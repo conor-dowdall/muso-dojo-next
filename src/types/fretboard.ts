@@ -1,10 +1,13 @@
 import type { NoteCollectionKey, RootNote } from "@musodojo/music-theory-data";
 
 export interface FretboardConfig {
+  // Setup
   tuning: number[];
   fretRange: [number, number];
-  rootNote: RootNote;
-  noteCollectionKey: NoteCollectionKey;
+
+  // Notes
+  rootNote?: RootNote;
+  noteCollectionKey?: NoteCollectionKey;
 
   // Visual
   darkMode: boolean;

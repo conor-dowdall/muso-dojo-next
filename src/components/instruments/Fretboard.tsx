@@ -16,8 +16,8 @@ export function Fretboard({ config = {}, preset, ...rest }: FretboardProps) {
   return (
     <p>
       {getNoteNamesFromRootAndCollectionKey(
-        cfg.rootNote,
-        cfg.noteCollectionKey,
+        cfg.rootNote ?? "C",
+        cfg.noteCollectionKey ?? "ionian",
       )}
     </p>
   );
