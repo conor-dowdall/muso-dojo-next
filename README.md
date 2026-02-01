@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Muso Dojo Web Interface
 
-## Getting Started
+This is a `Next.js` project created with `pnpm create next-app@latest muso-dojo --typescript --tailwind --eslint`.
 
-First, run the development server:
+This README provides instructions and context for an AI coding assistant to help build and maintain this project.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Project Goals
+
+The primary goal is to create a reactive, configurable Fretboard Component using React 19.
+
+## Fretboard Component Requirements
+
+The Fretboard component should be highly configurable. Here are the desired features and properties:
+
+### Core Configuration
+
+- **`tuning`**: An array of MIDI numbers representing the tuning of the strings (e.g., `[40, 45, 50, 55, 59, 64]` for EADGBE Standard Guitar Tuning).
+- **`instrument`**: Ability to load predefined fretboard configurations for instruments like Mandolin, Violin, or Ukulele. Data for these presets can eventually be moved to `@musodojo/music-theory-data`.
+- **`rootNote`**: The root note to be highlighted on the fretboard.
+- **`fretRange`**: The starting and ending fret numbers to display.
+
+### Visual Customization
+
+- **`dark or light mode`**: Default to dark mode. Maybe light could be used for printing out fretboard diagrams, so it should be white on black.
+- **`showFretLines`**: A boolean to show or hide fret lines (e.g., a violin has no frets, a guitar does).
+- **`stringWidths`**: Configurable widths for the strings.
+- **`fretWidths`**: Configurable widths for the frets.
+- **`showFretLabels`**: A boolean to show fret number labels next to the fretboard.
+- **`fretLabelMarkers`**: Configurable markers for specific frets. This should support different styles, for example:
+  - **Guitar Style**: `[3, 5, 7, 9, 12, 15, 17, 19, 21, 24]`
+  - **Mandolin Style**: `[3, 5, 7, 10, 12, 15, 17, 19, 22, 24]`
+- **`fretLabelAreaWidth`**: The width of the area where fret labels are displayed.
+- **`backgroundColor`**: Custom background color for the fretboard.
+- **`backgroundImage`**: Custom background image for the fretboard.
+- **`showInlays`**: A boolean to show fretboard inlays (e.g., custom images or SVGs) in the fret areas, which should scale as the frets get smaller.
+- **`noteColors`**: An array of 12 colors to apply to each note.
+- **`applyColorsFrom`**: Whether to apply colors starting from 'C' or from the `rootNote`.
+- **`CSS Grid Layout`**: use grids and subgrids, if appropriate in the CSS. the `fingerboardArea` area and the `fretLabelArea` could be subgrids.
+
+```ts
+// Example code for calculating fret areas using a grid layout with CSS grid, which is scalable by default.
+get gridTemplateColumns() {
+    if (this.evenFrets) return `repeat(${this.numFrets}, 1fr)`;
+    let template = "";
+    for (let i = 0; i < this.numFrets; i++)
+      template = `${Math.pow(2, i / 12)}fr ${template}`;
+    return template;
+  }
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Interactivity & Audio
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **`audioSource`**: An identifier for which audio sample to play (`Tone.js`).
+- **`mode`**: A `play` or `lock` mode where notes can be clicked to be played.
+- **`noteDuration`**: How long to play a note when it's clicked.
+- **`transpose`**: A value to transpose the played note (e.g., clicking a `C` plays a `B flat`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Displaying Musical Data
 
-## Learn More
+- **`scale` or `chord`**: A predefined scale or chord from `@musodojo/music-theory-data` to display on the fretboard.
 
-To learn more about Next.js, take a look at the following resources:
+## Technical Stack & Conventions
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **UI Framework**: `Next.js` with `React 19`.
+- **Styling**: `Tailwind CSS`. Use the latest CSS techniques to create beautiful and intuitive interfaces.
+- **Component Library**: Use `shadcn/ui` components where appropriate.
+- **Icons**: Use `Lucide` for icons.
+- **Music Theory Data**: Utilize the `@musodojo/music-theory-data` package for music-related data and functions.
+- **Audio**: `Tone.js` will be used for audio playback. The implementation should support multiple channels for different instruments (e.g., piano, guitar, violin).
+- **Rich Text Editor**: `Tiptap` may be used in the future for lesson-style pages. The Fretboard component should be designed with the idea that it might be wrapped for use within `Tiptap`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Future Work
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Piano Component**: Consider how code and logic can be shared between the Fretboard component and a future Piano component.
+- **Data Abstraction**: Move predefined instrument data to `@musodojo/music-theory-data`.
