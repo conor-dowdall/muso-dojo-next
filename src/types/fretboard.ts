@@ -1,5 +1,13 @@
 import type { NoteCollectionKey, RootNote } from "@musodojo/music-theory-data";
 
+export interface FretboardTheme {
+  fretWireColor: string;
+  fretWireWidth: string;
+  stringColor: string;
+  stringWidths?: string[]; // For individual string widths
+  stringWidth?: string; // For a uniform string width
+}
+
 export interface FretboardConfig {
   // Setup
   tuning: number[];
@@ -11,14 +19,14 @@ export interface FretboardConfig {
 
   // Visual
   darkMode: boolean;
-  showFretLines: boolean;
+  showFretWires: boolean;
   showFretLabels: boolean;
-  fretLabelMarkers: number[];
+  markerFrets: number[];
   showInlays: boolean;
   fretLabelAreaHeight?: string;
+  evenFrets?: boolean;
+  theme?: string | Partial<FretboardTheme>;
 
   // Interactivity
   interactive: boolean;
 }
-
-export type FretboardPresetName = string;
