@@ -38,6 +38,7 @@ export default function Fretboard({
           gridTemplateColumns: "subgrid",
           gridColumn: "1 / -1",
           gridRow: "1 / 2",
+          background: cfg.background,
         }}
       >
         {Array.from({ length: numFrets }).map((_, i) => (

@@ -16,14 +16,14 @@ export interface FretboardConfig {
   noteCollectionKey?: NoteCollectionKey;
 
   // Visual
-  darkMode: boolean;
   showFretWires: boolean;
-  showFretLabels: boolean;
-  markerFrets: number[];
   showInlays: boolean;
+  showFretLabels: boolean;
   fretLabelAreaHeight: string;
-  evenFrets: boolean;
+  markerFrets: number[];
+  evenFrets?: boolean;
   theme: FretboardTheme; // ← Guaranteed resolved, never a string
+  background?: string; // CSS background (color, image, gradient, etc.)
 
   // Interactivity
   interactive: boolean;
