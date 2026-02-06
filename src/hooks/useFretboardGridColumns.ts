@@ -20,7 +20,7 @@ export function useFretboardGridColumns(config: FretboardConfig): string {
   // The width of the i-th fret (0-indexed) is proportional to 2^(-i/12).
   const fretFractions = Array.from(
     { length: numFrets },
-    (_, i) => `${Math.pow(2, -i / 12)}fr`,
+    (_, i) => `${Math.pow(2, -i / 12).toFixed(4)}fr`,
   );
   return fretFractions.join(" ");
 }
