@@ -1,18 +1,16 @@
 "use client";
 
-import type { FretboardConfig } from "@/types/fretboard";
+import type { FretboardProps } from "@/types/fretboard";
 import { createFretboardConfig } from "@/utils/createFretboardConfig";
 import { calculateFretboardGridColumns } from "@/utils/calculateFretboardGridColumns";
-import type { FretboardPresetName } from "@/configs/fretboard/presets/index";
 import { getNumFrets } from "@/utils/fretboard";
 import Fret from "./Fret";
 
-export interface FretboardProps extends Partial<FretboardConfig> {
-  config?: Partial<FretboardConfig>;
-  preset?: FretboardPresetName;
-}
-
-export function Fretboard({ config = {}, preset, ...rest }: FretboardProps) {
+export default function Fretboard({
+  config = {},
+  preset,
+  ...rest
+}: FretboardProps) {
   const cfg = createFretboardConfig(preset, { ...config, ...rest });
   const numFrets = getNumFrets(cfg.fretRange);
   const fretboardGridColumns = calculateFretboardGridColumns(
