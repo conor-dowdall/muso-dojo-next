@@ -1,6 +1,10 @@
 import presets, { type FretboardPresetName } from "@/configs/fretboard/presets";
 import themes from "@/configs/fretboard/themes";
-import type { FretboardConfig, FretboardTheme } from "@/types/fretboard";
+import type {
+  FretboardConfig,
+  FretboardConfigInput,
+  FretboardTheme,
+} from "@/types/fretboard";
 
 const defaultTheme: FretboardTheme = themes.dark;
 
@@ -15,13 +19,19 @@ const defaultConfig: FretboardConfig = {
   showInlays: true,
   fretLabelAreaHeight: "2rem",
   evenFrets: false,
+  theme: defaultTheme,
 
   interactive: true,
 };
 
+/**
+ * Creates a fully resolved FretboardConfig from optional preset and user overrides.
+ * All string references (preset names, theme names) are resolved to actual objects.
+ * The returned config is guaranteed to have theme as a FretboardTheme object (never a string).
+ */
 export function createFretboardConfig(
   preset?: FretboardPresetName,
-  overrides?: Partial<FretboardConfig>,
+  overrides?: Partial<FretboardConfigInput>,
 ): FretboardConfig {
   const presetCfg = preset ? presets[preset] : undefined;
 

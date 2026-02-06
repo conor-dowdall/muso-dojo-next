@@ -1,11 +1,10 @@
 import { FretboardPresetName } from "@/configs/fretboard/presets";
 import type { NoteCollectionKey, RootNote } from "@musodojo/music-theory-data";
 
-export interface FretboardProps extends Partial<FretboardConfig> {
-  config?: Partial<FretboardConfig>;
-  preset?: FretboardPresetName;
-}
-
+/**
+ * Fully resolved configuration - single source of truth for the shape.
+ * All required properties are resolved to concrete objects (no strings).
+ */
 export interface FretboardConfig {
   // Setup
   tuning: number[];
@@ -21,12 +20,25 @@ export interface FretboardConfig {
   showFretLabels: boolean;
   markerFrets: number[];
   showInlays: boolean;
-  fretLabelAreaHeight?: string;
-  evenFrets?: boolean;
-  theme?: string | Partial<FretboardTheme>;
+  fretLabelAreaHeight: string;
+  evenFrets: boolean;
+  theme: FretboardTheme; // ← Guaranteed resolved, never a string
 
   // Interactivity
   interactive: boolean;
+}
+
+/**
+ * User-facing configuration derived from FretboardConfig.
+ * All properties are optional, and theme can be a string reference.
+ */
+export type FretboardConfigInput = Partial<FretboardConfig> & {
+  theme?: string | Partial<FretboardTheme>;
+};
+
+export interface FretboardProps extends FretboardConfigInput {
+  config?: FretboardConfigInput;
+  preset?: FretboardPresetName;
 }
 
 export interface FretboardTheme {
@@ -39,4 +51,5 @@ export interface FretboardTheme {
 
 export interface FretProps {
   fretNumber: number;
+  theme: FretboardTheme;
 }
