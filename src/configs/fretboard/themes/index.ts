@@ -1,12 +1,13 @@
-import type { FretboardTheme } from "@/types/fretboard";
 import dark from "./dark";
 import light from "./light";
 import wood from "./wood";
 
-const themes: Record<string, FretboardTheme> = {
+const themes = {
   dark,
   light,
   wood,
 };
+
+export type FretboardThemeName = keyof typeof themes;
 
 export default themes;

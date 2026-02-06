@@ -4,7 +4,9 @@ export default function Home() {
   return (
     <>
       <Fretboard />
+      <Fretboard config={{ theme: "dark" }} />
       <Fretboard config={{ theme: "light" }} />
+      <Fretboard config={{ theme: "wood" }} />
     </>
   );
 }

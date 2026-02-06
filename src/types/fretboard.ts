@@ -1,4 +1,5 @@
 import { FretboardPresetName } from "@/configs/fretboard/presets";
+import { FretboardThemeName } from "@/configs/fretboard/themes";
 import type { NoteCollectionKey, RootNote } from "@musodojo/music-theory-data";
 
 /**
@@ -33,7 +34,7 @@ export interface FretboardConfig {
  * All properties are optional, and theme can be a string reference.
  */
 export type FretboardConfigInput = Omit<Partial<FretboardConfig>, "theme"> & {
-  theme?: string | Partial<FretboardTheme>;
+  theme?: FretboardThemeName | Partial<FretboardTheme>;
 };
 
 export interface FretboardProps extends FretboardConfigInput {
