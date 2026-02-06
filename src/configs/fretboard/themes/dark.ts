@@ -1,8 +1,8 @@
 import type { FretboardTheme } from "@/types/fretboard";
 
 const dark: FretboardTheme = {
-  fretWireColor: "#555",
-  fretWireWidth: "3px",
+  fretWireColor: "#BBB",
+  fretWireWidth: "2px",
   stringColor: "#ddd",
   stringWidth: "1px",
 };

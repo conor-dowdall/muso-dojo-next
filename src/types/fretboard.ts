@@ -32,7 +32,7 @@ export interface FretboardConfig {
  * User-facing configuration derived from FretboardConfig.
  * All properties are optional, and theme can be a string reference.
  */
-export type FretboardConfigInput = Partial<FretboardConfig> & {
+export type FretboardConfigInput = Omit<Partial<FretboardConfig>, "theme"> & {
   theme?: string | Partial<FretboardTheme>;
 };
 
