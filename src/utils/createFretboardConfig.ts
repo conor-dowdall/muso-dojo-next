@@ -19,7 +19,7 @@ const defaultConfig: FretboardConfig = {
   interactive: true,
 };
 
-export function useFretboardConfig(
+export function createFretboardConfig(
   preset?: FretboardPresetName,
   overrides?: Partial<FretboardConfig>,
 ): FretboardConfig {
@@ -27,7 +27,7 @@ export function useFretboardConfig(
 
   if (process.env.NODE_ENV === "development" && preset && !presetCfg) {
     console.warn(
-      `[useFretboardConfig] Preset "${preset}" not found. Falling back to default configuration.`,
+      `[createFretboardConfig] Preset "${preset}" not found. Falling back to default configuration.`,
     );
   }
 
@@ -55,5 +55,3 @@ export function useFretboardConfig(
     theme,
   };
 }
-
-export default useFretboardConfig;
