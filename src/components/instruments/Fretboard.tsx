@@ -26,6 +26,7 @@ export default function Fretboard({
         width: "100%",
         height: "100%",
         display: "grid",
+        containerType: "inline-size",
         gridTemplateRows:
           resolvedConfig.fretLabelsPosition === "bottom"
             ? "1fr max-content"
@@ -65,8 +66,12 @@ export default function Fretboard({
           <div
             key={i}
             style={{
-              fontSize: `calc(${resolvedConfig.fretLabelsHeight} * 0.7)`,
+              fontSize: `calc(${resolvedConfig.fretLabelsHeight})`,
+              textBoxTrim: "trim-both",
+              textBoxEdge: "cap alphabetic",
+              color: resolvedConfig.fretLabelsColor,
               textAlign: "center",
+              overflow: "hidden",
             }}
           >
             {i}

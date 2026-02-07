@@ -7,10 +7,10 @@ export default function Fret({ fretNumber, config }: FretProps) {
   const color = isNut ? config.nutColor : config.fretWireColor;
 
   return (
-    <div className="relative h-full" data-fret-number={fretNumber}>
+    <div className="relative h-full " data-fret-number={fretNumber}>
       {show && (
         <div
-          className="absolute top-0 right-0 h-full"
+          className="absolute top-0 right-0 h-full "
           style={{
             width: width,
             background: color,

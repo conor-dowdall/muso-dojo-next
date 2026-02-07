@@ -6,7 +6,7 @@ import type {
 
 const defaultConfig: FretboardConfig = {
   tuning: [64, 59, 55, 50, 45, 40],
-  fretRange: [0, 12],
+  fretRange: [0, 24],
 
   background: "linear-gradient(to top right, #c0750d, #8e5509)",
 
@@ -16,20 +16,21 @@ const defaultConfig: FretboardConfig = {
   showFretLabels: true,
   fretLabelsPosition: "bottom",
   freLabelsBackground: "linear-gradient(to top right, #cba857, #c09d52)",
-  fretLabelsHeight: "0.3em",
+  fretLabelsColor: "black",
+  fretLabelsHeight: "1cqi",
 
   showNut: true,
   nutColor: "linear-gradient(to top right, #e4cda2, #ceb992)",
-  nutWidth: "0.2em",
+  nutWidth: "0.9cqi",
 
   showFretWires: true,
   fretWireColor: "linear-gradient(to top right, #e2d6b9, #b0a690)",
-  fretWireWidth: "0.1em",
+  fretWireWidth: "0.3cqi",
   evenFrets: false,
 
   showStrings: true,
   stringColor: "BBB",
-  stringWidths: "2px",
+  stringWidths: "0.3cqi",
 };
 
 /**

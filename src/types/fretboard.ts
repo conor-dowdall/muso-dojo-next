@@ -21,6 +21,7 @@ export interface FretboardConfig {
   showFretLabels: boolean;
   fretLabelsPosition: "top" | "bottom";
   freLabelsBackground: string;
+  fretLabelsColor: string;
   fretLabelsHeight: string;
 
   // Nut
