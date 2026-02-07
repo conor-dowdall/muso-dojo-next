@@ -1,27 +1,29 @@
-import presets, { type FretboardPresetName } from "@/configs/fretboard/presets";
-import themes from "@/configs/fretboard/themes";
+import { presets, type FretboardPresetName } from "@/configs/fretboard/presets";
 import type {
   FretboardConfig,
-  FretboardConfigInput,
-  FretboardTheme,
+  PartialFretboardConfig,
 } from "@/types/fretboard";
-
-const defaultTheme: FretboardTheme = themes.dark;
 
 const defaultConfig: FretboardConfig = {
   tuning: [64, 59, 55, 50, 45, 40],
   fretRange: [0, 12],
 
-  darkMode: true,
   showFretWires: true,
-  showFretLabels: true,
-  markerFrets: [3, 5, 7, 9, 12, 15, 17, 19, 21, 24],
-  showInlays: true,
-  fretLabelAreaHeight: "2rem",
+  fretWireColor: "#bbb",
+  fretWireWidth: "2px",
   evenFrets: false,
-  theme: defaultTheme,
 
-  interactive: true,
+  showStrings: true,
+  stringColor: "BBB",
+  stringWidths: "2px",
+
+  showFretLabels: true,
+  fretLabelAreaHeight: "2rem",
+  markerFrets: [3, 5, 7, 9, 12, 15, 17, 19, 21, 24],
+
+  background:
+    "linear-gradient(45deg, oklab(50% 0.029 0.075), oklab(45% 0.054 0.063))",
+  showInlays: true,
 };
 
 /**
@@ -31,7 +33,7 @@ const defaultConfig: FretboardConfig = {
  */
 export function createFretboardConfig(
   preset?: FretboardPresetName,
-  overrides?: Partial<FretboardConfigInput>,
+  overrides?: PartialFretboardConfig,
 ): FretboardConfig {
   const presetCfg = preset ? presets[preset] : undefined;
 
@@ -41,27 +43,9 @@ export function createFretboardConfig(
     );
   }
 
-  let theme: FretboardTheme = { ...defaultTheme };
-
-  const applyTheme = (t?: string | Partial<FretboardTheme>) => {
-    if (!t) return;
-    if (typeof t === "string") {
-      const namedTheme = themes[t];
-      if (namedTheme) {
-        theme = { ...theme, ...namedTheme };
-      }
-    } else {
-      theme = { ...theme, ...t };
-    }
-  };
-
-  applyTheme(presetCfg?.theme);
-  applyTheme(overrides?.theme);
-
   return {
     ...defaultConfig,
     ...presetCfg,
     ...overrides,
-    theme,
   };
 }

@@ -1,5 +1,4 @@
 import { FretboardPresetName } from "@/configs/fretboard/presets";
-import { FretboardThemeName } from "@/configs/fretboard/themes";
 import type { NoteCollectionKey, RootNote } from "@musodojo/music-theory-data";
 
 /**
@@ -15,42 +14,35 @@ export interface FretboardConfig {
   rootNote?: RootNote;
   noteCollectionKey?: NoteCollectionKey;
 
-  // Visual
+  // Frets
   showFretWires: boolean;
-  showInlays: boolean;
+  fretWireColor: string;
+  fretWireWidth: string;
+  evenFrets: boolean;
+
+  // Strings
+  showStrings: boolean;
+  stringColor: string;
+  stringWidths: string | string[];
+
+  // Fret Labels
   showFretLabels: boolean;
   fretLabelAreaHeight: string;
   markerFrets: number[];
-  evenFrets?: boolean;
-  theme: FretboardTheme; // ← Guaranteed resolved, never a string
-  background?: string; // CSS background (color, image, gradient, etc.)
 
-  // Interactivity
-  interactive: boolean;
+  // Fretboard Design
+  background: string; // CSS background (color, image, gradient, etc.)
+  showInlays: boolean;
 }
 
-/**
- * User-facing configuration derived from FretboardConfig.
- * All properties are optional, and theme can be a string reference.
- */
-export type FretboardConfigInput = Omit<Partial<FretboardConfig>, "theme"> & {
-  theme?: FretboardThemeName | Partial<FretboardTheme>;
-};
+export type PartialFretboardConfig = Partial<FretboardConfig>;
 
-export interface FretboardProps extends FretboardConfigInput {
-  config?: FretboardConfigInput;
+export interface FretboardProps {
+  config?: PartialFretboardConfig;
   preset?: FretboardPresetName;
-}
-
-export interface FretboardTheme {
-  fretWireColor: string;
-  fretWireWidth: string;
-  stringColor: string;
-  stringWidths?: string[]; // For individual string widths
-  stringWidth?: string; // For a uniform string width
 }
 
 export interface FretProps {
   fretNumber: number;
-  theme: FretboardTheme;
+  config: FretboardConfig;
 }

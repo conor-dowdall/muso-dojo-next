@@ -42,7 +42,7 @@ export default function Fretboard({
         }}
       >
         {Array.from({ length: numFrets }).map((_, i) => (
-          <Fret key={i} fretNumber={startFret + i} theme={cfg.theme} />
+          <Fret key={i} fretNumber={startFret + i} config={cfg} />
         ))}
       </div>
 
