@@ -1,27 +1,8 @@
-import Fretboard from "@/components/instruments/Fretboard";
-import Image from "next/image";
+import Fretboard from "@/components/instruments/fretboard/Fretboard";
 
 export default function Home() {
   return (
     <>
-      <header
-        style={{
-          display: "flex",
-          gap: "1em",
-          alignItems: "center",
-          padding: "1em",
-          marginBlockEnd: "1em",
-        }}
-      >
-        <Image
-          style={{ borderRadius: "50%", display: "inline-block" }}
-          width={48}
-          height={48}
-          src="/logo.png"
-          alt="Muso Dojo Logo"
-        />
-        <h1 style={{ fontSize: "2em", display: "inline-block" }}>Muso Dojo</h1>
-      </header>
       <section
         style={{
           minHeight: "100dvh",

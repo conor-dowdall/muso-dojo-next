@@ -5,6 +5,7 @@ import { createFretboardConfig } from "@/utils/createFretboardConfig";
 import { calculateFretboardGridColumns } from "@/utils/calculateFretboardGridColumns";
 import { getNumFrets } from "@/utils/fretboard";
 import Fret from "./Fret";
+import FretLabel from "./FretLabel";
 
 export default function Fretboard({
   config = {},
@@ -13,11 +14,11 @@ export default function Fretboard({
 }: FretboardProps) {
   const resolvedConfig = createFretboardConfig(preset, { ...config, ...rest });
   const numFrets = getNumFrets(resolvedConfig.fretRange);
+  const startFret = resolvedConfig.fretRange[0];
   const fretboardGridColumns = calculateFretboardGridColumns(
     numFrets,
     resolvedConfig.evenFrets,
   );
-  const startFret = resolvedConfig.fretRange[0];
 
   return (
     <div
@@ -63,28 +64,11 @@ export default function Fretboard({
         }}
       >
         {Array.from({ length: numFrets }).map((_, i) => (
-          <div
+          <FretLabel
             key={i}
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              overflow: "visible",
-            }}
-          >
-            <span
-              style={{
-                fontSize: `calc(${resolvedConfig.fretLabelsHeight})`,
-                textBoxTrim: "trim-both",
-                textBoxEdge: "cap alphabetic",
-                color: resolvedConfig.fretLabelsColor,
-              }}
-            >
-              {resolvedConfig.markerFrets.includes(startFret + i)
-                ? startFret + i
-                : ""}
-            </span>
-          </div>
+            fretNumber={startFret + i}
+            config={resolvedConfig}
+          />
         ))}
       </div>
     </div>

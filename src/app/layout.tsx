@@ -1,16 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import Image from "next/image";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Muso Dojo",
@@ -24,9 +14,31 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body>
+        <header
+          style={{
+            display: "flex",
+            gap: "1em",
+            alignItems: "center",
+            padding: "2em",
+          }}
+        >
+          <Image
+            src="/logo.png"
+            alt="Muso Dojo Logo"
+            width={80}
+            height={80}
+            style={{ borderRadius: "50%", width: "5em", height: "5em" }}
+          />
+          <h1
+            style={{
+              fontSize: "2.5em",
+              fontWeight: "bold",
+            }}
+          >
+            Muso Dojo
+          </h1>
+        </header>
         {children}
       </body>
     </html>

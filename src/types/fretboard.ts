@@ -23,6 +23,9 @@ export interface FretboardConfig {
   freLabelsBackground: string;
   fretLabelsColor: string;
   fretLabelsHeight: string;
+  fretLabelMode: "number" | "image";
+  fretLabelImage?: "circle" | "star" | "triangle" | "square";
+  fretLabelImages?: Record<number, "circle" | "star" | "triangle" | "square">;
 
   // Nut
   showNut: boolean;
