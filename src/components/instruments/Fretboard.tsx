@@ -66,15 +66,24 @@ export default function Fretboard({
           <div
             key={i}
             style={{
-              fontSize: `calc(${resolvedConfig.fretLabelsHeight})`,
-              textBoxTrim: "trim-both",
-              textBoxEdge: "cap alphabetic",
-              color: resolvedConfig.fretLabelsColor,
-              textAlign: "center",
-              overflow: "hidden",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              overflow: "visible",
             }}
           >
-            {i}
+            <span
+              style={{
+                fontSize: `calc(${resolvedConfig.fretLabelsHeight})`,
+                textBoxTrim: "trim-both",
+                textBoxEdge: "cap alphabetic",
+                color: resolvedConfig.fretLabelsColor,
+              }}
+            >
+              {resolvedConfig.markerFrets.includes(startFret + i)
+                ? startFret + i
+                : ""}
+            </span>
           </div>
         ))}
       </div>
