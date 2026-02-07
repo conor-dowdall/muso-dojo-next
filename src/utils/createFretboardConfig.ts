@@ -9,7 +9,7 @@ const defaultConfig: FretboardConfig = {
   fretRange: [0, 12],
 
   showFretWires: true,
-  fretWireColor: "#bbb",
+  fretWireColor: "linear-gradient(to top left, #e2d6b9, #85806c)",
   fretWireWidth: "2px",
   evenFrets: false,
 
@@ -21,8 +21,7 @@ const defaultConfig: FretboardConfig = {
   fretLabelAreaHeight: "2rem",
   markerFrets: [3, 5, 7, 9, 12, 15, 17, 19, 21, 24],
 
-  background:
-    "linear-gradient(45deg, oklab(50% 0.029 0.075), oklab(45% 0.054 0.063))",
+  background: "linear-gradient(to top left, #c07406, #ae6b03)",
   showInlays: true,
 };
 
