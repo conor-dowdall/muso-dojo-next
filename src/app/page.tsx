@@ -3,7 +3,9 @@ import Fretboard from "@/components/instruments/Fretboard";
 export default function Home() {
   return (
     <>
-      <Fretboard />
+      <div style={{ width: "50em", height: "15em" }}>
+        <Fretboard />
+      </div>
     </>
   );
 }

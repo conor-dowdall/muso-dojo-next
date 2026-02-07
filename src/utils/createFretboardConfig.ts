@@ -8,21 +8,28 @@ const defaultConfig: FretboardConfig = {
   tuning: [64, 59, 55, 50, 45, 40],
   fretRange: [0, 12],
 
+  background: "linear-gradient(to top right, #c0750d, #8e5509)",
+
+  showInlays: true,
+  markerFrets: [3, 5, 7, 9, 12, 15, 17, 19, 21, 24],
+
+  showFretLabels: true,
+  fretLabelsPosition: "bottom",
+  freLabelsBackground: "linear-gradient(to top right, #cba857, #c09d52)",
+  fretLabelsHeight: "0.3em",
+
+  showNut: true,
+  nutColor: "linear-gradient(to top right, #e4cda2, #ceb992)",
+  nutWidth: "0.2em",
+
   showFretWires: true,
-  fretWireColor: "linear-gradient(to top left, #e2d6b9, #85806c)",
-  fretWireWidth: "2px",
+  fretWireColor: "linear-gradient(to top right, #e2d6b9, #b0a690)",
+  fretWireWidth: "0.1em",
   evenFrets: false,
 
   showStrings: true,
   stringColor: "BBB",
   stringWidths: "2px",
-
-  showFretLabels: true,
-  fretLabelAreaHeight: "2rem",
-  markerFrets: [3, 5, 7, 9, 12, 15, 17, 19, 21, 24],
-
-  background: "linear-gradient(to top left, #c07406, #ae6b03)",
-  showInlays: true,
 };
 
 /**

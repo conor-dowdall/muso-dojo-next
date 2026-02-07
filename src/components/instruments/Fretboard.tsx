@@ -11,38 +11,41 @@ export default function Fretboard({
   preset,
   ...rest
 }: FretboardProps) {
-  const cfg = createFretboardConfig(preset, { ...config, ...rest });
-  const numFrets = getNumFrets(cfg.fretRange);
+  const resolvedConfig = createFretboardConfig(preset, { ...config, ...rest });
+  const numFrets = getNumFrets(resolvedConfig.fretRange);
   const fretboardGridColumns = calculateFretboardGridColumns(
     numFrets,
-    cfg.evenFrets,
+    resolvedConfig.evenFrets,
   );
-  const startFret = cfg.fretRange[0];
+  const startFret = resolvedConfig.fretRange[0];
 
   return (
-    // This div represents the main wrapper for the fretboard and the fret-labels
     <div
+      id="fretboard-wrapper"
       style={{
-        width: "20em",
-        height: "10em",
+        width: "100%",
+        height: "100%",
         display: "grid",
-        gridTemplateRows: "1fr max-content", // Default layout for fretboard and labels
-        gridTemplateColumns: fretboardGridColumns, // Apply the calculated grid columns here
-        // You might add other host-level styles here, e.g., resize, overflow
+        gridTemplateRows:
+          resolvedConfig.fretLabelsPosition === "bottom"
+            ? "1fr max-content"
+            : "max-content 1fr",
+        gridTemplateColumns: fretboardGridColumns,
       }}
     >
       <div
-        id="fretboard"
+        id="fingerboard"
         style={{
           display: "grid",
           gridTemplateColumns: "subgrid",
           gridColumn: "1 / -1",
-          gridRow: "1 / 2",
-          background: cfg.background,
+          gridRow:
+            resolvedConfig.fretLabelsPosition === "bottom" ? "1 / 2" : "2 / -1",
+          background: resolvedConfig.background,
         }}
       >
         {Array.from({ length: numFrets }).map((_, i) => (
-          <Fret key={i} fretNumber={startFret + i} config={cfg} />
+          <Fret key={i} fretNumber={startFret + i} config={resolvedConfig} />
         ))}
       </div>
 
@@ -50,11 +53,26 @@ export default function Fretboard({
         id="fret-labels"
         style={{
           display: "grid",
+          height: resolvedConfig.fretLabelsHeight,
+          background: resolvedConfig.freLabelsBackground,
           gridTemplateColumns: "subgrid",
           gridColumn: "1 / -1",
-          gridRow: "2 / 3",
+          gridRow:
+            resolvedConfig.fretLabelsPosition === "bottom" ? "2 / -1" : "1 / 2",
         }}
-      ></div>
+      >
+        {Array.from({ length: numFrets }).map((_, i) => (
+          <div
+            key={i}
+            style={{
+              fontSize: `calc(${resolvedConfig.fretLabelsHeight} * 0.7)`,
+              textAlign: "center",
+            }}
+          >
+            {i}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -10,9 +10,23 @@ export interface FretboardConfig {
   tuning: number[];
   fretRange: [number, number];
 
-  // Notes
-  rootNote?: RootNote;
-  noteCollectionKey?: NoteCollectionKey;
+  // Fretboard Design
+  background: string;
+
+  // Fret Markers
+  showInlays: boolean;
+  markerFrets: number[]; // also used for fret labels
+
+  // Fret Labels
+  showFretLabels: boolean;
+  fretLabelsPosition: "top" | "bottom";
+  freLabelsBackground: string;
+  fretLabelsHeight: string;
+
+  // Nut
+  showNut: boolean;
+  nutColor: string;
+  nutWidth: string;
 
   // Frets
   showFretWires: boolean;
@@ -25,14 +39,9 @@ export interface FretboardConfig {
   stringColor: string;
   stringWidths: string | string[];
 
-  // Fret Labels
-  showFretLabels: boolean;
-  fretLabelAreaHeight: string;
-  markerFrets: number[];
-
-  // Fretboard Design
-  background: string; // CSS background (color, image, gradient, etc.)
-  showInlays: boolean;
+  // Notes
+  rootNote?: RootNote;
+  noteCollectionKey?: NoteCollectionKey;
 }
 
 export type PartialFretboardConfig = Partial<FretboardConfig>;
