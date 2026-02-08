@@ -56,7 +56,7 @@ export default function Fretboard({
         style={{
           display: "grid",
           height: resolvedConfig.fretLabelsHeight,
-          background: resolvedConfig.freLabelsBackground,
+          background: resolvedConfig.fretLabelsBackground,
           gridTemplateColumns: "subgrid",
           gridColumn: "1 / -1",
           gridRow:

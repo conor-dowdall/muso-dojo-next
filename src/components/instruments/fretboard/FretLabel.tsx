@@ -9,13 +9,16 @@ const icons = {
 };
 
 export default function FretLabel({ fretNumber, config }: FretProps) {
-  const isMarker = config.markerFrets.includes(fretNumber);
+  const isMarker = config.markerFrets
+    ? config.markerFrets.includes(fretNumber)
+    : false;
   const isImageMode = config.fretLabelMode === "image";
   const shape =
     isImageMode && isMarker
       ? (config.fretLabelImages?.[fretNumber] ?? config.fretLabelImage)
       : undefined;
-  const Icon = shape ? icons[shape] : null;
+  const Icon =
+    shape && shape in icons ? icons[shape as keyof typeof icons] : null;
 
   return (
     <div

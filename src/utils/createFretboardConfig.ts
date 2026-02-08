@@ -9,30 +9,30 @@ const defaultConfig: FretboardConfig = {
   fretRange: [0, 24],
 
   background: "linear-gradient(to top right, #c0750d, #8e5509)",
-
-  showInlays: true,
   markerFrets: [3, 5, 7, 9, 12, 15, 17, 19, 21, 24],
+
+  showFretInlays: true,
 
   showFretLabels: true,
   fretLabelsPosition: "bottom",
-  freLabelsBackground: "linear-gradient(to top right, #cba857, #c09d52)",
+  fretLabelsBackground: "linear-gradient(to top right, #cba857, #c09d52)",
   fretLabelsColor: "black",
   fretLabelsHeight: "1.9cqi",
   fretLabelMode: "image",
-  fretLabelImage: "circle",
+  fretLabelImage: "star",
   fretLabelImages: {
-    12: "square",
-    24: "square",
+    12: "circle",
+    24: "circle",
   },
 
   showNut: true,
   nutColor: "linear-gradient(to top right, #e4cda2, #ceb992)",
   nutWidth: "0.8cqi",
 
+  evenFrets: false,
   showFretWires: true,
   fretWireColor: "linear-gradient(to top right, #e2d6b9, #b0a690)",
   fretWireWidth: "0.4cqi",
-  evenFrets: false,
 
   showStrings: true,
   stringColor: "BBB",
