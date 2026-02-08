@@ -9,8 +9,8 @@ export const fretboardDefaults: Required<FretboardConfig> = {
 
   showFretInlays: true,
   fretInlayColor: "linear-gradient(to top right, #323232ff, #575757ff)",
-  fretInlayWidth: "1.3cqi",
-  fretInlayHeight: "1.3cqi",
+  fretInlayWidth: "1.5cqi",
+  fretInlayHeight: "1.5cqi",
   fretInlayImage: "circle",
   fretInlayImages: {},
   fretInlayDoubles: [12, 24],

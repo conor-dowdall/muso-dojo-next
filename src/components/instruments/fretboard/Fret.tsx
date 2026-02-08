@@ -45,6 +45,7 @@ export default function Fret({ fretNumber, config }: FretProps) {
         height: "100%",
         display: "flex",
         flexDirection: "row",
+        overflow: "hidden", // Prevent large icons from expanding the fret
       }}
     >
       <div
@@ -56,6 +57,7 @@ export default function Fret({ fretNumber, config }: FretProps) {
           justifyContent: "center",
           gap:
             config.fretInlayDoubleGap ?? fretboardDefaults.fretInlayDoubleGap,
+          overflow: "hidden", // Ensure content doesn't spill out
         }}
       >
         {Icon &&
@@ -75,6 +77,7 @@ export default function Fret({ fretNumber, config }: FretProps) {
                 <Icon
                   fill={inlayColor}
                   strokeWidth={0}
+                  preserveAspectRatio="none"
                   style={{
                     width: "100%",
                     height: "100%",
@@ -97,6 +100,7 @@ export default function Fret({ fretNumber, config }: FretProps) {
                 <Icon
                   fill={inlayColor}
                   strokeWidth={0}
+                  preserveAspectRatio="none"
                   style={{
                     width: "100%",
                     height: "100%",
@@ -121,6 +125,7 @@ export default function Fret({ fretNumber, config }: FretProps) {
               <Icon
                 fill={inlayColor}
                 strokeWidth={0}
+                preserveAspectRatio="none"
                 style={{
                   width: "100%",
                   height: "100%",
