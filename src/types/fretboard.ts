@@ -1,4 +1,5 @@
 import { FretboardPresetName } from "@/configs/fretboard/presets";
+import { FretboardIcon } from "@/configs/fretboard/icons";
 import type { NoteCollectionKey, RootNote } from "@musodojo/music-theory-data";
 
 /**
@@ -7,59 +8,67 @@ import type { NoteCollectionKey, RootNote } from "@musodojo/music-theory-data";
  */
 export interface FretboardConfig {
   // Setup
-  tuning: number[];
-  fretRange: [number, number];
+  tuning?: number[];
+  fretRange?: [number, number];
 
   // Fretboard Design
   background?: string;
   markerFrets?: number[]; // used for fret inlay-and-label positions
 
   // Fret Markers
-  showFretInlays: boolean;
+  showFretInlays?: boolean;
   fretInlayColor?: string;
   fretInlayWidth?: string;
   fretInlayHeight?: string;
-  fretInlayImage?: "circle" | "star" | "triangle" | "square";
-  fretInlayImages?: Record<number, "circle" | "star" | "triangle" | "square">;
+  fretInlayImage?: FretboardIcon;
+  fretInlayImages?: Record<number, FretboardIcon>;
+  fretInlayDoubles?: number[];
+  fretInlayDoubleGap?: string;
 
   // Fret Labels
-  showFretLabels: boolean;
+  showFretLabels?: boolean;
   fretLabelsPosition?: "top" | "bottom";
   fretLabelsBackground?: string;
   fretLabelsColor?: string;
   fretLabelsHeight?: string;
   fretLabelMode?: "number" | "image";
-  fretLabelImage?: "circle" | "star" | "triangle" | "square";
-  fretLabelImages?: Record<number, "circle" | "star" | "triangle" | "square">;
+  fretLabelImage?: FretboardIcon;
+  fretLabelImages?: Record<number, FretboardIcon>;
+  fretLabelDoubles?: number[];
+  fretLabelDoubleGap?: string;
 
   // Nut
-  showNut: boolean;
+  showNut?: boolean;
   nutColor?: string;
   nutWidth?: string;
 
   // Frets
-  evenFrets: boolean;
-  showFretWires: boolean;
+  evenFrets?: boolean;
+  showFretWires?: boolean;
   fretWireColor?: string;
   fretWireWidth?: string;
 
   // Strings
-  showStrings: boolean;
+  showStrings?: boolean;
   stringColor?: string;
+  stringColors?: Record<number, string>;
   stringWidth?: string;
   stringWidths?: Record<number, string>;
 }
 
-export type PartialFretboardConfig = Partial<FretboardConfig>;
-
 export interface FretboardProps {
-  config?: PartialFretboardConfig;
+  config?: FretboardConfig;
   preset?: FretboardPresetName;
+  rootNote?: RootNote;
+  noteCollectionKey?: NoteCollectionKey;
 }
 
 export interface FretProps {
   fretNumber: number;
   config: FretboardConfig;
-  rootNote?: RootNote;
-  noteCollectionKey?: NoteCollectionKey;
+}
+
+export interface InstrumentStringProps {
+  stringNumber: number;
+  config: FretboardConfig;
 }
