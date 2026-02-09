@@ -1,7 +1,7 @@
-import { guitar } from "./guitar";
+import { lightTelecaster } from "./lightTelecaster";
 
 export const presets = {
-  guitar,
+  lightTelecaster,
 } as const;
 
 export type FretboardPresetName = keyof typeof presets;

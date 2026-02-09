@@ -1,21 +1,12 @@
 import { InstrumentStringProps } from "@/types/fretboard";
-import { fretboardDefaults } from "@/configs/fretboard/defaults";
 
 export default function InstrumentString({
   stringNumber,
   config,
 }: InstrumentStringProps) {
-  const show = config.showStrings ?? fretboardDefaults.showStrings;
-  const width =
-    config.stringWidths?.[stringNumber] ??
-    config.stringWidth ??
-    fretboardDefaults.stringWidths?.[stringNumber] ??
-    fretboardDefaults.stringWidth;
-  const color =
-    config.stringColors?.[stringNumber] ??
-    config.stringColor ??
-    fretboardDefaults.stringColors?.[stringNumber] ??
-    fretboardDefaults.stringColor;
+  const show = config.showStrings;
+  const width = config.stringWidths?.[stringNumber] ?? config.stringWidth;
+  const color = config.stringColors?.[stringNumber] ?? config.stringColor;
 
   return (
     <div

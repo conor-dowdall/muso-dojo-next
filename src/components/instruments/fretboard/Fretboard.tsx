@@ -4,7 +4,6 @@ import type { FretboardProps } from "@/types/fretboard";
 import { createFretboardConfig } from "@/utils/createFretboardConfig";
 import { calculateFretboardGridColumns } from "@/utils/calculateFretboardGridColumns";
 import { getNumFrets } from "@/utils/fretboard";
-import { fretboardDefaults } from "@/configs/fretboard/defaults";
 import Fret from "./Fret";
 import FretLabel from "./FretLabel";
 import InstrumentString from "./InstrumentString";
@@ -16,14 +15,14 @@ export default function Fretboard({
 }: FretboardProps) {
   const resolvedConfig = createFretboardConfig(preset, { ...config, ...rest });
 
-  const tuning = resolvedConfig.tuning ?? fretboardDefaults.tuning;
-  const fretRange = resolvedConfig.fretRange ?? fretboardDefaults.fretRange;
+  const tuning = resolvedConfig.tuning;
+  const fretRange = resolvedConfig.fretRange;
 
   const numFrets = getNumFrets(fretRange);
   const startFret = fretRange[0];
   const fretboardGridColumns = calculateFretboardGridColumns(
     numFrets,
-    resolvedConfig.evenFrets ?? fretboardDefaults.evenFrets,
+    resolvedConfig.evenFrets,
   );
 
   return (
@@ -35,11 +34,11 @@ export default function Fretboard({
         display: "grid",
         containerType: "inline-size",
         gridTemplateRows:
-          (resolvedConfig.fretLabelsPosition ??
-            fretboardDefaults.fretLabelsPosition) === "bottom"
+          resolvedConfig.fretLabelsPosition === "bottom"
             ? "1fr max-content"
             : "max-content 1fr",
         gridTemplateColumns: fretboardGridColumns,
+        direction: resolvedConfig.leftHanded ? "rtl" : "ltr",
       }}
     >
       <div
@@ -49,11 +48,8 @@ export default function Fretboard({
           gridTemplateColumns: "subgrid",
           gridColumn: "1 / -1",
           gridRow:
-            (resolvedConfig.fretLabelsPosition ??
-              fretboardDefaults.fretLabelsPosition) === "bottom"
-              ? "1 / 2"
-              : "2 / -1",
-          background: resolvedConfig.background ?? fretboardDefaults.background,
+            resolvedConfig.fretLabelsPosition === "bottom" ? "1 / 2" : "2 / -1",
+          background: resolvedConfig.background,
         }}
       >
         {Array.from({ length: numFrets }).map((_, i) => (
@@ -66,10 +62,7 @@ export default function Fretboard({
         style={{
           gridColumn: "1 / -1",
           gridRow:
-            (resolvedConfig.fretLabelsPosition ??
-              fretboardDefaults.fretLabelsPosition) === "bottom"
-              ? "1 / 2"
-              : "2 / -1",
+            resolvedConfig.fretLabelsPosition === "bottom" ? "1 / 2" : "2 / -1",
           display: "flex",
           flexDirection: "column",
         }}
@@ -87,19 +80,12 @@ export default function Fretboard({
         id="fret-labels"
         style={{
           display: "grid",
-          height:
-            resolvedConfig.fretLabelsHeight ??
-            fretboardDefaults.fretLabelsHeight,
-          background:
-            resolvedConfig.fretLabelsBackground ??
-            fretboardDefaults.fretLabelsBackground,
+          height: resolvedConfig.fretLabelsHeight,
+          background: resolvedConfig.fretLabelsBackground,
           gridTemplateColumns: "subgrid",
           gridColumn: "1 / -1",
           gridRow:
-            (resolvedConfig.fretLabelsPosition ??
-              fretboardDefaults.fretLabelsPosition) === "bottom"
-              ? "2 / -1"
-              : "1 / 2",
+            resolvedConfig.fretLabelsPosition === "bottom" ? "2 / -1" : "1 / 2",
         }}
       >
         {Array.from({ length: numFrets }).map((_, i) => (

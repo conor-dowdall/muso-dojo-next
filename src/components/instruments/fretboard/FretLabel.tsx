@@ -1,20 +1,16 @@
 import { FretProps } from "@/types/fretboard";
-import { fretboardDefaults } from "@/configs/fretboard/defaults";
 import { fretboardIcons } from "@/configs/fretboard/icons";
 
 export default function FretLabel({ fretNumber, config }: FretProps) {
-  const markerFrets = config.markerFrets ?? fretboardDefaults.markerFrets;
+  const markerFrets = config.markerFrets;
   const isMarker = markerFrets.includes(fretNumber);
 
-  const fretLabelMode = config.fretLabelMode ?? fretboardDefaults.fretLabelMode;
+  const fretLabelMode = config.fretLabelMode;
   const isImageMode = fretLabelMode === "image";
 
   const shape =
     isImageMode && isMarker
-      ? (config.fretLabelImages?.[fretNumber] ??
-        config.fretLabelImage ??
-        fretboardDefaults.fretLabelImages?.[fretNumber] ??
-        fretboardDefaults.fretLabelImage)
+      ? (config.fretLabelImages?.[fretNumber] ?? config.fretLabelImage)
       : undefined;
 
   const Icon =
@@ -22,18 +18,15 @@ export default function FretLabel({ fretNumber, config }: FretProps) {
       ? fretboardIcons[shape as keyof typeof fretboardIcons]
       : null;
 
-  const height = config.fretLabelsHeight ?? fretboardDefaults.fretLabelsHeight;
-  const color = config.fretLabelsColor ?? fretboardDefaults.fretLabelsColor;
+  const height = config.fretLabelsHeight;
+  const color = config.fretLabelsColor;
 
-  const fretLabelDoubles =
-    config.fretLabelDoubles ?? fretboardDefaults.fretLabelDoubles;
+  const fretLabelDoubles = config.fretLabelDoubles;
   const isDouble = fretLabelDoubles && fretLabelDoubles.includes(fretNumber);
 
   // Calculate the wire/nut width to compensate for centering
   const isNut = fretNumber === 0;
-  const wireWidth = isNut
-    ? (config.nutWidth ?? fretboardDefaults.nutWidth)
-    : (config.fretWireWidth ?? fretboardDefaults.fretWireWidth);
+  const wireWidth = isNut ? config.nutWidth : config.fretWireWidth;
 
   // We need to match the layout of Fret.tsx for alignment.
   // Fret.tsx has [Content (flex: 1)] [Wire (width: wireWidth)]
@@ -57,8 +50,7 @@ export default function FretLabel({ fretNumber, config }: FretProps) {
           justifyContent: "center",
           alignItems: "center",
           overflow: "visible",
-          gap:
-            config.fretLabelDoubleGap ?? fretboardDefaults.fretLabelDoubleGap,
+          gap: config.fretLabelDoubleGap,
         }}
       >
         {isMarker &&

@@ -20,7 +20,7 @@ export default function RootLayout({
             display: "flex",
             gap: "1em",
             alignItems: "center",
-            padding: "2em",
+            padding: "1em",
           }}
         >
           <Image
@@ -28,11 +28,11 @@ export default function RootLayout({
             alt="Muso Dojo Logo"
             width={80}
             height={80}
-            style={{ borderRadius: "50%", width: "5em", height: "5em" }}
+            style={{ borderRadius: "50%", width: "2em", height: "2em" }}
           />
           <h1
             style={{
-              fontSize: "2.5em",
+              fontSize: "1.5em",
               fontWeight: "bold",
             }}
           >

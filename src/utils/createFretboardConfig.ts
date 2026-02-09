@@ -1,5 +1,6 @@
 import { presets, type FretboardPresetName } from "@/configs/fretboard/presets";
 import { type FretboardConfig } from "@/types/fretboard";
+import { fretboardDefaults } from "@/configs/fretboard/defaults";
 
 /**
  * Creates a fully resolved FretboardConfig from optional preset and user overrides.
@@ -9,7 +10,7 @@ import { type FretboardConfig } from "@/types/fretboard";
 export function createFretboardConfig(
   preset?: FretboardPresetName,
   overrides?: FretboardConfig,
-): FretboardConfig {
+): Required<FretboardConfig> {
   const presetCfg = preset ? presets[preset] : undefined;
 
   if (process.env.NODE_ENV === "development" && preset && !presetCfg) {
@@ -19,7 +20,8 @@ export function createFretboardConfig(
   }
 
   return {
+    ...fretboardDefaults,
     ...presetCfg,
     ...overrides,
-  };
+  } as Required<FretboardConfig>;
 }

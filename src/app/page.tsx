@@ -13,12 +13,13 @@ export default function Home() {
       >
         <div
           style={{
-            width: "50em",
-            height: "15em",
+            width: "30em",
+            height: "6em",
             resize: "both",
             overflow: "hidden",
           }}
         >
+          <Fretboard preset="lightTelecaster" />
           <Fretboard />
         </div>
       </section>

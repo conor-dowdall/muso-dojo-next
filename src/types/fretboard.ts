@@ -10,6 +10,7 @@ export interface FretboardConfig {
   // Setup
   tuning?: number[];
   fretRange?: [number, number];
+  leftHanded?: boolean;
 
   // Fretboard Design
   background?: string;
@@ -56,7 +57,7 @@ export interface FretboardConfig {
   stringWidths?: Record<number, string>;
 }
 
-export interface FretboardProps {
+export interface FretboardProps extends Partial<FretboardConfig> {
   config?: FretboardConfig;
   preset?: FretboardPresetName;
   rootNote?: RootNote;
@@ -65,10 +66,10 @@ export interface FretboardProps {
 
 export interface FretProps {
   fretNumber: number;
-  config: FretboardConfig;
+  config: Required<FretboardConfig>;
 }
 
 export interface InstrumentStringProps {
   stringNumber: number;
-  config: FretboardConfig;
+  config: Required<FretboardConfig>;
 }

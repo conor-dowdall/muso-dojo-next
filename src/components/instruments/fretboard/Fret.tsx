@@ -1,41 +1,28 @@
 import { FretProps } from "@/types/fretboard";
-import { fretboardDefaults } from "@/configs/fretboard/defaults";
 import { fretboardIcons } from "@/configs/fretboard/icons";
 
 export default function Fret({ fretNumber, config }: FretProps) {
   const isNut = fretNumber === 0;
-  const show = isNut
-    ? (config.showNut ?? fretboardDefaults.showNut)
-    : (config.showFretWires ?? fretboardDefaults.showFretWires);
-  const width = isNut
-    ? (config.nutWidth ?? fretboardDefaults.nutWidth)
-    : (config.fretWireWidth ?? fretboardDefaults.fretWireWidth);
-  const color = isNut
-    ? (config.nutColor ?? fretboardDefaults.nutColor)
-    : (config.fretWireColor ?? fretboardDefaults.fretWireColor);
+  const show = isNut ? config.showNut : config.showFretWires;
+  const width = isNut ? config.nutWidth : config.fretWireWidth;
+  const color = isNut ? config.nutColor : config.fretWireColor;
 
-  const markerFrets = config.markerFrets ?? fretboardDefaults.markerFrets;
+  const markerFrets = config.markerFrets;
   const isMarker = markerFrets.includes(fretNumber);
-  const showFretInlays =
-    config.showFretInlays ?? fretboardDefaults.showFretInlays;
+  const showFretInlays = config.showFretInlays;
 
   const shape =
     !isNut && showFretInlays && isMarker
-      ? (config.fretInlayImages?.[fretNumber] ??
-        config.fretInlayImage ??
-        fretboardDefaults.fretInlayImages?.[fretNumber] ??
-        fretboardDefaults.fretInlayImage)
+      ? (config.fretInlayImages?.[fretNumber] ?? config.fretInlayImage)
       : undefined;
 
   const Icon = shape ? fretboardIcons[shape] : null;
 
-  const inlayWidth = config.fretInlayWidth ?? fretboardDefaults.fretInlayWidth;
-  const inlayHeight =
-    config.fretInlayHeight ?? fretboardDefaults.fretInlayHeight;
-  const inlayColor = config.fretInlayColor ?? fretboardDefaults.fretInlayColor;
+  const inlayWidth = config.fretInlayWidth;
+  const inlayHeight = config.fretInlayHeight;
+  const inlayColor = config.fretInlayColor;
 
-  const fretInlayDoubles =
-    config.fretInlayDoubles ?? fretboardDefaults.fretInlayDoubles;
+  const fretInlayDoubles = config.fretInlayDoubles;
   const isDouble = fretInlayDoubles && fretInlayDoubles.includes(fretNumber);
 
   return (
@@ -55,8 +42,8 @@ export default function Fret({ fretNumber, config }: FretProps) {
           flexDirection: isDouble ? "column" : "row", // Vertical for double, center for single
           alignItems: "center",
           justifyContent: "center",
-          gap:
-            config.fretInlayDoubleGap ?? fretboardDefaults.fretInlayDoubleGap,
+          gap: config.fretInlayDoubleGap,
+
           overflow: "hidden", // Ensure content doesn't spill out
         }}
       >
