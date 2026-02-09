@@ -1,9 +1,9 @@
 "use client";
 
 import type { FretboardProps } from "@/types/fretboard";
-import { createFretboardConfig } from "@/utils/createFretboardConfig";
-import { calculateFretboardGridColumns } from "@/utils/calculateFretboardGridColumns";
-import { getNumFrets } from "@/utils/fretboard";
+import { createFretboardConfig } from "@/utils/fretboard/createFretboardConfig";
+import { calculateFretboardGridColumns } from "@/utils/fretboard/calculateFretboardGridColumns";
+import { getNumFrets } from "@/utils/fretboard/getNumFrets";
 import Fret from "./Fret";
 import FretLabel from "./FretLabel";
 import InstrumentString from "./InstrumentString";

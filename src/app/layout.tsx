@@ -39,7 +39,7 @@ export default function RootLayout({
             Muso Dojo
           </h1>
         </header>
-        {children}
+        <main style={{ maxWidth: "50em", margin: "0 auto" }}>{children}</main>
       </body>
     </html>
   );

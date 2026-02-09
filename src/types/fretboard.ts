@@ -8,13 +8,13 @@ import type { NoteCollectionKey, RootNote } from "@musodojo/music-theory-data";
  */
 export interface FretboardConfig {
   // Setup
-  tuning?: number[];
+  tuning?: readonly number[];
   fretRange?: [number, number];
   leftHanded?: boolean;
 
   // Fretboard Design
   background?: string;
-  markerFrets?: number[]; // used for fret inlay-and-label positions
+  markerFrets?: readonly number[]; // used for fret inlay-and-label positions
 
   // Fret Markers
   showFretInlays?: boolean;
@@ -23,7 +23,7 @@ export interface FretboardConfig {
   fretInlayHeight?: string;
   fretInlayImage?: FretboardIcon;
   fretInlayImages?: Record<number, FretboardIcon>;
-  fretInlayDoubles?: number[];
+  fretInlayDoubles?: readonly number[];
   fretInlayDoubleGap?: string;
 
   // Fret Labels
@@ -35,7 +35,7 @@ export interface FretboardConfig {
   fretLabelMode?: "number" | "image";
   fretLabelImage?: FretboardIcon;
   fretLabelImages?: Record<number, FretboardIcon>;
-  fretLabelDoubles?: number[];
+  fretLabelDoubles?: readonly number[];
   fretLabelDoubleGap?: string;
 
   // Nut

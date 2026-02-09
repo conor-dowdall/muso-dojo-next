@@ -7,6 +7,7 @@ export default function Home() {
         style={{
           minHeight: "100dvh",
           display: "grid",
+          gap: "1em",
           justifyItems: "center",
           alignContent: "start",
         }}
@@ -20,7 +21,16 @@ export default function Home() {
           }}
         >
           <Fretboard preset="lightTelecaster" />
-          <Fretboard />
+        </div>
+        <div
+          style={{
+            width: "30em",
+            height: "6em",
+            resize: "both",
+            overflow: "hidden",
+          }}
+        >
+          <Fretboard preset="darkGibson" />
         </div>
       </section>
     </>
