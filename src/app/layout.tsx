@@ -20,7 +20,7 @@ export default function RootLayout({
             display: "flex",
             gap: "1em",
             alignItems: "center",
-            padding: "1em",
+            padding: "0.7em",
           }}
         >
           <Image
@@ -34,6 +34,7 @@ export default function RootLayout({
             style={{
               fontSize: "1.5em",
               fontWeight: "bold",
+              margin: "0",
             }}
           >
             Muso Dojo
