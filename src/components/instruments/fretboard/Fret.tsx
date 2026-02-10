@@ -25,6 +25,16 @@ export default function Fret({ fretNumber, config }: FretProps) {
   const fretInlayDoubles = config.fretInlayDoubles;
   const isDouble = fretInlayDoubles && fretInlayDoubles.includes(fretNumber);
 
+  const leftHanded = config.leftHanded;
+
+  const iconStyle = {
+    width: "100%",
+    height: "100%",
+    maxWidth: "100%",
+    maxHeight: "100%",
+    transform: leftHanded ? "scaleX(-1)" : undefined,
+  };
+
   return (
     <div
       style={{
@@ -65,12 +75,7 @@ export default function Fret({ fretNumber, config }: FretProps) {
                   fill={inlayColor}
                   strokeWidth={0}
                   preserveAspectRatio="none"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    maxWidth: "100%",
-                    maxHeight: "100%",
-                  }}
+                  style={iconStyle}
                 />
               </div>
               <div
@@ -88,12 +93,7 @@ export default function Fret({ fretNumber, config }: FretProps) {
                   fill={inlayColor}
                   strokeWidth={0}
                   preserveAspectRatio="none"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    maxWidth: "100%",
-                    maxHeight: "100%",
-                  }}
+                  style={iconStyle}
                 />
               </div>
             </>
@@ -113,12 +113,7 @@ export default function Fret({ fretNumber, config }: FretProps) {
                 fill={inlayColor}
                 strokeWidth={0}
                 preserveAspectRatio="none"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  maxWidth: "100%",
-                  maxHeight: "100%",
-                }}
+                style={iconStyle}
               />
             </div>
           ))}

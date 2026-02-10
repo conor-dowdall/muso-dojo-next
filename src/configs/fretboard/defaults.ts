@@ -24,6 +24,8 @@ export const fretboardDefaults: Required<FretboardConfig> = {
   fretLabelsBackground: "transparent",
   fretLabelsColor: "light-dark(black, white)",
   fretLabelsHeight: "1.5cqi",
+
+  // TODO: should be "fretLabels..."
   fretLabelMode: "number",
   fretLabelImage: "circle",
   fretLabelImages: {},

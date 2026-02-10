@@ -13,7 +13,7 @@
 ## Notes
 
 - **UI Framework**: `Next.js` with `React 19`.
-- **Styling**: `Tailwind CSS`. Use the latest CSS techniques to create beautiful and intuitive interfaces.
+- **Styling**: `Modern CSS`. Use the latest CSS techniques to create beautiful and intuitive interfaces.
 - **Component Library**: Use `shadcn/ui` components where appropriate.
 - **Icons**: Use `Lucide` for icons.
 - **Music Theory Data**: Utilize the `@musodojo/music-theory-data` package for music-related data and functions.

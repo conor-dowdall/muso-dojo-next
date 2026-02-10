@@ -4,30 +4,20 @@ import { guitarBase } from "@/configs/fretboard/bases/guitar";
 export const darkGibson: FretboardConfig = {
   ...guitarBase,
   fretRange: [0, 22],
-  leftHanded: false,
 
-  background: "#3e2723", // Dark wood color
+  background: "linear-gradient(to top right, #7e3613, #583129)",
 
-  fretInlayColor: "#d4af37", // Gold
-  fretInlayWidth: "1.2cqi",
-  fretInlayHeight: "1.2cqi",
-  fretInlayImage: "circle",
-  fretInlayImages: {},
-  fretInlayDoubleGap: "20%",
+  fretInlayColor: "#cbc8c8ff",
+  fretInlayWidth: "75%",
+  fretInlayHeight: "80%",
+  fretInlayImage: "trapezoid",
+  fretInlayDoubles: [],
 
-  fretLabelsPosition: "bottom",
-  fretLabelsBackground: "#4e342e", // Slightly lighter dark wood
-  fretLabelsColor: "#e7e0cbff", // Gold
-  fretLabelsHeight: "1.5cqi",
+  fretLabelsBackground: "#e3dccf",
+  fretLabelsColor: "black",
   fretLabelMode: "number",
-  fretLabelImage: "circle",
-  fretLabelImages: {},
-  fretLabelDoubleGap: "0.2cqi",
 
-  nutColor: "#fff8e1", // Ivory-ish
-  nutWidth: "0.8cqi",
+  nutColor: "linear-gradient(to top right, #e3dccfff, #bcb7ae)",
 
-  evenFrets: false,
-  fretWireColor: "#cfd8dc", // Silver/Chrome
-  fretWireWidth: "0.4cqi",
+  fretWireColor: "#cfd8dc",
 } as const;
