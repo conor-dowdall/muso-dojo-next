@@ -32,6 +32,16 @@ export default function Home() {
         >
           <Fretboard preset="darkGibson" />
         </div>
+        <div
+          style={{
+            width: "30em",
+            height: "6em",
+            resize: "both",
+            overflow: "hidden",
+          }}
+        >
+          <Fretboard />
+        </div>
       </section>
     </>
   );

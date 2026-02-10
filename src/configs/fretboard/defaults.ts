@@ -1,15 +1,17 @@
 import { FretboardConfig } from "@/types/fretboard";
+import { fretMarkers } from "./fretMarkers";
+import { guitarTunings } from "./tunings";
 
 export const fretboardDefaults: Required<FretboardConfig> = {
-  tuning: [64, 59, 55, 50, 45, 40],
+  tuning: guitarTunings["Standard E"],
   fretRange: [0, 12],
   leftHanded: false,
 
   background: "transparent",
-  markerFrets: [3, 5, 7, 9, 12, 15, 17, 19, 21, 24],
+  markerFrets: fretMarkers["Guitar Style"],
 
-  showFretInlays: true,
-  fretInlayColor: "#888888",
+  showFretInlays: false,
+  fretInlayColor: "transparent",
   fretInlayWidth: "1.5cqi",
   fretInlayHeight: "1.5cqi",
   fretInlayImage: "circle",
@@ -20,7 +22,7 @@ export const fretboardDefaults: Required<FretboardConfig> = {
   showFretLabels: true,
   fretLabelsPosition: "bottom",
   fretLabelsBackground: "transparent",
-  fretLabelsColor: "black",
+  fretLabelsColor: "light-dark(black, white)",
   fretLabelsHeight: "1.5cqi",
   fretLabelMode: "number",
   fretLabelImage: "circle",
@@ -29,16 +31,16 @@ export const fretboardDefaults: Required<FretboardConfig> = {
   fretLabelDoubleGap: "0.2cqi",
 
   showNut: true,
-  nutColor: "#444444",
+  nutColor: "light-dark(black, white)",
   nutWidth: "0.8cqi",
 
   evenFrets: false,
   showFretWires: true,
-  fretWireColor: "#aaaaaa",
+  fretWireColor: "light-dark(black, white)",
   fretWireWidth: "0.4cqi",
 
   showStrings: true,
-  stringColor: "#dddddd",
+  stringColor: "light-dark(black, white)",
   stringColors: {},
   stringWidth: "0.2cqi",
   stringWidths: {},

@@ -30,21 +30,4 @@ export const lightTelecaster: FretboardConfig = {
   evenFrets: false,
   fretWireColor: "linear-gradient(to top right, #e2d6b9, #b0a690)",
   fretWireWidth: "0.4cqi",
-
-  stringColor:
-    "repeating-linear-gradient(to right, #cac3c3ff, #726c6cff 0.1cqi)",
-  stringColors: {
-    1: "#b09e9eff",
-    2: "#b09e9eff",
-    3: "#b09e9eff",
-  },
-  stringWidth: "0.2cqi",
-  stringWidths: {
-    1: "0.11cqi",
-    2: "0.13cqi",
-    3: "0.15cqi",
-    4: "0.18cqi",
-    5: "0.23cqi",
-    6: "0.28cqi",
-  },
 } as const;

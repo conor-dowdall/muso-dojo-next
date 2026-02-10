@@ -11,16 +11,16 @@ export const darkGibson: FretboardConfig = {
   fretInlayColor: "#d4af37", // Gold
   fretInlayWidth: "1.2cqi",
   fretInlayHeight: "1.2cqi",
-  fretInlayImage: "square",
+  fretInlayImage: "circle",
   fretInlayImages: {},
   fretInlayDoubleGap: "20%",
 
   fretLabelsPosition: "bottom",
   fretLabelsBackground: "#4e342e", // Slightly lighter dark wood
-  fretLabelsColor: "#d4af37", // Gold
+  fretLabelsColor: "#e7e0cbff", // Gold
   fretLabelsHeight: "1.5cqi",
   fretLabelMode: "number",
-  fretLabelImage: "square",
+  fretLabelImage: "circle",
   fretLabelImages: {},
   fretLabelDoubleGap: "0.2cqi",
 
@@ -30,20 +30,4 @@ export const darkGibson: FretboardConfig = {
   evenFrets: false,
   fretWireColor: "#cfd8dc", // Silver/Chrome
   fretWireWidth: "0.4cqi",
-
-  stringColor: "#b0bec5", // Steel strings
-  stringColors: {
-    1: "#b0bec5",
-    2: "#b0bec5",
-    3: "#b0bec5",
-  },
-  stringWidth: "0.2cqi",
-  stringWidths: {
-    1: "0.11cqi",
-    2: "0.13cqi",
-    3: "0.15cqi",
-    4: "0.18cqi",
-    5: "0.23cqi",
-    6: "0.28cqi",
-  },
 } as const;
