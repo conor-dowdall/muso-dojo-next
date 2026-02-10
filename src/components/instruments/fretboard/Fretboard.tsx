@@ -1,12 +1,13 @@
 "use client";
 
-import type { FretboardProps } from "@/types/fretboard";
 import { createFretboardConfig } from "@/utils/fretboard/createFretboardConfig";
 import { calculateFretboardGridColumns } from "@/utils/fretboard/calculateFretboardGridColumns";
 import { getNumFrets } from "@/utils/fretboard/getNumFrets";
 import Fret from "./Fret";
 import FretLabel from "./FretLabel";
 import InstrumentString from "./InstrumentString";
+import FretboardNote from "./FretboardNote";
+import { ActiveNote, FretboardProps } from "@/types/fretboard";
 
 export default function Fretboard({
   config = {},
@@ -74,6 +75,67 @@ export default function Fretboard({
             config={resolvedConfig}
           />
         ))}
+      </div>
+
+      <div
+        id="notes-container"
+        style={{
+          gridColumn: "1 / -1",
+          gridRow:
+            resolvedConfig.fretLabelsPosition === "bottom" ? "1 / 2" : "2 / -1",
+          display: "grid",
+          gridTemplateColumns: "subgrid",
+          gridTemplateRows: `repeat(${tuning.length}, 1fr)`,
+          pointerEvents: "none",
+        }}
+      >
+        {tuning.map((openStringMidi, stringIndex) =>
+          Array.from({ length: numFrets }).map((_, fretIndex) => {
+            const fretNumber = startFret + fretIndex;
+            const key = `${stringIndex}-${fretNumber}`;
+            const note = rest.activeNotes?.[key];
+
+            return (
+              <div
+                key={key}
+                style={{
+                  gridColumn: `${fretIndex + 1} / span 1`,
+                  gridRow: `${stringIndex + 1} / span 1`,
+                  position: "relative",
+                  pointerEvents: "auto",
+                }}
+                onClick={() => {
+                  if (rest.onActiveNotesChange && rest.activeNotes) {
+                    // Toggle logic
+                    // Logic: Undefined -> Large -> Small -> Undefined
+                    const current = rest.activeNotes[key];
+                    let next: ActiveNote | undefined = undefined;
+
+                    if (!current) {
+                      next = {
+                        midi: openStringMidi + fretNumber,
+                        emphasis: "large",
+                      };
+                    } else if (current.emphasis === "large") {
+                      next = { ...current, emphasis: "small" };
+                    }
+
+                    const newNotes = { ...rest.activeNotes };
+                    if (next) {
+                      newNotes[key] = next;
+                    } else {
+                      delete newNotes[key];
+                    }
+
+                    rest.onActiveNotesChange(newNotes);
+                  }
+                }}
+              >
+                {note && <FretboardNote note={note} />}
+              </div>
+            );
+          }),
+        )}
       </div>
 
       <div

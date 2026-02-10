@@ -2,10 +2,6 @@ import { FretboardPresetName } from "@/configs/fretboard/presets";
 import { FretboardIcon } from "@/configs/fretboard/icons";
 import type { NoteCollectionKey, RootNote } from "@musodojo/music-theory-data";
 
-/**
- * Fully resolved configuration - single source of truth for the shape.
- * All required properties are resolved to concrete objects (no strings).
- */
 export interface FretboardConfig {
   // Setup
   tuning?: readonly number[];
@@ -57,11 +53,20 @@ export interface FretboardConfig {
   stringWidths?: Record<number, string>;
 }
 
+export interface ActiveNote {
+  midi: number;
+  emphasis: "large" | "small";
+}
+
+export type ActiveNotes = Record<string, ActiveNote>; // Keyed by `${stringNumber}-${fretNumber}`
+
 export interface FretboardProps extends Partial<FretboardConfig> {
   config?: FretboardConfig;
   preset?: FretboardPresetName;
   rootNote?: RootNote;
   noteCollectionKey?: NoteCollectionKey;
+  activeNotes?: ActiveNotes;
+  onActiveNotesChange?: (notes: ActiveNotes) => void;
 }
 
 export interface FretProps {

@@ -1,48 +1,32 @@
+"use client";
+
+import { useState } from "react";
 import Fretboard from "@/components/instruments/fretboard/Fretboard";
+import { ActiveNotes } from "@/types/fretboard";
 
 export default function Home() {
+  const [activeNotes, setActiveNotes] = useState<ActiveNotes>({});
+
   return (
-    <>
-      <section
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
         style={{
-          minHeight: "100dvh",
-          display: "grid",
-          gap: "1em",
-          justifyItems: "center",
-          alignContent: "start",
+          width: "100%",
+          height: "12em",
         }}
       >
-        <div
-          style={{
-            width: "30em",
-            height: "6em",
-            resize: "both",
-            overflow: "hidden",
-          }}
-        >
-          <Fretboard preset="lightTelecaster" />
-        </div>
-        <div
-          style={{
-            width: "30em",
-            height: "6em",
-            resize: "both",
-            overflow: "hidden",
-          }}
-        >
-          <Fretboard preset="darkGibson" />
-        </div>
-        <div
-          style={{
-            width: "30em",
-            height: "6em",
-            resize: "both",
-            overflow: "hidden",
-          }}
-        >
-          <Fretboard />
-        </div>
-      </section>
-    </>
+        <Fretboard
+          preset="lightTelecaster"
+          activeNotes={activeNotes}
+          onActiveNotesChange={setActiveNotes}
+        />
+      </div>
+    </div>
   );
 }
