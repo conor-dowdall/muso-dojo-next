@@ -1,6 +1,7 @@
 "use client";
 
 import { createFretboardConfig } from "@/utils/fretboard/createFretboardConfig";
+import { getNoteNamesFromRootAndCollectionKey } from "@musodojo/music-theory-data";
 import { calculateFretboardGridColumns } from "@/utils/fretboard/calculateFretboardGridColumns";
 import { getNumFrets } from "@/utils/fretboard/getNumFrets";
 import Fret from "./Fret";
@@ -26,6 +27,24 @@ export default function Fretboard({
     resolvedConfig.evenFrets,
   );
 
+  const isFretLabelsBottom = resolvedConfig.fretLabelsPosition === "bottom";
+  const mainContentGridRow = isFretLabelsBottom ? "1 / 2" : "2 / -1";
+  const fretLabelsGridRow = isFretLabelsBottom ? "2 / -1" : "1 / 2";
+
+  // Calculate note names if root and collection are provided
+  // Hoisted out of loop for performance, no useMemo needed in React 19
+  let noteNames: string[] | undefined;
+  if (rest.rootNote && rest.noteCollectionKey) {
+    noteNames = getNoteNamesFromRootAndCollectionKey(
+      rest.rootNote,
+      rest.noteCollectionKey,
+      {
+        fillChromatic: true,
+        rotateToRootInteger0: true,
+      },
+    );
+  }
+
   return (
     <div
       id="fretboard-wrapper"
@@ -34,10 +53,9 @@ export default function Fretboard({
         height: "100%",
         display: "grid",
         containerType: "inline-size",
-        gridTemplateRows:
-          resolvedConfig.fretLabelsPosition === "bottom"
-            ? "1fr max-content"
-            : "max-content 1fr",
+        gridTemplateRows: isFretLabelsBottom
+          ? "1fr max-content"
+          : "max-content 1fr",
         gridTemplateColumns: fretboardGridColumns,
         direction: resolvedConfig.leftHanded ? "rtl" : "ltr",
       }}
@@ -48,8 +66,7 @@ export default function Fretboard({
           display: "grid",
           gridTemplateColumns: "subgrid",
           gridColumn: "1 / -1",
-          gridRow:
-            resolvedConfig.fretLabelsPosition === "bottom" ? "1 / 2" : "2 / -1",
+          gridRow: mainContentGridRow,
           background: resolvedConfig.background,
         }}
       >
@@ -62,8 +79,7 @@ export default function Fretboard({
         id="strings-container"
         style={{
           gridColumn: "1 / -1",
-          gridRow:
-            resolvedConfig.fretLabelsPosition === "bottom" ? "1 / 2" : "2 / -1",
+          gridRow: mainContentGridRow,
           display: "flex",
           flexDirection: "column",
         }}
@@ -81,12 +97,10 @@ export default function Fretboard({
         id="notes-container"
         style={{
           gridColumn: "1 / -1",
-          gridRow:
-            resolvedConfig.fretLabelsPosition === "bottom" ? "1 / 2" : "2 / -1",
+          gridRow: mainContentGridRow,
           display: "grid",
           gridTemplateColumns: "subgrid",
           gridTemplateRows: `repeat(${tuning.length}, 1fr)`,
-          pointerEvents: "none",
         }}
       >
         {tuning.map((openStringMidi, stringIndex) =>
@@ -95,14 +109,17 @@ export default function Fretboard({
             const key = `${stringIndex}-${fretNumber}`;
             const note = rest.activeNotes?.[key];
 
+            const noteName =
+              note && noteNames ? noteNames[note.midi % 12] : undefined;
+
             return (
               <div
                 key={key}
                 style={{
                   gridColumn: `${fretIndex + 1} / span 1`,
                   gridRow: `${stringIndex + 1} / span 1`,
-                  position: "relative",
-                  pointerEvents: "auto",
+                  display: "grid",
+                  placeItems: "center",
                 }}
                 onClick={() => {
                   if (rest.onActiveNotesChange && rest.activeNotes) {
@@ -131,7 +148,7 @@ export default function Fretboard({
                   }
                 }}
               >
-                {note && <FretboardNote note={note} />}
+                {note && <FretboardNote note={note} label={noteName} />}
               </div>
             );
           }),
@@ -146,8 +163,7 @@ export default function Fretboard({
           background: resolvedConfig.fretLabelsBackground,
           gridTemplateColumns: "subgrid",
           gridColumn: "1 / -1",
-          gridRow:
-            resolvedConfig.fretLabelsPosition === "bottom" ? "2 / -1" : "1 / 2",
+          gridRow: fretLabelsGridRow,
         }}
       >
         {Array.from({ length: numFrets }).map((_, i) => (

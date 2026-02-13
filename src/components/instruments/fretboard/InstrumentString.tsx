@@ -15,7 +15,6 @@ export default function InstrumentString({
         display: "flex",
         alignItems: "center",
         width: "100%",
-        position: "relative",
       }}
     >
       {show && (

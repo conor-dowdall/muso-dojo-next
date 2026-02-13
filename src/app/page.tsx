@@ -11,6 +11,8 @@ export default function Home() {
     <div
       style={{
         display: "flex",
+        flexDirection: "column",
+        gap: "1em",
         alignItems: "center",
         justifyContent: "center",
       }}
@@ -23,6 +25,22 @@ export default function Home() {
       >
         <Fretboard
           preset="lightTelecaster"
+          rootNote="C"
+          noteCollectionKey="ionian"
+          activeNotes={activeNotes}
+          onActiveNotesChange={setActiveNotes}
+        />
+      </div>
+      <div
+        style={{
+          width: "100%",
+          height: "12em",
+        }}
+      >
+        <Fretboard
+          preset="darkGibson"
+          rootNote="E"
+          noteCollectionKey="ionian"
           activeNotes={activeNotes}
           onActiveNotesChange={setActiveNotes}
         />

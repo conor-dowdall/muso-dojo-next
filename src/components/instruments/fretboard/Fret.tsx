@@ -38,7 +38,6 @@ export default function Fret({ fretNumber, config }: FretProps) {
   return (
     <div
       style={{
-        position: "relative",
         height: "100%",
         display: "flex",
         flexDirection: "row",
