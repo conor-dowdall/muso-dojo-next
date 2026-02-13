@@ -1,6 +1,6 @@
-import { FretboardPresetName } from "@/configs/fretboard/presets";
-import { FretboardIcon } from "@/configs/fretboard/icons";
-import type { NoteCollectionKey, RootNote } from "@musodojo/music-theory-data";
+import { type FretboardPresetName } from "@/configs/fretboard/presets";
+import { type FretboardIcon } from "@/configs/fretboard/icons";
+import { type NoteCollectionKey, type RootNote } from "@musodojo/music-theory-data";
 
 export interface FretboardConfig {
   // Setup
@@ -77,4 +77,11 @@ export interface FretProps {
 export interface InstrumentStringProps {
   stringNumber: number;
   config: Required<FretboardConfig>;
+}
+
+export interface FretboardNoteProps {
+  note: ActiveNote;
+  label?: string;
+  onPointerDown?: () => void;
+  style?: React.CSSProperties;
 }

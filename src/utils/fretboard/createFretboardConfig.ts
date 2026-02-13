@@ -11,9 +11,9 @@ export function createFretboardConfig(
   preset?: FretboardPresetName,
   overrides?: FretboardConfig,
 ): Required<FretboardConfig> {
-  const presetCfg = preset ? presets[preset] : undefined;
+  const presetConfig = preset ? presets[preset] : undefined;
 
-  if (process.env.NODE_ENV === "development" && preset && !presetCfg) {
+  if (process.env.NODE_ENV === "development" && preset && !presetConfig) {
     console.warn(
       `[createFretboardConfig] Preset "${preset}" not found. Falling back to default configuration.`,
     );
@@ -21,7 +21,7 @@ export function createFretboardConfig(
 
   return {
     ...fretboardDefaults,
-    ...presetCfg,
+    ...presetConfig,
     ...overrides,
   } as Required<FretboardConfig>;
 }

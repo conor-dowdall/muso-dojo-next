@@ -1,4 +1,4 @@
-import { FretProps } from "@/types/fretboard";
+import { type FretProps } from "@/types/fretboard";
 import { fretboardIcons } from "@/configs/fretboard/icons";
 
 export default function FretLabel({ fretNumber, config }: FretProps) {

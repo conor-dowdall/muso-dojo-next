@@ -8,11 +8,15 @@ import Fret from "./Fret";
 import FretLabel from "./FretLabel";
 import InstrumentString from "./InstrumentString";
 import FretboardNote from "./FretboardNote";
-import { ActiveNote, FretboardProps } from "@/types/fretboard";
+import { type ActiveNote, type FretboardProps } from "@/types/fretboard";
 
 export default function Fretboard({
   config = {},
   preset,
+  rootNote,
+  noteCollectionKey,
+  activeNotes,
+  onActiveNotesChange,
   ...rest
 }: FretboardProps) {
   const resolvedConfig = createFretboardConfig(preset, { ...config, ...rest });
@@ -34,10 +38,10 @@ export default function Fretboard({
   // Calculate note names if root and collection are provided
   // Hoisted out of loop for performance, no useMemo needed in React 19
   let noteNames: string[] | undefined;
-  if (rest.rootNote && rest.noteCollectionKey) {
+  if (rootNote && noteCollectionKey) {
     noteNames = getNoteNamesFromRootAndCollectionKey(
-      rest.rootNote,
-      rest.noteCollectionKey,
+      rootNote,
+      noteCollectionKey,
       {
         fillChromatic: true,
         rotateToRootInteger0: true,
@@ -107,7 +111,7 @@ export default function Fretboard({
           Array.from({ length: numFrets }).map((_, fretIndex) => {
             const fretNumber = startFret + fretIndex;
             const key = `${stringIndex}-${fretNumber}`;
-            const note = rest.activeNotes?.[key];
+            const note = activeNotes?.[key];
 
             const noteName =
               note && noteNames ? noteNames[note.midi % 12] : undefined;
@@ -121,11 +125,11 @@ export default function Fretboard({
                   display: "grid",
                   placeItems: "center",
                 }}
-                onClick={() => {
-                  if (rest.onActiveNotesChange && rest.activeNotes) {
+                onPointerDown={() => {
+                  if (onActiveNotesChange && activeNotes) {
                     // Toggle logic
                     // Logic: Undefined -> Large -> Small -> Undefined
-                    const current = rest.activeNotes[key];
+                    const current = activeNotes[key];
                     let next: ActiveNote | undefined = undefined;
 
                     if (!current) {
@@ -137,14 +141,14 @@ export default function Fretboard({
                       next = { ...current, emphasis: "small" };
                     }
 
-                    const newNotes = { ...rest.activeNotes };
+                    const newNotes = { ...activeNotes };
                     if (next) {
                       newNotes[key] = next;
                     } else {
                       delete newNotes[key];
                     }
 
-                    rest.onActiveNotesChange(newNotes);
+                    onActiveNotesChange(newNotes);
                   }
                 }}
               >

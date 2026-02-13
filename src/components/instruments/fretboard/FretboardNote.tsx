@@ -1,16 +1,9 @@
-import { ActiveNote } from "@/types/fretboard";
-
-interface FretboardNoteProps {
-  note: ActiveNote;
-  label?: string;
-  onClick?: () => void;
-  style?: React.CSSProperties;
-}
+import { type FretboardNoteProps } from "@/types/fretboard";
 
 export default function FretboardNote({
   note,
   label,
-  onClick,
+  onPointerDown,
   style,
 }: FretboardNoteProps) {
   const isLarge = note.emphasis === "large";
@@ -35,9 +28,9 @@ export default function FretboardNote({
         opacity: isLarge ? 1 : 0.8,
         borderRadius: isLarge ? "1cqi" : "0.8cqi",
       }}
-      onClick={(e) => {
+      onPointerDown={(e) => {
         e.stopPropagation();
-        onClick?.();
+        onPointerDown?.();
       }}
     >
       {label || note.midi}

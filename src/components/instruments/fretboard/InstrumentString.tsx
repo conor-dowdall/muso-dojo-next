@@ -1,4 +1,4 @@
-import { InstrumentStringProps } from "@/types/fretboard";
+import { type InstrumentStringProps } from "@/types/fretboard";
 
 export default function InstrumentString({
   stringNumber,
