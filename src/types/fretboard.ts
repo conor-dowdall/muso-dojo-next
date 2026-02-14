@@ -1,6 +1,12 @@
 import { type FretboardPresetName } from "@/configs/fretboard/presets";
 import { type FretboardIcon } from "@/configs/fretboard/icons";
-import { type NoteCollectionKey, type RootNote } from "@musodojo/music-theory-data";
+import { type NoteCollectionKey } from "@musodojo/music-theory-data";
+
+export type FretboardNoteLabelType =
+  | "midi"
+  | "note-name"
+  | "interval"
+  | "solfege";
 
 export interface FretboardConfig {
   // Setup
@@ -63,20 +69,23 @@ export type ActiveNotes = Record<string, ActiveNote>; // Keyed by `${stringNumbe
 export interface FretboardProps extends Partial<FretboardConfig> {
   config?: FretboardConfig;
   preset?: FretboardPresetName;
-  rootNote?: RootNote;
+  /**
+   * The root note of the scale/mode.
+   * Accepts formatted RootNotes (e.g. "C♯") or common strings (e.g. "C#", "Db") which are normalized.
+   */
+  rootNote?: string;
   noteCollectionKey?: NoteCollectionKey;
+  noteLabelType?: FretboardNoteLabelType;
   activeNotes?: ActiveNotes;
   onActiveNotesChange?: (notes: ActiveNotes) => void;
 }
 
 export interface FretProps {
   fretNumber: number;
-  config: Required<FretboardConfig>;
 }
 
 export interface InstrumentStringProps {
   stringNumber: number;
-  config: Required<FretboardConfig>;
 }
 
 export interface FretboardNoteProps {

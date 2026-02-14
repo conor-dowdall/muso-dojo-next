@@ -25,8 +25,8 @@ export default function Home() {
       >
         <Fretboard
           preset="lightTelecaster"
-          rootNote="C"
-          noteCollectionKey="ionian"
+          rootNote="C#"
+          noteCollectionKey="halfWholeDiminished"
           activeNotes={activeNotes}
           onActiveNotesChange={setActiveNotes}
         />
@@ -39,8 +39,9 @@ export default function Home() {
       >
         <Fretboard
           preset="darkGibson"
-          rootNote="E"
+          rootNote="Fb"
           noteCollectionKey="ionian"
+          noteLabelType="note-name"
           activeNotes={activeNotes}
           onActiveNotesChange={setActiveNotes}
         />

@@ -1,7 +1,9 @@
 import { type FretProps } from "@/types/fretboard";
 import { fretboardIcons } from "@/configs/fretboard/icons";
+import { useFretboardConfig } from "@/context/FretboardContext";
 
-export default function FretLabel({ fretNumber, config }: FretProps) {
+export default function FretLabel({ fretNumber }: FretProps) {
+  const config = useFretboardConfig();
   const markerFrets = config.markerFrets;
   const isMarker = markerFrets.includes(fretNumber);
 

@@ -33,7 +33,7 @@ export default function FretboardNote({
         onPointerDown?.();
       }}
     >
-      {label || note.midi}
+      {label}
     </div>
   );
 }

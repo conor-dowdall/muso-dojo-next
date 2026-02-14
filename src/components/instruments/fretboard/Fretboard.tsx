@@ -1,53 +1,56 @@
 "use client";
 
-import { createFretboardConfig } from "@/utils/fretboard/createFretboardConfig";
-import { getNoteNamesFromRootAndCollectionKey } from "@musodojo/music-theory-data";
 import { calculateFretboardGridColumns } from "@/utils/fretboard/calculateFretboardGridColumns";
+
 import { getNumFrets } from "@/utils/fretboard/getNumFrets";
 import Fret from "./Fret";
 import FretLabel from "./FretLabel";
 import InstrumentString from "./InstrumentString";
 import FretboardNote from "./FretboardNote";
-import { type ActiveNote, type FretboardProps } from "@/types/fretboard";
+import { getNoteLabel } from "@/utils/fretboard/getNoteLabel";
+import { type FretboardProps } from "@/types/fretboard";
+import {
+  FretboardProvider,
+  useFretboardConfig,
+} from "@/context/FretboardContext";
+import { getFretboardNotes } from "@/utils/fretboard/getFretboardNotes";
+import { useNoteInteraction } from "@/hooks/fretboard/useNoteInteraction";
 
-export default function Fretboard({
-  config = {},
-  preset,
-  rootNote,
-  noteCollectionKey,
+export default function Fretboard(props: FretboardProps) {
+  return (
+    <FretboardProvider {...props}>
+      <FretboardContent {...props} />
+    </FretboardProvider>
+  );
+}
+
+function FretboardContent({
   activeNotes,
   onActiveNotesChange,
-  ...rest
+  noteCollectionKey,
+  rootNote,
+  noteLabelType = "midi", // Default to MIDI if not specified
 }: FretboardProps) {
-  const resolvedConfig = createFretboardConfig(preset, { ...config, ...rest });
+  const config = useFretboardConfig();
+  const noteNames = getFretboardNotes({ rootNote, noteCollectionKey });
+  const { handleNoteClick } = useNoteInteraction({
+    activeNotes,
+    onActiveNotesChange,
+  });
 
-  const tuning = resolvedConfig.tuning;
-  const fretRange = resolvedConfig.fretRange;
+  const tuning = config.tuning;
+  const fretRange = config.fretRange;
 
   const numFrets = getNumFrets(fretRange);
   const startFret = fretRange[0];
   const fretboardGridColumns = calculateFretboardGridColumns(
     numFrets,
-    resolvedConfig.evenFrets,
+    config.evenFrets,
   );
 
-  const isFretLabelsBottom = resolvedConfig.fretLabelsPosition === "bottom";
+  const isFretLabelsBottom = config.fretLabelsPosition === "bottom";
   const mainContentGridRow = isFretLabelsBottom ? "1 / 2" : "2 / -1";
   const fretLabelsGridRow = isFretLabelsBottom ? "2 / -1" : "1 / 2";
-
-  // Calculate note names if root and collection are provided
-  // Hoisted out of loop for performance, no useMemo needed in React 19
-  let noteNames: string[] | undefined;
-  if (rootNote && noteCollectionKey) {
-    noteNames = getNoteNamesFromRootAndCollectionKey(
-      rootNote,
-      noteCollectionKey,
-      {
-        fillChromatic: true,
-        rotateToRootInteger0: true,
-      },
-    );
-  }
 
   return (
     <div
@@ -61,7 +64,7 @@ export default function Fretboard({
           ? "1fr max-content"
           : "max-content 1fr",
         gridTemplateColumns: fretboardGridColumns,
-        direction: resolvedConfig.leftHanded ? "rtl" : "ltr",
+        direction: config.leftHanded ? "rtl" : "ltr",
       }}
     >
       <div
@@ -71,11 +74,11 @@ export default function Fretboard({
           gridTemplateColumns: "subgrid",
           gridColumn: "1 / -1",
           gridRow: mainContentGridRow,
-          background: resolvedConfig.background,
+          background: config.background,
         }}
       >
-        {Array.from({ length: numFrets }).map((_, i) => (
-          <Fret key={i} fretNumber={startFret + i} config={resolvedConfig} />
+        {Array.from({ length: numFrets }).map((_, fretIndex) => (
+          <Fret key={fretIndex} fretNumber={startFret + fretIndex} />
         ))}
       </div>
 
@@ -88,12 +91,8 @@ export default function Fretboard({
           flexDirection: "column",
         }}
       >
-        {tuning.map((_: number, i: number) => (
-          <InstrumentString
-            key={i}
-            stringNumber={i + 1}
-            config={resolvedConfig}
-          />
+        {tuning.map((_: number, stringIndex: number) => (
+          <InstrumentString key={stringIndex} stringNumber={stringIndex + 1} />
         ))}
       </div>
 
@@ -113,8 +112,13 @@ export default function Fretboard({
             const key = `${stringIndex}-${fretNumber}`;
             const note = activeNotes?.[key];
 
-            const noteName =
-              note && noteNames ? noteNames[note.midi % 12] : undefined;
+            const label = note
+              ? getNoteLabel({
+                  note,
+                  labelType: noteLabelType,
+                  noteNames,
+                })
+              : undefined;
 
             return (
               <div
@@ -125,34 +129,13 @@ export default function Fretboard({
                   display: "grid",
                   placeItems: "center",
                 }}
-                onPointerDown={() => {
-                  if (onActiveNotesChange && activeNotes) {
-                    // Toggle logic
-                    // Logic: Undefined -> Large -> Small -> Undefined
-                    const current = activeNotes[key];
-                    let next: ActiveNote | undefined = undefined;
-
-                    if (!current) {
-                      next = {
-                        midi: openStringMidi + fretNumber,
-                        emphasis: "large",
-                      };
-                    } else if (current.emphasis === "large") {
-                      next = { ...current, emphasis: "small" };
-                    }
-
-                    const newNotes = { ...activeNotes };
-                    if (next) {
-                      newNotes[key] = next;
-                    } else {
-                      delete newNotes[key];
-                    }
-
-                    onActiveNotesChange(newNotes);
-                  }
-                }}
+                onPointerDown={() =>
+                  handleNoteClick(stringIndex, fretNumber, openStringMidi)
+                }
               >
-                {note && <FretboardNote note={note} label={noteName} />}
+                {note && (
+                  <FretboardNote note={note} label={label?.toString()} />
+                )}
               </div>
             );
           }),
@@ -163,19 +146,15 @@ export default function Fretboard({
         id="fret-labels"
         style={{
           display: "grid",
-          height: resolvedConfig.fretLabelsHeight,
-          background: resolvedConfig.fretLabelsBackground,
+          height: config.fretLabelsHeight,
+          background: config.fretLabelsBackground,
           gridTemplateColumns: "subgrid",
           gridColumn: "1 / -1",
           gridRow: fretLabelsGridRow,
         }}
       >
         {Array.from({ length: numFrets }).map((_, i) => (
-          <FretLabel
-            key={i}
-            fretNumber={startFret + i}
-            config={resolvedConfig}
-          />
+          <FretLabel key={i} fretNumber={startFret + i} />
         ))}
       </div>
     </div>
