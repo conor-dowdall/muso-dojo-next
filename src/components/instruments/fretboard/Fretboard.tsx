@@ -14,7 +14,7 @@ import {
   useFretboardConfig,
 } from "@/context/FretboardContext";
 import { getFretboardNotes } from "@/utils/fretboard/getFretboardNotes";
-import { useNoteInteraction } from "@/hooks/fretboard/useNoteInteraction";
+import { toggleFretboardNote } from "@/utils/fretboard/toggleFretboardNote";
 
 export default function Fretboard(props: FretboardProps) {
   return (
@@ -29,14 +29,10 @@ function FretboardContent({
   onActiveNotesChange,
   noteCollectionKey,
   rootNote,
-  noteLabelType = "midi", // Default to MIDI if not specified
+  noteLabelType = "note-name",
 }: FretboardProps) {
   const config = useFretboardConfig();
   const noteNames = getFretboardNotes({ rootNote, noteCollectionKey });
-  const { handleNoteClick } = useNoteInteraction({
-    activeNotes,
-    onActiveNotesChange,
-  });
 
   const tuning = config.tuning;
   const fretRange = config.fretRange;
@@ -130,7 +126,13 @@ function FretboardContent({
                   placeItems: "center",
                 }}
                 onPointerDown={() =>
-                  handleNoteClick(stringIndex, fretNumber, openStringMidi)
+                  toggleFretboardNote({
+                    stringIndex,
+                    fretNumber,
+                    openStringMidi,
+                    activeNotes,
+                    onActiveNotesChange,
+                  })
                 }
               >
                 {note && (

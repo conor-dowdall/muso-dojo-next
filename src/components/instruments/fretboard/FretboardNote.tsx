@@ -1,4 +1,11 @@
-import { type FretboardNoteProps } from "@/types/fretboard";
+import type { ActiveNote } from "@/types/fretboard";
+
+interface FretboardNoteProps {
+  note: ActiveNote;
+  label?: string;
+  onPointerDown?: () => void;
+  style?: React.CSSProperties;
+}
 
 export default function FretboardNote({
   note,

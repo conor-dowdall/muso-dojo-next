@@ -1,8 +1,7 @@
-import { type FretProps } from "@/types/fretboard";
 import { fretboardIcons } from "@/configs/fretboard/icons";
 import { useFretboardConfig } from "@/context/FretboardContext";
 
-export default function Fret({ fretNumber }: FretProps) {
+export default function Fret({ fretNumber }: { fretNumber: number }) {
   const config = useFretboardConfig();
   const isNut = fretNumber === 0;
   const show = isNut ? config.showNut : config.showFretWires;

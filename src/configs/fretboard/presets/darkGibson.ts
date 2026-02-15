@@ -14,7 +14,7 @@ export const darkGibson: FretboardConfig = {
   fretInlayDoubles: [],
 
   fretLabelsBackground: "linear-gradient(to top right, #bba164ff, #978152ff)",
-  fretLabelsColor: "black",
+  fretLabelColor: "black",
   fretLabelMode: "image",
   fretLabelImage: "circle",
   fretLabelDoubleGap: "0.2cqi",

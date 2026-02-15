@@ -14,7 +14,7 @@ export const lightTelecaster: FretboardConfig = {
   fretInlayDoubleGap: "20%",
 
   fretLabelsBackground: "linear-gradient(to top right, #cba857, #c09d52)",
-  fretLabelsColor: "black",
+  fretLabelColor: "black",
   fretLabelMode: "image",
   fretLabelImage: "circle",
   fretLabelDoubleGap: "0.2cqi",

@@ -1,9 +1,10 @@
-import { type InstrumentStringProps } from "@/types/fretboard";
 import { useFretboardConfig } from "@/context/FretboardContext";
 
 export default function InstrumentString({
   stringNumber,
-}: InstrumentStringProps) {
+}: {
+  stringNumber: number;
+}) {
   const config = useFretboardConfig();
   const show = config.showStrings;
   const width = config.stringWidths?.[stringNumber] ?? config.stringWidth;

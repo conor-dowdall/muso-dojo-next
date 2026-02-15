@@ -12,7 +12,7 @@ This document provides context, guidelines, and architectural insights for the "
 ## 2. Technology Stack
 
 - **Framework**: [Next.js](https://nextjs.org/) (App Router)
-- **Library**: [React 19](https://react.dev/)
+- **Library**: [React 19](https://react.dev/) with **React Compiler** (discourage the use of useMemo and useCallback unless necessary).
 - **Language**: TypeScript
 - **Styling**: **Modern Native CSS** (CSS Modules or Scoped CSS preferred over Tailwind).
   - Use CSS Variables for theming (e.g., `light-dark()` color-scheme).
@@ -23,8 +23,7 @@ This document provides context, guidelines, and architectural insights for the "
 
 ## 3. Design Philosophy & Aesthetics
 
-- **_"Premium & Native"_**: The UI should feel substantial, native, and high-quality.
-- **Visuals**: Use rich aesthetics, subtle gradients, glassmorphism, and smooth animations. Avoid "generic bootstrap" looks.
+- **_"Premium & Polished"_**: The UI should be high-quality and polished.
 - **CSS First**: Utilize modern CSS features like Grid, Flexbox, Container Queries (`container-type`), and logical properties (`margin-inline`, etc.).
 - **No Tailwind**: The project has moved _away_ from Tailwind CSS in favor of clean, semantic CSS and CSS variables.
 
@@ -34,41 +33,14 @@ The `Fretboard` (`src/components/instruments/fretboard/Fretboard.tsx`) is the ce
 
 ### Architecture
 
-- **Composition**:
-  - `Fretboard` (Main Container)
-  - `Fret` (Visual fret background/inlays)
-  - `InstrumentString` (String representation)
-  - `FretLabel` (Fret numbers)
-  - `FretboardNote` (Interactive note overlays)
 - **Layout**: Heavily relies on **CSS Grid**.
   - The fretboard uses a multi-layer grid approach where `fingerboard`, `strings`, and `notes` are stacked using `grid-area` or explicit row/column placement within a parent grid.
-  - **Columns**: Calculated based on fret spacing rule (Rule of 18) or uniform spacing.
-  - **Rows**: Determined by string count.
-- **Configuration**:
-  - Configs are resolved relationships between "Presets" (defaults) and "Props" (overrides).
-  - See `src/utils/fretboard/createFretboardConfig.ts`.
-
-### Specific Patterns
-
-- **Z-Index / Layering**:
-  1.  **Background/Frets**: Bottom layer.
-  2.  **Strings**: Middle layer.
-  3.  **Notes**: Top layer (Interactive).
-- **Interactivity**:
-  - Notes are toggled via an `onClick` handler in the `notes-container`.
-  - **Toggle Logic**: `Off` -> `Large Emphasis` -> `Small Emphasis` -> `Off`.
-- **Responsiveness**:
-  - Uses `container-type: inline-size` for container queries to adjust layout based on the _component's_ size, not just the viewport.
 
 ## 5. Coding Standards
 
+- **pnpm**: Use `pnpm` for package management, and anywhere else you would use `npm` or `yarn`.
 - **Components**: Functional components with strict TypeScript typing.
-- **Props**: Use interface definitions (e.g., `FretboardProps` in `@/types/fretboard`).
-- **File Structure**:
-  - `src/components/instruments/[instrument]/[Component].tsx`
-  - `src/utils/[instrument]/[utility].ts`
-  - `src/types/[typefile].ts`
-- **"Magic Numbers"**: Avoid them. Use calculated values or constants where possible (e.g., fret width calculations).
+- **React Compiler**: Do NOT use `useMemo` or `useCallback` unless specifically required for library interoperability. Trust the React Compiler to optimize renders.
 
 ## 6. Future Roadmap (Context)
 

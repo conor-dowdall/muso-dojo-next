@@ -1,8 +1,7 @@
-import { type FretProps } from "@/types/fretboard";
 import { fretboardIcons } from "@/configs/fretboard/icons";
 import { useFretboardConfig } from "@/context/FretboardContext";
 
-export default function FretLabel({ fretNumber }: FretProps) {
+export default function FretLabel({ fretNumber }: { fretNumber: number }) {
   const config = useFretboardConfig();
   const markerFrets = config.markerFrets;
   const isMarker = markerFrets.includes(fretNumber);
@@ -21,7 +20,7 @@ export default function FretLabel({ fretNumber }: FretProps) {
       : null;
 
   const height = config.fretLabelsHeight;
-  const color = config.fretLabelsColor;
+  const color = config.fretLabelColor;
 
   const fretLabelDoubles = config.fretLabelDoubles;
   const isDouble = fretLabelDoubles && fretLabelDoubles.includes(fretNumber);

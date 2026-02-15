@@ -32,8 +32,8 @@ export interface FretboardConfig {
   showFretLabels?: boolean;
   fretLabelsPosition?: "top" | "bottom";
   fretLabelsBackground?: string;
-  fretLabelsColor?: string;
   fretLabelsHeight?: string;
+  fretLabelColor?: string;
   fretLabelMode?: "number" | "image";
   fretLabelImage?: FretboardIcon;
   fretLabelImages?: Record<number, FretboardIcon>;
@@ -70,7 +70,7 @@ export interface FretboardProps extends Partial<FretboardConfig> {
   config?: FretboardConfig;
   preset?: FretboardPresetName;
   /**
-   * The root note of the scale/mode.
+   * The root note of the scale/mode/chord/arpeggio.
    * Accepts formatted RootNotes (e.g. "C♯") or common strings (e.g. "C#", "Db") which are normalized.
    */
   rootNote?: string;
@@ -78,19 +78,4 @@ export interface FretboardProps extends Partial<FretboardConfig> {
   noteLabelType?: FretboardNoteLabelType;
   activeNotes?: ActiveNotes;
   onActiveNotesChange?: (notes: ActiveNotes) => void;
-}
-
-export interface FretProps {
-  fretNumber: number;
-}
-
-export interface InstrumentStringProps {
-  stringNumber: number;
-}
-
-export interface FretboardNoteProps {
-  note: ActiveNote;
-  label?: string;
-  onPointerDown?: () => void;
-  style?: React.CSSProperties;
 }

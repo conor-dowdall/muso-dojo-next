@@ -41,7 +41,17 @@ export default function Home() {
           preset="darkGibson"
           rootNote="Fb"
           noteCollectionKey="ionian"
-          noteLabelType="note-name"
+          activeNotes={activeNotes}
+          onActiveNotesChange={setActiveNotes}
+        />
+      </div>
+      <div
+        style={{
+          width: "100%",
+          height: "12em",
+        }}
+      >
+        <Fretboard
           activeNotes={activeNotes}
           onActiveNotesChange={setActiveNotes}
         />
