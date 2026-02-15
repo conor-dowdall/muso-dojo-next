@@ -1,4 +1,4 @@
-import { type ActiveNotes, type ActiveNote } from "@/types/fretboard";
+import { type ActiveNotes, type ActiveNote } from "@/types/fretboard/fretboard";
 
 interface ToggleFretboardNoteParams {
   stringIndex: number;

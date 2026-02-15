@@ -1,4 +1,4 @@
-import { type FretboardConfig } from "@/types/fretboard";
+import { type FretboardConfig } from "@/types/fretboard/fretboard";
 import { fretMarkers } from "./fretMarkers";
 import { guitarTunings } from "./tunings";
 

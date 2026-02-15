@@ -1,4 +1,4 @@
-import { useFretboardConfig } from "@/context/FretboardContext";
+import { useFretboardConfig } from "@/context/fretboard/FretboardContext";
 
 export default function InstrumentString({
   stringNumber,

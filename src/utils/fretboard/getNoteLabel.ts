@@ -1,7 +1,7 @@
 import {
   type ActiveNote,
   type FretboardNoteLabelType,
-} from "@/types/fretboard";
+} from "@/types/fretboard/fretboard";
 
 interface GetNoteLabelOptions {
   note: ActiveNote;

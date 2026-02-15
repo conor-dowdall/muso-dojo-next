@@ -8,11 +8,11 @@ import FretLabel from "./FretLabel";
 import InstrumentString from "./InstrumentString";
 import FretboardNote from "./FretboardNote";
 import { getNoteLabel } from "@/utils/fretboard/getNoteLabel";
-import { type FretboardProps } from "@/types/fretboard";
+import { type FretboardProps } from "@/types/fretboard/fretboard";
 import {
   FretboardProvider,
   useFretboardConfig,
-} from "@/context/FretboardContext";
+} from "@/context/fretboard/FretboardContext";
 import { getFretboardNotes } from "@/utils/fretboard/getFretboardNotes";
 import { toggleFretboardNote } from "@/utils/fretboard/toggleFretboardNote";
 

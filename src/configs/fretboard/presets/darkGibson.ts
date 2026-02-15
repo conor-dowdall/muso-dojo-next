@@ -1,4 +1,4 @@
-import { type FretboardConfig } from "@/types/fretboard";
+import { type FretboardConfig } from "@/types/fretboard/fretboard";
 import { guitarBase } from "@/configs/fretboard/bases/guitar";
 
 export const darkGibson: FretboardConfig = {

@@ -1,5 +1,5 @@
 import { presets, type FretboardPresetName } from "@/configs/fretboard/presets";
-import { type FretboardConfig } from "@/types/fretboard";
+import { type FretboardConfig } from "@/types/fretboard/fretboard";
 import { fretboardDefaults } from "@/configs/fretboard/defaults";
 
 /**

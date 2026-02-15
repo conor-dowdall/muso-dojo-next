@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Fretboard from "@/components/instruments/fretboard/Fretboard";
-import { type ActiveNotes } from "@/types/fretboard";
+import Fretboard from "@/components/fretboard/Fretboard";
+import { type ActiveNotes } from "@/types/fretboard/fretboard";
 
 export default function Home() {
   const [activeNotes, setActiveNotes] = useState<ActiveNotes>({});

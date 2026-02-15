@@ -1,4 +1,4 @@
-import type { ActiveNote } from "@/types/fretboard";
+import type { ActiveNote } from "@/types/fretboard/fretboard";
 
 interface FretboardNoteProps {
   note: ActiveNote;

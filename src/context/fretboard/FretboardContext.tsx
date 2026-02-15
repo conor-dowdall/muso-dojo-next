@@ -1,5 +1,8 @@
 import { createContext, use, useMemo } from "react";
-import { type FretboardConfig, type FretboardProps } from "@/types/fretboard";
+import {
+  type FretboardConfig,
+  type FretboardProps,
+} from "@/types/fretboard/fretboard";
 import { createFretboardConfig } from "@/utils/fretboard/createFretboardConfig";
 import { fretboardDefaults } from "@/configs/fretboard/defaults";
 

@@ -1,5 +1,5 @@
 import { fretboardIcons } from "@/configs/fretboard/icons";
-import { useFretboardConfig } from "@/context/FretboardContext";
+import { useFretboardConfig } from "@/context/fretboard/FretboardContext";
 
 export default function Fret({ fretNumber }: { fretNumber: number }) {
   const config = useFretboardConfig();
