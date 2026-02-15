@@ -78,4 +78,5 @@ export interface FretboardProps extends Partial<FretboardConfig> {
   noteLabelType?: FretboardNoteLabelType;
   activeNotes?: ActiveNotes;
   onActiveNotesChange?: (notes: ActiveNotes) => void;
+  showToolbar?: boolean;
 }
