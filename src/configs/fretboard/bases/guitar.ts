@@ -12,8 +12,7 @@ export const guitarBase: FretboardConfig = {
   showFretInlays: true,
   showFretLabels: true,
   showFretWires: true,
-  stringColor:
-    "repeating-linear-gradient(to right, #cac3c3ff, #726c6cff 0.1cqi)",
+  stringColor: "repeating-linear-gradient(to right, #cac3c3ff, #726c6cff 1px)",
   stringColors: {
     1: "#b09e9eff",
     2: "#b09e9eff",

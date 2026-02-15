@@ -5,7 +5,9 @@ import Fretboard from "@/components/fretboard/Fretboard";
 import { type ActiveNotes } from "@/types/fretboard/fretboard";
 
 export default function Home() {
-  const [activeNotes, setActiveNotes] = useState<ActiveNotes>({});
+  const [activeNotes1, setActiveNotes1] = useState<ActiveNotes>({});
+  const [activeNotes2, setActiveNotes2] = useState<ActiveNotes>({});
+  const [activeNotes3, setActiveNotes3] = useState<ActiveNotes>({});
 
   return (
     <div
@@ -27,8 +29,8 @@ export default function Home() {
           preset="lightTelecaster"
           rootNote="C#"
           noteCollectionKey="halfWholeDiminished"
-          activeNotes={activeNotes}
-          onActiveNotesChange={setActiveNotes}
+          activeNotes={activeNotes1}
+          onActiveNotesChange={setActiveNotes1}
         />
       </div>
       <div
@@ -41,8 +43,8 @@ export default function Home() {
           preset="darkGibson"
           rootNote="Fb"
           noteCollectionKey="ionian"
-          activeNotes={activeNotes}
-          onActiveNotesChange={setActiveNotes}
+          activeNotes={activeNotes2}
+          onActiveNotesChange={setActiveNotes2}
         />
       </div>
       <div
@@ -52,8 +54,8 @@ export default function Home() {
         }}
       >
         <Fretboard
-          activeNotes={activeNotes}
-          onActiveNotesChange={setActiveNotes}
+          activeNotes={activeNotes3}
+          onActiveNotesChange={setActiveNotes3}
         />
       </div>
     </div>

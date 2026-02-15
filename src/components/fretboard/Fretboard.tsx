@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { calculateFretboardGridColumns } from "@/utils/fretboard/calculateFretboardGridColumns";
 
 import { getNumFrets } from "@/utils/fretboard/getNumFrets";
@@ -15,6 +17,7 @@ import {
 } from "@/context/fretboard/FretboardContext";
 import { getFretboardNotes } from "@/utils/fretboard/getFretboardNotes";
 import { toggleFretboardNote } from "@/utils/fretboard/toggleFretboardNote";
+import { getScaleActiveNotes } from "@/utils/fretboard/getScaleActiveNotes";
 
 export default function Fretboard(props: FretboardProps) {
   return (
@@ -43,6 +46,18 @@ function FretboardContent({
     numFrets,
     config.evenFrets,
   );
+
+  useEffect(() => {
+    if (rootNote && noteCollectionKey && onActiveNotesChange) {
+      const newActiveNotes = getScaleActiveNotes({
+        rootNote,
+        noteCollectionKey,
+        tuning,
+        fretRange,
+      });
+      onActiveNotesChange(newActiveNotes);
+    }
+  }, [rootNote, noteCollectionKey, tuning, fretRange, onActiveNotesChange]);
 
   const isFretLabelsBottom = config.fretLabelsPosition === "bottom";
   const mainContentGridRow = isFretLabelsBottom ? "1 / 2" : "2 / -1";
