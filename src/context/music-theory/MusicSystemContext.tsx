@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, use, useState, useMemo } from "react";
+import { createContext, use, useState } from "react";
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 
 interface MusicSystemContextValue {
@@ -28,15 +28,12 @@ export function MusicSystemProvider({
     initialNoteCollectionKey,
   );
 
-  const value = useMemo(
-    () => ({
-      rootNote,
-      noteCollectionKey,
-      setRootNote,
-      setNoteCollectionKey,
-    }),
-    [rootNote, noteCollectionKey],
-  );
+  const value = {
+    rootNote,
+    noteCollectionKey,
+    setRootNote,
+    setNoteCollectionKey,
+  };
 
   return (
     <MusicSystemContext.Provider value={value}>
