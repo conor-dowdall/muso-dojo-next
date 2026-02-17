@@ -66,9 +66,9 @@ export interface ActiveNote {
 
 export type ActiveNotes = Record<string, ActiveNote>; // Keyed by `${stringNumber}-${fretNumber}`
 
-export interface FretboardProps extends Partial<FretboardConfig> {
-  config?: FretboardConfig;
+export interface FretboardProps {
   preset?: FretboardPresetName;
+  config?: FretboardConfig;
   /**
    * The root note of the scale/mode/chord/arpeggio.
    * Accepts formatted RootNotes (e.g. "C♯") or common strings (e.g. "C#", "Db") which are normalized.

@@ -1,22 +1,53 @@
-# Muso Dojo Next
+# Muso Dojo Next - Gemini LLM Context
 
-### Interactivity & Audio
+This document provides context, guidelines, and architectural insights for the "Muso Dojo Next" project. Use this to inform your code generation, refactoring, and design decisions.
 
-- **`audioSource`**: An identifier for which audio sample to play (`Tone.js`).
-- **`noteDuration`**: How long to play a note when it's clicked.
-- **`transpose`**: A value to transpose the played note (e.g., clicking a `C` plays a `B flat`).
+## 1. Project Overview
 
-### Displaying Musical Data
+**Muso Dojo Next** is a modern web application for music education, focusing on interactive instruments and music theory. It aims to provide a visually stunning, and highly interactive, clear, and educational user experience.
 
-- **`scale` or `chord`**: A predefined scale or chord from `@musodojo/music-theory-data` to display on the fretboard.
+- **Goal**: Create better music teachers and students through interactive tools.
+- **Current Focus**: Building a robust and flexible interactive Fretboard component and Musical Context, or system to tie musical elements together, like looper, metronome Keyboard components.
 
-## Notes
+## 2. Technology Stack
 
-- **UI Framework**: `Next.js` with `React 19`.
-- **Styling**: `Modern CSS`. Use the latest CSS techniques to create beautiful and intuitive interfaces.
-- **Component Library**: Use `shadcn/ui` components where appropriate.
-- **Icons**: Use `Lucide` for icons.
-- **Music Theory Data**: Utilize the `@musodojo/music-theory-data` package for music-related data and functions.
-- **Audio**: `Tone.js` will be used for audio playback. The implementation should support multiple channels for different instruments (e.g., piano, guitar, violin).
-- **Rich Text Editor**: `Tiptap` may be used in the future for lesson-style pages. The Fretboard component should be designed with the idea that it might be wrapped for use within `Tiptap`.
-- **Piano Component**: Consider how code and logic can be shared between the Fretboard component and a future Piano component.
+- **Framework**: [Next.js](https://nextjs.org/) (App Router)
+- **Library**: [React 19](https://react.dev/)
+- **React Compiler**: Use modern syntax and features.
+
+  Discourage the use of
+  - `memo()`
+  - `useMemo()`
+  - `useCallback()`
+  - `forwardRef()`
+  - `useEffect()`
+  - `useContext()`
+
+Encourage the use of `use()` hooks to access context.
+
+- **Language**: TypeScript
+- **Styling**: **Modern Native CSS** (CSS Modules or Scoped CSS preferred over Tailwind).
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Audio**: [Tone.js](https://tonejs.github.io/)
+- **Music Theory**: `@musodojo/music-theory-data` (external package).
+
+## 3. Design Philosophy & Aesthetics
+
+- **_"Polished UI"_**: The UI should be high-quality and polished.
+- **CSS First**: Utilize modern CSS features like Grid, Flexbox, Container Queries (`container-type`), and logical properties (`margin-inline`, etc.).
+- **No Tailwind**: The project has moved _away_ from Tailwind CSS in favor of clean, semantic CSS and CSS variables.
+
+## 4. Key Component: `Fretboard`
+
+The `Fretboard` (`src/components/instruments/fretboard/Fretboard.tsx`) is the centerpiece of the current development.
+
+### Architecture
+
+- **Layout**: Heavily relies on **CSS Grid**.
+  - The fretboard uses a multi-layer grid approach where `fingerboard`, `strings`, and `notes` are stacked using `grid-area` or explicit row/column placement within a parent grid.
+
+## 5. Coding Standards
+
+- **pnpm**: Use `pnpm` for package management, and anywhere else you would use `npm` or `yarn`.
+- **Components**: Functional components with strict TypeScript typing.
+- **React Compiler**: Do NOT use `useMemo` or `useCallback` unless specifically required for performance. Trust the React Compiler to optimize renders.

@@ -4,33 +4,19 @@ import {
   type FretboardProps,
 } from "@/types/fretboard/fretboard";
 import { createFretboardConfig } from "@/utils/fretboard/createFretboardConfig";
-import { fretboardDefaults } from "@/configs/fretboard/defaults";
 
 const FretboardContext = createContext<Required<FretboardConfig> | null>(null);
 
 export function FretboardProvider({
   children,
-  config: userConfig,
   preset,
-  ...rest
+  config: userConfig,
 }: FretboardProps & { children: React.ReactNode }) {
-  // Filter `rest` to only include keys that are actual FretboardConfig keys.
-  // This prevents random props from invalidating the config.
-  const configOverrides = useMemo(() => {
-    const validConfigKeys = Object.keys(fretboardDefaults);
-    const filteredrest = Object.fromEntries(
-      Object.entries(rest).filter(([key]) => validConfigKeys.includes(key)),
-    );
-    return { ...userConfig, ...filteredrest };
-  }, [userConfig, rest]);
-
-  // We recreate the config ONLY when actual config props change.
-  // We use JSON.stringify on the overrides to ensure deep equality for the dependency,
-  // preventing re-renders when new object references with same values are passed.
+  // manually memoizing using `config object stringification` to avoid re-renders
   const config = useMemo(() => {
-    return createFretboardConfig(preset, configOverrides);
+    return createFretboardConfig(preset, userConfig);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preset, JSON.stringify(configOverrides)]);
+  }, [preset, JSON.stringify(userConfig)]);
 
   return (
     <FretboardContext.Provider value={config}>

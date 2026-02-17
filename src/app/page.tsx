@@ -41,6 +41,9 @@ export default function Home() {
             onActiveNotesChange={setActiveNotes1}
           />
         </div>
+        <h3 style={{ alignSelf: "start", color: "#888", fontSize: "0.9em" }}>
+          G Major Scale
+        </h3>
         <div
           style={{
             width: "100%",
@@ -49,6 +52,8 @@ export default function Home() {
         >
           <Fretboard
             preset="darkGibson"
+            rootNote="G"
+            noteCollectionKey="major"
             activeNotes={activeNotes2}
             onActiveNotesChange={setActiveNotes2}
           />
