@@ -59,7 +59,7 @@ function FretboardContent(props: FretboardProps) {
           }}
         >
           <MusicToolbar />
-          <div style={{ flex: 1, position: "relative" }}>
+          <div style={{ flex: 1 }}>
             <FretboardInner
               {...props}
               // Pass null/undefined for these so the inner component uses the context we just created

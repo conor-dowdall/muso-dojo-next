@@ -1,11 +1,12 @@
 /* MusicSelectorDialog.module.css */
 
 .dialog {
-  border: none;
-  border-radius: 16px;
+  border: 1px solid var(--border, #eee);
+  border-radius: 10px;
   padding: 0;
   box-shadow: 0 10px 25px rgb(0 0 0 / 0.2);
   animation: slideIn 0.2s ease-out;
+  max-width: 60rem;
 }
 
 .dialog::backdrop {
@@ -27,7 +28,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
+  padding: 1rem;
   border-bottom: 1px solid var(--border, #eee);
 }
 
@@ -42,7 +43,6 @@
   border: none;
   cursor: pointer;
   padding: 0.5rem;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -51,7 +51,7 @@
 }
 
 .closeButton:hover {
-  background-color: var(--secondary, #f0f0f0);
+  background-color: var(--secondary, #8b8b8b);
 }
 
 .content {
@@ -137,7 +137,7 @@
 
 .collectionButton {
   appearance: none;
-  background: var(--card, #fff);
+  background: var(--card, #757575);
   border: 1px solid var(--border, #e4e4e7);
   border-radius: 9999px; /* Pill shape */
   padding: 0.5rem 1rem;
