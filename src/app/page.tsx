@@ -65,7 +65,7 @@ export default function Home() {
           <h3
             style={{ margin: "0 0 0.5em 0", color: "#888", fontSize: "0.9em" }}
           >
-            Independent Fretboard with Local Toolbar
+            Independent Fretboard - with Local Toolbar
           </h3>
           <Fretboard showToolbar />
         </div>
