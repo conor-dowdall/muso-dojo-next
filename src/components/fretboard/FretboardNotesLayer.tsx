@@ -1,18 +1,20 @@
-import { useEffect } from "react";
+import { useState } from "react";
 import { useFretboardConfig } from "@/context/fretboard/FretboardContext";
 import { useMusicSystem } from "@/context/music-theory/MusicSystemContext";
-import { calculateFretboardGridColumns } from "@/utils/fretboard/calculateFretboardGridColumns";
 import { getFretboardNotes } from "@/utils/fretboard/getFretboardNotes";
 import { getNoteLabel } from "@/utils/fretboard/getNoteLabel";
 import { getNumFrets } from "@/utils/fretboard/getNumFrets";
 import { getScaleActiveNotes } from "@/utils/fretboard/getScaleActiveNotes";
 import { toggleFretboardNote } from "@/utils/fretboard/toggleFretboardNote";
-import { type FretboardProps } from "@/types/fretboard/fretboard";
+import {
+  type FretboardProps,
+  type ActiveNotes,
+} from "@/types/fretboard/fretboard";
 import FretboardNote from "./FretboardNote";
 
 export default function FretboardNotesLayer({
-  activeNotes,
-  onActiveNotesChange,
+  activeNotes: externalActiveNotes,
+  onActiveNotesChange: externalOnChange,
   noteCollectionKey,
   rootNote,
   noteLabelType = "note-name",
@@ -29,64 +31,60 @@ export default function FretboardNotesLayer({
   const fretRange = config.fretRange;
   const numFrets = getNumFrets(fretRange);
   const startFret = fretRange[0];
-  const fretboardGridColumns = calculateFretboardGridColumns(
-    numFrets,
-    config.evenFrets,
-  );
 
   const noteNames = getFretboardNotes({
     rootNote: effectiveRootNote,
     noteCollectionKey: effectiveNoteCollectionKey,
   });
 
-  useEffect(() => {
-    if (
-      effectiveRootNote &&
-      effectiveNoteCollectionKey &&
-      onActiveNotesChange
-    ) {
-      const newActiveNotes = getScaleActiveNotes({
+  // State Management: Smart Uncontrolled Pattern
+  // If the parent provides `activeNotes`, we are controlled. Otherwise, we manage our own state.
+  const isControlled = externalActiveNotes !== undefined;
+  const [internalActiveNotes, setInternalActiveNotes] = useState<ActiveNotes>(
+    {},
+  );
+
+  // Track dependencies to derive state whenever rootNote, scale, or tuning changes.
+  // This avoids `useEffect` double-renders by updating state directly during the render phase.
+  const [prevDependencies, setPrevDependencies] = useState("");
+  const currentDependencies = `${effectiveRootNote}-${effectiveNoteCollectionKey}-${tuning.join()}-${fretRange.join()}`;
+
+  if (currentDependencies !== prevDependencies) {
+    setPrevDependencies(currentDependencies);
+
+    // Only auto-calculate notes if we are managing our own state.
+    // If we are controlled, it's the parent's responsibility to provide the correct notes!
+    if (!isControlled) {
+      const newNotes = getScaleActiveNotes({
         rootNote: effectiveRootNote,
         noteCollectionKey: effectiveNoteCollectionKey,
         tuning,
         fretRange,
       });
-      onActiveNotesChange(newActiveNotes);
+      setInternalActiveNotes(newNotes);
     }
-  }, [
-    effectiveRootNote,
-    effectiveNoteCollectionKey,
-    tuning,
-    fretRange,
-    onActiveNotesChange,
-  ]);
+  }
+
+  // Determine which state to use for rendering and updating
+  const activeNotes = isControlled ? externalActiveNotes : internalActiveNotes;
+  const onActiveNotesChange = isControlled
+    ? externalOnChange
+    : setInternalActiveNotes;
 
   const isFretLabelsBottom = config.fretLabelsPosition === "bottom";
   const mainContentGridRow = isFretLabelsBottom ? "1 / 2" : "2 / -1";
-
-  const fretLabelsGridRow = isFretLabelsBottom ? "2 / -1" : "1 / 2";
 
   return (
     <div
       style={{
         display: "grid",
-        width: "100%",
-        height: "100%",
-        gridTemplateRows: isFretLabelsBottom
-          ? "1fr max-content"
-          : "max-content 1fr",
-        gridTemplateColumns: fretboardGridColumns,
+        gridColumn: "1 / -1",
+        gridRow: "1 / -1",
+        gridTemplateRows: "subgrid",
+        gridTemplateColumns: "subgrid",
         pointerEvents: "none", // Let clicks pass through empty areas
       }}
     >
-      {/* Spacer to Ensure Grid Alignment with Background (which has content in this row) */}
-      <div
-        style={{
-          gridColumn: "1 / -1",
-          gridRow: fretLabelsGridRow,
-          height: config.fretLabelsHeight,
-        }}
-      />
       <div
         id="notes-container"
         style={{

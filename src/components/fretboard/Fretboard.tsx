@@ -10,6 +10,8 @@ import {
 import MusicToolbar from "../toolbar/MusicToolbar";
 import FretboardBackground from "./FretboardBackground";
 import FretboardNotesLayer from "./FretboardNotesLayer";
+import { getNumFrets } from "@/utils/fretboard/getNumFrets";
+import { calculateFretboardGridColumns } from "@/utils/fretboard/calculateFretboardGridColumns";
 
 export default function Fretboard(props: FretboardProps) {
   return (
@@ -64,6 +66,12 @@ function FretboardContent(props: FretboardProps) {
 
 function FretboardInner(props: FretboardProps) {
   const config = useFretboardConfig();
+  const numFrets = getNumFrets(config.fretRange);
+  const fretboardGridColumns = calculateFretboardGridColumns(
+    numFrets,
+    config.evenFrets,
+  );
+  const isFretLabelsBottom = config.fretLabelsPosition === "bottom";
 
   return (
     <div
@@ -72,32 +80,17 @@ function FretboardInner(props: FretboardProps) {
         width: "100%",
         height: "100%",
         display: "grid",
+        gridTemplateRows: isFretLabelsBottom
+          ? "1fr max-content"
+          : "max-content 1fr",
+        gridTemplateColumns: fretboardGridColumns,
         containerType: "inline-size",
         isolation: "isolate", // Create a local stacking context
         direction: config.leftHanded ? "rtl" : "ltr",
       }}
     >
-      {/* Background Layer: Static elements (Frets, Strings, Labels) */}
-      <div
-        style={{
-          gridArea: "1 / 1",
-          width: "100%",
-          height: "100%",
-        }}
-      >
-        <FretboardBackground />
-      </div>
-
-      {/* Foreground Layer: Dynamic/Interactive elements (Notes) */}
-      <div
-        style={{
-          gridArea: "1 / 1",
-          width: "100%",
-          height: "100%",
-        }}
-      >
-        <FretboardNotesLayer {...props} />
-      </div>
+      <FretboardBackground />
+      <FretboardNotesLayer {...props} />
     </div>
   );
 }

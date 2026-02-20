@@ -1,5 +1,4 @@
 import { useFretboardConfig } from "@/context/fretboard/FretboardContext";
-import { calculateFretboardGridColumns } from "@/utils/fretboard/calculateFretboardGridColumns";
 import { getNumFrets } from "@/utils/fretboard/getNumFrets";
 import Fret from "./Fret";
 import FretLabel from "./FretLabel";
@@ -12,10 +11,6 @@ export default function FretboardBackground() {
   const fretRange = config.fretRange;
   const numFrets = getNumFrets(fretRange);
   const startFret = fretRange[0];
-  const fretboardGridColumns = calculateFretboardGridColumns(
-    numFrets,
-    config.evenFrets,
-  );
 
   const isFretLabelsBottom = config.fretLabelsPosition === "bottom";
   const mainContentGridRow = isFretLabelsBottom ? "1 / 2" : "2 / -1";
@@ -25,12 +20,10 @@ export default function FretboardBackground() {
     <div
       style={{
         display: "grid",
-        width: "100%",
-        height: "100%",
-        gridTemplateRows: isFretLabelsBottom
-          ? "1fr max-content"
-          : "max-content 1fr",
-        gridTemplateColumns: fretboardGridColumns,
+        gridColumn: "1 / -1",
+        gridRow: "1 / -1",
+        gridTemplateRows: "subgrid",
+        gridTemplateColumns: "subgrid",
         pointerEvents: "none",
       }}
     >

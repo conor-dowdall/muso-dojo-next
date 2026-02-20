@@ -1,18 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import Fretboard from "@/components/fretboard/Fretboard";
-import { type ActiveNotes } from "@/types/fretboard/fretboard";
 
 import { MusicSystemProvider } from "@/context/music-theory/MusicSystemContext";
 import MusicToolbar from "@/components/toolbar/MusicToolbar";
 
 export default function Home() {
-  const [activeNotes1, setActiveNotes1] = useState<ActiveNotes>({});
-  const [activeNotes2, setActiveNotes2] = useState<ActiveNotes>({});
-  const [activeNotes3, setActiveNotes3] = useState<ActiveNotes>({});
-  const [activeNotes4, setActiveNotes4] = useState<ActiveNotes>({});
-
   return (
     <MusicSystemProvider>
       <div
@@ -35,11 +28,7 @@ export default function Home() {
             height: "12em",
           }}
         >
-          <Fretboard
-            preset="lightTelecaster"
-            activeNotes={activeNotes1}
-            onActiveNotesChange={setActiveNotes1}
-          />
+          <Fretboard preset="lightTelecaster" />
         </div>
         <h3 style={{ alignSelf: "start", color: "#888", fontSize: "0.9em" }}>
           G Major Scale
@@ -54,8 +43,6 @@ export default function Home() {
             preset="darkGibson"
             rootNote="G"
             noteCollectionKey="major"
-            activeNotes={activeNotes2}
-            onActiveNotesChange={setActiveNotes2}
           />
         </div>
         <div
@@ -64,10 +51,7 @@ export default function Home() {
             height: "12em",
           }}
         >
-          <Fretboard
-            activeNotes={activeNotes3}
-            onActiveNotesChange={setActiveNotes3}
-          />
+          <Fretboard />
         </div>
         <div
           style={{
@@ -83,11 +67,7 @@ export default function Home() {
           >
             Independent Fretboard with Local Toolbar
           </h3>
-          <Fretboard
-            activeNotes={activeNotes4}
-            onActiveNotesChange={setActiveNotes4}
-            showToolbar
-          />
+          <Fretboard showToolbar />
         </div>
       </div>
     </MusicSystemProvider>
