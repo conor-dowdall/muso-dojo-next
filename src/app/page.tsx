@@ -28,7 +28,10 @@ export default function Home() {
             height: "13em",
           }}
         >
-          <Fretboard preset="lightTelecaster" />
+          <Fretboard
+            preset="lightTelecaster"
+            noteCollectionKey="majorPentatonic"
+          />
         </div>
         <h3 style={{ alignSelf: "start", color: "#888", fontSize: "0.9em" }}>
           G Major Scale
@@ -68,6 +71,7 @@ export default function Home() {
             Independent Fretboard with Local Toolbar
           </h3>
           <Fretboard showToolbar />
+          <Fretboard showToolbar noteCollectionKey="majorPentatonic" />
         </div>
       </div>
     </MusicSystemProvider>
