@@ -26,6 +26,6 @@ export function getFretboardNotes({
       rotateToRootInteger0: true,
     });
   } else {
-    return [...noteLabelCollections.flat.labels];
+    return [...noteLabelCollections.noteNamesFlat.labels];
   }
 }
