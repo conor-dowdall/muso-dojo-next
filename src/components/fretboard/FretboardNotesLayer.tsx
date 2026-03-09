@@ -43,19 +43,16 @@ export default function FretboardNotesLayer({
 
   const normalizedRootNote = normalizeRootNoteString(effectiveRootNote);
 
-  const noteNames = conversionFn !== undefined && normalizedRootNote !== undefined
-    ? (conversionFn(
-        normalizedRootNote,
-        effectiveNoteCollectionKey,
-        {
+  const noteNames =
+    conversionFn !== undefined && normalizedRootNote !== undefined
+      ? (conversionFn(normalizedRootNote, effectiveNoteCollectionKey, {
           fillChromatic: true,
           rotateToRootInteger0: true,
-        },
-      ) as string[])
-    : getFretboardNotes({
-        rootNote: effectiveRootNote,
-        noteCollectionKey: effectiveNoteCollectionKey,
-      });
+        }) as string[])
+      : getFretboardNotes({
+          rootNote: effectiveRootNote,
+          noteCollectionKey: effectiveNoteCollectionKey,
+        });
 
   // State Management: Smart Uncontrolled Pattern
   // If the parent provides `activeNotes`, we are controlled. Otherwise, we manage our own state.
