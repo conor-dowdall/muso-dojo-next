@@ -85,7 +85,7 @@ export default function MusicToolbar() {
           <button
             onClick={() => setDialogMode("collection")}
             style={buttonStyle}
-            title="Change Scale Strategy"
+            title="Change Note Collection"
           >
             {getCurrentCollectionName()}
           </button>
