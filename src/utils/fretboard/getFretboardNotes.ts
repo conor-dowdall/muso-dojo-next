@@ -1,5 +1,5 @@
 import {
-  getNoteNamesFromRootAndCollectionKey,
+  getNoteNamesForRootAndNoteCollectionKey,
   noteLabelCollections,
   normalizeRootNoteString,
   type NoteCollectionKey,
@@ -21,10 +21,14 @@ export function getFretboardNotes({
 
   // Calculate note names if root and collection are provided
   if (rootNote && noteCollectionKey) {
-    return getNoteNamesFromRootAndCollectionKey(rootNote, noteCollectionKey, {
-      fillChromatic: true,
-      rotateToRootInteger0: true,
-    });
+    return getNoteNamesForRootAndNoteCollectionKey(
+      rootNote,
+      noteCollectionKey,
+      {
+        fillChromatic: true,
+        rotateToRootInteger0: true,
+      },
+    );
   } else {
     return [...noteLabelCollections.noteNamesFlat.labels];
   }

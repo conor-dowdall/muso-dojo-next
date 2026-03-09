@@ -7,6 +7,10 @@ import { getNumFrets } from "@/utils/fretboard/getNumFrets";
 import { getScaleActiveNotes } from "@/utils/fretboard/getScaleActiveNotes";
 import { toggleFretboardNote } from "@/utils/fretboard/toggleFretboardNote";
 import {
+  conversions,
+  normalizeRootNoteString,
+} from "@musodojo/music-theory-data";
+import {
   type FretboardProps,
   type ActiveNotes,
 } from "@/types/fretboard/fretboard";
@@ -26,16 +30,32 @@ export default function FretboardNotesLayer({
   const effectiveRootNote = rootNote ?? musicSystem?.rootNote ?? "C";
   const effectiveNoteCollectionKey =
     noteCollectionKey ?? musicSystem?.noteCollectionKey ?? "major";
+  const activeConversionId = musicSystem?.activeConversionId ?? "note-names";
 
   const tuning = config.tuning;
   const fretRange = config.fretRange;
   const numFrets = getNumFrets(fretRange);
   const startFret = fretRange[0];
 
-  const noteNames = getFretboardNotes({
-    rootNote: effectiveRootNote,
-    noteCollectionKey: effectiveNoteCollectionKey,
-  });
+  const conversionFn = Object.values(conversions.rootAndNoteCollection).find(
+    (c) => c.id === activeConversionId,
+  )?.get as typeof conversions.rootAndNoteCollection.noteNames.get | undefined;
+
+  const normalizedRootNote = normalizeRootNoteString(effectiveRootNote);
+
+  const noteNames = conversionFn !== undefined && normalizedRootNote !== undefined
+    ? (conversionFn(
+        normalizedRootNote,
+        effectiveNoteCollectionKey,
+        {
+          fillChromatic: true,
+          rotateToRootInteger0: true,
+        },
+      ) as string[])
+    : getFretboardNotes({
+        rootNote: effectiveRootNote,
+        noteCollectionKey: effectiveNoteCollectionKey,
+      });
 
   // State Management: Smart Uncontrolled Pattern
   // If the parent provides `activeNotes`, we are controlled. Otherwise, we manage our own state.

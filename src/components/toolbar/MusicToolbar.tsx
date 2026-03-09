@@ -4,6 +4,7 @@ import { useMusicSystem } from "@/context/music-theory/MusicSystemContext";
 import {
   groupedNoteCollections,
   type NoteCollectionGroupKey,
+  conversions,
 } from "@musodojo/music-theory-data";
 import { useState } from "react";
 import { MusicSelectorDialog } from "./MusicSelectorDialog";
@@ -17,8 +18,14 @@ export default function MusicToolbar() {
     return null;
   }
 
-  const { rootNote, setRootNote, noteCollectionKey, setNoteCollectionKey } =
-    musicSystem;
+  const {
+    rootNote,
+    setRootNote,
+    noteCollectionKey,
+    setNoteCollectionKey,
+    activeConversionId,
+    setActiveConversionId,
+  } = musicSystem;
 
   // Helper to get the display name of the current collection
   const getCurrentCollectionName = () => {
@@ -65,6 +72,31 @@ export default function MusicToolbar() {
             {rootNote} {getCurrentCollectionName()}
           </span>
         </button>
+
+        <select
+          value={activeConversionId}
+          onChange={(e) => setActiveConversionId(e.target.value)}
+          style={{
+            padding: "0.5rem",
+            background: "black",
+            color: "white",
+            border: "1px solid var(--border, #e4e4e7)",
+            borderRadius: "8px",
+            fontSize: "0.9rem",
+            fontWeight: 500,
+            cursor: "pointer",
+            fontFamily: "inherit",
+          }}
+          title="Display Format"
+        >
+          {Object.values(conversions.rootAndNoteCollection).map(
+            (conversion) => (
+              <option key={conversion.id} value={conversion.id}>
+                {conversion.name}
+              </option>
+            ),
+          )}
+        </select>
       </div>
 
       <MusicSelectorDialog

@@ -30,7 +30,11 @@ export default function Home() {
         >
           <Fretboard
             preset="lightTelecaster"
-            noteCollectionKey="majorPentatonic"
+            config={{
+              fretLabelsPosition: "top",
+              fretLabelMode: "number",
+              fretLabelsHeight: "1em",
+            }}
           />
         </div>
         <h3 style={{ alignSelf: "start", color: "#888", fontSize: "0.9em" }}>
@@ -45,7 +49,7 @@ export default function Home() {
           <Fretboard
             preset="darkGibson"
             rootNote="G"
-            noteCollectionKey="major"
+            noteCollectionKey="ionian"
           />
         </div>
         <div
