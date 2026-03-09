@@ -34,13 +34,16 @@ export default function FretboardNote({
         fontSize: isLarge ? "0.875rem" : "0.75rem",
         opacity: isLarge ? 1 : 0.8,
         borderRadius: isLarge ? "1cqi" : "0.8cqi",
+        overflow: "hidden", // Prevent text from escaping bounds
+        whiteSpace: "nowrap", // Prevent text from wrapping to multi-line and getting tall
+        textOverflow: "ellipsis", // Add "..." if text is too wide
       }}
       onPointerDown={(e) => {
         e.stopPropagation();
         onPointerDown?.();
       }}
     >
-      {label}
+      <span style={{ padding: "0 0.1rem" }}>{label}</span>
     </div>
   );
 }

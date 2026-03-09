@@ -139,6 +139,7 @@ export default function FretboardNotesLayer({
                   display: "grid",
                   placeItems: "center",
                   cursor: "pointer",
+                  minWidth: 0, // CRITICAL: Prevents long text from stretching the CSS Grid columns
                 }}
                 onPointerDown={() => {
                   // Prevent event bubbling if needed, or allow it.
