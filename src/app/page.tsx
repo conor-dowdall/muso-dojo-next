@@ -28,54 +28,7 @@ export default function Home() {
             height: "13em",
           }}
         >
-          <Fretboard
-            preset="lightTelecaster"
-            config={{
-              fretLabelsPosition: "top",
-              fretLabelMode: "number",
-              fretLabelsHeight: "1em",
-            }}
-          />
-        </div>
-        <h3 style={{ alignSelf: "start", color: "#888", fontSize: "0.9em" }}>
-          G Major Scale
-        </h3>
-        <div
-          style={{
-            width: "100%",
-            height: "12em",
-          }}
-        >
-          <Fretboard
-            preset="darkGibson"
-            rootNote="G"
-            noteCollectionKey="ionian"
-          />
-        </div>
-        <div
-          style={{
-            width: "100%",
-            height: "12em",
-          }}
-        >
-          <Fretboard />
-        </div>
-        <div
-          style={{
-            width: "100%",
-            height: "16em", // Slightly taller for the toolbar
-            border: "1px solid #333",
-            padding: "0.5em",
-            borderRadius: "0.5em",
-          }}
-        >
-          <h3
-            style={{ margin: "0 0 0.5em 0", color: "#888", fontSize: "0.9em" }}
-          >
-            Independent Fretboard with Local Toolbar
-          </h3>
-          <Fretboard showToolbar />
-          <Fretboard showToolbar noteCollectionKey="majorPentatonic" />
+          <Fretboard preset="darkGibson" />
         </div>
       </div>
     </MusicSystemProvider>
