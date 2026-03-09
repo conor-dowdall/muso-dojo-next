@@ -7,12 +7,14 @@ import {
   conversions,
 } from "@musodojo/music-theory-data";
 import { useState } from "react";
-import { MusicSelectorDialog } from "./MusicSelectorDialog";
-import { Settings2 } from "lucide-react";
+import {
+  MusicSelectorDialog,
+  type MusicSelectorMode,
+} from "./MusicSelectorDialog";
 
 export default function MusicToolbar() {
   const musicSystem = useMusicSystem();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<MusicSelectorMode | null>(null);
 
   if (!musicSystem) {
     return null;
@@ -43,69 +45,70 @@ export default function MusicToolbar() {
     return noteCollectionKey;
   };
 
+  const currentFormatName =
+    Object.values(conversions.rootAndNoteCollection).find(
+      (c) => c.id === activeConversionId,
+    )?.name || activeConversionId;
+
+  const buttonStyle = {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem",
+    padding: "0.5rem 1rem",
+    background: "none",
+    border: "1px solid var(--border, #e4e4e7)",
+    borderRadius: "8px",
+    fontSize: "0.9rem",
+    fontWeight: 500,
+    cursor: "pointer",
+    fontFamily: "inherit",
+    color: "inherit",
+  };
+
   return (
     <>
       <div
         style={{
           display: "flex",
           gap: "1rem",
+          alignItems: "center",
         }}
       >
-        <button
-          onClick={() => setIsDialogOpen(true)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            padding: "0.5rem 1rem",
-            background: "none",
-            border: "1px solid var(--border, #e4e4e7)",
-            borderRadius: "8px",
-            fontSize: "0.9rem",
-            fontWeight: 500,
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          <Settings2 size={16} />
-          <span>
-            {rootNote} {getCurrentCollectionName()}
-          </span>
-        </button>
-
-        <select
-          value={activeConversionId}
-          onChange={(e) => setActiveConversionId(e.target.value)}
-          style={{
-            padding: "0.5rem",
-            background: "black",
-            color: "white",
-            border: "1px solid var(--border, #e4e4e7)",
-            borderRadius: "8px",
-            fontSize: "0.9rem",
-            fontWeight: 500,
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-          title="Display Format"
-        >
-          {Object.values(conversions.rootAndNoteCollection).map(
-            (conversion) => (
-              <option key={conversion.id} value={conversion.id}>
-                {conversion.name}
-              </option>
-            ),
-          )}
-        </select>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button
+            onClick={() => setDialogMode("root")}
+            style={buttonStyle}
+            title="Change Root Note"
+          >
+            {rootNote}
+          </button>
+          <button
+            onClick={() => setDialogMode("collection")}
+            style={buttonStyle}
+            title="Change Scale Strategy"
+          >
+            {getCurrentCollectionName()}
+          </button>
+          <button
+            onClick={() => setDialogMode("format")}
+            style={buttonStyle}
+            title="Change Display Format"
+          >
+            {currentFormatName}
+          </button>
+        </div>
       </div>
 
       <MusicSelectorDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
+        isOpen={dialogMode !== null}
+        mode={dialogMode || "root"} // Default to 'root' when closed to satisfy type
+        onClose={() => setDialogMode(null)}
         rootNote={rootNote}
         noteCollectionKey={noteCollectionKey}
+        activeConversionId={activeConversionId}
         onRootNoteChange={setRootNote}
         onNoteCollectionChange={setNoteCollectionKey}
+        onConversionChange={setActiveConversionId}
       />
     </>
   );
