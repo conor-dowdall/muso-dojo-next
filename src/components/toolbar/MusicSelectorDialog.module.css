@@ -51,7 +51,7 @@
 }
 
 .content {
-  padding: 1.5rem;
+  padding: 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -75,7 +75,7 @@
 /* Root Note Selector - Horizontal Scroll */
 .rootNoteList {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.2rem;
   overflow-x: auto;
   padding-bottom: 0.5rem; /* Space for scrollbar if needed */
 }
@@ -85,7 +85,9 @@
   flex-direction: column;
   gap: 0.25rem;
   align-items: center;
-  width: clamp(1rem, 8%, 3rem);
+  min-width: 2.5ch;
+  max-width: 4ch;
+  /* width: clamp(2.2ch, 8%, 3rem); */
 }
 
 .noteButton {
@@ -95,7 +97,7 @@
   color: var(--primary-foreground, #fff);
   border: 1px solid white;
   border-radius: 10px;
-  padding: 0.75rem 0;
+  padding: 0.5rem 0;
   width: 100%;
   cursor: pointer;
   transition: all 0.2s;
@@ -107,8 +109,7 @@
 
 .noteButton[aria-pressed="true"] {
   background: var(--primary, #000);
-  border: 1px solid var(--border, #e4e4e7);
-  border-color: var(--primary, #000);
+  border: 3px solid var(--border, #e4e4e7);
 }
 
 /* Collection Selector - Wrap */

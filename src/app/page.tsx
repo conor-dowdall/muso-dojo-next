@@ -1,9 +1,7 @@
 "use client";
 
 import Fretboard from "@/components/fretboard/Fretboard";
-
 import { MusicSystemProvider } from "@/context/music-theory/MusicSystemContext";
-import MusicToolbar from "@/components/toolbar/MusicToolbar";
 
 export default function Home() {
   return (
@@ -13,22 +11,15 @@ export default function Home() {
           display: "flex",
           flexDirection: "column",
           gap: "1em",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "1em",
+          alignItems: "start",
+          padding: "1em 2em",
         }}
       >
-        <div style={{ width: "100%", maxWidth: "50em" }}>
-          <MusicToolbar />
+        <div style={{ width: "100%", maxWidth: "50em", height: "9em" }}>
+          <Fretboard showToolbar={true} preset="darkGibson" />
         </div>
-
-        <div
-          style={{
-            width: "100%",
-            height: "13em",
-          }}
-        >
-          <Fretboard preset="darkGibson" />
+        <div style={{ width: "100%", maxWidth: "50em", height: "12em" }}>
+          <Fretboard showToolbar={true} preset="lightTelecaster" />
         </div>
       </div>
     </MusicSystemProvider>
