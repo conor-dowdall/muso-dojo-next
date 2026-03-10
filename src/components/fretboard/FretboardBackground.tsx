@@ -24,11 +24,10 @@ export default function FretboardBackground() {
         gridRow: "1 / -1",
         gridTemplateRows: "subgrid",
         gridTemplateColumns: "subgrid",
-        pointerEvents: "none",
       }}
     >
       <div
-        id="fingerboard"
+        className="fingerboard-area"
         style={{
           display: "grid",
           gridTemplateColumns: "subgrid",
@@ -43,7 +42,7 @@ export default function FretboardBackground() {
       </div>
 
       <div
-        id="strings-container"
+        className="strings-area"
         style={{
           gridColumn: "1 / -1",
           gridRow: mainContentGridRow,
@@ -57,7 +56,7 @@ export default function FretboardBackground() {
       </div>
 
       <div
-        id="fret-labels"
+        className="fret-labels-area"
         style={{
           display: "grid",
           height: config.fretLabelsHeight,
@@ -65,7 +64,6 @@ export default function FretboardBackground() {
           gridTemplateColumns: "subgrid",
           gridColumn: "1 / -1",
           gridRow: fretLabelsGridRow,
-          pointerEvents: "auto", // Re-enable pointer events if labels are interactive (unlikely but safe)
         }}
       >
         {Array.from({ length: numFrets }).map((_, i) => (
