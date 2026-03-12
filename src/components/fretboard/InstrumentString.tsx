@@ -12,6 +12,7 @@ export default function InstrumentString({
 
   return (
     <div
+      data-component="InstrumentString"
       style={{
         flex: "1",
         display: "flex",

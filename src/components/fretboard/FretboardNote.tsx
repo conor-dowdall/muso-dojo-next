@@ -22,6 +22,7 @@ export default function FretboardNote({
 
   return (
     <div
+      data-component="FretboardNote"
       style={{
         ...style,
         container: "note-display-wrapper / size",

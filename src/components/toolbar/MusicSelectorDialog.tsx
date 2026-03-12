@@ -175,6 +175,7 @@ export function MusicSelectorDialog({
 
   return (
     <dialog
+      data-component="MusicSelectorDialog"
       ref={dialogRef}
       className={styles.dialog}
       onClose={onClose}

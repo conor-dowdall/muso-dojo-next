@@ -15,7 +15,7 @@ export default function Home() {
           padding: "1em 2em",
         }}
       >
-        <div style={{ width: "100%", maxWidth: "50em", height: "9em" }}>
+        <div style={{ width: "100%", maxWidth: "20em", height: "9em" }}>
           <Fretboard
             config={{ fretRange: [0, 5] }}
             showToolbar={true}
