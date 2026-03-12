@@ -7,6 +7,7 @@ export default function Home() {
   return (
     <MusicSystemProvider>
       <div
+        data-component="Home"
         style={{
           display: "flex",
           flexDirection: "column",
