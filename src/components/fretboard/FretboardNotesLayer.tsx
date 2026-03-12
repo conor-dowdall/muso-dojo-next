@@ -93,6 +93,7 @@ export default function FretboardNotesLayer({
 
   return (
     <div
+      data-component="FretboardNotesLayer"
       style={{
         display: "grid",
         gridColumn: "1 / -1",

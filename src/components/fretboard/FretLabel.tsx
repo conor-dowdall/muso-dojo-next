@@ -36,6 +36,7 @@ export default function FretLabel({ fretNumber }: { fretNumber: number }) {
 
   return (
     <div
+      data-component="FretLabel"
       style={{
         display: "flex",
         flexDirection: "row",

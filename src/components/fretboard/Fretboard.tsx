@@ -39,6 +39,7 @@ function FretboardContent(props: FretboardProps) {
         initialNoteCollectionKey={initialNoteCollectionKey}
       >
         <div
+          data-component="Fretboard"
           style={{
             width: "100%",
             height: "100%",
@@ -75,8 +76,9 @@ function FretboardInner(props: FretboardProps) {
 
   return (
     <div
+      data-component="FretboardInner"
       style={{
-        container: "fretboard-wrapper / size",
+        container: "fretboard-inner / size",
         width: "100%",
         height: "100%",
         display: "grid",

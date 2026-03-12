@@ -38,6 +38,7 @@ export default function Fret({ fretNumber }: { fretNumber: number }) {
 
   return (
     <div
+      data-component="Fret"
       style={{
         height: "100%",
         display: "flex",

@@ -68,6 +68,7 @@ export default function MusicToolbar() {
   return (
     <>
       <div
+        data-component="MusicToolbar"
         style={{
           display: "flex",
           gap: "1rem",

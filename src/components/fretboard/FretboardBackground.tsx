@@ -18,6 +18,7 @@ export default function FretboardBackground() {
 
   return (
     <div
+      data-component="FretboardBackground"
       style={{
         display: "grid",
         gridColumn: "1 / -1",
@@ -27,7 +28,7 @@ export default function FretboardBackground() {
       }}
     >
       <div
-        className="fingerboard-area"
+        data-id="fretboard-fingerboard-area"
         style={{
           display: "grid",
           gridTemplateColumns: "subgrid",
@@ -42,7 +43,7 @@ export default function FretboardBackground() {
       </div>
 
       <div
-        className="strings-area"
+        data-id="fretboard-strings-area"
         style={{
           gridColumn: "1 / -1",
           gridRow: mainContentGridRow,
@@ -56,7 +57,7 @@ export default function FretboardBackground() {
       </div>
 
       <div
-        className="fret-labels-area"
+        data-id="fretboard-fret-labels-area"
         style={{
           display: "grid",
           height: config.fretLabelsHeight,
