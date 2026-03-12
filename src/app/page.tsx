@@ -1,6 +1,7 @@
 "use client";
 
 import Fretboard from "@/components/fretboard/Fretboard";
+import Keyboard from "@/components/keyboard/Keyboard";
 import { MusicSystemProvider } from "@/context/music-theory/MusicSystemContext";
 
 export default function Home() {
@@ -33,7 +34,11 @@ export default function Home() {
         <div style={{ width: "100%", maxWidth: "50em", height: "18em" }}>
           <Fretboard config={{ fretRange: [0, 5] }} showToolbar={true} />
         </div>
+        <div style={{ width: "100%", maxWidth: "50em", height: "10em" }}>
+          <Keyboard showToolbar={true} />
+        </div>
       </div>
     </MusicSystemProvider>
   );
 }
+

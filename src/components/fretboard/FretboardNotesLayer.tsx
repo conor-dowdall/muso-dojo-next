@@ -1,19 +1,11 @@
-import { useState } from "react";
 import { useFretboardConfig } from "@/context/fretboard/FretboardContext";
-import { useMusicSystem } from "@/context/music-theory/MusicSystemContext";
-import { getFretboardNotes } from "@/utils/fretboard/getFretboardNotes";
-import { getNoteLabel } from "@/utils/fretboard/getNoteLabel";
+import { useEffectiveMusicSystem } from "@/hooks/useEffectiveMusicSystem";
+import { useActiveNotes } from "@/hooks/useActiveNotes";
+import { getNoteLabel } from "@/utils/music/getNoteLabel";
 import { getNumFrets } from "@/utils/fretboard/getNumFrets";
 import { getScaleActiveNotes } from "@/utils/fretboard/getScaleActiveNotes";
 import { toggleFretboardNote } from "@/utils/fretboard/toggleFretboardNote";
-import {
-  conversions,
-  normalizeRootNoteString,
-} from "@musodojo/music-theory-data";
-import {
-  type FretboardProps,
-  type ActiveNotes,
-} from "@/types/fretboard/fretboard";
+import { type FretboardProps } from "@/types/fretboard/fretboard";
 import FretboardNote from "./FretboardNote";
 
 export default function FretboardNotesLayer({
@@ -23,70 +15,30 @@ export default function FretboardNotesLayer({
   rootNote,
   noteLabelType = "note-name",
 }: FretboardProps) {
-  const musicSystem = useMusicSystem();
   const config = useFretboardConfig();
 
-  // Effective values: Prop > Context > Default
-  const effectiveRootNote = rootNote ?? musicSystem?.rootNote ?? "C";
-  const effectiveNoteCollectionKey =
-    noteCollectionKey ?? musicSystem?.noteCollectionKey ?? "major";
-  const activeConversionId = musicSystem?.activeConversionId ?? "note-names";
+  const { effectiveRootNote, effectiveNoteCollectionKey, noteNames } =
+    useEffectiveMusicSystem({ rootNote, noteCollectionKey });
 
   const tuning = config.tuning;
   const fretRange = config.fretRange;
   const numFrets = getNumFrets(fretRange);
   const startFret = fretRange[0];
 
-  const conversionFn = Object.values(conversions.rootAndNoteCollection).find(
-    (c) => c.id === activeConversionId,
-  )?.get as typeof conversions.rootAndNoteCollection.noteNames.get | undefined;
+  const dependencies = `${effectiveRootNote}-${effectiveNoteCollectionKey}-${tuning.join()}-${fretRange.join()}`;
 
-  const normalizedRootNote = normalizeRootNoteString(effectiveRootNote);
-
-  const noteNames =
-    conversionFn !== undefined && normalizedRootNote !== undefined
-      ? (conversionFn(normalizedRootNote, effectiveNoteCollectionKey, {
-          fillChromatic: true,
-          rotateToRootInteger0: true,
-        }) as string[])
-      : getFretboardNotes({
-          rootNote: effectiveRootNote,
-          noteCollectionKey: effectiveNoteCollectionKey,
-        });
-
-  // State Management: Smart Uncontrolled Pattern
-  // If the parent provides `activeNotes`, we are controlled. Otherwise, we manage our own state.
-  const isControlled = externalActiveNotes !== undefined;
-  const [internalActiveNotes, setInternalActiveNotes] = useState<ActiveNotes>(
-    {},
-  );
-
-  // Track dependencies to derive state whenever rootNote, scale, or tuning changes.
-  // This avoids `useEffect` double-renders by updating state directly during the render phase.
-  const [prevDependencies, setPrevDependencies] = useState("");
-  const currentDependencies = `${effectiveRootNote}-${effectiveNoteCollectionKey}-${tuning.join()}-${fretRange.join()}`;
-
-  if (currentDependencies !== prevDependencies) {
-    setPrevDependencies(currentDependencies);
-
-    // Only auto-calculate notes if we are managing our own state.
-    // If we are controlled, it's the parent's responsibility to provide the correct notes!
-    if (!isControlled) {
-      const newNotes = getScaleActiveNotes({
+  const [activeNotes, onActiveNotesChange] = useActiveNotes(
+    externalActiveNotes,
+    externalOnChange,
+    dependencies,
+    () =>
+      getScaleActiveNotes({
         rootNote: effectiveRootNote,
         noteCollectionKey: effectiveNoteCollectionKey,
         tuning,
         fretRange,
-      });
-      setInternalActiveNotes(newNotes);
-    }
-  }
-
-  // Determine which state to use for rendering and updating
-  const activeNotes = isControlled ? externalActiveNotes : internalActiveNotes;
-  const onActiveNotesChange = isControlled
-    ? externalOnChange
-    : setInternalActiveNotes;
+      }),
+  );
 
   const isFretLabelsBottom = config.fretLabelsPosition === "bottom";
   const mainContentGridRow = isFretLabelsBottom ? "1 / 2" : "2 / -1";

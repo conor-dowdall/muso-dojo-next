@@ -1,12 +1,16 @@
 import { type FretboardPresetName } from "@/configs/fretboard/presets";
 import { type FretboardIcon } from "@/configs/fretboard/icons";
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
+import {
+  type ActiveNote,
+  type ActiveNotes,
+  type NoteLabelType,
+} from "@/types/instrument/shared";
 
-export type FretboardNoteLabelType =
-  | "midi"
-  | "note-name"
-  | "interval"
-  | "solfege";
+// Re-export shared types for backward compatibility
+export type { ActiveNote, ActiveNotes };
+
+export type FretboardNoteLabelType = NoteLabelType;
 
 export interface FretboardConfig {
   // Setup
@@ -58,13 +62,6 @@ export interface FretboardConfig {
   stringWidth?: string;
   stringWidths?: Record<number, string>;
 }
-
-export interface ActiveNote {
-  midi: number;
-  emphasis: "large" | "small";
-}
-
-export type ActiveNotes = Record<string, ActiveNote>; // Keyed by `${stringNumber}-${fretNumber}`
 
 export interface FretboardProps {
   preset?: FretboardPresetName;
