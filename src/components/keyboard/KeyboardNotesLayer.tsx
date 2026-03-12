@@ -109,6 +109,7 @@ export default function KeyboardNotesLayer({
               width,
               top: 0,
               height: black ? `${config.blackKeyHeightPercent}%` : "100%",
+              zIndex: black ? 2 : 0,
               display: "flex",
               alignItems: "flex-end",
               justifyContent: "center",
