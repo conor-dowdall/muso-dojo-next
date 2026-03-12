@@ -75,8 +75,8 @@ function FretboardInner(props: FretboardProps) {
 
   return (
     <div
-      id="fretboard-wrapper"
       style={{
+        container: "fretboard-wrapper / size",
         width: "100%",
         height: "100%",
         display: "grid",
@@ -84,8 +84,6 @@ function FretboardInner(props: FretboardProps) {
           ? "1fr max-content"
           : "max-content 1fr",
         gridTemplateColumns: fretboardGridColumns,
-        containerType: "inline-size",
-        isolation: "isolate", // Create a local stacking context
         direction: config.leftHanded ? "rtl" : "ltr",
       }}
     >

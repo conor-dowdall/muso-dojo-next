@@ -24,7 +24,7 @@ export default function FretboardNote({
     <div
       style={{
         ...style,
-        containerType: "size",
+        container: "note-display-wrapper / size",
         backgroundColor: "black",
         color: "white",
         textBoxTrim: "trim-both",

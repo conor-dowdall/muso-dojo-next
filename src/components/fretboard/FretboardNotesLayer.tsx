@@ -99,7 +99,6 @@ export default function FretboardNotesLayer({
         gridRow: "1 / -1",
         gridTemplateRows: "subgrid",
         gridTemplateColumns: "subgrid",
-        pointerEvents: "none", // Let clicks pass through empty areas
       }}
     >
       {/* Notes Container */}
@@ -110,7 +109,6 @@ export default function FretboardNotesLayer({
           display: "grid",
           gridTemplateColumns: "subgrid",
           gridTemplateRows: `repeat(${tuning.length}, 1fr)`,
-          pointerEvents: "auto", // Capture clicks on the notes grid
         }}
       >
         {tuning.map((openStringMidi, stringIndex) =>
@@ -138,8 +136,6 @@ export default function FretboardNotesLayer({
                   cursor: "pointer",
                 }}
                 onPointerDown={() => {
-                  // Prevent event bubbling if needed, or allow it.
-                  // Since we have pointer-events: auto on the container, this is fine.
                   toggleFretboardNote({
                     stringIndex,
                     fretNumber,
