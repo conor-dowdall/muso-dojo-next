@@ -1,7 +1,6 @@
 import { useFretboardConfig } from "@/context/fretboard/FretboardContext";
 import { useEffectiveMusicSystem } from "@/hooks/useEffectiveMusicSystem";
 import { useActiveNotes } from "@/hooks/useActiveNotes";
-import { getNoteLabel } from "@/utils/music/getNoteLabel";
 import { getNumFrets } from "@/utils/fretboard/getNumFrets";
 import { getScaleActiveNotes } from "@/utils/fretboard/getScaleActiveNotes";
 import { toggleFretboardNote } from "@/utils/fretboard/toggleFretboardNote";
@@ -13,12 +12,19 @@ export default function FretboardNotesLayer({
   onActiveNotesChange: externalOnChange,
   noteCollectionKey,
   rootNote,
-  noteLabelType = "note-name",
+  showMidiNumbers: externalShowMidiNumbers,
 }: FretboardProps) {
   const config = useFretboardConfig();
 
-  const { effectiveRootNote, effectiveNoteCollectionKey, noteNames } =
-    useEffectiveMusicSystem({ rootNote, noteCollectionKey });
+  const {
+    effectiveRootNote,
+    effectiveNoteCollectionKey,
+    noteNames,
+    showMidiNumbers: contextShowMidiNumbers,
+  } = useEffectiveMusicSystem({ rootNote, noteCollectionKey });
+
+  const effectiveShowMidiNumbers =
+    externalShowMidiNumbers ?? contextShowMidiNumbers;
 
   const tuning = config.tuning;
   const fretRange = config.fretRange;
@@ -71,11 +77,9 @@ export default function FretboardNotesLayer({
             const note = activeNotes?.[key];
 
             const label = note
-              ? getNoteLabel({
-                  note,
-                  labelType: noteLabelType,
-                  noteNames,
-                })
+              ? effectiveShowMidiNumbers
+                ? String(note.midi)
+                : noteNames?.[note.midi % 12]
               : undefined;
 
             return (
@@ -99,7 +103,7 @@ export default function FretboardNotesLayer({
                 }}
               >
                 {note && (
-                  <FretboardNote note={note} label={label?.toString()} />
+                  <FretboardNote note={note} label={label} />
                 )}
               </div>
             );

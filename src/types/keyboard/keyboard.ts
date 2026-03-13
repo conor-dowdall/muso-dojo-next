@@ -1,8 +1,5 @@
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
-import {
-  type ActiveNotes,
-  type NoteLabelType,
-} from "@/types/instrument/shared";
+import { type ActiveNotes } from "@/types/instrument/shared";
 import { type KeyboardPresetName } from "@/configs/keyboard/presets";
 
 export interface KeyboardConfig {
@@ -41,8 +38,10 @@ export interface KeyboardProps {
   config?: KeyboardConfig;
   rootNote?: string;
   noteCollectionKey?: NoteCollectionKey;
-  noteLabelType?: NoteLabelType;
+  /** When true, note labels display MIDI note numbers instead of the active conversion (note names, intervals, etc.) */
+  showMidiNumbers?: boolean;
   activeNotes?: ActiveNotes;
   onActiveNotesChange?: (notes: ActiveNotes) => void;
   showToolbar?: boolean;
 }
+

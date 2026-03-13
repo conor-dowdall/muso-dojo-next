@@ -1,7 +1,6 @@
 import { useKeyboardConfig } from "@/context/keyboard/KeyboardContext";
 import { useEffectiveMusicSystem } from "@/hooks/useEffectiveMusicSystem";
 import { useActiveNotes } from "@/hooks/useActiveNotes";
-import { getNoteLabel } from "@/utils/music/getNoteLabel";
 import { getKeyboardActiveNotes } from "@/utils/keyboard/getKeyboardActiveNotes";
 import { toggleKeyboardNote } from "@/utils/keyboard/toggleKeyboardNote";
 import {
@@ -17,12 +16,19 @@ export default function KeyboardNotesLayer({
   onActiveNotesChange: externalOnChange,
   noteCollectionKey,
   rootNote,
-  noteLabelType = "note-name",
+  showMidiNumbers: externalShowMidiNumbers,
 }: KeyboardProps) {
   const config = useKeyboardConfig();
 
-  const { effectiveRootNote, effectiveNoteCollectionKey, noteNames } =
-    useEffectiveMusicSystem({ rootNote, noteCollectionKey });
+  const {
+    effectiveRootNote,
+    effectiveNoteCollectionKey,
+    noteNames,
+    showMidiNumbers: contextShowMidiNumbers,
+  } = useEffectiveMusicSystem({ rootNote, noteCollectionKey });
+
+  const effectiveShowMidiNumbers =
+    externalShowMidiNumbers ?? contextShowMidiNumbers;
 
   const midiRange = config.midiRange;
   const [startMidi, endMidi] = midiRange;
@@ -93,11 +99,9 @@ export default function KeyboardNotesLayer({
         const note = activeNotes?.[key];
 
         const label = note
-          ? getNoteLabel({
-              note,
-              labelType: noteLabelType,
-              noteNames,
-            })
+          ? effectiveShowMidiNumbers
+            ? String(note.midi)
+            : noteNames?.[note.midi % 12]
           : undefined;
 
         return (
@@ -128,7 +132,7 @@ export default function KeyboardNotesLayer({
             {note && (
               <KeyboardNote
                 note={note}
-                label={label?.toString()}
+                label={label}
                 isBlack={black}
               />
             )}

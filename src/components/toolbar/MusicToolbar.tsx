@@ -46,9 +46,11 @@ export default function MusicToolbar() {
   };
 
   const currentFormatName =
-    Object.values(conversions.rootAndNoteCollection).find(
-      (c) => c.id === activeConversionId,
-    )?.name || activeConversionId;
+    activeConversionId === "midi"
+      ? "Midi"
+      : Object.values(conversions.rootAndNoteCollection).find(
+          (c) => c.id === activeConversionId,
+        )?.name || activeConversionId;
 
   const buttonStyle = {
     display: "flex",

@@ -4,13 +4,10 @@ import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import {
   type ActiveNote,
   type ActiveNotes,
-  type NoteLabelType,
 } from "@/types/instrument/shared";
 
 // Re-export shared types for backward compatibility
 export type { ActiveNote, ActiveNotes };
-
-export type FretboardNoteLabelType = NoteLabelType;
 
 export interface FretboardConfig {
   // Setup
@@ -72,8 +69,10 @@ export interface FretboardProps {
    */
   rootNote?: string;
   noteCollectionKey?: NoteCollectionKey;
-  noteLabelType?: FretboardNoteLabelType;
+  /** When true, note labels display MIDI note numbers instead of the active conversion (note names, intervals, etc.) */
+  showMidiNumbers?: boolean;
   activeNotes?: ActiveNotes;
   onActiveNotesChange?: (notes: ActiveNotes) => void;
   showToolbar?: boolean;
 }
+

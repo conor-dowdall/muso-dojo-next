@@ -44,10 +44,13 @@ export function useEffectiveMusicSystem({
           noteCollectionKey: effectiveNoteCollectionKey,
         });
 
+  const showMidiNumbers = activeConversionId === "midi";
+
   return {
     effectiveRootNote,
     effectiveNoteCollectionKey,
     activeConversionId,
     noteNames,
+    showMidiNumbers,
   };
 }

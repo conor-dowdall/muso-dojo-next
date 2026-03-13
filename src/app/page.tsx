@@ -25,7 +25,7 @@ export default function Home() {
           <Fretboard preset="darkGibson" />
         </div>
         <div style={{ width: "100%", maxWidth: "50em", height: "10em" }}>
-          <Keyboard config={{ midiRange: [48, 85] }} />
+          <Keyboard config={{ midiRange: [44, 85] }} />
         </div>
       </div>
     </MusicSystemProvider>

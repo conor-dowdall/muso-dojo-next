@@ -151,6 +151,17 @@ export function MusicSelectorDialog({
                     </button>
                   ),
                 )}
+                <button
+                  type="button"
+                  className={styles.collectionButton}
+                  aria-pressed={activeConversionId === "midi"}
+                  onClick={() => {
+                    onConversionChange("midi");
+                    onClose();
+                  }}
+                >
+                  MIDI Note
+                </button>
               </div>
             </div>
           </div>
