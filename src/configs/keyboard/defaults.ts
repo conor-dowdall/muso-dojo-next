@@ -3,13 +3,13 @@ import { type KeyboardConfig } from "@/types/keyboard/keyboard";
 export const keyboardDefaults: Required<KeyboardConfig> = {
   midiRange: [48, 72], // C3 to C5 (2 octaves)
 
-  whiteKeyColor: "light-dark(#ffffff, #e8e8e8)",
-  blackKeyColor: "light-dark(#1a1a1a, #2a2a2a)",
+  whiteKeyColor: "white",
+  blackKeyColor: "black",
 
-  whiteKeyTextColor: "light-dark(#333333, #333333)",
-  blackKeyTextColor: "light-dark(#ffffff, #ffffff)",
+  whiteKeyTextColor: "black",
+  blackKeyTextColor: "white",
 
-  keyBorderColor: "light-dark(#cccccc, #444444)",
+  keyBorderColor: "black",
   keyBorderRadius: "0 0 4px 4px",
 
   showKeyLabels: false,

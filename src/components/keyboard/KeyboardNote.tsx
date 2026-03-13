@@ -23,11 +23,9 @@ export default function KeyboardNote({
         justifyContent: "center",
         width: isLarge ? "80%" : "55%",
         aspectRatio: "1",
-        borderRadius: "50%",
-        backgroundColor: isBlack
-          ? "rgba(255, 255, 255, 0.9)"
-          : "rgba(0, 0, 0, 0.85)",
-        color: isBlack ? "#1a1a1a" : "#ffffff",
+        borderRadius: "10px",
+        backgroundColor: isBlack ? "white" : "black",
+        color: isBlack ? "black" : "white",
         fontWeight: "bold",
         transition: "all 0.15s ease-out",
         opacity: isLarge ? 1 : 0.6,

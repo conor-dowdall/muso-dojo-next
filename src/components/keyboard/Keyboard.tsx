@@ -72,6 +72,9 @@ function KeyboardInner(props: KeyboardProps) {
         width: "100%",
         height: "100%",
         position: "relative",
+        // a sharp note can stick out past the right edge of the keyboard
+        // so we need to hide it
+        overflow: "hidden",
       }}
     >
       <KeyboardBackground />
