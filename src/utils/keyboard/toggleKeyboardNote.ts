@@ -1,29 +1,24 @@
 import { type ActiveNotes } from "@/types/instrument/shared";
 import { cycleNoteEmphasis } from "@/utils/music/cycleNoteEmphasis";
 
-interface ToggleFretboardNoteParams {
-  stringIndex: number;
-  fretNumber: number;
-  openStringMidi: number;
+interface ToggleKeyboardNoteParams {
+  midi: number;
   activeNotes?: ActiveNotes;
   onActiveNotesChange?: (notes: ActiveNotes) => void;
 }
 
 /**
- * Toggles a note on the fretboard.
+ * Toggles a note on the keyboard.
  * Logic: Undefined -> Large -> Small -> Undefined
  */
-export function toggleFretboardNote({
-  stringIndex,
-  fretNumber,
-  openStringMidi,
+export function toggleKeyboardNote({
+  midi,
   activeNotes,
   onActiveNotesChange,
-}: ToggleFretboardNoteParams) {
+}: ToggleKeyboardNoteParams) {
   if (!onActiveNotesChange || !activeNotes) return;
 
-  const key = `${stringIndex}-${fretNumber}`;
-  const midi = openStringMidi + fretNumber;
+  const key = `${midi}`;
   const next = cycleNoteEmphasis(activeNotes[key], midi);
 
   const newNotes = { ...activeNotes };
