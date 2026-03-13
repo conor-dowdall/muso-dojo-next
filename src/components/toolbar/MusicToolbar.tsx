@@ -47,7 +47,7 @@ export default function MusicToolbar() {
 
   const currentFormatName =
     activeConversionId === "midi"
-      ? "Midi"
+      ? "MIDI Notes"
       : Object.values(conversions.rootAndNoteCollection).find(
           (c) => c.id === activeConversionId,
         )?.name || activeConversionId;
