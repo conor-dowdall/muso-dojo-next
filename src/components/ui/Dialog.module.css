@@ -1,0 +1,59 @@
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dialog {
+  animation: slideIn 0.1s ease-out;
+  max-width: 50rem;
+  background-color: var(--background, rgb(0 0 0 / 0.95));
+  padding: 0;
+  border: 1px solid var(--border, white);
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgb(255 255 255 / 0.2);
+  color: var(--foreground, white);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border, white);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  color: inherit;
+}
+
+.closeButton:hover {
+  background-color: var(--secondary, #1f1f1f);
+}
+
+.content {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}

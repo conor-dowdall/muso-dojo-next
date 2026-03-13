@@ -1,4 +1,3 @@
-import { useRef, useEffect } from "react";
 import {
   enharmonicRootNoteGroups,
   groupedNoteCollections,
@@ -8,7 +7,7 @@ import {
   type NoteCollectionGroupKey,
 } from "@musodojo/music-theory-data";
 import styles from "./MusicSelectorDialog.module.css";
-import { X } from "lucide-react";
+import { Dialog } from "../ui/Dialog";
 
 export type MusicSelectorMode = "root" | "collection" | "format";
 
@@ -35,24 +34,6 @@ export function MusicSelectorDialog({
   onNoteCollectionChange,
   onConversionChange,
 }: MusicSelectorDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  // Sync dialog open/close with isOpen prop
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (isOpen) {
-      if (!dialog.open) {
-        dialog.showModal();
-      }
-    } else {
-      if (dialog.open) {
-        dialog.close();
-      }
-    }
-  }, [isOpen]);
-
   const renderContent = () => {
     switch (mode) {
       case "root":
@@ -185,29 +166,13 @@ export function MusicSelectorDialog({
   };
 
   return (
-    <dialog
+    <Dialog
       data-component="MusicSelectorDialog"
-      ref={dialogRef}
-      className={styles.dialog}
+      isOpen={isOpen}
       onClose={onClose}
-      onClick={(e) => {
-        if (e.target === dialogRef.current) {
-          onClose();
-        }
-      }}
+      title={getTitle()}
     >
-      <div className={styles.header}>
-        <h2 className={styles.title}>{getTitle()}</h2>
-        <button
-          onClick={onClose}
-          className={styles.closeButton}
-          aria-label="Close dialog"
-        >
-          <X size={20} />
-        </button>
-      </div>
-
-      <div className={styles.content}>{renderContent()}</div>
-    </dialog>
+      {renderContent()}
+    </Dialog>
   );
 }
