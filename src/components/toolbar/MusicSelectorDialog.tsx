@@ -141,7 +141,7 @@ export function MusicSelectorDialog({
                     onClose();
                   }}
                 >
-                  MIDI Note
+                  MIDI Notes
                 </button>
               </div>
             </div>
@@ -157,7 +157,7 @@ export function MusicSelectorDialog({
       case "root":
         return "Select Root Note";
       case "collection":
-        return "Select Scale Strategy";
+        return "Select Note Collection";
       case "format":
         return "Select Display Format";
       default:
