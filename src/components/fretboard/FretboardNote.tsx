@@ -1,4 +1,5 @@
 import type { ActiveNote } from "@/types/fretboard/fretboard";
+import styles from "./Fretboard.module.css";
 
 interface FretboardNoteProps {
   note: ActiveNote;
@@ -23,24 +24,12 @@ export default function FretboardNote({
   return (
     <div
       data-component="FretboardNote"
+      className={styles.note}
       style={{
         ...style,
-        container: "note-display-wrapper / size",
-        backgroundColor: "black",
-        color: "white",
-        textBoxTrim: "trim-both",
-        textBoxEdge: "cap alphabetic",
-        pointerEvents: "none",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontWeight: "bold",
-        transition: "all 0.2s cubic-bezier(0.5, -1, 1, 1)",
         width: isLarge ? "90%" : "60%",
         height: isLarge ? "90%" : "60%",
         opacity: isLarge ? 1 : 0.8,
-        borderRadius: "12%",
-        overflow: "hidden",
       }}
       onPointerDown={(e) => {
         e.stopPropagation();
@@ -49,9 +38,6 @@ export default function FretboardNote({
     >
       <span
         style={{
-          // Use 'min' to constrain the text by BOTH height and width limits.
-          // 80cqh: Caps the height to 80% of the container (leaves nice padding).
-          // maxFontWidth * cqw: Caps by width based on string length!
           fontSize: `min(80cqh, ${maxFontWidth}cqw)`,
         }}
       >

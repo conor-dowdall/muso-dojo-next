@@ -12,6 +12,7 @@ import FretboardBackground from "./FretboardBackground";
 import FretboardNotesLayer from "./FretboardNotesLayer";
 import { getNumFrets } from "@/utils/fretboard/getNumFrets";
 import { calculateFretboardGridColumns } from "@/utils/fretboard/calculateFretboardGridColumns";
+import styles from "./Fretboard.module.css";
 
 export default function Fretboard(props: FretboardProps) {
   return (
@@ -38,16 +39,7 @@ function FretboardContent(props: FretboardProps) {
         initialRootNote={initialRootNote}
         initialNoteCollectionKey={initialNoteCollectionKey}
       >
-        <div
-          data-component="Fretboard"
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
+        <div data-component="Fretboard" className={styles.fretboardLayout}>
           <MusicToolbar />
           <div style={{ flex: 1 }}>
             <FretboardInner
@@ -77,17 +69,16 @@ function FretboardInner(props: FretboardProps) {
   return (
     <div
       data-component="FretboardInner"
-      style={{
-        container: "fretboard-inner / size",
-        width: "100%",
-        height: "100%",
-        display: "grid",
-        gridTemplateRows: isFretLabelsBottom
-          ? "1fr max-content"
-          : "max-content 1fr",
-        gridTemplateColumns: fretboardGridColumns,
-        direction: config.leftHanded ? "rtl" : "ltr",
-      }}
+      className={styles.fretboardInner}
+      style={
+        {
+          gridTemplateRows: isFretLabelsBottom
+            ? "1fr max-content"
+            : "max-content 1fr",
+          gridTemplateColumns: fretboardGridColumns,
+          direction: config.leftHanded ? "rtl" : "ltr",
+        } as React.CSSProperties
+      }
     >
       <FretboardBackground />
       <FretboardNotesLayer {...props} />

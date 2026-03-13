@@ -1,4 +1,5 @@
 import { useFretboardConfig } from "@/context/fretboard/FretboardContext";
+import styles from "./Fretboard.module.css";
 
 export default function InstrumentString({
   stringNumber,
@@ -11,22 +12,16 @@ export default function InstrumentString({
   const color = config.stringColors?.[stringNumber] ?? config.stringColor;
 
   return (
-    <div
-      data-component="InstrumentString"
-      style={{
-        flex: "1",
-        display: "flex",
-        alignItems: "center",
-        width: "100%",
-      }}
-    >
+    <div data-component="InstrumentString" className={styles.instrumentStringArea}>
       {show && (
         <div
-          style={{
-            width: "100%",
-            height: width,
-            background: color,
-          }}
+          className={styles.instrumentStringWire}
+          style={
+            {
+              "--string-width": width,
+              "--string-color": color,
+            } as React.CSSProperties
+          }
         />
       )}
     </div>

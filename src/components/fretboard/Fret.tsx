@@ -1,5 +1,6 @@
 import { fretboardIcons } from "@/configs/fretboard/icons";
 import { useFretboardConfig } from "@/context/fretboard/FretboardContext";
+import styles from "./Fretboard.module.css";
 
 export default function Fret({ fretNumber }: { fretNumber: number }) {
   const config = useFretboardConfig();
@@ -28,105 +29,80 @@ export default function Fret({ fretNumber }: { fretNumber: number }) {
 
   const leftHanded = config.leftHanded;
 
-  const iconStyle = {
-    width: "100%",
-    height: "100%",
-    maxWidth: "100%",
-    maxHeight: "100%",
-    transform: leftHanded ? "scaleX(-1)" : undefined,
-  };
-
   return (
     <div
       data-component="Fret"
-      style={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "row",
-        overflow: "hidden", // Prevent large icons from expanding the fret
-      }}
+      className={styles.fret}
+      style={
+        {
+          "--inlay-gap": config.fretInlayDoubleGap,
+        } as React.CSSProperties
+      }
     >
       <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: isDouble ? "column" : "row", // Vertical for double, center for single
-          alignItems: "center",
-          justifyContent: "center",
-          gap: config.fretInlayDoubleGap,
-
-          overflow: "hidden", // Ensure content doesn't spill out
-        }}
+        className={styles.fretContent}
+        style={
+          {
+            flexDirection: isDouble ? "column" : "row",
+          } as React.CSSProperties
+        }
       >
-        {Icon &&
-          (isDouble ? (
-            <>
-              <div
-                style={{
-                  width: inlayWidth,
-                  height: inlayHeight,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  maxWidth: "100%",
-                  maxHeight: "100%",
-                }}
-              >
-                <Icon
-                  fill={inlayColor}
-                  strokeWidth={0}
-                  preserveAspectRatio="none"
-                  style={iconStyle}
-                />
-              </div>
-              <div
-                style={{
-                  width: inlayWidth,
-                  height: inlayHeight,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  maxWidth: "100%",
-                  maxHeight: "100%",
-                }}
-              >
-                <Icon
-                  fill={inlayColor}
-                  strokeWidth={0}
-                  preserveAspectRatio="none"
-                  style={iconStyle}
-                />
-              </div>
-            </>
-          ) : (
+        {Icon && (
+          <>
             <div
-              style={{
-                width: inlayWidth,
-                height: inlayHeight,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                maxWidth: "100%",
-                maxHeight: "100%",
-              }}
+              className={styles.inlayIconWrapper}
+              style={
+                {
+                  "--inlay-width": inlayWidth,
+                  "--inlay-height": inlayHeight,
+                } as React.CSSProperties
+              }
             >
               <Icon
                 fill={inlayColor}
                 strokeWidth={0}
                 preserveAspectRatio="none"
-                style={iconStyle}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  transform: leftHanded ? "scaleX(-1)" : undefined,
+                }}
               />
             </div>
-          ))}
+            {isDouble && (
+              <div
+                className={styles.inlayIconWrapper}
+                style={
+                  {
+                    "--inlay-width": inlayWidth,
+                    "--inlay-height": inlayHeight,
+                  } as React.CSSProperties
+                }
+              >
+                <Icon
+                  fill={inlayColor}
+                  strokeWidth={0}
+                  preserveAspectRatio="none"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    transform: leftHanded ? "scaleX(-1)" : undefined,
+                  }}
+                />
+              </div>
+            )}
+          </>
+        )}
       </div>
       {show && (
         <div
-          style={{
-            height: "100%",
-            width: width,
-            background: color,
-            flexShrink: 0,
-          }}
+          className={styles.fretWire}
+          style={
+            {
+              "--wire-width": width,
+              "--wire-color": color,
+            } as React.CSSProperties
+          }
         />
       )}
     </div>

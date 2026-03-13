@@ -6,6 +6,7 @@ import { getScaleActiveNotes } from "@/utils/fretboard/getScaleActiveNotes";
 import { toggleFretboardNote } from "@/utils/fretboard/toggleFretboardNote";
 import { type FretboardProps } from "@/types/fretboard/fretboard";
 import FretboardNote from "./FretboardNote";
+import styles from "./Fretboard.module.css";
 
 export default function FretboardNotesLayer({
   activeNotes: externalActiveNotes,
@@ -50,25 +51,16 @@ export default function FretboardNotesLayer({
   const mainContentGridRow = isFretLabelsBottom ? "1 / 2" : "2 / -1";
 
   return (
-    <div
-      data-component="FretboardNotesLayer"
-      style={{
-        display: "grid",
-        gridColumn: "1 / -1",
-        gridRow: "1 / -1",
-        gridTemplateRows: "subgrid",
-        gridTemplateColumns: "subgrid",
-      }}
-    >
+    <div data-component="FretboardNotesLayer" className={styles.subgridOverlay}>
       {/* Notes Container */}
       <div
-        style={{
-          gridColumn: "1 / -1",
-          gridRow: mainContentGridRow,
-          display: "grid",
-          gridTemplateColumns: "subgrid",
-          gridTemplateRows: `repeat(${tuning.length}, 1fr)`,
-        }}
+        className={styles.notesContainer}
+        style={
+          {
+            gridRow: mainContentGridRow,
+            gridTemplateRows: `repeat(${tuning.length}, 1fr)`,
+          } as React.CSSProperties
+        }
       >
         {tuning.map((openStringMidi, stringIndex) =>
           Array.from({ length: numFrets }).map((_, fretIndex) => {
@@ -85,13 +77,13 @@ export default function FretboardNotesLayer({
             return (
               <div
                 key={key}
-                style={{
-                  gridColumn: `${fretIndex + 1} / span 1`,
-                  gridRow: `${stringIndex + 1} / span 1`,
-                  display: "grid",
-                  placeItems: "center",
-                  cursor: "pointer",
-                }}
+                className={styles.noteCell}
+                style={
+                  {
+                    gridColumn: `${fretIndex + 1} / span 1`,
+                    gridRow: `${stringIndex + 1} / span 1`,
+                  } as React.CSSProperties
+                }
                 onPointerDown={() => {
                   toggleFretboardNote({
                     stringIndex,
@@ -102,9 +94,7 @@ export default function FretboardNotesLayer({
                   });
                 }}
               >
-                {note && (
-                  <FretboardNote note={note} label={label} />
-                )}
+                {note && <FretboardNote note={note} label={label} />}
               </div>
             );
           }),
