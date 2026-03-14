@@ -23,8 +23,10 @@ export default function Fretboard(props: FretboardProps) {
 }
 
 function FretboardContent(props: FretboardProps) {
-  const { showToolbar, rootNote, noteCollectionKey } = props;
+  const { showToolbar, rootNote, noteCollectionKey, noteEmphasis: propEmphasis } = props;
   const musicSystem = useMusicSystem();
+
+  const noteEmphasis = propEmphasis ?? musicSystem?.noteEmphasis;
 
   // Effective values: Prop > Context > Default
   const initialRootNote = rootNote ?? musicSystem?.rootNote ?? "C";
@@ -44,6 +46,7 @@ function FretboardContent(props: FretboardProps) {
           <div style={{ flex: 1 }}>
             <FretboardInner
               {...props}
+              noteEmphasis={noteEmphasis}
               // Pass null/undefined for these so the inner component uses the context we just created
               rootNote={undefined}
               noteCollectionKey={undefined}
@@ -54,7 +57,7 @@ function FretboardContent(props: FretboardProps) {
     );
   }
 
-  return <FretboardInner {...props} />;
+  return <FretboardInner {...props} noteEmphasis={noteEmphasis} />;
 }
 
 function FretboardInner(props: FretboardProps) {

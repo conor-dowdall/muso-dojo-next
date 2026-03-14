@@ -11,10 +11,14 @@ import {
   MusicSelectorDialog,
   type MusicSelectorMode,
 } from "./MusicSelectorDialog";
+import { Circle, CircleDot, CircleOff } from "lucide-react";
+import { useInstrumentShortcuts } from "@/hooks/useInstrumentShortcuts";
 
 export default function MusicToolbar() {
   const musicSystem = useMusicSystem();
   const [dialogMode, setDialogMode] = useState<MusicSelectorMode | null>(null);
+
+  useInstrumentShortcuts();
 
   if (!musicSystem) {
     return null;
@@ -27,7 +31,15 @@ export default function MusicToolbar() {
     setNoteCollectionKey,
     activeConversionId,
     setActiveConversionId,
+    noteEmphasis,
+    setNoteEmphasis,
   } = musicSystem;
+
+  const toggleNoteEmphasis = () => {
+    if (noteEmphasis === "large") setNoteEmphasis("small");
+    else if (noteEmphasis === "small") setNoteEmphasis("hidden");
+    else setNoteEmphasis("large");
+  };
 
   // Helper to get the display name of the current collection
   const getCurrentCollectionName = () => {
@@ -98,6 +110,15 @@ export default function MusicToolbar() {
             title="Change Display Format"
           >
             {currentFormatName}
+          </button>
+          <button
+            onClick={toggleNoteEmphasis}
+            style={buttonStyle}
+            title={`Note Size: ${noteEmphasis.charAt(0).toUpperCase() + noteEmphasis.slice(1)}`}
+          >
+            {noteEmphasis === "large" && <Circle size={16} />}
+            {noteEmphasis === "small" && <CircleDot size={16} />}
+            {noteEmphasis === "hidden" && <CircleOff size={16} />}
           </button>
         </div>
       </div>
