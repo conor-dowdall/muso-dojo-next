@@ -14,6 +14,7 @@ export default function FretboardNotesLayer({
   noteCollectionKey,
   rootNote,
   showMidiNumbers: externalShowMidiNumbers,
+  noteEmphasis,
 }: FretboardProps) {
   const config = useFretboardConfig();
 
@@ -94,7 +95,16 @@ export default function FretboardNotesLayer({
                   });
                 }}
               >
-                {note && <FretboardNote note={note} label={label} />}
+                {note && (
+                  <FretboardNote
+                    note={
+                      noteEmphasis
+                        ? { ...note, emphasis: noteEmphasis }
+                        : note
+                    }
+                    label={label}
+                  />
+                )}
               </div>
             );
           }),

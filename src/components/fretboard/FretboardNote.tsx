@@ -14,7 +14,9 @@ export default function FretboardNote({
   onPointerDown,
   style,
 }: FretboardNoteProps) {
-  const isLarge = note.emphasis === "large";
+  const emphasis = note.emphasis;
+  const isLarge = emphasis === "large";
+  const isHidden = emphasis === "hidden";
 
   // A typical character width-to-height ratio is about 0.6 in standard fonts.
   // We use this to estimate the horizontal space the string will take.
@@ -27,11 +29,14 @@ export default function FretboardNote({
       className={styles.note}
       style={{
         ...style,
-        width: isLarge ? "90%" : "60%",
-        height: isLarge ? "90%" : "60%",
-        opacity: isLarge ? 1 : 0.8,
+        width: isHidden ? "0%" : isLarge ? "90%" : "60%",
+        height: isHidden ? "0%" : isLarge ? "90%" : "60%",
+        opacity: isHidden ? 0 : isLarge ? 1 : 0.8,
+        transform: isHidden ? "scale(0)" : "scale(1)",
+        pointerEvents: isHidden ? "none" : "auto",
       }}
       onPointerDown={(e) => {
+        if (isHidden) return;
         e.stopPropagation();
         onPointerDown?.();
       }}

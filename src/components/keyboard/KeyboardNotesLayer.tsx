@@ -17,6 +17,7 @@ export default function KeyboardNotesLayer({
   noteCollectionKey,
   rootNote,
   showMidiNumbers: externalShowMidiNumbers,
+  noteEmphasis,
 }: KeyboardProps) {
   const config = useKeyboardConfig();
 
@@ -131,7 +132,11 @@ export default function KeyboardNotesLayer({
           >
             {note && (
               <KeyboardNote
-                note={note}
+                note={
+                  noteEmphasis
+                    ? { ...note, emphasis: noteEmphasis }
+                    : note
+                }
                 label={label}
                 isBlack={black}
               />

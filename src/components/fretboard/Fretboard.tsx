@@ -81,7 +81,7 @@ function FretboardInner(props: FretboardProps) {
       }
     >
       <FretboardBackground />
-      <FretboardNotesLayer {...props} />
+      <FretboardNotesLayer {...props} noteEmphasis={props.noteEmphasis} />
     </div>
   );
 }
