@@ -22,13 +22,13 @@ export default function Home() {
         }}
       >
         <div style={{ width: "100%", maxWidth: "50em", height: "10em" }}>
-          <Fretboard preset="darkGibson" config={{}} />
+          <Fretboard preset="darkGibson" showToolbar />
         </div>
         {/* <div style={{ width: "100%", maxWidth: "50em", height: "10em" }}>
           <Fretboard preset="lightTelecaster" config={{}} />
         </div> */}
         <div style={{ width: "100%", maxWidth: "50em", height: "10em" }}>
-          <Keyboard config={{ midiRange: [44, 85] }} />
+          <Keyboard preset="3octave" showToolbar />
         </div>
       </div>
     </MusicSystemProvider>

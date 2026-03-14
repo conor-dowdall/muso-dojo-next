@@ -1,7 +1,4 @@
-import {
-  presets,
-  type KeyboardPresetName,
-} from "@/configs/keyboard/presets";
+import { presets, type KeyboardPresetName } from "@/configs/keyboard/presets";
 import { type KeyboardConfig } from "@/types/keyboard/keyboard";
 import { keyboardDefaults } from "@/configs/keyboard/defaults";
 
@@ -12,9 +9,7 @@ export function createKeyboardConfig(
   preset?: KeyboardPresetName,
   overrides?: KeyboardConfig,
 ): Required<KeyboardConfig> {
-  const presetConfig = preset
-    ? (presets as Record<string, Partial<KeyboardConfig>>)[preset]
-    : undefined;
+  const presetConfig = preset ? presets[preset] : undefined;
 
   if (process.env.NODE_ENV === "development" && preset && !presetConfig) {
     console.warn(

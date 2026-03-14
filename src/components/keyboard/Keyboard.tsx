@@ -20,7 +20,12 @@ export default function Keyboard(props: KeyboardProps) {
 }
 
 function KeyboardContent(props: KeyboardProps) {
-  const { showToolbar, rootNote, noteCollectionKey, noteEmphasis: propEmphasis } = props;
+  const {
+    showToolbar,
+    rootNote,
+    noteCollectionKey,
+    noteEmphasis: propEmphasis,
+  } = props;
   const musicSystem = useMusicSystem();
 
   const noteEmphasis = propEmphasis ?? musicSystem?.noteEmphasis;

@@ -4,8 +4,7 @@ import { fretboardDefaults } from "@/configs/fretboard/defaults";
 
 /**
  * Creates a fully resolved FretboardConfig from optional preset and user overrides.
- * All string references (preset names, theme names) are resolved to actual objects.
- * The returned config is guaranteed to have theme as a FretboardTheme object (never a string).
+ * Preset name is resolved to an actual stored object, if it exists.
  */
 export function createFretboardConfig(
   preset?: FretboardPresetName,
