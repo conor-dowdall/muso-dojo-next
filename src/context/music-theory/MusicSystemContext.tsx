@@ -7,9 +7,11 @@ interface MusicSystemContextValue {
   rootNote: string;
   noteCollectionKey: NoteCollectionKey;
   activeConversionId: string;
+  noteEmphasis: "large" | "small" | "hidden";
   setRootNote: (note: string) => void;
   setNoteCollectionKey: (key: NoteCollectionKey) => void;
   setActiveConversionId: (id: string) => void;
+  setNoteEmphasis: (emphasis: "large" | "small" | "hidden") => void;
 }
 
 const MusicSystemContext = createContext<MusicSystemContextValue | null>(null);
@@ -19,6 +21,7 @@ interface MusicSystemProviderProps {
   initialRootNote?: string;
   initialNoteCollectionKey?: NoteCollectionKey;
   initialActiveConversionId?: string;
+  initialNoteEmphasis?: "large" | "small" | "hidden";
 }
 
 export function MusicSystemProvider({
@@ -26,6 +29,7 @@ export function MusicSystemProvider({
   initialRootNote = "C",
   initialNoteCollectionKey = "major",
   initialActiveConversionId = "note-names",
+  initialNoteEmphasis = "large",
 }: MusicSystemProviderProps) {
   const [rootNote, setRootNote] = useState(initialRootNote);
   const [noteCollectionKey, setNoteCollectionKey] = useState<NoteCollectionKey>(
@@ -34,14 +38,19 @@ export function MusicSystemProvider({
   const [activeConversionId, setActiveConversionId] = useState<string>(
     initialActiveConversionId,
   );
+  const [noteEmphasis, setNoteEmphasis] = useState<"large" | "small" | "hidden">(
+    initialNoteEmphasis,
+  );
 
   const value = {
     rootNote,
     noteCollectionKey,
     activeConversionId,
+    noteEmphasis,
     setRootNote,
     setNoteCollectionKey,
     setActiveConversionId,
+    setNoteEmphasis,
   };
 
   return (

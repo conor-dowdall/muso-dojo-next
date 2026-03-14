@@ -20,8 +20,10 @@ export default function Keyboard(props: KeyboardProps) {
 }
 
 function KeyboardContent(props: KeyboardProps) {
-  const { showToolbar, rootNote, noteCollectionKey } = props;
+  const { showToolbar, rootNote, noteCollectionKey, noteEmphasis: propEmphasis } = props;
   const musicSystem = useMusicSystem();
+
+  const noteEmphasis = propEmphasis ?? musicSystem?.noteEmphasis;
 
   // Effective values: Prop > Context > Default
   const initialRootNote = rootNote ?? musicSystem?.rootNote ?? "C";
@@ -48,6 +50,7 @@ function KeyboardContent(props: KeyboardProps) {
           <div style={{ flex: 1 }}>
             <KeyboardInner
               {...props}
+              noteEmphasis={noteEmphasis}
               rootNote={undefined}
               noteCollectionKey={undefined}
             />
@@ -57,7 +60,7 @@ function KeyboardContent(props: KeyboardProps) {
     );
   }
 
-  return <KeyboardInner {...props} />;
+  return <KeyboardInner {...props} noteEmphasis={noteEmphasis} />;
 }
 
 function KeyboardInner(props: KeyboardProps) {
