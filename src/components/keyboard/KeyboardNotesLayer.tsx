@@ -17,7 +17,7 @@ export default function KeyboardNotesLayer({
   noteCollectionKey,
   rootNote,
   showMidiNumbers: externalShowMidiNumbers,
-  noteEmphasis,
+  noteEmphasis = "large",
 }: KeyboardProps) {
   const config = useKeyboardConfig();
 
@@ -34,7 +34,9 @@ export default function KeyboardNotesLayer({
   const midiRange = config.midiRange;
   const [startMidi, endMidi] = midiRange;
 
-  const dependencies = `${effectiveRootNote}-${effectiveNoteCollectionKey}-${midiRange.join()}`;
+  // Include noteEmphasis in dependencies so manual overrides are cleared
+  // when the global mode changes (switching between Large, Small, Hidden).
+  const dependencies = `${effectiveRootNote}-${effectiveNoteCollectionKey}-${midiRange.join()}-${noteEmphasis}`;
 
   const [activeNotes, onActiveNotesChange] = useActiveNotes(
     externalActiveNotes,
@@ -67,8 +69,7 @@ export default function KeyboardNotesLayer({
       // Black key: positioned relative to the current white key index
       const offset = getBlackKeyOffset(midi);
       const leftPercent =
-        (whiteKeyIndex / numWhiteKeys) * 100 +
-        (offset * 100) / numWhiteKeys;
+        (whiteKeyIndex / numWhiteKeys) * 100 + (offset * 100) / numWhiteKeys;
       keys.push({
         midi,
         isBlack: true,
@@ -105,6 +106,9 @@ export default function KeyboardNotesLayer({
             : noteNames?.[note.midi % 12]
           : undefined;
 
+        // Note emphasis override ALWAYS wins over global state.
+        const effectiveEmphasis = note?.emphasis ?? noteEmphasis;
+
         return (
           <div
             key={key}
@@ -118,7 +122,6 @@ export default function KeyboardNotesLayer({
               display: "flex",
               alignItems: "flex-end",
               justifyContent: "center",
-              paddingBottom: black ? "4%" : "3%",
               pointerEvents: "auto",
               cursor: "pointer",
             }}
@@ -127,16 +130,16 @@ export default function KeyboardNotesLayer({
                 midi,
                 activeNotes,
                 onActiveNotesChange,
+                globalEmphasis: noteEmphasis,
               });
             }}
           >
             {note && (
               <KeyboardNote
-                note={
-                  noteEmphasis
-                    ? { ...note, emphasis: noteEmphasis }
-                    : note
-                }
+                note={{
+                  ...note,
+                  emphasis: effectiveEmphasis,
+                }}
                 label={label}
                 isBlack={black}
               />

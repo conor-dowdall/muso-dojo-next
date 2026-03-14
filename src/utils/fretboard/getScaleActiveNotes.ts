@@ -54,7 +54,6 @@ export function getScaleActiveNotes({
         const key = `${stringIndex}-${fretNumber}`;
         activeNotes[key] = {
           midi: noteMidi,
-          emphasis: "large",
         };
       }
     }

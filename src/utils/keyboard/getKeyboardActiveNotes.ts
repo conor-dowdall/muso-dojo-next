@@ -45,7 +45,6 @@ export function getKeyboardActiveNotes({
       const key = `${midi}`;
       activeNotes[key] = {
         midi,
-        emphasis: "large",
       };
     }
   }

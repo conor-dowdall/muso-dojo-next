@@ -4,14 +4,12 @@ import styles from "./Fretboard.module.css";
 interface FretboardNoteProps {
   note: ActiveNote;
   label?: string;
-  onPointerDown?: () => void;
   style?: React.CSSProperties;
 }
 
 export default function FretboardNote({
   note,
   label,
-  onPointerDown,
   style,
 }: FretboardNoteProps) {
   const emphasis = note.emphasis;
@@ -33,12 +31,7 @@ export default function FretboardNote({
         height: isHidden ? "0%" : isLarge ? "90%" : "60%",
         opacity: isHidden ? 0 : isLarge ? 1 : 0.8,
         transform: isHidden ? "scale(0)" : "scale(1)",
-        pointerEvents: isHidden ? "none" : "auto",
-      }}
-      onPointerDown={(e) => {
-        if (isHidden) return;
-        e.stopPropagation();
-        onPointerDown?.();
+        pointerEvents: "none",
       }}
     >
       <span

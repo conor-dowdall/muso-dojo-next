@@ -7,11 +7,12 @@ interface ToggleFretboardNoteParams {
   openStringMidi: number;
   activeNotes?: ActiveNotes;
   onActiveNotesChange?: (notes: ActiveNotes) => void;
+  globalEmphasis?: "large" | "small" | "hidden";
 }
 
 /**
  * Toggles a note on the fretboard.
- * Logic: Undefined -> Large -> Small -> Undefined
+ * Logic: Off -> Global -> Override -> Off
  */
 export function toggleFretboardNote({
   stringIndex,
@@ -19,12 +20,13 @@ export function toggleFretboardNote({
   openStringMidi,
   activeNotes,
   onActiveNotesChange,
+  globalEmphasis,
 }: ToggleFretboardNoteParams) {
   if (!onActiveNotesChange || !activeNotes) return;
 
   const key = `${stringIndex}-${fretNumber}`;
   const midi = openStringMidi + fretNumber;
-  const next = cycleNoteEmphasis(activeNotes[key], midi);
+  const next = cycleNoteEmphasis(activeNotes[key], midi, globalEmphasis);
 
   const newNotes = { ...activeNotes };
   if (next) {

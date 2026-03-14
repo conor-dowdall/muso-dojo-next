@@ -27,13 +27,15 @@ export default function KeyboardNote({
         opacity: isHidden ? 0 : isLarge ? 1 : 0.6,
         transform: isHidden ? "scale(0)" : "scale(1)",
         aspectRatio: "1",
-        borderRadius: "10px",
+        borderRadius: "12%",
         backgroundColor: isBlack ? "white" : "black",
         color: isBlack ? "black" : "white",
         fontWeight: "bold",
         transition: "all 0.15s ease-out",
         fontSize: "clamp(0.4rem, 1.5cqw, 0.75rem)",
         overflow: "hidden",
+        textBoxTrim: "trim-both",
+        textBoxEdge: "cap alphabetic",
       }}
     >
       {label && <span>{label}</span>}

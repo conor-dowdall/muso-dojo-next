@@ -14,7 +14,7 @@ export default function FretboardNotesLayer({
   noteCollectionKey,
   rootNote,
   showMidiNumbers: externalShowMidiNumbers,
-  noteEmphasis,
+  noteEmphasis = "large",
 }: FretboardProps) {
   const config = useFretboardConfig();
 
@@ -33,7 +33,9 @@ export default function FretboardNotesLayer({
   const numFrets = getNumFrets(fretRange);
   const startFret = fretRange[0];
 
-  const dependencies = `${effectiveRootNote}-${effectiveNoteCollectionKey}-${tuning.join()}-${fretRange.join()}`;
+  // Include noteEmphasis in dependencies so manual overrides are cleared
+  // when the global mode changes (switching between Large, Small, Hidden).
+  const dependencies = `${effectiveRootNote}-${effectiveNoteCollectionKey}-${tuning.join()}-${fretRange.join()}-${noteEmphasis}`;
 
   const [activeNotes, onActiveNotesChange] = useActiveNotes(
     externalActiveNotes,
@@ -75,6 +77,10 @@ export default function FretboardNotesLayer({
                 : noteNames?.[note.midi % 12]
               : undefined;
 
+            // Note emphasis override ALWAYS wins over global state.
+            // This allows spot-showing or spot-hiding notes.
+            const effectiveEmphasis = note?.emphasis ?? noteEmphasis;
+
             return (
               <div
                 key={key}
@@ -92,16 +98,16 @@ export default function FretboardNotesLayer({
                     openStringMidi,
                     activeNotes,
                     onActiveNotesChange,
+                    globalEmphasis: noteEmphasis,
                   });
                 }}
               >
                 {note && (
                   <FretboardNote
-                    note={
-                      noteEmphasis
-                        ? { ...note, emphasis: noteEmphasis }
-                        : note
-                    }
+                    note={{
+                      ...note,
+                      emphasis: effectiveEmphasis,
+                    }}
                     label={label}
                   />
                 )}
