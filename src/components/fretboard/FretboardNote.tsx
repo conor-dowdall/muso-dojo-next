@@ -1,4 +1,5 @@
 import type { ActiveNote } from "@/types/fretboard/fretboard";
+import styles from "./Fretboard.module.css";
 
 interface FretboardNoteProps {
   note: ActiveNote;
@@ -13,7 +14,9 @@ export default function FretboardNote({
   onPointerDown,
   style,
 }: FretboardNoteProps) {
-  const isLarge = note.emphasis === "large";
+  const emphasis = note.emphasis;
+  const isLarge = emphasis === "large";
+  const isHidden = emphasis === "hidden";
 
   // A typical character width-to-height ratio is about 0.6 in standard fonts.
   // We use this to estimate the horizontal space the string will take.
@@ -23,35 +26,23 @@ export default function FretboardNote({
   return (
     <div
       data-component="FretboardNote"
+      className={styles.note}
       style={{
         ...style,
-        container: "note-display-wrapper / size",
-        backgroundColor: "black",
-        color: "white",
-        textBoxTrim: "trim-both",
-        textBoxEdge: "cap alphabetic",
-        pointerEvents: "none",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontWeight: "bold",
-        transition: "all 0.2s cubic-bezier(0.5, -1, 1, 1)",
-        width: isLarge ? "90%" : "60%",
-        height: isLarge ? "90%" : "60%",
-        opacity: isLarge ? 1 : 0.8,
-        borderRadius: "12%",
-        overflow: "hidden",
+        width: isHidden ? "0%" : isLarge ? "90%" : "60%",
+        height: isHidden ? "0%" : isLarge ? "90%" : "60%",
+        opacity: isHidden ? 0 : isLarge ? 1 : 0.8,
+        transform: isHidden ? "scale(0)" : "scale(1)",
+        pointerEvents: isHidden ? "none" : "auto",
       }}
       onPointerDown={(e) => {
+        if (isHidden) return;
         e.stopPropagation();
         onPointerDown?.();
       }}
     >
       <span
         style={{
-          // Use 'min' to constrain the text by BOTH height and width limits.
-          // 80cqh: Caps the height to 80% of the container (leaves nice padding).
-          // maxFontWidth * cqw: Caps by width based on string length!
           fontSize: `min(80cqh, ${maxFontWidth}cqw)`,
         }}
       >

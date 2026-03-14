@@ -1,0 +1,165 @@
+.fretboardLayout {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fretboardInner {
+  container: fretboard-inner / size;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  /* grid-template-rows, grid-template-columns, and direction are dynamic */
+}
+
+.subgridOverlay {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  grid-template-rows: subgrid;
+  grid-template-columns: subgrid;
+}
+
+.fingerboardArea {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  background: var(--fretboard-bg);
+}
+
+.stringsArea {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+}
+
+.labelsArea {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  height: var(--labels-height);
+  background: var(--labels-bg);
+}
+
+/* Fret */
+.fret {
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+.fretContent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--inlay-gap);
+  overflow: hidden;
+}
+
+.fretWire {
+  height: 100%;
+  width: var(--wire-width);
+  background: var(--wire-color);
+  flex-shrink: 0;
+}
+
+.inlayIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--inlay-width);
+  height: var(--inlay-height);
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.inlayIcon {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Fret Label */
+.fretLabel {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+  overflow: visible;
+}
+
+.labelContent {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: visible;
+  gap: var(--label-gap);
+}
+
+.labelText {
+  font-size: var(--label-font-size);
+  color: var(--label-color);
+  text-box-trim: trim-both;
+  text-box-edge: cap alphabetic;
+}
+
+.labelIcon {
+  height: var(--label-icon-size);
+  width: auto;
+  max-width: 100%;
+}
+
+.labelSpacer {
+  width: var(--wire-width);
+  flex-shrink: 0;
+}
+
+/* Notes Layer */
+.notesContainer {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+}
+
+.noteCell {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+/* Note */
+.note {
+  container: note-display-wrapper / size;
+  background-color: black;
+  color: white;
+  text-box-trim: trim-both;
+  text-box-edge: cap alphabetic;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  transition: all 0.2s cubic-bezier(0.5, -1, 1, 1);
+  border-radius: 12%;
+  overflow: hidden;
+}
+
+/* Instrument String */
+.instrumentStringArea {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.instrumentStringWire {
+  width: 100%;
+  height: var(--string-width);
+  background: var(--string-color);
+}

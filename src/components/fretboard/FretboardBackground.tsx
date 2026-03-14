@@ -3,6 +3,7 @@ import { getNumFrets } from "@/utils/fretboard/getNumFrets";
 import Fret from "./Fret";
 import FretLabel from "./FretLabel";
 import InstrumentString from "./InstrumentString";
+import styles from "./Fretboard.module.css";
 
 export default function FretboardBackground() {
   const config = useFretboardConfig();
@@ -17,25 +18,16 @@ export default function FretboardBackground() {
   const fretLabelsGridRow = isFretLabelsBottom ? "2 / -1" : "1 / 2";
 
   return (
-    <div
-      data-component="FretboardBackground"
-      style={{
-        display: "grid",
-        gridColumn: "1 / -1",
-        gridRow: "1 / -1",
-        gridTemplateRows: "subgrid",
-        gridTemplateColumns: "subgrid",
-      }}
-    >
+    <div data-component="FretboardBackground" className={styles.subgridOverlay}>
       <div
         data-id="fretboard-fingerboard-area"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "subgrid",
-          gridColumn: "1 / -1",
-          gridRow: mainContentGridRow,
-          background: config.background,
-        }}
+        className={styles.fingerboardArea}
+        style={
+          {
+            gridRow: mainContentGridRow,
+            "--fretboard-bg": config.background,
+          } as React.CSSProperties
+        }
       >
         {Array.from({ length: numFrets }).map((_, fretIndex) => (
           <Fret key={fretIndex} fretNumber={startFret + fretIndex} />
@@ -44,12 +36,12 @@ export default function FretboardBackground() {
 
       <div
         data-id="fretboard-strings-area"
-        style={{
-          gridColumn: "1 / -1",
-          gridRow: mainContentGridRow,
-          display: "flex",
-          flexDirection: "column",
-        }}
+        className={styles.stringsArea}
+        style={
+          {
+            gridRow: mainContentGridRow,
+          } as React.CSSProperties
+        }
       >
         {tuning.map((_: number, stringIndex: number) => (
           <InstrumentString key={stringIndex} stringNumber={stringIndex + 1} />
@@ -58,14 +50,14 @@ export default function FretboardBackground() {
 
       <div
         data-id="fretboard-fret-labels-area"
-        style={{
-          display: "grid",
-          height: config.fretLabelsHeight,
-          background: config.fretLabelsBackground,
-          gridTemplateColumns: "subgrid",
-          gridColumn: "1 / -1",
-          gridRow: fretLabelsGridRow,
-        }}
+        className={styles.labelsArea}
+        style={
+          {
+            gridRow: fretLabelsGridRow,
+            "--labels-height": config.fretLabelsHeight,
+            "--labels-bg": config.fretLabelsBackground,
+          } as React.CSSProperties
+        }
       >
         {Array.from({ length: numFrets }).map((_, i) => (
           <FretLabel key={i} fretNumber={startFret + i} />

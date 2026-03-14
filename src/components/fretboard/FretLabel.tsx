@@ -1,5 +1,6 @@
 import { fretboardIcons } from "@/configs/fretboard/icons";
 import { useFretboardConfig } from "@/context/fretboard/FretboardContext";
+import styles from "./Fretboard.module.css";
 
 export default function FretLabel({ fretNumber }: { fretNumber: number }) {
   const config = useFretboardConfig();
@@ -29,31 +30,23 @@ export default function FretLabel({ fretNumber }: { fretNumber: number }) {
   const isNut = fretNumber === 0;
   const wireWidth = isNut ? config.nutWidth : config.fretWireWidth;
 
-  // We need to match the layout of Fret.tsx for alignment.
-  // Fret.tsx has [Content (flex: 1)] [Wire (width: wireWidth)]
-  // Therefore, FretLabel should also reserve space on the right equal to wireWidth.
-  // Even if the wire isn't visually part of the label, the label should center relative to the fret space *minus* the wire.
-
   return (
     <div
       data-component="FretLabel"
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        height: "100%",
-        width: "100%",
-        overflow: "visible",
-      }}
+      className={styles.fretLabel}
+      style={
+        {
+          "--wire-width": wireWidth,
+        } as React.CSSProperties
+      }
     >
       <div
-        style={{
-          flex: 1,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          overflow: "visible",
-          gap: config.fretLabelDoubleGap,
-        }}
+        className={styles.labelContent}
+        style={
+          {
+            "--label-gap": config.fretLabelDoubleGap,
+          } as React.CSSProperties
+        }
       >
         {isMarker &&
           (isImageMode ? (
@@ -63,48 +56,52 @@ export default function FretLabel({ fretNumber }: { fretNumber: number }) {
                 <Icon
                   fill={color}
                   strokeWidth={0}
-                  style={{
-                    height: `calc(${height} * 0.65)`,
-                    width: "auto",
-                    maxWidth: "100%",
-                  }}
+                  className={styles.labelIcon}
+                  style={
+                    {
+                      "--label-icon-size": `calc(${height} * 0.65)`,
+                    } as React.CSSProperties
+                  }
                 />
                 <Icon
                   fill={color}
                   strokeWidth={0}
-                  style={{
-                    height: `calc(${height} * 0.65)`,
-                    width: "auto",
-                    maxWidth: "100%",
-                  }}
+                  className={styles.labelIcon}
+                  style={
+                    {
+                      "--label-icon-size": `calc(${height} * 0.65)`,
+                    } as React.CSSProperties
+                  }
                 />
               </>
             ) : (
               <Icon
                 fill={color}
                 strokeWidth={0}
-                style={{
-                  height: `calc(${height} * 0.65)`,
-                  width: "auto",
-                  maxWidth: "100%",
-                }}
+                className={styles.labelIcon}
+                style={
+                  {
+                    "--label-icon-size": `calc(${height} * 0.65)`,
+                  } as React.CSSProperties
+                }
               />
             ))
           ) : (
             <span
-              style={{
-                fontSize: `calc(${height} * 0.8)`,
-                textBoxTrim: "trim-both",
-                textBoxEdge: "cap alphabetic",
-                color: color,
-              }}
+              className={styles.labelText}
+              style={
+                {
+                  "--label-font-size": `calc(${height} * 0.8)`,
+                  "--label-color": color,
+                } as React.CSSProperties
+              }
             >
               {fretNumber}
             </span>
           ))}
       </div>
       {/* Spacer to simulate the wire width for alignment */}
-      <div style={{ width: wireWidth, flexShrink: 0 }} />
+      <div className={styles.labelSpacer} />
     </div>
   );
 }

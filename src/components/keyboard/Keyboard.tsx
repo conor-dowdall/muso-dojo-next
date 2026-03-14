@@ -78,7 +78,7 @@ function KeyboardInner(props: KeyboardProps) {
       }}
     >
       <KeyboardBackground />
-      <KeyboardNotesLayer {...props} />
+      <KeyboardNotesLayer {...props} noteEmphasis={props.noteEmphasis} />
     </div>
   );
 }

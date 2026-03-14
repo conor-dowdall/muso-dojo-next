@@ -43,5 +43,6 @@ export interface KeyboardProps {
   activeNotes?: ActiveNotes;
   onActiveNotesChange?: (notes: ActiveNotes) => void;
   showToolbar?: boolean;
+  noteEmphasis?: "large" | "small" | "hidden";
 }
 

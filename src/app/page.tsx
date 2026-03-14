@@ -22,8 +22,11 @@ export default function Home() {
         }}
       >
         <div style={{ width: "100%", maxWidth: "50em", height: "10em" }}>
-          <Fretboard preset="darkGibson" />
+          <Fretboard preset="darkGibson" config={{}} />
         </div>
+        {/* <div style={{ width: "100%", maxWidth: "50em", height: "10em" }}>
+          <Fretboard preset="lightTelecaster" config={{}} />
+        </div> */}
         <div style={{ width: "100%", maxWidth: "50em", height: "10em" }}>
           <Keyboard config={{ midiRange: [44, 85] }} />
         </div>
