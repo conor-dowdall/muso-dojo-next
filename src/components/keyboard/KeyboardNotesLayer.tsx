@@ -54,38 +54,96 @@ export default function KeyboardNotesLayer({
   const whiteKeyWidth = `${100 / numWhiteKeys}%`;
   const blackKeyWidth = `${(100 / numWhiteKeys) * config.blackKeyWidthRatio}%`;
 
-  // Build key list with positions
-  let whiteKeyIndex = 0;
-  const keys: Array<{
+  // Separate white and black keys for proper z-ordering
+  const whiteKeys: Array<{
     midi: number;
-    isBlack: boolean;
+    left: string;
+    width: string;
+  }> = [];
+  const blackKeys: Array<{
+    midi: number;
     left: string;
     width: string;
   }> = [];
 
+  let whiteKeyIndex = 0;
   for (let midi = startMidi; midi <= endMidi; midi++) {
     const black = isBlackKey(midi);
     if (black) {
-      // Black key: positioned relative to the current white key index
       const offset = getBlackKeyOffset(midi);
       const leftPercent =
         (whiteKeyIndex / numWhiteKeys) * 100 + (offset * 100) / numWhiteKeys;
-      keys.push({
+      blackKeys.push({
         midi,
-        isBlack: true,
         left: `${leftPercent}%`,
         width: blackKeyWidth,
       });
     } else {
-      keys.push({
+      whiteKeys.push({
         midi,
-        isBlack: false,
         left: `${(whiteKeyIndex / numWhiteKeys) * 100}%`,
         width: whiteKeyWidth,
       });
       whiteKeyIndex++;
     }
   }
+
+  const renderKey = (
+    midi: number,
+    isBlack: boolean,
+    left: string,
+    width: string,
+  ) => {
+    const key = `${midi}`;
+    const note = activeNotes?.[key];
+
+    const label = note
+      ? effectiveShowMidiNumbers
+        ? String(note.midi)
+        : noteNames?.[note.midi % 12]
+      : undefined;
+
+    // Note emphasis override ALWAYS wins over global state.
+    const effectiveEmphasis = note?.emphasis ?? noteEmphasis;
+
+    return (
+      <div
+        key={key}
+        data-component="KeyboardKey"
+        style={{
+          position: "absolute",
+          left,
+          width,
+          top: 0,
+          height: isBlack ? `${config.blackKeyHeightPercent}%` : "100%",
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "center",
+          pointerEvents: "auto",
+          cursor: "pointer",
+        }}
+        onPointerDown={() => {
+          toggleKeyboardNote({
+            midi,
+            activeNotes,
+            onActiveNotesChange,
+            globalEmphasis: noteEmphasis,
+          });
+        }}
+      >
+        {note && (
+          <KeyboardNote
+            note={{
+              ...note,
+              emphasis: effectiveEmphasis,
+            }}
+            label={label}
+            isBlack={isBlack}
+          />
+        )}
+      </div>
+    );
+  };
 
   return (
     <div
@@ -96,57 +154,15 @@ export default function KeyboardNotesLayer({
         pointerEvents: "none",
       }}
     >
-      {keys.map(({ midi, isBlack: black, left, width }) => {
-        const key = `${midi}`;
-        const note = activeNotes?.[key];
+      {/* White keys first */}
+      {whiteKeys.map(({ midi, left, width }) =>
+        renderKey(midi, false, left, width),
+      )}
 
-        const label = note
-          ? effectiveShowMidiNumbers
-            ? String(note.midi)
-            : noteNames?.[note.midi % 12]
-          : undefined;
-
-        // Note emphasis override ALWAYS wins over global state.
-        const effectiveEmphasis = note?.emphasis ?? noteEmphasis;
-
-        return (
-          <div
-            key={key}
-            style={{
-              position: "absolute",
-              left,
-              width,
-              top: 0,
-              height: black ? `${config.blackKeyHeightPercent}%` : "100%",
-              zIndex: black ? 2 : 0,
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "center",
-              pointerEvents: "auto",
-              cursor: "pointer",
-            }}
-            onPointerDown={() => {
-              toggleKeyboardNote({
-                midi,
-                activeNotes,
-                onActiveNotesChange,
-                globalEmphasis: noteEmphasis,
-              });
-            }}
-          >
-            {note && (
-              <KeyboardNote
-                note={{
-                  ...note,
-                  emphasis: effectiveEmphasis,
-                }}
-                label={label}
-                isBlack={black}
-              />
-            )}
-          </div>
-        );
-      })}
+      {/* Black keys second (always on top) */}
+      {blackKeys.map(({ midi, left, width }) =>
+        renderKey(midi, true, left, width),
+      )}
     </div>
   );
 }

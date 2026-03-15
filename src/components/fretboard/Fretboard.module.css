@@ -145,7 +145,6 @@
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  transition: all 0.2s cubic-bezier(0.5, -1, 1, 1);
   border-radius: 12%;
   overflow: hidden;
 }

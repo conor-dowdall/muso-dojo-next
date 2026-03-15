@@ -22,8 +22,7 @@ export default function KeyboardBackground() {
     if (isBlackKey(midi)) {
       const offset = getBlackKeyOffset(midi);
       const leftPercent =
-        (whiteKeyIndex / numWhiteKeys) * 100 +
-        (offset * 100) / numWhiteKeys;
+        (whiteKeyIndex / numWhiteKeys) * 100 + (offset * 100) / numWhiteKeys;
       blackKeys.push({ midi, left: `${leftPercent}%` });
     } else {
       whiteKeys.push({
@@ -76,7 +75,6 @@ export default function KeyboardBackground() {
             background: config.blackKeyColor,
             borderRadius: config.keyBorderRadius,
             borderBottom: `2px solid ${config.keyBorderColor}`,
-            zIndex: 1,
           }}
         />
       ))}

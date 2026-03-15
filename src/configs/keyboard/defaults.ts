@@ -1,7 +1,7 @@
 import { type KeyboardConfig } from "@/types/keyboard/keyboard";
 
 export const keyboardDefaults: Required<KeyboardConfig> = {
-  midiRange: [48, 72], // C3 to C5 (2 octaves)
+  midiRange: [48, 73],
 
   whiteKeyColor: "white",
   blackKeyColor: "black",
@@ -9,7 +9,7 @@ export const keyboardDefaults: Required<KeyboardConfig> = {
   whiteKeyTextColor: "black",
   blackKeyTextColor: "white",
 
-  keyBorderColor: "black",
+  keyBorderColor: "darkgray",
   keyBorderRadius: "0 0 4px 4px",
 
   showKeyLabels: false,
