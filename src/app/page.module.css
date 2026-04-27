@@ -8,7 +8,6 @@
   --color-text: #f8fafc;
   --color-text-muted: #a8b3c7;
   --color-accent: #8fb7c9;
-  --landing-accent-warm: #c8b68d;
 
   display: grid;
   min-block-size: inherit;
@@ -108,7 +107,6 @@
   inline-size: var(--text-xs);
   block-size: var(--text-xs);
   flex: 0 0 auto;
-  translate: 1px 0;
 }
 
 .instrumentDetails {
@@ -462,10 +460,6 @@
     grid-template-columns: 1fr;
   }
 
-  .videoIntro {
-    inline-size: 100%;
-  }
-
   .actionCard {
     min-block-size: 8rem;
   }
@@ -502,10 +496,6 @@
     inline-size: min(100%, 16rem);
   }
 
-  .actionGrid {
-    grid-template-columns: 1fr;
-  }
-
   .videoIntro,
   .actionCard {
     min-block-size: 7.5rem;
@@ -527,10 +517,6 @@
     block-size: var(--space-16);
   }
 
-  .videoFrame {
-    min-block-size: auto;
-  }
-
   .videoTitleCard {
     inset: 10% 10% 24%;
   }
@@ -545,14 +531,6 @@
 }
 
 @media (max-width: 32rem) {
-  .actionGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .videoIntro {
-    inline-size: 100%;
-  }
-
   .videoOverlay {
     place-items: start end;
     padding: var(--space-4);

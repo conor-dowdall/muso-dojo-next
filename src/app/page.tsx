@@ -3,44 +3,50 @@
 import Link from "next/link";
 import Image from "next/image";
 import { DoorOpen, Play, Pointer } from "lucide-react";
-import { type CSSProperties, useEffect, useState } from "react";
-import { type FretboardThemeName } from "@/data/fretboard/themes";
+import { type CSSProperties, useState, useSyncExternalStore } from "react";
+import {
+  type FretboardThemeName,
+  fretboardThemes,
+} from "@/data/fretboard/themes";
 import { Fretboard } from "@/components/fretboard/Fretboard";
 import { MusicGroup } from "@/components/music-group/MusicGroup";
 import { Button } from "@/components/ui/buttons/Button";
 import { assetPath, assetUrl } from "@/utils/assets/assetPath";
 import styles from "./page.module.css";
 
-interface ThemeChoice<T extends FretboardThemeName> {
-  id: T;
-  title: string;
+const compactViewportQuery = "(max-width: 48rem)";
+const landingFretboardThemeNames = [
+  "maple",
+  "rosewood",
+  "ebony",
+  "pauFerro",
+] as const satisfies readonly FretboardThemeName[];
+
+function subscribeToCompactViewport(onStoreChange: () => void) {
+  const mediaQuery = window.matchMedia(compactViewportQuery);
+
+  mediaQuery.addEventListener("change", onStoreChange);
+
+  return () => mediaQuery.removeEventListener("change", onStoreChange);
 }
 
-const fretboardThemeChoices: ThemeChoice<FretboardThemeName>[] = [
-  { id: "maple", title: "Maple" },
-  { id: "rosewood", title: "Rosewood" },
-  { id: "ebony", title: "Ebony" },
-  { id: "pauFerro", title: "Pau Ferro" },
-];
+function getCompactViewportSnapshot() {
+  return window.matchMedia(compactViewportQuery).matches;
+}
+
+function getServerCompactViewportSnapshot() {
+  return false;
+}
 
 export default function LandingPage() {
   const [fretboardTheme, setFretboardTheme] =
     useState<FretboardThemeName>("ebony");
-  const [fretRange, setFretRange] = useState<[number, number]>([0, 7]);
-  const fretboardThemeTitle =
-    fretboardThemeChoices.find((theme) => theme.id === fretboardTheme)?.title ??
-    "Ebony";
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 48rem)");
-    const syncFretRange = () =>
-      setFretRange(mediaQuery.matches ? [0, 5] : [0, 7]);
-
-    syncFretRange();
-    mediaQuery.addEventListener("change", syncFretRange);
-
-    return () => mediaQuery.removeEventListener("change", syncFretRange);
-  }, []);
+  const isCompactViewport = useSyncExternalStore(
+    subscribeToCompactViewport,
+    getCompactViewportSnapshot,
+    getServerCompactViewportSnapshot,
+  );
+  const fretRange: [number, number] = isCompactViewport ? [0, 5] : [0, 7];
 
   return (
     <div
@@ -109,12 +115,12 @@ export default function LandingPage() {
                 <span className={styles.instrumentTitleGroup}>
                   <span className={styles.instrumentTitle}>Guitar</span>
                   <span className={styles.playHint}>
-                    <Pointer></Pointer>
+                    <Pointer />
                     <span>Interactive</span>
                   </span>
                 </span>
                 <span className={styles.instrumentDetails}>
-                  {fretboardThemeTitle} finish · Standard tuning · E A D G B E
+                  Standard tuning · E A D G B E
                 </span>
               </div>
 
@@ -141,16 +147,16 @@ export default function LandingPage() {
               </div>
 
               <div className={styles.themeControls} aria-label="Wood">
-                {fretboardThemeChoices.map((theme) => {
-                  const selected = theme.id === fretboardTheme;
+                {landingFretboardThemeNames.map((themeName) => {
+                  const selected = themeName === fretboardTheme;
 
                   return (
                     <Button
                       className={styles.themeButton}
                       density="compact"
-                      key={theme.id}
-                      label={theme.title}
-                      onClick={() => setFretboardTheme(theme.id)}
+                      key={themeName}
+                      label={fretboardThemes[themeName].title}
+                      onClick={() => setFretboardTheme(themeName)}
                       selected={selected}
                       size="md"
                       type="button"
