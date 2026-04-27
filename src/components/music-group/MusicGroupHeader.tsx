@@ -125,7 +125,11 @@ export function MusicGroupHeader({ className = "" }: MusicGroupHeaderProps) {
         ) : (
           <>
             <DialogHeader
-              title={dialogMode === "root" ? "Root Note" : "Note Collection"}
+              title={
+                dialogMode === "root"
+                  ? "Choose Root Note"
+                  : "Choose Note Collection"
+              }
               onClose={() => setDialogMode(null)}
             />
             <DialogContent>

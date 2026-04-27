@@ -40,7 +40,7 @@ export function DisplayFormatButton({
 
       <Dialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
         <DialogHeader
-          title="Display Format"
+          title="Choose Display Format"
           onClose={() => setIsDialogOpen(false)}
         />
         <DialogContent>

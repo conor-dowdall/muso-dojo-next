@@ -39,7 +39,9 @@ export function WorkspaceManagementDialog({
   const renameWorkspace = useAppStore((state) => state.renameWorkspace);
 
   const workspaceList = Object.values(workspaces);
-  const activeWorkspace = workspaces[activeWorkspaceId] ?? workspaceList[0];
+  const activeWorkspace =
+    (activeWorkspaceId ? workspaces[activeWorkspaceId] : undefined) ??
+    workspaceList[0];
   const activeWorkspaceName = activeWorkspace?.name ?? "Practice Workspace";
   const [draftWorkspace, setDraftWorkspace] = useState({
     id: activeWorkspace?.id ?? "",
@@ -49,20 +51,15 @@ export function WorkspaceManagementDialog({
   const [deleteConfirmationWorkspaceId, setDeleteConfirmationWorkspaceId] =
     useState<string | null>(null);
 
-  if (!activeWorkspace) {
-    return (
-      <>
-        <DialogHeader title="Workspace" onClose={onClose} />
-        <DialogContent>
-          <Text as="p" variant="muted">
-            No workspace is available.
-          </Text>
-        </DialogContent>
-      </>
-    );
-  }
+  const handleAddWorkspace = () => {
+    addWorkspace();
+  };
 
   const setDraftName = (name: string) => {
+    if (!activeWorkspace) {
+      return;
+    }
+
     setDraftWorkspace({
       id: activeWorkspace.id,
       savedName: activeWorkspace.name,
@@ -71,23 +68,28 @@ export function WorkspaceManagementDialog({
   };
 
   const draftWorkspaceMatchesActive =
+    activeWorkspace !== undefined &&
     draftWorkspace.id === activeWorkspace.id &&
     draftWorkspace.savedName === activeWorkspace.name;
   const draftName = draftWorkspaceMatchesActive
     ? draftWorkspace.name
-    : activeWorkspace.name;
+    : (activeWorkspace?.name ?? "");
   const trimmedDraftName = draftName.trim();
-  const hasNameChanged = trimmedDraftName !== activeWorkspace.name;
+  const hasNameChanged = trimmedDraftName !== activeWorkspace?.name;
   const isNameEmpty = trimmedDraftName.length === 0;
   const hasNameConflict = workspaceList.some(
     (workspace) =>
-      workspace.id !== activeWorkspace.id &&
+      workspace.id !== activeWorkspace?.id &&
       normalizeNameForComparison(workspace.name) ===
         normalizeNameForComparison(trimmedDraftName),
   );
-  const canRename = hasNameChanged && !isNameEmpty && !hasNameConflict;
-  const canDeleteWorkspace = workspaceList.length > 1;
+  const canRename =
+    activeWorkspace !== undefined &&
+    hasNameChanged &&
+    !isNameEmpty &&
+    !hasNameConflict;
   const isConfirmingDelete =
+    activeWorkspace !== undefined &&
     deleteConfirmationWorkspaceId === activeWorkspace.id;
   const renameMessage = isNameEmpty
     ? "Add a name before saving."
@@ -98,7 +100,7 @@ export function WorkspaceManagementDialog({
   const handleRename = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!canRename) {
+    if (!activeWorkspace || !canRename) {
       return;
     }
 
@@ -110,16 +112,16 @@ export function WorkspaceManagementDialog({
     });
   };
 
-  const handleAddWorkspace = () => {
-    addWorkspace();
-  };
-
   const handleCloneWorkspace = () => {
+    if (!activeWorkspace) {
+      return;
+    }
+
     cloneWorkspace(activeWorkspace.id);
   };
 
   const handleDeleteWorkspace = () => {
-    if (!canDeleteWorkspace) {
+    if (!activeWorkspace) {
       return;
     }
 
@@ -129,57 +131,61 @@ export function WorkspaceManagementDialog({
 
   return (
     <>
-      <DialogHeader title="Workspace" onClose={onClose} />
+      <DialogHeader title="Manage Workspaces" onClose={onClose} />
       <DialogContent className={styles.content}>
-        <section className={styles.section} aria-labelledby="workspace-name">
-          <div className={styles.sectionHeader}>
-            <Heading as="h3" id="workspace-name" size="xs" variant="muted">
-              Name
-            </Heading>
-          </div>
-
-          <form className={styles.nameForm} onSubmit={handleRename}>
-            <div className={styles.nameField}>
-              <label className={styles.nameLabel} htmlFor={nameInputId}>
-                Workspace name
-              </label>
-              <div className={styles.nameControl}>
-                <input
-                  aria-describedby={renameMessage ? nameMessageId : undefined}
-                  aria-invalid={isNameEmpty || hasNameConflict}
-                  autoComplete="off"
-                  className={styles.nameInput}
-                  id={nameInputId}
-                  spellCheck={false}
-                  value={draftName}
-                  onChange={(event) => setDraftName(event.currentTarget.value)}
-                />
-                <IconButton
-                  aria-label="Save workspace name"
-                  disabled={!canRename}
-                  icon={<Check />}
-                  shouldYield={false}
-                  type="submit"
-                  variant="outline"
-                />
-              </div>
-              {renameMessage ? (
-                <Text
-                  as="span"
-                  className={styles.nameMessage}
-                  data-tone={
-                    isNameEmpty || hasNameConflict ? "danger" : "muted"
-                  }
-                  id={nameMessageId}
-                  size="xs"
-                  variant="muted"
-                >
-                  {renameMessage}
-                </Text>
-              ) : null}
+        {activeWorkspace ? (
+          <section className={styles.section} aria-labelledby="workspace-name">
+            <div className={styles.sectionHeader}>
+              <Heading as="h3" id="workspace-name" size="xs" variant="muted">
+                Name
+              </Heading>
             </div>
-          </form>
-        </section>
+
+            <form className={styles.nameForm} onSubmit={handleRename}>
+              <div className={styles.nameField}>
+                <label className={styles.nameLabel} htmlFor={nameInputId}>
+                  Workspace name
+                </label>
+                <div className={styles.nameControl}>
+                  <input
+                    aria-describedby={renameMessage ? nameMessageId : undefined}
+                    aria-invalid={isNameEmpty || hasNameConflict}
+                    autoComplete="off"
+                    className={styles.nameInput}
+                    id={nameInputId}
+                    spellCheck={false}
+                    value={draftName}
+                    onChange={(event) =>
+                      setDraftName(event.currentTarget.value)
+                    }
+                  />
+                  <IconButton
+                    aria-label="Save workspace name"
+                    disabled={!canRename}
+                    icon={<Check />}
+                    shouldYield={false}
+                    type="submit"
+                    variant="outline"
+                  />
+                </div>
+                {renameMessage ? (
+                  <Text
+                    as="span"
+                    className={styles.nameMessage}
+                    data-tone={
+                      isNameEmpty || hasNameConflict ? "danger" : "muted"
+                    }
+                    id={nameMessageId}
+                    size="xs"
+                    variant="muted"
+                  >
+                    {renameMessage}
+                  </Text>
+                ) : null}
+              </div>
+            </form>
+          </section>
+        ) : null}
 
         <section className={styles.section} aria-labelledby="workspace-actions">
           <div className={styles.sectionHeader}>
@@ -191,13 +197,12 @@ export function WorkspaceManagementDialog({
             <OptionButton
               icon={<Plus />}
               label="New workspace"
-              subtitle="Start fresh."
               onClick={handleAddWorkspace}
             />
             <OptionButton
               icon={<Copy />}
+              disabled={!activeWorkspace}
               label="Duplicate workspace"
-              subtitle="Copy groups and instruments."
               onClick={handleCloneWorkspace}
             />
           </div>
@@ -211,71 +216,76 @@ export function WorkspaceManagementDialog({
           </div>
 
           <div className={styles.workspaceList}>
-            {workspaceList.map((workspace) => {
-              const isActive = workspace.id === activeWorkspace.id;
+            {workspaceList.length === 0 ? (
+              <Text as="p" size="sm" variant="muted">
+                No workspaces
+              </Text>
+            ) : (
+              workspaceList.map((workspace) => {
+                const isActive = workspace.id === activeWorkspace.id;
 
-              return (
-                <OptionButton
-                  key={workspace.id}
-                  aria-current={isActive ? "true" : undefined}
-                  presentation="list"
-                  selected={isActive}
-                  label={workspace.name}
-                  subtitle={getGroupCountLabel(workspace.groups.length)}
-                  onClick={() => {
-                    setActiveWorkspaceId(workspace.id);
-                    setDeleteConfirmationWorkspaceId(null);
-                  }}
-                />
-              );
-            })}
+                return (
+                  <OptionButton
+                    key={workspace.id}
+                    aria-current={isActive ? "true" : undefined}
+                    presentation="list"
+                    selected={isActive}
+                    label={workspace.name}
+                    subtitle={getGroupCountLabel(workspace.groups.length)}
+                    onClick={() => {
+                      setActiveWorkspaceId(workspace.id);
+                      setDeleteConfirmationWorkspaceId(null);
+                    }}
+                  />
+                );
+              })
+            )}
           </div>
         </section>
 
-        <section
-          className={`${styles.section} ${styles.dangerSection}`}
-          aria-labelledby="workspace-delete"
-        >
-          <div className={styles.sectionHeader}>
-            <Heading
-              as="h3"
-              className={styles.dangerHeading}
-              id="workspace-delete"
-              size="xs"
-              variant="muted"
-            >
-              Delete
-            </Heading>
-          </div>
-
-          {isConfirmingDelete ? (
-            <div
-              aria-label={`Confirm deleting ${activeWorkspace.name}. This cannot be undone.`}
-              className={styles.deleteConfirmation}
-              role="group"
-            >
-              <div className={styles.deleteConfirmationActions}>
-                <Button
-                  label="Cancel"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setDeleteConfirmationWorkspaceId(null)}
-                />
-                <Button
-                  aria-label={`Delete ${activeWorkspace.name}`}
-                  label="Delete"
-                  size="sm"
-                  tone="danger"
-                  variant="outline"
-                  onClick={handleDeleteWorkspace}
-                />
-              </div>
+        {activeWorkspace ? (
+          <section
+            className={`${styles.section} ${styles.dangerSection}`}
+            aria-labelledby="workspace-delete"
+          >
+            <div className={styles.sectionHeader}>
+              <Heading
+                as="h3"
+                className={styles.dangerHeading}
+                id="workspace-delete"
+                size="xs"
+                variant="muted"
+              >
+                Delete
+              </Heading>
             </div>
-          ) : (
-            <>
+
+            {isConfirmingDelete ? (
+              <div
+                aria-label={`Confirm deleting ${activeWorkspace.name}. This cannot be undone.`}
+                className={styles.deleteConfirmation}
+                role="group"
+              >
+                <div className={styles.deleteConfirmationActions}>
+                  <Button
+                    label="Cancel"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setDeleteConfirmationWorkspaceId(null)}
+                  />
+                  <Button
+                    aria-label={`Delete ${activeWorkspace.name}`}
+                    label="Delete"
+                    size="sm"
+                    tone="danger"
+                    variant="outline"
+                    onClick={handleDeleteWorkspace}
+                  />
+                </div>
+              </div>
+            ) : (
               <Button
                 className={styles.deleteButton}
-                disabled={!canDeleteWorkspace}
                 icon={<Trash2 />}
                 label="Delete workspace"
                 size="sm"
@@ -285,14 +295,9 @@ export function WorkspaceManagementDialog({
                   setDeleteConfirmationWorkspaceId(activeWorkspace.id)
                 }
               />
-              {!canDeleteWorkspace && (
-                <Text as="p" size="xs" variant="muted">
-                  Keep at least one workspace.
-                </Text>
-              )}
-            </>
-          )}
-        </section>
+            )}
+          </section>
+        ) : null}
       </DialogContent>
     </>
   );

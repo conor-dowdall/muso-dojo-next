@@ -258,23 +258,25 @@ export function normalizeAppStoreSnapshot(
     return fallbackSnapshot;
   }
 
-  const normalizedWorkspaces = isRecord(value.workspaces)
-    ? Object.values(value.workspaces).map((workspace) =>
+  const workspaceRecord = isRecord(value.workspaces)
+    ? value.workspaces
+    : undefined;
+  const normalizedWorkspaces = workspaceRecord
+    ? Object.values(workspaceRecord).map((workspace) =>
         normalizeWorkspaceConfig(workspace),
       )
     : [];
-  const workspaces =
-    normalizedWorkspaces.length > 0
-      ? Object.fromEntries(
-          normalizedWorkspaces.map((workspace) => [workspace.id, workspace]),
-        )
-      : fallbackSnapshot.workspaces;
+  const workspaces = workspaceRecord
+    ? Object.fromEntries(
+        normalizedWorkspaces.map((workspace) => [workspace.id, workspace]),
+      )
+    : fallbackSnapshot.workspaces;
   const requestedActiveWorkspaceId = normalizeString(value.activeWorkspaceId);
   const firstWorkspaceId = Object.keys(workspaces)[0];
   const activeWorkspaceId =
     requestedActiveWorkspaceId && workspaces[requestedActiveWorkspaceId]
       ? requestedActiveWorkspaceId
-      : (firstWorkspaceId ?? fallbackSnapshot.activeWorkspaceId);
+      : (firstWorkspaceId ?? null);
 
   return {
     activeWorkspaceId,

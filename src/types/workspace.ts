@@ -70,6 +70,6 @@ export interface WorkspaceConfig {
 }
 
 export interface AppStoreSnapshot {
-  activeWorkspaceId: string;
+  activeWorkspaceId: string | null;
   workspaces: Record<string, WorkspaceConfig>;
 }

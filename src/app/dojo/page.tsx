@@ -12,7 +12,9 @@ function HydratedWorkspace() {
   return (
     <>
       <WorkspaceHeader />
-      <WorkspaceView workspaceId={activeWorkspaceId} />
+      {activeWorkspaceId ? (
+        <WorkspaceView workspaceId={activeWorkspaceId} />
+      ) : null}
     </>
   );
 }

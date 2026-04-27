@@ -426,19 +426,14 @@ export const useAppStore = create<AppStore>()(
 
             const nextWorkspaces = { ...state.workspaces };
             delete nextWorkspaces[workspaceId];
-            const replacementWorkspace =
-              Object.values(nextWorkspaces)[0] ??
-              createDefaultWorkspaceConfig();
+            const replacementWorkspace = Object.values(nextWorkspaces)[0];
 
             return {
               activeWorkspaceId:
                 state.activeWorkspaceId === workspaceId
-                  ? replacementWorkspace.id
+                  ? (replacementWorkspace?.id ?? null)
                   : state.activeWorkspaceId,
-              workspaces:
-                Object.keys(nextWorkspaces).length > 0
-                  ? nextWorkspaces
-                  : { [replacementWorkspace.id]: replacementWorkspace },
+              workspaces: nextWorkspaces,
             };
           });
         },
@@ -471,6 +466,10 @@ export const useAppStore = create<AppStore>()(
         addMusicGroup: (workspaceId, settings) => {
           const state = get();
           const targetWorkspaceId = workspaceId ?? state.activeWorkspaceId;
+          if (!targetWorkspaceId) {
+            return undefined;
+          }
+
           const workspace = state.workspaces[targetWorkspaceId];
 
           if (!workspace) {
