@@ -1,0 +1,57 @@
+.keyboardInner {
+  container: keyboard-inner / size;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.keyboardBackground {
+  position: absolute;
+  inset: 0;
+}
+
+.whiteKey {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  left: var(--left);
+  width: var(--width);
+  background: var(--bg);
+  border-right: var(--border-width-base) solid var(--border-color);
+  border-bottom: var(--border-width-thick) solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+}
+
+.blackKey {
+  position: absolute;
+  top: 0;
+  left: var(--left);
+  width: var(--width);
+  height: var(--height);
+  background: var(--bg);
+  border-radius: var(--border-radius);
+  border-bottom: var(--border-width-medium) solid var(--border-color);
+  box-shadow: var(--shadow);
+}
+
+.notesLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.keyWrapper {
+  position: absolute;
+  top: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+  left: var(--left);
+  width: var(--width);
+  height: var(--height);
+  padding-bottom: var(--space-2);
+}

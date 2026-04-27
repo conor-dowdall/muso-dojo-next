@@ -1,0 +1,9 @@
+.main {
+  inline-size: min(
+    calc(100% - (var(--page-inline-gutter) * 2)),
+    var(--workspace-max-inline-size)
+  );
+  min-block-size: 100dvb;
+  padding-block: var(--page-block-gutter);
+  margin-inline: auto;
+}

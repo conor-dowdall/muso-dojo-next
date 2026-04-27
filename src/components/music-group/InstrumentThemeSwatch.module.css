@@ -1,0 +1,7 @@
+.themeSwatch {
+  display: block;
+  inline-size: var(--instrument-theme-swatch-width, var(--space-14));
+  block-size: var(--instrument-theme-swatch-height, var(--space-1));
+  border-radius: var(--radius-full);
+  background: var(--theme-swatch-background);
+}

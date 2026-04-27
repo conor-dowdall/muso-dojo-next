@@ -1,0 +1,173 @@
+.fretboardInner {
+  position: relative;
+  container: fretboard-root / size;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  overflow: visible;
+  grid-template-rows: var(--inner-grid-rows);
+  grid-template-columns: var(--inner-grid-columns);
+  direction: var(--inner-direction);
+}
+
+.subgridOverlay {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  grid-template-rows: subgrid;
+  grid-template-columns: subgrid;
+  pointer-events: none;
+}
+
+.fingerboardArea {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  grid-row: var(--fretboard-row);
+  background: var(--fretboard-bg);
+  pointer-events: none;
+}
+
+.stringsArea {
+  grid-column: 1 / -1;
+  grid-row: var(--strings-row);
+  display: flex;
+  flex-direction: column;
+}
+
+.labelsArea {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  grid-row: var(--labels-row);
+  height: var(--labels-height);
+  background: var(--labels-bg);
+  pointer-events: none;
+}
+
+/* Fret */
+.fret {
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.fretContent {
+  container: fret-content / size;
+  display: flex;
+  flex: 1;
+  flex-direction: var(--fret-content-direction);
+  align-items: center;
+  justify-content: center;
+  gap: var(--inlay-gap);
+  overflow: hidden;
+}
+
+.fretWire {
+  height: 100%;
+  width: var(--wire-width);
+  background: var(--wire-color);
+  flex-shrink: 0;
+  box-shadow: var(--wire-shadow);
+}
+
+.inlayIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--inlay-width);
+  height: var(--inlay-height);
+  max-width: 100%;
+  max-height: 100%;
+  transform: var(--inlay-transform);
+}
+
+.inlayIcon {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Fret Label */
+.fretLabel {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/*
+ * Absolutely positioned so the content is visually centered on the fret
+ * without contributing to the column's intrinsic width. Double-dot labels
+ * at octave frets (12, 24) overflow symmetrically into neighbouring space
+ * without widening the already-narrow high frets.
+ */
+.labelContent {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: visible;
+  gap: var(--label-gap);
+}
+
+.labelText {
+  font-size: var(--label-font-size);
+  font-weight: bold;
+  color: var(--label-color);
+  line-height: 1;
+  direction: ltr;
+}
+
+.labelIcon {
+  height: var(--label-icon-size);
+  width: auto;
+  fill: var(--label-color);
+}
+
+/* Individual Strings */
+.stringArea {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  pointer-events: none;
+}
+
+.string {
+  width: 100%;
+  height: var(--string-width);
+  position: relative;
+  overflow: hidden;
+  background-color: var(--string-color);
+  background-image: linear-gradient(rgb(255 255 255 / 0.16), rgb(0 0 0 / 0.12));
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  box-shadow: var(--string-shadow);
+}
+
+.string[data-string-texture="wound"] {
+  background-image:
+    var(--wound-string-texture),
+    linear-gradient(rgb(255 255 255 / 0.14), rgb(0 0 0 / 0.14));
+  background-position: center;
+  background-repeat: repeat-x, no-repeat;
+  background-size:
+    4px 100%,
+    100% 100%;
+}
+
+/* Notes Layer */
+.notesLayerWrapper {
+  grid-column: 1 / -1;
+  grid-row: var(--notes-row);
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-template-rows: var(--notes-grid-rows);
+  pointer-events: none;
+}

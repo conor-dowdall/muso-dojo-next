@@ -1,0 +1,148 @@
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes popOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.dialog {
+  --dialog-background: color-mix(
+    in oklch,
+    var(--color-base),
+    var(--color-accent) 4%
+  );
+  --dialog-backdrop: color-mix(in oklch, var(--color-base), transparent 60%);
+  --dialog-width-compact: 20rem;
+  --dialog-width-standard: 40rem;
+  --dialog-width-expanded: var(--content-max-inline-size);
+  --dialog-inline-size: var(--dialog-width-standard);
+  --dialog-viewport-gutter: var(--page-inline-gutter);
+
+  animation: popIn var(--transition-medium) var(--ease-out-expo) forwards;
+  inline-size: min(
+    var(--dialog-inline-size),
+    calc(100% - (var(--dialog-viewport-gutter) * 2))
+  );
+  max-inline-size: calc(100% - (var(--dialog-viewport-gutter) * 2));
+  max-block-size: calc(100dvb - (var(--dialog-viewport-gutter) * 2));
+  padding: 0;
+  border: var(--border-width-base) solid
+    color-mix(in oklch, var(--color-accent), transparent 62%);
+  border-radius: var(--radius-surface);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklch, var(--dialog-background), var(--color-text) 3%),
+      var(--dialog-background)
+    ),
+    var(--color-base);
+  box-shadow:
+    inset 0 1px 0 var(--color-surface-highlight),
+    0 28px 90px rgb(0 0 0 / 0.44);
+  color: var(--color-text);
+}
+
+.dialog[data-size="sm"] {
+  --dialog-inline-size: var(--dialog-width-compact);
+}
+
+.dialog[data-size="md"] {
+  --dialog-inline-size: var(--dialog-width-standard);
+}
+
+.dialog[data-size="lg"] {
+  --dialog-inline-size: var(--dialog-width-expanded);
+}
+
+.dialog[data-state="closing"] {
+  animation: popOut var(--transition-medium) var(--ease-out) forwards;
+}
+
+.dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog::backdrop {
+  background-color: var(--dialog-backdrop);
+  animation: fadeIn var(--transition-medium) var(--ease-out) forwards;
+}
+
+.dialog[data-state="closing"]::backdrop {
+  animation: fadeOut var(--transition-medium) var(--ease-out) forwards;
+}
+
+.dialogHeader {
+  --dialog-header-control-size: calc(
+    var(--text-sm) + (var(--space-2) * 2) + (var(--border-width-base) * 2)
+  );
+
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-2);
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--space-4);
+  border-bottom: var(--border-width-base) solid var(--color-border);
+}
+
+.dialogTitle {
+  display: flex;
+  min-inline-size: 0;
+  min-block-size: var(--dialog-header-control-size);
+  align-items: center;
+  overflow-wrap: anywhere;
+}
+
+.content {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  padding: var(--space-4);
+  overflow: auto;
+  scrollbar-color: color-mix(in oklch, var(--color-accent), transparent 45%)
+    transparent;
+  scrollbar-width: thin;
+}
+
+.content:focus-visible {
+  outline: none;
+}
+
+.dialogFooter {
+  display: block;
+  flex: 0 0 auto;
+  min-inline-size: 0;
+  padding: var(--space-4);
+  border-top: var(--border-width-base) solid var(--color-border);
+}

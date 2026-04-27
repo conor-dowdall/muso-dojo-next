@@ -1,0 +1,26 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--workspace-stack-gap);
+}
+
+.hydrated {
+  animation: workspace-content-arrive var(--transition-medium) var(--ease-out)
+    both;
+}
+
+@keyframes workspace-content-arrive {
+  from {
+    opacity: 0.65;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hydrated {
+    animation: none;
+  }
+}
