@@ -79,7 +79,7 @@ export function MusicGroupHeader({ className = "" }: MusicGroupHeaderProps) {
       <div className={styles.actionsWrapper}>
         {musicGroup.addInstrument ? (
           <IconButton
-            aria-label="Add to music group"
+            aria-label="Add item"
             icon={<Plus />}
             size="sm"
             variant="outline"
@@ -88,7 +88,7 @@ export function MusicGroupHeader({ className = "" }: MusicGroupHeaderProps) {
         ) : null}
         {musicGroup.cloneGroup ? (
           <IconButton
-            aria-label="Duplicate music group"
+            aria-label="Duplicate group"
             icon={<Copy />}
             size="sm"
             variant="outline"
@@ -97,7 +97,7 @@ export function MusicGroupHeader({ className = "" }: MusicGroupHeaderProps) {
         ) : null}
         {musicGroup.removeGroup ? (
           <IconButton
-            aria-label="Remove music group"
+            aria-label="Delete group"
             icon={<X />}
             size="sm"
             variant="outline"

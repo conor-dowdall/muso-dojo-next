@@ -116,7 +116,7 @@ export function AddToMusicGroupDialog({
 
   return (
     <>
-      <DialogHeader title="Add to Music Group" onClose={onClose} />
+      <DialogHeader title="Add to Group" onClose={onClose} />
       <DialogContent className={styles.content}>
         <section className={styles.section} aria-labelledby={itemTypeHeadingId}>
           <div className={styles.sectionHeader}>

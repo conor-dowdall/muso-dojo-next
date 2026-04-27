@@ -22,7 +22,7 @@ export function WorkspaceHeader() {
       </Heading>
       <div className={styles.actions}>
         <IconButton
-          aria-label="Add music group"
+          aria-label="Add group"
           icon={<Plus />}
           size="sm"
           variant="outline"

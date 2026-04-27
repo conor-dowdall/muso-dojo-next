@@ -14,7 +14,7 @@ export function WorkspaceMenu() {
   return (
     <>
       <IconButton
-        aria-label="Workspace options"
+        aria-label="Workspace menu"
         icon={<MoreHorizontal />}
         size="sm"
         variant="outline"
