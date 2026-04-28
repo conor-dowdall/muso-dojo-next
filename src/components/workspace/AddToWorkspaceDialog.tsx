@@ -9,15 +9,17 @@ import {
   useState,
 } from "react";
 import {
+  chordProgressionTemplateTypeMetadata,
   chordProgressionTemplateGroupsMetadata,
   chordProgressionTemplates,
-  getChordProgressionTemplateChordNames,
-  getChordProgressionTemplateRomanNames,
+  getNoteNamesForRootAndIntervals,
   groupedChordProgressionTemplates,
   normalizeRootNoteString,
   stringInstrumentTunings,
   stringInstruments,
+  type ChordQuality,
   type ChordProgressionTemplateKey,
+  type Interval,
   type RootNote,
   type StringInstrumentKey,
   type StringInstrumentTuningKey,
@@ -63,7 +65,13 @@ type ChordProgressionTemplate =
   (typeof chordProgressionTemplates)[ChordProgressionTemplateKey];
 
 interface ChordProgressionTemplateSection {
-  chords: readonly unknown[];
+  name: string;
+  chords: readonly ChordProgressionTemplateStep[];
+}
+
+interface ChordProgressionTemplateStep {
+  interval: Interval;
+  quality: ChordQuality;
 }
 
 interface KeyboardSelection {
@@ -78,12 +86,14 @@ interface FretboardSelection {
 }
 
 interface AddToWorkspaceDialogProps {
-  onAddBlankGroup: () => void;
+  onAddBlankGroup: (settings: { replaceWorkspace: boolean }) => void;
   onAddChordProgression: (settings: {
     rootNote: RootNote;
     templateKey: ChordProgressionTemplateKey;
+    sectionIndex: number;
     instrumentType: AddableMusicGroupItemType;
     instrumentSettings: InstrumentCreationConfig;
+    replaceWorkspace: boolean;
   }) => void;
   onClose: () => void;
 }
@@ -116,20 +126,59 @@ function getProgressionTemplateKeys(
 }
 
 function getTemplateStepCount(templateKey: ChordProgressionTemplateKey) {
+  return getTemplateSections(templateKey).reduce(
+    (count, section) => count + section.chords.length,
+    0,
+  );
+}
+
+function getTemplateSections(templateKey: ChordProgressionTemplateKey) {
   const template = chordProgressionTemplates[
     templateKey
   ] as ChordProgressionTemplate;
 
-  return (
-    template.sections as readonly ChordProgressionTemplateSection[]
-  ).reduce((count, section) => count + section.chords.length, 0);
+  return template.sections as readonly ChordProgressionTemplateSection[];
+}
+
+function getTemplateSection(
+  templateKey: ChordProgressionTemplateKey,
+  sectionIndex: number,
+) {
+  const sections = getTemplateSections(templateKey);
+
+  return sections[sectionIndex] ?? sections[0];
+}
+
+function getTemplateSubtitle(templateKey: ChordProgressionTemplateKey) {
+  const template = chordProgressionTemplates[templateKey];
+  const sections = getTemplateSections(templateKey);
+  const typeName =
+    chordProgressionTemplateTypeMetadata[
+      template.templateType
+    ].displayName.toLocaleLowerCase();
+
+  if (sections.length > 1) {
+    return `${sections.length} section ${typeName}`;
+  }
+
+  return `${getTemplateStepCount(templateKey)} chord ${typeName}`;
 }
 
 function getProgressionPreview(
   rootNote: RootNote,
   templateKey: ChordProgressionTemplateKey,
+  sectionIndex: number,
 ) {
-  return getChordProgressionTemplateChordNames(rootNote, templateKey).join(" ");
+  const section = getTemplateSection(templateKey, sectionIndex);
+  const steps = section?.chords ?? [];
+  const chordRootNotes = getNoteNamesForRootAndIntervals(
+    rootNote,
+    steps.map((step) => step.interval),
+  );
+
+  return steps
+    .map((step, index) => `${chordRootNotes[index] ?? rootNote}${step.quality}`)
+    .join(" ");
 }
 
 function getInstrumentSettings(
@@ -173,6 +222,7 @@ export function AddToWorkspaceDialog({
   const typeHeadingId = useId();
   const rootHeadingId = useId();
   const progressionHeadingId = useId();
+  const sectionHeadingId = useId();
   const instrumentHeadingId = useId();
   const [selectedMode, setSelectedMode] =
     useState<WorkspaceAddMode>("blank-group");
@@ -180,6 +230,8 @@ export function AddToWorkspaceDialog({
   const [templateKey, setTemplateKey] = useState<ChordProgressionTemplateKey>(
     defaultProgressionTemplateKey,
   );
+  const [sectionIndex, setSectionIndex] = useState(0);
+  const [replaceWorkspace, setReplaceWorkspace] = useState(false);
   const [instrumentType, setInstrumentType] =
     useState<AddableMusicGroupItemType>("keyboard");
   const [keyboardSelection, setKeyboardSelection] = useState<KeyboardSelection>(
@@ -190,12 +242,19 @@ export function AddToWorkspaceDialog({
 
   const selectedRootNote = normalizeRootNoteString(rootNote) ?? "C";
   const template = chordProgressionTemplates[templateKey];
+  const templateSections = getTemplateSections(templateKey);
+  const resolvedSectionIndex =
+    sectionIndex < templateSections.length ? sectionIndex : 0;
   const progressionPreview = getProgressionPreview(
     selectedRootNote,
     templateKey,
+    resolvedSectionIndex,
   );
-  const actionLabel =
-    selectedMode === "blank-group" ? "Add group" : "Add progression";
+  const actionLabel = replaceWorkspace
+    ? "Replace workspace"
+    : selectedMode === "blank-group"
+      ? "Add group"
+      : "Add progression";
   const selectedSummary =
     selectedMode === "blank-group"
       ? "Blank group"
@@ -207,7 +266,7 @@ export function AddToWorkspaceDialog({
 
   const handleSubmit = () => {
     if (selectedMode === "blank-group") {
-      onAddBlankGroup();
+      onAddBlankGroup({ replaceWorkspace });
       onClose();
       return;
     }
@@ -215,7 +274,9 @@ export function AddToWorkspaceDialog({
     onAddChordProgression({
       rootNote: selectedRootNote,
       templateKey,
+      sectionIndex: resolvedSectionIndex,
       instrumentType,
+      replaceWorkspace,
       instrumentSettings: getInstrumentSettings(
         instrumentType,
         keyboardSelection,
@@ -306,19 +367,17 @@ export function AddToWorkspaceDialog({
                           (candidateKey) => {
                             const candidate =
                               chordProgressionTemplates[candidateKey];
-                            const romanNames =
-                              getChordProgressionTemplateRomanNames(
-                                candidateKey,
-                              );
-
                             return (
                               <OptionButton
                                 key={candidateKey}
                                 label={candidate.primaryName}
                                 presentation="tile"
                                 selected={templateKey === candidateKey}
-                                subtitle={`${romanNames.join(" ")} - ${getTemplateStepCount(candidateKey)} chords`}
-                                onClick={() => setTemplateKey(candidateKey)}
+                                subtitle={getTemplateSubtitle(candidateKey)}
+                                onClick={() => {
+                                  setTemplateKey(candidateKey);
+                                  setSectionIndex(0);
+                                }}
                               />
                             );
                           },
@@ -328,6 +387,37 @@ export function AddToWorkspaceDialog({
                   ))}
                 </div>
               </section>
+
+              {templateSections.length > 1 ? (
+                <section
+                  className={styles.section}
+                  aria-labelledby={sectionHeadingId}
+                >
+                  <div className={styles.sectionHeader}>
+                    <Heading
+                      as="h3"
+                      id={sectionHeadingId}
+                      size="sm"
+                      weight="semibold"
+                    >
+                      Section
+                    </Heading>
+                  </div>
+
+                  <div className={`${styles.optionGrid} ${styles.compactGrid}`}>
+                    {templateSections.map((section, index) => (
+                      <OptionButton
+                        key={`${section.name}-${index}`}
+                        label={section.name}
+                        presentation="tile"
+                        selected={resolvedSectionIndex === index}
+                        subtitle={`${section.chords.length} chords`}
+                        onClick={() => setSectionIndex(index)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ) : null}
 
               <section
                 className={styles.section}
@@ -340,7 +430,7 @@ export function AddToWorkspaceDialog({
                     size="sm"
                     weight="semibold"
                   >
-                    Instrument
+                    Tool
                   </Heading>
                 </div>
 
@@ -377,6 +467,19 @@ export function AddToWorkspaceDialog({
       <DialogFooter className={styles.footer}>
         <section className={styles.summarySection} aria-label="Selection">
           <div className={styles.summaryCopy}>
+            <label className={localStyles.replaceOption}>
+              <input
+                checked={replaceWorkspace}
+                className={localStyles.replaceCheckbox}
+                type="checkbox"
+                onChange={(event) =>
+                  setReplaceWorkspace(event.currentTarget.checked)
+                }
+              />
+              <Text as="span" className={localStyles.replaceLabel} size="sm">
+                Replace current workspace
+              </Text>
+            </label>
             <Text as="p" size="sm">
               {selectedSummary}
             </Text>

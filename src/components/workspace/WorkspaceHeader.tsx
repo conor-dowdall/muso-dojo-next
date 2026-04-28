@@ -7,6 +7,7 @@ import { Heading } from "@/components/ui/typography/Heading";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { useAppStore } from "@/stores/appStore";
 import { createChordProgressionGroups } from "@/utils/workspace/createChordProgressionGroups";
+import { createDefaultMusicGroupConfig } from "@/utils/workspace/createWorkspaceEntities";
 import { WorkspaceMenu } from "./WorkspaceMenu";
 import { AddToWorkspaceDialog } from "./AddToWorkspaceDialog";
 import styles from "./WorkspaceHeader.module.css";
@@ -21,6 +22,7 @@ export function WorkspaceHeader() {
   );
   const addMusicGroup = useAppStore((state) => state.addMusicGroup);
   const addMusicGroups = useAppStore((state) => state.addMusicGroups);
+  const replaceMusicGroups = useAppStore((state) => state.replaceMusicGroups);
   const hasActiveWorkspace = activeWorkspaceId !== null;
   const closeAddDialog = () => setIsAddDialogOpen(false);
 
@@ -44,8 +46,15 @@ export function WorkspaceHeader() {
 
       <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="lg">
         <AddToWorkspaceDialog
-          onAddBlankGroup={() => {
+          onAddBlankGroup={({ replaceWorkspace }) => {
             if (activeWorkspaceId) {
+              if (replaceWorkspace) {
+                replaceMusicGroups(activeWorkspaceId, [
+                  createDefaultMusicGroupConfig(),
+                ]);
+                return;
+              }
+
               addMusicGroup(activeWorkspaceId);
             }
           }}
@@ -54,10 +63,14 @@ export function WorkspaceHeader() {
               return;
             }
 
-            addMusicGroups(
-              activeWorkspaceId,
-              createChordProgressionGroups(settings),
-            );
+            const groups = createChordProgressionGroups(settings);
+
+            if (settings.replaceWorkspace) {
+              replaceMusicGroups(activeWorkspaceId, groups);
+              return;
+            }
+
+            addMusicGroups(activeWorkspaceId, groups);
           }}
           onClose={closeAddDialog}
         />

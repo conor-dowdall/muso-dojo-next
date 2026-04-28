@@ -121,7 +121,7 @@ export function AddToMusicGroupDialog({
         <section className={styles.section} aria-labelledby={itemTypeHeadingId}>
           <div className={styles.sectionHeader}>
             <Heading as="h3" id={itemTypeHeadingId} size="sm" weight="semibold">
-              Type
+              Tool
             </Heading>
           </div>
 

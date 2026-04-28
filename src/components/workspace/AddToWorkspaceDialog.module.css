@@ -8,3 +8,23 @@
   overflow-x: auto;
   padding-block-end: var(--space-1);
 }
+
+.replaceOption {
+  display: flex;
+  min-inline-size: 0;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.replaceCheckbox {
+  flex: 0 0 auto;
+  inline-size: 1rem;
+  block-size: 1rem;
+  accent-color: var(--color-accent);
+}
+
+.replaceLabel {
+  min-inline-size: 0;
+}

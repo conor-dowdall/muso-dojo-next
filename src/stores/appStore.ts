@@ -66,6 +66,10 @@ interface AppStoreActions {
     workspaceId: string | undefined,
     groups: MusicGroupConfig[],
   ) => string[];
+  replaceMusicGroups: (
+    workspaceId: string | undefined,
+    groups: MusicGroupConfig[],
+  ) => string[];
   updateMusicGroupSettings: (
     workspaceId: string,
     groupId: string,
@@ -517,6 +521,34 @@ export const useAppStore = create<AppStore>()(
               (currentWorkspace) => ({
                 ...currentWorkspace,
                 groups: [...currentWorkspace.groups, ...normalizedGroups],
+              }),
+            ),
+          );
+
+          return normalizedGroups.map((group) => group.id);
+        },
+        replaceMusicGroups: (workspaceId, groups) => {
+          const state = get();
+          const targetWorkspaceId = workspaceId ?? state.activeWorkspaceId;
+          if (!targetWorkspaceId) {
+            return [];
+          }
+
+          const workspace = state.workspaces[targetWorkspaceId];
+
+          if (!workspace) {
+            return [];
+          }
+
+          const normalizedGroups = groups.map(normalizeMusicGroupForWrite);
+
+          set((currentState) =>
+            updateWorkspaceById(
+              currentState,
+              targetWorkspaceId,
+              (currentWorkspace) => ({
+                ...currentWorkspace,
+                groups: normalizedGroups,
               }),
             ),
           );

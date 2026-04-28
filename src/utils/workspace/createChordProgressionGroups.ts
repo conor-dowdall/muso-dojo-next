@@ -31,6 +31,7 @@ interface ChordProgressionTemplateSection {
 interface CreateChordProgressionGroupsOptions {
   rootNote: string;
   templateKey: ChordProgressionTemplateKey;
+  sectionIndex?: number;
   instrumentType: InstrumentType;
   instrumentSettings: InstrumentCreationConfig;
 }
@@ -42,10 +43,14 @@ function createProgressionGroupId(
   return createEntityId(`group-${templateKey}-${index + 1}`);
 }
 
-function getTemplateSteps(template: ChordProgressionTemplate) {
-  return (
-    template.sections as readonly ChordProgressionTemplateSection[]
-  ).flatMap((section) => section.chords);
+function getTemplateSection(
+  template: ChordProgressionTemplate,
+  sectionIndex: number,
+) {
+  const sections =
+    template.sections as readonly ChordProgressionTemplateSection[];
+
+  return sections[sectionIndex] ?? sections[0];
 }
 
 function createGroupFromStep({
@@ -80,11 +85,13 @@ function createGroupFromStep({
 export function createChordProgressionGroups({
   rootNote,
   templateKey,
+  sectionIndex = 0,
   instrumentType,
   instrumentSettings,
 }: CreateChordProgressionGroupsOptions): MusicGroupConfig[] {
   const template = chordProgressionTemplates[templateKey];
-  const steps = getTemplateSteps(template);
+  const section = getTemplateSection(template, sectionIndex);
+  const steps = section?.chords ?? [];
   const normalizedRootNote = normalizeRootNoteString(rootNote) ?? "C";
   const chordRootNotes = getNoteNamesForRootAndIntervals(
     normalizedRootNote,
