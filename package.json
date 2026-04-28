@@ -18,11 +18,11 @@
     "clean": "rm -rf .next"
   },
   "dependencies": {
-    "@musodojo/music-theory-data": "^26.3.0",
-    "lucide-react": "^0.577.0",
-    "next": "16.1.6",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "@musodojo/music-theory-data": "^26.4.0",
+    "lucide-react": "^1.12.0",
+    "next": "16.2.4",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
@@ -31,9 +31,9 @@
     "@types/react-dom": "^19.2.3",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9.39.4",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "16.2.4",
     "eslint-plugin-react": "^7.37.5",
     "prettier": "^3.8.3",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }
