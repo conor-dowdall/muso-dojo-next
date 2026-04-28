@@ -28,7 +28,6 @@ export function WorkspaceHeader() {
           disabled={!hasActiveWorkspace}
           icon={<Plus />}
           size="sm"
-          variant="outline"
           onClick={() => {
             if (activeWorkspaceId) {
               addMusicGroup(activeWorkspaceId);

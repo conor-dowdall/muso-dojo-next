@@ -65,7 +65,6 @@ export const InstrumentHeaderActions = ({
           aria-label="Duplicate instrument"
           icon={<Copy />}
           size="sm"
-          variant="outline"
           onClick={onClone}
         />
       ) : null}
@@ -74,7 +73,6 @@ export const InstrumentHeaderActions = ({
           aria-label="Remove instrument"
           icon={<X />}
           size="sm"
-          variant="outline"
           onClick={onRemove}
         />
       ) : null}

@@ -17,7 +17,6 @@ export function WorkspaceMenu() {
         aria-label="Workspace menu"
         icon={<MoreHorizontal />}
         size="sm"
-        variant="outline"
         onClick={() => setIsDialogOpen(true)}
       />
 

@@ -21,6 +21,7 @@
   --color-border: rgb(255 255 255 / 0.26);
   --color-border-subtle: rgb(255 255 255 / 0.14);
   --color-surface-highlight: rgb(255 255 255 / 0.04);
+  --color-control-outline-background: rgb(0 0 0 / 0.18);
 
   /* Spacing */
   --space-0: 0;
@@ -141,6 +142,7 @@
     --color-border: rgb(0 0 0 / 0.22);
     --color-border-subtle: rgb(0 0 0 / 0.12);
     --color-surface-highlight: rgb(255 255 255 / 0.72);
+    --color-control-outline-background: rgb(0 0 0 / 0.04);
   }
 }
 
@@ -161,6 +163,7 @@
   --color-border: rgb(0 0 0 / 0.22);
   --color-border-subtle: rgb(0 0 0 / 0.12);
   --color-surface-highlight: rgb(255 255 255 / 0.72);
+  --color-control-outline-background: rgb(0 0 0 / 0.04);
 }
 
 [data-theme="ocean"] {

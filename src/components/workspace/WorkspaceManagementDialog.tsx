@@ -165,7 +165,6 @@ export function WorkspaceManagementDialog({
                     icon={<Check />}
                     shouldYield={false}
                     type="submit"
-                    variant="outline"
                   />
                 </div>
                 {renameMessage ? (
@@ -278,7 +277,6 @@ export function WorkspaceManagementDialog({
                     label="Delete"
                     size="sm"
                     tone="danger"
-                    variant="outline"
                     onClick={handleDeleteWorkspace}
                   />
                 </div>
@@ -290,7 +288,6 @@ export function WorkspaceManagementDialog({
                 label="Delete workspace"
                 size="sm"
                 tone="danger"
-                variant="outline"
                 onClick={() =>
                   setDeleteConfirmationWorkspaceId(activeWorkspace.id)
                 }

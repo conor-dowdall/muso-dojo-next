@@ -126,7 +126,7 @@ export const Button: FC<ButtonProps> = ({
   size = "md",
   subtitle,
   tone = "neutral",
-  variant = "filled",
+  variant = "outline",
   type = "button",
   shouldYield = true,
   onClick,

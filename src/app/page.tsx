@@ -160,7 +160,6 @@ export default function LandingPage() {
                       selected={selected}
                       size="md"
                       type="button"
-                      variant="outline"
                     />
                   );
                 })}

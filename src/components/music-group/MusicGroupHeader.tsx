@@ -82,7 +82,6 @@ export function MusicGroupHeader({ className = "" }: MusicGroupHeaderProps) {
             aria-label="Add item"
             icon={<Plus />}
             size="sm"
-            variant="outline"
             onClick={() => setDialogMode("add-to-music-group")}
           />
         ) : null}
@@ -91,7 +90,6 @@ export function MusicGroupHeader({ className = "" }: MusicGroupHeaderProps) {
             aria-label="Duplicate group"
             icon={<Copy />}
             size="sm"
-            variant="outline"
             onClick={musicGroup.cloneGroup}
           />
         ) : null}
@@ -100,7 +98,6 @@ export function MusicGroupHeader({ className = "" }: MusicGroupHeaderProps) {
             aria-label="Delete group"
             icon={<X />}
             size="sm"
-            variant="outline"
             onClick={musicGroup.removeGroup}
           />
         ) : null}

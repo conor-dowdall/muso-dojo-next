@@ -159,7 +159,12 @@ export function AddToMusicGroupDialog({
               {selectedSummary}
             </Text>
           </div>
-          <Button label={addLabel} size="lg" onClick={handleAddToMusicGroup} />
+          <Button
+            label={addLabel}
+            size="lg"
+            variant="filled"
+            onClick={handleAddToMusicGroup}
+          />
         </section>
       </DialogFooter>
     </>

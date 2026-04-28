@@ -63,7 +63,7 @@ export function OptionButton({
   selected,
   showSelectionIndicator,
   subtitle,
-  variant = "outline",
+  variant,
   ...props
 }: OptionButtonProps) {
   const shouldShowSelectionIndicator =
