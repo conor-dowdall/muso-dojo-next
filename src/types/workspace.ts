@@ -56,7 +56,6 @@ export interface MusicGroupConfig {
   id: string;
   rootNote: string;
   noteCollectionKey: NoteCollectionKey;
-  accentColor?: string;
   layout?: MusicGroupLayout;
   showHeader?: boolean;
   instruments: InstrumentInstanceConfig[];

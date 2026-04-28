@@ -1,14 +1,6 @@
 .instrumentContainer {
-  --instrument-frame-background: color-mix(
-    in oklch,
-    var(--color-base),
-    var(--color-accent) 5%
-  );
-  --instrument-frame-border: color-mix(
-    in oklch,
-    var(--color-accent),
-    transparent 78%
-  );
+  --instrument-frame-background: var(--color-surface);
+  --instrument-frame-border: var(--color-border);
 
   position: relative;
   display: flex;
@@ -48,9 +40,8 @@
   overflow-x: hidden;
   overflow-y: hidden;
   border-radius: var(--radius-control);
-  background: color-mix(in oklch, var(--color-base), black 12%);
-  scrollbar-color: color-mix(in oklch, var(--color-accent), transparent 45%)
-    transparent;
+  background: rgb(0 0 0 / 0.12);
+  scrollbar-color: var(--color-border) transparent;
   scrollbar-width: thin;
 }
 

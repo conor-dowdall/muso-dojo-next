@@ -13,8 +13,14 @@
   --color-base: #000000;
   --color-text: #ffffff;
   --color-text-muted: #a1a1aa;
-  --color-accent: oklch(78% 0.015 255deg);
+  --color-accent: #c4c9d1;
   --color-danger: #f87171;
+  --color-page-gradient: rgb(196 201 209 / 0.06);
+  --color-surface: #121214;
+  --color-surface-hover: #1f1f23;
+  --color-border: rgb(255 255 255 / 0.26);
+  --color-border-subtle: rgb(255 255 255 / 0.14);
+  --color-surface-highlight: rgb(255 255 255 / 0.04);
 
   /* Spacing */
   --space-0: 0;
@@ -127,8 +133,14 @@
     --color-base: #ffffff;
     --color-text: #000000;
     --color-text-muted: #71717a;
-    --color-accent: oklch(34% 0.018 255deg);
+    --color-accent: #4f5661;
     --color-danger: #dc2626;
+    --color-page-gradient: rgb(79 86 97 / 0.06);
+    --color-surface: #f5f5f6;
+    --color-surface-hover: #e8e8ea;
+    --color-border: rgb(0 0 0 / 0.22);
+    --color-border-subtle: rgb(0 0 0 / 0.12);
+    --color-surface-highlight: rgb(255 255 255 / 0.72);
   }
 }
 
@@ -141,8 +153,14 @@
   --color-base: #ffffff;
   --color-text: #000000;
   --color-text-muted: #71717a;
-  --color-accent: oklch(34% 0.018 255deg);
+  --color-accent: #4f5661;
   --color-danger: #dc2626;
+  --color-page-gradient: rgb(79 86 97 / 0.06);
+  --color-surface: #f5f5f6;
+  --color-surface-hover: #e8e8ea;
+  --color-border: rgb(0 0 0 / 0.22);
+  --color-border-subtle: rgb(0 0 0 / 0.12);
+  --color-surface-highlight: rgb(255 255 255 / 0.72);
 }
 
 [data-theme="ocean"] {
@@ -151,6 +169,7 @@
   --color-text: #f8fafc;
   --color-text-muted: #94a3b8;
   --color-accent: #38bdf8;
+  --color-page-gradient: rgb(56 189 248 / 0.06);
 }
 
 [data-theme="purple"] {
@@ -159,6 +178,7 @@
   --color-text: #b6bdd7;
   --color-text-muted: #765b83;
   --color-accent: #5e6bdd;
+  --color-page-gradient: rgb(94 107 221 / 0.1);
 }
 
 body {
@@ -170,7 +190,7 @@ body {
   background:
     linear-gradient(
       180deg,
-      color-mix(in oklch, var(--color-base), var(--color-accent) 6%) 0,
+      var(--color-page-gradient) 0,
       var(--color-base) 18rem
     ),
     var(--color-base);
@@ -181,21 +201,4 @@ body {
 *::after {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
-
-  --color-surface: color-mix(
-    in oklch,
-    var(--color-base),
-    var(--color-accent) 7%
-  );
-  --color-surface-hover: color-mix(
-    in oklch,
-    var(--color-base),
-    var(--color-accent) 12%
-  );
-  --color-border: color-mix(in oklch, var(--color-accent), transparent 70%);
-  --color-surface-highlight: color-mix(
-    in oklch,
-    var(--color-text),
-    transparent 96%
-  );
 }

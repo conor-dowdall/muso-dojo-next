@@ -27,7 +27,6 @@ import {
   type WorkspaceConfig,
 } from "@/types/workspace";
 import { type MusicGroupLayout } from "@/types/music-group";
-import { getMusicGroupAccentColor } from "@/data/music-group/accentPalette";
 
 const DEFAULT_WORKSPACE_ID = "workspace-1";
 const DEFAULT_WORKSPACE_NAME = "Practice Workspace";
@@ -197,8 +196,6 @@ export function normalizeMusicGroupConfig(
           Boolean(instrument),
         )
     : [];
-  const accentColor =
-    normalizeString(value.accentColor) ?? getMusicGroupAccentColor(index);
   const layout = normalizeLayout(value.layout);
   const showHeader = normalizeOptionalBoolean(value.showHeader, true);
 
@@ -206,7 +203,6 @@ export function normalizeMusicGroupConfig(
     id: normalizeId(value.id, `group-${index + 1}`),
     rootNote: normalizeRootNote(value.rootNote),
     noteCollectionKey: normalizeNoteCollectionKey(value.noteCollectionKey),
-    accentColor,
     ...(layout && layout !== "column" ? { layout } : {}),
     ...(showHeader !== undefined ? { showHeader } : {}),
     instruments,

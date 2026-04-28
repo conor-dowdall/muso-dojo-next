@@ -1,14 +1,6 @@
 .content {
-  --workspace-management-danger-background: color-mix(
-    in oklch,
-    var(--color-danger),
-    transparent 88%
-  );
-  --workspace-management-danger-border: color-mix(
-    in oklch,
-    var(--color-danger),
-    transparent 40%
-  );
+  --workspace-management-danger-background: rgb(248 113 113 / 0.12);
+  --workspace-management-danger-border: rgb(248 113 113 / 0.6);
 
   container-type: inline-size;
   display: flex;

@@ -13,7 +13,6 @@ import {
   normalizeMusicGroupConfig,
   normalizeWorkspaceConfig,
 } from "@/utils/workspace/createWorkspaceConfig";
-import { getMusicGroupAccentColor } from "@/data/music-group/accentPalette";
 
 const DEFAULT_GROUP_ROOT_NOTE = "C";
 const DEFAULT_GROUP_NOTE_COLLECTION_KEY = "major";
@@ -26,9 +25,7 @@ interface CreateMusicGroupConfigOptions {
   id?: string;
   rootNote?: string;
   noteCollectionKey?: NoteCollectionKey;
-  accentColor?: string;
   instrumentType?: InstrumentType;
-  groupIndex?: number;
 }
 
 interface CreateWorkspaceConfigOptions {
@@ -70,22 +67,16 @@ export function createDefaultMusicGroupConfig({
   id = createEntityId("group"),
   rootNote = DEFAULT_GROUP_ROOT_NOTE,
   noteCollectionKey = DEFAULT_GROUP_NOTE_COLLECTION_KEY,
-  accentColor,
   instrumentType,
-  groupIndex = 0,
 }: CreateMusicGroupConfigOptions = {}): MusicGroupConfig {
-  const group = normalizeMusicGroupConfig(
-    {
-      id,
-      rootNote,
-      noteCollectionKey,
-      accentColor: accentColor ?? getMusicGroupAccentColor(groupIndex),
-      instruments: instrumentType
-        ? [createDefaultInstrumentConfig(instrumentType)]
-        : [],
-    },
-    groupIndex,
-  );
+  const group = normalizeMusicGroupConfig({
+    id,
+    rootNote,
+    noteCollectionKey,
+    instruments: instrumentType
+      ? [createDefaultInstrumentConfig(instrumentType)]
+      : [],
+  });
 
   if (!group) {
     throw new Error("Unable to create default music group");

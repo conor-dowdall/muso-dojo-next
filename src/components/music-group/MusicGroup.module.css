@@ -6,16 +6,9 @@
   --music-group-padding: var(--space-4);
   --music-group-gap: var(--space-4);
   --music-group-content-gap: var(--space-4);
-  --music-group-border: color-mix(
-    in oklch,
-    var(--color-accent),
-    transparent 62%
-  );
-  --music-group-background: color-mix(
-    in oklch,
-    var(--color-base),
-    var(--color-accent) 8%
-  );
+  --music-group-border: var(--color-border);
+  --music-group-background: var(--color-surface);
+  --music-group-background-highlight: rgb(255 255 255 / 0.03);
 
   border: var(--border-width-base) solid var(--music-group-border);
   border-radius: var(--radius-surface);
@@ -23,7 +16,7 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in oklch, var(--music-group-background), var(--color-text) 3%),
+      var(--music-group-background-highlight),
       var(--music-group-background)
     ),
     var(--color-surface);

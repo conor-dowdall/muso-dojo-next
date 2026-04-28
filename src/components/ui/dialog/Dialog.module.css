@@ -37,12 +37,10 @@
 }
 
 .dialog {
-  --dialog-background: color-mix(
-    in oklch,
-    var(--color-base),
-    var(--color-accent) 4%
-  );
-  --dialog-backdrop: color-mix(in oklch, var(--color-base), transparent 60%);
+  --dialog-background: var(--color-surface);
+  --dialog-background-highlight: rgb(255 255 255 / 0.03);
+  --dialog-backdrop: rgb(0 0 0 / 0.6);
+  --dialog-border: var(--color-border);
   --dialog-width-compact: 20rem;
   --dialog-width-standard: 40rem;
   --dialog-width-expanded: var(--content-max-inline-size);
@@ -57,13 +55,12 @@
   max-inline-size: calc(100% - (var(--dialog-viewport-gutter) * 2));
   max-block-size: calc(100dvb - (var(--dialog-viewport-gutter) * 2));
   padding: 0;
-  border: var(--border-width-base) solid
-    color-mix(in oklch, var(--color-accent), transparent 62%);
+  border: var(--border-width-base) solid var(--dialog-border);
   border-radius: var(--radius-surface);
   background:
     linear-gradient(
       180deg,
-      color-mix(in oklch, var(--dialog-background), var(--color-text) 3%),
+      var(--dialog-background-highlight),
       var(--dialog-background)
     ),
     var(--color-base);
@@ -130,8 +127,7 @@
   min-block-size: 0;
   padding: var(--space-4);
   overflow: auto;
-  scrollbar-color: color-mix(in oklch, var(--color-accent), transparent 45%)
-    transparent;
+  scrollbar-color: var(--color-border) transparent;
   scrollbar-width: thin;
 }
 

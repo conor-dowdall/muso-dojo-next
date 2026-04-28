@@ -6,7 +6,6 @@ export type MusicGroupLayout = "column" | "row";
 export interface MusicGroupSettings {
   rootNote?: string;
   noteCollectionKey?: NoteCollectionKey;
-  accentColor?: string;
   layout?: MusicGroupLayout;
   showHeader?: boolean;
 }

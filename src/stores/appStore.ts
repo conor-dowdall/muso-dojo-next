@@ -476,10 +476,7 @@ export const useAppStore = create<AppStore>()(
             return undefined;
           }
 
-          const group = createDefaultMusicGroupConfig({
-            ...settings,
-            groupIndex: workspace.groups.length,
-          });
+          const group = createDefaultMusicGroupConfig(settings);
 
           set((currentState) =>
             updateWorkspaceById(

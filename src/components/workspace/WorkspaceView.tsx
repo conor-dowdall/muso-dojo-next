@@ -126,7 +126,6 @@ const MusicGroupView = memo(function MusicGroupView({
         ? {
             rootNote: group.rootNote,
             noteCollectionKey: group.noteCollectionKey,
-            accentColor: group.accentColor,
             layout: group.layout,
             showHeader: group.showHeader,
           }
@@ -159,7 +158,6 @@ const MusicGroupView = memo(function MusicGroupView({
   return (
     <MusicGroup
       groupId={groupId}
-      accentColor={groupSettings.accentColor}
       layout={groupSettings.layout}
       rootNote={groupSettings.rootNote}
       onRootNoteChange={(rootNote) =>

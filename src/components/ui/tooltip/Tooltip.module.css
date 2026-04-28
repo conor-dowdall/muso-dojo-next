@@ -4,12 +4,8 @@
 }
 
 .tooltip {
-  --tooltip-background: color-mix(
-    in oklch,
-    var(--color-base),
-    var(--color-accent) 18%
-  );
-  --tooltip-border: color-mix(in oklch, var(--color-accent), transparent 40%);
+  --tooltip-background: var(--color-surface-hover);
+  --tooltip-border: var(--color-border);
   --tooltip-enter-y: 0px;
 
   position: fixed;

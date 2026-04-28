@@ -35,6 +35,7 @@
 }
 
 .detailPanelFrame {
+  box-sizing: content-box;
   flex: 0 0 auto;
   min-inline-size: 0;
   block-size: var(--detail-panel-height, auto);
