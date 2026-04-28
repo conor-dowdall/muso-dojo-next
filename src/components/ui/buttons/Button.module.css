@@ -12,7 +12,7 @@
   --button-border-color: var(--color-border);
   --button-border-color-hover: var(--color-accent);
   --button-border-current-color: var(--button-border-color);
-  --button-border-visual-width: var(--border-width-base);
+  --button-border-extra-width: var(--border-width-none);
   --button-active-background: var(--color-surface-hover);
   --button-active-border-color: var(--color-accent);
   --button-danger-surface: rgb(248 113 113 / 0.14);
@@ -112,17 +112,17 @@
 
 .filled {
   background-color: var(--button-background);
-  border: var(--border-width-base) solid transparent;
+  border: var(--border-width-base) solid var(--button-border-current-color);
   box-shadow:
-    inset 0 0 0 var(--button-border-visual-width)
+    inset 0 0 0 var(--button-border-extra-width)
       var(--button-border-current-color),
     inset 0 1px 0 var(--color-surface-highlight);
 }
 
 .outline {
   background-color: var(--button-outline-background);
-  border: var(--border-width-base) solid transparent;
-  box-shadow: inset 0 0 0 var(--button-border-visual-width)
+  border: var(--border-width-base) solid var(--button-border-current-color);
+  box-shadow: inset 0 0 0 var(--button-border-extra-width)
     var(--button-border-current-color);
 }
 
@@ -141,7 +141,7 @@
 .button[aria-pressed="true"] {
   background-color: var(--button-active-background);
   --button-border-current-color: var(--button-active-border-color);
-  --button-border-visual-width: var(--border-width-medium);
+  --button-border-extra-width: var(--border-width-base);
 }
 
 .button:not(:disabled):active {
