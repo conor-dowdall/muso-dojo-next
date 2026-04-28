@@ -11,24 +11,20 @@
 }
 
 .note {
-  /* use transform to scale the note for hover and active states 
-  this works alongside scale for hiding and showing the note */
-  --note-transform-scale: 1;
-  --note-transform-scale-hover: 1.1;
-  --note-transform-scale-active: 0.97;
-  transform: scale(var(--note-transform-scale));
+  transform: scale(var(--note-scale));
+  --note-hover-ring-color: rgb(255 255 255 / 0.72);
+  --note-hover-shadow-color: rgb(0 0 0 / 0.28);
+  box-shadow: 0 0 0 0 rgb(255 255 255 / 0);
   transition:
     transform var(--transition-fast) var(--ease-out),
-    scale var(--transition-medium) var(--ease-out),
+    box-shadow var(--transition-fast) var(--ease-out),
     opacity var(--transition-medium) var(--ease-out),
     background-color var(--transition-medium) var(--ease-out);
 
-  /* use scale to hide and show the note */
   --note-scale-large: 1;
   --note-scale-small: 0.7;
   --note-scale-hidden: 0;
   --note-scale: var(--note-scale-large);
-  scale: var(--note-scale);
 
   --note-opacity-large: 1;
   --note-opacity-small: 0.7;
@@ -49,6 +45,21 @@
   overflow: hidden;
   direction: ltr;
   color: white;
+}
+
+@supports (color: color-mix(in srgb, red, white)) {
+  .note {
+    --note-hover-ring-color: color-mix(
+      in srgb,
+      var(--pitch-color, var(--color-accent)) 55%,
+      white
+    );
+    --note-hover-shadow-color: color-mix(
+      in srgb,
+      var(--pitch-color, var(--color-accent)) 28%,
+      black
+    );
+  }
 }
 
 .noteCell {
@@ -151,13 +162,14 @@
 }
 
 @media (hover: hover) {
-  .noteCell:hover .note {
-    --note-transform-scale: var(--note-transform-scale-hover);
+  .noteCell:hover:not(:focus-visible) .note {
+    box-shadow:
+      0 0 0 var(--border-width-base) var(--note-hover-shadow-color),
+      0 0 0 var(--space-0_5) var(--note-hover-ring-color);
   }
 }
 
 .noteCell:active .note {
-  --note-transform-scale: var(--note-transform-scale-active);
   transition-duration: var(--transition-snap);
 }
 
