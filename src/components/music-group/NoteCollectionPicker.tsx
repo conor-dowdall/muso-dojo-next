@@ -46,6 +46,7 @@ export function NoteCollectionPicker({ onSelect }: NoteCollectionPickerProps) {
                     label={collection.primaryName}
                     presentation="tile"
                     selected={currentCollectionKey === key}
+                    subtitle={collection.intervals.join(" ")}
                     onClick={() => {
                       onCollectionChange(key as NoteCollectionKey);
                       onSelect();
