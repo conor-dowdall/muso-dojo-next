@@ -18,7 +18,6 @@ const DEFAULT_GROUP_ROOT_NOTE = "C";
 const DEFAULT_GROUP_NOTE_COLLECTION_KEY = "major";
 const DEFAULT_WORKSPACE_NAME = "Practice Workspace";
 const FALLBACK_WORKSPACE_ID = "workspace-1";
-const FALLBACK_GROUP_ID = "group-1";
 const FALLBACK_LAST_MODIFIED = "1970-01-01T00:00:00.000Z";
 
 interface CreateMusicGroupConfigOptions {
@@ -32,7 +31,6 @@ interface CreateWorkspaceConfigOptions {
   id?: string;
   name?: string;
   lastModified?: string;
-  groupId?: string;
 }
 
 export function createEntityId(prefix: string) {
@@ -89,13 +87,12 @@ export function createDefaultWorkspaceConfig({
   id = createEntityId("workspace"),
   name = DEFAULT_WORKSPACE_NAME,
   lastModified = new Date().toISOString(),
-  groupId,
 }: CreateWorkspaceConfigOptions = {}): WorkspaceConfig {
   return normalizeWorkspaceConfig({
     id,
     name,
     lastModified,
-    groups: [createDefaultMusicGroupConfig({ id: groupId })],
+    groups: [],
   });
 }
 
@@ -104,6 +101,5 @@ export function createFallbackWorkspaceConfig(): WorkspaceConfig {
     id: FALLBACK_WORKSPACE_ID,
     name: DEFAULT_WORKSPACE_NAME,
     lastModified: FALLBACK_LAST_MODIFIED,
-    groupId: FALLBACK_GROUP_ID,
   });
 }

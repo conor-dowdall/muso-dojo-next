@@ -544,19 +544,17 @@ export const useAppStore = create<AppStore>()(
           return clonedGroup.id;
         },
         removeMusicGroup: (workspaceId, groupId) => {
-          set((state) =>
-            updateWorkspaceById(state, workspaceId, (workspace) => {
-              if (workspace.groups.length <= 1) {
-                return workspace;
-              }
+          const workspace = get().workspaces[workspaceId];
 
-              return {
-                ...workspace,
-                groups: workspace.groups.filter(
-                  (group) => group.id !== groupId,
-                ),
-              };
-            }),
+          if (!workspace?.groups.some((group) => group.id === groupId)) {
+            return;
+          }
+
+          set((state) =>
+            updateWorkspaceById(state, workspaceId, (workspace) => ({
+              ...workspace,
+              groups: workspace.groups.filter((group) => group.id !== groupId),
+            })),
           );
         },
         addInstrument: (workspaceId, groupId, type = "keyboard", settings) => {

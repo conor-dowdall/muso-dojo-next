@@ -140,9 +140,6 @@ const MusicGroupView = memo(function MusicGroupView({
         ) ?? [],
     ),
   );
-  const groupCount = useAppStore(
-    (state) => state.workspaces[workspaceId]?.groups.length ?? 0,
-  );
   const setGroupRootNote = useAppStore((state) => state.setGroupRootNote);
   const setGroupNoteCollectionKey = useAppStore(
     (state) => state.setGroupNoteCollectionKey,
@@ -172,11 +169,7 @@ const MusicGroupView = memo(function MusicGroupView({
         addInstrument(workspaceId, groupId, type, settings)
       }
       onCloneGroup={() => cloneMusicGroup(workspaceId, groupId)}
-      onRemoveGroup={
-        groupCount > 1
-          ? () => removeMusicGroup(workspaceId, groupId)
-          : undefined
-      }
+      onRemoveGroup={() => removeMusicGroup(workspaceId, groupId)}
     >
       {instrumentIds.map((instrumentId) => (
         <InstrumentView
