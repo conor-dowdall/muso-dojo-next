@@ -50,7 +50,7 @@
   min-inline-size: 0;
   flex-direction: column;
   gap: 0;
-  animation: detail-panel-enter 260ms ease-out both;
+  animation: detail-panel-enter 260ms ease-out;
 }
 
 .detailPanel > .section + .section {
@@ -125,6 +125,6 @@
 
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }

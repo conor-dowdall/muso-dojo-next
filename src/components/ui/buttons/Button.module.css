@@ -283,30 +283,22 @@
 }
 
 .interactable {
-  --interact-scale: 1;
-  --interact-scale-hover: 1;
-  --interact-scale-active: 0.98;
-  scale: var(--interact-scale);
-
   --interact-y-hover: -1px;
   --interact-ease: var(--ease-out);
 
   transition:
     background-color var(--transition-fast) var(--interact-ease),
     border-color var(--transition-fast) var(--interact-ease),
-    translate var(--transition-fast) var(--interact-ease),
-    scale var(--transition-fast) var(--interact-ease);
+    translate var(--transition-fast) var(--interact-ease);
 }
 
 @media (hover: hover) {
   .interactable:not(:disabled):hover {
-    --interact-scale: var(--interact-scale-hover);
     translate: 0 var(--interact-y-hover);
   }
 }
 
 .interactable:not(:disabled):active {
-  --interact-scale: var(--interact-scale-active);
   transition-duration: var(--transition-snap);
 }
 
