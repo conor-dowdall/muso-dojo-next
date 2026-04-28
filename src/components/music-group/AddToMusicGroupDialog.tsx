@@ -189,7 +189,7 @@ function AnimatedDetailPanel({
     }
 
     const updateHeight = () => {
-      setHeight(panel.getBoundingClientRect().height);
+      setHeight(panel.offsetHeight);
     };
 
     updateHeight();
