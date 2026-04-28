@@ -128,6 +128,14 @@
   --pitch-11: #ff9ee6;
 }
 
+@media (pointer: coarse) and (min-resolution: 1.25dppx) and (max-resolution: 1.75dppx) {
+  :root {
+    /* Some Android tablet panels rasterize semi-transparent 1px borders
+       inconsistently at mid-density DPRs, especially after repaint. */
+    --border-width-base: 2px;
+  }
+}
+
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
     color-scheme: light;

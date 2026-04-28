@@ -141,7 +141,7 @@
 .button[aria-pressed="true"] {
   background-color: var(--button-active-background);
   --button-border-current-color: var(--button-active-border-color);
-  --button-border-extra-width: var(--border-width-base);
+  --button-border-extra-width: var(--space-px);
 }
 
 .button:not(:disabled):active {
