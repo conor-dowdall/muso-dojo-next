@@ -9,6 +9,11 @@ import { Heading } from "@/components/ui/typography/Heading";
 import { OptionButton } from "@/components/ui/buttons/OptionButton";
 import { Text } from "@/components/ui/typography/Text";
 import { useAppStore } from "@/stores/appStore";
+import { type MusicGroupConfig } from "@/types/workspace";
+import {
+  normalizeRootNoteString,
+  noteCollections,
+} from "@musodojo/music-theory-data";
 import styles from "./WorkspaceManagementDialog.module.css";
 
 interface WorkspaceManagementDialogProps {
@@ -21,6 +26,53 @@ function normalizeNameForComparison(name: string) {
 
 function getGroupCountLabel(groupCount: number) {
   return groupCount === 1 ? "1 group" : `${groupCount} groups`;
+}
+
+const maxWorkspaceSignaturePreviewCount = 2;
+
+function getSignatureJoiner({
+  category,
+}: (typeof noteCollections)[keyof typeof noteCollections]) {
+  return category === "chord" ? "" : " ";
+}
+
+function getGroupSignatureLabel(group: MusicGroupConfig) {
+  const rootNoteLabel =
+    normalizeRootNoteString(group.rootNote) ?? group.rootNote;
+  const collection = noteCollections[group.noteCollectionKey];
+  const collectionName = collection.primaryName;
+  const joiner = getSignatureJoiner(collection);
+
+  return `${rootNoteLabel}${joiner}${collectionName}`;
+}
+
+function getWorkspaceSubtitle(groups: MusicGroupConfig[]) {
+  if (groups.length === 0) {
+    return "No groups yet";
+  }
+
+  const signatureCounts = new Map<string, number>();
+
+  groups.forEach((group) => {
+    const signature = getGroupSignatureLabel(group);
+    signatureCounts.set(signature, (signatureCounts.get(signature) ?? 0) + 1);
+  });
+
+  const signatures = Array.from(signatureCounts.entries()).map(
+    ([signature, count]) =>
+      count === 1 ? signature : `${signature} x${count}`,
+  );
+  const previewSignatures = signatures.slice(
+    0,
+    maxWorkspaceSignaturePreviewCount,
+  );
+  const remainingSignatureCount = signatures.length - previewSignatures.length;
+  const moreSignaturesLabel =
+    remainingSignatureCount > 0 ? ` + ${remainingSignatureCount} more` : "";
+
+  return `${getGroupCountLabel(groups.length)} - ${previewSignatures.join(
+    ", ",
+  )}${moreSignaturesLabel}`;
 }
 
 export function WorkspaceManagementDialog({
@@ -230,7 +282,7 @@ export function WorkspaceManagementDialog({
                     presentation="list"
                     selected={isActive}
                     label={workspace.name}
-                    subtitle={getGroupCountLabel(workspace.groups.length)}
+                    subtitle={getWorkspaceSubtitle(workspace.groups)}
                     onClick={() => {
                       setActiveWorkspaceId(workspace.id);
                       setDeleteConfirmationWorkspaceId(null);
