@@ -18,7 +18,7 @@
     "clean": "rm -rf .next"
   },
   "dependencies": {
-    "@musodojo/music-theory-data": "^26.4.0",
+    "@musodojo/music-theory-data": "^26.5.0",
     "lucide-react": "^1.12.0",
     "next": "16.2.4",
     "react": "19.2.5",
