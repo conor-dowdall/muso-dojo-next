@@ -62,6 +62,10 @@ interface AppStoreActions {
       instrumentType?: InstrumentType;
     },
   ) => string | undefined;
+  addMusicGroups: (
+    workspaceId: string | undefined,
+    groups: MusicGroupConfig[],
+  ) => string[];
   updateMusicGroupSettings: (
     workspaceId: string,
     groupId: string,
@@ -490,6 +494,34 @@ export const useAppStore = create<AppStore>()(
           );
 
           return group.id;
+        },
+        addMusicGroups: (workspaceId, groups) => {
+          const state = get();
+          const targetWorkspaceId = workspaceId ?? state.activeWorkspaceId;
+          if (!targetWorkspaceId || groups.length === 0) {
+            return [];
+          }
+
+          const workspace = state.workspaces[targetWorkspaceId];
+
+          if (!workspace) {
+            return [];
+          }
+
+          const normalizedGroups = groups.map(normalizeMusicGroupForWrite);
+
+          set((currentState) =>
+            updateWorkspaceById(
+              currentState,
+              targetWorkspaceId,
+              (currentWorkspace) => ({
+                ...currentWorkspace,
+                groups: [...currentWorkspace.groups, ...normalizedGroups],
+              }),
+            ),
+          );
+
+          return normalizedGroups.map((group) => group.id);
         },
         updateMusicGroupSettings: (workspaceId, groupId, patch) => {
           const shouldClearActiveNotes =

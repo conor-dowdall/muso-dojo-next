@@ -1,0 +1,10 @@
+.progressionPreview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rootPanel {
+  overflow-x: auto;
+  padding-block-end: var(--space-1);
+}
