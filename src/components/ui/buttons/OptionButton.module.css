@@ -1,0 +1,82 @@
+.optionButton {
+  /* OptionButton presentations own their spacing while Button owns the mechanics. */
+  --option-button-media-size: var(--control-size-2xl);
+  --option-button-tile-size: var(--control-size-lg);
+  --option-button-list-size: var(--control-size-xl);
+
+  min-inline-size: 0;
+}
+
+.optionButton[data-option-presentation="media"] {
+  --button-control-size: var(--option-button-media-size);
+  --button-padding-block: var(--space-3);
+  --button-padding-inline: var(--space-3);
+  --button-gap: var(--space-3);
+  --button-icon-size: var(--text-lg);
+}
+
+.optionButton[data-option-presentation="tile"] {
+  --button-control-size: var(--option-button-tile-size);
+  --button-padding-block: var(--space-3);
+  --button-padding-inline: var(--space-3);
+  --button-gap: var(--space-1);
+  --button-label-gap: var(--space-1);
+}
+
+.optionButton[data-option-presentation="list"] {
+  --button-control-size: var(--option-button-list-size);
+  --button-padding-block: var(--space-3);
+  --button-padding-inline: var(--space-3);
+  --button-gap: var(--space-3);
+}
+
+.optionButton[data-option-density="compact"] {
+  --option-button-media-size: var(--control-size-xl);
+  --option-button-tile-size: var(--control-size-md);
+  --option-button-list-size: var(--control-size-lg);
+}
+
+.optionButton[data-option-density="compact"][data-option-presentation="media"],
+.optionButton[data-option-density="compact"][data-option-presentation="list"] {
+  --button-padding-block: var(--space-2);
+  --button-padding-inline: var(--space-3);
+  --button-gap: var(--space-2);
+}
+
+.optionButton[data-option-density="compact"][data-option-presentation="tile"] {
+  --button-padding-block: var(--space-2);
+  --button-padding-inline: var(--space-2);
+}
+
+.fullWidth {
+  inline-size: 100%;
+}
+
+.selectionIndicator {
+  flex: 0 0 auto;
+  opacity: 0;
+  transition: opacity var(--transition-fast) var(--ease-out);
+}
+
+.selectionIndicator[data-selected="true"] {
+  opacity: 1;
+}
+
+.selectionDot {
+  inline-size: var(--space-2);
+  block-size: var(--space-2);
+  border-radius: var(--radius-full);
+  background-color: var(--color-accent);
+}
+
+.preview {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .selectionIndicator {
+    transition: none;
+  }
+}

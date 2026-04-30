@@ -1,0 +1,249 @@
+@supports (corner-shape: squircle) {
+  .note {
+    corner-shape: squircle;
+    border-radius: 50%;
+  }
+}
+@supports not (corner-shape: squircle) {
+  .note {
+    border-radius: 15%;
+  }
+}
+
+.note {
+  transform: scale(var(--note-scale));
+  --note-hover-ring-color: var(--color-interaction-ring-light);
+  --note-hover-shadow-color: var(--color-interaction-ring-dark);
+  --note-focus-ring-color: var(--color-focus-ring);
+  --note-focus-contrast-color: var(--color-focus-ring-contrast);
+  box-shadow: inset 0 0 0 0 transparent;
+  transition:
+    transform var(--transition-fast) var(--ease-out),
+    border-color var(--transition-fast) var(--ease-out),
+    box-shadow var(--transition-fast) var(--ease-out),
+    opacity var(--transition-medium) var(--ease-out),
+    background-color var(--transition-medium) var(--ease-out);
+
+  --note-scale-large: 1;
+  --note-scale-small: 0.7;
+  --note-scale-hidden: 0;
+  --note-scale: var(--note-scale-large);
+
+  --note-opacity-large: 1;
+  --note-opacity-small: 0.7;
+  --note-opacity-hidden: 0;
+  --note-opacity: var(--note-opacity-large);
+  opacity: var(--note-opacity);
+
+  background-color: var(--pitch-color, var(--color-base));
+  border: var(--border-width-base) solid black;
+  width: var(--note-width);
+  height: var(--note-height, var(--note-width));
+
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-bold);
+  overflow: hidden;
+  direction: ltr;
+  color: white;
+}
+
+@supports (color: color-mix(in srgb, red, white)) {
+  .note {
+    --note-hover-ring-color: color-mix(
+      in srgb,
+      var(--pitch-color, var(--color-accent)) 55%,
+      var(--color-interaction-ring-light)
+    );
+    --note-hover-shadow-color: color-mix(
+      in srgb,
+      var(--pitch-color, var(--color-accent)) 28%,
+      var(--color-interaction-ring-dark)
+    );
+    --note-focus-ring-color: color-mix(
+      in srgb,
+      var(--color-focus-ring) 76%,
+      var(--color-interaction-ring-light)
+    );
+  }
+}
+
+.noteCell {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: var(--space-0);
+  margin: var(--space-0);
+  font: inherit;
+  color: inherit;
+
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  pointer-events: auto;
+
+  /* ── Container Query setup ──
+     Establishes this cell as a size container so children
+     can use cqi/cqb units relative to this cell's dimensions.
+     Size containment also prevents child content from affecting
+     the cell's own size — breaking any layout feedback loops. */
+  container-type: size;
+}
+
+/* ============================================================
+   Container-Query Font Sizing
+   ============================================================
+   
+   The char-count factor scales the WIDTH dimension before comparing
+   to height, so that height remains the same regardless of label
+   length. Only when the char-scaled width is smaller than the
+   height does the width become the constraining dimension.
+   
+   The --note-cq-unit @property resolves the min() expression
+   to a stable pixel <length> once, preventing cascading
+   recalculations for descendants.
+   ============================================================ */
+
+/* Default: 1 character */
+.note {
+  --note-cq-unit: min(50cqi, 56cqb);
+}
+
+/* Scale the width dimension down for longer labels */
+.note[data-chars="2"] {
+  --note-cq-unit: min(40cqi, 56cqb);
+}
+
+.note[data-chars="3"] {
+  --note-cq-unit: min(33cqi, 56cqb);
+}
+
+.note[data-chars="4"] {
+  --note-cq-unit: min(27cqi, 56cqb);
+}
+
+/* 5+ chars (edge case, e.g. long conversion labels) */
+.note[data-chars="5"] {
+  --note-cq-unit: min(25cqi, 56cqb);
+}
+
+/* Semantic styling for the placeholder dash.
+   We use a pseudo-element instead of a character to ensure
+   pixel-perfect vertical and horizontal centering regardless
+   of font metric variations. */
+.note[data-is-placeholder="true"] .label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Reset text-box trim for the placeholder to avoid font metric offsets */
+  text-box: none;
+}
+
+.note[data-is-placeholder="true"] .label::before {
+  content: "";
+  display: block;
+  width: 0.5em;
+  height: max(2px, 0.08em);
+  background-color: currentColor;
+  border-radius: var(--radius-full);
+}
+
+.label {
+  color: white;
+  font-size: var(--note-cq-unit);
+  font-weight: var(--font-bold);
+  /* Robust outline for legibility on light backgrounds (like yellow).
+     -webkit-text-stroke is used for the outline.
+     paint-order: stroke fill ensures the stroke is behind the text,
+     preventing it from making the font look thinner. */
+  -webkit-text-stroke: 0.1em black;
+  text-shadow: 0 0 0.25em black;
+  paint-order: stroke fill;
+  user-select: none;
+
+  /* Optical vertical centering via Text Box Trim (Chrome 133+, Safari 18.2+)
+     This trims the half-leading based on cap-height and the alphabetic baseline,
+     ensuring "D" and "D♭" share a consistent vertical center. */
+  text-box: trim-both cap alphabetic;
+}
+
+@media (hover: hover) {
+  .noteCell:hover:not(:focus-visible) .note {
+    border-color: var(--note-hover-ring-color);
+    box-shadow:
+      inset 0 0 0 var(--border-width-medium) var(--note-hover-shadow-color),
+      inset 0 0 0 var(--border-width-wide) var(--note-hover-ring-color),
+      inset 0 0 var(--space-4) var(--note-hover-ring-color);
+  }
+}
+
+.noteCell:active .note {
+  transition-duration: var(--transition-snap);
+}
+
+.noteCell:focus {
+  outline: none;
+}
+
+.noteCell:focus-visible {
+  z-index: var(--z-index-max);
+}
+
+.noteCell:focus-visible .note {
+  border-color: var(--note-focus-ring-color);
+  outline: none;
+  box-shadow:
+    inset 0 0 0 var(--border-width-medium) var(--note-focus-contrast-color),
+    inset 0 0 0 var(--border-width-wide) var(--note-focus-ring-color),
+    inset 0 0 var(--space-5) var(--note-focus-ring-color);
+}
+
+/* Give hidden notes a "ghost" outline when focused so navigation is visible */
+.noteCell:focus-visible .note[data-emphasis="hidden"] {
+  transition: none;
+  visibility: visible !important;
+  opacity: var(--note-opacity-large) !important;
+  --note-scale: var(--note-scale-large) !important;
+  background-color: transparent !important;
+  border: none !important;
+}
+
+.noteCell:focus-visible .note[data-emphasis="hidden"] .label {
+  opacity: var(--note-opacity-hidden) !important;
+}
+
+/* ============================================================
+   Emphasis States
+   ============================================================ */
+
+/* Inherited from container context (e.g. [data-note-emphasis] on fretboard row) */
+:where([data-note-emphasis="large"]) .note {
+  --note-scale: var(--note-scale-large);
+  --note-opacity: var(--note-opacity-large);
+}
+
+:where([data-note-emphasis="small"]) .note {
+  --note-scale: var(--note-scale-small);
+  --note-opacity: var(--note-opacity-small);
+}
+
+:where([data-note-emphasis="hidden"]) .note {
+  --note-scale: var(--note-scale-hidden);
+  --note-opacity: var(--note-opacity-hidden);
+}
+
+/* Individual overrides (active notes with explicit emphasis) */
+.note[data-emphasis="large"] {
+  --note-scale: var(--note-scale-large);
+  --note-opacity: var(--note-opacity-large);
+}
+.note[data-emphasis="small"] {
+  --note-scale: var(--note-scale-small);
+  --note-opacity: var(--note-opacity-small);
+}
+.note[data-emphasis="hidden"] {
+  --note-scale: var(--note-scale-hidden);
+  --note-opacity: var(--note-opacity-hidden);
+}

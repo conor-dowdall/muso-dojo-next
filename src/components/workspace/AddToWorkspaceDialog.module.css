@@ -1,0 +1,47 @@
+.rootPanel {
+  overflow-x: auto;
+  padding-block-end: var(--space-1);
+}
+
+.progressionChordPreview {
+  display: block;
+  min-inline-size: 0;
+  max-inline-size: min(16rem, 42vw);
+  overflow: hidden;
+  color: var(--color-text);
+  font-weight: var(--font-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progressionRomanPreview {
+  display: block;
+  min-inline-size: 0;
+  max-inline-size: min(18rem, 48vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progressionSectionOptions {
+  padding-inline: var(--space-3);
+}
+
+.footerActions {
+  min-inline-size: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.footerActions > :first-child {
+  flex: 0 1 auto;
+}
+
+.footerActions > :last-child {
+  flex: 0 0 auto;
+}
+
+.replaceOption {
+  flex: 0 1 auto;
+}

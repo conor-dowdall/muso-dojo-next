@@ -1,0 +1,183 @@
+.loader {
+  display: grid;
+  min-block-size: min(42rem, 58dvh);
+  place-items: center;
+}
+
+.statusText {
+  position: absolute;
+  width: var(--space-px);
+  height: var(--space-px);
+  padding: 0;
+  margin: calc(var(--space-px) * -1);
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.mark {
+  --loader-cycle: 2.4s;
+
+  display: grid;
+  inline-size: var(--space-24);
+  block-size: var(--space-20);
+  place-items: center;
+}
+
+.waveMark {
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+}
+
+.waveEcho,
+.waveLine,
+.wavePulse,
+.waveHarmonic {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.waveEcho {
+  stroke: var(--color-accent);
+  stroke-width: 13;
+  stroke-dasharray: 30 128;
+  stroke-dashoffset: 0;
+  opacity: 0.08;
+  animation: workspace-loader-wave var(--loader-cycle) linear infinite;
+}
+
+.waveLine {
+  stroke: url("#workspace-loader-wave");
+  stroke-width: 1.5;
+  opacity: 0.22;
+}
+
+.wavePulse {
+  stroke: url("#workspace-loader-wave");
+  stroke-width: 3;
+  stroke-dasharray: 30 128;
+  stroke-dashoffset: 0;
+  opacity: 0.86;
+  animation: workspace-loader-wave var(--loader-cycle) linear infinite;
+}
+
+.waveHarmonic {
+  stroke: var(--color-border);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.pitchPoint {
+  color: var(--color-accent);
+  fill: currentColor;
+  filter: drop-shadow(0 0 var(--space-1) currentColor);
+  opacity: 0.42;
+  scale: 0.78;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: workspace-loader-pitch var(--loader-cycle) var(--ease-out) infinite;
+}
+
+.pitchPoint:nth-of-type(1) {
+  color: var(--pitch-0);
+  animation-delay: 0ms;
+}
+
+.pitchPoint:nth-of-type(2) {
+  color: var(--pitch-1);
+  animation-delay: 140ms;
+}
+
+.pitchPoint:nth-of-type(3) {
+  color: var(--pitch-2);
+  animation-delay: 280ms;
+}
+
+.pitchPoint:nth-of-type(4) {
+  color: var(--pitch-3);
+  animation-delay: 420ms;
+}
+
+.pitchPoint:nth-of-type(5) {
+  color: var(--pitch-4);
+  animation-delay: 560ms;
+}
+
+.pitchPoint:nth-of-type(6) {
+  color: var(--pitch-5);
+  animation-delay: 700ms;
+}
+
+.pitchPoint:nth-of-type(7) {
+  color: var(--pitch-6);
+  animation-delay: 840ms;
+}
+
+.pitchPoint:nth-of-type(8) {
+  color: var(--pitch-7);
+  animation-delay: 980ms;
+}
+
+.pitchPoint:nth-of-type(9) {
+  color: var(--pitch-8);
+  animation-delay: 1120ms;
+}
+
+.pitchPoint:nth-of-type(10) {
+  color: var(--pitch-9);
+  animation-delay: 1260ms;
+}
+
+.pitchPoint:nth-of-type(11) {
+  color: var(--pitch-10);
+  animation-delay: 1400ms;
+}
+
+.pitchPoint:nth-of-type(12) {
+  color: var(--pitch-11);
+  animation-delay: 1540ms;
+}
+
+@keyframes workspace-loader-wave {
+  to {
+    stroke-dashoffset: -158;
+  }
+}
+
+@keyframes workspace-loader-pitch {
+  16% {
+    opacity: 1;
+    scale: 1.35;
+  }
+
+  36% {
+    opacity: 0.5;
+    scale: 0.86;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .waveEcho,
+  .waveHarmonic,
+  .wavePulse,
+  .pitchPoint {
+    animation: none;
+  }
+
+  .waveEcho {
+    opacity: 0.1;
+  }
+
+  .wavePulse {
+    stroke-dasharray: none;
+    opacity: 0.7;
+  }
+
+  .pitchPoint {
+    opacity: 0.76;
+    scale: 1;
+  }
+}

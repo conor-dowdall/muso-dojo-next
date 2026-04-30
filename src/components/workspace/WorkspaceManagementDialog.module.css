@@ -1,0 +1,134 @@
+.content {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.nameForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.nameField {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.nameLabel {
+  position: absolute;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  inline-size: var(--space-px);
+  block-size: var(--space-px);
+  margin: calc(var(--space-px) * -1);
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+}
+
+.nameControl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.nameInput {
+  appearance: none;
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: var(--control-size-md);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-base) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  line-height: var(--leading-none);
+}
+
+.nameInput:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.nameInput[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.nameMessage {
+  padding-inline: var(--space-1);
+}
+
+.nameMessage[data-tone="danger"] {
+  color: var(--color-danger);
+}
+
+.actionGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.workspaceList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.workspaceControls {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.dangerSection {
+  margin-block-start: var(--space-1);
+  gap: var(--space-1);
+}
+
+.deleteButton {
+  align-self: flex-start;
+}
+
+.deleteConfirmation {
+  display: flex;
+  inline-size: 100%;
+  min-block-size: var(--control-size-sm);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.deletePrompt {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deleteConfirmationActions {
+  display: flex;
+  flex-wrap: nowrap;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+@container (width > 32rem) {
+  .actionGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

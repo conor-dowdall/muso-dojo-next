@@ -1,0 +1,157 @@
+.content {
+  --dialog-major-section-gap: var(--space-7);
+  --dialog-revealed-settings-gap: var(--space-5);
+  --dialog-revealed-settings-indent: var(--space-3);
+  --dialog-peer-choice-gap: var(--space-2);
+  --dialog-disclosure-category-gap: var(--space-8);
+
+  --detail-panel-motion-gutter: var(--space-1);
+
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dialog-major-section-gap);
+}
+
+.section {
+  display: flex;
+  flex: 0 0 auto;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-block: 0;
+}
+
+.content > .section:first-child {
+  padding-block-start: 0;
+}
+
+.optionGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.detailPanelFrame {
+  box-sizing: content-box;
+  flex: 0 0 auto;
+  min-inline-size: 0;
+  block-size: var(--detail-panel-height, auto);
+  margin: calc(var(--detail-panel-motion-gutter) * -1);
+  padding: var(--detail-panel-motion-gutter);
+  overflow: hidden;
+  transition: block-size var(--transition-base) var(--ease-out-expo);
+}
+
+.section + .detailPanelFrame {
+  margin-block-start: 0;
+}
+
+.sectionGroup > .detailPanelFrame > .detailPanel {
+  padding-inline: var(--dialog-revealed-settings-indent);
+}
+
+.detailPanel {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--dialog-major-section-gap);
+  animation: detail-panel-enter 260ms ease-out;
+}
+
+.sectionGroup {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--dialog-revealed-settings-gap);
+}
+
+.setupRows {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--dialog-peer-choice-gap);
+}
+
+.disclosurePanel {
+  min-inline-size: 0;
+  padding-block: var(--space-5) var(--space-6);
+  padding-inline: var(--space-4);
+  animation: detail-panel-enter 220ms ease-out;
+}
+
+.disclosurePanel > * + * {
+  margin-block-start: var(--space-5);
+}
+
+.disclosureGroups {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: 0;
+}
+
+.indentedDisclosureGroups {
+  padding-inline: var(--space-4);
+}
+
+.disclosureGroup {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.disclosureGroup + .disclosureGroup {
+  margin-block-start: var(--dialog-disclosure-category-gap);
+}
+
+.disclosureList {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--dialog-peer-choice-gap);
+}
+
+.footer {
+  container-type: inline-size;
+}
+
+.summarySection {
+  display: flex;
+  min-inline-size: 0;
+  justify-content: flex-end;
+}
+
+@container (width > 34rem) {
+  .optionGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detailPanelFrame {
+    block-size: auto;
+    transition: none;
+  }
+
+  .detailPanel {
+    animation: none;
+  }
+
+  .disclosurePanel {
+    animation: none;
+  }
+}
+
+@keyframes detail-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-1));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -1,0 +1,44 @@
+.musicGroupWrapper {
+  container-type: inline-size;
+}
+
+.musicGroup {
+  --music-group-padding: var(--space-4);
+  --music-group-gap: var(--space-4);
+  --music-group-content-gap: var(--space-4);
+  --music-group-border: var(--color-border);
+  --music-group-background: var(--color-surface);
+  --music-group-background-highlight: rgb(255 255 255 / 0.03);
+
+  border: var(--border-width-base) solid var(--music-group-border);
+  border-radius: var(--radius-surface);
+  padding: var(--music-group-padding);
+  background:
+    linear-gradient(
+      180deg,
+      var(--music-group-background-highlight),
+      var(--music-group-background)
+    ),
+    var(--color-surface);
+  box-shadow: var(--shadow-highlight-inset), var(--shadow-surface-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: var(--music-group-gap);
+
+  @container (width > 48rem) {
+    --music-group-padding: var(--space-6);
+    --music-group-gap: var(--space-6);
+    --music-group-content-gap: var(--space-6);
+  }
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--music-group-content-gap);
+}
+
+.content[data-layout="row"] {
+  flex-flow: row wrap;
+  align-items: flex-start;
+}

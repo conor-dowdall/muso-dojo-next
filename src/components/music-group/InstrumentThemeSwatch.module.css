@@ -1,0 +1,117 @@
+.keyboardSwatch {
+  display: grid;
+  position: relative;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  inline-size: var(--instrument-theme-swatch-width, var(--control-size-2xl));
+  block-size: var(--instrument-theme-swatch-height, var(--control-size-xs));
+  overflow: hidden;
+  border-radius: var(--radius-subtle);
+  background: var(--keyboard-swatch-white-key-background);
+  box-shadow: inset 0 0 0 var(--border-width-base) rgb(0 0 0 / 0.18);
+}
+
+.keyboardSwatchWhiteKey {
+  min-inline-size: 0;
+  border-inline-end: var(--border-width-base) solid
+    var(--keyboard-swatch-white-key-border);
+  border-radius: var(--keyboard-swatch-key-radius);
+  background: var(--keyboard-swatch-white-key-background);
+  box-shadow: var(--keyboard-swatch-white-key-shadow);
+}
+
+.keyboardSwatchWhiteKey:last-of-type {
+  border-inline-end: 0;
+}
+
+.keyboardSwatchBlackKey {
+  position: absolute;
+  inset-block-start: 0;
+  inline-size: 14.5%;
+  block-size: 62%;
+  border: var(--border-width-base) solid var(--keyboard-swatch-black-key-border);
+  border-radius: 0 0 var(--radius-small) var(--radius-small);
+  background: var(--keyboard-swatch-black-key-background);
+  box-shadow: var(--keyboard-swatch-black-key-shadow);
+  pointer-events: none;
+}
+
+.keyboardSwatchBlackKey[data-position="1"] {
+  inset-inline-start: 15.5%;
+}
+
+.keyboardSwatchBlackKey[data-position="2"] {
+  inset-inline-start: 43%;
+}
+
+.keyboardSwatchBlackKey[data-position="3"] {
+  inset-inline-start: 89.5%;
+}
+
+.fretboardSwatch {
+  display: block;
+  position: relative;
+  inline-size: var(--instrument-theme-swatch-width, var(--control-size-2xl));
+  block-size: var(--instrument-theme-swatch-height, var(--control-size-xs));
+  overflow: hidden;
+  border-radius: var(--radius-subtle);
+  background: var(--fretboard-swatch-background);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 220% 100%;
+}
+
+.fretboardSwatchNut,
+.fretboardSwatchFret,
+.fretboardSwatchString {
+  position: absolute;
+  pointer-events: none;
+}
+
+.fretboardSwatchNut {
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 13%;
+  background: var(--fretboard-swatch-nut-color);
+  box-shadow:
+    1px 0 0 rgb(255 255 255 / 0.16),
+    2px 0 3px rgb(0 0 0 / 0.28);
+}
+
+.fretboardSwatchFret {
+  inset-block: 0;
+  inset-inline-start: 80%;
+  inline-size: var(--space-1);
+  background: var(--fretboard-swatch-fret-color);
+  box-shadow:
+    1px 0 0 rgb(255 255 255 / 0.18),
+    -1px 0 1px rgb(0 0 0 / 0.24);
+}
+
+.fretboardSwatchString {
+  inset-block-start: 50%;
+  inset-inline: 0;
+  block-size: var(--border-width-thick);
+  border-radius: 0;
+  background-color: var(--fretboard-swatch-string-color);
+  background-image:
+    var(--fretboard-swatch-string-texture),
+    linear-gradient(rgb(255 255 255 / 0.14), rgb(0 0 0 / 0.14));
+  background-position: center;
+  background-repeat: repeat-x, no-repeat;
+  background-size:
+    3px 100%,
+    100% 100%;
+  box-shadow:
+    0 -1px 0 rgb(255 255 255 / 0.12),
+    0 1px 2px rgb(0 0 0 / 0.4);
+  transform: translateY(-50%);
+}
+
+.fretboardSwatch::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--border-width-base) solid rgb(0 0 0 / 0.18);
+  border-radius: inherit;
+  pointer-events: none;
+}
