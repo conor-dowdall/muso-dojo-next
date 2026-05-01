@@ -5,8 +5,12 @@ import {
   type ColorCollectionKey,
 } from "@musodojo/music-theory-data";
 import { Button } from "@/components/ui/buttons/Button";
-import { OptionButton } from "@/components/ui/buttons/OptionButton";
-import { Heading } from "@/components/ui/typography/Heading";
+import {
+  DisclosureList,
+  DisclosureListAction,
+  DisclosureListItem,
+  useDisclosureList,
+} from "@/components/ui/disclosure-list/DisclosureList";
 import {
   DEFAULT_NOTE_COLOR_CONFIG,
   NOTE_COLOR_INDEXES,
@@ -29,6 +33,8 @@ import {
 import styles from "./WorkspaceManagementDialog.module.css";
 
 interface WorkspaceNoteColorSettingsProps {
+  isOpen?: boolean;
+  onToggle?: () => void;
   value?: WorkspaceNoteColorConfig;
   onChange: (value: WorkspaceNoteColorConfig) => void;
 }
@@ -36,6 +42,7 @@ interface WorkspaceNoteColorSettingsProps {
 const themePreviewColors = createNoteColorTuple(
   NOTE_COLOR_INDEXES.map(() => NOTE_COLOR_THEME_VALUE),
 );
+type NoteColorChoice = "note-colors";
 
 function getNormalizedConfig(value: WorkspaceNoteColorConfig | undefined) {
   return normalizeNoteColorConfig(value) ?? DEFAULT_NOTE_COLOR_CONFIG;
@@ -51,6 +58,44 @@ function getPresetPreviewColors(preset: ColorCollectionKey) {
 
 function getCustomSubtitle({ mode }: CustomNoteColorConfig) {
   return mode === "relative" ? "Root-relative" : "Pitch";
+}
+
+function getConfigLabel(config: WorkspaceNoteColorConfig) {
+  if (config.source === "theme") {
+    return "Theme";
+  }
+
+  if (config.source === "preset") {
+    return colorCollections[config.preset].name;
+  }
+
+  return config.name;
+}
+
+function getConfigSubtitle(config: WorkspaceNoteColorConfig) {
+  if (config.source === "theme") {
+    return "Global";
+  }
+
+  if (config.source === "preset") {
+    return colorCollections[config.preset].mode === "relative"
+      ? "Root-relative"
+      : "Pitch";
+  }
+
+  return getCustomSubtitle(config);
+}
+
+function getConfigPreviewColors(config: WorkspaceNoteColorConfig) {
+  if (config.source === "theme") {
+    return themePreviewColors;
+  }
+
+  if (config.source === "preset") {
+    return getPresetPreviewColors(config.preset);
+  }
+
+  return config.colors;
 }
 
 function updateCustomMode(
@@ -92,118 +137,135 @@ function NoteColorPreview({ colors }: { colors: NoteColorTuple<string> }) {
 }
 
 export function WorkspaceNoteColorSettings({
+  isOpen,
+  onToggle,
   value,
   onChange,
 }: WorkspaceNoteColorSettingsProps) {
+  const { openChoice, toggleChoice } = useDisclosureList<NoteColorChoice>();
   const config = getNormalizedConfig(value);
   const customConfig = createCustomNoteColorConfig(config);
   const selectedCustomConfig =
     config.source === "custom" ? config : customConfig;
+  const configLabel = getConfigLabel(config);
+  const configSubtitle = getConfigSubtitle(config);
+  const isColorChoiceOpen = isOpen ?? openChoice === "note-colors";
+  const handleToggle = onToggle ?? (() => toggleChoice("note-colors"));
 
   return (
-    <section className={styles.section} aria-label="Note colors">
-      <Heading as="h3" size="sm" weight="semibold">
-        Note colors
-      </Heading>
+    <DisclosureListItem
+      ariaLabel={`Choose note colors. Current: ${configLabel}, ${configSubtitle}.`}
+      isOpen={isColorChoiceOpen}
+      label="Note colors"
+      preview={<NoteColorPreview colors={getConfigPreviewColors(config)} />}
+      subtitle={`${configLabel} - ${configSubtitle}`}
+      onToggle={handleToggle}
+    >
+      <div className={styles.noteColorDisclosure}>
+        <DisclosureList className={styles.noteColorOptions}>
+          <DisclosureListAction
+            density="compact"
+            label="Theme"
+            preview={<NoteColorPreview colors={themePreviewColors} />}
+            selected={config.source === "theme"}
+            showSelectionIndicator
+            subtitle="Global"
+            onClick={() => onChange({ source: "theme" })}
+          />
 
-      <div className={styles.noteColorOptions}>
-        <OptionButton
-          density="compact"
-          label="Theme"
-          presentation="list"
-          preview={<NoteColorPreview colors={themePreviewColors} />}
-          selected={config.source === "theme"}
-          subtitle="Global"
-          onClick={() => onChange({ source: "theme" })}
-        />
+          {noteColorPresetKeys.map((preset) => {
+            const collection = colorCollections[preset];
 
-        {noteColorPresetKeys.map((preset) => {
-          const collection = colorCollections[preset];
+            return (
+              <DisclosureListAction
+                key={preset}
+                density="compact"
+                label={collection.name}
+                preview={
+                  <NoteColorPreview colors={getPresetPreviewColors(preset)} />
+                }
+                selected={
+                  config.source === "preset" && config.preset === preset
+                }
+                showSelectionIndicator
+                subtitle={
+                  collection.mode === "relative" ? "Root-relative" : "Pitch"
+                }
+                onClick={() => onChange({ source: "preset", preset })}
+              />
+            );
+          })}
 
-          return (
-            <OptionButton
-              key={preset}
-              density="compact"
-              label={collection.name}
-              presentation="list"
-              preview={
-                <NoteColorPreview colors={getPresetPreviewColors(preset)} />
-              }
-              selected={config.source === "preset" && config.preset === preset}
-              subtitle={
-                collection.mode === "relative" ? "Root-relative" : "Pitch"
-              }
-              onClick={() => onChange({ source: "preset", preset })}
-            />
-          );
-        })}
-
-        <OptionButton
-          density="compact"
-          label="Custom"
-          presentation="list"
-          preview={<NoteColorPreview colors={customConfig.colors} />}
-          selected={config.source === "custom"}
-          subtitle={getCustomSubtitle(customConfig)}
-          onClick={() => onChange(customConfig)}
-        />
-      </div>
-
-      {config.source === "custom" ? (
-        <div className={styles.customColorPanel}>
-          <div
-            className={styles.noteColorModeControls}
-            role="group"
-            aria-label="Custom color mode"
+          <DisclosureListItem
+            ariaLabel={`Choose custom note colors. ${getCustomSubtitle(
+              customConfig,
+            )}.`}
+            density="compact"
+            isOpen={config.source === "custom"}
+            label="Custom"
+            preview={<NoteColorPreview colors={customConfig.colors} />}
+            subtitle={getCustomSubtitle(customConfig)}
+            onToggle={() => onChange(customConfig)}
           >
-            <Button
-              density="compact"
-              label="Pitch"
-              selected={selectedCustomConfig.mode === "absolute"}
-              size="sm"
-              onClick={() =>
-                onChange(updateCustomMode(selectedCustomConfig, "absolute"))
-              }
-            />
-            <Button
-              density="compact"
-              label="Root-relative"
-              selected={selectedCustomConfig.mode === "relative"}
-              size="sm"
-              onClick={() =>
-                onChange(updateCustomMode(selectedCustomConfig, "relative"))
-              }
-            />
-          </div>
+            <div className={styles.customColorPanel}>
+              <div
+                className={styles.noteColorModeControls}
+                role="group"
+                aria-label="Custom color mode"
+              >
+                <Button
+                  density="compact"
+                  label="Pitch"
+                  selected={selectedCustomConfig.mode === "absolute"}
+                  size="sm"
+                  onClick={() =>
+                    onChange(updateCustomMode(selectedCustomConfig, "absolute"))
+                  }
+                />
+                <Button
+                  density="compact"
+                  label="Root-relative"
+                  selected={selectedCustomConfig.mode === "relative"}
+                  size="sm"
+                  onClick={() =>
+                    onChange(updateCustomMode(selectedCustomConfig, "relative"))
+                  }
+                />
+              </div>
 
-          <div className={styles.customColorGrid}>
-            {NOTE_COLOR_INDEXES.map((index) => {
-              const label = getNoteColorLabel(selectedCustomConfig.mode, index);
+              <div className={styles.customColorGrid}>
+                {NOTE_COLOR_INDEXES.map((index) => {
+                  const label = getNoteColorLabel(
+                    selectedCustomConfig.mode,
+                    index,
+                  );
 
-              return (
-                <label key={index} className={styles.customColorField}>
-                  <span className={styles.customColorLabel}>{label}</span>
-                  <input
-                    aria-label={`${label} color`}
-                    className={styles.customColorInput}
-                    type="color"
-                    value={selectedCustomConfig.colors[index]}
-                    onChange={(event) =>
-                      onChange(
-                        updateCustomColor(
-                          selectedCustomConfig,
-                          index,
-                          event.currentTarget.value,
-                        ),
-                      )
-                    }
-                  />
-                </label>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
-    </section>
+                  return (
+                    <label key={index} className={styles.customColorField}>
+                      <span className={styles.customColorLabel}>{label}</span>
+                      <input
+                        aria-label={`${label} color`}
+                        className={styles.customColorInput}
+                        type="color"
+                        value={selectedCustomConfig.colors[index]}
+                        onChange={(event) =>
+                          onChange(
+                            updateCustomColor(
+                              selectedCustomConfig,
+                              index,
+                              event.currentTarget.value,
+                            ),
+                          )
+                        }
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          </DisclosureListItem>
+        </DisclosureList>
+      </div>
+    </DisclosureListItem>
   );
 }
