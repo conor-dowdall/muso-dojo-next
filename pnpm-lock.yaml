@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@musodojo/music-theory-data':
-        specifier: ^26.5.0
-        version: 26.5.0
+        specifier: ^27.0.0
+        version: 27.0.0
       lucide-react:
         specifier: ^1.12.0
         version: 1.12.0(react@19.2.5)
@@ -360,8 +360,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@musodojo/music-theory-data@26.5.0':
-    resolution: {integrity: sha512-PHHijoC0YuiqlEdz7vMfAQuy6RGgpnh66ulUFAueUTIs3N1D6DHnmJwlPa/Vw45aeydVmBvgqJjRFd+i43MW7g==}
+  '@musodojo/music-theory-data@27.0.0':
+    resolution: {integrity: sha512-KykXF1tKqhALYmHkNziaTSpxASpFgMYjg7A8Ni+MnFAVOCev5Uc6bmgVqlw+DRPnkkMcMOn+EiAP1gZBjY9/zA==}
 
   '@napi-rs/wasm-runtime@0.2.12':
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
@@ -2101,7 +2101,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@musodojo/music-theory-data@26.5.0': {}
+  '@musodojo/music-theory-data@27.0.0': {}
 
   '@napi-rs/wasm-runtime@0.2.12':
     dependencies:

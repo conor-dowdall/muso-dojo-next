@@ -1,5 +1,6 @@
 import {
   colorCollections,
+  normalizeHexColor as normalizeCoreHexColor,
   type ColorCollectionKey,
 } from "@musodojo/music-theory-data";
 import {
@@ -45,24 +46,7 @@ export function normalizeHexColor(value: unknown): string | undefined {
     return undefined;
   }
 
-  const trimmedValue = value.trim();
-  const shorthandMatch = /^#?([\da-f])([\da-f])([\da-f])$/i.exec(trimmedValue);
-
-  if (shorthandMatch) {
-    return `#${shorthandMatch
-      .slice(1)
-      .map((part) => `${part}${part}`)
-      .join("")
-      .toLowerCase()}`;
-  }
-
-  const fullMatch = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(
-    trimmedValue,
-  );
-
-  return fullMatch
-    ? `#${fullMatch.slice(1).join("").toLowerCase()}`
-    : undefined;
+  return normalizeCoreHexColor(value) ?? undefined;
 }
 
 export function normalizeCustomNoteColors(
@@ -93,7 +77,7 @@ export function createCustomNoteColorConfig(
     return {
       source: "custom",
       name: "Custom Colors",
-      mode: collection.relative ? "relative" : "absolute",
+      mode: collection.mode,
       colors: createNoteColorTuple(
         collection.colors.map(
           (color, index) =>

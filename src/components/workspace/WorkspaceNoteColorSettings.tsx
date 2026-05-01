@@ -130,7 +130,9 @@ export function WorkspaceNoteColorSettings({
                 <NoteColorPreview colors={getPresetPreviewColors(preset)} />
               }
               selected={config.source === "preset" && config.preset === preset}
-              subtitle={collection.relative ? "Root-relative" : "Pitch"}
+              subtitle={
+                collection.mode === "relative" ? "Root-relative" : "Pitch"
+              }
               onClick={() => onChange({ source: "preset", preset })}
             />
           );

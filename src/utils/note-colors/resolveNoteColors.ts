@@ -1,5 +1,7 @@
 import {
   colorCollections,
+  getNoteColorIndex as getCoreNoteColorIndex,
+  normalizeChromaticIndex,
   normalizeRootNoteString,
   rootNoteToIntegerMap,
 } from "@musodojo/music-theory-data";
@@ -24,10 +26,6 @@ export interface ResolvedWorkspaceNoteColors {
   colors: NoteColorTuple<string>;
 }
 
-function normalizeMidiPitchClass(midi: number) {
-  return ((Math.trunc(midi) % 12) + 12) % 12;
-}
-
 function resolvePresetNoteColors(
   config: WorkspaceNoteColorConfig,
 ): ResolvedWorkspaceNoteColors {
@@ -39,7 +37,7 @@ function resolvePresetNoteColors(
 
   return {
     source: "preset",
-    mode: collection.relative ? "relative" : "absolute",
+    mode: collection.mode,
     colors: createNoteColorTuple(
       collection.colors.map((color) => color ?? NOTE_COLOR_NEUTRAL_VALUE),
     ),
@@ -86,25 +84,21 @@ export function getNoteColorIndex(
   rootNote: string | undefined,
   mode: NoteColorMode,
 ) {
-  const pitchClass = normalizeMidiPitchClass(midi);
-
-  if (mode !== "relative") {
-    return pitchClass;
-  }
-
   const normalizedRootNote =
     rootNote !== undefined ? normalizeRootNoteString(rootNote) : undefined;
   const rootPitchClass = normalizedRootNote
     ? rootNoteToIntegerMap.get(normalizedRootNote)
     : undefined;
 
-  return rootPitchClass === undefined
-    ? pitchClass
-    : (pitchClass - rootPitchClass + 12) % 12;
+  return getCoreNoteColorIndex({
+    midi: Math.trunc(midi),
+    mode,
+    rootPitchClass,
+  });
 }
 
 export function getWorkspaceNoteColorVariable(index: number) {
-  const colorIndex = normalizeMidiPitchClass(index);
+  const colorIndex = normalizeChromaticIndex(Math.trunc(index));
 
   return `var(--workspace-note-color-${colorIndex}, var(--pitch-${colorIndex}))`;
 }

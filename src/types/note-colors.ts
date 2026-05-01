@@ -1,22 +1,15 @@
-import { type ColorCollectionKey } from "@musodojo/music-theory-data";
+import {
+  type ChromaticIndex,
+  type ChromaticTuple,
+  type ColorCollectionKey,
+  type NoteColorMode,
+} from "@musodojo/music-theory-data";
 
-export type NoteColorMode = "absolute" | "relative";
 export type NoteColorSource = "theme" | "preset" | "custom";
 
-export type NoteColorTuple<T = string | null> = readonly [
-  T,
-  T,
-  T,
-  T,
-  T,
-  T,
-  T,
-  T,
-  T,
-  T,
-  T,
-  T,
-];
+export type { NoteColorMode };
+
+export type NoteColorTuple<T = string | null> = ChromaticTuple<T>;
 
 export interface ThemeNoteColorConfig {
   source: "theme";
@@ -40,6 +33,6 @@ export type WorkspaceNoteColorConfig =
   | CustomNoteColorConfig;
 
 export interface InstrumentNoteColor {
-  index: number;
+  index: ChromaticIndex;
   value: string;
 }
