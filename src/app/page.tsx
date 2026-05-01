@@ -67,6 +67,7 @@ export default function LandingPage() {
                 alt="Muso Dojo"
                 className={styles.appHeaderLogo}
                 height={180}
+                preload
                 src={assetPath(
                   "/logos/app-header-on-dark-transparent-560x180.webp",
                 )}
