@@ -1,8 +1,20 @@
 .note {
   transform: scale(var(--note-scale));
-  --note-hover-ring-color: var(--color-interaction-ring-light);
-  --note-hover-shadow-color: var(--color-interaction-ring-dark);
-  --note-focus-ring-color: var(--color-focus-ring);
+  --note-hover-ring-color: color-mix(
+    in srgb,
+    var(--note-color, var(--color-accent)) 55%,
+    var(--color-interaction-ring-light)
+  );
+  --note-hover-shadow-color: color-mix(
+    in srgb,
+    var(--note-color, var(--color-accent)) 28%,
+    var(--color-interaction-ring-dark)
+  );
+  --note-focus-ring-color: color-mix(
+    in srgb,
+    var(--color-focus-ring) 76%,
+    var(--color-interaction-ring-light)
+  );
   --note-focus-contrast-color: var(--color-focus-ring-contrast);
   box-shadow: inset 0 0 0 0 transparent;
   transition:
@@ -37,26 +49,6 @@
   overflow: hidden;
   direction: ltr;
   color: white;
-}
-
-@supports (color: color-mix(in srgb, red, white)) {
-  .note {
-    --note-hover-ring-color: color-mix(
-      in srgb,
-      var(--note-color, var(--color-accent)) 55%,
-      var(--color-interaction-ring-light)
-    );
-    --note-hover-shadow-color: color-mix(
-      in srgb,
-      var(--note-color, var(--color-accent)) 28%,
-      var(--color-interaction-ring-dark)
-    );
-    --note-focus-ring-color: color-mix(
-      in srgb,
-      var(--color-focus-ring) 76%,
-      var(--color-interaction-ring-light)
-    );
-  }
 }
 
 .noteCell {
