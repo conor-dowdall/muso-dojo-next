@@ -1,4 +1,5 @@
 import { type ActiveNote } from "@/types/instrument-active-note";
+import { type InstrumentNoteColor } from "@/types/note-colors";
 import styles from "./InstrumentNote.module.css";
 import { type CSSProperties, type ReactNode } from "react";
 
@@ -11,6 +12,7 @@ interface InstrumentNoteProps {
   width?: string;
   height?: string;
   largeSize?: string;
+  noteColor?: InstrumentNoteColor;
 }
 
 /**
@@ -31,13 +33,12 @@ export function InstrumentNote({
   width,
   height,
   largeSize = "85%",
+  noteColor,
 }: InstrumentNoteProps) {
   const emphasis = note.emphasis;
   const isHidden = emphasis === "hidden";
-
-  // Chromatic pitch color calculation (0-11)
-  const pitchIndex = note.midi % 12;
-  const pitchColorVar = `var(--pitch-${pitchIndex})`;
+  const noteColorIndex = noteColor?.index ?? note.midi % 12;
+  const noteColorValue = noteColor?.value ?? `var(--pitch-${noteColorIndex})`;
 
   // Physical size is stabilized to prevent layout reflows.
   const effectiveWidth = width ?? largeSize;
@@ -49,7 +50,7 @@ export function InstrumentNote({
   return (
     <div
       data-emphasis={emphasis}
-      data-pitch={pitchIndex}
+      data-note-color-index={noteColorIndex}
       data-is-placeholder={label === ""}
       data-chars={charCount}
       className={className ? `${styles.note} ${className}` : styles.note}
@@ -58,7 +59,7 @@ export function InstrumentNote({
           ...style,
           "--note-width": effectiveWidth,
           "--note-height": effectiveHeight,
-          "--pitch-color": pitchColorVar,
+          "--note-color": noteColorValue,
           visibility: isHidden ? "hidden" : undefined,
         } as CSSProperties
       }

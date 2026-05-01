@@ -17,6 +17,7 @@ type KeyboardNoteCellWrapperProps =
 function KeyboardNoteCellWrapper({
   noteCell,
   note,
+  noteColor,
   label,
   ariaLabel,
   isFocused,
@@ -30,6 +31,7 @@ function KeyboardNoteCellWrapper({
     <InstrumentNoteCell
       noteKey={key}
       note={note}
+      noteColor={noteColor}
       midi={midi}
       label={label}
       ariaLabel={ariaLabel}
@@ -55,7 +57,7 @@ export function KeyboardNotesLayer({
   const presentation = useKeyboardPresentation();
   const { interactiveMidiRange, noteCells } = geometry;
 
-  const { activeNotes, noteLabels, handleToggle, getAriaLabel } =
+  const { activeNotes, noteLabels, handleToggle, getAriaLabel, getNoteColor } =
     useInstrumentNotes({
       activeNotes: externalActiveNotes,
       onActiveNotesChange: externalOnChange,
@@ -87,6 +89,7 @@ export function KeyboardNotesLayer({
         key={noteCell.key}
         noteCell={noteCell}
         note={activeNotes?.[noteCell.key]}
+        noteColor={getNoteColor(noteCell.midi)}
         label={noteLabels[noteCell.midi]}
         ariaLabel={getAriaLabel(
           {

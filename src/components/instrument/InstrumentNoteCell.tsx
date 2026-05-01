@@ -1,11 +1,13 @@
 import { type ReactNode, type CSSProperties, type KeyboardEvent } from "react";
 import { InstrumentNote } from "./InstrumentNote";
 import { type ActiveNote } from "@/types/instrument-active-note";
+import { type InstrumentNoteColor } from "@/types/note-colors";
 import styles from "./InstrumentNote.module.css";
 
 interface InstrumentNoteCellProps {
   noteKey: string;
   note?: ActiveNote;
+  noteColor?: InstrumentNoteColor;
   midi: number;
   label?: string;
   ariaLabel: string;
@@ -28,6 +30,7 @@ interface InstrumentNoteCellProps {
 export function InstrumentNoteCell({
   noteKey,
   note,
+  noteColor,
   midi,
   label,
   ariaLabel,
@@ -71,6 +74,7 @@ export function InstrumentNoteCell({
     >
       <InstrumentNote
         note={effectiveNote}
+        noteColor={noteColor}
         label={label}
         width={width}
         height={height}

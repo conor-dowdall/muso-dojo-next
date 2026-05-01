@@ -18,6 +18,7 @@ type FretboardNoteCellWrapperProps =
 function FretboardNoteCellWrapper({
   noteCell,
   note,
+  noteColor,
   label,
   ariaLabel,
   isFocused,
@@ -29,6 +30,7 @@ function FretboardNoteCellWrapper({
     <InstrumentNoteCell
       noteKey={noteCell.key}
       note={note}
+      noteColor={noteColor}
       midi={noteCell.midi}
       label={label}
       ariaLabel={ariaLabel}
@@ -54,7 +56,7 @@ export function FretboardNotesLayer({
   const { tuning, mainContentGridRow, fretRange, noteCells, leftHanded } =
     geometry;
 
-  const { activeNotes, noteLabels, handleToggle, getAriaLabel } =
+  const { activeNotes, noteLabels, handleToggle, getAriaLabel, getNoteColor } =
     useInstrumentNotes({
       activeNotes: externalActiveNotes,
       onActiveNotesChange: externalOnChange,
@@ -89,6 +91,7 @@ export function FretboardNotesLayer({
         key={noteCell.key}
         noteCell={noteCell}
         note={activeNotes?.[noteCell.key]}
+        noteColor={getNoteColor(noteCell.midi)}
         label={noteLabels[noteCell.midi]}
         ariaLabel={getAriaLabel(
           {

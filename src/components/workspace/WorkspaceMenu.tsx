@@ -20,7 +20,7 @@ export function WorkspaceMenu() {
         onClick={() => setIsDialogOpen(true)}
       />
 
-      <Dialog isOpen={isDialogOpen} onClose={closeDialog}>
+      <Dialog isOpen={isDialogOpen} onClose={closeDialog} size="lg">
         <WorkspaceManagementDialog onClose={closeDialog} />
       </Dialog>
     </>

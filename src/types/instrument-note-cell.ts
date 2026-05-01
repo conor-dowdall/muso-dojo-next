@@ -1,5 +1,6 @@
 import { type CSSProperties, type KeyboardEvent } from "react";
 import { type ActiveNote } from "./instrument-active-note";
+import { type InstrumentNoteColor } from "./note-colors";
 
 export interface InstrumentNoteCellInfo {
   key: string;
@@ -14,6 +15,7 @@ export interface InstrumentNoteCellWrapperProps<
 > {
   noteCell: TNoteCell;
   note?: ActiveNote;
+  noteColor: InstrumentNoteColor;
   label?: string;
   ariaLabel: string;
   isFocused: boolean;

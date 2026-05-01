@@ -27,6 +27,7 @@ import {
   type WorkspaceConfig,
 } from "@/types/workspace";
 import { type MusicGroupLayout } from "@/types/music-group";
+import { normalizeNoteColorConfig } from "@/utils/note-colors/createNoteColorConfig";
 
 const DEFAULT_WORKSPACE_ID = "workspace-1";
 const DEFAULT_WORKSPACE_NAME = "Practice Workspace";
@@ -211,6 +212,7 @@ export function normalizeMusicGroupConfig(
 
 export function normalizeWorkspaceConfig(value: unknown): WorkspaceConfig {
   const input = isRecord(value) ? value : {};
+  const noteColorConfig = normalizeNoteColorConfig(input.noteColorConfig);
   const groups = Array.isArray(input.groups)
     ? input.groups
         .map((group, groupIndex) =>
@@ -223,6 +225,7 @@ export function normalizeWorkspaceConfig(value: unknown): WorkspaceConfig {
     id: normalizeId(input.id, DEFAULT_WORKSPACE_ID),
     name: normalizeString(input.name) ?? DEFAULT_WORKSPACE_NAME,
     lastModified: normalizeString(input.lastModified) ?? FALLBACK_LAST_MODIFIED,
+    ...(noteColorConfig ? { noteColorConfig } : {}),
     groups,
   };
 }

@@ -8,6 +8,8 @@ import {
 import { toggleNote } from "@/utils/instrument/toggleNote";
 import { getNoteAriaLabel } from "@/utils/instrument/getNoteAriaLabel";
 import { areActiveNotesEqual } from "@/utils/instrument/areActiveNotesEqual";
+import { useWorkspaceNoteColors } from "@/components/note-colors/WorkspaceNoteColorProvider";
+import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
 
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
@@ -53,6 +55,7 @@ export function useInstrumentNotes({
     noteCollectionKey,
     activeDisplayFormatId,
   });
+  const workspaceNoteColors = useWorkspaceNoteColors();
 
   const effectiveShowMidiNumbers =
     externalShowMidiNumbers ?? musicSystem.showMidiNumbers;
@@ -119,6 +122,12 @@ export function useInstrumentNotes({
   }
 
   const getNoteLabel = (midi: number) => noteLabels[midi];
+  const getNoteColor = (midi: number) =>
+    resolveInstrumentNoteColor({
+      midi,
+      mode: workspaceNoteColors.mode,
+      rootNote: musicSystem.normalizedRootNote,
+    });
 
   return {
     ...musicSystem,
@@ -128,6 +137,7 @@ export function useInstrumentNotes({
     handleToggle,
     getAriaLabel,
     getNoteLabel,
+    getNoteColor,
     noteLabels,
   };
 }

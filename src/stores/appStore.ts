@@ -32,6 +32,7 @@ import { type SettingValue } from "@/types/state";
 import { type ActiveNotes } from "@/types/instrument-active-note";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type DisplayFormatId } from "@/data/displayFormats";
+import { type WorkspaceNoteColorConfig } from "@/types/note-colors";
 
 export type InstrumentSettingsPatch = Partial<
   Omit<InstrumentInstanceBaseConfig, "id">
@@ -54,6 +55,10 @@ interface AppStoreActions {
   cloneWorkspace: (workspaceId: string) => string | undefined;
   removeWorkspace: (workspaceId: string) => void;
   renameWorkspace: (workspaceId: string, name: string) => void;
+  setWorkspaceNoteColorConfig: (
+    workspaceId: string,
+    noteColorConfig: WorkspaceNoteColorConfig,
+  ) => void;
   addMusicGroup: (
     workspaceId?: string,
     settings?: {
@@ -468,6 +473,14 @@ export const useAppStore = create<AppStore>()(
             updateWorkspaceById(state, workspaceId, (workspace) => ({
               ...workspace,
               name: trimmedName,
+            })),
+          );
+        },
+        setWorkspaceNoteColorConfig: (workspaceId, noteColorConfig) => {
+          set((state) =>
+            updateWorkspaceById(state, workspaceId, (workspace) => ({
+              ...workspace,
+              noteColorConfig,
             })),
           );
         },

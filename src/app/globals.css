@@ -139,6 +139,25 @@
   --pitch-9: #cc00ff;
   --pitch-10: #bf6a1f;
   --pitch-11: #ff9ee6;
+
+  --note-color-neutral: var(--color-accent);
+  --note-color-theme: var(--note-color-neutral);
+  --note-label-color: #ffffff;
+  --note-label-stroke-width: 0.11em;
+  --note-label-stroke-color: rgb(0 0 0 / 0.92);
+  --note-label-shadow:
+    0 1px 0 rgb(0 0 0 / 0.78), 0 0 0.22em rgb(0 0 0 / 0.88),
+    0 0 0.45em rgb(0 0 0 / 0.52);
+}
+
+@supports (color: color-mix(in srgb, red, white)) {
+  :root {
+    --note-color-neutral: color-mix(
+      in srgb,
+      var(--color-accent) 68%,
+      var(--color-surface)
+    );
+  }
 }
 
 @media (pointer: coarse) and (min-resolution: 1.25dppx) and (max-resolution: 1.75dppx) {

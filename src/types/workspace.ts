@@ -6,6 +6,7 @@ import { type ActiveNotes } from "@/types/instrument-active-note";
 import { type InstrumentLayoutConfig } from "@/types/instrument-layout";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type MusicGroupLayout } from "@/types/music-group";
+import { type WorkspaceNoteColorConfig } from "@/types/note-colors";
 import { type FretboardConfig } from "@/types/fretboard";
 import { type KeyboardConfig } from "@/types/keyboard";
 import { type DisplayFormatId } from "@/data/displayFormats";
@@ -65,6 +66,7 @@ export interface WorkspaceConfig {
   id: string;
   name: string;
   lastModified: string;
+  noteColorConfig?: WorkspaceNoteColorConfig;
   groups: MusicGroupConfig[];
 }
 

@@ -9,6 +9,7 @@ import { OptionButton } from "@/components/ui/buttons/OptionButton";
 import { Text } from "@/components/ui/typography/Text";
 import { useAppStore } from "@/stores/appStore";
 import { type MusicGroupConfig } from "@/types/workspace";
+import { WorkspaceNoteColorSettings } from "./WorkspaceNoteColorSettings";
 import {
   normalizeRootNoteString,
   noteCollections,
@@ -88,6 +89,9 @@ export function WorkspaceManagementDialog({
   const cloneWorkspace = useAppStore((state) => state.cloneWorkspace);
   const removeWorkspace = useAppStore((state) => state.removeWorkspace);
   const renameWorkspace = useAppStore((state) => state.renameWorkspace);
+  const setWorkspaceNoteColorConfig = useAppStore(
+    (state) => state.setWorkspaceNoteColorConfig,
+  );
 
   const workspaceList = Object.values(workspaces);
   const activeWorkspace =
@@ -232,6 +236,15 @@ export function WorkspaceManagementDialog({
                 </div>
               </form>
             </section>
+          ) : null}
+
+          {activeWorkspace ? (
+            <WorkspaceNoteColorSettings
+              value={activeWorkspace.noteColorConfig}
+              onChange={(noteColorConfig) =>
+                setWorkspaceNoteColorConfig(activeWorkspace.id, noteColorConfig)
+              }
+            />
           ) : null}
 
           <section className={styles.section} aria-label="Workspace actions">

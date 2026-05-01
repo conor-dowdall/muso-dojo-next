@@ -5,6 +5,7 @@ import { useShallow } from "zustand/react/shallow";
 import { MusicGroup } from "@/components/music-group/MusicGroup";
 import { Fretboard } from "@/components/fretboard/Fretboard";
 import { Keyboard } from "@/components/keyboard/Keyboard";
+import { WorkspaceNoteColorProvider } from "@/components/note-colors/WorkspaceNoteColorProvider";
 import { useAppStore } from "@/stores/appStore";
 import { type ActiveNotes } from "@/types/instrument-active-note";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
@@ -184,6 +185,9 @@ const MusicGroupView = memo(function MusicGroupView({
 });
 
 export function WorkspaceView({ workspaceId }: WorkspaceViewProps) {
+  const noteColorConfig = useAppStore(
+    (state) => state.workspaces[workspaceId]?.noteColorConfig,
+  );
   const groupIds = useAppStore(
     useShallow(
       (state) =>
@@ -192,7 +196,7 @@ export function WorkspaceView({ workspaceId }: WorkspaceViewProps) {
   );
 
   return (
-    <>
+    <WorkspaceNoteColorProvider config={noteColorConfig}>
       {groupIds.map((groupId) => (
         <MusicGroupView
           key={groupId}
@@ -200,6 +204,6 @@ export function WorkspaceView({ workspaceId }: WorkspaceViewProps) {
           groupId={groupId}
         />
       ))}
-    </>
+    </WorkspaceNoteColorProvider>
   );
 }

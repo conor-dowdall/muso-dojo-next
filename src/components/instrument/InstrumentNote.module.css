@@ -23,7 +23,7 @@
   --note-opacity: var(--note-opacity-large);
   opacity: var(--note-opacity);
 
-  background-color: var(--pitch-color, var(--color-base));
+  background-color: var(--note-color, var(--color-base));
   border: var(--border-width-base) solid black;
   border-radius: var(--radius-control);
   width: var(--note-width);
@@ -43,12 +43,12 @@
   .note {
     --note-hover-ring-color: color-mix(
       in srgb,
-      var(--pitch-color, var(--color-accent)) 55%,
+      var(--note-color, var(--color-accent)) 55%,
       var(--color-interaction-ring-light)
     );
     --note-hover-shadow-color: color-mix(
       in srgb,
-      var(--pitch-color, var(--color-accent)) 28%,
+      var(--note-color, var(--color-accent)) 28%,
       var(--color-interaction-ring-dark)
     );
     --note-focus-ring-color: color-mix(
@@ -140,15 +140,16 @@
 }
 
 .label {
-  color: white;
+  color: var(--note-label-color);
   font-size: var(--note-cq-unit);
   font-weight: var(--font-bold);
   /* Robust outline for legibility on light backgrounds (like yellow).
      -webkit-text-stroke is used for the outline.
      paint-order: stroke fill ensures the stroke is behind the text,
      preventing it from making the font look thinner. */
-  -webkit-text-stroke: 0.1em black;
-  text-shadow: 0 0 0.25em black;
+  -webkit-text-stroke: var(--note-label-stroke-width)
+    var(--note-label-stroke-color);
+  text-shadow: var(--note-label-shadow);
   paint-order: stroke fill;
   user-select: none;
 
