@@ -1,15 +1,3 @@
-@supports (corner-shape: squircle) {
-  .note {
-    corner-shape: squircle;
-    border-radius: 50%;
-  }
-}
-@supports not (corner-shape: squircle) {
-  .note {
-    border-radius: 15%;
-  }
-}
-
 .note {
   transform: scale(var(--note-scale));
   --note-hover-ring-color: var(--color-interaction-ring-light);
@@ -37,6 +25,7 @@
 
   background-color: var(--pitch-color, var(--color-base));
   border: var(--border-width-base) solid black;
+  border-radius: var(--radius-control);
   width: var(--note-width);
   height: var(--note-height, var(--note-width));
 
