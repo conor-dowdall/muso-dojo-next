@@ -1,6 +1,11 @@
 .content {
   --dialog-major-section-gap: var(--space-7);
   --dialog-peer-choice-gap: var(--space-2);
+  --dialog-menu-row-gap: var(--dialog-peer-choice-gap);
+  --dialog-menu-related-group-gap: var(--space-3);
+  --dialog-menu-group-gap: var(--space-5);
+  --dialog-menu-panel-block-padding: var(--space-3) var(--space-4);
+  --dialog-menu-panel-content-gap: var(--space-4);
   --workspace-dialog-stable-block-size: 34rem;
 
   container-type: inline-size;
@@ -30,16 +35,12 @@
 }
 
 .workspaceActionsPanel {
-  --disclosure-list-panel-block-padding: var(--space-3) var(--space-4);
-  --disclosure-list-panel-gap: var(--space-2);
+  --disclosure-list-panel-block-padding: var(--dialog-menu-panel-block-padding);
+  --disclosure-list-panel-content-gap: var(--dialog-menu-row-gap);
 }
 
 .workspaceActionsList {
-  --disclosure-list-gap: var(--space-2);
-}
-
-.workspaceSettingsList {
-  --disclosure-list-panel-gap: var(--space-4);
+  --disclosure-list-group-gap: var(--dialog-menu-related-group-gap);
 }
 
 .nameForm {
@@ -115,7 +116,7 @@
 }
 
 .noteColorOptions {
-  --disclosure-list-gap: var(--space-2);
+  --disclosure-list-row-gap: var(--space-2);
 }
 
 .noteColorPreview {
@@ -349,7 +350,11 @@
 }
 
 .workspaceList {
-  --disclosure-list-section-gap: var(--space-4);
+  --disclosure-list-group-gap: var(--dialog-menu-group-gap);
+}
+
+.workspaceDangerGroup {
+  --disclosure-list-row-gap: var(--dialog-menu-row-gap);
 }
 
 .deleteInlineConfirmation {

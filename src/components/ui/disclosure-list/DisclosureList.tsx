@@ -1,53 +1,81 @@
 "use client";
 
-import { type ReactNode, useCallback, useId, useState } from "react";
+import {
+  type ComponentPropsWithoutRef,
+  type ReactNode,
+  useCallback,
+  useId,
+  useState,
+} from "react";
 import {
   OptionButton,
   type OptionButtonProps,
 } from "@/components/ui/buttons/OptionButton";
 import styles from "./DisclosureList.module.css";
 
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
+
+type DivProps = Omit<ComponentPropsWithoutRef<"div">, "children">;
+
+export type DisclosureListDensity = "comfortable" | "compact";
+
 /**
  * Shared vertical menu pattern for object rows, action rows, and nested editors.
  * Panels can stay mounted for calmer transitions while inert keeps closed inputs
  * out of the focus order.
  */
+interface DisclosureListProps extends DivProps {
+  children: ReactNode;
+  density?: DisclosureListDensity;
+  grouped?: boolean;
+}
+
 export function DisclosureList({
   children,
   className = "",
+  density = "comfortable",
   grouped = false,
-}: {
-  children: ReactNode;
-  className?: string;
-  grouped?: boolean;
-}) {
-  const listClasses = [
-    styles.list,
-    grouped ? styles.groupedList : "",
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  ...props
+}: DisclosureListProps) {
+  const listClasses = cx(styles.list, grouped && styles.groupedList, className);
 
-  return <div className={listClasses}>{children}</div>;
+  return (
+    <div
+      {...props}
+      className={listClasses}
+      data-density={density}
+      data-grouped={grouped ? true : undefined}
+    >
+      {children}
+    </div>
+  );
+}
+
+interface DisclosureListGroupProps extends DivProps {
+  children: ReactNode;
 }
 
 export function DisclosureListGroup({
   children,
   className = "",
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  const groupClasses = [styles.group, className].filter(Boolean).join(" ");
+  ...props
+}: DisclosureListGroupProps) {
+  const groupClasses = cx(styles.group, className);
 
-  return <div className={groupClasses}>{children}</div>;
+  return (
+    <div {...props} className={groupClasses}>
+      {children}
+    </div>
+  );
 }
 
 interface DisclosureListItemProps {
   ariaLabel: string;
   children: ReactNode;
   className?: string;
+  containerClassName?: string;
   density?: OptionButtonProps["density"];
   disabled?: boolean;
   disclosureIndicator?: boolean;
@@ -57,6 +85,9 @@ interface DisclosureListItemProps {
   label: ReactNode;
   labelProps?: OptionButtonProps["labelProps"];
   onToggle: () => void;
+  panelClassName?: string;
+  panelContentClassName?: string;
+  panelId?: string;
   preview?: ReactNode;
   selected?: boolean;
   showSelectionIndicator?: OptionButtonProps["showSelectionIndicator"];
@@ -69,6 +100,7 @@ export function DisclosureListItem({
   ariaLabel,
   children,
   className = "",
+  containerClassName = "",
   density,
   disabled,
   disclosureIndicator = true,
@@ -78,6 +110,9 @@ export function DisclosureListItem({
   label,
   labelProps,
   onToggle,
+  panelClassName,
+  panelContentClassName,
+  panelId,
   preview,
   selected,
   showSelectionIndicator,
@@ -85,15 +120,17 @@ export function DisclosureListItem({
   tone,
   variant,
 }: DisclosureListItemProps) {
-  const panelId = useId();
-  const itemClasses = [styles.item, className].filter(Boolean).join(" ");
+  const generatedPanelId = useId();
+  const resolvedPanelId = panelId ?? generatedPanelId;
+  const clusterClasses = cx(styles.itemCluster, containerClassName);
+  const itemClasses = cx(styles.item, className);
   const isSelected = selected ?? isOpen;
 
   return (
-    <>
+    <div className={clusterClasses}>
       <OptionButton
         aria-label={ariaLabel}
-        aria-controls={panelId}
+        aria-controls={resolvedPanelId}
         aria-expanded={isOpen}
         className={itemClasses}
         density={density}
@@ -116,61 +153,76 @@ export function DisclosureListItem({
       />
 
       <DisclosureListPanel
-        id={panelId}
+        className={panelClassName}
+        contentClassName={panelContentClassName}
+        id={resolvedPanelId}
         isOpen={isOpen}
         keepMounted={keepMounted}
       >
         {children}
       </DisclosureListPanel>
-    </>
+    </div>
   );
 }
 
+type DisclosureListActionProps = OptionButtonProps & {
+  containerClassName?: string;
+};
+
 export function DisclosureListAction({
   className = "",
+  containerClassName = "",
   showSelectionIndicator = false,
   ...props
-}: OptionButtonProps) {
-  const itemClasses = [styles.item, className].filter(Boolean).join(" ");
+}: DisclosureListActionProps) {
+  const clusterClasses = cx(styles.itemCluster, containerClassName);
+  const itemClasses = cx(styles.item, className);
 
   return (
-    <OptionButton
-      {...props}
-      className={itemClasses}
-      presentation="list"
-      showSelectionIndicator={showSelectionIndicator}
-    />
+    <div className={clusterClasses}>
+      <OptionButton
+        {...props}
+        className={itemClasses}
+        presentation="list"
+        showSelectionIndicator={showSelectionIndicator}
+      />
+    </div>
   );
+}
+
+interface DisclosureListPanelProps extends DivProps {
+  children: ReactNode;
+  contentClassName?: string;
+  isOpen?: boolean;
+  keepMounted?: boolean;
 }
 
 export function DisclosureListPanel({
   children,
   className = "",
+  contentClassName = "",
   id,
   isOpen = true,
   keepMounted = false,
-}: {
-  children: ReactNode;
-  className?: string;
-  id?: string;
-  isOpen?: boolean;
-  keepMounted?: boolean;
-}) {
+  ...props
+}: DisclosureListPanelProps) {
   if (!isOpen && !keepMounted) {
     return null;
   }
 
-  const panelClasses = [styles.panel, className].filter(Boolean).join(" ");
+  const panelClasses = cx(styles.panel, className);
+  const contentClasses = cx(styles.panelInner, contentClassName);
 
   return (
     <div
+      {...props}
       id={id}
       aria-hidden={isOpen ? undefined : true}
       className={panelClasses}
       data-state={isOpen ? "open" : "closed"}
       inert={isOpen ? undefined : true}
     >
-      <div className={styles.panelInner}>{children}</div>
+      <div className={contentClasses}>{children}</div>
     </div>
   );
 }
@@ -181,6 +233,10 @@ export function useDisclosureList<ChoiceKey extends string>(
   const [openChoice, setOpenChoice] = useState<ChoiceKey | null>(
     initialOpenChoice,
   );
+
+  const open = useCallback((choice: ChoiceKey) => {
+    setOpenChoice(choice);
+  }, []);
 
   const toggleChoice = useCallback((choice: ChoiceKey) => {
     setOpenChoice((currentChoice) =>
@@ -198,10 +254,18 @@ export function useDisclosureList<ChoiceKey extends string>(
     setOpenChoice(null);
   }, []);
 
+  const isOpen = useCallback(
+    (choice: ChoiceKey) => openChoice === choice,
+    [openChoice],
+  );
+
   return {
     closeAll,
     closeChoice,
+    isOpen,
+    open,
     openChoice,
+    setOpenChoice,
     toggleChoice,
   };
 }

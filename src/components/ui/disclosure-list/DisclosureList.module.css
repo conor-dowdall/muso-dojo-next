@@ -1,31 +1,86 @@
 .list {
-  --disclosure-list-gap: var(--dialog-peer-choice-gap, var(--space-2));
-  --disclosure-list-section-gap: var(--space-4);
-  --disclosure-list-indent-offset: var(--space-2);
-  --disclosure-list-indent: var(--space-4);
-  --disclosure-list-panel-block-padding: var(--space-4);
-  --disclosure-list-panel-gap: var(--space-4);
+  /*
+   * Rhythm contract:
+   * - row gap: peer choices in the same menu level
+   * - group gap: separated clusters, such as primary actions vs danger actions
+   * - row-panel gap: space between a disclosure trigger and its revealed panel
+   * - panel padding/gap: breathing room inside revealed nested settings
+   *
+   * Consumers should override the public --disclosure-list-* tokens. The
+   * --dialog-menu-* tokens let dialogs set a family rhythm once and have these
+   * lists inherit it.
+   */
+  --disclosure-list-default-row-gap: var(
+    --dialog-menu-row-gap,
+    var(--dialog-peer-choice-gap, var(--space-2))
+  );
+  --disclosure-list-default-group-gap: var(
+    --dialog-menu-group-gap,
+    var(--dialog-menu-section-gap, var(--space-4))
+  );
+  --disclosure-list-default-indent-offset: var(
+    --dialog-menu-indent-offset,
+    var(--space-2)
+  );
+  --disclosure-list-default-indent: var(--dialog-menu-indent, var(--space-4));
+  --disclosure-list-default-panel-block-padding: var(
+    --dialog-menu-panel-block-padding,
+    var(--space-4)
+  );
+  --disclosure-list-default-panel-content-gap: var(
+    --dialog-menu-panel-content-gap,
+    var(--space-4)
+  );
+  --disclosure-list-default-row-panel-gap: var(
+    --dialog-menu-row-panel-gap,
+    var(--space-0)
+  );
   --disclosure-list-panel-transition: 180ms var(--ease-out);
 
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
-  gap: var(--disclosure-list-gap);
+  gap: var(
+    --disclosure-list-gap,
+    var(--disclosure-list-row-gap, var(--disclosure-list-default-row-gap))
+  );
+}
+
+.list[data-density="compact"] {
+  --disclosure-list-default-row-gap: var(--space-1);
+  --disclosure-list-default-panel-block-padding: var(--space-2) var(--space-3);
+  --disclosure-list-default-panel-content-gap: var(--space-3);
 }
 
 .groupedList {
-  gap: var(--disclosure-list-section-gap);
+  gap: var(
+    --disclosure-list-section-gap,
+    var(--disclosure-list-group-gap, var(--disclosure-list-default-group-gap))
+  );
 }
 
 .group {
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
-  gap: var(--disclosure-list-gap);
+  gap: var(
+    --disclosure-list-gap,
+    var(--disclosure-list-row-gap, var(--disclosure-list-default-row-gap))
+  );
 }
 
 .item {
   min-inline-size: 0;
+}
+
+.itemCluster {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(
+    --disclosure-list-row-panel-gap,
+    var(--disclosure-list-default-row-panel-gap)
+  );
 }
 
 .panel {
@@ -49,10 +104,25 @@
   min-block-size: 0;
   min-inline-size: 0;
   flex-direction: column;
-  gap: var(--disclosure-list-panel-gap);
-  margin-inline-start: var(--disclosure-list-indent-offset);
-  padding-block: var(--disclosure-list-panel-block-padding);
-  padding-inline-start: var(--disclosure-list-indent);
+  gap: var(
+    --disclosure-list-panel-gap,
+    var(
+      --disclosure-list-panel-content-gap,
+      var(--disclosure-list-default-panel-content-gap)
+    )
+  );
+  margin-inline-start: var(
+    --disclosure-list-indent-offset,
+    var(--disclosure-list-default-indent-offset)
+  );
+  padding-block: var(
+    --disclosure-list-panel-block-padding,
+    var(--disclosure-list-default-panel-block-padding)
+  );
+  padding-inline-start: var(
+    --disclosure-list-indent,
+    var(--disclosure-list-default-indent)
+  );
   padding-inline-end: 0;
   border-inline-start: var(--border-width-base) solid var(--color-border-subtle);
   animation: disclosure-list-panel-enter 220ms ease-out;
