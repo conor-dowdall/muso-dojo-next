@@ -47,7 +47,6 @@
 }
 
 .list[data-density="compact"] {
-  --disclosure-list-default-row-gap: var(--space-1);
   --disclosure-list-default-panel-block-padding: var(--space-2) var(--space-3);
   --disclosure-list-default-panel-content-gap: var(--space-3);
 }

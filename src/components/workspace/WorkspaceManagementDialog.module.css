@@ -123,8 +123,11 @@
   display: grid;
   inline-size: var(--instrument-theme-swatch-width, var(--control-size-2xl));
   block-size: var(--instrument-theme-swatch-height, var(--control-size-xs));
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: var(--space-px);
   overflow: hidden;
+  padding: var(--space-0_5);
   border-radius: var(--radius-subtle);
   background-color: var(--color-surface);
   box-shadow: inset 0 0 0 var(--border-width-base) rgb(0 0 0 / 0.18);
@@ -132,13 +135,11 @@
 
 .noteColorPreviewDot {
   min-inline-size: 0;
+  min-block-size: 0;
+  border-radius: var(--radius-small);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.24),
-    inset -1px 0 0 rgb(0 0 0 / 0.16);
-}
-
-.noteColorPreviewDot:last-child {
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.24);
+    inset 0 0 0 var(--space-px) rgb(0 0 0 / 0.2);
 }
 
 .noteColorPreviewDot[data-default="true"] {
