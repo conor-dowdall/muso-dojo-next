@@ -2,7 +2,11 @@
 
 import { Fragment, type SyntheticEvent, useId, useState } from "react";
 import { Check, Copy, Plus, Settings, Trash2 } from "lucide-react";
-import { DialogContent, DialogHeader } from "@/components/ui/dialog/Dialog";
+import {
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+} from "@/components/ui/dialog/Dialog";
 import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { OptionButton } from "@/components/ui/buttons/OptionButton";
@@ -453,6 +457,11 @@ export function WorkspaceManagementDialog({
           </section>
         </div>
       </DialogContent>
+      <DialogFooter className={styles.footer}>
+        <section className={styles.footerActions} aria-label="Dialog actions">
+          <Button label="Done" size="lg" variant="filled" onClick={onClose} />
+        </section>
+      </DialogFooter>
     </>
   );
 }

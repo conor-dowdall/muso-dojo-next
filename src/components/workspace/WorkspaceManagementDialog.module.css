@@ -270,7 +270,10 @@
 }
 
 .customColorChoiceText {
+  display: flex;
   min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .customColorChoiceLabel {
@@ -278,6 +281,16 @@
   min-inline-size: 0;
   overflow-wrap: anywhere;
   font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  line-height: var(--leading-none);
+}
+
+.customColorChoiceTarget {
+  display: block;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
   font-weight: var(--font-medium);
   line-height: var(--leading-none);
 }
@@ -356,6 +369,16 @@
 
 .workspaceDangerGroup {
   --disclosure-list-row-gap: var(--dialog-menu-row-gap);
+}
+
+.footer {
+  container-type: inline-size;
+}
+
+.footerActions {
+  display: flex;
+  min-inline-size: 0;
+  justify-content: flex-end;
 }
 
 .deleteInlineConfirmation {

@@ -186,6 +186,7 @@ export function WorkspaceNoteColorSettings({
     selectedCustomConfig.mode,
     selectedCustomColorIndex,
   );
+  const selectedCustomColorTargetLabel = `Applies to ${selectedCustomColorLabel}`;
   const selectedCustomColor =
     selectedCustomConfig.colors[selectedCustomColorIndex];
   const isCustomSelected = config.source === "custom";
@@ -337,11 +338,14 @@ export function WorkspaceNoteColorSettings({
                   >
                     <span className={styles.customColorChoiceText}>
                       <span className={styles.customColorChoiceLabel}>
-                        {selectedCustomColorLabel} Custom Color
+                        Custom Color
+                      </span>
+                      <span className={styles.customColorChoiceTarget}>
+                        {selectedCustomColorTargetLabel}
                       </span>
                     </span>
                     <input
-                      aria-label={`${selectedCustomColorLabel} custom color`}
+                      aria-label={`Custom color value for ${selectedCustomColorLabel}`}
                       className={styles.customColorChoiceInput}
                       type="color"
                       value={getColorInputValue(
@@ -365,6 +369,7 @@ export function WorkspaceNoteColorSettings({
                   </label>
 
                   <button
+                    aria-label={`Use Theme Fallback for ${selectedCustomColorLabel}`}
                     className={styles.customColorChoice}
                     data-selected={selectedCustomColor === null}
                     type="button"
@@ -380,7 +385,10 @@ export function WorkspaceNoteColorSettings({
                   >
                     <span className={styles.customColorChoiceText}>
                       <span className={styles.customColorChoiceLabel}>
-                        {selectedCustomColorLabel} Theme Fallback
+                        Theme Fallback
+                      </span>
+                      <span className={styles.customColorChoiceTarget}>
+                        {selectedCustomColorTargetLabel}
                       </span>
                     </span>
                     <span
