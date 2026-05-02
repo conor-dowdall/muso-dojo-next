@@ -412,7 +412,6 @@ export function AddToWorkspaceDialog({
                         <DisclosureListItem
                           key={option.id}
                           ariaLabel={`Choose ${option.title}`}
-                          disclosureIndicator={false}
                           isOpen={isSelected}
                           keepMounted
                           label={option.title}

@@ -3,7 +3,6 @@
   --dialog-revealed-settings-gap: var(--space-5);
   --dialog-revealed-settings-indent: var(--space-3);
   --dialog-peer-choice-gap: var(--space-2);
-  --dialog-disclosure-category-gap: var(--space-8);
 
   --detail-panel-motion-gutter: var(--space-1);
 
@@ -66,46 +65,6 @@
   gap: var(--dialog-revealed-settings-gap);
 }
 
-.setupRows {
-  display: flex;
-  min-inline-size: 0;
-  flex-direction: column;
-  gap: var(--dialog-peer-choice-gap);
-}
-
-.disclosurePanel {
-  min-inline-size: 0;
-  padding-block: var(--space-5) var(--space-6);
-  padding-inline: var(--space-4);
-  animation: detail-panel-enter 220ms ease-out;
-}
-
-.disclosurePanel > * + * {
-  margin-block-start: var(--space-5);
-}
-
-.disclosureGroups {
-  display: flex;
-  min-inline-size: 0;
-  flex-direction: column;
-  gap: 0;
-}
-
-.indentedDisclosureGroups {
-  padding-inline: var(--space-4);
-}
-
-.disclosureGroup {
-  display: flex;
-  min-inline-size: 0;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.disclosureGroup + .disclosureGroup {
-  margin-block-start: var(--dialog-disclosure-category-gap);
-}
-
 .disclosureList {
   display: flex;
   min-inline-size: 0;
@@ -136,10 +95,6 @@
   }
 
   .detailPanel {
-    animation: none;
-  }
-
-  .disclosurePanel {
     animation: none;
   }
 }

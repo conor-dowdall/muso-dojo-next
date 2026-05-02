@@ -7,7 +7,13 @@ import {
   type StringInstrumentKey,
   type StringInstrumentTuningKey,
 } from "@musodojo/music-theory-data";
-import { OptionButton } from "@/components/ui/buttons/OptionButton";
+import {
+  DisclosureList,
+  DisclosureListAction,
+  DisclosureListGroup,
+  DisclosureListItem,
+  useDisclosureList,
+} from "@/components/ui/disclosure-list/DisclosureList";
 import {
   RangeSlider,
   RangeSliderGroup,
@@ -16,11 +22,6 @@ import {
   fretboardThemes,
   type FretboardThemeName,
 } from "@/data/fretboard/themes";
-import {
-  ChoiceAccordion,
-  ChoiceAccordionItem,
-  useChoiceAccordion,
-} from "./ChoiceAccordion";
 import { FretboardThemeSwatch } from "./InstrumentThemeSwatch";
 import {
   formatOpenStringNotes,
@@ -63,7 +64,7 @@ export function AddFretboardToMusicGroupPanel({
   onChoiceOpen,
 }: AddFretboardToMusicGroupPanelProps) {
   const { closeAll, closeChoice, openChoice, toggleChoice } =
-    useChoiceAccordion<FretboardChoice>();
+    useDisclosureList<FretboardChoice>();
 
   useEffect(() => {
     closeAll();
@@ -125,82 +126,75 @@ export function AddFretboardToMusicGroupPanel({
 
   return (
     <section className={styles.section} aria-label="Fretboard settings">
-      <ChoiceAccordion>
-        <ChoiceAccordionItem
+      <DisclosureList>
+        <DisclosureListItem
           ariaLabel={`Choose instrument, ${selectedInstrument.primaryName} selected`}
           isOpen={openChoice === "instrument"}
+          keepMounted
           label={selectedInstrument.primaryName}
           onToggle={() => handleToggleChoice("instrument")}
         >
-          <div className={styles.disclosureGroups}>
+          <DisclosureList grouped>
             {fretboardInstrumentGroups.map((group) => (
-              <div key={group.title} className={styles.disclosureGroup}>
-                <div className={styles.disclosureList}>
-                  {group.options.map((option) => (
-                    <OptionButton
-                      key={option.id}
-                      label={option.title}
-                      presentation="list"
-                      selected={value.instrument === option.id}
-                      onClick={() => handleInstrumentSelect(option.id)}
-                    />
-                  ))}
-                </div>
-              </div>
+              <DisclosureListGroup key={group.title}>
+                {group.options.map((option) => (
+                  <DisclosureListAction
+                    key={option.id}
+                    label={option.title}
+                    selected={value.instrument === option.id}
+                    onClick={() => handleInstrumentSelect(option.id)}
+                  />
+                ))}
+              </DisclosureListGroup>
             ))}
-          </div>
-        </ChoiceAccordionItem>
+          </DisclosureList>
+        </DisclosureListItem>
 
-        <ChoiceAccordionItem
+        <DisclosureListItem
           ariaLabel={`Choose tuning, ${selectedTuning.primaryName} selected`}
           isOpen={openChoice === "tuning"}
+          keepMounted
           label={selectedTuning.primaryName}
           onToggle={() => handleToggleChoice("tuning")}
         >
-          <div className={styles.disclosureGroups}>
+          <DisclosureList grouped>
             {tuningGroups.map((group, index) => (
-              <div
-                key={group.title ?? `tuning-group-${index}`}
-                className={styles.disclosureGroup}
-              >
-                <div className={styles.disclosureList}>
-                  {group.tuningKeys.map((tuningKey) => {
-                    const tuning = stringInstrumentTunings[tuningKey];
+              <DisclosureListGroup key={group.title ?? `tuning-group-${index}`}>
+                {group.tuningKeys.map((tuningKey) => {
+                  const tuning = stringInstrumentTunings[tuningKey];
 
-                    return (
-                      <OptionButton
-                        key={tuningKey}
-                        label={tuning.primaryName}
-                        presentation="list"
-                        preview={formatOpenStringNotes(tuning)}
-                        selected={value.tuningKey === tuningKey}
-                        onClick={() => handleTuningSelect(tuningKey)}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
+                  return (
+                    <DisclosureListAction
+                      key={tuningKey}
+                      label={tuning.primaryName}
+                      preview={formatOpenStringNotes(tuning)}
+                      selected={value.tuningKey === tuningKey}
+                      onClick={() => handleTuningSelect(tuningKey)}
+                    />
+                  );
+                })}
+              </DisclosureListGroup>
             ))}
-          </div>
-        </ChoiceAccordionItem>
+          </DisclosureList>
+        </DisclosureListItem>
 
-        <ChoiceAccordionItem
+        <DisclosureListItem
           ariaLabel={`Choose fret range, ${formatFretRange(value.fretRange)} selected`}
           isOpen={openChoice === "fretRange"}
+          keepMounted
           label={formatFretRange(value.fretRange)}
           onToggle={() => handleToggleChoice("fretRange")}
         >
-          <div className={styles.disclosureList}>
+          <DisclosureList>
             {fretRangeOptions.map((option) => (
-              <OptionButton
+              <DisclosureListAction
                 key={formatFretRange(option)}
                 label={formatFretRange(option)}
-                presentation="list"
                 selected={areRangesEqual(value.fretRange, option)}
                 onClick={() => handleFretRangeSelect(option)}
               />
             ))}
-          </div>
+          </DisclosureList>
 
           <RangeSliderGroup>
             <RangeSlider
@@ -224,55 +218,54 @@ export function AddFretboardToMusicGroupPanel({
               }
             />
           </RangeSliderGroup>
-        </ChoiceAccordionItem>
+        </DisclosureListItem>
 
-        <ChoiceAccordionItem
+        <DisclosureListItem
           ariaLabel={`Choose handedness, ${formatHandedness(value.handedness)} selected`}
           isOpen={openChoice === "handedness"}
+          keepMounted
           label={formatHandedness(value.handedness)}
           onToggle={() => handleToggleChoice("handedness")}
         >
-          <div className={styles.disclosureList}>
-            <OptionButton
+          <DisclosureList>
+            <DisclosureListAction
               label={formatHandedness("right")}
-              presentation="list"
               selected={value.handedness === "right"}
               onClick={() => handleHandednessSelect("right")}
             />
-            <OptionButton
+            <DisclosureListAction
               label={formatHandedness("left")}
-              presentation="list"
               selected={value.handedness === "left"}
               onClick={() => handleHandednessSelect("left")}
             />
-          </div>
-        </ChoiceAccordionItem>
+          </DisclosureList>
+        </DisclosureListItem>
 
-        <ChoiceAccordionItem
+        <DisclosureListItem
           ariaLabel={`Choose style, ${selectedTheme.title} selected`}
           isOpen={openChoice === "style"}
+          keepMounted
           label={selectedTheme.title}
           preview={<FretboardThemeSwatch themeName={value.theme} />}
           onToggle={() => handleToggleChoice("style")}
         >
-          <div className={styles.disclosureList}>
+          <DisclosureList>
             {fretboardThemeOptions.map((themeName) => {
               const theme = fretboardThemes[themeName];
 
               return (
-                <OptionButton
+                <DisclosureListAction
                   key={themeName}
                   label={theme.title}
-                  presentation="list"
                   preview={<FretboardThemeSwatch themeName={themeName} />}
                   selected={value.theme === themeName}
                   onClick={() => handleThemeSelect(themeName)}
                 />
               );
             })}
-          </div>
-        </ChoiceAccordionItem>
-      </ChoiceAccordion>
+          </DisclosureList>
+        </DisclosureListItem>
+      </DisclosureList>
     </section>
   );
 }

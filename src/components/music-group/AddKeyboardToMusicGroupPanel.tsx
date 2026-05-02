@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { OptionButton } from "@/components/ui/buttons/OptionButton";
+import {
+  DisclosureList,
+  DisclosureListAction,
+  DisclosureListItem,
+  useDisclosureList,
+} from "@/components/ui/disclosure-list/DisclosureList";
 import {
   RangeSlider,
   RangeSliderGroup,
@@ -9,11 +14,6 @@ import {
 import { keyboardRanges, type KeyboardRangeName } from "@/data/keyboard/ranges";
 import { keyboardThemes, type KeyboardThemeName } from "@/data/keyboard/themes";
 import { MIDI_MAX, MIDI_MIN } from "@/utils/keyboard/keyboardGeometry";
-import {
-  ChoiceAccordion,
-  ChoiceAccordionItem,
-  useChoiceAccordion,
-} from "./ChoiceAccordion";
 import { KeyboardThemeSwatch } from "./InstrumentThemeSwatch";
 import {
   formatKeyboardRangeNoteNames,
@@ -48,7 +48,7 @@ export function AddKeyboardToMusicGroupPanel({
   onChoiceOpen,
 }: AddKeyboardToMusicGroupPanelProps) {
   const { closeAll, closeChoice, openChoice, toggleChoice } =
-    useChoiceAccordion<KeyboardChoice>();
+    useDisclosureList<KeyboardChoice>();
 
   useEffect(() => {
     closeAll();
@@ -93,22 +93,22 @@ export function AddKeyboardToMusicGroupPanel({
 
   return (
     <section className={styles.section} aria-label="Keyboard settings">
-      <ChoiceAccordion>
-        <ChoiceAccordionItem
+      <DisclosureList>
+        <DisclosureListItem
           ariaLabel={`Choose keyboard range, ${rangeLabel}, ${rangeDescription} selected`}
           isOpen={openChoice === "range"}
+          keepMounted
           label={rangeLabel}
           onToggle={() => handleToggleChoice("range")}
         >
-          <div className={styles.disclosureList}>
+          <DisclosureList>
             {keyboardRangeOptions.map((rangeName) => {
               const range = keyboardRanges[rangeName];
 
               return (
-                <OptionButton
+                <DisclosureListAction
                   key={rangeName}
                   label={range.title}
-                  presentation="list"
                   preview={formatKeyboardRangeNoteNames(
                     range.midiRangeNoteNames,
                   )}
@@ -117,7 +117,7 @@ export function AddKeyboardToMusicGroupPanel({
                 />
               );
             })}
-          </div>
+          </DisclosureList>
 
           <RangeFieldset
             max={MIDI_MAX}
@@ -126,33 +126,33 @@ export function AddKeyboardToMusicGroupPanel({
             valueFormatter={formatMidiNote}
             onChange={handleMidiRangeChange}
           />
-        </ChoiceAccordionItem>
+        </DisclosureListItem>
 
-        <ChoiceAccordionItem
+        <DisclosureListItem
           ariaLabel={`Choose style, ${selectedTheme.title} selected`}
           isOpen={openChoice === "style"}
+          keepMounted
           label={selectedTheme.title}
           preview={<KeyboardThemeSwatch themeName={value.theme} />}
           onToggle={() => handleToggleChoice("style")}
         >
-          <div className={styles.disclosureList}>
+          <DisclosureList>
             {keyboardThemeOptions.map((themeName) => {
               const theme = keyboardThemes[themeName];
 
               return (
-                <OptionButton
+                <DisclosureListAction
                   key={themeName}
                   label={theme.title}
-                  presentation="list"
                   preview={<KeyboardThemeSwatch themeName={themeName} />}
                   selected={value.theme === themeName}
                   onClick={() => handleThemeSelect(themeName)}
                 />
               );
             })}
-          </div>
-        </ChoiceAccordionItem>
-      </ChoiceAccordion>
+          </DisclosureList>
+        </DisclosureListItem>
+      </DisclosureList>
     </section>
   );
 }
