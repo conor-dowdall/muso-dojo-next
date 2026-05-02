@@ -61,7 +61,9 @@ export function resolveWorkspaceNoteColors(
     return {
       source: "custom",
       mode: config.mode,
-      colors: config.colors,
+      colors: createNoteColorTuple(
+        config.colors.map((color) => color ?? NOTE_COLOR_NEUTRAL_VALUE),
+      ),
     };
   }
 

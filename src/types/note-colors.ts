@@ -24,7 +24,7 @@ export interface CustomNoteColorConfig {
   source: "custom";
   name: string;
   mode: NoteColorMode;
-  colors: NoteColorTuple<string>;
+  colors: NoteColorTuple<string | null>;
 }
 
 export type WorkspaceNoteColorConfig =

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   colorCollections,
   type ColorCollectionKey,
@@ -17,11 +18,13 @@ import {
   NOTE_COLOR_NEUTRAL_VALUE,
   NOTE_COLOR_THEME_VALUE,
   createNoteColorTuple,
+  defaultCustomNoteColors,
   getNoteColorLabel,
   noteColorPresetKeys,
 } from "@/data/noteColors";
 import {
   createCustomNoteColorConfig,
+  normalizeHexColor,
   normalizeNoteColorConfig,
 } from "@/utils/note-colors/createNoteColorConfig";
 import {
@@ -43,6 +46,7 @@ interface WorkspaceNoteColorSettingsProps {
 const themePreviewColors = createNoteColorTuple(
   NOTE_COLOR_INDEXES.map(() => NOTE_COLOR_THEME_VALUE),
 );
+const colorInputFallbackValue = "#737373";
 type NoteColorChoice = "note-colors";
 
 function getNormalizedConfig(value: WorkspaceNoteColorConfig | undefined) {
@@ -57,8 +61,8 @@ function getPresetPreviewColors(preset: ColorCollectionKey) {
   );
 }
 
-function getCustomSubtitle({ mode }: CustomNoteColorConfig) {
-  return mode === "relative" ? "Root-relative" : "Pitch";
+function getModeLabel(mode: NoteColorMode) {
+  return mode === "relative" ? "Relative to Root" : "Fixed to Notes";
 }
 
 function getConfigLabel(config: WorkspaceNoteColorConfig) {
@@ -75,16 +79,14 @@ function getConfigLabel(config: WorkspaceNoteColorConfig) {
 
 function getConfigSubtitle(config: WorkspaceNoteColorConfig) {
   if (config.source === "theme") {
-    return "App theme";
+    return "App Theme";
   }
 
   if (config.source === "preset") {
-    return colorCollections[config.preset].mode === "relative"
-      ? "Root-relative"
-      : "Pitch";
+    return getModeLabel(colorCollections[config.preset].mode);
   }
 
-  return getCustomSubtitle(config);
+  return getModeLabel(config.mode);
 }
 
 function getConfigPreviewColors(config: WorkspaceNoteColorConfig) {
@@ -112,7 +114,7 @@ function updateCustomMode(
 function updateCustomColor(
   config: CustomNoteColorConfig,
   index: number,
-  color: string,
+  color: string | null,
 ): CustomNoteColorConfig {
   const colors = [...config.colors];
   colors[index] = color;
@@ -123,16 +125,37 @@ function updateCustomColor(
   };
 }
 
-function NoteColorPreview({ colors }: { colors: NoteColorTuple<string> }) {
+function getPreviewColorValue(color: string | null) {
+  return color ?? NOTE_COLOR_NEUTRAL_VALUE;
+}
+
+function getColorInputValue(color: string | null, index: number) {
+  return (
+    normalizeHexColor(color) ??
+    normalizeHexColor(defaultCustomNoteColors[index]) ??
+    colorInputFallbackValue
+  );
+}
+
+function NoteColorPreview({
+  colors,
+}: {
+  colors: NoteColorTuple<string | null>;
+}) {
   return (
     <span className={styles.noteColorPreview} aria-hidden="true">
-      {NOTE_COLOR_INDEXES.map((index) => (
-        <span
-          key={index}
-          className={styles.noteColorPreviewDot}
-          style={{ backgroundColor: colors[index] }}
-        />
-      ))}
+      {NOTE_COLOR_INDEXES.map((index) => {
+        const color = colors[index];
+
+        return (
+          <span
+            key={index}
+            className={styles.noteColorPreviewDot}
+            data-default={color === null}
+            style={{ backgroundColor: getPreviewColorValue(color) }}
+          />
+        );
+      })}
     </span>
   );
 }
@@ -146,6 +169,9 @@ export function WorkspaceNoteColorSettings({
 }: WorkspaceNoteColorSettingsProps) {
   const { closeChoice, openChoice, toggleChoice } =
     useDisclosureList<NoteColorChoice>();
+  const [selectedCustomColorIndex, setSelectedCustomColorIndex] = useState(
+    NOTE_COLOR_INDEXES[0],
+  );
   const config = getNormalizedConfig(value);
   const customConfig = createCustomNoteColorConfig(config);
   const selectedCustomConfig =
@@ -155,6 +181,12 @@ export function WorkspaceNoteColorSettings({
   const isColorChoiceOpen = isOpen ?? openChoice === "note-colors";
   const handleToggle = onToggle ?? (() => toggleChoice("note-colors"));
   const closeNoteColors = onClose ?? (() => closeChoice("note-colors"));
+  const selectedCustomColorLabel = getNoteColorLabel(
+    selectedCustomConfig.mode,
+    selectedCustomColorIndex,
+  );
+  const selectedCustomColor =
+    selectedCustomConfig.colors[selectedCustomColorIndex];
 
   return (
     <DisclosureListItem
@@ -185,9 +217,9 @@ export function WorkspaceNoteColorSettings({
             return (
               <DisclosureListAction
                 key={preset}
-                aria-label={`${collection.name} note colors, ${
-                  collection.mode === "relative" ? "root-relative" : "pitch"
-                }`}
+                aria-label={`${collection.name} note colors, ${getModeLabel(
+                  collection.mode,
+                )}`}
                 density="compact"
                 label={collection.name}
                 preview={
@@ -206,8 +238,8 @@ export function WorkspaceNoteColorSettings({
           })}
 
           <DisclosureListItem
-            ariaLabel={`Choose custom note colors. ${getCustomSubtitle(
-              customConfig,
+            ariaLabel={`Choose custom note colors. ${getModeLabel(
+              customConfig.mode,
             )}.`}
             density="compact"
             isOpen={config.source === "custom"}
@@ -224,7 +256,7 @@ export function WorkspaceNoteColorSettings({
               >
                 <Button
                   density="compact"
-                  label="Pitch"
+                  label="Fixed to Notes"
                   selected={selectedCustomConfig.mode === "absolute"}
                   size="sm"
                   onClick={() =>
@@ -233,7 +265,7 @@ export function WorkspaceNoteColorSettings({
                 />
                 <Button
                   density="compact"
-                  label="Root-relative"
+                  label="Relative to Root"
                   selected={selectedCustomConfig.mode === "relative"}
                   size="sm"
                   onClick={() =>
@@ -242,34 +274,114 @@ export function WorkspaceNoteColorSettings({
                 />
               </div>
 
-              <div className={styles.customColorGrid}>
+              <div
+                className={styles.customColorGrid}
+                role="group"
+                aria-label="Custom note color swatches"
+              >
                 {NOTE_COLOR_INDEXES.map((index) => {
                   const label = getNoteColorLabel(
                     selectedCustomConfig.mode,
                     index,
                   );
+                  const color = selectedCustomConfig.colors[index];
 
                   return (
-                    <label key={index} className={styles.customColorField}>
+                    <button
+                      key={index}
+                      aria-label={`${label} color, ${
+                        color === null ? "Theme Fallback" : color
+                      }`}
+                      aria-pressed={selectedCustomColorIndex === index}
+                      className={styles.customColorSwatchButton}
+                      data-default={color === null}
+                      data-selected={selectedCustomColorIndex === index}
+                      type="button"
+                      onClick={() => setSelectedCustomColorIndex(index)}
+                    >
                       <span className={styles.customColorLabel}>{label}</span>
-                      <input
-                        aria-label={`${label} color`}
-                        className={styles.customColorInput}
-                        type="color"
-                        value={selectedCustomConfig.colors[index]}
-                        onChange={(event) =>
-                          onChange(
-                            updateCustomColor(
-                              selectedCustomConfig,
-                              index,
-                              event.currentTarget.value,
-                            ),
-                          )
-                        }
+                      <span
+                        className={styles.customColorSwatch}
+                        style={{
+                          backgroundColor: getPreviewColorValue(color),
+                        }}
                       />
-                    </label>
+                    </button>
                   );
                 })}
+              </div>
+
+              <div className={styles.customColorEditor}>
+                <div
+                  className={styles.customColorChoiceList}
+                  role="group"
+                  aria-label={`${selectedCustomColorLabel} color source`}
+                >
+                  <label
+                    className={styles.customColorChoice}
+                    data-selected={selectedCustomColor !== null}
+                  >
+                    <span className={styles.customColorChoiceText}>
+                      <span className={styles.customColorChoiceLabel}>
+                        {selectedCustomColorLabel} Custom Color
+                      </span>
+                    </span>
+                    <input
+                      aria-label={`${selectedCustomColorLabel} custom color`}
+                      className={styles.customColorChoiceInput}
+                      type="color"
+                      value={getColorInputValue(
+                        selectedCustomColor,
+                        selectedCustomColorIndex,
+                      )}
+                      onChange={(event) =>
+                        onChange(
+                          updateCustomColor(
+                            selectedCustomConfig,
+                            selectedCustomColorIndex,
+                            event.currentTarget.value,
+                          ),
+                        )
+                      }
+                    />
+                    <span
+                      className={styles.customColorChoiceIndicator}
+                      aria-hidden="true"
+                    />
+                  </label>
+
+                  <button
+                    className={styles.customColorChoice}
+                    data-selected={selectedCustomColor === null}
+                    type="button"
+                    onClick={() =>
+                      onChange(
+                        updateCustomColor(
+                          selectedCustomConfig,
+                          selectedCustomColorIndex,
+                          null,
+                        ),
+                      )
+                    }
+                  >
+                    <span className={styles.customColorChoiceText}>
+                      <span className={styles.customColorChoiceLabel}>
+                        {selectedCustomColorLabel} Theme Fallback
+                      </span>
+                    </span>
+                    <span
+                      className={`${styles.customColorChoicePreview} ${styles.customColorChoiceDefaultPreview}`}
+                      aria-hidden="true"
+                      style={{
+                        backgroundColor: NOTE_COLOR_NEUTRAL_VALUE,
+                      }}
+                    />
+                    <span
+                      className={styles.customColorChoiceIndicator}
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
               </div>
 
               <div className={styles.customColorActions}>

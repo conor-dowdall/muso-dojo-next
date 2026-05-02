@@ -91,8 +91,7 @@ export function WorkspaceManagementDialog({
 }: WorkspaceManagementDialogProps) {
   const nameInputId = useId();
   const nameMessageId = useId();
-  const workspaceActionDisclosure =
-    useDisclosureList<WorkspaceActionChoice>("settings");
+  const workspaceActionDisclosure = useDisclosureList<WorkspaceActionChoice>();
   const workspaceSettingDisclosure =
     useDisclosureList<WorkspaceSettingChoice>();
   const [deleteConfirmationWorkspaceId, setDeleteConfirmationWorkspaceId] =

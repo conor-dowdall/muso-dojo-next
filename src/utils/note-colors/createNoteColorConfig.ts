@@ -51,15 +51,20 @@ export function normalizeHexColor(value: unknown): string | undefined {
 
 export function normalizeCustomNoteColors(
   value: unknown,
-): NoteColorTuple<string> | undefined {
+): NoteColorTuple<string | null> | undefined {
   if (!Array.isArray(value)) {
     return undefined;
   }
 
-  const colors = NOTE_COLOR_INDEXES.map(
-    (index) =>
-      normalizeHexColor(value[index]) ?? defaultCustomNoteColors[index],
-  );
+  const colors = NOTE_COLOR_INDEXES.map((index) => {
+    const color = value[index];
+
+    if (color === null) {
+      return null;
+    }
+
+    return normalizeHexColor(color) ?? defaultCustomNoteColors[index];
+  });
 
   return createNoteColorTuple(colors);
 }
@@ -79,10 +84,7 @@ export function createCustomNoteColorConfig(
       name: "Custom Colors",
       mode: collection.mode,
       colors: createNoteColorTuple(
-        collection.colors.map(
-          (color, index) =>
-            normalizeHexColor(color) ?? defaultCustomNoteColors[index],
-        ),
+        collection.colors.map((color) => normalizeHexColor(color) ?? null),
       ),
     };
   }
