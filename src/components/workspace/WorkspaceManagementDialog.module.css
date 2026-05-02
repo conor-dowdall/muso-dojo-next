@@ -1,6 +1,5 @@
 .content {
   --dialog-major-section-gap: var(--space-7);
-  --dialog-revealed-settings-gap: var(--space-5);
   --dialog-peer-choice-gap: var(--space-2);
 
   container-type: inline-size;
@@ -9,47 +8,31 @@
   gap: var(--dialog-major-section-gap);
 }
 
-.section {
-  display: flex;
-  flex: 0 0 auto;
-  min-inline-size: 0;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding-block: 0;
-}
-
 .workspaceLayout {
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
-  gap: var(--dialog-major-section-gap);
+  gap: var(--space-4);
 }
 
-.sectionGroup {
-  display: flex;
-  min-inline-size: 0;
-  flex-direction: column;
-  gap: var(--dialog-revealed-settings-gap);
-}
-
-.workspaceListSection,
-.workspaceSettingsSection {
+.workspaceListSection {
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
   gap: var(--space-4);
 }
 
-.workspaceSettingsList {
-  --disclosure-list-panel-gap: var(--space-4);
+.workspaceActionsPanel {
+  --disclosure-list-panel-block-padding: var(--space-3) var(--space-4);
+  --disclosure-list-panel-gap: var(--space-2);
 }
 
-.sectionHeader {
-  display: flex;
-  min-inline-size: 0;
-  gap: var(--space-3);
-  align-items: center;
-  justify-content: space-between;
+.workspaceActionsList {
+  --disclosure-list-gap: var(--space-2);
+}
+
+.workspaceSettingsList {
+  --disclosure-list-panel-gap: var(--space-4);
 }
 
 .nameForm {
@@ -166,6 +149,11 @@
   gap: var(--space-2);
 }
 
+.customColorActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .customColorField {
   display: grid;
   min-inline-size: 0;
@@ -211,26 +199,53 @@
 }
 
 .workspaceList {
-  display: flex;
-  min-inline-size: 0;
-  flex-direction: column;
-  gap: var(--dialog-peer-choice-gap);
+  --disclosure-list-section-gap: var(--space-4);
 }
 
-.deleteConfirmation {
+.deleteInlineConfirmation {
   display: flex;
-  min-inline-size: min(100%, 18rem);
-  min-block-size: var(--control-size-sm);
+  min-inline-size: 0;
+  min-block-size: var(--control-size-xl);
   align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--space-2);
-  padding: var(--space-1);
-  border: var(--border-width-base) solid var(--color-border-subtle);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-base) solid
+    color-mix(in srgb, var(--color-danger) 50%, var(--color-border));
   border-radius: var(--radius-control);
+  background-color: color-mix(
+    in srgb,
+    var(--color-danger) 8%,
+    var(--color-control-outline-background)
+  );
+}
+
+.deleteInlineHeader {
+  display: inline-flex;
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.deleteInlineIcon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  inline-size: var(--icon-size-base);
+  block-size: var(--icon-size-base);
+  align-items: center;
+  justify-content: center;
+  color: var(--color-danger);
+}
+
+.deleteInlineIcon > svg {
+  inline-size: 100%;
+  block-size: 100%;
 }
 
 .deletePrompt {
-  flex: 1 1 9rem;
+  flex: 1 1 auto;
   min-inline-size: 0;
   overflow-wrap: anywhere;
 }
@@ -241,13 +256,6 @@
   flex: 0 0 auto;
   justify-content: flex-end;
   gap: var(--space-2);
-}
-
-.emptyWorkspaceState {
-  display: flex;
-  min-block-size: var(--control-size-xl);
-  align-items: center;
-  padding-block: var(--space-2);
 }
 
 @container (width > 32rem) {

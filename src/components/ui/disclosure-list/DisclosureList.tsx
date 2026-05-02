@@ -10,13 +10,33 @@ import styles from "./DisclosureList.module.css";
 export function DisclosureList({
   children,
   className = "",
+  grouped = false,
+}: {
+  children: ReactNode;
+  className?: string;
+  grouped?: boolean;
+}) {
+  const listClasses = [
+    styles.list,
+    grouped ? styles.groupedList : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return <div className={listClasses}>{children}</div>;
+}
+
+export function DisclosureListGroup({
+  children,
+  className = "",
 }: {
   children: ReactNode;
   className?: string;
 }) {
-  const listClasses = [styles.list, className].filter(Boolean).join(" ");
+  const groupClasses = [styles.group, className].filter(Boolean).join(" ");
 
-  return <div className={listClasses}>{children}</div>;
+  return <div className={groupClasses}>{children}</div>;
 }
 
 interface DisclosureListItemProps {
@@ -31,6 +51,7 @@ interface DisclosureListItemProps {
   labelProps?: OptionButtonProps["labelProps"];
   onToggle: () => void;
   preview?: ReactNode;
+  showSelectionIndicator?: OptionButtonProps["showSelectionIndicator"];
   subtitle?: ReactNode;
   tone?: OptionButtonProps["tone"];
   variant?: OptionButtonProps["variant"];
@@ -48,6 +69,7 @@ export function DisclosureListItem({
   labelProps,
   onToggle,
   preview,
+  showSelectionIndicator,
   subtitle,
   tone,
   variant,
@@ -71,7 +93,7 @@ export function DisclosureListItem({
         preview={preview}
         selected={isOpen}
         selectionSemantics="visual"
-        showSelectionIndicator={false}
+        showSelectionIndicator={showSelectionIndicator ?? false}
         subtitle={subtitle}
         tone={tone}
         variant={variant}

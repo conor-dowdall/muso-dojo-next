@@ -34,6 +34,7 @@ import styles from "./WorkspaceManagementDialog.module.css";
 
 interface WorkspaceNoteColorSettingsProps {
   isOpen?: boolean;
+  onClose?: () => void;
   onToggle?: () => void;
   value?: WorkspaceNoteColorConfig;
   onChange: (value: WorkspaceNoteColorConfig) => void;
@@ -62,7 +63,7 @@ function getCustomSubtitle({ mode }: CustomNoteColorConfig) {
 
 function getConfigLabel(config: WorkspaceNoteColorConfig) {
   if (config.source === "theme") {
-    return "Theme";
+    return "Default";
   }
 
   if (config.source === "preset") {
@@ -74,7 +75,7 @@ function getConfigLabel(config: WorkspaceNoteColorConfig) {
 
 function getConfigSubtitle(config: WorkspaceNoteColorConfig) {
   if (config.source === "theme") {
-    return "Global";
+    return "App theme";
   }
 
   if (config.source === "preset") {
@@ -138,11 +139,13 @@ function NoteColorPreview({ colors }: { colors: NoteColorTuple<string> }) {
 
 export function WorkspaceNoteColorSettings({
   isOpen,
+  onClose,
   onToggle,
   value,
   onChange,
 }: WorkspaceNoteColorSettingsProps) {
-  const { openChoice, toggleChoice } = useDisclosureList<NoteColorChoice>();
+  const { closeChoice, openChoice, toggleChoice } =
+    useDisclosureList<NoteColorChoice>();
   const config = getNormalizedConfig(value);
   const customConfig = createCustomNoteColorConfig(config);
   const selectedCustomConfig =
@@ -151,26 +154,29 @@ export function WorkspaceNoteColorSettings({
   const configSubtitle = getConfigSubtitle(config);
   const isColorChoiceOpen = isOpen ?? openChoice === "note-colors";
   const handleToggle = onToggle ?? (() => toggleChoice("note-colors"));
+  const closeNoteColors = onClose ?? (() => closeChoice("note-colors"));
 
   return (
     <DisclosureListItem
-      ariaLabel={`Choose note colors. Current: ${configLabel}, ${configSubtitle}.`}
+      ariaLabel={`Choose Note Colors. Current: ${configLabel}, ${configSubtitle}.`}
       isOpen={isColorChoiceOpen}
-      label="Note colors"
+      label="Note Colors"
       preview={<NoteColorPreview colors={getConfigPreviewColors(config)} />}
-      subtitle={`${configLabel} - ${configSubtitle}`}
       onToggle={handleToggle}
     >
       <div className={styles.noteColorDisclosure}>
         <DisclosureList className={styles.noteColorOptions}>
           <DisclosureListAction
+            aria-label="Use default note colors from the app theme"
             density="compact"
-            label="Theme"
+            label="Default"
             preview={<NoteColorPreview colors={themePreviewColors} />}
             selected={config.source === "theme"}
             showSelectionIndicator
-            subtitle="Global"
-            onClick={() => onChange({ source: "theme" })}
+            onClick={() => {
+              onChange({ source: "theme" });
+              closeNoteColors();
+            }}
           />
 
           {noteColorPresetKeys.map((preset) => {
@@ -179,6 +185,9 @@ export function WorkspaceNoteColorSettings({
             return (
               <DisclosureListAction
                 key={preset}
+                aria-label={`${collection.name} note colors, ${
+                  collection.mode === "relative" ? "root-relative" : "pitch"
+                }`}
                 density="compact"
                 label={collection.name}
                 preview={
@@ -188,10 +197,10 @@ export function WorkspaceNoteColorSettings({
                   config.source === "preset" && config.preset === preset
                 }
                 showSelectionIndicator
-                subtitle={
-                  collection.mode === "relative" ? "Root-relative" : "Pitch"
-                }
-                onClick={() => onChange({ source: "preset", preset })}
+                onClick={() => {
+                  onChange({ source: "preset", preset });
+                  closeNoteColors();
+                }}
               />
             );
           })}
@@ -204,7 +213,7 @@ export function WorkspaceNoteColorSettings({
             isOpen={config.source === "custom"}
             label="Custom"
             preview={<NoteColorPreview colors={customConfig.colors} />}
-            subtitle={getCustomSubtitle(customConfig)}
+            showSelectionIndicator
             onToggle={() => onChange(customConfig)}
           >
             <div className={styles.customColorPanel}>
@@ -261,6 +270,10 @@ export function WorkspaceNoteColorSettings({
                     </label>
                   );
                 })}
+              </div>
+
+              <div className={styles.customColorActions}>
+                <Button label="Done" size="sm" onClick={closeNoteColors} />
               </div>
             </div>
           </DisclosureListItem>
