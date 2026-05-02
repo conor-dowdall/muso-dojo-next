@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  type CSSProperties,
-  type ReactNode,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useState } from "react";
 import {
   chordProgressionTemplateTypeMetadata,
   chordProgressionTemplates,
@@ -29,17 +23,18 @@ import {
 } from "@/components/ui/dialog/Dialog";
 import { Button } from "@/components/ui/buttons/Button";
 import { CheckOptionButton } from "@/components/ui/buttons/CheckOptionButton";
-import { OptionButton } from "@/components/ui/buttons/OptionButton";
+import {
+  DisclosureList,
+  DisclosureListAction,
+  DisclosureListGroup,
+  DisclosureListItem,
+  useDisclosureList,
+} from "@/components/ui/disclosure-list/DisclosureList";
 import { AddFretboardToMusicGroupPanel } from "@/components/music-group/AddFretboardToMusicGroupPanel";
 import {
   AddKeyboardToMusicGroupPanel,
   type KeyboardRangeSelection,
 } from "@/components/music-group/AddKeyboardToMusicGroupPanel";
-import {
-  ChoiceAccordion,
-  ChoiceAccordionItem,
-  useChoiceAccordion,
-} from "@/components/music-group/ChoiceAccordion";
 import { RootNoteGrid } from "@/components/music-group/RootNoteGrid";
 import {
   addableMusicGroupOptions,
@@ -230,8 +225,7 @@ export function AddToWorkspaceDialog({
   const [replaceWorkspace, setReplaceWorkspace] = useState(false);
   const [instrumentType, setInstrumentType] =
     useState<AddableMusicGroupItemType>("keyboard");
-  const { closeChoice, closeAll, openChoice, toggleChoice } =
-    useChoiceAccordion<WorkspaceChoice>();
+  const workspaceDisclosure = useDisclosureList<WorkspaceChoice>();
   const [instrumentCloseSignal, setInstrumentCloseSignal] = useState(0);
   const [keyboardSelection, setKeyboardSelection] = useState<KeyboardSelection>(
     defaultKeyboardSelection,
@@ -260,15 +254,15 @@ export function AddToWorkspaceDialog({
       : "Add Progression";
 
   const handleWorkspaceChoiceToggle = (choice: WorkspaceChoice) => {
-    if (openChoice !== choice) {
+    if (workspaceDisclosure.openChoice !== choice) {
       setInstrumentCloseSignal((currentSignal) => currentSignal + 1);
     }
-    toggleChoice(choice);
+    workspaceDisclosure.toggleChoice(choice);
   };
 
   const handleRootNoteSelect = (nextRootNote: RootNote) => {
     setRootNote(nextRootNote);
-    closeChoice("key");
+    workspaceDisclosure.closeChoice("key");
   };
 
   const handleSubmit = () => {
@@ -298,168 +292,167 @@ export function AddToWorkspaceDialog({
       <DialogHeader title="Add to Workspace" onClose={onClose} />
       <DialogContent className={styles.content}>
         <section className={styles.section} aria-label="Workspace item type">
-          <div className={styles.disclosureList}>
-            {workspaceAddOptions.map((option) => (
-              <OptionButton
-                key={option.id}
-                label={option.title}
-                presentation="list"
-                selected={selectedMode === option.id}
-                onClick={() => setSelectedMode(option.id)}
-              />
-            ))}
-          </div>
-        </section>
+          <DisclosureList>
+            <DisclosureListAction
+              label={workspaceAddOptions[0].title}
+              selected={selectedMode === "blank-group"}
+              onClick={() => {
+                setSelectedMode("blank-group");
+                workspaceDisclosure.closeAll();
+                setInstrumentCloseSignal((currentSignal) => currentSignal + 1);
+              }}
+            />
+            <DisclosureListItem
+              ariaLabel="Configure a progression practice set"
+              isOpen={selectedMode === "chord-progression"}
+              keepMounted
+              label={workspaceAddOptions[1].title}
+              selected={selectedMode === "chord-progression"}
+              onToggle={() => {
+                setSelectedMode("chord-progression");
+              }}
+            >
+              <DisclosureList grouped>
+                <DisclosureListGroup>
+                  <DisclosureListItem
+                    ariaLabel={`Choose key, ${selectedRootNote} selected`}
+                    isOpen={workspaceDisclosure.openChoice === "key"}
+                    keepMounted
+                    label="Key"
+                    preview={selectedRootNote}
+                    onToggle={() => handleWorkspaceChoiceToggle("key")}
+                  >
+                    <div className={localStyles.rootPanel}>
+                      <RootNoteGrid
+                        value={rootNote}
+                        onChange={handleRootNoteSelect}
+                      />
+                    </div>
+                  </DisclosureListItem>
 
-        <AnimatedDetailPanel animationKey={selectedMode}>
-          {selectedMode === "chord-progression" ? (
-            <>
-              <div className={styles.sectionGroup}>
-                <section
-                  className={styles.section}
-                  aria-label="Progression setup"
-                >
-                  <ChoiceAccordion>
-                    <ChoiceAccordionItem
-                      ariaLabel={`Choose key, ${selectedRootNote} selected`}
-                      isOpen={openChoice === "key"}
-                      label={selectedRootNote}
-                      subtitle="Key"
-                      onToggle={() => handleWorkspaceChoiceToggle("key")}
-                    >
-                      <div className={localStyles.rootPanel}>
-                        <RootNoteGrid
-                          value={rootNote}
-                          onChange={handleRootNoteSelect}
-                        />
-                      </div>
-                    </ChoiceAccordionItem>
-
-                    <ChoiceAccordionItem
-                      ariaLabel={`Choose chord progression, ${progressionRomanLabel} gives ${progressionChordLabel}`}
-                      isOpen={openChoice === "progression"}
-                      label={selectedTemplate.primaryName}
-                      preview={
-                        <span
-                          className={localStyles.progressionChordPreview}
-                          title={progressionChordLabel}
-                        >
-                          {progressionChordLabel}
-                        </span>
-                      }
-                      subtitle={
-                        shouldShowProgressionRomanSubtitle ? (
-                          <span
-                            className={localStyles.progressionRomanPreview}
-                            title={progressionRomanLabel}
-                          >
-                            {progressionRomanLabel}
-                          </span>
-                        ) : undefined
-                      }
-                      onToggle={() =>
-                        handleWorkspaceChoiceToggle("progression")
-                      }
-                    >
-                      <div
-                        className={`${styles.disclosureGroups} ${styles.indentedDisclosureGroups}`}
+                  <DisclosureListItem
+                    ariaLabel={`Choose chord progression, ${progressionRomanLabel} gives ${progressionChordLabel}`}
+                    isOpen={workspaceDisclosure.openChoice === "progression"}
+                    keepMounted
+                    label={selectedTemplate.primaryName}
+                    preview={
+                      <span
+                        className={localStyles.progressionChordPreview}
+                        title={progressionChordLabel}
                       >
-                        {(
-                          Object.keys(
-                            groupedChordProgressionTemplates,
-                          ) as ChordProgressionTemplateGroupKey[]
-                        ).map((groupKey) => (
-                          <div
-                            key={groupKey}
-                            className={styles.disclosureGroup}
-                          >
-                            <div className={styles.disclosureList}>
-                              {getProgressionTemplateKeys(groupKey).map(
-                                (candidateKey) => {
-                                  const candidate =
-                                    chordProgressionTemplates[candidateKey];
-                                  return (
-                                    <OptionButton
-                                      key={candidateKey}
-                                      label={candidate.primaryName}
-                                      presentation="list"
-                                      preview={getTemplateSubtitle(
-                                        candidateKey,
-                                      )}
-                                      selected={templateKey === candidateKey}
-                                      onClick={() => {
-                                        setTemplateKey(candidateKey);
-                                        setSectionIndex(0);
-                                        closeChoice("progression");
-                                      }}
-                                    />
-                                  );
-                                },
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </ChoiceAccordionItem>
-                  </ChoiceAccordion>
-                </section>
+                        {progressionChordLabel}
+                      </span>
+                    }
+                    subtitle={
+                      shouldShowProgressionRomanSubtitle ? (
+                        <span
+                          className={localStyles.progressionRomanPreview}
+                          title={progressionRomanLabel}
+                        >
+                          {progressionRomanLabel}
+                        </span>
+                      ) : undefined
+                    }
+                    onToggle={() => handleWorkspaceChoiceToggle("progression")}
+                  >
+                    <DisclosureList grouped>
+                      {(
+                        Object.keys(
+                          groupedChordProgressionTemplates,
+                        ) as ChordProgressionTemplateGroupKey[]
+                      ).map((groupKey) => (
+                        <DisclosureListGroup key={groupKey}>
+                          {getProgressionTemplateKeys(groupKey).map(
+                            (candidateKey) => {
+                              const candidate =
+                                chordProgressionTemplates[candidateKey];
+                              return (
+                                <DisclosureListAction
+                                  key={candidateKey}
+                                  label={candidate.primaryName}
+                                  preview={getTemplateSubtitle(candidateKey)}
+                                  selected={templateKey === candidateKey}
+                                  onClick={() => {
+                                    setTemplateKey(candidateKey);
+                                    setSectionIndex(0);
+                                    workspaceDisclosure.closeChoice(
+                                      "progression",
+                                    );
+                                  }}
+                                />
+                              );
+                            },
+                          )}
+                        </DisclosureListGroup>
+                      ))}
+                    </DisclosureList>
+                  </DisclosureListItem>
 
-                {templateSections.length > 1 ? (
-                  <section className={styles.section} aria-label="Section">
-                    <div
-                      className={`${styles.disclosureList} ${localStyles.progressionSectionOptions}`}
-                    >
+                  {templateSections.length > 1 ? (
+                    <DisclosureList>
                       {templateSections.map((section, index) => (
-                        <OptionButton
+                        <DisclosureListAction
                           key={`${section.name}-${index}`}
                           label={section.name}
-                          presentation="list"
                           preview={`${section.chords.length} Chords`}
                           selected={resolvedSectionIndex === index}
                           onClick={() => setSectionIndex(index)}
                         />
                       ))}
-                    </div>
-                  </section>
-                ) : null}
-              </div>
+                    </DisclosureList>
+                  ) : null}
+                </DisclosureListGroup>
 
-              <div className={styles.sectionGroup}>
-                <section className={styles.section} aria-label="Instrument">
-                  <div className={styles.disclosureList}>
-                    {addableMusicGroupOptions.map((option) => (
-                      <OptionButton
-                        key={option.id}
-                        label={option.title}
-                        presentation="list"
-                        selected={instrumentType === option.id}
-                        onClick={() => setInstrumentType(option.id)}
-                      />
-                    ))}
-                  </div>
-                </section>
+                <DisclosureListGroup>
+                  <DisclosureList>
+                    {addableMusicGroupOptions.map((option) => {
+                      const isSelected = instrumentType === option.id;
 
-                <AnimatedDetailPanel animationKey={instrumentType}>
-                  {instrumentType === "keyboard" ? (
-                    <AddKeyboardToMusicGroupPanel
-                      closeSignal={instrumentCloseSignal}
-                      value={keyboardSelection}
-                      onChange={setKeyboardSelection}
-                      onChoiceOpen={closeAll}
-                    />
-                  ) : (
-                    <AddFretboardToMusicGroupPanel
-                      closeSignal={instrumentCloseSignal}
-                      value={fretboardSelection}
-                      onChange={setFretboardSelection}
-                      onChoiceOpen={closeAll}
-                    />
-                  )}
-                </AnimatedDetailPanel>
-              </div>
-            </>
-          ) : null}
-        </AnimatedDetailPanel>
+                      return (
+                        <DisclosureListItem
+                          key={option.id}
+                          ariaLabel={`Choose ${option.title}`}
+                          disclosureIndicator={false}
+                          isOpen={isSelected}
+                          keepMounted
+                          label={option.title}
+                          selected={isSelected}
+                          showSelectionIndicator
+                          onToggle={() => {
+                            if (!isSelected) {
+                              setInstrumentCloseSignal(
+                                (currentSignal) => currentSignal + 1,
+                              );
+                            }
+
+                            setInstrumentType(option.id);
+                            workspaceDisclosure.closeAll();
+                          }}
+                        >
+                          {option.id === "keyboard" ? (
+                            <AddKeyboardToMusicGroupPanel
+                              closeSignal={instrumentCloseSignal}
+                              value={keyboardSelection}
+                              onChange={setKeyboardSelection}
+                              onChoiceOpen={workspaceDisclosure.closeAll}
+                            />
+                          ) : (
+                            <AddFretboardToMusicGroupPanel
+                              closeSignal={instrumentCloseSignal}
+                              value={fretboardSelection}
+                              onChange={setFretboardSelection}
+                              onChoiceOpen={workspaceDisclosure.closeAll}
+                            />
+                          )}
+                        </DisclosureListItem>
+                      );
+                    })}
+                  </DisclosureList>
+                </DisclosureListGroup>
+              </DisclosureList>
+            </DisclosureListItem>
+          </DisclosureList>
+        </section>
       </DialogContent>
       <DialogFooter className={styles.footer}>
         <section
@@ -481,52 +474,5 @@ export function AddToWorkspaceDialog({
         </section>
       </DialogFooter>
     </>
-  );
-}
-
-function AnimatedDetailPanel({
-  animationKey,
-  children,
-}: {
-  animationKey: string;
-  children: ReactNode;
-}) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState<number>();
-
-  useLayoutEffect(() => {
-    const panel = panelRef.current;
-
-    if (!panel) {
-      return;
-    }
-
-    const updateHeight = () => {
-      setHeight(panel.offsetHeight);
-    };
-
-    updateHeight();
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(panel);
-
-    return () => observer.disconnect();
-  }, [animationKey]);
-
-  return (
-    <div
-      className={styles.detailPanelFrame}
-      style={
-        height === undefined
-          ? undefined
-          : ({
-              "--detail-panel-height": `${height}px`,
-            } as CSSProperties)
-      }
-    >
-      <div key={animationKey} ref={panelRef} className={styles.detailPanel}>
-        {children}
-      </div>
-    </div>
   );
 }

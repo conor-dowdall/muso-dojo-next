@@ -23,10 +23,6 @@
   white-space: nowrap;
 }
 
-.progressionSectionOptions {
-  padding-inline: var(--space-3);
-}
-
 .footerActions {
   min-inline-size: 0;
   align-items: center;
