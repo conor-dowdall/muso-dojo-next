@@ -58,6 +58,7 @@
   padding: 0;
   border: var(--border-width-base) solid var(--dialog-border);
   border-radius: var(--radius-surface);
+  overflow: hidden;
   background:
     linear-gradient(
       180deg,

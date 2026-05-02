@@ -1,11 +1,18 @@
 .content {
   --dialog-major-section-gap: var(--space-7);
   --dialog-peer-choice-gap: var(--space-2);
+  --workspace-dialog-stable-block-size: 34rem;
 
   container-type: inline-size;
   display: flex;
   flex-direction: column;
   gap: var(--dialog-major-section-gap);
+}
+
+@media (height > 42rem) {
+  .content {
+    block-size: var(--workspace-dialog-stable-block-size);
+  }
 }
 
 .workspaceLayout {
@@ -336,7 +343,7 @@
   opacity: 1;
 }
 
-.customColorActions {
+.noteColorActions {
   display: flex;
   justify-content: flex-end;
 }

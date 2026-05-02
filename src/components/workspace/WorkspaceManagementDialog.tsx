@@ -266,6 +266,7 @@ export function WorkspaceManagementDialog({
                                   workspaceActionDisclosure.openChoice ===
                                   "settings"
                                 }
+                                keepMounted
                                 label="Settings"
                                 onToggle={() =>
                                   workspaceActionDisclosure.toggleChoice(
@@ -282,6 +283,7 @@ export function WorkspaceManagementDialog({
                                       workspaceSettingDisclosure.openChoice ===
                                       "title"
                                     }
+                                    keepMounted
                                     label="Title"
                                     preview={draftName}
                                     onToggle={() =>

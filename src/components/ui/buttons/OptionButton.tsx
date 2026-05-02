@@ -1,4 +1,5 @@
 import { type ReactNode } from "react";
+import { ChevronRight } from "lucide-react";
 import {
   Button,
   type ButtonLayout,
@@ -17,6 +18,7 @@ import styles from "./OptionButton.module.css";
  */
 export type OptionButtonPresentation = "media" | "tile" | "list";
 export type OptionButtonDensity = "compact" | "comfortable";
+export type OptionButtonDisclosureState = "open" | "closed";
 
 export type OptionButtonLabelProps = Omit<
   ButtonLabelProps,
@@ -36,6 +38,7 @@ export type OptionButtonProps = Omit<
   | "variant"
 > & {
   density?: OptionButtonDensity;
+  disclosureState?: OptionButtonDisclosureState;
   fullWidth?: boolean;
   icon?: ReactNode;
   label: ReactNode;
@@ -57,6 +60,7 @@ const presentationLayouts = {
 export function OptionButton({
   className = "",
   density = "comfortable",
+  disclosureState,
   fullWidth = true,
   icon,
   iconPosition,
@@ -74,6 +78,8 @@ export function OptionButton({
   const shouldShowSelectionIndicator =
     showSelectionIndicator ?? presentation === "list";
   const hasPreview = preview !== undefined;
+  const hasAccessory =
+    shouldShowSelectionIndicator || disclosureState !== undefined;
   const buttonClasses = [
     styles.optionButton,
     fullWidth ? styles.fullWidth : "",
@@ -86,12 +92,25 @@ export function OptionButton({
     <Button
       {...props}
       accessory={
-        shouldShowSelectionIndicator ? (
-          <span
-            aria-hidden="true"
-            className={`${styles.selectionIndicator} ${styles.selectionDot}`}
-            data-selected={selected === true}
-          />
+        hasAccessory ? (
+          <span className={styles.accessoryGroup}>
+            {shouldShowSelectionIndicator ? (
+              <span
+                aria-hidden="true"
+                className={`${styles.selectionIndicator} ${styles.selectionDot}`}
+                data-selected={selected === true}
+              />
+            ) : null}
+            {disclosureState !== undefined ? (
+              <span
+                aria-hidden="true"
+                className={styles.disclosureIndicator}
+                data-state={disclosureState}
+              >
+                <ChevronRight />
+              </span>
+            ) : null}
+          </span>
         ) : undefined
       }
       className={buttonClasses}

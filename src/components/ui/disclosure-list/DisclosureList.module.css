@@ -5,6 +5,7 @@
   --disclosure-list-indent: var(--space-4);
   --disclosure-list-panel-block-padding: var(--space-4);
   --disclosure-list-panel-gap: var(--space-4);
+  --disclosure-list-panel-transition: 180ms var(--ease-out);
 
   display: flex;
   min-inline-size: 0;
@@ -28,7 +29,24 @@
 }
 
 .panel {
+  display: grid;
+  min-inline-size: 0;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  overflow: hidden;
+  transition:
+    grid-template-rows var(--disclosure-list-panel-transition),
+    opacity var(--disclosure-list-panel-transition);
+}
+
+.panel[data-state="closed"] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+.panelInner {
   display: flex;
+  min-block-size: 0;
   min-inline-size: 0;
   flex-direction: column;
   gap: var(--disclosure-list-panel-gap);
@@ -38,10 +56,22 @@
   padding-inline-end: 0;
   border-inline-start: var(--border-width-base) solid var(--color-border-subtle);
   animation: disclosure-list-panel-enter 220ms ease-out;
+  overflow: hidden;
+  transition:
+    border-color var(--disclosure-list-panel-transition),
+    padding-block var(--disclosure-list-panel-transition);
+}
+
+.panel[data-state="closed"] .panelInner {
+  padding-block: 0;
+  border-inline-start-color: transparent;
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel {
+  .panel,
+  .panelInner {
+    transition: none;
     animation: none;
   }
 }

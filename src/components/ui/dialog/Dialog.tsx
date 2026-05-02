@@ -4,6 +4,27 @@ import styles from "./Dialog.module.css";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { Heading } from "@/components/ui/typography/Heading";
 
+let lockedDialogCount = 0;
+let previousBodyOverflow = "";
+
+function lockBodyScroll() {
+  if (lockedDialogCount === 0) {
+    previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+  }
+
+  lockedDialogCount += 1;
+
+  return () => {
+    lockedDialogCount = Math.max(0, lockedDialogCount - 1);
+
+    if (lockedDialogCount === 0) {
+      document.body.style.overflow = previousBodyOverflow;
+      previousBodyOverflow = "";
+    }
+  };
+}
+
 interface DialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -46,6 +67,14 @@ export function Dialog({
         dialog.showModal();
       }
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    return lockBodyScroll();
   }, [isOpen]);
 
   return (

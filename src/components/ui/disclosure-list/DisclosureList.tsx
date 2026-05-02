@@ -7,6 +7,11 @@ import {
 } from "@/components/ui/buttons/OptionButton";
 import styles from "./DisclosureList.module.css";
 
+/**
+ * Shared vertical menu pattern for object rows, action rows, and nested editors.
+ * Panels can stay mounted for calmer transitions while inert keeps closed inputs
+ * out of the focus order.
+ */
 export function DisclosureList({
   children,
   className = "",
@@ -45,12 +50,15 @@ interface DisclosureListItemProps {
   className?: string;
   density?: OptionButtonProps["density"];
   disabled?: boolean;
+  disclosureIndicator?: boolean;
   icon?: ReactNode;
   isOpen: boolean;
+  keepMounted?: boolean;
   label: ReactNode;
   labelProps?: OptionButtonProps["labelProps"];
   onToggle: () => void;
   preview?: ReactNode;
+  selected?: boolean;
   showSelectionIndicator?: OptionButtonProps["showSelectionIndicator"];
   subtitle?: ReactNode;
   tone?: OptionButtonProps["tone"];
@@ -63,12 +71,15 @@ export function DisclosureListItem({
   className = "",
   density,
   disabled,
+  disclosureIndicator = true,
   icon,
   isOpen,
+  keepMounted = false,
   label,
   labelProps,
   onToggle,
   preview,
+  selected,
   showSelectionIndicator,
   subtitle,
   tone,
@@ -76,6 +87,7 @@ export function DisclosureListItem({
 }: DisclosureListItemProps) {
   const panelId = useId();
   const itemClasses = [styles.item, className].filter(Boolean).join(" ");
+  const isSelected = selected ?? isOpen;
 
   return (
     <>
@@ -86,12 +98,15 @@ export function DisclosureListItem({
         className={itemClasses}
         density={density}
         disabled={disabled}
+        disclosureState={
+          disclosureIndicator ? (isOpen ? "open" : "closed") : undefined
+        }
         icon={icon}
         label={label}
         labelProps={labelProps}
         presentation="list"
         preview={preview}
-        selected={isOpen}
+        selected={isSelected}
         selectionSemantics="visual"
         showSelectionIndicator={showSelectionIndicator ?? false}
         subtitle={subtitle}
@@ -100,9 +115,13 @@ export function DisclosureListItem({
         onClick={onToggle}
       />
 
-      {isOpen ? (
-        <DisclosureListPanel id={panelId}>{children}</DisclosureListPanel>
-      ) : null}
+      <DisclosureListPanel
+        id={panelId}
+        isOpen={isOpen}
+        keepMounted={keepMounted}
+      >
+        {children}
+      </DisclosureListPanel>
     </>
   );
 }
@@ -128,16 +147,30 @@ export function DisclosureListPanel({
   children,
   className = "",
   id,
+  isOpen = true,
+  keepMounted = false,
 }: {
   children: ReactNode;
   className?: string;
   id?: string;
+  isOpen?: boolean;
+  keepMounted?: boolean;
 }) {
+  if (!isOpen && !keepMounted) {
+    return null;
+  }
+
   const panelClasses = [styles.panel, className].filter(Boolean).join(" ");
 
   return (
-    <div id={id} className={panelClasses}>
-      {children}
+    <div
+      id={id}
+      aria-hidden={isOpen ? undefined : true}
+      className={panelClasses}
+      data-state={isOpen ? "open" : "closed"}
+      inert={isOpen ? undefined : true}
+    >
+      <div className={styles.panelInner}>{children}</div>
     </div>
   );
 }

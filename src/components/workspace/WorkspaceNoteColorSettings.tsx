@@ -172,6 +172,7 @@ export function WorkspaceNoteColorSettings({
   const [selectedCustomColorIndex, setSelectedCustomColorIndex] = useState(
     NOTE_COLOR_INDEXES[0],
   );
+  const [isCustomEditorOpen, setIsCustomEditorOpen] = useState(false);
   const config = getNormalizedConfig(value);
   const customConfig = createCustomNoteColorConfig(config);
   const selectedCustomConfig =
@@ -187,11 +188,14 @@ export function WorkspaceNoteColorSettings({
   );
   const selectedCustomColor =
     selectedCustomConfig.colors[selectedCustomColorIndex];
+  const isCustomSelected = config.source === "custom";
+  const isCustomOpen = isCustomSelected && isCustomEditorOpen;
 
   return (
     <DisclosureListItem
       ariaLabel={`Choose Note Colors. Current: ${configLabel}, ${configSubtitle}.`}
       isOpen={isColorChoiceOpen}
+      keepMounted
       label="Note Colors"
       preview={<NoteColorPreview colors={getConfigPreviewColors(config)} />}
       onToggle={handleToggle}
@@ -206,8 +210,8 @@ export function WorkspaceNoteColorSettings({
             selected={config.source === "theme"}
             showSelectionIndicator
             onClick={() => {
+              setIsCustomEditorOpen(false);
               onChange({ source: "theme" });
-              closeNoteColors();
             }}
           />
 
@@ -230,8 +234,8 @@ export function WorkspaceNoteColorSettings({
                 }
                 showSelectionIndicator
                 onClick={() => {
+                  setIsCustomEditorOpen(false);
                   onChange({ source: "preset", preset });
-                  closeNoteColors();
                 }}
               />
             );
@@ -242,11 +246,21 @@ export function WorkspaceNoteColorSettings({
               customConfig.mode,
             )}.`}
             density="compact"
-            isOpen={config.source === "custom"}
+            isOpen={isCustomOpen}
+            keepMounted
             label="Custom"
             preview={<NoteColorPreview colors={customConfig.colors} />}
+            selected={isCustomSelected}
             showSelectionIndicator
-            onToggle={() => onChange(customConfig)}
+            onToggle={() => {
+              if (isCustomSelected) {
+                setIsCustomEditorOpen((currentValue) => !currentValue);
+                return;
+              }
+
+              setIsCustomEditorOpen(true);
+              onChange(customConfig);
+            }}
           >
             <div className={styles.customColorPanel}>
               <div
@@ -383,13 +397,13 @@ export function WorkspaceNoteColorSettings({
                   </button>
                 </div>
               </div>
-
-              <div className={styles.customColorActions}>
-                <Button label="Done" size="sm" onClick={closeNoteColors} />
-              </div>
             </div>
           </DisclosureListItem>
         </DisclosureList>
+
+        <div className={styles.noteColorActions}>
+          <Button label="Done" size="sm" onClick={closeNoteColors} />
+        </div>
       </div>
     </DisclosureListItem>
   );
