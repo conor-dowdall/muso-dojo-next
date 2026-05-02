@@ -252,6 +252,7 @@ export function AddFretboardToMusicGroupPanel({
           ariaLabel={`Choose style, ${selectedTheme.title} selected`}
           isOpen={openChoice === "style"}
           label={selectedTheme.title}
+          preview={<FretboardThemeSwatch themeName={value.theme} />}
           onToggle={() => handleToggleChoice("style")}
         >
           <div className={styles.disclosureList}>

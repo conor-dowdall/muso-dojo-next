@@ -6,6 +6,10 @@
   --dialog-menu-group-gap: var(--space-5);
   --dialog-menu-panel-block-padding: var(--space-3) var(--space-4);
   --dialog-menu-panel-content-gap: var(--space-4);
+  --dialog-swatch-radius: var(
+    --instrument-theme-swatch-radius,
+    var(--radius-small)
+  );
   --workspace-dialog-stable-block-size: 34rem;
 
   container-type: inline-size;
@@ -128,7 +132,7 @@
   gap: var(--space-px);
   overflow: hidden;
   padding: var(--space-0_5);
-  border-radius: var(--radius-subtle);
+  border-radius: var(--dialog-swatch-radius);
   background-color: var(--color-surface);
   box-shadow: inset 0 0 0 var(--border-width-base) rgb(0 0 0 / 0.18);
 }
@@ -207,7 +211,7 @@
   min-inline-size: 0;
   block-size: var(--instrument-theme-swatch-height, var(--control-size-xs));
   overflow: hidden;
-  border-radius: var(--radius-subtle);
+  border-radius: var(--dialog-swatch-radius);
   box-shadow:
     inset 0 0 0 var(--border-width-base) rgb(0 0 0 / 0.18),
     inset 0 1px 0 rgb(255 255 255 / 0.24);
@@ -301,7 +305,7 @@
   block-size: var(--instrument-theme-swatch-height, var(--control-size-xs));
   padding: 0;
   border: 0;
-  border-radius: var(--radius-subtle);
+  border-radius: var(--dialog-swatch-radius);
   background-color: var(--color-surface);
   box-shadow: inset 0 0 0 var(--border-width-base) rgb(0 0 0 / 0.18);
   cursor: pointer;
@@ -319,12 +323,12 @@
 
 .customColorChoiceInput::-webkit-color-swatch {
   border: 0;
-  border-radius: var(--radius-subtle);
+  border-radius: var(--dialog-swatch-radius);
 }
 
 .customColorChoiceInput::-moz-color-swatch {
   border: 0;
-  border-radius: var(--radius-subtle);
+  border-radius: var(--dialog-swatch-radius);
 }
 
 .customColorChoicePreview {
@@ -332,7 +336,7 @@
   inline-size: var(--instrument-theme-swatch-width, var(--control-size-2xl));
   block-size: var(--instrument-theme-swatch-height, var(--control-size-xs));
   overflow: hidden;
-  border-radius: var(--radius-subtle);
+  border-radius: var(--dialog-swatch-radius);
   box-shadow:
     inset 0 0 0 var(--border-width-base) rgb(0 0 0 / 0.18),
     inset 0 1px 0 rgb(255 255 255 / 0.24);

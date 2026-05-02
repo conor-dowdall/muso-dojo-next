@@ -4,7 +4,6 @@ import {
   type FretboardThemeName,
 } from "@/data/fretboard/themes";
 import { keyboardThemes, type KeyboardThemeName } from "@/data/keyboard/themes";
-import { assetUrl } from "@/utils/assets/assetPath";
 import styles from "./InstrumentThemeSwatch.module.css";
 
 export function KeyboardThemeSwatch({
@@ -71,15 +70,16 @@ export function FretboardThemeSwatch({
           "--fretboard-swatch-fret-color": fretWireColor,
           "--fretboard-swatch-nut-color": nutColor,
           "--fretboard-swatch-string-color": stringColor,
-          "--fretboard-swatch-string-texture": assetUrl(
-            "/textures/wound-string.svg",
-          ),
         } as CSSProperties
       }
     >
       <span className={styles.fretboardSwatchNut} />
       <span className={styles.fretboardSwatchFret} />
-      <span className={styles.fretboardSwatchString} />
+      <span className={styles.fretboardSwatchStrings}>
+        <span className={styles.fretboardSwatchString} />
+        <span className={styles.fretboardSwatchString} />
+        <span className={styles.fretboardSwatchString} />
+      </span>
     </span>
   );
 }

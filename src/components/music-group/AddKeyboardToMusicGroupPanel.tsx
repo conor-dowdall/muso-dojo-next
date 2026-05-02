@@ -132,6 +132,7 @@ export function AddKeyboardToMusicGroupPanel({
           ariaLabel={`Choose style, ${selectedTheme.title} selected`}
           isOpen={openChoice === "style"}
           label={selectedTheme.title}
+          preview={<KeyboardThemeSwatch themeName={value.theme} />}
           onToggle={() => handleToggleChoice("style")}
         >
           <div className={styles.disclosureList}>

@@ -5,7 +5,7 @@
   inline-size: var(--instrument-theme-swatch-width, var(--control-size-2xl));
   block-size: var(--instrument-theme-swatch-height, var(--control-size-xs));
   overflow: hidden;
-  border-radius: var(--radius-subtle);
+  border-radius: var(--instrument-theme-swatch-radius, var(--radius-small));
   background: var(--keyboard-swatch-white-key-background);
   box-shadow: inset 0 0 0 var(--border-width-base) rgb(0 0 0 / 0.18);
 }
@@ -53,7 +53,7 @@
   inline-size: var(--instrument-theme-swatch-width, var(--control-size-2xl));
   block-size: var(--instrument-theme-swatch-height, var(--control-size-xs));
   overflow: hidden;
-  border-radius: var(--radius-subtle);
+  border-radius: var(--instrument-theme-swatch-radius, var(--radius-small));
   background: var(--fretboard-swatch-background);
   background-position: center;
   background-repeat: no-repeat;
@@ -62,7 +62,7 @@
 
 .fretboardSwatchNut,
 .fretboardSwatchFret,
-.fretboardSwatchString {
+.fretboardSwatchStrings {
   position: absolute;
   pointer-events: none;
 }
@@ -87,24 +87,41 @@
     -1px 0 1px rgb(0 0 0 / 0.24);
 }
 
+.fretboardSwatchStrings {
+  display: flex;
+  inset: 0;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+
 .fretboardSwatchString {
-  inset-block-start: 50%;
-  inset-inline: 0;
-  block-size: var(--border-width-thick);
-  border-radius: 0;
+  display: block;
+  inline-size: 100%;
+  block-size: var(
+    --fretboard-swatch-string-thickness,
+    var(--border-width-base)
+  );
+  border-radius: var(--radius-full);
   background-color: var(--fretboard-swatch-string-color);
-  background-image:
-    var(--fretboard-swatch-string-texture),
-    linear-gradient(rgb(255 255 255 / 0.14), rgb(0 0 0 / 0.14));
+  background-image: linear-gradient(rgb(255 255 255 / 0.16), rgb(0 0 0 / 0.14));
   background-position: center;
-  background-repeat: repeat-x, no-repeat;
-  background-size:
-    3px 100%,
-    100% 100%;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
   box-shadow:
     0 -1px 0 rgb(255 255 255 / 0.12),
-    0 1px 2px rgb(0 0 0 / 0.4);
-  transform: translateY(-50%);
+    0 1px 1px rgb(0 0 0 / 0.34);
+}
+
+.fretboardSwatchString:first-child {
+  --fretboard-swatch-string-thickness: calc(var(--border-width-base) * 1.25);
+}
+
+.fretboardSwatchString:nth-child(2) {
+  --fretboard-swatch-string-thickness: calc(var(--border-width-base) * 1.5);
+}
+
+.fretboardSwatchString:last-child {
+  --fretboard-swatch-string-thickness: calc(var(--border-width-base) * 1.6);
 }
 
 .fretboardSwatch::after {
