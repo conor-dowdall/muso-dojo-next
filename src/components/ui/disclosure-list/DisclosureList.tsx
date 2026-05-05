@@ -228,6 +228,22 @@ export function DisclosureListChoice({
   );
 }
 
+type DisclosureListChoiceItemProps = Omit<
+  DisclosureListItemProps,
+  "selected" | "showSelectionIndicator"
+> & {
+  selected: boolean;
+};
+
+export function DisclosureListChoiceItem({
+  selected,
+  ...props
+}: DisclosureListChoiceItemProps) {
+  return (
+    <DisclosureListItem {...props} selected={selected} showSelectionIndicator />
+  );
+}
+
 interface DisclosureListConfirmActionProps {
   actionAriaLabel?: string;
   cancelLabel?: string;

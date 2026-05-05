@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/buttons/Button";
 import {
   DisclosureList,
   DisclosureListChoice,
+  DisclosureListChoiceItem,
   DisclosureListItem,
   DisclosureListPanelActions,
   useDisclosureList,
@@ -241,7 +242,7 @@ export function WorkspaceNoteColorSettings({
             );
           })}
 
-          <DisclosureListItem
+          <DisclosureListChoiceItem
             ariaLabel={`Choose custom note colors. ${getModeLabel(
               customConfig.mode,
             )}.`}
@@ -251,7 +252,6 @@ export function WorkspaceNoteColorSettings({
             label="Custom"
             preview={<NoteColorPreview colors={customConfig.colors} />}
             selected={isCustomSelected}
-            showSelectionIndicator
             onToggle={() => {
               if (isCustomSelected) {
                 setIsCustomEditorOpen((currentValue) => !currentValue);
@@ -405,7 +405,7 @@ export function WorkspaceNoteColorSettings({
                 </div>
               </div>
             </div>
-          </DisclosureListItem>
+          </DisclosureListChoiceItem>
         </DisclosureList>
 
         <DisclosureListPanelActions>

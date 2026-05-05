@@ -8,7 +8,7 @@ import {
 } from "@musodojo/music-theory-data";
 import {
   DisclosureList,
-  DisclosureListItem,
+  DisclosureListChoiceItem,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
   DEFAULT_FRETBOARD_THEME,
@@ -124,7 +124,7 @@ export function InstrumentCreationSettingsMenu({
         const isSelected = instrumentType === option.id;
 
         return (
-          <DisclosureListItem
+          <DisclosureListChoiceItem
             key={option.id}
             ariaLabel={`Choose ${option.title}`}
             isOpen={isSelected}
@@ -132,7 +132,6 @@ export function InstrumentCreationSettingsMenu({
             label={option.title}
             panelVariant="menu"
             selected={isSelected}
-            showSelectionIndicator
             onToggle={() => {
               if (!isSelected) {
                 setLocalCloseSignal((currentSignal) => currentSignal + 1);
@@ -157,7 +156,7 @@ export function InstrumentCreationSettingsMenu({
                 onChoiceOpen={onChoiceOpen}
               />
             )}
-          </DisclosureListItem>
+          </DisclosureListChoiceItem>
         );
       })}
     </DisclosureList>

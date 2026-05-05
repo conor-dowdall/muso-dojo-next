@@ -23,6 +23,7 @@ import { CheckOptionButton } from "@/components/ui/buttons/CheckOptionButton";
 import {
   DisclosureList,
   DisclosureListChoice,
+  DisclosureListChoiceItem,
   DisclosureListGroup,
   DisclosureListItem,
   useDisclosureList,
@@ -236,13 +237,12 @@ export function AddToWorkspaceDialog({
                 setInstrumentCloseSignal((currentSignal) => currentSignal + 1);
               }}
             />
-            <DisclosureListItem
+            <DisclosureListChoiceItem
               ariaLabel="Configure a progression practice set"
               isOpen={selectedMode === "chord-progression"}
               keepMounted
               label={workspaceAddOptions[1].title}
               selected={selectedMode === "chord-progression"}
-              showSelectionIndicator
               onToggle={() => {
                 setSelectedMode("chord-progression");
               }}
@@ -353,7 +353,7 @@ export function AddToWorkspaceDialog({
                   />
                 </DisclosureListGroup>
               </DisclosureList>
-            </DisclosureListItem>
+            </DisclosureListChoiceItem>
           </DisclosureList>
         </section>
       </DialogContent>

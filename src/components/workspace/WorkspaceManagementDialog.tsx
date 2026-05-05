@@ -13,6 +13,7 @@ import { Text } from "@/components/ui/typography/Text";
 import {
   DisclosureList,
   DisclosureListAction,
+  DisclosureListChoiceItem,
   DisclosureListConfirmAction,
   DisclosureListGroup,
   DisclosureListItem,
@@ -245,7 +246,7 @@ export function WorkspaceManagementDialog({
                   const isActive = workspace.id === activeWorkspace?.id;
 
                   return (
-                    <DisclosureListItem
+                    <DisclosureListChoiceItem
                       key={workspace.id}
                       ariaCurrent={isActive ? "true" : undefined}
                       ariaLabel={
@@ -261,7 +262,6 @@ export function WorkspaceManagementDialog({
                       panelVariant="menu"
                       preview={getWorkspaceSubtitle(workspace.groups)}
                       selected={isActive}
-                      showSelectionIndicator
                       onToggle={() => handleSelectWorkspace(workspace.id)}
                     >
                       <DisclosureList grouped groupGap="related">
@@ -411,7 +411,7 @@ export function WorkspaceManagementDialog({
                           />
                         </DisclosureListGroup>
                       </DisclosureList>
-                    </DisclosureListItem>
+                    </DisclosureListChoiceItem>
                   );
                 })
               )}
