@@ -11,6 +11,7 @@ import {
   OptionButton,
   type OptionButtonProps,
 } from "@/components/ui/buttons/OptionButton";
+import { Button } from "@/components/ui/buttons/Button";
 import styles from "./DisclosureList.module.css";
 
 function cx(...classes: Array<string | false | null | undefined>) {
@@ -20,15 +21,19 @@ function cx(...classes: Array<string | false | null | undefined>) {
 type DivProps = Omit<ComponentPropsWithoutRef<"div">, "children">;
 
 export type DisclosureListDensity = "comfortable" | "compact";
+export type DisclosureListGroupGap = "related" | "section";
+export type DisclosureListPanelVariant = "editor" | "menu";
 
 /**
  * Shared vertical menu pattern for object rows, action rows, and nested editors.
  * Panels can stay mounted for calmer transitions while inert keeps closed inputs
- * out of the focus order.
+ * out of the focus order. Panel actions give interactive editors a consistent
+ * footer without teaching disclosure rows about a specific "Done" behavior.
  */
 interface DisclosureListProps extends DivProps {
   children: ReactNode;
   density?: DisclosureListDensity;
+  groupGap?: DisclosureListGroupGap;
   grouped?: boolean;
 }
 
@@ -36,6 +41,7 @@ export function DisclosureList({
   children,
   className = "",
   density = "comfortable",
+  groupGap = "section",
   grouped = false,
   ...props
 }: DisclosureListProps) {
@@ -46,6 +52,7 @@ export function DisclosureList({
       {...props}
       className={listClasses}
       data-density={density}
+      data-group-gap={grouped ? groupGap : undefined}
       data-grouped={grouped ? true : undefined}
     >
       {children}
@@ -72,6 +79,7 @@ export function DisclosureListGroup({
 }
 
 interface DisclosureListItemProps {
+  ariaCurrent?: ComponentPropsWithoutRef<"button">["aria-current"];
   ariaLabel: string;
   children: ReactNode;
   className?: string;
@@ -79,6 +87,7 @@ interface DisclosureListItemProps {
   density?: OptionButtonProps["density"];
   disabled?: boolean;
   disclosureIndicator?: boolean;
+  disclosureSemantics?: boolean;
   icon?: ReactNode;
   isOpen: boolean;
   keepMounted?: boolean;
@@ -88,6 +97,7 @@ interface DisclosureListItemProps {
   panelClassName?: string;
   panelContentClassName?: string;
   panelId?: string;
+  panelVariant?: DisclosureListPanelVariant;
   preview?: ReactNode;
   selected?: boolean;
   showSelectionIndicator?: OptionButtonProps["showSelectionIndicator"];
@@ -97,6 +107,7 @@ interface DisclosureListItemProps {
 }
 
 export function DisclosureListItem({
+  ariaCurrent,
   ariaLabel,
   children,
   className = "",
@@ -104,6 +115,7 @@ export function DisclosureListItem({
   density,
   disabled,
   disclosureIndicator = true,
+  disclosureSemantics = true,
   icon,
   isOpen,
   keepMounted = false,
@@ -113,6 +125,7 @@ export function DisclosureListItem({
   panelClassName,
   panelContentClassName,
   panelId,
+  panelVariant,
   preview,
   selected,
   showSelectionIndicator,
@@ -125,13 +138,17 @@ export function DisclosureListItem({
   const clusterClasses = cx(styles.itemCluster, containerClassName);
   const itemClasses = cx(styles.item, className);
   const isSelected = selected ?? isOpen;
+  const panelIsMounted = isOpen || keepMounted;
+  const controlledPanelId =
+    disclosureSemantics && panelIsMounted ? resolvedPanelId : undefined;
 
   return (
     <div className={clusterClasses}>
       <OptionButton
+        aria-current={ariaCurrent}
         aria-label={ariaLabel}
-        aria-controls={resolvedPanelId}
-        aria-expanded={isOpen}
+        aria-controls={controlledPanelId}
+        aria-expanded={disclosureSemantics ? isOpen : undefined}
         className={itemClasses}
         density={density}
         disabled={disabled}
@@ -158,6 +175,7 @@ export function DisclosureListItem({
         id={resolvedPanelId}
         isOpen={isOpen}
         keepMounted={keepMounted}
+        variant={panelVariant}
       >
         {children}
       </DisclosureListPanel>
@@ -190,11 +208,119 @@ export function DisclosureListAction({
   );
 }
 
+type DisclosureListChoiceProps = Omit<
+  DisclosureListActionProps,
+  "showSelectionIndicator"
+> & {
+  selected: boolean;
+};
+
+export function DisclosureListChoice({
+  selected,
+  ...props
+}: DisclosureListChoiceProps) {
+  return (
+    <DisclosureListAction
+      {...props}
+      selected={selected}
+      showSelectionIndicator
+    />
+  );
+}
+
+interface DisclosureListConfirmActionProps {
+  actionAriaLabel?: string;
+  cancelLabel?: string;
+  className?: string;
+  confirmAriaLabel: string;
+  confirmLabel: ReactNode;
+  confirmLabelClassName?: string;
+  confirmButtonLabel?: string;
+  containerClassName?: string;
+  icon?: ReactNode;
+  isConfirming: boolean;
+  label: ReactNode;
+  onCancel: () => void;
+  onConfirm: () => void;
+  onRequestConfirm: () => void;
+  tone?: OptionButtonProps["tone"];
+}
+
+export function DisclosureListConfirmAction({
+  actionAriaLabel,
+  cancelLabel = "Cancel",
+  className = "",
+  confirmAriaLabel,
+  confirmLabel,
+  confirmLabelClassName = "",
+  confirmButtonLabel = "Confirm",
+  containerClassName = "",
+  icon,
+  isConfirming,
+  label,
+  onCancel,
+  onConfirm,
+  onRequestConfirm,
+  tone = "neutral",
+}: DisclosureListConfirmActionProps) {
+  const clusterClasses = cx(styles.itemCluster, containerClassName);
+  const confirmationClasses = cx(styles.confirmation, className);
+  const labelClasses = cx(styles.confirmationLabel, confirmLabelClassName);
+
+  if (!isConfirming) {
+    return (
+      <DisclosureListAction
+        aria-label={actionAriaLabel}
+        containerClassName={containerClassName}
+        icon={icon}
+        label={label}
+        tone={tone}
+        onClick={onRequestConfirm}
+      />
+    );
+  }
+
+  return (
+    <div className={clusterClasses}>
+      <div
+        aria-label={confirmAriaLabel}
+        className={confirmationClasses}
+        data-tone={tone}
+        role="group"
+      >
+        <span className={styles.confirmationHeader}>
+          {icon !== undefined ? (
+            <span className={styles.confirmationIcon} aria-hidden="true">
+              {icon}
+            </span>
+          ) : null}
+          <span className={labelClasses}>{confirmLabel}</span>
+        </span>
+        <span className={styles.confirmationActions}>
+          <Button
+            label={cancelLabel}
+            size="sm"
+            variant="ghost"
+            onClick={onCancel}
+          />
+          <Button
+            label={confirmButtonLabel}
+            size="sm"
+            tone={tone}
+            onClick={onConfirm}
+          />
+        </span>
+      </div>
+    </div>
+  );
+}
+
 interface DisclosureListPanelProps extends DivProps {
   children: ReactNode;
   contentClassName?: string;
   isOpen?: boolean;
   keepMounted?: boolean;
+  variant?: DisclosureListPanelVariant;
 }
 
 export function DisclosureListPanel({
@@ -204,6 +330,7 @@ export function DisclosureListPanel({
   id,
   isOpen = true,
   keepMounted = false,
+  variant = "editor",
   ...props
 }: DisclosureListPanelProps) {
   if (!isOpen && !keepMounted) {
@@ -220,9 +347,30 @@ export function DisclosureListPanel({
       aria-hidden={isOpen ? undefined : true}
       className={panelClasses}
       data-state={isOpen ? "open" : "closed"}
+      data-variant={variant}
       inert={isOpen ? undefined : true}
     >
       <div className={contentClasses}>{children}</div>
+    </div>
+  );
+}
+
+interface DisclosureListPanelActionsProps extends DivProps {
+  align?: "start" | "end" | "stretch";
+  children: ReactNode;
+}
+
+export function DisclosureListPanelActions({
+  align = "end",
+  children,
+  className = "",
+  ...props
+}: DisclosureListPanelActionsProps) {
+  const actionsClasses = cx(styles.panelActions, className);
+
+  return (
+    <div {...props} className={actionsClasses} data-align={align}>
+      {children}
     </div>
   );
 }

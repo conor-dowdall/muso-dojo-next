@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import {
   DisclosureList,
-  DisclosureListAction,
+  DisclosureListChoice,
   DisclosureListItem,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
@@ -106,7 +106,7 @@ export function AddKeyboardToMusicGroupPanel({
               const range = keyboardRanges[rangeName];
 
               return (
-                <DisclosureListAction
+                <DisclosureListChoice
                   key={rangeName}
                   label={range.title}
                   preview={formatKeyboardRangeNoteNames(
@@ -141,7 +141,7 @@ export function AddKeyboardToMusicGroupPanel({
               const theme = keyboardThemes[themeName];
 
               return (
-                <DisclosureListAction
+                <DisclosureListChoice
                   key={themeName}
                   label={theme.title}
                   preview={<KeyboardThemeSwatch themeName={themeName} />}

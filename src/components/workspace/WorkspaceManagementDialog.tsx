@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, type SyntheticEvent, useId, useState } from "react";
+import { type SyntheticEvent, useId, useState } from "react";
 import { Check, Copy, Plus, Settings, Trash2 } from "lucide-react";
 import {
   DialogContent,
@@ -9,14 +9,13 @@ import {
 } from "@/components/ui/dialog/Dialog";
 import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
-import { OptionButton } from "@/components/ui/buttons/OptionButton";
 import { Text } from "@/components/ui/typography/Text";
 import {
   DisclosureList,
   DisclosureListAction,
+  DisclosureListConfirmAction,
   DisclosureListGroup,
   DisclosureListItem,
-  DisclosureListPanel,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { useAppStore } from "@/stores/appStore";
@@ -131,6 +130,17 @@ export function WorkspaceManagementDialog({
     workspaceSettingDisclosure.closeAll();
   };
 
+  const handleSelectWorkspace = (workspaceId: string) => {
+    if (workspaceId === activeWorkspace?.id) {
+      return;
+    }
+
+    setActiveWorkspaceId(workspaceId);
+    setDeleteConfirmationWorkspaceId(null);
+    workspaceActionDisclosure.closeAll();
+    workspaceSettingDisclosure.closeAll();
+  };
+
   const setDraftName = (name: string) => {
     if (!activeWorkspace) {
       return;
@@ -212,250 +222,202 @@ export function WorkspaceManagementDialog({
     <>
       <DialogHeader title="Manage Workspaces" onClose={onClose} />
       <DialogContent className={styles.content}>
-        <div className={styles.workspaceLayout}>
-          <section
-            className={styles.workspaceListSection}
-            aria-label="Workspace choices"
-          >
-            <DisclosureList className={styles.workspaceList} grouped>
-              <DisclosureListGroup>
-                <DisclosureListAction
-                  icon={<Plus />}
-                  label="New Workspace"
-                  onClick={handleAddWorkspace}
-                />
-              </DisclosureListGroup>
+        <section
+          className={styles.workspaceListSection}
+          aria-label="Workspace choices"
+        >
+          <DisclosureList grouped groupGap="section">
+            <DisclosureListGroup>
+              <DisclosureListAction
+                icon={<Plus />}
+                label="New Workspace"
+                onClick={handleAddWorkspace}
+              />
+            </DisclosureListGroup>
 
-              <DisclosureListGroup>
-                {workspaceList.length === 0 ? (
-                  <Text as="p" size="sm" variant="muted">
-                    No workspaces
-                  </Text>
-                ) : (
-                  workspaceList.map((workspace) => {
-                    const isActive = workspace.id === activeWorkspace?.id;
+            <DisclosureListGroup>
+              {workspaceList.length === 0 ? (
+                <Text as="p" size="sm" variant="muted">
+                  No workspaces
+                </Text>
+              ) : (
+                workspaceList.map((workspace) => {
+                  const isActive = workspace.id === activeWorkspace?.id;
 
-                    return (
-                      <Fragment key={workspace.id}>
-                        <OptionButton
-                          aria-current={isActive ? "true" : undefined}
-                          presentation="list"
-                          selected={isActive}
-                          label={workspace.name}
-                          preview={getWorkspaceSubtitle(workspace.groups)}
-                          onClick={() => {
-                            setActiveWorkspaceId(workspace.id);
-                            setDeleteConfirmationWorkspaceId(null);
-                            workspaceSettingDisclosure.closeAll();
-                          }}
-                        />
+                  return (
+                    <DisclosureListItem
+                      key={workspace.id}
+                      ariaCurrent={isActive ? "true" : undefined}
+                      ariaLabel={
+                        isActive
+                          ? `${workspace.name} workspace selected`
+                          : `Select ${workspace.name} workspace`
+                      }
+                      disclosureIndicator={false}
+                      disclosureSemantics={false}
+                      isOpen={isActive}
+                      keepMounted={false}
+                      label={workspace.name}
+                      panelVariant="menu"
+                      preview={getWorkspaceSubtitle(workspace.groups)}
+                      selected={isActive}
+                      showSelectionIndicator
+                      onToggle={() => handleSelectWorkspace(workspace.id)}
+                    >
+                      <DisclosureList grouped groupGap="related">
+                        <DisclosureListGroup>
+                          <DisclosureListAction
+                            icon={<Copy />}
+                            label="Duplicate"
+                            onClick={handleCloneWorkspace}
+                          />
 
-                        {isActive ? (
-                          <DisclosureListPanel
-                            className={styles.workspaceActionsPanel}
+                          <DisclosureListItem
+                            ariaLabel={`Open settings for ${workspace.name}`}
+                            icon={<Settings />}
+                            isOpen={
+                              workspaceActionDisclosure.openChoice ===
+                              "settings"
+                            }
+                            keepMounted
+                            label="Settings"
+                            panelVariant="menu"
+                            onToggle={() =>
+                              workspaceActionDisclosure.toggleChoice("settings")
+                            }
                           >
-                            <DisclosureList
-                              className={styles.workspaceActionsList}
-                              grouped
-                            >
-                              <DisclosureListGroup>
-                                <DisclosureListAction
-                                  icon={<Copy />}
-                                  label="Duplicate"
-                                  onClick={handleCloneWorkspace}
-                                />
-
-                                <DisclosureListItem
-                                  ariaLabel={`Open settings for ${workspace.name}`}
-                                  icon={<Settings />}
-                                  isOpen={
-                                    workspaceActionDisclosure.openChoice ===
-                                    "settings"
-                                  }
-                                  keepMounted
-                                  label="Settings"
-                                  onToggle={() =>
-                                    workspaceActionDisclosure.toggleChoice(
-                                      "settings",
-                                    )
-                                  }
-                                >
-                                  <DisclosureList density="compact">
-                                    <DisclosureListItem
-                                      ariaLabel={`Edit workspace title. Current: ${workspace.name}`}
-                                      isOpen={
-                                        workspaceSettingDisclosure.openChoice ===
-                                        "title"
-                                      }
-                                      keepMounted
-                                      label="Title"
-                                      preview={draftName}
-                                      onToggle={() =>
-                                        workspaceSettingDisclosure.toggleChoice(
-                                          "title",
-                                        )
-                                      }
-                                    >
-                                      <form
-                                        className={styles.nameForm}
-                                        onSubmit={handleRename}
-                                      >
-                                        <div className={styles.nameField}>
-                                          <label
-                                            className={styles.nameLabel}
-                                            htmlFor={nameInputId}
-                                          >
-                                            Workspace title
-                                          </label>
-                                          <div className={styles.nameControl}>
-                                            <input
-                                              aria-describedby={
-                                                renameMessage
-                                                  ? nameMessageId
-                                                  : undefined
-                                              }
-                                              aria-invalid={
-                                                isNameEmpty || hasNameConflict
-                                              }
-                                              autoComplete="off"
-                                              className={styles.nameInput}
-                                              id={nameInputId}
-                                              spellCheck={false}
-                                              value={draftName}
-                                              onChange={(event) =>
-                                                setDraftName(
-                                                  event.currentTarget.value,
-                                                )
-                                              }
-                                            />
-                                            <IconButton
-                                              aria-label="Save workspace name"
-                                              disabled={!canRename}
-                                              icon={<Check />}
-                                              shouldYield={false}
-                                              size="lg"
-                                              type="submit"
-                                            />
-                                          </div>
-                                          {renameMessage ? (
-                                            <Text
-                                              as="span"
-                                              className={styles.nameMessage}
-                                              data-tone={
-                                                isNameEmpty || hasNameConflict
-                                                  ? "danger"
-                                                  : "muted"
-                                              }
-                                              id={nameMessageId}
-                                              size="xs"
-                                              variant="muted"
-                                            >
-                                              {renameMessage}
-                                            </Text>
-                                          ) : null}
-                                        </div>
-                                      </form>
-                                    </DisclosureListItem>
-
-                                    <WorkspaceNoteColorSettings
-                                      isOpen={
-                                        workspaceSettingDisclosure.openChoice ===
-                                        "note-colors"
-                                      }
-                                      value={workspace.noteColorConfig}
-                                      onClose={() =>
-                                        workspaceSettingDisclosure.closeChoice(
-                                          "note-colors",
-                                        )
-                                      }
-                                      onToggle={() =>
-                                        workspaceSettingDisclosure.toggleChoice(
-                                          "note-colors",
-                                        )
-                                      }
-                                      onChange={(noteColorConfig) =>
-                                        setWorkspaceNoteColorConfig(
-                                          workspace.id,
-                                          noteColorConfig,
-                                        )
-                                      }
-                                    />
-                                  </DisclosureList>
-                                </DisclosureListItem>
-                              </DisclosureListGroup>
-
-                              <DisclosureListGroup
-                                className={styles.workspaceDangerGroup}
+                            <DisclosureList density="compact">
+                              <DisclosureListItem
+                                ariaLabel={`Edit workspace title. Current: ${workspace.name}`}
+                                isOpen={
+                                  workspaceSettingDisclosure.openChoice ===
+                                  "title"
+                                }
+                                keepMounted
+                                label="Title"
+                                preview={draftName}
+                                onToggle={() =>
+                                  workspaceSettingDisclosure.toggleChoice(
+                                    "title",
+                                  )
+                                }
                               >
-                                {deleteConfirmationWorkspaceId ===
-                                workspace.id ? (
-                                  <div
-                                    aria-label={`Confirm deleting ${workspace.name}. This cannot be undone.`}
-                                    className={styles.deleteInlineConfirmation}
-                                    role="group"
-                                  >
-                                    <span className={styles.deleteInlineHeader}>
-                                      <span
-                                        className={styles.deleteInlineIcon}
-                                        aria-hidden="true"
-                                      >
-                                        <Trash2 />
-                                      </span>
-                                      <Text
-                                        as="span"
-                                        className={styles.deletePrompt}
-                                        size="sm"
-                                        variant="muted"
-                                      >
-                                        Delete {workspace.name}?
-                                      </Text>
-                                    </span>
-                                    <div
-                                      className={
-                                        styles.deleteConfirmationActions
-                                      }
+                                <form
+                                  className={styles.nameForm}
+                                  onSubmit={handleRename}
+                                >
+                                  <div className={styles.nameField}>
+                                    <label
+                                      className={styles.nameLabel}
+                                      htmlFor={nameInputId}
                                     >
-                                      <Button
-                                        label="Cancel"
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() =>
-                                          setDeleteConfirmationWorkspaceId(null)
+                                      Workspace title
+                                    </label>
+                                    <div className={styles.nameControl}>
+                                      <input
+                                        aria-describedby={
+                                          renameMessage
+                                            ? nameMessageId
+                                            : undefined
+                                        }
+                                        aria-invalid={
+                                          isNameEmpty || hasNameConflict
+                                        }
+                                        autoComplete="off"
+                                        className={styles.nameInput}
+                                        id={nameInputId}
+                                        spellCheck={false}
+                                        value={draftName}
+                                        onChange={(event) =>
+                                          setDraftName(
+                                            event.currentTarget.value,
+                                          )
                                         }
                                       />
-                                      <Button
-                                        aria-label={`Delete ${workspace.name}`}
-                                        label="Delete"
-                                        size="sm"
-                                        tone="danger"
-                                        onClick={handleDeleteWorkspace}
+                                      <IconButton
+                                        aria-label="Save workspace name"
+                                        disabled={!canRename}
+                                        icon={<Check />}
+                                        shouldYield={false}
+                                        size="lg"
+                                        type="submit"
                                       />
                                     </div>
+                                    {renameMessage ? (
+                                      <Text
+                                        as="span"
+                                        className={styles.nameMessage}
+                                        data-tone={
+                                          isNameEmpty || hasNameConflict
+                                            ? "danger"
+                                            : "muted"
+                                        }
+                                        id={nameMessageId}
+                                        size="xs"
+                                        variant="muted"
+                                      >
+                                        {renameMessage}
+                                      </Text>
+                                    ) : null}
                                   </div>
-                                ) : (
-                                  <DisclosureListAction
-                                    icon={<Trash2 />}
-                                    label="Delete"
-                                    tone="danger"
-                                    onClick={() =>
-                                      setDeleteConfirmationWorkspaceId(
-                                        workspace.id,
-                                      )
-                                    }
-                                  />
-                                )}
-                              </DisclosureListGroup>
+                                </form>
+                              </DisclosureListItem>
+
+                              <WorkspaceNoteColorSettings
+                                isOpen={
+                                  workspaceSettingDisclosure.openChoice ===
+                                  "note-colors"
+                                }
+                                value={workspace.noteColorConfig}
+                                onClose={() =>
+                                  workspaceSettingDisclosure.closeChoice(
+                                    "note-colors",
+                                  )
+                                }
+                                onToggle={() =>
+                                  workspaceSettingDisclosure.toggleChoice(
+                                    "note-colors",
+                                  )
+                                }
+                                onChange={(noteColorConfig) =>
+                                  setWorkspaceNoteColorConfig(
+                                    workspace.id,
+                                    noteColorConfig,
+                                  )
+                                }
+                              />
                             </DisclosureList>
-                          </DisclosureListPanel>
-                        ) : null}
-                      </Fragment>
-                    );
-                  })
-                )}
-              </DisclosureListGroup>
-            </DisclosureList>
-          </section>
-        </div>
+                          </DisclosureListItem>
+                        </DisclosureListGroup>
+
+                        <DisclosureListGroup>
+                          <DisclosureListConfirmAction
+                            confirmAriaLabel={`Confirm deleting ${workspace.name}. This cannot be undone.`}
+                            confirmButtonLabel="Delete"
+                            confirmLabel={`Delete ${workspace.name}?`}
+                            icon={<Trash2 />}
+                            isConfirming={
+                              deleteConfirmationWorkspaceId === workspace.id
+                            }
+                            label="Delete"
+                            tone="danger"
+                            onCancel={() =>
+                              setDeleteConfirmationWorkspaceId(null)
+                            }
+                            onConfirm={handleDeleteWorkspace}
+                            onRequestConfirm={() =>
+                              setDeleteConfirmationWorkspaceId(workspace.id)
+                            }
+                          />
+                        </DisclosureListGroup>
+                      </DisclosureList>
+                    </DisclosureListItem>
+                  );
+                })
+              )}
+            </DisclosureListGroup>
+          </DisclosureList>
+        </section>
       </DialogContent>
       <DialogFooter className={styles.footer}>
         <section className={styles.footerActions} aria-label="Dialog actions">

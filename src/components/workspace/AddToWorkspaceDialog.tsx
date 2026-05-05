@@ -8,13 +8,10 @@ import {
   getRomanNumeralForIntervalAndChordQuality,
   groupedChordProgressionTemplates,
   normalizeRootNoteString,
-  stringInstruments,
   type ChordQuality,
   type ChordProgressionTemplateKey,
   type Interval,
   type RootNote,
-  type StringInstrumentKey,
-  type StringInstrumentTuningKey,
 } from "@musodojo/music-theory-data";
 import {
   DialogContent,
@@ -25,32 +22,23 @@ import { Button } from "@/components/ui/buttons/Button";
 import { CheckOptionButton } from "@/components/ui/buttons/CheckOptionButton";
 import {
   DisclosureList,
-  DisclosureListAction,
+  DisclosureListChoice,
   DisclosureListGroup,
   DisclosureListItem,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
-import { AddFretboardToMusicGroupPanel } from "@/components/music-group/AddFretboardToMusicGroupPanel";
 import {
-  AddKeyboardToMusicGroupPanel,
-  type KeyboardRangeSelection,
-} from "@/components/music-group/AddKeyboardToMusicGroupPanel";
+  defaultFretboardInstrumentSelection,
+  defaultKeyboardInstrumentSelection,
+  getInstrumentCreationConfig,
+  InstrumentCreationSettingsMenu,
+  type FretboardInstrumentSelection,
+  type KeyboardInstrumentSelection,
+} from "@/components/music-group/InstrumentCreationSettingsMenu";
 import { RootNoteGrid } from "@/components/music-group/RootNoteGrid";
-import {
-  addableMusicGroupOptions,
-  type AddableMusicGroupItemType,
-} from "@/components/music-group/addToMusicGroupOptions";
+import { type AddableMusicGroupItemType } from "@/components/music-group/addToMusicGroupOptions";
 import styles from "@/components/music-group/AddToMusicGroupDialog.module.css";
 import localStyles from "./AddToWorkspaceDialog.module.css";
-import {
-  DEFAULT_FRETBOARD_THEME,
-  type FretboardThemeName,
-} from "@/data/fretboard/themes";
-import { DEFAULT_KEYBOARD_RANGE, keyboardRanges } from "@/data/keyboard/ranges";
-import {
-  DEFAULT_KEYBOARD_THEME,
-  type KeyboardThemeName,
-} from "@/data/keyboard/themes";
 import { type InstrumentCreationConfig } from "@/types/workspace";
 
 type WorkspaceAddMode = "blank-group" | "chord-progression";
@@ -70,20 +58,6 @@ interface ChordProgressionTemplateStep {
   quality: ChordQuality;
 }
 
-interface KeyboardSelection {
-  range: KeyboardRangeSelection;
-  midiRange: readonly [number, number];
-  theme: KeyboardThemeName;
-}
-
-interface FretboardSelection {
-  instrument: StringInstrumentKey;
-  tuningKey: StringInstrumentTuningKey;
-  fretRange: readonly [number, number];
-  handedness: "right" | "left";
-  theme: FretboardThemeName;
-}
-
 interface AddToWorkspaceDialogProps {
   onAddBlankGroup: (settings: { replaceWorkspace: boolean }) => void;
   onAddChordProgression: (settings: {
@@ -101,20 +75,6 @@ const workspaceAddOptions = [
   { id: "blank-group", title: "New Music Group" },
   { id: "chord-progression", title: "Progression Practice Set" },
 ] as const satisfies readonly { id: WorkspaceAddMode; title: string }[];
-
-const defaultKeyboardSelection: KeyboardSelection = {
-  range: DEFAULT_KEYBOARD_RANGE,
-  midiRange: keyboardRanges[DEFAULT_KEYBOARD_RANGE].midiRange,
-  theme: DEFAULT_KEYBOARD_THEME,
-};
-
-const defaultFretboardSelection: FretboardSelection = {
-  instrument: "guitar",
-  tuningKey: stringInstruments.guitar.defaultTuning,
-  fretRange: [0, 12],
-  handedness: "right",
-  theme: DEFAULT_FRETBOARD_THEME,
-};
 
 const defaultProgressionTemplateKey =
   "oneFourFive" satisfies ChordProgressionTemplateKey;
@@ -185,31 +145,6 @@ function getProgressionSummary(
   };
 }
 
-function getInstrumentSettings(
-  instrumentType: AddableMusicGroupItemType,
-  keyboardSelection: KeyboardSelection,
-  fretboardSelection: FretboardSelection,
-): InstrumentCreationConfig {
-  if (instrumentType === "keyboard") {
-    return {
-      ...(keyboardSelection.range === "custom"
-        ? { config: { midiRange: keyboardSelection.midiRange } }
-        : { range: keyboardSelection.range }),
-      theme: keyboardSelection.theme,
-    };
-  }
-
-  return {
-    theme: fretboardSelection.theme,
-    config: {
-      instrument: fretboardSelection.instrument,
-      tuningKey: fretboardSelection.tuningKey,
-      fretRange: [...fretboardSelection.fretRange],
-      leftHanded: fretboardSelection.handedness === "left",
-    },
-  };
-}
-
 export function AddToWorkspaceDialog({
   onAddBlankGroup,
   onAddChordProgression,
@@ -227,11 +162,10 @@ export function AddToWorkspaceDialog({
     useState<AddableMusicGroupItemType>("keyboard");
   const workspaceDisclosure = useDisclosureList<WorkspaceChoice>();
   const [instrumentCloseSignal, setInstrumentCloseSignal] = useState(0);
-  const [keyboardSelection, setKeyboardSelection] = useState<KeyboardSelection>(
-    defaultKeyboardSelection,
-  );
+  const [keyboardSelection, setKeyboardSelection] =
+    useState<KeyboardInstrumentSelection>(defaultKeyboardInstrumentSelection);
   const [fretboardSelection, setFretboardSelection] =
-    useState<FretboardSelection>(defaultFretboardSelection);
+    useState<FretboardInstrumentSelection>(defaultFretboardInstrumentSelection);
 
   const selectedRootNote = normalizeRootNoteString(rootNote) ?? "C";
   const selectedTemplate = chordProgressionTemplates[templateKey];
@@ -278,7 +212,7 @@ export function AddToWorkspaceDialog({
       sectionIndex: resolvedSectionIndex,
       instrumentType,
       replaceWorkspace,
-      instrumentSettings: getInstrumentSettings(
+      instrumentSettings: getInstrumentCreationConfig(
         instrumentType,
         keyboardSelection,
         fretboardSelection,
@@ -293,7 +227,7 @@ export function AddToWorkspaceDialog({
       <DialogContent className={styles.content}>
         <section className={styles.section} aria-label="Workspace item type">
           <DisclosureList>
-            <DisclosureListAction
+            <DisclosureListChoice
               label={workspaceAddOptions[0].title}
               selected={selectedMode === "blank-group"}
               onClick={() => {
@@ -308,17 +242,19 @@ export function AddToWorkspaceDialog({
               keepMounted
               label={workspaceAddOptions[1].title}
               selected={selectedMode === "chord-progression"}
+              showSelectionIndicator
               onToggle={() => {
                 setSelectedMode("chord-progression");
               }}
             >
-              <DisclosureList grouped>
+              <DisclosureList grouped groupGap="section">
                 <DisclosureListGroup>
                   <DisclosureListItem
                     ariaLabel={`Choose key, ${selectedRootNote} selected`}
                     isOpen={workspaceDisclosure.openChoice === "key"}
                     keepMounted
                     label="Key"
+                    panelVariant="menu"
                     preview={selectedRootNote}
                     onToggle={() => handleWorkspaceChoiceToggle("key")}
                   >
@@ -335,6 +271,7 @@ export function AddToWorkspaceDialog({
                     isOpen={workspaceDisclosure.openChoice === "progression"}
                     keepMounted
                     label={selectedTemplate.primaryName}
+                    panelVariant="menu"
                     preview={
                       <span
                         className={localStyles.progressionChordPreview}
@@ -367,7 +304,7 @@ export function AddToWorkspaceDialog({
                               const candidate =
                                 chordProgressionTemplates[candidateKey];
                               return (
-                                <DisclosureListAction
+                                <DisclosureListChoice
                                   key={candidateKey}
                                   label={candidate.primaryName}
                                   preview={getTemplateSubtitle(candidateKey)}
@@ -391,7 +328,7 @@ export function AddToWorkspaceDialog({
                   {templateSections.length > 1 ? (
                     <DisclosureList>
                       {templateSections.map((section, index) => (
-                        <DisclosureListAction
+                        <DisclosureListChoice
                           key={`${section.name}-${index}`}
                           label={section.name}
                           preview={`${section.chords.length} Chords`}
@@ -404,49 +341,16 @@ export function AddToWorkspaceDialog({
                 </DisclosureListGroup>
 
                 <DisclosureListGroup>
-                  <DisclosureList>
-                    {addableMusicGroupOptions.map((option) => {
-                      const isSelected = instrumentType === option.id;
-
-                      return (
-                        <DisclosureListItem
-                          key={option.id}
-                          ariaLabel={`Choose ${option.title}`}
-                          isOpen={isSelected}
-                          keepMounted
-                          label={option.title}
-                          selected={isSelected}
-                          showSelectionIndicator
-                          onToggle={() => {
-                            if (!isSelected) {
-                              setInstrumentCloseSignal(
-                                (currentSignal) => currentSignal + 1,
-                              );
-                            }
-
-                            setInstrumentType(option.id);
-                            workspaceDisclosure.closeAll();
-                          }}
-                        >
-                          {option.id === "keyboard" ? (
-                            <AddKeyboardToMusicGroupPanel
-                              closeSignal={instrumentCloseSignal}
-                              value={keyboardSelection}
-                              onChange={setKeyboardSelection}
-                              onChoiceOpen={workspaceDisclosure.closeAll}
-                            />
-                          ) : (
-                            <AddFretboardToMusicGroupPanel
-                              closeSignal={instrumentCloseSignal}
-                              value={fretboardSelection}
-                              onChange={setFretboardSelection}
-                              onChoiceOpen={workspaceDisclosure.closeAll}
-                            />
-                          )}
-                        </DisclosureListItem>
-                      );
-                    })}
-                  </DisclosureList>
+                  <InstrumentCreationSettingsMenu
+                    closeSignal={instrumentCloseSignal}
+                    fretboardSelection={fretboardSelection}
+                    instrumentType={instrumentType}
+                    keyboardSelection={keyboardSelection}
+                    onChoiceOpen={workspaceDisclosure.closeAll}
+                    onFretboardSelectionChange={setFretboardSelection}
+                    onInstrumentTypeChange={setInstrumentType}
+                    onKeyboardSelectionChange={setKeyboardSelection}
+                  />
                 </DisclosureListGroup>
               </DisclosureList>
             </DisclosureListItem>

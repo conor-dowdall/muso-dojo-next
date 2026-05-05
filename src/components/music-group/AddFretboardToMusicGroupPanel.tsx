@@ -9,7 +9,7 @@ import {
 } from "@musodojo/music-theory-data";
 import {
   DisclosureList,
-  DisclosureListAction,
+  DisclosureListChoice,
   DisclosureListGroup,
   DisclosureListItem,
   useDisclosureList,
@@ -138,7 +138,7 @@ export function AddFretboardToMusicGroupPanel({
             {fretboardInstrumentGroups.map((group) => (
               <DisclosureListGroup key={group.title}>
                 {group.options.map((option) => (
-                  <DisclosureListAction
+                  <DisclosureListChoice
                     key={option.id}
                     label={option.title}
                     selected={value.instrument === option.id}
@@ -164,7 +164,7 @@ export function AddFretboardToMusicGroupPanel({
                   const tuning = stringInstrumentTunings[tuningKey];
 
                   return (
-                    <DisclosureListAction
+                    <DisclosureListChoice
                       key={tuningKey}
                       label={tuning.primaryName}
                       preview={formatOpenStringNotes(tuning)}
@@ -187,7 +187,7 @@ export function AddFretboardToMusicGroupPanel({
         >
           <DisclosureList>
             {fretRangeOptions.map((option) => (
-              <DisclosureListAction
+              <DisclosureListChoice
                 key={formatFretRange(option)}
                 label={formatFretRange(option)}
                 selected={areRangesEqual(value.fretRange, option)}
@@ -228,12 +228,12 @@ export function AddFretboardToMusicGroupPanel({
           onToggle={() => handleToggleChoice("handedness")}
         >
           <DisclosureList>
-            <DisclosureListAction
+            <DisclosureListChoice
               label={formatHandedness("right")}
               selected={value.handedness === "right"}
               onClick={() => handleHandednessSelect("right")}
             />
-            <DisclosureListAction
+            <DisclosureListChoice
               label={formatHandedness("left")}
               selected={value.handedness === "left"}
               onClick={() => handleHandednessSelect("left")}
@@ -254,7 +254,7 @@ export function AddFretboardToMusicGroupPanel({
               const theme = fretboardThemes[themeName];
 
               return (
-                <DisclosureListAction
+                <DisclosureListChoice
                   key={themeName}
                   label={theme.title}
                   preview={<FretboardThemeSwatch themeName={themeName} />}

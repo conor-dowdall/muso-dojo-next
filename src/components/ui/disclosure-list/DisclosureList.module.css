@@ -5,6 +5,7 @@
    * - group gap: separated clusters, such as primary actions vs danger actions
    * - row-panel gap: space between a disclosure trigger and its revealed panel
    * - panel padding/gap: breathing room inside revealed nested settings
+   * - menu panel: tighter revealed child menu under a selected row
    *
    * Consumers should override the public --disclosure-list-* tokens. The
    * --dialog-menu-* tokens let dialogs set a family rhythm once and have these
@@ -16,20 +17,32 @@
   );
   --disclosure-list-default-group-gap: var(
     --dialog-menu-group-gap,
-    var(--dialog-menu-section-gap, var(--space-4))
+    var(--dialog-menu-section-gap, var(--space-5))
+  );
+  --disclosure-list-default-related-group-gap: var(
+    --dialog-menu-related-group-gap,
+    var(--space-3)
   );
   --disclosure-list-default-indent-offset: var(
     --dialog-menu-indent-offset,
     var(--space-2)
   );
-  --disclosure-list-default-indent: var(--dialog-menu-indent, var(--space-4));
+  --disclosure-list-default-indent: var(--dialog-menu-indent, var(--space-3));
   --disclosure-list-default-panel-block-padding: var(
     --dialog-menu-panel-block-padding,
-    var(--space-4)
+    var(--space-3) var(--space-4)
   );
   --disclosure-list-default-panel-content-gap: var(
     --dialog-menu-panel-content-gap,
     var(--space-4)
+  );
+  --disclosure-list-default-menu-panel-block-padding: var(
+    --dialog-menu-submenu-panel-block-padding,
+    var(--space-3) var(--space-4)
+  );
+  --disclosure-list-default-menu-panel-content-gap: var(
+    --dialog-menu-submenu-panel-content-gap,
+    var(--disclosure-list-row-gap, var(--disclosure-list-default-row-gap))
   );
   --disclosure-list-default-row-panel-gap: var(
     --dialog-menu-row-panel-gap,
@@ -49,9 +62,25 @@
 .list[data-density="compact"] {
   --disclosure-list-default-panel-block-padding: var(--space-2) var(--space-3);
   --disclosure-list-default-panel-content-gap: var(--space-3);
+  --disclosure-list-default-menu-panel-block-padding: var(--space-2)
+    var(--space-3);
 }
 
 .groupedList {
+  gap: var(
+    --disclosure-list-section-gap,
+    var(--disclosure-list-group-gap, var(--disclosure-list-default-group-gap))
+  );
+}
+
+.groupedList[data-group-gap="related"] {
+  gap: var(
+    --disclosure-list-related-group-gap,
+    var(--disclosure-list-default-related-group-gap)
+  );
+}
+
+.groupedList[data-group-gap="section"] {
   gap: var(
     --disclosure-list-section-gap,
     var(--disclosure-list-group-gap, var(--disclosure-list-default-group-gap))
@@ -135,6 +164,115 @@
   padding-block: 0;
   border-inline-start-color: transparent;
   animation: none;
+}
+
+.panel[data-variant="menu"] .panelInner {
+  --disclosure-list-panel-block-padding: var(
+    --disclosure-list-menu-panel-block-padding,
+    var(--disclosure-list-default-menu-panel-block-padding)
+  );
+  --disclosure-list-panel-content-gap: var(
+    --disclosure-list-menu-panel-content-gap,
+    var(--disclosure-list-default-menu-panel-content-gap)
+  );
+}
+
+.confirmation {
+  --disclosure-list-confirmation-background: var(
+    --color-control-outline-background
+  );
+  --disclosure-list-confirmation-border: var(--color-border);
+  --disclosure-list-confirmation-icon: var(--color-text-muted);
+  --disclosure-list-confirmation-text: var(--color-text-muted);
+
+  display: flex;
+  min-inline-size: 0;
+  min-block-size: var(--control-size-xl);
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-base) solid
+    var(--disclosure-list-confirmation-border);
+  border-radius: var(--radius-control);
+  background-color: var(--disclosure-list-confirmation-background);
+}
+
+.confirmation[data-tone="danger"] {
+  --disclosure-list-confirmation-background: color-mix(
+    in srgb,
+    var(--color-danger) 8%,
+    var(--color-control-outline-background)
+  );
+  --disclosure-list-confirmation-border: color-mix(
+    in srgb,
+    var(--color-danger) 50%,
+    var(--color-border)
+  );
+  --disclosure-list-confirmation-icon: var(--color-danger);
+}
+
+.confirmationHeader {
+  display: inline-flex;
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.confirmationIcon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  inline-size: var(--icon-size-base);
+  block-size: var(--icon-size-base);
+  align-items: center;
+  justify-content: center;
+  color: var(--disclosure-list-confirmation-icon);
+}
+
+.confirmationIcon > svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.confirmationLabel {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  color: var(--disclosure-list-confirmation-text);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  line-height: var(--leading-tight);
+}
+
+.confirmationActions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.panelActions {
+  display: flex;
+  min-inline-size: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--disclosure-list-panel-actions-gap, var(--space-2));
+  justify-content: flex-end;
+}
+
+.panelActions[data-align="start"] {
+  justify-content: flex-start;
+}
+
+.panelActions[data-align="stretch"] {
+  align-items: stretch;
+}
+
+.panelActions[data-align="stretch"] > * {
+  flex: 1 1 auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

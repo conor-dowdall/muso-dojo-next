@@ -1,15 +1,15 @@
 .content {
-  --dialog-major-section-gap: var(--space-7);
-  --dialog-revealed-settings-gap: var(--space-5);
-  --dialog-revealed-settings-indent: var(--space-3);
-  --dialog-peer-choice-gap: var(--space-2);
-
-  --detail-panel-motion-gutter: var(--space-1);
+  --dialog-menu-row-gap: var(--space-2);
+  --dialog-menu-related-group-gap: var(--space-3);
+  --dialog-menu-section-gap: var(--space-5);
+  --dialog-menu-panel-block-padding: var(--space-3) var(--space-4);
+  --dialog-menu-panel-content-gap: var(--space-4);
+  --dialog-menu-submenu-panel-content-gap: var(--dialog-menu-row-gap);
 
   container-type: inline-size;
   display: flex;
   flex-direction: column;
-  gap: var(--dialog-major-section-gap);
+  gap: var(--dialog-menu-section-gap);
 }
 
 .section {
@@ -21,57 +21,6 @@
   padding-block: 0;
 }
 
-.content > .section:first-child {
-  padding-block-start: 0;
-}
-
-.optionGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-3);
-}
-
-.detailPanelFrame {
-  box-sizing: content-box;
-  flex: 0 0 auto;
-  min-inline-size: 0;
-  block-size: var(--detail-panel-height, auto);
-  margin: calc(var(--detail-panel-motion-gutter) * -1);
-  padding: var(--detail-panel-motion-gutter);
-  overflow: hidden;
-  transition: block-size var(--transition-base) var(--ease-out-expo);
-}
-
-.section + .detailPanelFrame {
-  margin-block-start: 0;
-}
-
-.sectionGroup > .detailPanelFrame > .detailPanel {
-  padding-inline: var(--dialog-revealed-settings-indent);
-}
-
-.detailPanel {
-  display: flex;
-  min-inline-size: 0;
-  flex-direction: column;
-  gap: var(--dialog-major-section-gap);
-  animation: detail-panel-enter 260ms ease-out;
-}
-
-.sectionGroup {
-  display: flex;
-  min-inline-size: 0;
-  flex-direction: column;
-  gap: var(--dialog-revealed-settings-gap);
-}
-
-.disclosureList {
-  display: flex;
-  min-inline-size: 0;
-  flex-direction: column;
-  gap: var(--dialog-peer-choice-gap);
-}
-
 .footer {
   container-type: inline-size;
 }
@@ -80,33 +29,4 @@
   display: flex;
   min-inline-size: 0;
   justify-content: flex-end;
-}
-
-@container (width > 34rem) {
-  .optionGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .detailPanelFrame {
-    block-size: auto;
-    transition: none;
-  }
-
-  .detailPanel {
-    animation: none;
-  }
-}
-
-@keyframes detail-panel-enter {
-  from {
-    opacity: 0;
-    transform: translateY(var(--space-1));
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }

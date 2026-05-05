@@ -8,8 +8,9 @@ import {
 import { Button } from "@/components/ui/buttons/Button";
 import {
   DisclosureList,
-  DisclosureListAction,
+  DisclosureListChoice,
   DisclosureListItem,
+  DisclosureListPanelActions,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
@@ -33,7 +34,7 @@ import {
   type NoteColorTuple,
   type WorkspaceNoteColorConfig,
 } from "@/types/note-colors";
-import styles from "./WorkspaceManagementDialog.module.css";
+import styles from "./WorkspaceNoteColorSettings.module.css";
 
 interface WorkspaceNoteColorSettingsProps {
   isOpen?: boolean;
@@ -203,13 +204,12 @@ export function WorkspaceNoteColorSettings({
     >
       <div className={styles.noteColorDisclosure}>
         <DisclosureList className={styles.noteColorOptions}>
-          <DisclosureListAction
+          <DisclosureListChoice
             aria-label="Use default note colors from the app theme"
             density="compact"
             label="Default"
             preview={<NoteColorPreview colors={themePreviewColors} />}
             selected={config.source === "theme"}
-            showSelectionIndicator
             onClick={() => {
               setIsCustomEditorOpen(false);
               onChange({ source: "theme" });
@@ -220,7 +220,7 @@ export function WorkspaceNoteColorSettings({
             const collection = colorCollections[preset];
 
             return (
-              <DisclosureListAction
+              <DisclosureListChoice
                 key={preset}
                 aria-label={`${collection.name} note colors, ${getModeLabel(
                   collection.mode,
@@ -233,7 +233,6 @@ export function WorkspaceNoteColorSettings({
                 selected={
                   config.source === "preset" && config.preset === preset
                 }
-                showSelectionIndicator
                 onClick={() => {
                   setIsCustomEditorOpen(false);
                   onChange({ source: "preset", preset });
@@ -409,9 +408,9 @@ export function WorkspaceNoteColorSettings({
           </DisclosureListItem>
         </DisclosureList>
 
-        <div className={styles.noteColorActions}>
+        <DisclosureListPanelActions>
           <Button label="Done" size="sm" onClick={closeNoteColors} />
-        </div>
+        </DisclosureListPanelActions>
       </div>
     </DisclosureListItem>
   );
