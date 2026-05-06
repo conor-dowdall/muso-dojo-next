@@ -1,10 +1,8 @@
 import {
-  chordProgressionTemplates,
-  getNoteNamesForRootAndIntervals,
+  getChordProgressionChordReferences,
   normalizeRootNoteString,
-  type ChordProgressionTemplateKey,
-  type Interval,
-  type NoteCollectionKey,
+  type ChordProgressionChordReference,
+  type ChordProgressionKey,
 } from "@musodojo/music-theory-data";
 import {
   createDefaultInstrumentConfig,
@@ -17,59 +15,35 @@ import {
   type MusicGroupConfig,
 } from "@/types/workspace";
 
-type ChordProgressionTemplate =
-  (typeof chordProgressionTemplates)[ChordProgressionTemplateKey];
-interface ChordProgressionTemplateStep {
-  interval: Interval;
-  noteCollectionKey: NoteCollectionKey;
-}
-
-interface ChordProgressionTemplateSection {
-  chords: readonly ChordProgressionTemplateStep[];
-}
-
 interface CreateChordProgressionGroupsOptions {
   rootNote: string;
-  templateKey: ChordProgressionTemplateKey;
-  sectionIndex?: number;
+  progressionKey: ChordProgressionKey;
   instrumentType: InstrumentType;
   instrumentSettings: InstrumentCreationConfig;
 }
 
 function createProgressionGroupId(
-  templateKey: ChordProgressionTemplateKey,
+  progressionKey: ChordProgressionKey,
   index: number,
 ) {
-  return createEntityId(`group-${templateKey}-${index + 1}`);
+  return createEntityId(`group-${progressionKey}-${index + 1}`);
 }
 
-function getTemplateSection(
-  template: ChordProgressionTemplate,
-  sectionIndex: number,
-) {
-  const sections =
-    template.sections as readonly ChordProgressionTemplateSection[];
-
-  return sections[sectionIndex] ?? sections[0];
-}
-
-function createGroupFromStep({
+function createGroupFromReference({
   groupId,
   instrumentSettings,
   instrumentType,
-  rootNote,
-  step,
+  reference,
 }: {
   groupId: string;
   instrumentSettings: InstrumentCreationConfig;
   instrumentType: InstrumentType;
-  rootNote: string;
-  step: ChordProgressionTemplateStep;
+  reference: ChordProgressionChordReference;
 }): MusicGroupConfig {
   const group = normalizeMusicGroupConfig({
     id: groupId,
-    rootNote,
-    noteCollectionKey: step.noteCollectionKey,
+    rootNote: reference.rootNote,
+    noteCollectionKey: reference.noteCollectionKey,
     instruments: [
       createDefaultInstrumentConfig(instrumentType, instrumentSettings),
     ],
@@ -84,27 +58,22 @@ function createGroupFromStep({
 
 export function createChordProgressionGroups({
   rootNote,
-  templateKey,
-  sectionIndex = 0,
+  progressionKey,
   instrumentType,
   instrumentSettings,
 }: CreateChordProgressionGroupsOptions): MusicGroupConfig[] {
-  const template = chordProgressionTemplates[templateKey];
-  const section = getTemplateSection(template, sectionIndex);
-  const steps = section?.chords ?? [];
   const normalizedRootNote = normalizeRootNoteString(rootNote) ?? "C";
-  const chordRootNotes = getNoteNamesForRootAndIntervals(
+  const references = getChordProgressionChordReferences(
     normalizedRootNote,
-    steps.map((step) => step.interval),
+    progressionKey,
   );
 
-  return steps.map((step, index) =>
-    createGroupFromStep({
-      groupId: createProgressionGroupId(templateKey, index),
+  return references.map((reference, index) =>
+    createGroupFromReference({
+      groupId: createProgressionGroupId(progressionKey, index),
       instrumentSettings,
       instrumentType,
-      rootNote: chordRootNotes[index] ?? normalizedRootNote,
-      step,
+      reference,
     }),
   );
 }

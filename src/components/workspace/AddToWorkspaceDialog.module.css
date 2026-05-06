@@ -3,6 +3,11 @@
   padding-block-end: var(--space-1);
 }
 
+.progressionGroupLabel {
+  padding-block-end: var(--space-1);
+  padding-inline: var(--space-3);
+}
+
 .progressionChordPreview {
   display: block;
   min-inline-size: 0;

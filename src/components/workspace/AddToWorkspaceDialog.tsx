@@ -2,15 +2,9 @@
 
 import { useState } from "react";
 import {
-  chordProgressionTemplateTypeMetadata,
-  chordProgressionTemplates,
-  getNoteNamesForRootAndIntervals,
-  getRomanNumeralForIntervalAndChordQuality,
-  groupedChordProgressionTemplates,
+  chordProgressions,
   normalizeRootNoteString,
-  type ChordQuality,
-  type ChordProgressionTemplateKey,
-  type Interval,
+  type ChordProgressionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
 import {
@@ -38,33 +32,23 @@ import {
 } from "@/components/music-group/InstrumentCreationSettingsMenu";
 import { RootNoteGrid } from "@/components/music-group/RootNoteGrid";
 import { type AddableMusicGroupItemType } from "@/components/music-group/addToMusicGroupOptions";
+import { Text } from "@/components/ui/typography/Text";
+import {
+  chordProgressionLoopGroups,
+  getChordProgressionDisplaySummary,
+} from "@/utils/music-theory/chordProgressions";
 import styles from "@/components/music-group/AddToMusicGroupDialog.module.css";
 import localStyles from "./AddToWorkspaceDialog.module.css";
 import { type InstrumentCreationConfig } from "@/types/workspace";
 
 type WorkspaceAddMode = "blank-group" | "chord-progression";
 type WorkspaceChoice = "key" | "progression";
-type ChordProgressionTemplateGroupKey =
-  keyof typeof groupedChordProgressionTemplates;
-type ChordProgressionTemplate =
-  (typeof chordProgressionTemplates)[ChordProgressionTemplateKey];
-
-interface ChordProgressionTemplateSection {
-  name: string;
-  chords: readonly ChordProgressionTemplateStep[];
-}
-
-interface ChordProgressionTemplateStep {
-  interval: Interval;
-  quality: ChordQuality;
-}
 
 interface AddToWorkspaceDialogProps {
   onAddBlankGroup: (settings: { replaceWorkspace: boolean }) => void;
   onAddChordProgression: (settings: {
     rootNote: RootNote;
-    templateKey: ChordProgressionTemplateKey;
-    sectionIndex: number;
+    progressionKey: ChordProgressionKey;
     instrumentType: AddableMusicGroupItemType;
     instrumentSettings: InstrumentCreationConfig;
     replaceWorkspace: boolean;
@@ -77,72 +61,17 @@ const workspaceAddOptions = [
   { id: "chord-progression", title: "Progression Practice Set" },
 ] as const satisfies readonly { id: WorkspaceAddMode; title: string }[];
 
-const defaultProgressionTemplateKey =
-  "oneFourFive" satisfies ChordProgressionTemplateKey;
+const defaultProgressionKey = "oneOneFiveFive" satisfies ChordProgressionKey;
 
-function getProgressionTemplateKeys(
-  groupKey: ChordProgressionTemplateGroupKey,
-) {
-  return Object.keys(
-    groupedChordProgressionTemplates[groupKey],
-  ) as ChordProgressionTemplateKey[];
-}
-
-function getTemplateStepCount(templateKey: ChordProgressionTemplateKey) {
-  return getTemplateSections(templateKey).reduce(
-    (count, section) => count + section.chords.length,
-    0,
-  );
-}
-
-function getTemplateSections(templateKey: ChordProgressionTemplateKey) {
-  const template = chordProgressionTemplates[
-    templateKey
-  ] as ChordProgressionTemplate;
-
-  return template.sections as readonly ChordProgressionTemplateSection[];
-}
-
-function toTitleCase(value: string) {
-  return value.replace(/\b\w/g, (letter) => letter.toLocaleUpperCase());
-}
-
-function getTemplateSubtitle(templateKey: ChordProgressionTemplateKey) {
-  const template = chordProgressionTemplates[templateKey];
-  const sections = getTemplateSections(templateKey);
-  const typeName =
-    chordProgressionTemplateTypeMetadata[template.templateType].displayName;
-
-  if (sections.length > 1) {
-    return `${sections.length} Section ${toTitleCase(typeName)}`;
-  }
-
-  return `${getTemplateStepCount(templateKey)} Chord ${toTitleCase(typeName)}`;
-}
-
-function getProgressionSummary(
+function getProgressionLabels(
   rootNote: RootNote,
-  section: ChordProgressionTemplateSection | undefined,
+  progressionKey: ChordProgressionKey,
 ) {
-  const steps = section?.chords ?? [];
-  const chordRootNotes = getNoteNamesForRootAndIntervals(
-    rootNote,
-    steps.map((step) => step.interval),
-  );
+  const summary = getChordProgressionDisplaySummary(rootNote, progressionKey);
 
   return {
-    chordNames: chordRootNotes.map(
-      (chordRootNote, index) =>
-        `${chordRootNote}${steps[index]?.quality ?? ""}`,
-    ),
-    romanNames: steps.flatMap((step) => {
-      const romanName = getRomanNumeralForIntervalAndChordQuality(
-        step.interval,
-        step.quality,
-      );
-
-      return romanName ? [romanName] : [];
-    }),
+    chordLabel: summary.chordNames.join(" | "),
+    romanLabel: summary.romanNames.join(" | "),
   };
 }
 
@@ -154,10 +83,9 @@ export function AddToWorkspaceDialog({
   const [selectedMode, setSelectedMode] =
     useState<WorkspaceAddMode>("blank-group");
   const [rootNote, setRootNote] = useState<RootNote>("C");
-  const [templateKey, setTemplateKey] = useState<ChordProgressionTemplateKey>(
-    defaultProgressionTemplateKey,
+  const [progressionKey, setProgressionKey] = useState<ChordProgressionKey>(
+    defaultProgressionKey,
   );
-  const [sectionIndex, setSectionIndex] = useState(0);
   const [replaceWorkspace, setReplaceWorkspace] = useState(false);
   const [instrumentType, setInstrumentType] =
     useState<AddableMusicGroupItemType>("keyboard");
@@ -169,19 +97,11 @@ export function AddToWorkspaceDialog({
     useState<FretboardInstrumentSelection>(defaultFretboardInstrumentSelection);
 
   const selectedRootNote = normalizeRootNoteString(rootNote) ?? "C";
-  const selectedTemplate = chordProgressionTemplates[templateKey];
-  const templateSections = getTemplateSections(templateKey);
-  const resolvedSectionIndex =
-    sectionIndex < templateSections.length ? sectionIndex : 0;
-  const selectedTemplateSection = templateSections[resolvedSectionIndex];
-  const progressionSummary = getProgressionSummary(
-    selectedRootNote,
-    selectedTemplateSection,
-  );
-  const progressionRomanLabel = progressionSummary.romanNames.join(" ");
-  const progressionChordLabel = progressionSummary.chordNames.join(" ");
+  const selectedProgression = chordProgressions[progressionKey];
+  const { chordLabel: progressionChordLabel, romanLabel: progressionRomanLabel } =
+    getProgressionLabels(selectedRootNote, progressionKey);
   const shouldShowProgressionRomanSubtitle =
-    selectedTemplate.primaryName !== progressionRomanLabel;
+    selectedProgression.primaryName !== progressionRomanLabel;
   const actionLabel = replaceWorkspace
     ? "Replace Workspace"
     : selectedMode === "blank-group"
@@ -209,8 +129,7 @@ export function AddToWorkspaceDialog({
 
     onAddChordProgression({
       rootNote: selectedRootNote,
-      templateKey,
-      sectionIndex: resolvedSectionIndex,
+      progressionKey,
       instrumentType,
       replaceWorkspace,
       instrumentSettings: getInstrumentCreationConfig(
@@ -270,7 +189,7 @@ export function AddToWorkspaceDialog({
                     ariaLabel={`Choose chord progression, ${progressionRomanLabel} gives ${progressionChordLabel}`}
                     isOpen={workspaceDisclosure.openChoice === "progression"}
                     keepMounted
-                    label={selectedTemplate.primaryName}
+                    label={selectedProgression.primaryName}
                     panelVariant="menu"
                     preview={
                       <span
@@ -293,51 +212,68 @@ export function AddToWorkspaceDialog({
                     onToggle={() => handleWorkspaceChoiceToggle("progression")}
                   >
                     <DisclosureList grouped>
-                      {(
-                        Object.keys(
-                          groupedChordProgressionTemplates,
-                        ) as ChordProgressionTemplateGroupKey[]
-                      ).map((groupKey) => (
-                        <DisclosureListGroup key={groupKey}>
-                          {getProgressionTemplateKeys(groupKey).map(
-                            (candidateKey) => {
-                              const candidate =
-                                chordProgressionTemplates[candidateKey];
-                              return (
-                                <DisclosureListChoice
-                                  key={candidateKey}
-                                  label={candidate.primaryName}
-                                  preview={getTemplateSubtitle(candidateKey)}
-                                  selected={templateKey === candidateKey}
-                                  onClick={() => {
-                                    setTemplateKey(candidateKey);
-                                    setSectionIndex(0);
-                                    workspaceDisclosure.closeChoice(
-                                      "progression",
-                                    );
-                                  }}
-                                />
-                              );
-                            },
-                          )}
+                      {chordProgressionLoopGroups.map((group) => (
+                        <DisclosureListGroup key={group.key}>
+                          <Text
+                            as="p"
+                            block
+                            className={localStyles.progressionGroupLabel}
+                            overline
+                            size="xs"
+                            variant="muted"
+                          >
+                            {group.title}
+                          </Text>
+                          {group.progressionKeys.map((candidateKey) => {
+                            const candidate = chordProgressions[candidateKey];
+                            const {
+                              chordLabel: candidateChordLabel,
+                              romanLabel: candidateRomanLabel,
+                            } = getProgressionLabels(
+                              selectedRootNote,
+                              candidateKey,
+                            );
+                            const showCandidateRomanSubtitle =
+                              candidate.primaryName !== candidateRomanLabel;
+
+                            return (
+                              <DisclosureListChoice
+                                key={candidateKey}
+                                label={candidate.primaryName}
+                                preview={
+                                  <span
+                                    className={localStyles.progressionChordPreview}
+                                    title={candidateChordLabel}
+                                  >
+                                    {candidateChordLabel}
+                                  </span>
+                                }
+                                selected={progressionKey === candidateKey}
+                                subtitle={
+                                  showCandidateRomanSubtitle ? (
+                                    <span
+                                      className={
+                                        localStyles.progressionRomanPreview
+                                      }
+                                      title={candidateRomanLabel}
+                                    >
+                                      {candidateRomanLabel}
+                                    </span>
+                                  ) : undefined
+                                }
+                                onClick={() => {
+                                  setProgressionKey(candidateKey);
+                                  workspaceDisclosure.closeChoice(
+                                    "progression",
+                                  );
+                                }}
+                              />
+                            );
+                          })}
                         </DisclosureListGroup>
                       ))}
                     </DisclosureList>
                   </DisclosureListItem>
-
-                  {templateSections.length > 1 ? (
-                    <DisclosureList>
-                      {templateSections.map((section, index) => (
-                        <DisclosureListChoice
-                          key={`${section.name}-${index}`}
-                          label={section.name}
-                          preview={`${section.chords.length} Chords`}
-                          selected={resolvedSectionIndex === index}
-                          onClick={() => setSectionIndex(index)}
-                        />
-                      ))}
-                    </DisclosureList>
-                  ) : null}
                 </DisclosureListGroup>
 
                 <DisclosureListGroup>
