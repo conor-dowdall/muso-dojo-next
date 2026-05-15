@@ -1,0 +1,12 @@
+.instrumentHeaderActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.noteInteractionModeGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}

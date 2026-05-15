@@ -1,0 +1,87 @@
+.content {
+  --dialog-menu-row-gap: var(--space-2);
+  --dialog-menu-related-group-gap: var(--space-3);
+  --dialog-menu-section-gap: var(--space-5);
+  --dialog-menu-panel-block-padding: var(--space-3) var(--space-4);
+  --dialog-menu-panel-content-gap: var(--space-4);
+  --dialog-menu-submenu-panel-content-gap: var(--dialog-menu-row-gap);
+
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dialog-menu-section-gap);
+}
+
+.section {
+  display: flex;
+  flex: 0 0 auto;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-block: 0;
+}
+
+.appearanceDisclosure {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.appearanceModeOptions {
+  --disclosure-list-row-gap: var(--space-2);
+}
+
+.appearanceCustomPanel {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  border: var(--border-width-base) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  background-color: var(--color-control-outline-background);
+}
+
+.appearancePreviewFrame {
+  --instrument-theme-swatch-height: var(--control-size-md);
+  --instrument-theme-swatch-radius: var(--radius-control);
+  --instrument-theme-swatch-width: min(100%, var(--space-40));
+
+  display: flex;
+  min-inline-size: 0;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  border: var(--border-width-base) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+}
+
+.appearanceControlGroup {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.appearanceControlGroup + .appearanceControlGroup {
+  margin-block-start: var(--space-2);
+}
+
+.appearanceButtonGrid {
+  display: grid;
+  min-inline-size: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.footer {
+  container-type: inline-size;
+}
+
+.summarySection {
+  display: flex;
+  min-inline-size: 0;
+  justify-content: flex-end;
+}

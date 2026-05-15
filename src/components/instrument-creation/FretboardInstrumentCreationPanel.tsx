@@ -1,0 +1,465 @@
+"use client";
+
+import { useEffect } from "react";
+import {
+  stringInstrumentTunings,
+  stringInstruments,
+  type StringInstrumentKey,
+  type StringInstrumentTuningKey,
+} from "@musodojo/music-theory-data";
+import {
+  DisclosureList,
+  DisclosureListChoice,
+  DisclosureListChoiceItem,
+  DisclosureListGroup,
+  DisclosureListItem,
+  DisclosureListPanelActions,
+  useDisclosureList,
+} from "@/components/ui/disclosure-list/DisclosureList";
+import { Button } from "@/components/ui/buttons/Button";
+import {
+  fretboardThemes,
+  type FretboardThemeName,
+} from "@/data/fretboard/themes";
+import { getDefaultFretboardWoodThemeName } from "@/data/fretboard/instrumentDefaults";
+import {
+  DEFAULT_FRETBOARD_INLAY_PRESET,
+  customFretboardInlayPresetOptions,
+  type CustomFretboardInlayPresetName,
+  type FretboardInlayPresetName,
+} from "@/data/fretboard/inlayPresets";
+import { type FretboardIcon } from "@/data/fretboard/icons";
+import { createFretboardConfig } from "@/utils/fretboard/createFretboardConfig";
+import { areRangesEqual } from "@/utils/range/numberRange";
+import { DISPLAY_VALUE_SEPARATOR } from "@/utils/displayText";
+import { BoundedRangeSliderGroup } from "@/components/ui/range-slider/BoundedRangeSliderGroup";
+import { FretboardInlayPresetSwatch } from "@/components/instrument/InstrumentThemeSwatch";
+import { type FretboardInstrumentSelection } from "./instrumentCreationConfig";
+import {
+  formatOpenStringNotes,
+  fretboardInstrumentGroups,
+  fretboardThemeOptions,
+  getFretboardTuningGroups,
+} from "./options";
+import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
+
+const FRET_RANGE_MAX = 24;
+const FRET_RANGE_MIN = 0;
+const MIN_FRET_RANGE_SPAN = 2;
+
+type FretboardChoice =
+  | "instrument"
+  | "tuning"
+  | "fretRange"
+  | "handedness"
+  | "appearance";
+type AppearanceEditor = "custom";
+
+interface FretboardInstrumentCreationPanelProps {
+  closeSignal?: number;
+  value: FretboardInstrumentSelection;
+  onChange: (value: FretboardInstrumentSelection) => void;
+  onChoiceOpen?: () => void;
+}
+
+export function FretboardInstrumentCreationPanel({
+  closeSignal,
+  value,
+  onChange,
+  onChoiceOpen,
+}: FretboardInstrumentCreationPanelProps) {
+  const { closeAll, closeChoice, openChoice, toggleChoice } =
+    useDisclosureList<FretboardChoice>();
+  const {
+    closeAll: closeAppearanceEditors,
+    open: openAppearanceEditorChoice,
+    openChoice: openAppearanceEditor,
+    toggleChoice: toggleAppearanceEditor,
+  } = useDisclosureList<AppearanceEditor>();
+
+  useEffect(() => {
+    closeAll();
+    closeAppearanceEditors();
+  }, [closeAll, closeAppearanceEditors, closeSignal]);
+
+  const handleToggleChoice = (choice: FretboardChoice) => {
+    if (openChoice !== choice) {
+      onChoiceOpen?.();
+    }
+    if (choice !== "appearance" || openChoice === "appearance") {
+      closeAppearanceEditors();
+    }
+    toggleChoice(choice);
+  };
+  const selectedInstrument = stringInstruments[value.instrument];
+  const selectedTuning = stringInstrumentTunings[value.tuningKey];
+  const defaultThemeName = getDefaultFretboardWoodThemeName(value.instrument);
+  const effectiveThemeName = getEffectiveFretboardThemeName(value);
+  const effectiveInlayPresetName = getEffectiveFretboardInlayPresetName(value);
+  const appearanceSummary = formatAppearanceSummary(value);
+  const customAppearanceSummary = formatCustomAppearanceSummary(value);
+  const autoAppearanceSummary = formatAutoAppearanceSummary(
+    value.instrument,
+    defaultThemeName,
+  );
+  const tuningGroups = getFretboardTuningGroups(value.instrument);
+
+  const handleInstrumentSelect = (instrument: StringInstrumentKey) => {
+    onChange({
+      ...value,
+      instrument,
+      tuningKey: stringInstruments[instrument].defaultTuning,
+    });
+    closeChoice("instrument");
+  };
+  const handleTuningSelect = (tuningKey: StringInstrumentTuningKey) => {
+    onChange({ ...value, tuningKey });
+    closeChoice("tuning");
+  };
+  const handleFretRangeSelect = (fretRange: readonly [number, number]) => {
+    onChange({ ...value, fretRange });
+    closeChoice("fretRange");
+  };
+  const handleHandednessSelect = (handedness: "right" | "left") => {
+    onChange({ ...value, handedness });
+    closeChoice("handedness");
+  };
+  const handleAppearanceAutoSelect = () => {
+    onChange({ ...value, appearanceSource: "auto" });
+    closeAppearanceEditors();
+  };
+  const handleAppearanceCustomToggle = () => {
+    if (value.appearanceSource !== "custom") {
+      onChange({ ...value, appearanceSource: "custom" });
+      openAppearanceEditorChoice("custom");
+      return;
+    }
+
+    toggleAppearanceEditor("custom");
+  };
+  const handleThemeSelect = (theme: FretboardThemeName) => {
+    onChange({ ...value, appearanceSource: "custom", theme });
+  };
+  const handleInlayPresetSelect = (
+    inlayPreset: CustomFretboardInlayPresetName,
+  ) => {
+    onChange({ ...value, appearanceSource: "custom", inlayPreset });
+  };
+  const handleAppearanceDone = () => {
+    closeAppearanceEditors();
+    closeChoice("appearance");
+  };
+  const handleFretRangeChange = (fretRange: readonly [number, number]) => {
+    onChange({ ...value, fretRange });
+  };
+
+  return (
+    <section className={styles.section} aria-label="Fretboard settings">
+      <DisclosureList>
+        <DisclosureListItem
+          ariaLabel={`Choose instrument, ${selectedInstrument.primaryName} selected`}
+          isOpen={openChoice === "instrument"}
+          keepMounted
+          label="Instrument"
+          preview={selectedInstrument.primaryName}
+          onToggle={() => handleToggleChoice("instrument")}
+        >
+          <DisclosureList grouped>
+            {fretboardInstrumentGroups.map((group) => (
+              <DisclosureListGroup key={group.title}>
+                {group.options.map((option) => (
+                  <DisclosureListChoice
+                    key={option.id}
+                    label={option.title}
+                    selected={value.instrument === option.id}
+                    onClick={() => handleInstrumentSelect(option.id)}
+                  />
+                ))}
+              </DisclosureListGroup>
+            ))}
+          </DisclosureList>
+        </DisclosureListItem>
+
+        <DisclosureListItem
+          ariaLabel={`Choose tuning, ${selectedTuning.primaryName} selected`}
+          isOpen={openChoice === "tuning"}
+          keepMounted
+          label="Tuning"
+          preview={selectedTuning.primaryName}
+          subtitle={formatOpenStringNotes(selectedTuning)}
+          onToggle={() => handleToggleChoice("tuning")}
+        >
+          <DisclosureList grouped>
+            {tuningGroups.map((group, index) => (
+              <DisclosureListGroup key={group.title ?? `tuning-group-${index}`}>
+                {group.tuningKeys.map((tuningKey) => {
+                  const tuning = stringInstrumentTunings[tuningKey];
+
+                  return (
+                    <DisclosureListChoice
+                      key={tuningKey}
+                      label={tuning.primaryName}
+                      subtitle={formatOpenStringNotes(tuning)}
+                      selected={value.tuningKey === tuningKey}
+                      onClick={() => handleTuningSelect(tuningKey)}
+                    />
+                  );
+                })}
+              </DisclosureListGroup>
+            ))}
+          </DisclosureList>
+        </DisclosureListItem>
+
+        <DisclosureListItem
+          ariaLabel={`Choose fret range, ${formatFretRange(value.fretRange)} selected`}
+          isOpen={openChoice === "fretRange"}
+          keepMounted
+          label="Fret Range"
+          preview={formatFretRange(value.fretRange)}
+          onToggle={() => handleToggleChoice("fretRange")}
+        >
+          <DisclosureList>
+            {fretRangeOptions.map((option) => (
+              <DisclosureListChoice
+                key={formatFretRange(option)}
+                label={formatFretRange(option)}
+                selected={areRangesEqual(value.fretRange, option)}
+                onClick={() => handleFretRangeSelect(option)}
+              />
+            ))}
+          </DisclosureList>
+
+          <BoundedRangeSliderGroup
+            endLabel="Last fret"
+            max={FRET_RANGE_MAX}
+            min={FRET_RANGE_MIN}
+            minSpan={MIN_FRET_RANGE_SPAN}
+            startLabel="First fret"
+            value={value.fretRange}
+            valueFormatter={formatFretPosition}
+            onChange={handleFretRangeChange}
+          />
+        </DisclosureListItem>
+
+        <DisclosureListItem
+          ariaLabel={`Choose handedness, ${formatHandedness(value.handedness)} selected`}
+          isOpen={openChoice === "handedness"}
+          keepMounted
+          label="Handedness"
+          preview={formatHandedness(value.handedness)}
+          onToggle={() => handleToggleChoice("handedness")}
+        >
+          <DisclosureList>
+            <DisclosureListChoice
+              label={formatHandedness("right")}
+              selected={value.handedness === "right"}
+              onClick={() => handleHandednessSelect("right")}
+            />
+            <DisclosureListChoice
+              label={formatHandedness("left")}
+              selected={value.handedness === "left"}
+              onClick={() => handleHandednessSelect("left")}
+            />
+          </DisclosureList>
+        </DisclosureListItem>
+
+        <DisclosureListItem
+          ariaLabel={`Choose appearance, ${appearanceSummary} selected`}
+          isOpen={openChoice === "appearance"}
+          keepMounted
+          label="Appearance"
+          preview={
+            <FretboardInlayPresetSwatch
+              instrument={value.instrument}
+              presetName={effectiveInlayPresetName}
+              themeName={effectiveThemeName}
+            />
+          }
+          subtitle={appearanceSummary}
+          onToggle={() => handleToggleChoice("appearance")}
+        >
+          <div className={styles.appearanceDisclosure}>
+            <DisclosureList
+              className={styles.appearanceModeOptions}
+              density="compact"
+            >
+              <DisclosureListChoice
+                aria-label={`Use auto appearance, ${autoAppearanceSummary}`}
+                density="compact"
+                label="Auto"
+                selected={value.appearanceSource === "auto"}
+                subtitle={autoAppearanceSummary}
+                onClick={handleAppearanceAutoSelect}
+              />
+
+              <DisclosureListChoiceItem
+                ariaLabel={`Choose custom appearance, ${customAppearanceSummary} selected`}
+                density="compact"
+                isOpen={
+                  value.appearanceSource === "custom" &&
+                  openAppearanceEditor === "custom"
+                }
+                keepMounted
+                label="Custom"
+                panelVariant="menu"
+                selected={value.appearanceSource === "custom"}
+                subtitle={customAppearanceSummary}
+                onToggle={handleAppearanceCustomToggle}
+              >
+                <div className={styles.appearanceCustomPanel}>
+                  <div className={styles.appearancePreviewFrame}>
+                    <FretboardInlayPresetSwatch
+                      instrument={value.instrument}
+                      presetName={value.inlayPreset}
+                      size="featured"
+                      themeName={value.theme}
+                    />
+                  </div>
+
+                  <section
+                    className={styles.appearanceControlGroup}
+                    aria-label="Wood"
+                  >
+                    <div className={styles.appearanceButtonGrid}>
+                      {fretboardThemeOptions.map((themeName) => {
+                        const theme = fretboardThemes[themeName];
+
+                        return (
+                          <Button
+                            key={themeName}
+                            density="compact"
+                            label={theme.title}
+                            selected={value.theme === themeName}
+                            size="sm"
+                            onClick={() => handleThemeSelect(themeName)}
+                          />
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  <section
+                    className={styles.appearanceControlGroup}
+                    aria-label="Inlay"
+                  >
+                    <div className={styles.appearanceButtonGrid}>
+                      {customFretboardInlayPresetOptions.map((presetName) => (
+                        <Button
+                          key={presetName}
+                          density="compact"
+                          label={formatInlayPresetLabel(presetName)}
+                          selected={value.inlayPreset === presetName}
+                          size="sm"
+                          onClick={() => handleInlayPresetSelect(presetName)}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              </DisclosureListChoiceItem>
+            </DisclosureList>
+
+            <DisclosureListPanelActions>
+              <Button label="Done" size="sm" onClick={handleAppearanceDone} />
+            </DisclosureListPanelActions>
+          </div>
+        </DisclosureListItem>
+      </DisclosureList>
+    </section>
+  );
+}
+
+const fretRangeOptions = [
+  [0, 5],
+  [0, 12],
+  [0, 24],
+] as const satisfies readonly (readonly [number, number])[];
+
+function formatFretRange([start, end]: readonly [number, number]) {
+  return `Frets ${start} to ${end}`;
+}
+
+function formatFretPosition(fret: number) {
+  return `Fret ${fret}`;
+}
+
+function formatHandedness(
+  handedness: FretboardInstrumentSelection["handedness"],
+) {
+  return handedness === "right" ? "Right Handed" : "Left Handed";
+}
+
+function getEffectiveFretboardThemeName(
+  value: Pick<
+    FretboardInstrumentSelection,
+    "appearanceSource" | "instrument" | "theme"
+  >,
+): FretboardThemeName {
+  return value.appearanceSource === "auto"
+    ? getDefaultFretboardWoodThemeName(value.instrument)
+    : value.theme;
+}
+
+function getEffectiveFretboardInlayPresetName(
+  value: Pick<FretboardInstrumentSelection, "appearanceSource" | "inlayPreset">,
+): FretboardInlayPresetName {
+  return value.appearanceSource === "auto"
+    ? DEFAULT_FRETBOARD_INLAY_PRESET
+    : value.inlayPreset;
+}
+
+function formatAppearanceSummary(value: FretboardInstrumentSelection) {
+  return value.appearanceSource === "auto"
+    ? "Auto"
+    : `Custom${DISPLAY_VALUE_SEPARATOR}${formatCustomAppearanceSummary(value)}`;
+}
+
+function formatCustomAppearanceSummary(
+  value: Pick<FretboardInstrumentSelection, "inlayPreset" | "theme">,
+) {
+  return `${fretboardThemes[value.theme].title}${DISPLAY_VALUE_SEPARATOR}${formatInlayPresetLabel(
+    value.inlayPreset,
+  )}`;
+}
+
+function formatAutoAppearanceSummary(
+  instrument: StringInstrumentKey,
+  themeName: FretboardThemeName,
+) {
+  const config = createFretboardConfig(themeName, { instrument });
+  const woodLabel = fretboardThemes[themeName].title;
+  const inlayLabel = config.showFretInlays
+    ? formatInlayIconLabel(config.fretInlayImage)
+    : "No Inlay";
+
+  return `${woodLabel}${DISPLAY_VALUE_SEPARATOR}${inlayLabel} for ${
+    stringInstruments[instrument].primaryName
+  }`;
+}
+
+function formatInlayIconLabel(icon: FretboardIcon) {
+  switch (icon) {
+    case "circle":
+      return "Dot Inlay";
+    case "paw-print":
+      return "Paw Print Inlay";
+    case "trapezoid":
+      return "Classic Inlay";
+  }
+}
+
+function formatInlayPresetLabel(presetName: FretboardInlayPresetName) {
+  switch (presetName) {
+    case "none":
+      return "No Inlay";
+    case "dots":
+      return "Dot Inlay";
+    case "pawPrint":
+      return "Paw Print Inlay";
+    case "trapezoid":
+      return "Classic Inlay";
+    case "auto":
+    default:
+      return "Auto Inlay";
+  }
+}

@@ -1,0 +1,92 @@
+.content {
+  --dialog-menu-row-gap: var(--space-2);
+  --dialog-menu-related-group-gap: var(--space-3);
+  --dialog-menu-section-gap: var(--space-5);
+  --dialog-menu-panel-block-padding: var(--space-3) var(--space-4);
+  --dialog-menu-panel-content-gap: var(--space-4);
+  --dialog-menu-submenu-panel-content-gap: var(--dialog-menu-row-gap);
+
+  container-type: inline-size;
+}
+
+.sessionListSection {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.nameForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.nameField {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.nameLabel {
+  position: absolute;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  inline-size: var(--space-px);
+  block-size: var(--space-px);
+  margin: calc(var(--space-px) * -1);
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+}
+
+.nameControl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.nameInput {
+  appearance: none;
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: var(--control-size-lg);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-base) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-none);
+}
+
+.nameInput:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.nameInput[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.nameMessage {
+  padding-inline: var(--space-1);
+}
+
+.nameMessage[data-tone="danger"] {
+  color: var(--color-danger);
+}
+
+.footer {
+  container-type: inline-size;
+}
+
+.footerActions {
+  display: flex;
+  min-inline-size: 0;
+  justify-content: flex-end;
+}

@@ -1,0 +1,11 @@
+.iconButton {
+  --icon-button-size: var(--button-control-size);
+
+  inline-size: var(--icon-button-size);
+  block-size: var(--icon-button-size);
+  min-inline-size: var(--icon-button-size);
+  min-block-size: var(--icon-button-size);
+  flex: 0 0 auto;
+  aspect-ratio: 1;
+  padding: var(--button-padding-block);
+}

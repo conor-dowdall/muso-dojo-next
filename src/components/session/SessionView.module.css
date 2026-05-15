@@ -1,0 +1,6 @@
+.emptySession {
+  display: flex;
+  min-block-size: clamp(8rem, 20dvb, 14rem);
+  align-items: center;
+  justify-content: center;
+}

@@ -1,0 +1,162 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import styles from "./page.module.css";
+import { IconButton } from "@/components/ui/buttons/IconButton";
+import { Dialog } from "@/components/ui/dialog/Dialog";
+import { AddToSessionDialog } from "@/components/session/AddToSessionDialog";
+import { SessionHeader } from "@/components/session/SessionHeader";
+import { SessionLoader } from "@/components/session/SessionLoader";
+import { SessionView } from "@/components/session/SessionView";
+import { musoAudioEngine } from "@/audio";
+import { useAppStore, useHydrateAppStore } from "@/stores/appStore";
+import { createChordProgressionParts } from "@/utils/music-part/createChordProgressionParts";
+import { createDefaultMusicPartConfig } from "@/utils/session/createSessionEntities";
+
+interface HydratedSessionProps {
+  isPerformanceMode: boolean;
+  onPerformanceModeChange: (isPerformanceMode: boolean) => void;
+}
+
+function HydratedSession({
+  isPerformanceMode,
+  onPerformanceModeChange,
+}: HydratedSessionProps) {
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const activeSessionId = useAppStore((state) => state.activeSessionId);
+  const addPart = useAppStore((state) => state.addPart);
+  const addParts = useAppStore((state) => state.addParts);
+  const replaceParts = useAppStore((state) => state.replaceParts);
+  const closeAddDialog = () => setIsAddDialogOpen(false);
+  const openAddDialog = () => setIsAddDialogOpen(true);
+  const enterPerformanceMode = () => {
+    setIsAddDialogOpen(false);
+    void musoAudioEngine.prime().catch(() => undefined);
+    onPerformanceModeChange(true);
+  };
+  const exitPerformanceMode = () => onPerformanceModeChange(false);
+
+  useEffect(() => {
+    if (!activeSessionId && isPerformanceMode) {
+      onPerformanceModeChange(false);
+    }
+  }, [activeSessionId, isPerformanceMode, onPerformanceModeChange]);
+
+  useEffect(() => {
+    if (!isPerformanceMode) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onPerformanceModeChange(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isPerformanceMode, onPerformanceModeChange]);
+
+  return (
+    <>
+      {isPerformanceMode ? (
+        <IconButton
+          aria-label="Exit performance mode"
+          className={styles.performanceModeExit}
+          icon={<X />}
+          size="sm"
+          tooltip={false}
+          variant="ghost"
+          shouldYield={false}
+          onClick={exitPerformanceMode}
+        />
+      ) : (
+        <SessionHeader
+          onEnterPerformanceMode={enterPerformanceMode}
+          onOpenAddDialog={openAddDialog}
+        />
+      )}
+      {activeSessionId ? (
+        <SessionView
+          isPerformanceMode={isPerformanceMode}
+          sessionId={activeSessionId}
+          onOpenAddDialog={isPerformanceMode ? undefined : openAddDialog}
+        />
+      ) : null}
+      <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="lg">
+        <AddToSessionDialog
+          onAddCustomChordOrScale={({
+            rootNote,
+            noteCollectionKey,
+            moduleType,
+            moduleSettings,
+            replaceSession,
+          }) => {
+            if (!activeSessionId) {
+              return;
+            }
+
+            const partSettings = {
+              rootNote,
+              noteCollectionKey,
+              moduleType,
+              moduleSettings,
+            };
+
+            if (replaceSession) {
+              replaceParts(activeSessionId, [
+                createDefaultMusicPartConfig(partSettings),
+              ]);
+              return;
+            }
+
+            addPart(activeSessionId, partSettings);
+          }}
+          onAddChordProgression={(settings) => {
+            if (!activeSessionId) {
+              return;
+            }
+
+            const parts = createChordProgressionParts(settings);
+
+            if (settings.replaceSession) {
+              replaceParts(activeSessionId, parts);
+              return;
+            }
+
+            addParts(activeSessionId, parts);
+          }}
+          onClose={closeAddDialog}
+        />
+      </Dialog>
+    </>
+  );
+}
+
+function SessionLoadingFallback() {
+  return <SessionLoader />;
+}
+
+export default function DojoSessionPage() {
+  const hasHydrated = useHydrateAppStore();
+  const [isPerformanceMode, setIsPerformanceMode] = useState(false);
+
+  return (
+    <main className={styles.main}>
+      <div
+        className={`${styles.container} ${hasHydrated ? styles.hydrated : ""}`}
+        data-performance-mode={isPerformanceMode ? true : undefined}
+      >
+        {hasHydrated ? (
+          <HydratedSession
+            isPerformanceMode={isPerformanceMode}
+            onPerformanceModeChange={setIsPerformanceMode}
+          />
+        ) : (
+          <SessionLoadingFallback />
+        )}
+      </div>
+    </main>
+  );
+}

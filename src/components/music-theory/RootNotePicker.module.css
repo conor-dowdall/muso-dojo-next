@@ -1,0 +1,17 @@
+.rootNoteList {
+  display: flex;
+  width: fit-content;
+  margin-inline: auto;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.rootNoteGroup {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-1);
+}
+
+.rootNoteButton {
+  min-width: var(--space-14);
+}
