@@ -9,14 +9,8 @@ const allowedDevOrigins =
     : undefined;
 
 const nextConfig: NextConfig = {
-  /* config options here */
   ...(allowedDevOrigins?.length ? { allowedDevOrigins } : {}),
   basePath,
-  output: "export",
-  trailingSlash: true,
-  images: {
-    unoptimized: true,
-  },
   reactCompiler: true,
 };
 
