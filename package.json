@@ -3,9 +3,8 @@
   "version": "0.1.0",
   "license": "AGPL-3.0-only",
   "private": false,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
     "start": "next start",
     "preview": "serve out",
     "lint": "eslint -c eslint.config.mjs",
@@ -16,7 +15,10 @@
     "format:check": "prettier --check src/",
     "validate": "pnpm lint && pnpm check",
     "validate:strict": "pnpm validate && pnpm lint:strict",
-    "clean": "rm -rf .next"
+    "clean": "rm -rf .next",
+    "dev": "concurrently -p none 'serwist build --watch' 'next dev'",
+    "dev:once": "cross-env NODE_ENV=development serwist build && next dev",
+    "build": "next build && serwist build"
   },
   "dependencies": {
     "@musodojo/music-theory-data": "^32.0.0",
@@ -27,15 +29,20 @@
     "zustand": "^5.0.13"
   },
   "devDependencies": {
+    "@serwist/cli": "^9.5.11",
+    "@serwist/next": "^9.5.11",
     "@types/node": "^25.7.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "babel-plugin-react-compiler": "1.0.0",
+    "concurrently": "^9.2.1",
+    "esbuild": "^0.28.0",
     "eslint": "^9.39.4",
     "eslint-config-next": "16.2.6",
     "eslint-plugin-react": "^7.37.5",
     "prettier": "^3.8.3",
     "serve": "^14.2.6",
+    "serwist": "^9.5.11",
     "typescript": "^6.0.3"
   }
 }
