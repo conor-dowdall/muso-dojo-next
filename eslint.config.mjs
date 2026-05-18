@@ -18,6 +18,8 @@ export const baseConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "serwist.config.js",
+    "public/sw.js",
   ]),
   {
     rules: {
