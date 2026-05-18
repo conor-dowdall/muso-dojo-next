@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.musodojo",
+      "sha256_cert_fingerprints": [
+        "40:A2:D7:64:67:26:94:65:F5:04:69:95:88:11:D6:07:B3:76:DD:F0:E3:A8:42:A0:E5:EE:8F:08:2F:EA:CC:9C"
+      ]
+    }
+  }
+]
