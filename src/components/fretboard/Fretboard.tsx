@@ -8,7 +8,6 @@ import {
 import { InstrumentDisplayControls } from "@/components/instrument/InstrumentDisplayControls";
 import { InstrumentHeaderActions } from "@/components/instrument/InstrumentHeaderActions";
 import { InstrumentContainer } from "@/components/instrument/InstrumentContainer";
-import { assetUrl } from "@/utils/assets/assetPath";
 import { FretboardBackground } from "./FretboardBackground";
 import styles from "./Fretboard.module.css";
 
@@ -87,7 +86,7 @@ function FretboardInner({
             "--inner-direction": geometry.leftHanded ? "rtl" : "ltr",
             "--strings-count": geometry.stringIndices.length,
             "--frets-count": geometry.fretNumbers.length,
-            "--wound-string-texture": assetUrl("/textures/wound-string.svg"),
+            "--wound-string-texture": 'url("/textures/wound-string.svg")',
           } as CSSProperties
         }
       >

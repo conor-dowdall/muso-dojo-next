@@ -1,6 +1,5 @@
 import { type NextConfig } from "next";
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const allowedDevOrigins =
   process.env.NODE_ENV === "development"
     ? process.env.NEXT_ALLOWED_DEV_ORIGINS?.split(",")
@@ -10,7 +9,19 @@ const allowedDevOrigins =
 
 const nextConfig: NextConfig = {
   ...(allowedDevOrigins?.length ? { allowedDevOrigins } : {}),
-  basePath,
+  async headers() {
+    return [
+      {
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
+          },
+        ],
+      },
+    ];
+  },
   reactCompiler: true,
 };
 

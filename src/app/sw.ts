@@ -18,6 +18,10 @@ declare const self: ServiceWorkerGlobalScope;
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
+  precacheOptions: {
+    cleanupOutdatedCaches: true,
+    ignoreURLParametersMatching: [/^utm_/, /^fbclid$/, /^icon/, /^apple-icon/],
+  },
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,

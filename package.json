@@ -6,7 +6,6 @@
   "type": "module",
   "scripts": {
     "start": "next start",
-    "preview": "serve out",
     "lint": "eslint -c eslint.config.mjs",
     "lint:fix": "eslint -c eslint.config.mjs --fix",
     "lint:strict": "eslint -c eslint.strict.config.mjs",
@@ -18,7 +17,8 @@
     "clean": "rm -rf .next",
     "dev": "concurrently -p none 'serwist build --watch' 'next dev'",
     "dev:once": "cross-env NODE_ENV=development serwist build && next dev",
-    "build": "next build && serwist build"
+    "build": "next build && serwist build",
+    "preview": "pnpm build && next start"
   },
   "dependencies": {
     "@musodojo/music-theory-data": "^32.0.0",
@@ -41,7 +41,6 @@
     "eslint-config-next": "16.2.6",
     "eslint-plugin-react": "^7.37.5",
     "prettier": "^3.8.3",
-    "serve": "^14.2.6",
     "serwist": "^9.5.11",
     "typescript": "^6.0.3"
   }

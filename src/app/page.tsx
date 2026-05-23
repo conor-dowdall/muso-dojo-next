@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { DoorOpen } from "lucide-react";
-import { assetPath } from "@/utils/assets/assetPath";
 import styles from "./page.module.css";
 
 export default function LandingPage() {
@@ -14,9 +13,7 @@ export default function LandingPage() {
             className={styles.appHeaderLogo}
             height={450}
             preload
-            src={assetPath(
-              "/logos/hero-lockup-on-dark-transparent-1600x450.webp",
-            )}
+            src="/logos/hero-lockup-on-dark-transparent-1600x450.webp"
             width={1600}
           />
         </header>
