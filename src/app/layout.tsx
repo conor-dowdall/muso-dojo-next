@@ -65,7 +65,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body>
-        <SerwistProvider swUrl="/sw.js">{children}</SerwistProvider>
+        <SerwistProvider swUrl="/sw.js" reloadOnOnline={false}>
+          {children}
+        </SerwistProvider>
       </body>
     </html>
   );

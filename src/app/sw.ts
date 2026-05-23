@@ -22,8 +22,8 @@ const serwist = new Serwist({
     cleanupOutdatedCaches: true,
     ignoreURLParametersMatching: [/^utm_/, /^fbclid$/, /^icon/, /^apple-icon/],
   },
-  skipWaiting: true,
-  clientsClaim: true,
+  skipWaiting: false,
+  clientsClaim: false,
   navigationPreload: true,
   runtimeCaching: defaultCache,
   fallbacks: {
