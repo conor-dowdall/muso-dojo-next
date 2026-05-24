@@ -5,7 +5,6 @@ import {
   useFretboardGeometry,
   useFretboardPresentation,
 } from "./FretboardContext";
-import { InstrumentDisplayControls } from "@/components/instrument/InstrumentDisplayControls";
 import { InstrumentHeaderActions } from "@/components/instrument/InstrumentHeaderActions";
 import { InstrumentContainer } from "@/components/instrument/InstrumentContainer";
 import { FretboardBackground } from "./FretboardBackground";
@@ -13,7 +12,11 @@ import styles from "./Fretboard.module.css";
 
 export function Fretboard({
   children,
+  audioPresetId,
+  onAudioPresetIdChange,
   showHeader,
+  showMidiNumbers,
+  onShowMidiNumbersChange,
   layout,
   onClone,
   onRemove,
@@ -22,7 +25,11 @@ export function Fretboard({
   return (
     <FretboardProvider {...props}>
       <FretboardInner
+        audioPresetId={audioPresetId}
+        onAudioPresetIdChange={onAudioPresetIdChange}
         showHeader={showHeader}
+        showMidiNumbers={showMidiNumbers}
+        onShowMidiNumbersChange={onShowMidiNumbersChange}
         layout={layout}
         onClone={onClone}
         onRemove={onRemove}
@@ -35,29 +42,42 @@ export function Fretboard({
 
 function FretboardInner({
   children,
+  audioPresetId,
+  onAudioPresetIdChange,
   showHeader,
+  showMidiNumbers,
+  onShowMidiNumbersChange,
   layout,
   onClone,
   onRemove,
 }: Pick<
   FretboardProps,
-  "children" | "showHeader" | "layout" | "onClone" | "onRemove"
+  | "children"
+  | "audioPresetId"
+  | "onAudioPresetIdChange"
+  | "showHeader"
+  | "showMidiNumbers"
+  | "onShowMidiNumbersChange"
+  | "layout"
+  | "onClone"
+  | "onRemove"
 >) {
   const presentation = useFretboardPresentation();
   const geometry = useFretboardGeometry();
 
   return (
     <InstrumentContainer
-      displayControls={
-        <InstrumentDisplayControls
+      headerActions={
+        <InstrumentHeaderActions
+          instrumentType="fretboard"
           displayFormatId={presentation.activeDisplayFormatId}
           onDisplayFormatIdChange={presentation.setActiveDisplayFormatId}
           noteEmphasis={presentation.noteEmphasis}
           onNoteEmphasisChange={presentation.setNoteEmphasis}
-        />
-      }
-      headerActions={
-        <InstrumentHeaderActions
+          audioPresetId={audioPresetId}
+          onAudioPresetIdChange={onAudioPresetIdChange}
+          showMidiNumbers={showMidiNumbers}
+          onShowMidiNumbersChange={onShowMidiNumbersChange}
           noteInteractionMode={presentation.noteInteractionMode}
           setNoteInteractionMode={presentation.setNoteInteractionMode}
           onResetNotes={presentation.resetNotes}

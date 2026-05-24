@@ -1,0 +1,9 @@
+.settingsContent {
+  --dialog-menu-section-gap: var(--space-4);
+  --dialog-menu-related-group-gap: var(--space-3);
+}
+
+.groupLabel {
+  padding-inline: var(--space-3);
+  letter-spacing: 0;
+}

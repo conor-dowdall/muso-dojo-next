@@ -16,9 +16,9 @@ export interface ActiveVoice {
   envelope: GainNode;
   getGainAtTime: (sampleTime: number) => number;
   handle: AudioVoiceHandle;
-  oscillator: OscillatorNode;
   peakGain: number;
   releaseSeconds: number;
+  scheduleStop: (stopTime: number) => void;
   stop: (stopTime?: number) => void;
   stopping: boolean;
 }
@@ -68,18 +68,38 @@ export function createHarmonicVoice({
   }
 
   const envelope = context.createGain();
-  const oscillator = context.createOscillator();
+  const sourceMixer = context.createGain();
+  const requestedDetuneCents =
+    voiceConfig.unison?.detuneCents.filter(Number.isFinite) ?? [];
+  const oscillatorDetuneCents =
+    requestedDetuneCents.length > 0 ? requestedDetuneCents : [0];
+  const oscillators = oscillatorDetuneCents.map((detuneCents) => {
+    const oscillator = context.createOscillator();
+
+    oscillator.setPeriodicWave(periodicWave);
+    oscillator.frequency.setValueAtTime(frequency, startTime);
+
+    if (detuneCents !== 0) {
+      oscillator.detune.setValueAtTime(detuneCents, startTime);
+    }
+
+    oscillator.connect(sourceMixer);
+
+    return oscillator;
+  });
   const effectNodes = connectDistortion({
     config: voiceConfig.distortion,
     context,
     destination: envelope,
-    source: oscillator,
+    source: sourceMixer,
   });
   let disconnected = false;
 
   envelope.gain.setValueAtTime(0, startTime);
-  oscillator.setPeriodicWave(periodicWave);
-  oscillator.frequency.setValueAtTime(frequency, startTime);
+  sourceMixer.gain.setValueAtTime(
+    1 / Math.sqrt(Math.max(1, oscillators.length)),
+    startTime,
+  );
   envelope.connect(destination);
 
   const voice: ActiveVoice = {
@@ -92,9 +112,17 @@ export function createHarmonicVoice({
         sampleTime,
         startTime,
       }),
-    oscillator,
     peakGain: voiceGain,
     releaseSeconds: Math.max(0, voiceConfig.envelope.releaseSeconds),
+    scheduleStop: (stopTime: number) => {
+      oscillators.forEach((oscillator) => {
+        try {
+          oscillator.stop(stopTime);
+        } catch {
+          // The voice may already have a stop scheduled.
+        }
+      });
+    },
     stopping: false,
     disconnect: () => {
       if (disconnected) {
@@ -102,7 +130,8 @@ export function createHarmonicVoice({
       }
 
       disconnected = true;
-      oscillator.disconnect();
+      oscillators.forEach((oscillator) => oscillator.disconnect());
+      sourceMixer.disconnect();
       effectNodes.forEach((node) => node.disconnect());
       envelope.disconnect();
     },
@@ -127,17 +156,12 @@ export function createHarmonicVoice({
         envelope.gain.setValueAtTime(0, releaseEnd);
       }
 
-      try {
-        oscillator.stop(releaseEnd);
-      } catch {
-        // A one-shot voice may already have a stop scheduled.
-      }
-
+      voice.scheduleStop(releaseEnd);
       onEnded(voice, releaseEnd);
     },
   };
 
-  oscillator.start(startTime);
+  oscillators.forEach((oscillator) => oscillator.start(startTime));
 
   return voice;
 }

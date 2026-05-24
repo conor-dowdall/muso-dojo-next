@@ -290,7 +290,7 @@ export function createWebAudioEngine(): AudioEngine {
       });
 
     const stopTime = startTime + durationSeconds;
-    voice.oscillator.stop(stopTime);
+    voice.scheduleStop(stopTime);
     scheduleVoiceCleanup(voice, stopTime);
 
     return voice.handle;

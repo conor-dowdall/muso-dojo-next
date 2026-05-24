@@ -8,6 +8,7 @@ import { type InstrumentNotesLayerProps } from "@/types/instrument";
 import { type InstrumentNoteCellWrapperProps } from "@/types/instrument-note-cell";
 import { useInstrumentNotes } from "@/hooks/instrument/useInstrumentNotes";
 import { getFretboardActiveNotes } from "@/utils/fretboard/getFretboardActiveNotes";
+import { resolveInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
 import { type FretboardNoteCellInfo } from "@/types/fretboard";
 import { useFretboardNavigation } from "@/hooks/fretboard/useFretboardNavigation";
 import styles from "./Fretboard.module.css";
@@ -48,6 +49,7 @@ function FretboardNoteCellWrapper({
 
 export function FretboardNotesLayer({
   activeNotes: externalActiveNotes,
+  audioPresetId: externalAudioPresetId,
   onActiveNotesChange: externalOnChange,
   rootNote,
   noteCollectionKey,
@@ -57,6 +59,10 @@ export function FretboardNotesLayer({
   const presentation = useFretboardPresentation();
   const { tuning, mainContentGridRow, fretRange, noteCells, leftHanded } =
     geometry;
+  const previewAudioPresetId = resolveInstrumentAudioPresetId(
+    "fretboard",
+    externalAudioPresetId,
+  );
 
   const {
     activeNotes,
@@ -73,8 +79,8 @@ export function FretboardNotesLayer({
     showMidiNumbers: externalShowMidiNumbers,
     activeDisplayFormatId: presentation.activeDisplayFormatId,
     noteInteractionMode: presentation.noteInteractionMode,
-    previewAudioPresetId: "pluck",
-    previewDurationSeconds: 0.95,
+    previewAudioPresetId,
+    previewDurationSeconds: 0.72,
     noteEmphasis: presentation.noteEmphasis,
     emphasisResetKey: presentation.emphasisResetKey,
     setIsModified: presentation.setIsModified,

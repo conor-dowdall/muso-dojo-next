@@ -1,4 +1,5 @@
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
+import { type AudioPresetId } from "@/audio/types";
 import { type FretboardThemeName } from "@/data/fretboard/themes";
 import { type KeyboardRangeName } from "@/data/keyboard/ranges";
 import { type KeyboardThemeName } from "@/data/keyboard/themes";
@@ -16,6 +17,7 @@ export type ChordProgressionChordListMode =
   | "full-song-order";
 
 export interface InstrumentInstanceBaseConfig {
+  audioPresetId?: AudioPresetId;
   displayFormatId?: DisplayFormatId;
   noteEmphasis?: InstrumentNoteEmphasis;
   activeNotes?: ActiveNotes;

@@ -3,10 +3,26 @@ export type AudioUse = "preview" | "tuning" | "drone" | "exercise";
 export type AudioPresetId =
   | "reference-tone"
   | "pluck"
+  | "round-pluck"
+  | "nylon-ish"
   | "piano"
+  | "muted-keys"
+  | "tape-keys"
   | "soft-organ"
+  | "reed-organ"
+  | "soft-pad"
   | "bright-tone"
-  | "warm-drive";
+  | "glass-bell"
+  | "hollow-synth"
+  | "warm-drive"
+  | "fuzz-pluck"
+  | "broken-organ"
+  | "detuned-stack"
+  | "bit-glow"
+  | "ghost-harmonics";
+
+export type AudioPresetFamily = "generated" | "sample";
+export type AudioPresetCategory = "core" | "instrument" | "character" | "weird";
 
 export type AudioVoiceHandle = string & {
   readonly __audioVoiceHandle: unique symbol;
@@ -48,6 +64,10 @@ export interface DistortionConfig {
   oversample?: OverSampleType;
 }
 
+export interface UnisonConfig {
+  detuneCents: readonly number[];
+}
+
 export interface HarmonicVoiceConfig {
   distortion?: DistortionConfig;
   envelope: EnvelopeConfig;
@@ -55,9 +75,13 @@ export interface HarmonicVoiceConfig {
   lowPitchAssist?: LowPitchAssistConfig;
   partials: readonly HarmonicPartialConfig[];
   pitchGain?: PitchGainConfig;
+  unison?: UnisonConfig;
 }
 
 export interface AudioPreset {
+  category: AudioPresetCategory;
+  description?: string;
+  family: AudioPresetFamily;
   id: AudioPresetId;
   label: string;
   supports: readonly AudioUse[];

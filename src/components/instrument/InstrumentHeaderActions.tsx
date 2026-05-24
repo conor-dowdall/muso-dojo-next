@@ -4,13 +4,34 @@ import {
   type InstrumentNoteInteractionMode,
   type InstrumentNoteInteractionModeSetter,
 } from "@/types/instrument";
+import { type AudioPresetId } from "@/audio/types";
+import {
+  type DisplayFormatId,
+  type DisplayFormatSetter,
+} from "@/data/displayFormats";
+import {
+  type InstrumentNoteEmphasis,
+  type InstrumentNoteEmphasisSetter,
+} from "@/types/instrument-note-emphasis";
+import { type InstrumentType } from "@/types/session";
+import { type SettingSetter } from "@/types/state";
 import { Copy, Eraser, Pencil, Volume2, X } from "lucide-react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
+import { InstrumentSettingsButton } from "./InstrumentSettingsButton";
 import styles from "./InstrumentHeaderActions.module.css";
 
 interface InstrumentHeaderActionsProps {
+  audioPresetId?: AudioPresetId;
+  displayFormatId: DisplayFormatId;
+  instrumentType: InstrumentType;
+  noteEmphasis: InstrumentNoteEmphasis;
   noteInteractionMode: InstrumentNoteInteractionMode;
+  onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
+  onDisplayFormatIdChange: DisplayFormatSetter;
+  onNoteEmphasisChange: InstrumentNoteEmphasisSetter;
   setNoteInteractionMode: InstrumentNoteInteractionModeSetter;
+  showMidiNumbers?: boolean;
+  onShowMidiNumbersChange?: SettingSetter<boolean>;
   onResetNotes: () => void;
   isModified: boolean;
   onClone?: () => void;
@@ -23,8 +44,17 @@ const noteInteractionModeLabels = {
 } as const satisfies Record<InstrumentNoteInteractionMode, string>;
 
 export const InstrumentHeaderActions = ({
+  audioPresetId,
+  displayFormatId,
+  instrumentType,
+  noteEmphasis,
   noteInteractionMode,
+  onAudioPresetIdChange,
+  onDisplayFormatIdChange,
+  onNoteEmphasisChange,
   setNoteInteractionMode,
+  showMidiNumbers,
+  onShowMidiNumbersChange,
   onResetNotes,
   isModified,
   onClone,
@@ -72,6 +102,17 @@ export const InstrumentHeaderActions = ({
         disabled={!canResetNotes}
         tooltip={resetNotesLabel}
         variant={canResetNotes ? "filled" : "ghost"}
+      />
+      <InstrumentSettingsButton
+        audioPresetId={audioPresetId}
+        displayFormatId={displayFormatId}
+        instrumentType={instrumentType}
+        noteEmphasis={noteEmphasis}
+        onAudioPresetIdChange={onAudioPresetIdChange}
+        onDisplayFormatIdChange={onDisplayFormatIdChange}
+        onNoteEmphasisChange={onNoteEmphasisChange}
+        onShowMidiNumbersChange={onShowMidiNumbersChange}
+        showMidiNumbers={showMidiNumbers}
       />
       {onClone ? (
         <IconButton

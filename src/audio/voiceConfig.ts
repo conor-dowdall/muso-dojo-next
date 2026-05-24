@@ -11,6 +11,7 @@ export interface ResolvedHarmonicVoiceConfig {
   envelope: HarmonicVoiceConfig["envelope"];
   gain: number;
   partials: readonly HarmonicPartialConfig[];
+  unison: HarmonicVoiceConfig["unison"];
 }
 
 function lerp(start: number, end: number, progress: number) {
@@ -106,5 +107,6 @@ export function resolveHarmonicVoiceConfig(
       voice.gain *
       (voice.pitchGain ? getPitchGain(midiNote, voice.pitchGain) : 1),
     partials: mergePartials(voice.partials, voice.lowPitchAssist, midiNote),
+    unison: voice.unison,
   };
 }

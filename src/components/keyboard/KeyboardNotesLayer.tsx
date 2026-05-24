@@ -8,6 +8,7 @@ import { type InstrumentNoteCellWrapperProps } from "@/types/instrument-note-cel
 import { useInstrumentNotes } from "@/hooks/instrument/useInstrumentNotes";
 import { getKeyboardActiveNotes } from "@/utils/keyboard/getKeyboardActiveNotes";
 import { useKeyboardNavigation } from "@/hooks/keyboard/useKeyboardNavigation";
+import { resolveInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
 import { type KeyboardNoteCellInfo } from "@/types/keyboard";
 import styles from "./Keyboard.module.css";
 
@@ -51,6 +52,7 @@ function KeyboardNoteCellWrapper({
 
 export function KeyboardNotesLayer({
   activeNotes: externalActiveNotes,
+  audioPresetId: externalAudioPresetId,
   onActiveNotesChange: externalOnChange,
   rootNote,
   noteCollectionKey,
@@ -59,6 +61,10 @@ export function KeyboardNotesLayer({
   const geometry = useKeyboardGeometry();
   const presentation = useKeyboardPresentation();
   const { interactiveMidiRange, noteCells } = geometry;
+  const previewAudioPresetId = resolveInstrumentAudioPresetId(
+    "keyboard",
+    externalAudioPresetId,
+  );
 
   const {
     activeNotes,
@@ -75,7 +81,7 @@ export function KeyboardNotesLayer({
     showMidiNumbers: externalShowMidiNumbers,
     activeDisplayFormatId: presentation.activeDisplayFormatId,
     noteInteractionMode: presentation.noteInteractionMode,
-    previewAudioPresetId: "piano",
+    previewAudioPresetId,
     noteEmphasis: presentation.noteEmphasis,
     emphasisResetKey: presentation.emphasisResetKey,
     setIsModified: presentation.setIsModified,

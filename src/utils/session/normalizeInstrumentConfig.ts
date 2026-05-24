@@ -5,6 +5,7 @@ import {
 } from "@/utils/fretboard/createFretboardConfig";
 import { normalizeActiveNotes } from "@/utils/instrument/createActiveNotesConfig";
 import { normalizeInstrumentLayoutConfig } from "@/utils/instrument/createInstrumentLayoutConfig";
+import { normalizeInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
 import {
   normalizeKeyboardConfig,
   normalizeKeyboardRange,
@@ -69,13 +70,21 @@ export function normalizeInstrumentInstanceConfig(
 
   const type = value.type;
   const baseConfig = normalizeInstrumentBaseConfig(value);
+  const audioPresetId = normalizeInstrumentAudioPresetId(
+    type,
+    value.audioPresetId,
+  );
+  const baseInstrumentConfig = {
+    ...baseConfig,
+    ...(audioPresetId ? { audioPresetId } : {}),
+  };
 
   if (type === "fretboard") {
     const theme = normalizeFretboardThemeName(value.theme);
     const config = normalizeFretboardConfig(value.config, theme);
 
     return {
-      ...baseConfig,
+      ...baseInstrumentConfig,
       type,
       ...(theme ? { theme } : {}),
       ...(config ? { config } : {}),
@@ -87,7 +96,7 @@ export function normalizeInstrumentInstanceConfig(
   const config = normalizeKeyboardConfig(value.config, range, theme);
 
   return {
-    ...baseConfig,
+    ...baseInstrumentConfig,
     type,
     ...(range ? { range } : {}),
     ...(theme ? { theme } : {}),

@@ -4,6 +4,7 @@ import { useShallow } from "zustand/react/shallow";
 import { Fretboard } from "@/components/fretboard/Fretboard";
 import { Keyboard } from "@/components/keyboard/Keyboard";
 import { useAppStore } from "@/stores/appStore";
+import { type AudioPresetId } from "@/audio/types";
 import { type DisplayFormatId } from "@/data/displayFormats";
 import { type InstrumentNoteInteractionMode } from "@/types/instrument";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
@@ -29,6 +30,7 @@ interface InstrumentPartModuleViewProps {
 
 function selectInstrumentBase(module: InstrumentInstanceConfig) {
   return {
+    audioPresetId: module.audioPresetId,
     displayFormatId: module.displayFormatId,
     noteEmphasis: module.noteEmphasis,
     layout: module.layout,
@@ -85,6 +87,12 @@ export function InstrumentPartModuleView({
   const setInstrumentNoteEmphasis = useAppStore(
     (state) => state.setInstrumentNoteEmphasis,
   );
+  const setInstrumentAudioPresetId = useAppStore(
+    (state) => state.setInstrumentAudioPresetId,
+  );
+  const setInstrumentShowMidiNumbers = useAppStore(
+    (state) => state.setInstrumentShowMidiNumbers,
+  );
   const clonePartModule = useAppStore((state) => state.clonePartModule);
   const removePartModule = useAppStore((state) => state.removePartModule);
 
@@ -108,6 +116,17 @@ export function InstrumentPartModuleView({
     onNoteEmphasisChange: (
       noteEmphasis: SettingValue<InstrumentNoteEmphasis>,
     ) => setInstrumentNoteEmphasis(sessionId, partId, moduleId, noteEmphasis),
+    audioPresetId: instrument.audioPresetId,
+    onAudioPresetIdChange: (audioPresetId: SettingValue<AudioPresetId>) =>
+      setInstrumentAudioPresetId(sessionId, partId, moduleId, audioPresetId),
+    showMidiNumbers: instrument.showMidiNumbers,
+    onShowMidiNumbersChange: (showMidiNumbers: SettingValue<boolean>) =>
+      setInstrumentShowMidiNumbers(
+        sessionId,
+        partId,
+        moduleId,
+        showMidiNumbers,
+      ),
     layout: instrument.layout,
     noteInteractionMode,
     showHeader: !isPerformanceMode && instrument.showHeader,
@@ -131,6 +150,7 @@ export function InstrumentPartModuleView({
             sessionId={sessionId}
             partId={partId}
             moduleId={moduleId}
+            audioPresetId={instrument.audioPresetId}
             showMidiNumbers={instrument.showMidiNumbers}
           />
         </Fretboard>
@@ -147,6 +167,7 @@ export function InstrumentPartModuleView({
             sessionId={sessionId}
             partId={partId}
             moduleId={moduleId}
+            audioPresetId={instrument.audioPresetId}
             showMidiNumbers={instrument.showMidiNumbers}
           />
         </Keyboard>

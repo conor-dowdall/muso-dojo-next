@@ -8,15 +8,20 @@ export {
   midiToFrequency,
 } from "./pitch";
 export {
+  audioPresetCategoryLabels,
+  audioPresetCategoryOrder,
   audioPresets,
   defaultAudioPresetIds,
   getDefaultAudioPresetId,
+  isAudioPresetId,
   isAudioPresetSupportedForUse,
   resolveAudioPreset,
 } from "./presets";
 export type {
   AudioEngine,
   AudioPreset,
+  AudioPresetCategory,
+  AudioPresetFamily,
   AudioPresetId,
   AudioUse,
   AudioVoiceHandle,
@@ -29,4 +34,5 @@ export type {
   LowPitchAssistConfig,
   PlayNoteRequest,
   PitchGainConfig,
+  UnisonConfig,
 } from "./types";

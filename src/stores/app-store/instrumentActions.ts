@@ -15,6 +15,7 @@ import {
   type AppStoreSet,
   type InstrumentActions,
 } from "./types";
+import { resolveInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
 
 export function createInstrumentActions(
   set: AppStoreSet,
@@ -97,6 +98,69 @@ export function createInstrumentActions(
 
       get().updateInstrumentSettings(sessionId, partId, moduleId, {
         noteEmphasis: nextNoteEmphasis,
+      });
+    },
+    setInstrumentAudioPresetId: (
+      sessionId,
+      partId,
+      moduleId,
+      audioPresetId,
+    ) => {
+      const instrument = findInstrumentByModuleId(
+        get().sessions[sessionId],
+        partId,
+        moduleId,
+      );
+
+      if (!instrument) {
+        return;
+      }
+
+      const currentAudioPresetId = resolveInstrumentAudioPresetId(
+        instrument.type,
+        instrument.audioPresetId,
+      );
+      const nextAudioPresetId = resolveInstrumentAudioPresetId(
+        instrument.type,
+        resolveSettingValue(audioPresetId, currentAudioPresetId),
+      );
+
+      if (nextAudioPresetId === currentAudioPresetId) {
+        return;
+      }
+
+      get().updateInstrumentSettings(sessionId, partId, moduleId, {
+        audioPresetId: nextAudioPresetId,
+      });
+    },
+    setInstrumentShowMidiNumbers: (
+      sessionId,
+      partId,
+      moduleId,
+      showMidiNumbers,
+    ) => {
+      const instrument = findInstrumentByModuleId(
+        get().sessions[sessionId],
+        partId,
+        moduleId,
+      );
+
+      if (!instrument) {
+        return;
+      }
+
+      const currentShowMidiNumbers = instrument.showMidiNumbers ?? false;
+      const nextShowMidiNumbers = resolveSettingValue(
+        showMidiNumbers,
+        currentShowMidiNumbers,
+      );
+
+      if (nextShowMidiNumbers === currentShowMidiNumbers) {
+        return;
+      }
+
+      get().updateInstrumentSettings(sessionId, partId, moduleId, {
+        showMidiNumbers: nextShowMidiNumbers,
       });
     },
     setInstrumentActiveNotes: (sessionId, partId, moduleId, activeNotes) => {

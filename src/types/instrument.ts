@@ -1,9 +1,11 @@
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { type ReactNode } from "react";
+import { type AudioPresetId } from "@/audio/types";
 import {
   type DisplayFormatId,
   type DisplayFormatSetter,
 } from "@/data/displayFormats";
+import { type SettingSetter } from "@/types/state";
 import {
   type ActiveNotes,
   type ActiveNotesSetter,
@@ -47,6 +49,7 @@ export type {
 
 export interface InstrumentNotesLayerProps {
   activeNotes?: ActiveNotes;
+  audioPresetId?: AudioPresetId;
   onActiveNotesChange?: ActiveNotesSetter;
   rootNote?: string;
   noteCollectionKey?: NoteCollectionKey;
@@ -56,6 +59,8 @@ export interface InstrumentNotesLayerProps {
 
 export interface InstrumentFrameProps {
   children: ReactNode;
+  audioPresetId?: AudioPresetId;
+  onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
   layout?: InstrumentLayoutConfig;
   displayFormatId?: DisplayFormatId;
   initialDisplayFormatId?: DisplayFormatId;
@@ -67,6 +72,8 @@ export interface InstrumentFrameProps {
   initialNoteInteractionMode?: InstrumentNoteInteractionMode;
   onNoteInteractionModeChange?: InstrumentNoteInteractionModeSetter;
   showHeader?: boolean;
+  showMidiNumbers?: boolean;
+  onShowMidiNumbersChange?: SettingSetter<boolean>;
   onClone?: () => void;
   onRemove?: () => void;
 }

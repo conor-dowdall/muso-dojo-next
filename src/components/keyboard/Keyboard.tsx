@@ -4,7 +4,6 @@ import {
   useKeyboardGeometry,
   useKeyboardPresentation,
 } from "./KeyboardContext";
-import { InstrumentDisplayControls } from "@/components/instrument/InstrumentDisplayControls";
 import { InstrumentHeaderActions } from "@/components/instrument/InstrumentHeaderActions";
 import { InstrumentContainer } from "@/components/instrument/InstrumentContainer";
 import { KeyboardBackground } from "./KeyboardBackground";
@@ -12,7 +11,11 @@ import styles from "./Keyboard.module.css";
 
 export function Keyboard({
   children,
+  audioPresetId,
+  onAudioPresetIdChange,
   showHeader,
+  showMidiNumbers,
+  onShowMidiNumbersChange,
   layout,
   onClone,
   onRemove,
@@ -21,7 +24,11 @@ export function Keyboard({
   return (
     <KeyboardProvider {...props}>
       <KeyboardInner
+        audioPresetId={audioPresetId}
+        onAudioPresetIdChange={onAudioPresetIdChange}
         showHeader={showHeader}
+        showMidiNumbers={showMidiNumbers}
+        onShowMidiNumbersChange={onShowMidiNumbersChange}
         layout={layout}
         onClone={onClone}
         onRemove={onRemove}
@@ -34,29 +41,42 @@ export function Keyboard({
 
 function KeyboardInner({
   children,
+  audioPresetId,
+  onAudioPresetIdChange,
   showHeader,
+  showMidiNumbers,
+  onShowMidiNumbersChange,
   layout,
   onClone,
   onRemove,
 }: Pick<
   KeyboardProps,
-  "children" | "showHeader" | "layout" | "onClone" | "onRemove"
+  | "children"
+  | "audioPresetId"
+  | "onAudioPresetIdChange"
+  | "showHeader"
+  | "showMidiNumbers"
+  | "onShowMidiNumbersChange"
+  | "layout"
+  | "onClone"
+  | "onRemove"
 >) {
   const presentation = useKeyboardPresentation();
   const geometry = useKeyboardGeometry();
 
   return (
     <InstrumentContainer
-      displayControls={
-        <InstrumentDisplayControls
+      headerActions={
+        <InstrumentHeaderActions
+          instrumentType="keyboard"
           displayFormatId={presentation.activeDisplayFormatId}
           onDisplayFormatIdChange={presentation.setActiveDisplayFormatId}
           noteEmphasis={presentation.noteEmphasis}
           onNoteEmphasisChange={presentation.setNoteEmphasis}
-        />
-      }
-      headerActions={
-        <InstrumentHeaderActions
+          audioPresetId={audioPresetId}
+          onAudioPresetIdChange={onAudioPresetIdChange}
+          showMidiNumbers={showMidiNumbers}
+          onShowMidiNumbersChange={onShowMidiNumbersChange}
           noteInteractionMode={presentation.noteInteractionMode}
           setNoteInteractionMode={presentation.setNoteInteractionMode}
           onResetNotes={presentation.resetNotes}

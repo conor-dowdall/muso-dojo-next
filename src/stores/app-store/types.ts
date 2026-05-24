@@ -1,5 +1,6 @@
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { type StateCreator } from "zustand";
+import { type AudioPresetId } from "@/audio/types";
 import { type DisplayFormatId } from "@/data/displayFormats";
 import { type ActiveNotes } from "@/types/instrument-active-note";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
@@ -98,6 +99,18 @@ export interface InstrumentActions {
     partId: string,
     moduleId: string,
     noteEmphasis: SettingValue<InstrumentNoteEmphasis>,
+  ) => void;
+  setInstrumentAudioPresetId: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    audioPresetId: SettingValue<AudioPresetId>,
+  ) => void;
+  setInstrumentShowMidiNumbers: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    showMidiNumbers: SettingValue<boolean>,
   ) => void;
   setInstrumentActiveNotes: (
     sessionId: string,
