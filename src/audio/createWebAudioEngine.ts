@@ -74,7 +74,9 @@ export function createWebAudioEngine(): AudioEngine {
     }
 
     try {
-      audioContext = new AudioContextConstructor();
+      audioContext = new AudioContextConstructor({
+        latencyHint: "interactive",
+      });
     } catch {
       return undefined;
     }

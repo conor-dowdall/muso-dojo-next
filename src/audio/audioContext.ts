@@ -1,4 +1,6 @@
-type BrowserAudioContextConstructor = new () => AudioContext;
+type BrowserAudioContextConstructor = new (
+  options?: AudioContextOptions,
+) => AudioContext;
 
 interface WindowWithWebAudio extends Window {
   AudioContext?: BrowserAudioContextConstructor;
