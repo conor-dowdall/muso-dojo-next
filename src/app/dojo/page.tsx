@@ -38,6 +38,43 @@ function HydratedSession({
   const exitPerformanceMode = () => onPerformanceModeChange(false);
 
   useEffect(() => {
+    if (!activeSessionId || !musoAudioEngine.isSupported()) {
+      return;
+    }
+
+    const gestureEvents = ["pointerdown", "keydown"] as const;
+    const listenerOptions = {
+      capture: true,
+      passive: true,
+    } satisfies AddEventListenerOptions;
+
+    function removeListeners() {
+      gestureEvents.forEach((eventName) => {
+        window.removeEventListener(
+          eventName,
+          handleFirstUserGesture,
+          listenerOptions,
+        );
+      });
+    }
+
+    function handleFirstUserGesture() {
+      removeListeners();
+      void musoAudioEngine.prime().catch(() => undefined);
+    }
+
+    gestureEvents.forEach((eventName) => {
+      window.addEventListener(
+        eventName,
+        handleFirstUserGesture,
+        listenerOptions,
+      );
+    });
+
+    return removeListeners;
+  }, [activeSessionId]);
+
+  useEffect(() => {
     if (!activeSessionId && isPerformanceMode) {
       onPerformanceModeChange(false);
     }

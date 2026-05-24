@@ -17,6 +17,6 @@ export function midiToFrequency(
 
 export function isPlayableMidiNote(midiNote: number) {
   return (
-    Number.isFinite(midiNote) && midiNote >= MIDI_MIN && midiNote <= MIDI_MAX
+    Number.isInteger(midiNote) && midiNote >= MIDI_MIN && midiNote <= MIDI_MAX
   );
 }

@@ -1,5 +1,15 @@
+import { getAudioContextConstructor } from "./audioContext";
+import {
+  getOneShotEnvelopeGainAtTime,
+  scheduleAttackDecayEnvelope,
+  scheduleOneShotEnvelope,
+} from "./envelope";
+import { createHarmonicWaveCache } from "./harmonicWave";
+import { normalizePositiveNumber } from "./numeric";
 import { midiToFrequency, isPlayableMidiNote } from "./pitch";
-import { resolveAudioPreset } from "./presets";
+import { audioPresets, resolveAudioPreset } from "./presets";
+import { createHarmonicVoice, type ActiveVoice } from "./voice";
+import { resolveHarmonicVoiceConfig } from "./voiceConfig";
 import {
   type AudioEngine,
   type AudioPreset,
@@ -7,280 +17,66 @@ import {
   type AudioVoiceHandle,
   type DroneHandle,
   type DroneRequest,
-  type EnvelopeConfig,
-  type HarmonicPartialConfig,
   type PlayNoteRequest,
 } from "./types";
 
 const DEFAULT_AUDIO_USE = "preview" satisfies AudioUse;
+const DEFAULT_DRONE_USE = "drone" satisfies AudioUse;
 const DEFAULT_MASTER_GAIN = 0.72;
+const MASTER_COMPRESSOR_ATTACK_SECONDS = 0.004;
+const MASTER_COMPRESSOR_KNEE_DB = 18;
+const MASTER_COMPRESSOR_RATIO = 4;
+const MASTER_COMPRESSOR_RELEASE_SECONDS = 0.16;
+const MASTER_COMPRESSOR_THRESHOLD_DB = -10;
 const MIN_NOTE_DURATION_SECONDS = 0.02;
 const CLEANUP_DELAY_SECONDS = 0.05;
 const SILENT_UNLOCK_PULSE_SECONDS = 0.01;
-
-type BrowserAudioContextConstructor = new () => AudioContext;
-
-interface WindowWithWebAudio extends Window {
-  AudioContext?: BrowserAudioContextConstructor;
-  webkitAudioContext?: BrowserAudioContextConstructor;
-}
-
-interface ActiveVoice {
-  disconnect: () => void;
-  envelope: GainNode;
-  getGainAtTime: (sampleTime: number) => number;
-  handle: AudioVoiceHandle;
-  oscillator: OscillatorNode;
-  peakGain: number;
-  releaseSeconds: number;
-  stop: (stopTime?: number) => void;
-  stopping: boolean;
-}
+const WARMUP_MIDI_NOTES = [36, 48, 60, 72] as const;
 
 interface ActiveDrone {
   handle: DroneHandle;
   voices: ActiveVoice[];
 }
 
-function clampUnit(value: number | undefined, fallback: number) {
-  return typeof value === "number" && Number.isFinite(value)
-    ? Math.min(1, Math.max(0, value))
-    : fallback;
-}
-
-function normalizePositiveNumber(value: number, fallback: number) {
-  return Number.isFinite(value) && value > 0 ? value : fallback;
-}
-
-function getAudioContextConstructor() {
-  if (typeof window === "undefined") {
-    return undefined;
-  }
-
-  const browserWindow = window as WindowWithWebAudio;
-  return browserWindow.AudioContext ?? browserWindow.webkitAudioContext;
-}
-
-function getValidPartials(preset: AudioPreset) {
-  return preset.voice.partials.filter(
-    (partial) =>
-      Number.isInteger(partial.multiple) &&
-      Number.isFinite(partial.multiple) &&
-      partial.multiple > 0 &&
-      Number.isFinite(partial.gain) &&
-      partial.gain > 0,
-  );
-}
-
-function getPartialsCacheKey(partials: readonly HarmonicPartialConfig[]) {
-  return partials
-    .map((partial) => `${partial.multiple}:${partial.gain}`)
-    .join("|");
-}
-
-function getPartialGainScale(partials: readonly HarmonicPartialConfig[]) {
-  const totalGain = partials.reduce(
-    (total, partial) => total + partial.gain,
-    0,
-  );
-  return totalGain > 0 ? 1 / totalGain : 1;
-}
-
-function scheduleAttackDecay(
-  param: AudioParam,
-  envelope: EnvelopeConfig,
-  peakGain: number,
-  startTime: number,
-) {
-  const attackSeconds = Math.max(0, envelope.attackSeconds);
-  const decaySeconds = Math.max(0, envelope.decaySeconds);
-  const sustainGain = clampUnit(envelope.sustainGain, 1);
-  const attackEnd = startTime + attackSeconds;
-  const decayEnd = attackEnd + decaySeconds;
-
-  param.cancelScheduledValues(startTime);
-  param.setValueAtTime(0, startTime);
-
-  if (attackEnd > startTime) {
-    param.linearRampToValueAtTime(peakGain, attackEnd);
-  } else {
-    param.setValueAtTime(peakGain, startTime);
-  }
-
-  if (decayEnd > attackEnd) {
-    param.linearRampToValueAtTime(peakGain * sustainGain, decayEnd);
-  } else {
-    param.setValueAtTime(peakGain * sustainGain, attackEnd);
-  }
-}
-
-function getAttackDecayGainAtTime(
-  envelope: EnvelopeConfig,
-  peakGain: number,
-  startTime: number,
-  sampleTime: number,
-) {
-  const attackSeconds = Math.max(0, envelope.attackSeconds);
-  const decaySeconds = Math.max(0, envelope.decaySeconds);
-  const sustainGain = peakGain * clampUnit(envelope.sustainGain, 1);
-  const attackEnd = startTime + attackSeconds;
-  const decayEnd = attackEnd + decaySeconds;
-
-  if (sampleTime <= startTime) {
-    return 0;
-  }
-
-  if (attackSeconds > 0 && sampleTime < attackEnd) {
-    return peakGain * ((sampleTime - startTime) / attackSeconds);
-  }
-
-  if (decaySeconds > 0 && sampleTime < decayEnd) {
-    const progress = (sampleTime - attackEnd) / decaySeconds;
-    return peakGain + (sustainGain - peakGain) * progress;
-  }
-
-  return sustainGain;
-}
-
-function scheduleOneShotEnvelope(
-  param: AudioParam,
-  envelope: EnvelopeConfig,
-  peakGain: number,
-  startTime: number,
-  durationSeconds: number,
-) {
-  const releaseSeconds = Math.min(
-    Math.max(0, envelope.releaseSeconds),
-    durationSeconds,
-  );
-  const attackSeconds = Math.min(
-    Math.max(0, envelope.attackSeconds),
-    durationSeconds - releaseSeconds,
-  );
-  const decaySeconds = Math.min(
-    Math.max(0, envelope.decaySeconds),
-    durationSeconds - releaseSeconds - attackSeconds,
-  );
-  const sustainGain = clampUnit(envelope.sustainGain, 1);
-  const attackEnd = startTime + attackSeconds;
-  const decayEnd = attackEnd + decaySeconds;
-  const releaseStart = startTime + durationSeconds - releaseSeconds;
-
-  param.cancelScheduledValues(startTime);
-  param.setValueAtTime(0, startTime);
-
-  if (attackEnd > startTime) {
-    param.linearRampToValueAtTime(peakGain, attackEnd);
-  } else {
-    param.setValueAtTime(peakGain, startTime);
-  }
-
-  const releaseGain = decayEnd > attackEnd ? peakGain * sustainGain : peakGain;
-
-  if (decayEnd > attackEnd) {
-    param.linearRampToValueAtTime(releaseGain, decayEnd);
-  }
-
-  param.setValueAtTime(releaseGain, releaseStart);
-  param.linearRampToValueAtTime(0, startTime + durationSeconds);
-}
-
-function getOneShotGainAtTime(
-  envelope: EnvelopeConfig,
-  peakGain: number,
-  startTime: number,
-  durationSeconds: number,
-  sampleTime: number,
-) {
-  const releaseSeconds = Math.min(
-    Math.max(0, envelope.releaseSeconds),
-    durationSeconds,
-  );
-  const attackSeconds = Math.min(
-    Math.max(0, envelope.attackSeconds),
-    durationSeconds - releaseSeconds,
-  );
-  const decaySeconds = Math.min(
-    Math.max(0, envelope.decaySeconds),
-    durationSeconds - releaseSeconds - attackSeconds,
-  );
-  const sustainGain = peakGain * clampUnit(envelope.sustainGain, 1);
-  const attackEnd = startTime + attackSeconds;
-  const decayEnd = attackEnd + decaySeconds;
-  const releaseStart = startTime + durationSeconds - releaseSeconds;
-  const endTime = startTime + durationSeconds;
-  const releaseGain = decayEnd > attackEnd ? sustainGain : peakGain;
-
-  if (sampleTime <= startTime) {
-    return 0;
-  }
-
-  if (sampleTime >= endTime) {
-    return 0;
-  }
-
-  if (attackSeconds > 0 && sampleTime < attackEnd) {
-    return peakGain * ((sampleTime - startTime) / attackSeconds);
-  }
-
-  if (decaySeconds > 0 && sampleTime < decayEnd) {
-    const progress = (sampleTime - attackEnd) / decaySeconds;
-    return peakGain + (releaseGain - peakGain) * progress;
-  }
-
-  if (releaseSeconds > 0 && sampleTime >= releaseStart) {
-    const progress = (sampleTime - releaseStart) / releaseSeconds;
-    return releaseGain * (1 - progress);
-  }
-
-  return releaseGain;
-}
-
-function releaseAudioParam(
-  param: AudioParam,
-  stopTime: number,
-  fallbackGain: number,
-) {
-  const holdableParam = param as AudioParam & {
-    cancelAndHoldAtTime?: (cancelTime: number) => AudioParam;
-  };
-
-  if (holdableParam.cancelAndHoldAtTime) {
-    holdableParam.cancelAndHoldAtTime(stopTime);
-    return;
-  }
-
-  param.cancelScheduledValues(stopTime);
-  param.setValueAtTime(fallbackGain, stopTime);
-}
-
 export function createWebAudioEngine(): AudioEngine {
   let audioContext: AudioContext | undefined;
+  let masterCompressor: DynamicsCompressorNode | undefined;
   let masterGain: GainNode | undefined;
   let primedContext: AudioContext | undefined;
+  let readyContextPromise: Promise<AudioContext | undefined> | undefined;
   let nextVoiceId = 0;
   let nextDroneId = 0;
   const activeVoices = new Map<AudioVoiceHandle, ActiveVoice>();
   const activeDrones = new Map<DroneHandle, ActiveDrone>();
-  const periodicWaveCache = new WeakMap<
-    AudioContext,
-    Map<string, PeriodicWave>
-  >();
+  const harmonicWaveCache = createHarmonicWaveCache();
+
+  function clearContextReferences() {
+    audioContext = undefined;
+    masterCompressor = undefined;
+    masterGain = undefined;
+    primedContext = undefined;
+    readyContextPromise = undefined;
+  }
 
   function getAudioContext() {
     if (audioContext?.state === "closed") {
-      audioContext = undefined;
-      masterGain = undefined;
+      clearContextReferences();
     }
 
-    if (!audioContext) {
-      const AudioContextConstructor = getAudioContextConstructor();
+    if (audioContext) {
+      return audioContext;
+    }
 
-      if (!AudioContextConstructor) {
-        return undefined;
-      }
+    const AudioContextConstructor = getAudioContextConstructor();
 
+    if (!AudioContextConstructor) {
+      return undefined;
+    }
+
+    try {
       audioContext = new AudioContextConstructor();
+    } catch {
+      return undefined;
     }
 
     return audioContext;
@@ -293,73 +89,93 @@ export function createWebAudioEngine(): AudioEngine {
   }
 
   async function getReadyAudioContext() {
+    const runningContext = getRunningAudioContext();
+
+    if (runningContext) {
+      return runningContext;
+    }
+
+    if (readyContextPromise) {
+      return readyContextPromise;
+    }
+
     const context = getAudioContext();
 
     if (!context) {
       return undefined;
     }
 
-    if (context.state !== "running") {
+    readyContextPromise = (async () => {
       try {
-        await context.resume();
+        if (context.state !== "running") {
+          await context.resume();
+        }
       } catch {
         return undefined;
       }
-    }
 
-    return context.state === "running" ? context : undefined;
+      return context.state === "running" ? context : undefined;
+    })().finally(() => {
+      readyContextPromise = undefined;
+    });
+
+    return readyContextPromise;
   }
 
   function getMasterGain(context: AudioContext) {
     if (!masterGain || masterGain.context !== context) {
+      masterCompressor = context.createDynamicsCompressor();
+      masterCompressor.threshold.setValueAtTime(
+        MASTER_COMPRESSOR_THRESHOLD_DB,
+        context.currentTime,
+      );
+      masterCompressor.knee.setValueAtTime(
+        MASTER_COMPRESSOR_KNEE_DB,
+        context.currentTime,
+      );
+      masterCompressor.ratio.setValueAtTime(
+        MASTER_COMPRESSOR_RATIO,
+        context.currentTime,
+      );
+      masterCompressor.attack.setValueAtTime(
+        MASTER_COMPRESSOR_ATTACK_SECONDS,
+        context.currentTime,
+      );
+      masterCompressor.release.setValueAtTime(
+        MASTER_COMPRESSOR_RELEASE_SECONDS,
+        context.currentTime,
+      );
+
       masterGain = context.createGain();
       masterGain.gain.setValueAtTime(DEFAULT_MASTER_GAIN, context.currentTime);
-      masterGain.connect(context.destination);
+      masterGain.connect(masterCompressor);
+      masterCompressor.connect(context.destination);
     }
 
     return masterGain;
   }
 
-  function getPeriodicWave(
-    context: AudioContext,
-    partials: readonly HarmonicPartialConfig[],
-  ) {
-    const cacheKey = getPartialsCacheKey(partials);
-    const contextCache = periodicWaveCache.get(context) ?? new Map();
-    const cachedWave = contextCache.get(cacheKey);
-
-    if (cachedWave) {
-      return cachedWave;
-    }
-
-    const highestPartial = Math.max(
-      ...partials.map((partial) => partial.multiple),
-    );
-    const real = new Float32Array(highestPartial + 1);
-    const imag = new Float32Array(highestPartial + 1);
-    const partialGainScale = getPartialGainScale(partials);
-
-    partials.forEach((partial) => {
-      imag[partial.multiple] = partial.gain * partialGainScale;
+  function warmPresetWaves(context: AudioContext) {
+    Object.values(audioPresets).forEach((preset) => {
+      WARMUP_MIDI_NOTES.forEach((midiNote) => {
+        harmonicWaveCache.getPeriodicWave(
+          context,
+          resolveHarmonicVoiceConfig(preset.voice, midiNote).partials,
+        );
+      });
     });
-
-    const wave = context.createPeriodicWave(real, imag, {
-      disableNormalization: true,
-    });
-    contextCache.set(cacheKey, wave);
-    periodicWaveCache.set(context, contextCache);
-
-    return wave;
   }
 
   function primeContext(context: AudioContext) {
-    getMasterGain(context);
+    const destination = getMasterGain(context);
 
     if (primedContext === context) {
       return;
     }
 
     primedContext = context;
+    warmPresetWaves(context);
+
     const oscillator = context.createOscillator();
     const gain = context.createGain();
     const startTime = context.currentTime;
@@ -367,7 +183,7 @@ export function createWebAudioEngine(): AudioEngine {
 
     gain.gain.setValueAtTime(0, startTime);
     oscillator.connect(gain);
-    gain.connect(getMasterGain(context));
+    gain.connect(destination);
     oscillator.start(startTime);
     oscillator.stop(stopTime);
 
@@ -394,78 +210,37 @@ export function createWebAudioEngine(): AudioEngine {
   function createVoice({
     context,
     frequency,
+    midiNote,
     preset,
     startTime,
     velocity,
   }: {
     context: AudioContext;
     frequency: number;
+    midiNote: number;
     preset: AudioPreset;
     startTime: number;
     velocity: number | undefined;
   }) {
-    const partials = getValidPartials(preset);
+    const handle = `voice-${nextVoiceId++}` as AudioVoiceHandle;
+    const voice = createHarmonicVoice({
+      context,
+      destination: getMasterGain(context),
+      frequency,
+      getPeriodicWave: harmonicWaveCache.getPeriodicWave,
+      handle,
+      midiNote,
+      onEnded: scheduleVoiceCleanup,
+      preset,
+      startTime,
+      velocity,
+    });
 
-    if (partials.length === 0) {
+    if (!voice) {
       return undefined;
     }
 
-    const handle = `voice-${nextVoiceId++}` as AudioVoiceHandle;
-    const voiceGain = preset.voice.gain * clampUnit(velocity, 1);
-    const envelope = context.createGain();
-    const oscillator = context.createOscillator();
-
-    oscillator.setPeriodicWave(getPeriodicWave(context, partials));
-    oscillator.frequency.setValueAtTime(frequency, startTime);
-    oscillator.connect(envelope);
-
-    envelope.connect(getMasterGain(context));
-
-    const voice: ActiveVoice = {
-      handle,
-      envelope,
-      getGainAtTime: (sampleTime) =>
-        getAttackDecayGainAtTime(
-          preset.voice.envelope,
-          voiceGain,
-          startTime,
-          sampleTime,
-        ),
-      oscillator,
-      peakGain: voiceGain,
-      releaseSeconds: Math.max(0, preset.voice.envelope.releaseSeconds),
-      stopping: false,
-      disconnect: () => {
-        oscillator.disconnect();
-        envelope.disconnect();
-      },
-      stop: (stopTime = context.currentTime) => {
-        if (voice.stopping) {
-          return;
-        }
-
-        voice.stopping = true;
-        const releaseStart = Math.max(context.currentTime, stopTime);
-        const releaseEnd = releaseStart + voice.releaseSeconds;
-
-        releaseAudioParam(
-          envelope.gain,
-          releaseStart,
-          voice.getGainAtTime(releaseStart),
-        );
-        envelope.gain.linearRampToValueAtTime(0, releaseEnd);
-        try {
-          oscillator.stop(releaseEnd);
-        } catch {
-          // The oscillator may already have a stop scheduled by a one-shot note.
-        }
-        scheduleVoiceCleanup(voice, releaseEnd);
-      },
-    };
-
     activeVoices.set(handle, voice);
-    oscillator.start(startTime);
-
     return voice;
   }
 
@@ -486,6 +261,7 @@ export function createWebAudioEngine(): AudioEngine {
     const voice = createVoice({
       context,
       frequency: midiToFrequency(request.midiNote, request.concertPitchHz),
+      midiNote: request.midiNote,
       preset,
       startTime,
       velocity: request.velocity,
@@ -495,21 +271,21 @@ export function createWebAudioEngine(): AudioEngine {
       return undefined;
     }
 
-    scheduleOneShotEnvelope(
-      voice.envelope.gain,
-      preset.voice.envelope,
-      voice.peakGain,
-      startTime,
+    scheduleOneShotEnvelope({
       durationSeconds,
-    );
+      envelope: preset.voice.envelope,
+      param: voice.envelope.gain,
+      peakGain: voice.peakGain,
+      startTime,
+    });
     voice.getGainAtTime = (sampleTime) =>
-      getOneShotGainAtTime(
-        preset.voice.envelope,
-        voice.peakGain,
-        startTime,
+      getOneShotEnvelopeGainAtTime({
         durationSeconds,
+        envelope: preset.voice.envelope,
+        peakGain: voice.peakGain,
         sampleTime,
-      );
+        startTime,
+      });
 
     const stopTime = startTime + durationSeconds;
     voice.oscillator.stop(stopTime);
@@ -519,13 +295,15 @@ export function createWebAudioEngine(): AudioEngine {
   }
 
   function startDroneWithContext(context: AudioContext, request: DroneRequest) {
-    const midiNotes = request.midiNotes.filter(isPlayableMidiNote);
+    const midiNotes = [
+      ...new Set(request.midiNotes.filter(isPlayableMidiNote)),
+    ];
 
     if (midiNotes.length === 0) {
       return undefined;
     }
 
-    const use = request.use ?? "drone";
+    const use = request.use ?? DEFAULT_DRONE_USE;
     const preset = resolveAudioPreset(use, request.presetId);
     const startTime = context.currentTime;
     const voices = midiNotes
@@ -533,6 +311,7 @@ export function createWebAudioEngine(): AudioEngine {
         createVoice({
           context,
           frequency: midiToFrequency(midiNote, request.concertPitchHz),
+          midiNote,
           preset,
           startTime,
           velocity: request.velocity,
@@ -547,15 +326,33 @@ export function createWebAudioEngine(): AudioEngine {
     const handle = `drone-${nextDroneId++}` as DroneHandle;
     activeDrones.set(handle, { handle, voices });
     voices.forEach((voice) =>
-      scheduleAttackDecay(
-        voice.envelope.gain,
-        preset.voice.envelope,
-        voice.peakGain,
+      scheduleAttackDecayEnvelope({
+        envelope: preset.voice.envelope,
+        param: voice.envelope.gain,
+        peakGain: voice.peakGain,
         startTime,
-      ),
+      }),
     );
 
     return handle;
+  }
+
+  function runWithReadyContext<T>(operation: (context: AudioContext) => T) {
+    const runningContext = getRunningAudioContext();
+
+    if (runningContext) {
+      primeContext(runningContext);
+      return Promise.resolve(operation(runningContext));
+    }
+
+    return getReadyAudioContext().then((context) => {
+      if (!context) {
+        return undefined;
+      }
+
+      primeContext(context);
+      return operation(context);
+    });
   }
 
   return {
@@ -575,40 +372,18 @@ export function createWebAudioEngine(): AudioEngine {
         return Promise.resolve(undefined);
       }
 
-      const runningContext = getRunningAudioContext();
-
-      if (runningContext) {
-        return Promise.resolve(playNoteWithContext(runningContext, request));
-      }
-
-      return getReadyAudioContext().then((context) => {
-        if (!context) {
-          return undefined;
-        }
-
-        primeContext(context);
-        return playNoteWithContext(context, request);
-      });
+      return runWithReadyContext((context) =>
+        playNoteWithContext(context, request),
+      );
     },
     startDrone: (request: DroneRequest) => {
       if (!request.midiNotes.some(isPlayableMidiNote)) {
         return Promise.resolve(undefined);
       }
 
-      const runningContext = getRunningAudioContext();
-
-      if (runningContext) {
-        return Promise.resolve(startDroneWithContext(runningContext, request));
-      }
-
-      return getReadyAudioContext().then((context) => {
-        if (!context) {
-          return undefined;
-        }
-
-        primeContext(context);
-        return startDroneWithContext(context, request);
-      });
+      return runWithReadyContext((context) =>
+        startDroneWithContext(context, request),
+      );
     },
     stopDrone: (handle: DroneHandle) => {
       const drone = activeDrones.get(handle);

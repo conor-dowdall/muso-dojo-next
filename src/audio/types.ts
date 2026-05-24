@@ -5,7 +5,8 @@ export type AudioPresetId =
   | "pluck"
   | "piano"
   | "soft-organ"
-  | "bright-tone";
+  | "bright-tone"
+  | "warm-drive";
 
 export type AudioVoiceHandle = string & {
   readonly __audioVoiceHandle: unique symbol;
@@ -27,10 +28,33 @@ export interface HarmonicPartialConfig {
   gain: number;
 }
 
+export interface PitchGainConfig {
+  highGain: number;
+  highMidi: number;
+  lowGain: number;
+  lowMidi: number;
+  referenceMidi: number;
+}
+
+export interface LowPitchAssistConfig {
+  fadeOutMidi: number;
+  fullBelowMidi: number;
+  partials: readonly HarmonicPartialConfig[];
+}
+
+export interface DistortionConfig {
+  amount: number;
+  mix?: number;
+  oversample?: OverSampleType;
+}
+
 export interface HarmonicVoiceConfig {
+  distortion?: DistortionConfig;
   envelope: EnvelopeConfig;
   gain: number;
+  lowPitchAssist?: LowPitchAssistConfig;
   partials: readonly HarmonicPartialConfig[];
+  pitchGain?: PitchGainConfig;
 }
 
 export interface AudioPreset {

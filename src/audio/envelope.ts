@@ -1,0 +1,262 @@
+import { clampUnit } from "./numeric";
+import { type EnvelopeConfig } from "./types";
+
+interface EnvelopeShape {
+  attackSeconds: number;
+  decaySeconds: number;
+  releaseSeconds: number;
+  sustainRatio: number;
+}
+
+function normalizeDuration(durationSeconds: number) {
+  return Number.isFinite(durationSeconds) && durationSeconds > 0
+    ? durationSeconds
+    : 0;
+}
+
+function normalizeEnvelope(envelope: EnvelopeConfig): EnvelopeShape {
+  return {
+    attackSeconds: Math.max(0, envelope.attackSeconds),
+    decaySeconds: Math.max(0, envelope.decaySeconds),
+    releaseSeconds: Math.max(0, envelope.releaseSeconds),
+    sustainRatio: clampUnit(envelope.sustainGain, 1),
+  };
+}
+
+function getOneShotEnvelopeShape(
+  envelope: EnvelopeConfig,
+  durationSeconds: number,
+): EnvelopeShape {
+  const normalizedEnvelope = normalizeEnvelope(envelope);
+  const safeDurationSeconds = normalizeDuration(durationSeconds);
+  const envelopeDuration =
+    normalizedEnvelope.attackSeconds +
+    normalizedEnvelope.decaySeconds +
+    normalizedEnvelope.releaseSeconds;
+
+  if (safeDurationSeconds === 0 || envelopeDuration === 0) {
+    return {
+      ...normalizedEnvelope,
+      attackSeconds: 0,
+      decaySeconds: 0,
+      releaseSeconds: 0,
+    };
+  }
+
+  if (envelopeDuration <= safeDurationSeconds) {
+    return normalizedEnvelope;
+  }
+
+  const durationScale = safeDurationSeconds / envelopeDuration;
+
+  return {
+    ...normalizedEnvelope,
+    attackSeconds: normalizedEnvelope.attackSeconds * durationScale,
+    decaySeconds: normalizedEnvelope.decaySeconds * durationScale,
+    releaseSeconds: normalizedEnvelope.releaseSeconds * durationScale,
+  };
+}
+
+function getAttackDecayGainForShape({
+  peakGain,
+  sampleTime,
+  shape,
+  startTime,
+}: {
+  peakGain: number;
+  sampleTime: number;
+  shape: EnvelopeShape;
+  startTime: number;
+}) {
+  const sustainGain = peakGain * shape.sustainRatio;
+  const attackEnd = startTime + shape.attackSeconds;
+  const decayEnd = attackEnd + shape.decaySeconds;
+
+  if (sampleTime < startTime) {
+    return 0;
+  }
+
+  if (shape.attackSeconds > 0 && sampleTime < attackEnd) {
+    return peakGain * ((sampleTime - startTime) / shape.attackSeconds);
+  }
+
+  if (shape.decaySeconds > 0 && sampleTime < decayEnd) {
+    const progress = (sampleTime - attackEnd) / shape.decaySeconds;
+    return peakGain + (sustainGain - peakGain) * progress;
+  }
+
+  return sustainGain;
+}
+
+function setParamValue(param: AudioParam, value: number, sampleTime: number) {
+  param.setValueAtTime(value, sampleTime);
+}
+
+function rampParamValue(param: AudioParam, value: number, sampleTime: number) {
+  param.linearRampToValueAtTime(value, sampleTime);
+}
+
+export function scheduleAttackDecayEnvelope({
+  envelope,
+  param,
+  peakGain,
+  startTime,
+}: {
+  envelope: EnvelopeConfig;
+  param: AudioParam;
+  peakGain: number;
+  startTime: number;
+}) {
+  const shape = normalizeEnvelope(envelope);
+  const attackEnd = startTime + shape.attackSeconds;
+  const decayEnd = attackEnd + shape.decaySeconds;
+  const sustainGain = peakGain * shape.sustainRatio;
+
+  param.cancelScheduledValues(startTime);
+  setParamValue(param, 0, startTime);
+
+  if (attackEnd > startTime) {
+    rampParamValue(param, peakGain, attackEnd);
+  } else {
+    setParamValue(param, peakGain, startTime);
+  }
+
+  if (decayEnd > attackEnd) {
+    rampParamValue(param, sustainGain, decayEnd);
+  } else {
+    setParamValue(param, sustainGain, attackEnd);
+  }
+}
+
+export function getAttackDecayEnvelopeGainAtTime({
+  envelope,
+  peakGain,
+  sampleTime,
+  startTime,
+}: {
+  envelope: EnvelopeConfig;
+  peakGain: number;
+  sampleTime: number;
+  startTime: number;
+}) {
+  return getAttackDecayGainForShape({
+    peakGain,
+    sampleTime,
+    shape: normalizeEnvelope(envelope),
+    startTime,
+  });
+}
+
+export function scheduleOneShotEnvelope({
+  durationSeconds,
+  envelope,
+  param,
+  peakGain,
+  startTime,
+}: {
+  durationSeconds: number;
+  envelope: EnvelopeConfig;
+  param: AudioParam;
+  peakGain: number;
+  startTime: number;
+}) {
+  const safeDurationSeconds = normalizeDuration(durationSeconds);
+  const shape = getOneShotEnvelopeShape(envelope, safeDurationSeconds);
+  const attackEnd = startTime + shape.attackSeconds;
+  const decayEnd = attackEnd + shape.decaySeconds;
+  const endTime = startTime + safeDurationSeconds;
+  const releaseStart = endTime - shape.releaseSeconds;
+  const sustainGain = peakGain * shape.sustainRatio;
+  const releaseGain = getAttackDecayGainForShape({
+    peakGain,
+    sampleTime: releaseStart,
+    shape,
+    startTime,
+  });
+
+  param.cancelScheduledValues(startTime);
+  setParamValue(param, 0, startTime);
+
+  if (attackEnd > startTime) {
+    rampParamValue(param, peakGain, attackEnd);
+  } else {
+    setParamValue(param, peakGain, startTime);
+  }
+
+  if (decayEnd > attackEnd) {
+    rampParamValue(param, sustainGain, decayEnd);
+  } else {
+    setParamValue(param, sustainGain, attackEnd);
+  }
+
+  setParamValue(param, releaseGain, releaseStart);
+
+  if (endTime > releaseStart) {
+    rampParamValue(param, 0, endTime);
+  } else {
+    setParamValue(param, 0, endTime);
+  }
+}
+
+export function getOneShotEnvelopeGainAtTime({
+  durationSeconds,
+  envelope,
+  peakGain,
+  sampleTime,
+  startTime,
+}: {
+  durationSeconds: number;
+  envelope: EnvelopeConfig;
+  peakGain: number;
+  sampleTime: number;
+  startTime: number;
+}) {
+  const safeDurationSeconds = normalizeDuration(durationSeconds);
+  const shape = getOneShotEnvelopeShape(envelope, safeDurationSeconds);
+  const endTime = startTime + safeDurationSeconds;
+  const releaseStart = endTime - shape.releaseSeconds;
+
+  if (sampleTime < startTime || sampleTime >= endTime) {
+    return 0;
+  }
+
+  if (shape.releaseSeconds > 0 && sampleTime >= releaseStart) {
+    const releaseGain = getAttackDecayGainForShape({
+      peakGain,
+      sampleTime: releaseStart,
+      shape,
+      startTime,
+    });
+    const releaseProgress = (sampleTime - releaseStart) / shape.releaseSeconds;
+    return releaseGain * (1 - releaseProgress);
+  }
+
+  return getAttackDecayGainForShape({
+    peakGain,
+    sampleTime,
+    shape,
+    startTime,
+  });
+}
+
+export function releaseAudioParam({
+  fallbackGain,
+  param,
+  stopTime,
+}: {
+  fallbackGain: number;
+  param: AudioParam;
+  stopTime: number;
+}) {
+  const holdableParam = param as AudioParam & {
+    cancelAndHoldAtTime?: (cancelTime: number) => AudioParam;
+  };
+
+  if (holdableParam.cancelAndHoldAtTime) {
+    holdableParam.cancelAndHoldAtTime(stopTime);
+    return;
+  }
+
+  param.cancelScheduledValues(stopTime);
+  setParamValue(param, fallbackGain, stopTime);
+}

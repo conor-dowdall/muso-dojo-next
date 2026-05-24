@@ -11,6 +11,7 @@ export {
   audioPresets,
   defaultAudioPresetIds,
   getDefaultAudioPresetId,
+  isAudioPresetSupportedForUse,
   resolveAudioPreset,
 } from "./presets";
 export type {
@@ -21,8 +22,11 @@ export type {
   AudioVoiceHandle,
   DroneHandle,
   DroneRequest,
+  DistortionConfig,
   EnvelopeConfig,
   HarmonicPartialConfig,
   HarmonicVoiceConfig,
+  LowPitchAssistConfig,
   PlayNoteRequest,
+  PitchGainConfig,
 } from "./types";
