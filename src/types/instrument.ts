@@ -53,8 +53,6 @@ export interface InstrumentNotesLayerProps {
   onActiveNotesChange?: ActiveNotesSetter;
   rootNote?: string;
   noteCollectionKey?: NoteCollectionKey;
-  /** When true, note labels display MIDI note numbers instead of the active display format (note names, intervals, etc.) */
-  showMidiNumbers?: boolean;
 }
 
 export interface InstrumentFrameProps {
@@ -72,8 +70,6 @@ export interface InstrumentFrameProps {
   initialNoteInteractionMode?: InstrumentNoteInteractionMode;
   onNoteInteractionModeChange?: InstrumentNoteInteractionModeSetter;
   showHeader?: boolean;
-  showMidiNumbers?: boolean;
-  onShowMidiNumbersChange?: SettingSetter<boolean>;
   onClone?: () => void;
   onRemove?: () => void;
 }

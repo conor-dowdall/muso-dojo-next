@@ -15,8 +15,6 @@ export function Fretboard({
   audioPresetId,
   onAudioPresetIdChange,
   showHeader,
-  showMidiNumbers,
-  onShowMidiNumbersChange,
   layout,
   onClone,
   onRemove,
@@ -28,8 +26,6 @@ export function Fretboard({
         audioPresetId={audioPresetId}
         onAudioPresetIdChange={onAudioPresetIdChange}
         showHeader={showHeader}
-        showMidiNumbers={showMidiNumbers}
-        onShowMidiNumbersChange={onShowMidiNumbersChange}
         layout={layout}
         onClone={onClone}
         onRemove={onRemove}
@@ -45,8 +41,6 @@ function FretboardInner({
   audioPresetId,
   onAudioPresetIdChange,
   showHeader,
-  showMidiNumbers,
-  onShowMidiNumbersChange,
   layout,
   onClone,
   onRemove,
@@ -56,8 +50,6 @@ function FretboardInner({
   | "audioPresetId"
   | "onAudioPresetIdChange"
   | "showHeader"
-  | "showMidiNumbers"
-  | "onShowMidiNumbersChange"
   | "layout"
   | "onClone"
   | "onRemove"
@@ -76,8 +68,6 @@ function FretboardInner({
           onNoteEmphasisChange={presentation.setNoteEmphasis}
           audioPresetId={audioPresetId}
           onAudioPresetIdChange={onAudioPresetIdChange}
-          showMidiNumbers={showMidiNumbers}
-          onShowMidiNumbersChange={onShowMidiNumbersChange}
           noteInteractionMode={presentation.noteInteractionMode}
           setNoteInteractionMode={presentation.setNoteInteractionMode}
           onResetNotes={presentation.resetNotes}

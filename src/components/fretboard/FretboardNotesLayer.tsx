@@ -53,7 +53,6 @@ export function FretboardNotesLayer({
   onActiveNotesChange: externalOnChange,
   rootNote,
   noteCollectionKey,
-  showMidiNumbers: externalShowMidiNumbers,
 }: InstrumentNotesLayerProps) {
   const geometry = useFretboardGeometry();
   const presentation = useFretboardPresentation();
@@ -76,7 +75,6 @@ export function FretboardNotesLayer({
     onActiveNotesChange: externalOnChange,
     rootNote,
     noteCollectionKey,
-    showMidiNumbers: externalShowMidiNumbers,
     activeDisplayFormatId: presentation.activeDisplayFormatId,
     noteInteractionMode: presentation.noteInteractionMode,
     previewAudioPresetId,

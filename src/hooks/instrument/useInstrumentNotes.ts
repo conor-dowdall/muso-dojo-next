@@ -32,7 +32,6 @@ interface UseInstrumentNotesParams {
   noteInteractionMode: InstrumentNoteInteractionMode;
   previewAudioPresetId: AudioPresetId;
   previewDurationSeconds?: number;
-  showMidiNumbers?: boolean;
   noteEmphasis?: InstrumentNoteEmphasis;
   emphasisResetKey?: number;
   dependencies?: string[];
@@ -57,7 +56,6 @@ export function useInstrumentNotes({
   noteInteractionMode,
   previewAudioPresetId,
   previewDurationSeconds = DEFAULT_PREVIEW_NOTE_DURATION_SECONDS,
-  showMidiNumbers: externalShowMidiNumbers,
   noteEmphasis = "large",
   emphasisResetKey = 0,
   dependencies = [],
@@ -70,9 +68,6 @@ export function useInstrumentNotes({
     activeDisplayFormatId,
   });
   const sessionNoteColors = useSessionNoteColors();
-
-  const effectiveShowMidiNumbers =
-    externalShowMidiNumbers ?? musicSystem.showMidiNumbers;
 
   // Build dependency string for useActiveNotes.
   // noteEmphasis and activeDisplayFormatId are intentionally excluded —
@@ -158,7 +153,7 @@ export function useInstrumentNotes({
     if (activeDisplayFormatId === "none") {
       noteLabels[midi] = undefined;
     } else {
-      const label = effectiveShowMidiNumbers
+      const label = musicSystem.showMidiNumbers
         ? String(midi)
         : musicSystem.noteNames?.[midi % 12];
       noteLabels[midi] = label || "";
@@ -177,7 +172,6 @@ export function useInstrumentNotes({
     ...musicSystem,
     activeNotes,
     onActiveNotesChange,
-    effectiveShowMidiNumbers,
     noteInteractionMode,
     handleInteract,
     getAriaLabel,

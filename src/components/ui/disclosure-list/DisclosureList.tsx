@@ -37,6 +37,15 @@ export type DisclosureListPanelVariant = "editor" | "menu";
  * - In peer choice lists, label is the choice name and subtitle explains the
  *   difference between choices. If a choice opens nested settings, subtitle may
  *   summarize the nested setting values.
+ * - Use icons as visual landmarks for top-level setting categories and for
+ *   choices where the symbol clarifies a real difference. Avoid icon noise in
+ *   long peer lists where every row would receive a generic decoration.
+ *
+ * Quick action boundary:
+ * - Keep high-frequency, reversible, low-risk controls available as quick
+ *   actions near the object they affect.
+ * - Put lower-frequency configuration, management actions, and destructive
+ *   actions inside a disclosure menu or dialog, with confirmation where needed.
  *
  * Grouping model:
  * - Use visible DisclosureListGroup sections for scan-and-compare lists where

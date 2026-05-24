@@ -14,8 +14,6 @@ export function Keyboard({
   audioPresetId,
   onAudioPresetIdChange,
   showHeader,
-  showMidiNumbers,
-  onShowMidiNumbersChange,
   layout,
   onClone,
   onRemove,
@@ -27,8 +25,6 @@ export function Keyboard({
         audioPresetId={audioPresetId}
         onAudioPresetIdChange={onAudioPresetIdChange}
         showHeader={showHeader}
-        showMidiNumbers={showMidiNumbers}
-        onShowMidiNumbersChange={onShowMidiNumbersChange}
         layout={layout}
         onClone={onClone}
         onRemove={onRemove}
@@ -44,8 +40,6 @@ function KeyboardInner({
   audioPresetId,
   onAudioPresetIdChange,
   showHeader,
-  showMidiNumbers,
-  onShowMidiNumbersChange,
   layout,
   onClone,
   onRemove,
@@ -55,8 +49,6 @@ function KeyboardInner({
   | "audioPresetId"
   | "onAudioPresetIdChange"
   | "showHeader"
-  | "showMidiNumbers"
-  | "onShowMidiNumbersChange"
   | "layout"
   | "onClone"
   | "onRemove"
@@ -75,8 +67,6 @@ function KeyboardInner({
           onNoteEmphasisChange={presentation.setNoteEmphasis}
           audioPresetId={audioPresetId}
           onAudioPresetIdChange={onAudioPresetIdChange}
-          showMidiNumbers={showMidiNumbers}
-          onShowMidiNumbersChange={onShowMidiNumbersChange}
           noteInteractionMode={presentation.noteInteractionMode}
           setNoteInteractionMode={presentation.setNoteInteractionMode}
           onResetNotes={presentation.resetNotes}

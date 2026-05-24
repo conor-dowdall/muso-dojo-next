@@ -106,12 +106,6 @@ export interface InstrumentActions {
     moduleId: string,
     audioPresetId: SettingValue<AudioPresetId>,
   ) => void;
-  setInstrumentShowMidiNumbers: (
-    sessionId: string,
-    partId: string,
-    moduleId: string,
-    showMidiNumbers: SettingValue<boolean>,
-  ) => void;
   setInstrumentActiveNotes: (
     sessionId: string,
     partId: string,

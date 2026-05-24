@@ -1,12 +1,53 @@
 .instrumentHeaderActions {
   display: flex;
+  flex: 1 1 auto;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--space-2) var(--space-4);
+  inline-size: 100%;
 }
 
+.presentationControlsGroup,
+.rightControlsGroup,
+.interactionControlsGroup,
+.utilityControlsGroup,
 .noteInteractionModeGroup {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+}
+
+.presentationControlsGroup {
+  margin-inline-end: auto;
+}
+
+.rightControlsGroup {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2) var(--space-3);
+  margin-inline-start: auto;
+  max-inline-size: 100%;
+}
+
+.utilityControlsGroup {
+  margin-inline-start: var(--space-1);
+}
+
+.displayFormatButton {
+  max-inline-size: min(10rem, 40vw);
+}
+
+@media (width < 32rem) {
+  .instrumentHeaderActions {
+    gap: var(--space-2);
+  }
+
+  .displayFormatButton {
+    inline-size: min-content;
+    max-inline-size: min(8rem, 30vw);
+  }
+
+  .displayFormatButton span {
+    overflow-wrap: normal;
+  }
 }

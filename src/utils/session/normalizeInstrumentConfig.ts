@@ -42,10 +42,6 @@ function normalizeInstrumentBaseConfig(
   const activeNotes = normalizeActiveNotes(input.activeNotes);
   const layout = normalizeInstrumentLayoutConfig(input.layout);
   const showHeader = normalizeOptionalBoolean(input.showHeader, true);
-  const showMidiNumbers = normalizeOptionalBoolean(
-    input.showMidiNumbers,
-    false,
-  );
 
   return {
     ...(displayFormatId ? { displayFormatId } : {}),
@@ -53,7 +49,6 @@ function normalizeInstrumentBaseConfig(
     ...(activeNotes !== undefined ? { activeNotes } : {}),
     ...(layout ? { layout } : {}),
     ...(showHeader !== undefined ? { showHeader } : {}),
-    ...(showMidiNumbers !== undefined ? { showMidiNumbers } : {}),
   };
 }
 

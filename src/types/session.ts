@@ -23,7 +23,6 @@ export interface InstrumentInstanceBaseConfig {
   activeNotes?: ActiveNotes;
   layout?: InstrumentLayoutConfig;
   showHeader?: boolean;
-  showMidiNumbers?: boolean;
 }
 
 export interface FretboardInstrumentInstanceConfig extends InstrumentInstanceBaseConfig {

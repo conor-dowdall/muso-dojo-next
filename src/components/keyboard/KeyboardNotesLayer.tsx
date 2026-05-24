@@ -56,7 +56,6 @@ export function KeyboardNotesLayer({
   onActiveNotesChange: externalOnChange,
   rootNote,
   noteCollectionKey,
-  showMidiNumbers: externalShowMidiNumbers,
 }: InstrumentNotesLayerProps) {
   const geometry = useKeyboardGeometry();
   const presentation = useKeyboardPresentation();
@@ -78,7 +77,6 @@ export function KeyboardNotesLayer({
     onActiveNotesChange: externalOnChange,
     rootNote,
     noteCollectionKey,
-    showMidiNumbers: externalShowMidiNumbers,
     activeDisplayFormatId: presentation.activeDisplayFormatId,
     noteInteractionMode: presentation.noteInteractionMode,
     previewAudioPresetId,

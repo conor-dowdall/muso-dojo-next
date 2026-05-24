@@ -133,36 +133,6 @@ export function createInstrumentActions(
         audioPresetId: nextAudioPresetId,
       });
     },
-    setInstrumentShowMidiNumbers: (
-      sessionId,
-      partId,
-      moduleId,
-      showMidiNumbers,
-    ) => {
-      const instrument = findInstrumentByModuleId(
-        get().sessions[sessionId],
-        partId,
-        moduleId,
-      );
-
-      if (!instrument) {
-        return;
-      }
-
-      const currentShowMidiNumbers = instrument.showMidiNumbers ?? false;
-      const nextShowMidiNumbers = resolveSettingValue(
-        showMidiNumbers,
-        currentShowMidiNumbers,
-      );
-
-      if (nextShowMidiNumbers === currentShowMidiNumbers) {
-        return;
-      }
-
-      get().updateInstrumentSettings(sessionId, partId, moduleId, {
-        showMidiNumbers: nextShowMidiNumbers,
-      });
-    },
     setInstrumentActiveNotes: (sessionId, partId, moduleId, activeNotes) => {
       const instrument = findInstrumentByModuleId(
         get().sessions[sessionId],

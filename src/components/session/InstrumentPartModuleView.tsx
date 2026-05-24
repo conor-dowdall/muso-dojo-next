@@ -35,7 +35,6 @@ function selectInstrumentBase(module: InstrumentInstanceConfig) {
     noteEmphasis: module.noteEmphasis,
     layout: module.layout,
     showHeader: module.showHeader,
-    showMidiNumbers: module.showMidiNumbers,
   };
 }
 
@@ -90,9 +89,6 @@ export function InstrumentPartModuleView({
   const setInstrumentAudioPresetId = useAppStore(
     (state) => state.setInstrumentAudioPresetId,
   );
-  const setInstrumentShowMidiNumbers = useAppStore(
-    (state) => state.setInstrumentShowMidiNumbers,
-  );
   const clonePartModule = useAppStore((state) => state.clonePartModule);
   const removePartModule = useAppStore((state) => state.removePartModule);
 
@@ -119,14 +115,6 @@ export function InstrumentPartModuleView({
     audioPresetId: instrument.audioPresetId,
     onAudioPresetIdChange: (audioPresetId: SettingValue<AudioPresetId>) =>
       setInstrumentAudioPresetId(sessionId, partId, moduleId, audioPresetId),
-    showMidiNumbers: instrument.showMidiNumbers,
-    onShowMidiNumbersChange: (showMidiNumbers: SettingValue<boolean>) =>
-      setInstrumentShowMidiNumbers(
-        sessionId,
-        partId,
-        moduleId,
-        showMidiNumbers,
-      ),
     layout: instrument.layout,
     noteInteractionMode,
     showHeader: !isPerformanceMode && instrument.showHeader,
@@ -151,7 +139,6 @@ export function InstrumentPartModuleView({
             partId={partId}
             moduleId={moduleId}
             audioPresetId={instrument.audioPresetId}
-            showMidiNumbers={instrument.showMidiNumbers}
           />
         </Fretboard>
       );
@@ -168,7 +155,6 @@ export function InstrumentPartModuleView({
             partId={partId}
             moduleId={moduleId}
             audioPresetId={instrument.audioPresetId}
-            showMidiNumbers={instrument.showMidiNumbers}
           />
         </Keyboard>
       );

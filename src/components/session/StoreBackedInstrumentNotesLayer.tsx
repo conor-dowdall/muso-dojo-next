@@ -10,7 +10,7 @@ import { selectInstrumentForModule } from "./sessionSelectors";
 
 type StoreBackedNotesLayerProps = Pick<
   InstrumentNotesLayerProps,
-  "audioPresetId" | "showMidiNumbers"
+  "audioPresetId"
 > & {
   sessionId: string;
   partId: string;
@@ -45,7 +45,6 @@ export function StoreBackedFretboardNotesLayer({
   partId,
   moduleId,
   audioPresetId,
-  showMidiNumbers,
 }: StoreBackedNotesLayerProps) {
   const { activeNotes, onActiveNotesChange } = useStoreBackedInstrumentNotes({
     sessionId,
@@ -58,7 +57,6 @@ export function StoreBackedFretboardNotesLayer({
       activeNotes={activeNotes}
       audioPresetId={audioPresetId}
       onActiveNotesChange={onActiveNotesChange}
-      showMidiNumbers={showMidiNumbers}
     />
   );
 }
@@ -68,7 +66,6 @@ export function StoreBackedKeyboardNotesLayer({
   partId,
   moduleId,
   audioPresetId,
-  showMidiNumbers,
 }: StoreBackedNotesLayerProps) {
   const { activeNotes, onActiveNotesChange } = useStoreBackedInstrumentNotes({
     sessionId,
@@ -81,7 +78,6 @@ export function StoreBackedKeyboardNotesLayer({
       activeNotes={activeNotes}
       audioPresetId={audioPresetId}
       onActiveNotesChange={onActiveNotesChange}
-      showMidiNumbers={showMidiNumbers}
     />
   );
 }
