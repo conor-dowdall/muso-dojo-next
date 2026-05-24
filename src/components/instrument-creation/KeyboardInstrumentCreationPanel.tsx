@@ -91,8 +91,8 @@ export function KeyboardInstrumentCreationPanel({
           isOpen={openChoice === "range"}
           keepMounted
           label="Range"
-          preview={rangeDescription}
-          subtitle={rangeLabel}
+          preview={rangeLabel}
+          subtitle={rangeDescription}
           onToggle={() => handleToggleChoice("range")}
         >
           <DisclosureList>

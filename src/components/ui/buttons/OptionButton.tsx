@@ -16,14 +16,16 @@ import styles from "./OptionButton.module.css";
  * list: title/subtitle on the left, selected marker on the right.
  * Visual hierarchy contract:
  * - Setting rows keep label stable, such as "Root Note" or "Range"; put the
- *   current value in preview when it is short, or subtitle when it needs room.
+ *   compact current value or visual sample in preview.
  * - Choice rows use label for the choice name. If a choice opens its own
  *   settings, subtitle can summarize those settings, such as
  *   "Guitar • Standard E" or "25 Key • C3 to C5".
- * - Use subtitle for comparison details, examples, or plain-language help.
+ * - Use subtitle for comparison details, examples, longer derived values, or
+ *   plain-language help.
  * - preview is compact right-side content: current values, swatches, icons, or
- *   short summaries that benefit from fast scanning. Long explanatory text
- *   belongs in subtitle. Join compact value pairs with DISPLAY_VALUE_SEPARATOR.
+ *   visual samples that benefit from fast scanning. Long explanatory text and
+ *   summaries of nested actions belong in subtitle. Join compact value pairs
+ *   with DISPLAY_VALUE_SEPARATOR.
  */
 export type OptionButtonPresentation = "media" | "tile" | "list";
 export type OptionButtonDensity = "compact" | "comfortable";

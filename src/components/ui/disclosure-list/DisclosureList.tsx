@@ -32,14 +32,21 @@ export type DisclosureListPanelVariant = "editor" | "menu";
  *
  * Row hierarchy:
  * - Use stable labels for setting rows so beginners can keep their place.
- * - Put short current values or visual samples in preview, and longer current
- *   values, examples, or comparison details in subtitle.
+ * - Put compact current values or visual samples in preview. Use subtitle for
+ *   explanatory text, examples, longer derived values, or summaries that need
+ *   reading rather than quick scanning.
  * - In peer choice lists, label is the choice name and subtitle explains the
  *   difference between choices. If a choice opens nested settings, subtitle may
- *   summarize the nested setting values.
- * - Use icons as visual landmarks for top-level setting categories and for
- *   choices where the symbol clarifies a real difference. Avoid icon noise in
- *   long peer lists where every row would receive a generic decoration.
+ *   summarize the nested setting values. Use preview only for tangible samples
+ *   or very compact resolved values.
+ * - Use icons as visual landmarks for top-level setting categories, semantic
+ *   actions, and high-level choices where the symbol clarifies a real
+ *   difference. In complex mode-driven menus, nested setting rows may also use
+ *   icons as signposts, and may repeat the parent icon when they continue the
+ *   same decision path.
+ * - Avoid icon noise in short, obvious setting groups and in long peer lists
+ *   where every row would receive a generic decoration. Visual samples belong
+ *   in preview instead.
  *
  * Quick action boundary:
  * - Keep high-frequency, reversible, low-risk controls available as quick

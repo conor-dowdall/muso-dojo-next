@@ -1,7 +1,7 @@
 "use client";
 
 import { type SyntheticEvent, useEffect, useId, useState } from "react";
-import { Check, Copy, Settings, Trash2 } from "lucide-react";
+import { Check, Copy, Settings, TextCursorInput, Trash2 } from "lucide-react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import {
   DisclosureList,
@@ -203,6 +203,7 @@ export function SessionManagementRow({
             <DisclosureList density="compact">
               <DisclosureListItem
                 ariaLabel={`Edit session title. Current: ${session.name}`}
+                icon={<TextCursorInput />}
                 isOpen={openSessionSetting === "title"}
                 keepMounted
                 label="Title"

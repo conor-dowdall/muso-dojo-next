@@ -194,7 +194,7 @@ export function InstrumentSettingsDialog({
               label="Instrument"
               onToggle={() => toggleChoice("instrument")}
               panelVariant="menu"
-              preview={instrumentActionsPreview}
+              subtitle={instrumentActionsPreview}
             >
               <DisclosureList density="compact">
                 {onClone ? (

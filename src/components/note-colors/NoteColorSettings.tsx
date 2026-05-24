@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Palette } from "lucide-react";
 import {
   colorCollections,
   type ColorCollectionKey,
@@ -182,6 +183,7 @@ export function NoteColorSettings({
     <DisclosureListItem
       ariaLabel={`Choose Note Colors. Current: ${configLabel}, ${configSubtitle}.`}
       isOpen={isColorChoiceOpen}
+      icon={<Palette />}
       keepMounted
       label="Note Colors"
       preview={<NoteColorPreview colors={getConfigPreviewColors(config)} />}

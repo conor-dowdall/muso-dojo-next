@@ -7,6 +7,7 @@ import {
   type NoteCollectionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
+import { KeyRound, ListChecks, ListMusic, Shapes } from "lucide-react";
 import {
   DialogContent,
   DialogFooter,
@@ -141,6 +142,7 @@ export function AddToSessionDialog({
   const [instrumentType, setInstrumentType] = useState<InstrumentType>(
     DEFAULT_INSTRUMENT_TYPE,
   );
+  const modeDisclosure = useDisclosureList<SessionAddMode>();
   const sessionDisclosure = useDisclosureList<SessionChoice>();
   const [moduleSettingsCloseSignal, setModuleSettingsCloseSignal] = useState(0);
   const [keyboardSelection, setKeyboardSelection] =
@@ -185,9 +187,10 @@ export function AddToSessionDialog({
     sessionDisclosure.toggleChoice(choice);
   };
 
-  const handleModeSelect = (mode: SessionAddMode) => {
+  const handleModeToggle = (mode: SessionAddMode) => {
     setSelectedMode(mode);
     sessionDisclosure.closeAll();
+    modeDisclosure.toggleChoice(mode);
     setModuleSettingsCloseSignal((currentSignal) => currentSignal + 1);
   };
 
@@ -237,16 +240,18 @@ export function AddToSessionDialog({
           <DisclosureList>
             <DisclosureListChoiceItem
               ariaLabel="Configure a chord or scale"
-              isOpen={selectedMode === "custom-chord-or-scale"}
+              icon={<Shapes />}
+              isOpen={modeDisclosure.openChoice === "custom-chord-or-scale"}
               keepMounted
               label={sessionAddOptions[0].title}
               selected={selectedMode === "custom-chord-or-scale"}
               subtitle={sessionAddOptions[0].subtitle}
-              onToggle={() => handleModeSelect("custom-chord-or-scale")}
+              onToggle={() => handleModeToggle("custom-chord-or-scale")}
             >
               <DisclosureList grouped groupGap="section">
                 <DisclosureListGroup>
                   <AddToSessionRootNoteItem
+                    icon={<KeyRound />}
                     isOpen={sessionDisclosure.openChoice === "key"}
                     label="Root Note"
                     selectedRootNote={selectedRootNote}
@@ -257,6 +262,7 @@ export function AddToSessionDialog({
 
                   <DisclosureListItem
                     ariaLabel={`Choose chord or scale, ${selectedNoteCollectionName} selected`}
+                    icon={<Shapes />}
                     isOpen={sessionDisclosure.openChoice === "collection"}
                     keepMounted
                     label="Chord or Scale"
@@ -276,16 +282,18 @@ export function AddToSessionDialog({
             </DisclosureListChoiceItem>
             <DisclosureListChoiceItem
               ariaLabel="Configure a chord progression"
-              isOpen={selectedMode === "chord-progression"}
+              icon={<ListMusic />}
+              isOpen={modeDisclosure.openChoice === "chord-progression"}
               keepMounted
               label={sessionAddOptions[1].title}
               selected={selectedMode === "chord-progression"}
               subtitle={sessionAddOptions[1].subtitle}
-              onToggle={() => handleModeSelect("chord-progression")}
+              onToggle={() => handleModeToggle("chord-progression")}
             >
               <DisclosureList grouped groupGap="section">
                 <DisclosureListGroup aria-label="Progression">
                   <AddToSessionRootNoteItem
+                    icon={<KeyRound />}
                     isOpen={sessionDisclosure.openChoice === "key"}
                     label="Tonal Center"
                     selectedRootNote={selectedRootNote}
@@ -296,6 +304,7 @@ export function AddToSessionDialog({
 
                   <DisclosureListItem
                     ariaLabel={`Choose chord progression, ${progressionRomanLabel} gives ${progressionChordLabel}`}
+                    icon={<ListMusic />}
                     isOpen={sessionDisclosure.openChoice === "progression"}
                     keepMounted
                     label="Progression"
@@ -330,6 +339,7 @@ export function AddToSessionDialog({
 
                   <DisclosureListItem
                     ariaLabel={`Choose chords to add, ${selectedChordListOption.title} selected`}
+                    icon={<ListChecks />}
                     isOpen={sessionDisclosure.openChoice === "chord-list"}
                     keepMounted
                     label="Chords to Add"

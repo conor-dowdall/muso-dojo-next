@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import {
   stringInstrumentTunings,
   stringInstruments,
 } from "@musodojo/music-theory-data";
+import { Guitar, Piano } from "lucide-react";
 import {
   DisclosureList,
   DisclosureListChoiceItem,
@@ -24,6 +25,11 @@ import {
   formatKeyboardRangeNoteNames,
   instrumentCreationOptions,
 } from "./options";
+
+const instrumentCreationIcons = {
+  fretboard: <Guitar />,
+  keyboard: <Piano />,
+} as const satisfies Record<InstrumentType, ReactNode>;
 
 export interface InstrumentCreationSettingsMenuProps {
   closeSignal?: number;
@@ -94,6 +100,7 @@ export function InstrumentCreationSettingsMenu({
               isSelected ? ", selected" : ""
             }`}
             isOpen={isOpen}
+            icon={instrumentCreationIcons[option.id]}
             keepMounted
             label={option.title}
             panelVariant="menu"
