@@ -242,10 +242,10 @@ export function FretboardInstrumentCreationPanel({
         </DisclosureListItem>
 
         <DisclosureListItem
-          ariaLabel={`Choose handedness, ${formatHandedness(value.handedness)} selected`}
+          ariaLabel={`Choose hand, ${formatHandedness(value.handedness)} selected`}
           isOpen={openChoice === "handedness"}
           keepMounted
-          label="Handedness"
+          label="Hand"
           preview={formatHandedness(value.handedness)}
           onToggle={() => handleToggleChoice("handedness")}
         >

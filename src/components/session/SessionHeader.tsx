@@ -46,7 +46,7 @@ export function SessionHeader({
           tooltip="Performance mode"
           onClick={onEnterPerformanceMode}
         />
-        <SessionMenu />
+        <SessionMenu activeSessionId={activeSessionId} />
       </div>
     </header>
   );

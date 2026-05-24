@@ -28,6 +28,7 @@ type SessionSettingChoice = "title" | "note-colors";
 interface SessionManagementRowProps {
   session: SessionManagementSessionSummary;
   sessions: readonly SessionManagementSessionSummary[];
+  initialOpenNoteColors?: boolean;
   isActive: boolean;
   isDeleteConfirming: boolean;
   isOpen: boolean;
@@ -47,6 +48,7 @@ interface SessionManagementRowProps {
 export function SessionManagementRow({
   session,
   sessions,
+  initialOpenNoteColors = false,
   isActive,
   isDeleteConfirming,
   isOpen,
@@ -65,13 +67,17 @@ export function SessionManagementRow({
     closeAll: closeSessionActions,
     openChoice: openSessionAction,
     toggleChoice: toggleSessionAction,
-  } = useDisclosureList<SessionActionChoice>();
+  } = useDisclosureList<SessionActionChoice>(
+    initialOpenNoteColors ? "settings" : null,
+  );
   const {
     closeAll: closeSessionSettings,
     closeChoice: closeSessionSettingChoice,
     openChoice: openSessionSetting,
     toggleChoice: toggleSessionSetting,
-  } = useDisclosureList<SessionSettingChoice>();
+  } = useDisclosureList<SessionSettingChoice>(
+    initialOpenNoteColors ? "note-colors" : null,
+  );
   const [draftSession, setDraftSession] = useState({
     id: session.id,
     savedName: session.name,

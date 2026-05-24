@@ -24,6 +24,7 @@ import {
 import styles from "./SessionManagementDialog.module.css";
 
 interface SessionManagementDialogProps {
+  initialOpenNoteColorsSessionId?: string | null;
   onClose: () => void;
 }
 
@@ -73,9 +74,12 @@ const selectSessionManagementSnapshot =
   createSessionManagementSnapshotSelector();
 
 export function SessionManagementDialog({
+  initialOpenNoteColorsSessionId = null,
   onClose,
 }: SessionManagementDialogProps) {
-  const [openSessionId, setOpenSessionId] = useState<string | null>(null);
+  const [openSessionId, setOpenSessionId] = useState<string | null>(
+    initialOpenNoteColorsSessionId,
+  );
   const [deleteConfirmationSessionId, setDeleteConfirmationSessionId] =
     useState<string | null>(null);
   const { activeSessionId, sessions: sessionList } = useAppStore(
@@ -158,6 +162,9 @@ export function SessionManagementDialog({
                     isActive={session.id === activeSession?.id}
                     isDeleteConfirming={
                       deleteConfirmationSessionId === session.id
+                    }
+                    initialOpenNoteColors={
+                      session.id === initialOpenNoteColorsSessionId
                     }
                     isOpen={session.id === openSessionId}
                     session={session}

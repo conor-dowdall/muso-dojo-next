@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Music2, Trash2, Type, Wrench } from "lucide-react";
+import { AudioWaveform, Copy, Trash2, Type, Wrench } from "lucide-react";
 import {
   audioPresetCategoryLabels,
   audioPresetCategoryOrder,
@@ -130,7 +130,7 @@ export function InstrumentSettingsDialog({
         <DisclosureList>
           <DisclosureListItem
             ariaLabel={`Sound. Current: ${resolvedAudioPreset.label}`}
-            icon={<Music2 />}
+            icon={<AudioWaveform />}
             isOpen={isChoiceOpen("sound")}
             label="Sound"
             onToggle={() => toggleChoice("sound")}
