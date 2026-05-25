@@ -105,6 +105,11 @@ export function Dialog({
 }
 
 interface DialogHeaderProps {
+  /**
+   * !!! LLM COPY CONVENTION: Dialog titles are headings.
+   * Use Title Case, leaving minor words lowercase unless first/last:
+   * "Instrument Settings", "Add to Session", "Choose Root Note".
+   */
   title: string;
   onClose?: () => void;
   className?: string;
@@ -152,6 +157,13 @@ interface DialogFooterProps {
   className?: string;
 }
 
+/**
+ * !!! LLM COPY CONVENTION: Use DialogFooter for dialog-level decisions.
+ * Add a Done footer when settings/management choices apply immediately and the
+ * user needs an obvious close affordance. Omit Done when the footer already has
+ * a primary commit/cancel flow, such as Add/Cancel. Local inline editor Done
+ * buttons belong in DisclosureListPanelActions instead.
+ */
 export function DialogFooter({ children, className = "" }: DialogFooterProps) {
   return (
     <footer className={`${styles.dialogFooter} ${className}`}>

@@ -218,40 +218,45 @@ export const InstrumentHeaderActions = ({
         />
       </span>
 
-      <span className={styles.rightControlsGroup}>
+      <span
+        className={styles.rightControlsGroup}
+        role="group"
+        aria-label="Instrument action controls"
+      >
         <span
-          className={styles.interactionControlsGroup}
+          className={styles.noteInteractionModeGroup}
           role="group"
-          aria-label="Note interaction controls"
+          aria-label="Note interaction mode"
         >
-          <span
-            className={styles.noteInteractionModeGroup}
-            role="group"
-            aria-label="Note interaction mode"
-          >
-            {noteInteractionModes.map((mode) => {
-              const modeDisabled =
-                activeNotesLocked === true && mode.id !== "play";
+          {noteInteractionModes.map((mode) => {
+            const modeDisabled =
+              activeNotesLocked === true && mode.id !== "play";
 
-              return (
-                <IconButton
-                  key={mode.id}
-                  aria-label={mode.ariaLabel}
-                  disabled={modeDisabled}
-                  icon={mode.icon}
-                  size="sm"
-                  onClick={() => setNoteInteractionMode(mode.id)}
-                  selected={effectiveNoteInteractionMode === mode.id}
-                  tooltip={modeDisabled ? "Unlock to edit notes" : mode.tooltip}
-                  variant={
-                    effectiveNoteInteractionMode === mode.id
-                      ? "filled"
-                      : "outline"
-                  }
-                />
-              );
-            })}
-          </span>
+            return (
+              <IconButton
+                key={mode.id}
+                aria-label={mode.ariaLabel}
+                disabled={modeDisabled}
+                icon={mode.icon}
+                size="sm"
+                onClick={() => setNoteInteractionMode(mode.id)}
+                selected={effectiveNoteInteractionMode === mode.id}
+                tooltip={modeDisabled ? "Unlock to edit notes" : mode.tooltip}
+                variant={
+                  effectiveNoteInteractionMode === mode.id
+                    ? "filled"
+                    : "outline"
+                }
+              />
+            );
+          })}
+        </span>
+
+        <span
+          className={styles.noteEditActionsGroup}
+          role="group"
+          aria-label="Note edit actions"
+        >
           <IconButton
             aria-label={activeNotesLockLabel}
             disabled={!onActiveNotesLockChange}
@@ -273,7 +278,11 @@ export const InstrumentHeaderActions = ({
           />
         </span>
 
-        <span className={styles.utilityControlsGroup}>
+        <span
+          className={styles.utilityControlsGroup}
+          role="group"
+          aria-label="Instrument utilities"
+        >
           <IconButton
             aria-label="Instrument settings"
             icon={<Settings />}

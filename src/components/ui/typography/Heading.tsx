@@ -7,6 +7,12 @@ export type HeadingProps<T extends ElementType = "h2"> = TypographyProps<T> & {
   as?: HeadingTag;
 };
 
+/**
+ * !!! LLM COPY CONVENTION: Heading text is an app title/section title.
+ * Prefer Title Case for visible headings and dialog titles, leaving minor
+ * words lowercase unless first/last: "Instrument Settings", "Choose Root Note".
+ * Tooltips are intentionally different; keep tooltip text in sentence case.
+ */
 export function Heading<T extends HeadingTag = "h2">({
   as,
   children,

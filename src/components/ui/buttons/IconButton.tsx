@@ -18,6 +18,11 @@ export type IconButtonProps = Omit<
 > & {
   "aria-label": string;
   icon: ReactNode;
+  /**
+   * !!! LLM COPY CONVENTION: Icon button tooltips follow Tooltip copy rules.
+   * Prefer sentence case with no period. If the aria-label would look too
+   * formal as visible tooltip text, pass a separate sentence-case tooltip.
+   */
   tooltip?: string | false;
   tooltipSide?: TooltipSide;
 };

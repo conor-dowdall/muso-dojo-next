@@ -33,6 +33,12 @@ interface TooltipProps {
   describeChild?: boolean;
   id?: string;
   side?: TooltipSide;
+  /**
+   * !!! LLM COPY CONVENTION: Tooltips are hints, not headings.
+   * Use sentence case, preserve proper nouns/acronyms, and omit trailing
+   * periods for short fragments: "Change root note", "Edit all matching notes".
+   * Do not use Title Case here unless the text contains a proper title/name.
+   */
   text: ReactNode;
 }
 

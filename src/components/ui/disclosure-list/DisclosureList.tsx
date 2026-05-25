@@ -25,6 +25,14 @@ export type DisclosureListGroupGap = "related" | "section";
 export type DisclosureListPanelVariant = "editor" | "menu";
 
 /**
+ * !!! LLM COPY CONVENTION: Disclosure lists are scan surfaces, not articles.
+ * Top-level setting categories should use short, stable labels, usually Title
+ * Case when naming a category or object setting: "Root Note", "Chord or Scale".
+ * Subtitles are either explanatory microcopy in sentence case or compact value
+ * summaries. Value summaries often use Title Case source labels joined with
+ * DISPLAY_VALUE_SEPARATOR, such as "One Part • Root Note and Chord or Scale".
+ * Previews are compact current values or tangible samples, not extra help text.
+ *
  * Shared vertical menu pattern for object rows, action rows, and nested editors.
  * Panels can stay mounted for calmer transitions while inert keeps closed inputs
  * out of the focus order. Panel actions give interactive editors a consistent
@@ -33,8 +41,8 @@ export type DisclosureListPanelVariant = "editor" | "menu";
  * Row hierarchy:
  * - Use stable labels for setting rows so beginners can keep their place.
  * - Put compact current values or visual samples in preview. Use subtitle for
- *   explanatory text, examples, longer derived values, or summaries that need
- *   reading rather than quick scanning.
+ *   explanatory text, examples, longer derived values, or readable summaries.
+ *   Do not force sentence case when the subtitle is a title-cased value summary.
  * - In peer choice lists, label is the choice name and subtitle explains the
  *   difference between choices. If a choice opens nested settings, subtitle may
  *   summarize the nested setting values. Use preview only for tangible samples
@@ -53,6 +61,9 @@ export type DisclosureListPanelVariant = "editor" | "menu";
  *   actions near the object they affect.
  * - Put lower-frequency configuration, management actions, and destructive
  *   actions inside a disclosure menu or dialog, with confirmation where needed.
+ * - If a panel is a compact inline editor with several local controls, add a
+ *   local DisclosureListPanelActions footer with a Done button. This closes the
+ *   editor panel only; it is not a dialog-level commit action.
  *
  * Grouping model:
  * - Use visible DisclosureListGroup sections for scan-and-compare lists where
@@ -418,6 +429,12 @@ interface DisclosureListPanelActionsProps extends DivProps {
   children: ReactNode;
 }
 
+/**
+ * !!! LLM COPY CONVENTION: Use this for local inline editor actions.
+ * A Done button here should close the currently open panel after immediate
+ * changes have already applied. Do not use this for dialog-level Add/Cancel
+ * or Save/Cancel decisions; those belong in DialogFooter.
+ */
 export function DisclosureListPanelActions({
   align = "end",
   children,
