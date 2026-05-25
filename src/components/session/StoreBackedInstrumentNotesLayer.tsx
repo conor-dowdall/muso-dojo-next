@@ -27,6 +27,11 @@ function useStoreBackedInstrumentNotes({
       selectInstrumentForModule(state, sessionId, partId, moduleId)
         ?.activeNotes,
   );
+  const activeNotesLocked = useAppStore(
+    (state) =>
+      selectInstrumentForModule(state, sessionId, partId, moduleId)
+        ?.activeNotesLocked === true,
+  );
   const setInstrumentActiveNotes = useAppStore(
     (state) => state.setInstrumentActiveNotes,
   );
@@ -36,6 +41,7 @@ function useStoreBackedInstrumentNotes({
 
   return {
     activeNotes,
+    activeNotesLocked,
     onActiveNotesChange,
   };
 }
@@ -46,15 +52,17 @@ export function StoreBackedFretboardNotesLayer({
   moduleId,
   audioPresetId,
 }: StoreBackedNotesLayerProps) {
-  const { activeNotes, onActiveNotesChange } = useStoreBackedInstrumentNotes({
-    sessionId,
-    partId,
-    moduleId,
-  });
+  const { activeNotes, activeNotesLocked, onActiveNotesChange } =
+    useStoreBackedInstrumentNotes({
+      sessionId,
+      partId,
+      moduleId,
+    });
 
   return (
     <FretboardNotesLayer
       activeNotes={activeNotes}
+      activeNotesLocked={activeNotesLocked}
       audioPresetId={audioPresetId}
       onActiveNotesChange={onActiveNotesChange}
     />
@@ -67,15 +75,17 @@ export function StoreBackedKeyboardNotesLayer({
   moduleId,
   audioPresetId,
 }: StoreBackedNotesLayerProps) {
-  const { activeNotes, onActiveNotesChange } = useStoreBackedInstrumentNotes({
-    sessionId,
-    partId,
-    moduleId,
-  });
+  const { activeNotes, activeNotesLocked, onActiveNotesChange } =
+    useStoreBackedInstrumentNotes({
+      sessionId,
+      partId,
+      moduleId,
+    });
 
   return (
     <KeyboardNotesLayer
       activeNotes={activeNotes}
+      activeNotesLocked={activeNotesLocked}
       audioPresetId={audioPresetId}
       onActiveNotesChange={onActiveNotesChange}
     />

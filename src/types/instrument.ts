@@ -49,6 +49,7 @@ export type {
 
 export interface InstrumentNotesLayerProps {
   activeNotes?: ActiveNotes;
+  activeNotesLocked?: boolean;
   audioPresetId?: AudioPresetId;
   onActiveNotesChange?: ActiveNotesSetter;
   rootNote?: string;
@@ -61,6 +62,7 @@ export interface InstrumentFrameProps {
   onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
   layout?: InstrumentLayoutConfig;
   displayFormatId?: DisplayFormatId;
+  activeNotesLocked?: boolean;
   initialDisplayFormatId?: DisplayFormatId;
   onDisplayFormatIdChange?: DisplayFormatSetter;
   noteEmphasis?: InstrumentNoteEmphasis;

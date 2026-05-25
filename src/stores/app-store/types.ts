@@ -112,6 +112,12 @@ export interface InstrumentActions {
     moduleId: string,
     activeNotes: SettingValue<ActiveNotes | undefined>,
   ) => void;
+  setInstrumentActiveNotesLocked: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    activeNotesLocked: SettingValue<boolean>,
+  ) => void;
 }
 
 export interface PartModuleActions {

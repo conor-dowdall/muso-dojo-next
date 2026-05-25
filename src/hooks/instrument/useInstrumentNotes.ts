@@ -10,7 +10,7 @@ import {
   type InstrumentNoteInteractionMode,
   type InstrumentNoteInteractionTarget,
 } from "@/types/instrument";
-import { toggleIndividualNoteEmphasis } from "@/utils/instrument/toggleIndividualNoteEmphasis";
+import { applyInstrumentNoteEdit } from "@/utils/instrument/applyInstrumentNoteEdit";
 import { getNoteAriaLabel } from "@/utils/instrument/getNoteAriaLabel";
 import { areActiveNotesEqual } from "@/utils/instrument/areActiveNotesEqual";
 import { useSessionNoteColors } from "@/components/note-colors/SessionNoteColorProvider";
@@ -29,7 +29,9 @@ interface UseInstrumentNotesParams {
   noteCollectionKey?: NoteCollectionKey;
   rootNote?: string;
   activeDisplayFormatId: DisplayFormatId;
+  activeNotesLocked?: boolean;
   noteInteractionMode: InstrumentNoteInteractionMode;
+  noteTargets?: readonly InstrumentNoteInteractionTarget[];
   previewAudioPresetId: AudioPresetId;
   previewDurationSeconds?: number;
   noteEmphasis?: InstrumentNoteEmphasis;
@@ -53,7 +55,9 @@ export function useInstrumentNotes({
   noteCollectionKey,
   rootNote,
   activeDisplayFormatId,
+  activeNotesLocked = false,
   noteInteractionMode,
+  noteTargets = [],
   previewAudioPresetId,
   previewDurationSeconds = DEFAULT_PREVIEW_NOTE_DURATION_SECONDS,
   noteEmphasis = "large",
@@ -89,6 +93,7 @@ export function useInstrumentNotes({
         rootNote: musicSystem.effectiveRootNote,
         noteCollectionKey: musicSystem.effectiveNoteCollectionKey,
       }),
+    { preserveOnDependencyChange: activeNotesLocked },
   );
 
   const isModified = initialActiveNotes
@@ -111,12 +116,27 @@ export function useInstrumentNotes({
           })
           .catch(() => undefined);
         return;
-      case "edit-note":
-        toggleIndividualNoteEmphasis({
-          target,
-          onActiveNotesChange,
-          globalEmphasis: noteEmphasis,
-        });
+      case "edit-one":
+        onActiveNotesChange?.((currentNotes) =>
+          applyInstrumentNoteEdit({
+            activeNotes: currentNotes,
+            allTargets: noteTargets,
+            globalEmphasis: noteEmphasis,
+            scope: "one",
+            target,
+          }),
+        );
+        return;
+      case "edit-pitch-class":
+        onActiveNotesChange?.((currentNotes) =>
+          applyInstrumentNoteEdit({
+            activeNotes: currentNotes,
+            allTargets: noteTargets,
+            globalEmphasis: noteEmphasis,
+            scope: "pitch-class",
+            target,
+          }),
+        );
         return;
       default:
         return assertNever(
@@ -138,8 +158,10 @@ export function useInstrumentNotes({
     switch (noteInteractionMode) {
       case "play":
         return `Play ${label}`;
-      case "edit-note":
+      case "edit-one":
         return `Edit ${label}`;
+      case "edit-pitch-class":
+        return `Edit all notes matching ${noteName ?? label}`;
       default:
         return assertNever(
           noteInteractionMode,

@@ -21,14 +21,19 @@ import { areActiveNotesEqual } from "@/utils/instrument/areActiveNotesEqual";
  *   is recalculated via `recalculate`.
  * @param recalculate - A function that returns generated ActiveNotes for the
  *   current dependencies.
+ * @param options.preserveOnDependencyChange - Keep controlled overrides when
+ *   dependencies change. Locked instruments use this so root/collection changes
+ *   do not erase their stored note map.
  */
 export function useActiveNotes(
   externalActiveNotes: ActiveNotes | undefined,
   externalOnChange: ActiveNotesSetter | undefined,
   dependencies: string,
   recalculate: () => ActiveNotes,
+  options: { preserveOnDependencyChange?: boolean } = {},
 ): [ActiveNotes, ActiveNotesSetter, ActiveNotes] {
   const isControlled = externalOnChange !== undefined;
+  const { preserveOnDependencyChange = false } = options;
   const initialActiveNotes = recalculate();
   const previousControlledDependencies = useRef(dependencies);
   const [internalState, setInternalState] = useState(() => ({
@@ -63,10 +68,16 @@ export function useActiveNotes(
 
     previousControlledDependencies.current = dependencies;
 
-    if (externalActiveNotes !== undefined) {
+    if (!preserveOnDependencyChange && externalActiveNotes !== undefined) {
       externalOnChange(undefined);
     }
-  }, [dependencies, externalActiveNotes, externalOnChange, isControlled]);
+  }, [
+    dependencies,
+    externalActiveNotes,
+    externalOnChange,
+    isControlled,
+    preserveOnDependencyChange,
+  ]);
 
   const onActiveNotesChange = useCallback<ActiveNotesSetter>(
     (nextNotes) => {

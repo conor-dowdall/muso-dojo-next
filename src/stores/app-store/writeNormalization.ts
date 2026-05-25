@@ -64,6 +64,10 @@ function clearModuleActiveNotesAffectedByPartTheory(
 ): PartModuleConfig {
   switch (module.type) {
     case "instrument":
+      if (module.instrument.activeNotesLocked) {
+        return module;
+      }
+
       return {
         ...module,
         instrument: clearInstrumentActiveNotes(module.instrument),

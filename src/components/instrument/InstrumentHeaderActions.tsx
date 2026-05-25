@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import {
   type InstrumentNoteInteractionMode,
   type InstrumentNoteInteractionModeSetter,
@@ -24,6 +24,7 @@ import {
   Eraser,
   Pencil,
   Settings,
+  SquarePen,
   Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/buttons/Button";
@@ -53,8 +54,39 @@ interface InstrumentHeaderActionsProps {
 
 const noteInteractionModeLabels = {
   play: "Play notes",
-  "edit-note": "Edit notes",
+  "edit-one": "Edit notes",
+  "edit-pitch-class": "Edit all matching notes",
 } as const satisfies Record<InstrumentNoteInteractionMode, string>;
+
+const noteInteractionModes = [
+  {
+    id: "play",
+    label: "Play",
+    ariaLabel: noteInteractionModeLabels.play,
+    icon: <Volume2 />,
+    tooltip: noteInteractionModeLabels.play,
+  },
+  {
+    id: "edit-one",
+    label: "Edit",
+    ariaLabel: noteInteractionModeLabels["edit-one"],
+    icon: <Pencil />,
+    tooltip: noteInteractionModeLabels["edit-one"],
+  },
+  {
+    id: "edit-pitch-class",
+    label: "Edit All",
+    ariaLabel: noteInteractionModeLabels["edit-pitch-class"],
+    icon: <SquarePen />,
+    tooltip: noteInteractionModeLabels["edit-pitch-class"],
+  },
+] as const satisfies readonly {
+  ariaLabel: string;
+  icon: ReactNode;
+  id: InstrumentNoteInteractionMode;
+  label: string;
+  tooltip: string;
+}[];
 
 const noteEmphasisLabels = {
   large: "Large",
@@ -92,10 +124,11 @@ export const InstrumentHeaderActions = ({
   const [settingsDialogKey, setSettingsDialogKey] = useState(0);
   const [settingsChoice, setSettingsChoice] =
     useState<InstrumentSettingsChoice | null>(null);
-  const canResetNotes = noteInteractionMode === "edit-note" && isModified;
+  const isEditingNotes = noteInteractionMode !== "play";
+  const canResetNotes = isEditingNotes && isModified;
   const resetNotesLabel =
     noteInteractionMode === "play"
-      ? `${noteInteractionModeLabels["edit-note"]} to reset custom edits`
+      ? `${noteInteractionModeLabels["edit-one"]} to reset custom edits`
       : isModified
         ? "Reset custom edits"
         : "No custom edits";
@@ -153,26 +186,18 @@ export const InstrumentHeaderActions = ({
             role="group"
             aria-label="Note interaction mode"
           >
-            <IconButton
-              aria-label={noteInteractionModeLabels.play}
-              icon={<Volume2 />}
-              size="sm"
-              onClick={() => setNoteInteractionMode("play")}
-              selected={noteInteractionMode === "play"}
-              tooltip={noteInteractionModeLabels.play}
-              variant={noteInteractionMode === "play" ? "filled" : "outline"}
-            />
-            <IconButton
-              aria-label={noteInteractionModeLabels["edit-note"]}
-              icon={<Pencil />}
-              size="sm"
-              onClick={() => setNoteInteractionMode("edit-note")}
-              selected={noteInteractionMode === "edit-note"}
-              tooltip={noteInteractionModeLabels["edit-note"]}
-              variant={
-                noteInteractionMode === "edit-note" ? "filled" : "outline"
-              }
-            />
+            {noteInteractionModes.map((mode) => (
+              <IconButton
+                key={mode.id}
+                aria-label={mode.ariaLabel}
+                icon={mode.icon}
+                size="sm"
+                onClick={() => setNoteInteractionMode(mode.id)}
+                selected={noteInteractionMode === mode.id}
+                tooltip={mode.tooltip}
+                variant={noteInteractionMode === mode.id ? "filled" : "outline"}
+              />
+            ))}
           </span>
           <IconButton
             aria-label={resetNotesLabel}

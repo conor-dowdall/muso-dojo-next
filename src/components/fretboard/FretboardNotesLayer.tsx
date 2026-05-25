@@ -9,6 +9,7 @@ import { type InstrumentNoteCellWrapperProps } from "@/types/instrument-note-cel
 import { useInstrumentNotes } from "@/hooks/instrument/useInstrumentNotes";
 import { getFretboardActiveNotes } from "@/utils/fretboard/getFretboardActiveNotes";
 import { resolveInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
+import { createInstrumentNoteInteractionTarget } from "@/utils/instrument/createInstrumentNoteInteractionTarget";
 import { type FretboardNoteCellInfo } from "@/types/fretboard";
 import { useFretboardNavigation } from "@/hooks/fretboard/useFretboardNavigation";
 import styles from "./Fretboard.module.css";
@@ -49,6 +50,7 @@ function FretboardNoteCellWrapper({
 
 export function FretboardNotesLayer({
   activeNotes: externalActiveNotes,
+  activeNotesLocked = false,
   audioPresetId: externalAudioPresetId,
   onActiveNotesChange: externalOnChange,
   rootNote,
@@ -58,6 +60,9 @@ export function FretboardNotesLayer({
   const presentation = useFretboardPresentation();
   const { tuning, mainContentGridRow, fretRange, noteCells, leftHanded } =
     geometry;
+  const noteTargets = noteCells.map((noteCell) =>
+    createInstrumentNoteInteractionTarget(noteCell.key, noteCell.midi),
+  );
   const previewAudioPresetId = resolveInstrumentAudioPresetId(
     "fretboard",
     externalAudioPresetId,
@@ -76,7 +81,9 @@ export function FretboardNotesLayer({
     rootNote,
     noteCollectionKey,
     activeDisplayFormatId: presentation.activeDisplayFormatId,
+    activeNotesLocked,
     noteInteractionMode: presentation.noteInteractionMode,
+    noteTargets,
     previewAudioPresetId,
     previewDurationSeconds: 0.72,
     noteEmphasis: presentation.noteEmphasis,
@@ -99,7 +106,7 @@ export function FretboardNotesLayer({
       leftHanded,
       onInteract: handleInteract,
     });
-  const isToggleButton = noteInteractionMode === "edit-note";
+  const isToggleButton = noteInteractionMode !== "play";
 
   const noteCellElements = noteCells.map((noteCell) => {
     return (

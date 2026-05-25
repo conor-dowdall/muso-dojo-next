@@ -21,6 +21,7 @@ export interface InstrumentInstanceBaseConfig {
   displayFormatId?: DisplayFormatId;
   noteEmphasis?: InstrumentNoteEmphasis;
   activeNotes?: ActiveNotes;
+  activeNotesLocked?: boolean;
   layout?: InstrumentLayoutConfig;
   showHeader?: boolean;
 }

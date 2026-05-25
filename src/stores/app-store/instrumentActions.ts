@@ -159,5 +159,35 @@ export function createInstrumentActions(
         ),
       );
     },
+    setInstrumentActiveNotesLocked: (
+      sessionId,
+      partId,
+      moduleId,
+      activeNotesLocked,
+    ) => {
+      const instrument = findInstrumentByModuleId(
+        get().sessions[sessionId],
+        partId,
+        moduleId,
+      );
+
+      if (!instrument) {
+        return;
+      }
+
+      const currentActiveNotesLocked = instrument.activeNotesLocked === true;
+      const nextActiveNotesLocked = resolveSettingValue(
+        activeNotesLocked,
+        currentActiveNotesLocked,
+      );
+
+      if (nextActiveNotesLocked === currentActiveNotesLocked) {
+        return;
+      }
+
+      get().updateInstrumentSettings(sessionId, partId, moduleId, {
+        activeNotesLocked: nextActiveNotesLocked,
+      });
+    },
   };
 }

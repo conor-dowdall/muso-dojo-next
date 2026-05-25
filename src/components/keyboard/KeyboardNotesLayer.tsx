@@ -9,6 +9,7 @@ import { useInstrumentNotes } from "@/hooks/instrument/useInstrumentNotes";
 import { getKeyboardActiveNotes } from "@/utils/keyboard/getKeyboardActiveNotes";
 import { useKeyboardNavigation } from "@/hooks/keyboard/useKeyboardNavigation";
 import { resolveInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
+import { createInstrumentNoteInteractionTarget } from "@/utils/instrument/createInstrumentNoteInteractionTarget";
 import { type KeyboardNoteCellInfo } from "@/types/keyboard";
 import styles from "./Keyboard.module.css";
 
@@ -52,6 +53,7 @@ function KeyboardNoteCellWrapper({
 
 export function KeyboardNotesLayer({
   activeNotes: externalActiveNotes,
+  activeNotesLocked = false,
   audioPresetId: externalAudioPresetId,
   onActiveNotesChange: externalOnChange,
   rootNote,
@@ -60,6 +62,9 @@ export function KeyboardNotesLayer({
   const geometry = useKeyboardGeometry();
   const presentation = useKeyboardPresentation();
   const { interactiveMidiRange, noteCells } = geometry;
+  const noteTargets = noteCells.map((noteCell) =>
+    createInstrumentNoteInteractionTarget(noteCell.key, noteCell.midi),
+  );
   const previewAudioPresetId = resolveInstrumentAudioPresetId(
     "keyboard",
     externalAudioPresetId,
@@ -78,7 +83,9 @@ export function KeyboardNotesLayer({
     rootNote,
     noteCollectionKey,
     activeDisplayFormatId: presentation.activeDisplayFormatId,
+    activeNotesLocked,
     noteInteractionMode: presentation.noteInteractionMode,
+    noteTargets,
     previewAudioPresetId,
     noteEmphasis: presentation.noteEmphasis,
     emphasisResetKey: presentation.emphasisResetKey,
@@ -97,7 +104,7 @@ export function KeyboardNotesLayer({
       midiRange: interactiveMidiRange,
       onInteract: handleInteract,
     });
-  const isToggleButton = noteInteractionMode === "edit-note";
+  const isToggleButton = noteInteractionMode !== "play";
 
   const noteCellElements = noteCells.map((noteCell) => {
     return (

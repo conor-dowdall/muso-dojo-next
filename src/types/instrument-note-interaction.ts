@@ -1,6 +1,9 @@
 import { type SettingSetter } from "./state";
 
-export type InstrumentNoteInteractionMode = "play" | "edit-note";
+export type InstrumentNoteInteractionMode =
+  | "play"
+  | "edit-one"
+  | "edit-pitch-class";
 
 export type InstrumentNoteInteractionModeSetter =
   SettingSetter<InstrumentNoteInteractionMode>;
