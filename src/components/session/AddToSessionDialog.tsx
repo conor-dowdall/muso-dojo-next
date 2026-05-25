@@ -7,7 +7,7 @@ import {
   type NoteCollectionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
-import { KeyRound, ListChecks, ListMusic, Shapes } from "lucide-react";
+import { ListChecks, ListMusic, Music3, Shapes } from "lucide-react";
 import {
   DialogContent,
   DialogFooter,
@@ -251,7 +251,7 @@ export function AddToSessionDialog({
               <DisclosureList grouped groupGap="section">
                 <DisclosureListGroup>
                   <AddToSessionRootNoteItem
-                    icon={<KeyRound />}
+                    icon={<Music3 />}
                     isOpen={sessionDisclosure.openChoice === "key"}
                     label="Root Note"
                     selectedRootNote={selectedRootNote}
@@ -293,7 +293,7 @@ export function AddToSessionDialog({
               <DisclosureList grouped groupGap="section">
                 <DisclosureListGroup aria-label="Progression">
                   <AddToSessionRootNoteItem
-                    icon={<KeyRound />}
+                    icon={<Music3 />}
                     isOpen={sessionDisclosure.openChoice === "key"}
                     label="Tonal Center"
                     selectedRootNote={selectedRootNote}
