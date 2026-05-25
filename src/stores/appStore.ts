@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { create } from "zustand";
-import { devtools, persist, createJSONStorage } from "zustand/middleware";
+import { devtools, persist } from "zustand/middleware";
 import {
   createAppStoreSnapshot,
   normalizeAppStoreSnapshot,
@@ -11,6 +11,7 @@ import { createFallbackSessionConfig } from "@/utils/session/createSessionEntiti
 import {
   APP_STORE_VERSION,
   type AppStorePersistedSnapshot,
+  createDebouncedAppStoreStorage,
   migrateAppStoreSnapshot,
   partializeAppStoreSnapshot,
 } from "@/stores/app-store/persistence";
@@ -36,9 +37,7 @@ export const useAppStore = create<AppStore>()(
       {
         name: "muso-dojo-app-store",
         version: APP_STORE_VERSION,
-        storage: createJSONStorage<AppStorePersistedSnapshot>(
-          () => localStorage,
-        ),
+        storage: createDebouncedAppStoreStorage(() => localStorage),
         partialize: partializeAppStoreSnapshot,
         migrate: (persistedState, persistedVersion) =>
           migrateAppStoreSnapshot(

@@ -5,48 +5,12 @@ import {
 } from "./FretboardContext";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { type InstrumentNotesLayerProps } from "@/types/instrument";
-import { type InstrumentNoteCellWrapperProps } from "@/types/instrument-note-cell";
 import { useInstrumentNotes } from "@/hooks/instrument/useInstrumentNotes";
 import { getFretboardActiveNotes } from "@/utils/fretboard/getFretboardActiveNotes";
 import { resolveInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
 import { createInstrumentNoteInteractionTarget } from "@/utils/instrument/createInstrumentNoteInteractionTarget";
-import { type FretboardNoteCellInfo } from "@/types/fretboard";
 import { useFretboardNavigation } from "@/hooks/fretboard/useFretboardNavigation";
 import styles from "./Fretboard.module.css";
-
-type FretboardNoteCellWrapperProps =
-  InstrumentNoteCellWrapperProps<FretboardNoteCellInfo>;
-
-function FretboardNoteCellWrapper({
-  noteCell,
-  note,
-  noteColor,
-  label,
-  ariaLabel,
-  isFocused,
-  setItemRef,
-  handleKeyDown,
-  onInteract,
-  isToggleButton,
-}: FretboardNoteCellWrapperProps) {
-  return (
-    <InstrumentNoteCell
-      noteKey={noteCell.key}
-      note={note}
-      noteColor={noteColor}
-      midi={noteCell.midi}
-      label={label}
-      ariaLabel={ariaLabel}
-      isFocused={isFocused}
-      setItemRef={setItemRef}
-      handleKeyDown={handleKeyDown}
-      isToggleButton={isToggleButton}
-      onInteract={onInteract}
-      style={noteCell.style}
-      largeSize="80%"
-    />
-  );
-}
 
 export function FretboardNotesLayer({
   activeNotes: externalActiveNotes,
@@ -111,11 +75,12 @@ export function FretboardNotesLayer({
 
   const noteCellElements = noteCells.map((noteCell) => {
     return (
-      <FretboardNoteCellWrapper
+      <InstrumentNoteCell
         key={noteCell.key}
-        noteCell={noteCell}
+        noteKey={noteCell.key}
         note={activeNotes?.[noteCell.key]}
         noteColor={getNoteColor(noteCell.midi)}
+        midi={noteCell.midi}
         label={noteLabels[noteCell.midi]}
         ariaLabel={getAriaLabel(
           {
@@ -130,6 +95,8 @@ export function FretboardNotesLayer({
         handleKeyDown={handleKeyDown}
         onInteract={handleItemInteraction}
         isToggleButton={isToggleButton}
+        style={noteCell.style}
+        largeSize="80%"
       />
     );
   });

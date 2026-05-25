@@ -42,6 +42,10 @@ function normalizeInstrumentBaseConfig(
   const activeNotes = normalizeActiveNotes(input.activeNotes);
   const activeNotesLocked =
     input.activeNotesLocked === true && activeNotes !== undefined;
+  const activeNotesLockPreservesEdits =
+    activeNotesLocked && input.activeNotesLockPreservesEdits === false
+      ? false
+      : undefined;
   const layout = normalizeInstrumentLayoutConfig(input.layout);
   const showHeader = normalizeOptionalBoolean(input.showHeader, true);
 
@@ -50,6 +54,9 @@ function normalizeInstrumentBaseConfig(
     ...(noteEmphasis && noteEmphasis !== "large" ? { noteEmphasis } : {}),
     ...(activeNotes !== undefined ? { activeNotes } : {}),
     ...(activeNotesLocked ? { activeNotesLocked } : {}),
+    ...(activeNotesLockPreservesEdits === false
+      ? { activeNotesLockPreservesEdits }
+      : {}),
     ...(layout ? { layout } : {}),
     ...(showHeader !== undefined ? { showHeader } : {}),
   };

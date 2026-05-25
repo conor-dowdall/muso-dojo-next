@@ -4,52 +4,12 @@ import {
 } from "./KeyboardContext";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { type InstrumentNotesLayerProps } from "@/types/instrument";
-import { type InstrumentNoteCellWrapperProps } from "@/types/instrument-note-cell";
 import { useInstrumentNotes } from "@/hooks/instrument/useInstrumentNotes";
 import { getKeyboardActiveNotes } from "@/utils/keyboard/getKeyboardActiveNotes";
 import { useKeyboardNavigation } from "@/hooks/keyboard/useKeyboardNavigation";
 import { resolveInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
 import { createInstrumentNoteInteractionTarget } from "@/utils/instrument/createInstrumentNoteInteractionTarget";
-import { type KeyboardNoteCellInfo } from "@/types/keyboard";
 import styles from "./Keyboard.module.css";
-
-type KeyboardNoteCellWrapperProps =
-  InstrumentNoteCellWrapperProps<KeyboardNoteCellInfo>;
-
-function KeyboardNoteCellWrapper({
-  noteCell,
-  note,
-  noteColor,
-  label,
-  ariaLabel,
-  isFocused,
-  isToggleButton,
-  setItemRef,
-  handleKeyDown,
-  onInteract,
-}: KeyboardNoteCellWrapperProps) {
-  const { key, midi, labelLarge, style } = noteCell;
-
-  return (
-    <InstrumentNoteCell
-      noteKey={key}
-      note={note}
-      noteColor={noteColor}
-      midi={midi}
-      label={label}
-      ariaLabel={ariaLabel}
-      isFocused={isFocused}
-      setItemRef={setItemRef}
-      handleKeyDown={handleKeyDown}
-      isToggleButton={isToggleButton}
-      notePlacement="bottom"
-      onInteract={onInteract}
-      className={styles.keyWrapper}
-      style={style}
-      largeSize={labelLarge}
-    />
-  );
-}
 
 export function KeyboardNotesLayer({
   activeNotes: externalActiveNotes,
@@ -109,11 +69,12 @@ export function KeyboardNotesLayer({
 
   const noteCellElements = noteCells.map((noteCell) => {
     return (
-      <KeyboardNoteCellWrapper
+      <InstrumentNoteCell
         key={noteCell.key}
-        noteCell={noteCell}
+        noteKey={noteCell.key}
         note={activeNotes?.[noteCell.key]}
         noteColor={getNoteColor(noteCell.midi)}
+        midi={noteCell.midi}
         label={noteLabels[noteCell.midi]}
         ariaLabel={getAriaLabel(
           {
@@ -128,6 +89,10 @@ export function KeyboardNotesLayer({
         setItemRef={setItemRef}
         handleKeyDown={handleKeyDown}
         onInteract={handleItemInteraction}
+        notePlacement="bottom"
+        className={styles.keyWrapper}
+        style={noteCell.style}
+        largeSize={noteCell.labelLarge}
       />
     );
   });

@@ -49,6 +49,7 @@ interface InstrumentHeaderActionsProps {
   onActiveNotesLockChange?: (
     activeNotesLocked: boolean,
     activeNotesSnapshot?: ActiveNotes,
+    activeNotesLockPreservesEdits?: boolean,
   ) => void;
   onDisplayFormatIdChange: DisplayFormatSetter;
   onNoteEmphasisChange: InstrumentNoteEmphasisSetter;
@@ -184,7 +185,7 @@ export const InstrumentHeaderActions = ({
     }
 
     setNoteInteractionMode("play");
-    onActiveNotesLockChange(true, activeNotesSnapshot);
+    onActiveNotesLockChange(true, activeNotesSnapshot, isModified);
   };
 
   return (

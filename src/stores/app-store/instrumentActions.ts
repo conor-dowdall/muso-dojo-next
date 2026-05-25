@@ -166,6 +166,7 @@ export function createInstrumentActions(
       moduleId,
       activeNotesLocked,
       activeNotesSnapshot,
+      activeNotesLockPreservesEdits,
     ) => {
       const instrument = findInstrumentByModuleId(
         get().sessions[sessionId],
@@ -178,6 +179,10 @@ export function createInstrumentActions(
       }
 
       const currentActiveNotesLocked = instrument.activeNotesLocked === true;
+      const currentActiveNotesLockPreservesEdits =
+        instrument.activeNotesLockPreservesEdits !== false;
+      const nextActiveNotesLockPreservesEdits =
+        activeNotesLocked && activeNotesLockPreservesEdits !== false;
 
       if (activeNotesLocked && activeNotesSnapshot === undefined) {
         return;
@@ -186,10 +191,12 @@ export function createInstrumentActions(
       if (
         activeNotesLocked === currentActiveNotesLocked &&
         (!activeNotesLocked ||
-          areOptionalActiveNotesEqual(
-            instrument.activeNotes,
-            activeNotesSnapshot,
-          ))
+          (currentActiveNotesLockPreservesEdits ===
+            nextActiveNotesLockPreservesEdits &&
+            areOptionalActiveNotesEqual(
+              instrument.activeNotes,
+              activeNotesSnapshot,
+            )))
       ) {
         return;
       }
@@ -204,11 +211,15 @@ export function createInstrumentActions(
                       ...instrument,
                       activeNotes: activeNotesSnapshot,
                       activeNotesLocked: true,
+                      activeNotesLockPreservesEdits:
+                        nextActiveNotesLockPreservesEdits,
                     }
-                  : {
-                      ...instrument,
-                      activeNotesLocked: false,
-                    },
+                  : currentActiveNotesLockPreservesEdits
+                    ? {
+                        ...instrument,
+                        activeNotesLocked: false,
+                      }
+                    : clearInstrumentActiveNotesLock(instrument),
               ),
             ),
           ),

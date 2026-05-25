@@ -45,16 +45,13 @@ interface UseInstrumentNotesParams {
   setActiveNotesLockSnapshot?: (snapshot: ActiveNotes) => void;
 }
 
-function createActiveNotesLockSnapshot(
-  activeNotes: ActiveNotes,
-  noteEmphasis: InstrumentNoteEmphasis,
-): ActiveNotes {
+function createActiveNotesLockSnapshot(activeNotes: ActiveNotes): ActiveNotes {
   const snapshot: ActiveNotes = {};
 
   Object.entries(activeNotes).forEach(([key, note]) => {
     snapshot[key] = {
       midi: note.midi,
-      emphasis: note.emphasis ?? noteEmphasis,
+      ...(note.emphasis ? { emphasis: note.emphasis } : {}),
     };
   });
 
@@ -123,10 +120,8 @@ export function useInstrumentNotes({
   }, [isModified, setIsModified]);
 
   useLayoutEffect(() => {
-    setActiveNotesLockSnapshot?.(
-      createActiveNotesLockSnapshot(activeNotes, noteEmphasis),
-    );
-  }, [activeNotes, noteEmphasis, setActiveNotesLockSnapshot]);
+    setActiveNotesLockSnapshot?.(createActiveNotesLockSnapshot(activeNotes));
+  }, [activeNotes, setActiveNotesLockSnapshot]);
 
   const effectiveNoteInteractionMode = activeNotesLocked
     ? "play"

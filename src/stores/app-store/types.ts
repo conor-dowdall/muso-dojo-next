@@ -118,6 +118,7 @@ export interface InstrumentActions {
     moduleId: string,
     activeNotesLocked: boolean,
     activeNotesSnapshot?: ActiveNotes,
+    activeNotesLockPreservesEdits?: boolean,
   ) => void;
 }
 

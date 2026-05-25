@@ -66,6 +66,7 @@ export interface InstrumentFrameProps {
   onActiveNotesLockChange?: (
     activeNotesLocked: boolean,
     activeNotesSnapshot?: ActiveNotes,
+    activeNotesLockPreservesEdits?: boolean,
   ) => void;
   initialDisplayFormatId?: DisplayFormatId;
   onDisplayFormatIdChange?: DisplayFormatSetter;

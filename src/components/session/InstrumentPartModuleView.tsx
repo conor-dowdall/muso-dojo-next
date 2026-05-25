@@ -124,6 +124,7 @@ export function InstrumentPartModuleView({
     onActiveNotesLockChange: (
       activeNotesLocked: boolean,
       activeNotesSnapshot?: ActiveNotes,
+      activeNotesLockPreservesEdits?: boolean,
     ) =>
       setInstrumentActiveNotesLock(
         sessionId,
@@ -131,6 +132,7 @@ export function InstrumentPartModuleView({
         moduleId,
         activeNotesLocked,
         activeNotesSnapshot,
+        activeNotesLockPreservesEdits,
       ),
     layout: instrument.layout,
     noteInteractionMode,

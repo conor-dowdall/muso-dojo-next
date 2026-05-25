@@ -348,6 +348,7 @@ export function updateInstrumentActiveNotesByModuleId(
   if (normalizedActiveNotes === undefined) {
     delete nextInstrument.activeNotes;
     delete nextInstrument.activeNotesLocked;
+    delete nextInstrument.activeNotesLockPreservesEdits;
   } else {
     nextInstrument.activeNotes = normalizedActiveNotes;
   }

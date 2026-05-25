@@ -60,10 +60,15 @@ export function clearInstrumentActiveNotes<T extends { activeNotes?: unknown }>(
 }
 
 export function clearInstrumentActiveNotesLock<
-  T extends { activeNotes?: unknown; activeNotesLocked?: unknown },
+  T extends {
+    activeNotes?: unknown;
+    activeNotesLocked?: unknown;
+    activeNotesLockPreservesEdits?: unknown;
+  },
 >(instrument: T): T {
   const nextInstrument = clearInstrumentActiveNotes(instrument);
   delete nextInstrument.activeNotesLocked;
+  delete nextInstrument.activeNotesLockPreservesEdits;
   return nextInstrument;
 }
 
