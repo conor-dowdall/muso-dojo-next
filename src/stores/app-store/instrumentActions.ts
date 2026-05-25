@@ -7,7 +7,7 @@ import {
   updateSessionById,
 } from "./sessionGraph";
 import {
-  clearInstrumentActiveNotes,
+  clearInstrumentActiveNotesLock,
   normalizeInstrumentForWrite,
 } from "./writeNormalization";
 import {
@@ -15,6 +15,7 @@ import {
   type AppStoreSet,
   type InstrumentActions,
 } from "./types";
+import { areOptionalActiveNotesEqual } from "@/utils/instrument/areActiveNotesEqual";
 import { resolveInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
 
 export function createInstrumentActions(
@@ -37,7 +38,7 @@ export function createInstrumentActions(
 
               return normalizeInstrumentForWrite(
                 shouldClearActiveNotes
-                  ? clearInstrumentActiveNotes(patchedInstrument)
+                  ? clearInstrumentActiveNotesLock(patchedInstrument)
                   : patchedInstrument,
               );
             }),
@@ -159,11 +160,12 @@ export function createInstrumentActions(
         ),
       );
     },
-    setInstrumentActiveNotesLocked: (
+    setInstrumentActiveNotesLock: (
       sessionId,
       partId,
       moduleId,
       activeNotesLocked,
+      activeNotesSnapshot,
     ) => {
       const instrument = findInstrumentByModuleId(
         get().sessions[sessionId],
@@ -176,18 +178,42 @@ export function createInstrumentActions(
       }
 
       const currentActiveNotesLocked = instrument.activeNotesLocked === true;
-      const nextActiveNotesLocked = resolveSettingValue(
-        activeNotesLocked,
-        currentActiveNotesLocked,
-      );
 
-      if (nextActiveNotesLocked === currentActiveNotesLocked) {
+      if (activeNotesLocked && activeNotesSnapshot === undefined) {
         return;
       }
 
-      get().updateInstrumentSettings(sessionId, partId, moduleId, {
-        activeNotesLocked: nextActiveNotesLocked,
-      });
+      if (
+        activeNotesLocked === currentActiveNotesLocked &&
+        (!activeNotesLocked ||
+          areOptionalActiveNotesEqual(
+            instrument.activeNotes,
+            activeNotesSnapshot,
+          ))
+      ) {
+        return;
+      }
+
+      set((state) =>
+        updateSessionById(state, sessionId, (session) =>
+          updatePartById(session, partId, (part) =>
+            updateInstrumentByModuleId(part, moduleId, (instrument) =>
+              normalizeInstrumentForWrite(
+                activeNotesLocked
+                  ? {
+                      ...instrument,
+                      activeNotes: activeNotesSnapshot,
+                      activeNotesLocked: true,
+                    }
+                  : {
+                      ...instrument,
+                      activeNotesLocked: false,
+                    },
+              ),
+            ),
+          ),
+        ),
+      );
     },
   };
 }

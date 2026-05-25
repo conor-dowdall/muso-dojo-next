@@ -59,6 +59,14 @@ export function clearInstrumentActiveNotes<T extends { activeNotes?: unknown }>(
   return nextInstrument;
 }
 
+export function clearInstrumentActiveNotesLock<
+  T extends { activeNotes?: unknown; activeNotesLocked?: unknown },
+>(instrument: T): T {
+  const nextInstrument = clearInstrumentActiveNotes(instrument);
+  delete nextInstrument.activeNotesLocked;
+  return nextInstrument;
+}
+
 function clearModuleActiveNotesAffectedByPartTheory(
   module: PartModuleConfig,
 ): PartModuleConfig {

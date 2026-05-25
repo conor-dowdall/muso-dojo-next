@@ -22,3 +22,18 @@ export function areActiveNotesEqual(a: ActiveNotes, b: ActiveNotes): boolean {
 
   return true;
 }
+
+export function areOptionalActiveNotesEqual(
+  left: ActiveNotes | undefined,
+  right: ActiveNotes | undefined,
+): boolean {
+  if (left === right) {
+    return true;
+  }
+
+  if (left === undefined || right === undefined) {
+    return false;
+  }
+
+  return areActiveNotesEqual(left, right);
+}

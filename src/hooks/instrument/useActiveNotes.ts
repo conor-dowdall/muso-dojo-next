@@ -46,6 +46,8 @@ export function useActiveNotes(
 
   if (!isControlled && dependenciesChanged) {
     internalActiveNotes = externalActiveNotes ?? initialActiveNotes;
+    // Guarded derived-state update keeps uncontrolled notes in sync without
+    // committing a stale frame or causing an effect-driven cascading render.
     setInternalState({
       dependencies,
       activeNotes: internalActiveNotes,

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { useEffectiveMusicSystem } from "@/hooks/instrument/useEffectiveMusicSystem";
 import { useActiveNotes } from "@/hooks/instrument/useActiveNotes";
 import {
@@ -42,6 +42,23 @@ interface UseInstrumentNotesParams {
     noteCollectionKey: NoteCollectionKey;
   }) => ActiveNotes;
   setIsModified?: (isModified: boolean) => void;
+  setActiveNotesLockSnapshot?: (snapshot: ActiveNotes) => void;
+}
+
+function createActiveNotesLockSnapshot(
+  activeNotes: ActiveNotes,
+  noteEmphasis: InstrumentNoteEmphasis,
+): ActiveNotes {
+  const snapshot: ActiveNotes = {};
+
+  Object.entries(activeNotes).forEach(([key, note]) => {
+    snapshot[key] = {
+      midi: note.midi,
+      emphasis: note.emphasis ?? noteEmphasis,
+    };
+  });
+
+  return snapshot;
 }
 
 /**
@@ -65,6 +82,7 @@ export function useInstrumentNotes({
   dependencies = [],
   getInitialActiveNotes,
   setIsModified,
+  setActiveNotesLockSnapshot,
 }: UseInstrumentNotesParams) {
   const musicSystem = useEffectiveMusicSystem({
     rootNote,
@@ -104,8 +122,18 @@ export function useInstrumentNotes({
     setIsModified?.(isModified);
   }, [isModified, setIsModified]);
 
+  useLayoutEffect(() => {
+    setActiveNotesLockSnapshot?.(
+      createActiveNotesLockSnapshot(activeNotes, noteEmphasis),
+    );
+  }, [activeNotes, noteEmphasis, setActiveNotesLockSnapshot]);
+
+  const effectiveNoteInteractionMode = activeNotesLocked
+    ? "play"
+    : noteInteractionMode;
+
   const handleInteract = (target: InstrumentNoteInteractionTarget) => {
-    switch (noteInteractionMode) {
+    switch (effectiveNoteInteractionMode) {
       case "play":
         void musoAudioEngine
           .playNote({
@@ -117,6 +145,10 @@ export function useInstrumentNotes({
           .catch(() => undefined);
         return;
       case "edit-one":
+        if (activeNotesLocked) {
+          return;
+        }
+
         onActiveNotesChange?.((currentNotes) =>
           applyInstrumentNoteEdit({
             activeNotes: currentNotes,
@@ -128,6 +160,10 @@ export function useInstrumentNotes({
         );
         return;
       case "edit-pitch-class":
+        if (activeNotesLocked) {
+          return;
+        }
+
         onActiveNotesChange?.((currentNotes) =>
           applyInstrumentNoteEdit({
             activeNotes: currentNotes,
@@ -140,7 +176,7 @@ export function useInstrumentNotes({
         return;
       default:
         return assertNever(
-          noteInteractionMode,
+          effectiveNoteInteractionMode,
           "Unsupported note interaction mode",
         );
     }
@@ -155,7 +191,7 @@ export function useInstrumentNotes({
     const noteName = musicSystem.noteNames?.[midi % 12];
     const label = getNoteAriaLabel(context, noteName);
 
-    switch (noteInteractionMode) {
+    switch (effectiveNoteInteractionMode) {
       case "play":
         return `Play ${label}`;
       case "edit-one":
@@ -164,7 +200,7 @@ export function useInstrumentNotes({
         return `Edit all notes matching ${noteName ?? label}`;
       default:
         return assertNever(
-          noteInteractionMode,
+          effectiveNoteInteractionMode,
           "Unsupported note interaction mode",
         );
     }
@@ -194,7 +230,7 @@ export function useInstrumentNotes({
     ...musicSystem,
     activeNotes,
     onActiveNotesChange,
-    noteInteractionMode,
+    noteInteractionMode: effectiveNoteInteractionMode,
     handleInteract,
     getAriaLabel,
     getNoteLabel,

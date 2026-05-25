@@ -6,6 +6,7 @@ import { Keyboard } from "@/components/keyboard/Keyboard";
 import { useAppStore } from "@/stores/appStore";
 import { type AudioPresetId } from "@/audio/types";
 import { type DisplayFormatId } from "@/data/displayFormats";
+import { type ActiveNotes } from "@/types/instrument-active-note";
 import { type InstrumentNoteInteractionMode } from "@/types/instrument";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import {
@@ -33,6 +34,7 @@ function selectInstrumentBase(module: InstrumentInstanceConfig) {
     audioPresetId: module.audioPresetId,
     displayFormatId: module.displayFormatId,
     noteEmphasis: module.noteEmphasis,
+    activeNotesLocked: module.activeNotesLocked,
     layout: module.layout,
     showHeader: module.showHeader,
   };
@@ -89,6 +91,9 @@ export function InstrumentPartModuleView({
   const setInstrumentAudioPresetId = useAppStore(
     (state) => state.setInstrumentAudioPresetId,
   );
+  const setInstrumentActiveNotesLock = useAppStore(
+    (state) => state.setInstrumentActiveNotesLock,
+  );
   const clonePartModule = useAppStore((state) => state.clonePartModule);
   const removePartModule = useAppStore((state) => state.removePartModule);
 
@@ -115,6 +120,18 @@ export function InstrumentPartModuleView({
     audioPresetId: instrument.audioPresetId,
     onAudioPresetIdChange: (audioPresetId: SettingValue<AudioPresetId>) =>
       setInstrumentAudioPresetId(sessionId, partId, moduleId, audioPresetId),
+    activeNotesLocked: instrument.activeNotesLocked,
+    onActiveNotesLockChange: (
+      activeNotesLocked: boolean,
+      activeNotesSnapshot?: ActiveNotes,
+    ) =>
+      setInstrumentActiveNotesLock(
+        sessionId,
+        partId,
+        moduleId,
+        activeNotesLocked,
+        activeNotesSnapshot,
+      ),
     layout: instrument.layout,
     noteInteractionMode,
     showHeader: !isPerformanceMode && instrument.showHeader,

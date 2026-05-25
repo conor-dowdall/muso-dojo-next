@@ -2,6 +2,7 @@
 
 import { type ReactNode, useState } from "react";
 import {
+  type ActiveNotes,
   type InstrumentNoteInteractionMode,
   type InstrumentNoteInteractionModeSetter,
 } from "@/types/instrument";
@@ -22,6 +23,7 @@ import {
   CircleDot,
   CircleOff,
   Eraser,
+  Lock,
   Pencil,
   Settings,
   SquarePen,
@@ -42,10 +44,16 @@ interface InstrumentHeaderActionsProps {
   instrumentType: InstrumentType;
   noteEmphasis: InstrumentNoteEmphasis;
   noteInteractionMode: InstrumentNoteInteractionMode;
+  activeNotesLocked?: boolean;
   onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
+  onActiveNotesLockChange?: (
+    activeNotesLocked: boolean,
+    activeNotesSnapshot?: ActiveNotes,
+  ) => void;
   onDisplayFormatIdChange: DisplayFormatSetter;
   onNoteEmphasisChange: InstrumentNoteEmphasisSetter;
   setNoteInteractionMode: InstrumentNoteInteractionModeSetter;
+  getActiveNotesLockSnapshot: () => ActiveNotes | null;
   onResetNotes: () => void;
   isModified: boolean;
   onClone?: () => void;
@@ -111,10 +119,13 @@ export const InstrumentHeaderActions = ({
   instrumentType,
   noteEmphasis,
   noteInteractionMode,
+  activeNotesLocked = false,
   onAudioPresetIdChange,
+  onActiveNotesLockChange,
   onDisplayFormatIdChange,
   onNoteEmphasisChange,
   setNoteInteractionMode,
+  getActiveNotesLockSnapshot,
   onResetNotes,
   isModified,
   onClone,
@@ -124,16 +135,23 @@ export const InstrumentHeaderActions = ({
   const [settingsDialogKey, setSettingsDialogKey] = useState(0);
   const [settingsChoice, setSettingsChoice] =
     useState<InstrumentSettingsChoice | null>(null);
-  const isEditingNotes = noteInteractionMode !== "play";
-  const canResetNotes = isEditingNotes && isModified;
-  const resetNotesLabel =
-    noteInteractionMode === "play"
+  const effectiveNoteInteractionMode = activeNotesLocked
+    ? "play"
+    : noteInteractionMode;
+  const isEditingNotes = effectiveNoteInteractionMode !== "play";
+  const canResetNotes = !activeNotesLocked && isEditingNotes && isModified;
+  const resetNotesLabel = activeNotesLocked
+    ? "Unlock to reset custom edits"
+    : effectiveNoteInteractionMode === "play"
       ? `${noteInteractionModeLabels["edit-one"]} to reset custom edits`
       : isModified
         ? "Reset custom edits"
         : "No custom edits";
   const displayFormatLabel = getDisplayFormatLabel(displayFormatId);
   const noteEmphasisLabel = noteEmphasisLabels[noteEmphasis];
+  const activeNotesLockLabel = activeNotesLocked
+    ? "Unlock notes"
+    : "Lock current notes";
 
   const openSettings = (choice: InstrumentSettingsChoice | null) => {
     setSettingsChoice(choice);
@@ -147,6 +165,26 @@ export const InstrumentHeaderActions = ({
       if (prev === "small") return "hidden";
       return "large";
     });
+  };
+
+  const toggleActiveNotesLock = () => {
+    if (!onActiveNotesLockChange) {
+      return;
+    }
+
+    if (activeNotesLocked) {
+      onActiveNotesLockChange(false);
+      return;
+    }
+
+    const activeNotesSnapshot = getActiveNotesLockSnapshot();
+
+    if (!activeNotesSnapshot) {
+      return;
+    }
+
+    setNoteInteractionMode("play");
+    onActiveNotesLockChange(true, activeNotesSnapshot);
   };
 
   return (
@@ -168,10 +206,15 @@ export const InstrumentHeaderActions = ({
         </Tooltip>
         <IconButton
           aria-label={`Change default note size. Current: ${noteEmphasisLabel}`}
+          disabled={activeNotesLocked}
           icon={getNoteEmphasisIcon(noteEmphasis)}
           size="sm"
           onClick={cycleDefaultNoteSize}
-          tooltip={`Default note size: ${noteEmphasisLabel}`}
+          tooltip={
+            activeNotesLocked
+              ? "Unlock to change default note size"
+              : `Default note size: ${noteEmphasisLabel}`
+          }
         />
       </span>
 
@@ -186,19 +229,39 @@ export const InstrumentHeaderActions = ({
             role="group"
             aria-label="Note interaction mode"
           >
-            {noteInteractionModes.map((mode) => (
-              <IconButton
-                key={mode.id}
-                aria-label={mode.ariaLabel}
-                icon={mode.icon}
-                size="sm"
-                onClick={() => setNoteInteractionMode(mode.id)}
-                selected={noteInteractionMode === mode.id}
-                tooltip={mode.tooltip}
-                variant={noteInteractionMode === mode.id ? "filled" : "outline"}
-              />
-            ))}
+            {noteInteractionModes.map((mode) => {
+              const modeDisabled =
+                activeNotesLocked === true && mode.id !== "play";
+
+              return (
+                <IconButton
+                  key={mode.id}
+                  aria-label={mode.ariaLabel}
+                  disabled={modeDisabled}
+                  icon={mode.icon}
+                  size="sm"
+                  onClick={() => setNoteInteractionMode(mode.id)}
+                  selected={effectiveNoteInteractionMode === mode.id}
+                  tooltip={modeDisabled ? "Unlock to edit notes" : mode.tooltip}
+                  variant={
+                    effectiveNoteInteractionMode === mode.id
+                      ? "filled"
+                      : "outline"
+                  }
+                />
+              );
+            })}
           </span>
+          <IconButton
+            aria-label={activeNotesLockLabel}
+            disabled={!onActiveNotesLockChange}
+            icon={<Lock />}
+            size="sm"
+            onClick={toggleActiveNotesLock}
+            selected={activeNotesLocked}
+            tooltip={activeNotesLockLabel}
+            variant={activeNotesLocked ? "filled" : "outline"}
+          />
           <IconButton
             aria-label={resetNotesLabel}
             icon={<Eraser />}

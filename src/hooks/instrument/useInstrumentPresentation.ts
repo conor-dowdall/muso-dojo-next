@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   type InstrumentNoteEmphasis,
   type InstrumentNoteEmphasisSetter,
 } from "@/types/instrument-note-emphasis";
+import { type ActiveNotes } from "@/types/instrument-active-note";
 import {
   type InstrumentNoteInteractionMode,
   type InstrumentNoteInteractionModeSetter,
@@ -65,8 +66,16 @@ export function useInstrumentPresentation({
   });
   const [emphasisResetKey, setEmphasisResetKey] = useState(0);
   const [isModified, setIsModified] = useState(initialIsModified);
+  const activeNotesLockSnapshotRef = useRef<ActiveNotes | null>(null);
 
   const resetNotes = () => setEmphasisResetKey((k) => k + 1);
+  const getActiveNotesLockSnapshot = useCallback(
+    () => activeNotesLockSnapshotRef.current,
+    [],
+  );
+  const setActiveNotesLockSnapshot = useCallback((snapshot: ActiveNotes) => {
+    activeNotesLockSnapshotRef.current = snapshot;
+  }, []);
 
   return {
     activeDisplayFormatId,
@@ -79,5 +88,7 @@ export function useInstrumentPresentation({
     resetNotes,
     isModified,
     setIsModified,
+    getActiveNotesLockSnapshot,
+    setActiveNotesLockSnapshot,
   };
 }

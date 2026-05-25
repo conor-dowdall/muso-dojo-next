@@ -40,7 +40,8 @@ function normalizeInstrumentBaseConfig(
     ? input.noteEmphasis
     : undefined;
   const activeNotes = normalizeActiveNotes(input.activeNotes);
-  const activeNotesLocked = input.activeNotesLocked === true;
+  const activeNotesLocked =
+    input.activeNotesLocked === true && activeNotes !== undefined;
   const layout = normalizeInstrumentLayoutConfig(input.layout);
   const showHeader = normalizeOptionalBoolean(input.showHeader, true);
 

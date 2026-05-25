@@ -1,4 +1,7 @@
-import { areActiveNotesEqual } from "@/utils/instrument/areActiveNotesEqual";
+import {
+  areActiveNotesEqual,
+  areOptionalActiveNotesEqual,
+} from "@/utils/instrument/areActiveNotesEqual";
 import { normalizeActiveNotes } from "@/utils/instrument/createActiveNotesConfig";
 import { type ActiveNotes } from "@/types/instrument-active-note";
 import {
@@ -277,21 +280,6 @@ export function findInstrumentByModuleId(
   return isInstrumentPartModule(partModule) ? partModule.instrument : undefined;
 }
 
-function optionalActiveNotesAreEqual(
-  left: ActiveNotes | undefined,
-  right: ActiveNotes | undefined,
-) {
-  if (left === right) {
-    return true;
-  }
-
-  if (left === undefined || right === undefined) {
-    return false;
-  }
-
-  return areActiveNotesEqual(left, right);
-}
-
 function normalizeActiveNotesForTrustedWrite(
   activeNotes: ActiveNotes | undefined,
 ) {
@@ -347,7 +335,7 @@ export function updateInstrumentActiveNotesByModuleId(
     normalizeActiveNotesForTrustedWrite(activeNotes);
 
   if (
-    optionalActiveNotesAreEqual(instrument.activeNotes, normalizedActiveNotes)
+    areOptionalActiveNotesEqual(instrument.activeNotes, normalizedActiveNotes)
   ) {
     return state;
   }

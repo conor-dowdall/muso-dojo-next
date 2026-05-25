@@ -89,6 +89,7 @@ export function FretboardNotesLayer({
     noteEmphasis: presentation.noteEmphasis,
     emphasisResetKey: presentation.emphasisResetKey,
     setIsModified: presentation.setIsModified,
+    setActiveNotesLockSnapshot: presentation.setActiveNotesLockSnapshot,
     dependencies: [tuning.join(), fretRange.join()],
     getInitialActiveNotes: ({ rootNote, noteCollectionKey }) =>
       getFretboardActiveNotes({

@@ -63,6 +63,10 @@ export interface InstrumentFrameProps {
   layout?: InstrumentLayoutConfig;
   displayFormatId?: DisplayFormatId;
   activeNotesLocked?: boolean;
+  onActiveNotesLockChange?: (
+    activeNotesLocked: boolean,
+    activeNotesSnapshot?: ActiveNotes,
+  ) => void;
   initialDisplayFormatId?: DisplayFormatId;
   onDisplayFormatIdChange?: DisplayFormatSetter;
   noteEmphasis?: InstrumentNoteEmphasis;
@@ -87,4 +91,6 @@ export interface InstrumentPresentation {
   resetNotes: () => void;
   isModified: boolean;
   setIsModified: (isModified: boolean) => void;
+  getActiveNotesLockSnapshot: () => ActiveNotes | null;
+  setActiveNotesLockSnapshot: (snapshot: ActiveNotes) => void;
 }

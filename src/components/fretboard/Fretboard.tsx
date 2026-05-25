@@ -16,6 +16,8 @@ export function Fretboard({
   onAudioPresetIdChange,
   showHeader,
   layout,
+  activeNotesLocked,
+  onActiveNotesLockChange,
   onClone,
   onRemove,
   ...props
@@ -27,6 +29,8 @@ export function Fretboard({
         onAudioPresetIdChange={onAudioPresetIdChange}
         showHeader={showHeader}
         layout={layout}
+        activeNotesLocked={activeNotesLocked}
+        onActiveNotesLockChange={onActiveNotesLockChange}
         onClone={onClone}
         onRemove={onRemove}
       >
@@ -42,6 +46,8 @@ function FretboardInner({
   onAudioPresetIdChange,
   showHeader,
   layout,
+  activeNotesLocked,
+  onActiveNotesLockChange,
   onClone,
   onRemove,
 }: Pick<
@@ -51,6 +57,8 @@ function FretboardInner({
   | "onAudioPresetIdChange"
   | "showHeader"
   | "layout"
+  | "activeNotesLocked"
+  | "onActiveNotesLockChange"
   | "onClone"
   | "onRemove"
 >) {
@@ -68,6 +76,9 @@ function FretboardInner({
           onNoteEmphasisChange={presentation.setNoteEmphasis}
           audioPresetId={audioPresetId}
           onAudioPresetIdChange={onAudioPresetIdChange}
+          activeNotesLocked={activeNotesLocked}
+          onActiveNotesLockChange={onActiveNotesLockChange}
+          getActiveNotesLockSnapshot={presentation.getActiveNotesLockSnapshot}
           noteInteractionMode={presentation.noteInteractionMode}
           setNoteInteractionMode={presentation.setNoteInteractionMode}
           onResetNotes={presentation.resetNotes}

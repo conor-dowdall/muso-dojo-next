@@ -90,6 +90,7 @@ export function KeyboardNotesLayer({
     noteEmphasis: presentation.noteEmphasis,
     emphasisResetKey: presentation.emphasisResetKey,
     setIsModified: presentation.setIsModified,
+    setActiveNotesLockSnapshot: presentation.setActiveNotesLockSnapshot,
     dependencies: [interactiveMidiRange.join()],
     getInitialActiveNotes: ({ rootNote, noteCollectionKey }) =>
       getKeyboardActiveNotes({
