@@ -8,7 +8,12 @@ import {
   normalizeAppStoreSnapshot,
 } from "@/utils/session/normalizeAppStoreSnapshot";
 import { createFallbackSessionConfig } from "@/utils/session/createSessionEntities";
-import { type AppStoreSnapshot } from "@/types/session";
+import {
+  APP_STORE_VERSION,
+  type AppStorePersistedSnapshot,
+  migrateAppStoreSnapshot,
+  partializeAppStoreSnapshot,
+} from "@/stores/app-store/persistence";
 import { createAppStoreActions } from "@/stores/app-store/actions";
 import { type AppStore } from "@/stores/app-store/types";
 
@@ -23,19 +28,24 @@ let hasCompletedHydration = false;
 
 export const useAppStore = create<AppStore>()(
   devtools(
-    persist(
+    persist<AppStore, [], [], AppStorePersistedSnapshot>(
       (set, get) => ({
         ...initialSnapshot,
         ...createAppStoreActions(set, get),
       }),
       {
         name: "muso-dojo-app-store",
-        storage: createJSONStorage(() => localStorage),
-        partialize: (state): AppStoreSnapshot => ({
-          activeSessionId: state.activeSessionId,
-          sessions: state.sessions,
-        }),
-        migrate: (): AppStoreSnapshot => initialSnapshot,
+        version: APP_STORE_VERSION,
+        storage: createJSONStorage<AppStorePersistedSnapshot>(
+          () => localStorage,
+        ),
+        partialize: partializeAppStoreSnapshot,
+        migrate: (persistedState, persistedVersion) =>
+          migrateAppStoreSnapshot(
+            persistedState,
+            persistedVersion,
+            initialSnapshot,
+          ),
         merge: (persistedState, currentState) => ({
           ...currentState,
           ...normalizeAppStoreSnapshot(persistedState, initialSnapshot),

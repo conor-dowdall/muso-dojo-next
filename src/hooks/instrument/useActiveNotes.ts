@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import {
   type ActiveNotes,
   type ActiveNotesSetter,
@@ -23,7 +23,7 @@ import { areActiveNotesEqual } from "@/utils/instrument/areActiveNotesEqual";
  *   current dependencies.
  * @param options.preserveOnDependencyChange - Keep controlled overrides when
  *   dependencies change. Locked instruments use this so root/collection changes
- *   do not erase their stored note map.
+ *   do not erase their stored note map until the instrument is unlocked.
  */
 export function useActiveNotes(
   externalActiveNotes: ActiveNotes | undefined,
@@ -36,6 +36,7 @@ export function useActiveNotes(
   const { preserveOnDependencyChange = false } = options;
   const initialActiveNotes = recalculate();
   const previousControlledDependencies = useRef(dependencies);
+  const hasStalePreservedControlledNotes = useRef(false);
   const [internalState, setInternalState] = useState(() => ({
     dependencies,
     activeNotes: externalActiveNotes ?? initialActiveNotes,
@@ -58,19 +59,42 @@ export function useActiveNotes(
     ? (externalActiveNotes ?? initialActiveNotes)
     : internalActiveNotes;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isControlled) {
       previousControlledDependencies.current = dependencies;
+      hasStalePreservedControlledNotes.current = false;
       return;
     }
 
-    if (previousControlledDependencies.current === dependencies) {
+    const dependenciesDidChange =
+      previousControlledDependencies.current !== dependencies;
+
+    if (!dependenciesDidChange) {
+      if (
+        !preserveOnDependencyChange &&
+        hasStalePreservedControlledNotes.current
+      ) {
+        hasStalePreservedControlledNotes.current = false;
+
+        if (externalActiveNotes !== undefined) {
+          externalOnChange(undefined);
+        }
+      }
+
       return;
     }
 
     previousControlledDependencies.current = dependencies;
 
-    if (!preserveOnDependencyChange && externalActiveNotes !== undefined) {
+    if (preserveOnDependencyChange) {
+      hasStalePreservedControlledNotes.current =
+        externalActiveNotes !== undefined;
+      return;
+    }
+
+    hasStalePreservedControlledNotes.current = false;
+
+    if (externalActiveNotes !== undefined) {
       externalOnChange(undefined);
     }
   }, [

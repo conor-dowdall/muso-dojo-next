@@ -18,9 +18,13 @@ export function createSessionActions(
 ): SessionActions {
   return {
     setActiveSessionId: (sessionId) => {
-      set((state) =>
-        state.sessions[sessionId] ? { activeSessionId: sessionId } : {},
-      );
+      const state = get();
+
+      if (state.activeSessionId === sessionId || !state.sessions[sessionId]) {
+        return;
+      }
+
+      set({ activeSessionId: sessionId });
     },
     addSession: (settings) => {
       const session = createDefaultSessionConfig({
@@ -81,11 +85,11 @@ export function createSessionActions(
       return clonedSession.id;
     },
     removeSession: (sessionId) => {
-      set((state) => {
-        if (!state.sessions[sessionId]) {
-          return {};
-        }
+      if (!get().sessions[sessionId]) {
+        return;
+      }
 
+      set((state) => {
         const nextSessions = { ...state.sessions };
         delete nextSessions[sessionId];
         const replacementSession = Object.values(nextSessions)[0];

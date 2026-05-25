@@ -333,8 +333,11 @@ export function updateInstrumentActiveNotesByModuleId(
   const instrument = partModule.instrument;
   const normalizedActiveNotes =
     normalizeActiveNotesForTrustedWrite(activeNotes);
+  const shouldClearOrphanedActiveNotesLock =
+    normalizedActiveNotes === undefined && instrument.activeNotesLocked === true;
 
   if (
+    !shouldClearOrphanedActiveNotesLock &&
     areOptionalActiveNotesEqual(instrument.activeNotes, normalizedActiveNotes)
   ) {
     return state;
@@ -344,6 +347,7 @@ export function updateInstrumentActiveNotesByModuleId(
 
   if (normalizedActiveNotes === undefined) {
     delete nextInstrument.activeNotes;
+    delete nextInstrument.activeNotesLocked;
   } else {
     nextInstrument.activeNotes = normalizedActiveNotes;
   }
