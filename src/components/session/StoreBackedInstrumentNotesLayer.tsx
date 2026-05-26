@@ -32,6 +32,11 @@ function useStoreBackedInstrumentNotes({
       selectInstrumentForModule(state, sessionId, partId, moduleId)
         ?.activeNotesLocked === true,
   );
+  const activeNotesLockPreservesEdits = useAppStore(
+    (state) =>
+      selectInstrumentForModule(state, sessionId, partId, moduleId)
+        ?.activeNotesLockPreservesEdits !== false,
+  );
   const setInstrumentActiveNotes = useAppStore(
     (state) => state.setInstrumentActiveNotes,
   );
@@ -42,6 +47,7 @@ function useStoreBackedInstrumentNotes({
   return {
     activeNotes,
     activeNotesLocked,
+    activeNotesLockPreservesEdits,
     onActiveNotesChange,
   };
 }
@@ -52,17 +58,22 @@ export function StoreBackedFretboardNotesLayer({
   moduleId,
   audioPresetId,
 }: StoreBackedNotesLayerProps) {
-  const { activeNotes, activeNotesLocked, onActiveNotesChange } =
-    useStoreBackedInstrumentNotes({
-      sessionId,
-      partId,
-      moduleId,
-    });
+  const {
+    activeNotes,
+    activeNotesLocked,
+    activeNotesLockPreservesEdits,
+    onActiveNotesChange,
+  } = useStoreBackedInstrumentNotes({
+    sessionId,
+    partId,
+    moduleId,
+  });
 
   return (
     <FretboardNotesLayer
       activeNotes={activeNotes}
       activeNotesLocked={activeNotesLocked}
+      activeNotesLockPreservesEdits={activeNotesLockPreservesEdits}
       audioPresetId={audioPresetId}
       onActiveNotesChange={onActiveNotesChange}
     />
@@ -75,17 +86,22 @@ export function StoreBackedKeyboardNotesLayer({
   moduleId,
   audioPresetId,
 }: StoreBackedNotesLayerProps) {
-  const { activeNotes, activeNotesLocked, onActiveNotesChange } =
-    useStoreBackedInstrumentNotes({
-      sessionId,
-      partId,
-      moduleId,
-    });
+  const {
+    activeNotes,
+    activeNotesLocked,
+    activeNotesLockPreservesEdits,
+    onActiveNotesChange,
+  } = useStoreBackedInstrumentNotes({
+    sessionId,
+    partId,
+    moduleId,
+  });
 
   return (
     <KeyboardNotesLayer
       activeNotes={activeNotes}
       activeNotesLocked={activeNotesLocked}
+      activeNotesLockPreservesEdits={activeNotesLockPreservesEdits}
       audioPresetId={audioPresetId}
       onActiveNotesChange={onActiveNotesChange}
     />

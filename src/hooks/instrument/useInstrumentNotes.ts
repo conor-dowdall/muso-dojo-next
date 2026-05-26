@@ -31,6 +31,7 @@ interface UseInstrumentNotesParams {
   rootNote?: string;
   activeDisplayFormatId: DisplayFormatId;
   activeNotesLocked?: boolean;
+  activeNotesLockPreservesEdits?: boolean;
   noteInteractionMode: InstrumentNoteInteractionMode;
   noteTargets?: readonly InstrumentNoteInteractionTarget[];
   previewAudioPresetId: AudioPresetId;
@@ -58,6 +59,7 @@ export function useInstrumentNotes({
   rootNote,
   activeDisplayFormatId,
   activeNotesLocked = false,
+  activeNotesLockPreservesEdits = true,
   noteInteractionMode,
   noteTargets = [],
   previewAudioPresetId,
@@ -96,7 +98,10 @@ export function useInstrumentNotes({
         rootNote: musicSystem.effectiveRootNote,
         noteCollectionKey: musicSystem.effectiveNoteCollectionKey,
       }),
-    { preserveOnDependencyChange: activeNotesLocked },
+    {
+      preserveOnDependencyChange: activeNotesLocked,
+      preserveStaleNotesOnUnlock: activeNotesLockPreservesEdits,
+    },
   );
 
   const isModified = initialActiveNotes

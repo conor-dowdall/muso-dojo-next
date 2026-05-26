@@ -50,6 +50,7 @@ export type {
 export interface InstrumentNotesLayerProps {
   activeNotes?: ActiveNotes;
   activeNotesLocked?: boolean;
+  activeNotesLockPreservesEdits?: boolean;
   audioPresetId?: AudioPresetId;
   onActiveNotesChange?: ActiveNotesSetter;
   rootNote?: string;

@@ -24,16 +24,25 @@ import { areActiveNotesEqual } from "@/utils/instrument/areActiveNotesEqual";
  * @param options.preserveOnDependencyChange - Keep controlled overrides when
  *   dependencies change. Locked instruments use this so root/collection changes
  *   do not erase their stored note map until the instrument is unlocked.
+ * @param options.preserveStaleNotesOnUnlock - Keep notes preserved through a
+ *   locked dependency change after the instrument is unlocked. Custom edited
+ *   note sets use this; generated lock snapshots should clear instead.
  */
 export function useActiveNotes(
   externalActiveNotes: ActiveNotes | undefined,
   externalOnChange: ActiveNotesSetter | undefined,
   dependencies: string,
   recalculate: () => ActiveNotes,
-  options: { preserveOnDependencyChange?: boolean } = {},
+  options: {
+    preserveOnDependencyChange?: boolean;
+    preserveStaleNotesOnUnlock?: boolean;
+  } = {},
 ): [ActiveNotes, ActiveNotesSetter, ActiveNotes] {
   const isControlled = externalOnChange !== undefined;
-  const { preserveOnDependencyChange = false } = options;
+  const {
+    preserveOnDependencyChange = false,
+    preserveStaleNotesOnUnlock = false,
+  } = options;
   const initialActiveNotes = recalculate();
   const previousControlledDependencies = useRef(dependencies);
   const hasStalePreservedControlledNotes = useRef(false);
@@ -74,9 +83,15 @@ export function useActiveNotes(
         !preserveOnDependencyChange &&
         hasStalePreservedControlledNotes.current
       ) {
+        const shouldClearPreservedNotes =
+          shouldClearPreservedActiveNotesOnUnlock({
+            externalActiveNotes,
+            preserveStaleNotesOnUnlock,
+          });
+
         hasStalePreservedControlledNotes.current = false;
 
-        if (externalActiveNotes !== undefined) {
+        if (shouldClearPreservedNotes) {
           externalOnChange(undefined);
         }
       }
@@ -103,6 +118,7 @@ export function useActiveNotes(
     externalOnChange,
     isControlled,
     preserveOnDependencyChange,
+    preserveStaleNotesOnUnlock,
   ]);
 
   const onActiveNotesChange = useCallback<ActiveNotesSetter>(
@@ -134,6 +150,16 @@ export function useActiveNotes(
   );
 
   return [activeNotes, onActiveNotesChange, initialActiveNotes];
+}
+
+export function shouldClearPreservedActiveNotesOnUnlock({
+  externalActiveNotes,
+  preserveStaleNotesOnUnlock,
+}: {
+  externalActiveNotes: ActiveNotes | undefined;
+  preserveStaleNotesOnUnlock: boolean;
+}) {
+  return externalActiveNotes !== undefined && !preserveStaleNotesOnUnlock;
 }
 
 function resolveActiveNotesValue(
