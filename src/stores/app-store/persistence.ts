@@ -46,13 +46,30 @@ function isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
   );
 }
 
-function parsePersistedValue(value: string | null) {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parsePersistedValue(value: string | null): AppStorePersistedValue | null {
   if (value === null) {
     return null;
   }
 
   try {
-    return JSON.parse(value) as AppStorePersistedValue;
+    const persistedValue = JSON.parse(value) as unknown;
+
+    if (
+      isRecord(persistedValue) &&
+      "state" in persistedValue &&
+      typeof persistedValue.version !== "number"
+    ) {
+      return {
+        ...persistedValue,
+        version: 0,
+      } as AppStorePersistedValue;
+    }
+
+    return persistedValue as AppStorePersistedValue;
   } catch {
     return null;
   }

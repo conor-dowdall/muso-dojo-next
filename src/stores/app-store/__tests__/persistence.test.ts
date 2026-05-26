@@ -1,12 +1,28 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { type StateStorage, type StorageValue } from "zustand/middleware";
+import { createStore } from "zustand/vanilla";
+import {
+  persist,
+  type PersistStorage,
+  type StateStorage,
+  type StorageValue,
+} from "zustand/middleware";
+import { createAppStoreActions } from "@/stores/app-store/actions";
 import {
   APP_STORE_VERSION,
+  type AppStorePersistedSnapshot,
   createDebouncedAppStoreStorage,
   migrateAppStoreSnapshot,
+  partializeAppStoreSnapshot,
 } from "@/stores/app-store/persistence";
-import { createAppStoreSnapshot } from "@/utils/session/normalizeAppStoreSnapshot";
-import { type AppStoreSnapshot } from "@/types/session";
+import { type AppStore } from "@/stores/app-store/types";
+import {
+  createAppStoreSnapshot,
+  normalizeAppStoreSnapshot,
+} from "@/utils/session/normalizeAppStoreSnapshot";
+import {
+  type AppStoreSnapshot,
+  type InstrumentPartModuleConfig,
+} from "@/types/session";
 
 const fallbackSnapshot = createAppStoreSnapshot({
   id: "fallback-session",
@@ -56,6 +72,70 @@ function createPersistedValue(
     state: createPersistedSnapshot(sessionId),
     version: APP_STORE_VERSION,
   };
+}
+
+function expectValidSnapshotInvariants(snapshot: AppStoreSnapshot) {
+  if (snapshot.activeSessionId !== null) {
+    expect(snapshot.sessions[snapshot.activeSessionId]).toBeDefined();
+  }
+
+  Object.entries(snapshot.sessions).forEach(([sessionKey, session]) => {
+    expect(session.id).toBe(sessionKey);
+    expect(new Set(session.parts.map((part) => part.id)).size).toBe(
+      session.parts.length,
+    );
+
+    session.parts.forEach((part) => {
+      expect(new Set(part.modules.map((module) => module.id)).size).toBe(
+        part.modules.length,
+      );
+
+      part.modules.forEach((partModule) => {
+        if (partModule.type !== "instrument") {
+          return;
+        }
+
+        const instrument = partModule.instrument;
+        if (instrument.activeNotesLocked === true) {
+          expect(instrument.activeNotes).toBeDefined();
+        } else {
+          expect(instrument).not.toHaveProperty(
+            "activeNotesLockPreservesEdits",
+          );
+        }
+      });
+    });
+  });
+}
+
+function createPersistedTestStore(
+  storage: PersistStorage<AppStorePersistedSnapshot>,
+) {
+  return createStore<AppStore>()(
+    persist<AppStore, [], [], AppStorePersistedSnapshot>(
+      (set, get) => ({
+        ...fallbackSnapshot,
+        ...createAppStoreActions(set, get),
+      }),
+      {
+        name: "store",
+        version: APP_STORE_VERSION,
+        storage,
+        partialize: partializeAppStoreSnapshot,
+        migrate: (persistedState, persistedVersion) =>
+          migrateAppStoreSnapshot(
+            persistedState,
+            persistedVersion,
+            fallbackSnapshot,
+          ),
+        merge: (persistedState, currentState) => ({
+          ...currentState,
+          ...normalizeAppStoreSnapshot(persistedState, fallbackSnapshot),
+        }),
+        skipHydration: true,
+      },
+    ),
+  );
 }
 
 describe("app store persistence", () => {
@@ -174,6 +254,148 @@ describe("app store persistence", () => {
       valid: { midi: 60, emphasis: "small" },
     });
     expect(firstModule.instrument.activeNotesLocked).toBe(true);
+    expectValidSnapshotInvariants(migrated);
+    expect(normalizeAppStoreSnapshot(migrated, fallbackSnapshot)).toEqual(
+      migrated,
+    );
+  });
+
+  it("normalizes locked instruments with no recoverable active notes to unlocked instruments", () => {
+    const migrated = migrateAppStoreSnapshot(
+      {
+        activeSessionId: "session-a",
+        sessions: {
+          stored: {
+            id: "session-a",
+            name: "Session A",
+            lastModified: "2026-01-03T00:00:00.000Z",
+            parts: [
+              {
+                id: "part",
+                rootNote: "C",
+                noteCollectionKey: "major",
+                modules: [
+                  {
+                    id: "module",
+                    type: "instrument",
+                    instrument: {
+                      type: "fretboard",
+                      activeNotes: {
+                        invalidMidi: { midi: 200 },
+                      },
+                      activeNotesLocked: true,
+                      activeNotesLockPreservesEdits: false,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+      0,
+      fallbackSnapshot,
+    );
+    const partModule =
+      migrated.sessions["session-a"]?.parts[0]
+        ?.modules[0] as InstrumentPartModuleConfig;
+
+    expect(partModule.instrument).not.toHaveProperty("activeNotes");
+    expect(partModule.instrument).not.toHaveProperty("activeNotesLocked");
+    expect(partModule.instrument).not.toHaveProperty(
+      "activeNotesLockPreservesEdits",
+    );
+    expectValidSnapshotInvariants(migrated);
+  });
+
+  it("hydrates unversioned storage through Zustand persist and rewrites it at the current version", async () => {
+    vi.useFakeTimers();
+    const stateStorage = new MemoryStateStorage();
+    const storage = createDebouncedAppStoreStorage(() => stateStorage, {
+      debounceMs: 100,
+      maxWaitMs: 300,
+    });
+    if (!storage) {
+      throw new Error("Expected test storage to be available");
+    }
+
+    stateStorage.items.set(
+      "store",
+      JSON.stringify({
+        state: createPersistedSnapshot("legacy-session"),
+      }),
+    );
+
+    const store = createPersistedTestStore(storage);
+    await store.persist.rehydrate();
+
+    expect(store.getState().activeSessionId).toBe("legacy-session");
+    expect(store.getState().sessions["legacy-session"]?.name).toBe(
+      "Persisted Session",
+    );
+
+    vi.advanceTimersByTime(100);
+    expect(JSON.parse(stateStorage.items.get("store") ?? "null")).toEqual({
+      state: createPersistedSnapshot("legacy-session"),
+      version: APP_STORE_VERSION,
+    });
+  });
+
+  it("defensively normalizes current-version storage during merge", async () => {
+    const stateStorage = new MemoryStateStorage();
+    const storage = createDebouncedAppStoreStorage(() => stateStorage);
+    if (!storage) {
+      throw new Error("Expected test storage to be available");
+    }
+
+    stateStorage.items.set(
+      "store",
+      JSON.stringify({
+        state: {
+          activeSessionId: "missing-session",
+          sessions: {
+            stored: {
+              id: "current-session",
+              name: "Current Session",
+              lastModified: "2026-01-04T00:00:00.000Z",
+              parts: [
+                {
+                  id: "part",
+                  rootNote: "Not a note",
+                  noteCollectionKey: "not-a-scale",
+                  modules: [
+                    {
+                      id: "module",
+                      type: "instrument",
+                      instrument: {
+                        type: "fretboard",
+                        activeNotesLocked: true,
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        version: APP_STORE_VERSION,
+      }),
+    );
+
+    const store = createPersistedTestStore(storage);
+    await store.persist.rehydrate();
+    const snapshot = partializeAppStoreSnapshot(store.getState());
+    const partModule =
+      snapshot.sessions["current-session"]?.parts[0]
+        ?.modules[0] as InstrumentPartModuleConfig;
+
+    expect(snapshot.activeSessionId).toBe("current-session");
+    expect(snapshot.sessions["current-session"]?.parts[0]?.rootNote).toBe("C");
+    expect(snapshot.sessions["current-session"]?.parts[0]?.noteCollectionKey).toBe(
+      "major",
+    );
+    expect(partModule.instrument).not.toHaveProperty("activeNotesLocked");
+    expectValidSnapshotInvariants(snapshot);
   });
 
   it("debounces storage writes while exposing pending values to hydration reads", () => {
