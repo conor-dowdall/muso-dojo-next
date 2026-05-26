@@ -13,6 +13,7 @@ import {
 import { applyInstrumentNoteEdit } from "@/utils/instrument/applyInstrumentNoteEdit";
 import { getNoteAriaLabel } from "@/utils/instrument/getNoteAriaLabel";
 import { areActiveNotesEqual } from "@/utils/instrument/areActiveNotesEqual";
+import { createActiveNotesLockSnapshot } from "@/utils/instrument/createActiveNotesLockSnapshot";
 import { useSessionNoteColors } from "@/components/note-colors/SessionNoteColorProvider";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
 import { assertNever } from "@/utils/assertNever";
@@ -43,19 +44,6 @@ interface UseInstrumentNotesParams {
   }) => ActiveNotes;
   setIsModified?: (isModified: boolean) => void;
   setActiveNotesLockSnapshot?: (snapshot: ActiveNotes) => void;
-}
-
-function createActiveNotesLockSnapshot(activeNotes: ActiveNotes): ActiveNotes {
-  const snapshot: ActiveNotes = {};
-
-  Object.entries(activeNotes).forEach(([key, note]) => {
-    snapshot[key] = {
-      midi: note.midi,
-      ...(note.emphasis ? { emphasis: note.emphasis } : {}),
-    };
-  });
-
-  return snapshot;
 }
 
 /**
