@@ -50,7 +50,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function parsePersistedValue(value: string | null): AppStorePersistedValue | null {
+function parsePersistedValue(
+  value: string | null,
+): AppStorePersistedValue | null {
   if (value === null) {
     return null;
   }

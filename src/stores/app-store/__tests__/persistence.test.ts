@@ -296,9 +296,8 @@ describe("app store persistence", () => {
       0,
       fallbackSnapshot,
     );
-    const partModule =
-      migrated.sessions["session-a"]?.parts[0]
-        ?.modules[0] as InstrumentPartModuleConfig;
+    const partModule = migrated.sessions["session-a"]?.parts[0]
+      ?.modules[0] as InstrumentPartModuleConfig;
 
     expect(partModule.instrument).not.toHaveProperty("activeNotes");
     expect(partModule.instrument).not.toHaveProperty("activeNotesLocked");
@@ -385,15 +384,14 @@ describe("app store persistence", () => {
     const store = createPersistedTestStore(storage);
     await store.persist.rehydrate();
     const snapshot = partializeAppStoreSnapshot(store.getState());
-    const partModule =
-      snapshot.sessions["current-session"]?.parts[0]
-        ?.modules[0] as InstrumentPartModuleConfig;
+    const partModule = snapshot.sessions["current-session"]?.parts[0]
+      ?.modules[0] as InstrumentPartModuleConfig;
 
     expect(snapshot.activeSessionId).toBe("current-session");
     expect(snapshot.sessions["current-session"]?.parts[0]?.rootNote).toBe("C");
-    expect(snapshot.sessions["current-session"]?.parts[0]?.noteCollectionKey).toBe(
-      "major",
-    );
+    expect(
+      snapshot.sessions["current-session"]?.parts[0]?.noteCollectionKey,
+    ).toBe("major");
     expect(partModule.instrument).not.toHaveProperty("activeNotesLocked");
     expectValidSnapshotInvariants(snapshot);
   });

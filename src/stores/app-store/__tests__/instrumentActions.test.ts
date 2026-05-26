@@ -31,13 +31,11 @@ describe("instrument app store actions", () => {
       notificationCount += 1;
     });
 
-    store
-      .getState()
-      .setInstrumentActiveNotes(sessionId, partId, moduleId, {
-        c4: { midi: 60 },
-        e4: { midi: 64 },
-        g4: { midi: 67 },
-      });
+    store.getState().setInstrumentActiveNotes(sessionId, partId, moduleId, {
+      c4: { midi: 60 },
+      e4: { midi: 64 },
+      g4: { midi: 67 },
+    });
 
     unsubscribe();
     expect(notificationCount).toBe(0);

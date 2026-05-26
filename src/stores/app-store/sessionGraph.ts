@@ -334,7 +334,8 @@ export function updateInstrumentActiveNotesByModuleId(
   const normalizedActiveNotes =
     normalizeActiveNotesForTrustedWrite(activeNotes);
   const shouldClearOrphanedActiveNotesLock =
-    normalizedActiveNotes === undefined && instrument.activeNotesLocked === true;
+    normalizedActiveNotes === undefined &&
+    instrument.activeNotesLocked === true;
 
   if (
     !shouldClearOrphanedActiveNotesLock &&
