@@ -10,6 +10,8 @@
     "lint:fix": "eslint -c eslint.config.mjs --fix",
     "lint:strict": "eslint -c eslint.strict.config.mjs",
     "check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "format": "prettier --write src/",
     "format:check": "prettier --check src/",
     "validate": "pnpm lint && pnpm check",
