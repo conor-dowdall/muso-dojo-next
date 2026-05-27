@@ -183,6 +183,7 @@ export function SessionBatchSettings({
         label="Chord or Scale"
         panelVariant="menu"
         preview={noteCollectionAggregate.preview}
+        subtitle="All Parts"
         onToggle={() => onToggleSetting("note-collection")}
       >
         <NoteCollectionPicker
@@ -202,6 +203,7 @@ export function SessionBatchSettings({
         label="Display Text"
         panelVariant="menu"
         preview={displayFormatAggregate.preview}
+        subtitle="All Instruments"
         onToggle={() => onToggleSetting("display-format")}
       >
         <DisplayFormatPicker
@@ -221,6 +223,7 @@ export function SessionBatchSettings({
         label="Note Size"
         panelVariant="menu"
         preview={noteEmphasisAggregate.preview}
+        subtitle="All Instruments"
         onToggle={() => onToggleSetting("note-emphasis")}
       >
         <NoteEmphasisPicker
