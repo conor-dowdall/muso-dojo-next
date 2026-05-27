@@ -6,7 +6,7 @@
 
 ## Demo
 
-Visit Muso Dojo at https://conor-dowdall.github.io/muso-dojo-next/.
+Visit Muso Dojo at https://musodojo.vercel.app/.
 
 ## Contributing
 
