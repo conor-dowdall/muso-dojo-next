@@ -186,9 +186,7 @@ export function SessionManagementDialog({
                     }
                     onDeleteSession={handleDeleteSession}
                     onDuplicateSession={handleCloneSession}
-                    onSessionDisplayFormatIdChange={
-                      setSessionDisplayFormatId
-                    }
+                    onSessionDisplayFormatIdChange={setSessionDisplayFormatId}
                     onSessionNoteCollectionKeyChange={
                       setSessionNoteCollectionKey
                     }

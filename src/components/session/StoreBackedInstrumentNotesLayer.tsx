@@ -52,15 +52,12 @@ export function StoreBackedFretboardNotesLayer({
   moduleId,
   audioPresetId,
 }: StoreBackedNotesLayerProps) {
-  const {
-    activeNotes,
-    activeNotesLocked,
-    onActiveNotesChange,
-  } = useStoreBackedInstrumentNotes({
-    sessionId,
-    partId,
-    moduleId,
-  });
+  const { activeNotes, activeNotesLocked, onActiveNotesChange } =
+    useStoreBackedInstrumentNotes({
+      sessionId,
+      partId,
+      moduleId,
+    });
 
   return (
     <FretboardNotesLayer
@@ -78,15 +75,12 @@ export function StoreBackedKeyboardNotesLayer({
   moduleId,
   audioPresetId,
 }: StoreBackedNotesLayerProps) {
-  const {
-    activeNotes,
-    activeNotesLocked,
-    onActiveNotesChange,
-  } = useStoreBackedInstrumentNotes({
-    sessionId,
-    partId,
-    moduleId,
-  });
+  const { activeNotes, activeNotesLocked, onActiveNotesChange } =
+    useStoreBackedInstrumentNotes({
+      sessionId,
+      partId,
+      moduleId,
+    });
 
   return (
     <KeyboardNotesLayer

@@ -185,7 +185,8 @@ export function createInstrumentActions(
           instrument.activeNotes,
           activeNotesLockSnapshot.activeNotes,
         ) &&
-        instrument.activeNotesLockSourceKey === activeNotesLockSnapshot.sourceKey;
+        instrument.activeNotesLockSourceKey ===
+          activeNotesLockSnapshot.sourceKey;
 
       if (activeNotesLocked && activeNotesLockSnapshot === undefined) {
         return;

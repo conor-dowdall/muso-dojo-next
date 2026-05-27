@@ -13,10 +13,6 @@ export function InstrumentHeader({
   if (!displayControls && !children) return null;
 
   return (
-    <ControlHeader
-      actions={children}
-      actionsGrow
-      primary={displayControls}
-    />
+    <ControlHeader actions={children} actionsGrow primary={displayControls} />
   );
 }

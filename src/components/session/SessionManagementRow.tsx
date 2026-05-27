@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  type SyntheticEvent,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-} from "react";
+import { type SyntheticEvent, useEffect, useId, useRef, useState } from "react";
 import { Check, Copy, Settings, TextCursorInput, Trash2 } from "lucide-react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import {
@@ -102,9 +96,7 @@ export function SessionManagementRow({
     closeChoice: closeSessionSettingChoice,
     openChoice: openSessionSetting,
     toggleChoice: toggleSessionSetting,
-  } = useDisclosureList<SessionManagementSettingChoice>(
-    initialOpenSetting,
-  );
+  } = useDisclosureList<SessionManagementSettingChoice>(initialOpenSetting);
   const [draftSession, setDraftSession] = useState({
     id: session.id,
     savedName: session.name,

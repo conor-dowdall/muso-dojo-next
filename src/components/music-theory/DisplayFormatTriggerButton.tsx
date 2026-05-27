@@ -27,7 +27,8 @@ export function DisplayFormatTriggerButton({
   const displayFormatLabel = getDisplayFormatLabel(value);
   const ariaLabel = `Change display text. Current: ${displayFormatLabel}`;
   const tooltipText =
-    tooltip ?? `Display text: ${value === "none" ? "none" : displayFormatLabel}`;
+    tooltip ??
+    `Display text: ${value === "none" ? "none" : displayFormatLabel}`;
 
   if (value === "none") {
     return (

@@ -48,13 +48,14 @@ function createBatchSettingsSnapshot() {
 function getSessionInstruments(
   store: ReturnType<typeof createTestStore>,
 ): InstrumentInstanceConfig[] {
-  return store
-    .getState()
-    .sessions[sessionId]?.parts.flatMap((part) =>
-      part.modules.flatMap((partModule) =>
-        partModule.type === "instrument" ? [partModule.instrument] : [],
-      ),
-    ) ?? [];
+  return (
+    store
+      .getState()
+      .sessions[
+        sessionId
+      ]?.parts.flatMap((part) => part.modules.flatMap((partModule) => (partModule.type === "instrument" ? [partModule.instrument] : []))) ??
+    []
+  );
 }
 
 describe("session app store actions", () => {
