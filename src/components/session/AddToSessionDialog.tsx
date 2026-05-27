@@ -42,7 +42,7 @@ import {
 import { AddToSessionRootNoteItem } from "@/components/session/AddToSessionRootNoteItem";
 import { getChordProgressionDisplayLabels } from "@/utils/music-theory/chordProgressions";
 import { getNoteCollectionDisplayName } from "@/utils/music-theory/getNoteCollectionDisplayName";
-import { DISPLAY_VALUE_SEPARATOR } from "@/utils/displayText";
+import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
 import localStyles from "./AddToSessionDialog.module.css";
 import {

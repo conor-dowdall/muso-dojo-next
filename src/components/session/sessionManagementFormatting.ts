@@ -6,7 +6,7 @@ import { type DisplayFormatId } from "@/data/displayFormats";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type MusicPartConfig, type SessionConfig } from "@/types/session";
 import { type SessionNoteColorConfig } from "@/types/note-colors";
-import { DISPLAY_VALUE_SEPARATOR } from "@/utils/displayText";
+import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import { isInstrumentPartModule } from "@/utils/session/partModuleTypes";
 
 export interface SessionManagementInstrumentSummary {

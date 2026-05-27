@@ -28,7 +28,7 @@ import styles from "./OptionButton.module.css";
  * - preview is compact right-side content: current values, swatches, icons, or
  *   visual samples that benefit from fast scanning. Long explanatory text and
  *   summaries of nested actions belong in subtitle. Join compact value pairs
- *   with DISPLAY_VALUE_SEPARATOR.
+ *   with DISPLAY_VALUE_SEPARATOR from "@/utils/valueSummary".
  */
 export type OptionButtonPresentation = "media" | "tile" | "list";
 export type OptionButtonDensity = "compact" | "comfortable";

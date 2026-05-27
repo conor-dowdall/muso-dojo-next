@@ -12,7 +12,7 @@ import {
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { keyboardRanges } from "@/data/keyboard/ranges";
-import { DISPLAY_VALUE_SEPARATOR } from "@/utils/displayText";
+import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import {
   type FretboardInstrumentSelection,
   type KeyboardInstrumentSelection,

@@ -30,7 +30,7 @@ import {
   normalizeHexColor,
   normalizeNoteColorConfig,
 } from "@/utils/note-colors/createNoteColorConfig";
-import { DISPLAY_VALUE_SEPARATOR } from "@/utils/displayText";
+import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import { NoteColorPreview } from "./NoteColorPreview";
 import {
   type CustomNoteColorConfig,

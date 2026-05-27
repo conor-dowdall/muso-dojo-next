@@ -6,7 +6,7 @@ import {
   type ChordProgressionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
-import { DISPLAY_VALUE_SEPARATOR } from "@/utils/displayText";
+import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 
 interface ChordProgressionChord {
   romanSymbol?: string;

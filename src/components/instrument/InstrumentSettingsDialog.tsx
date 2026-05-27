@@ -41,6 +41,7 @@ import {
 } from "@/data/displayFormats";
 import { type InstrumentType } from "@/types/session";
 import { type SettingSetter } from "@/types/state";
+import { formatValueSummary } from "@/utils/valueSummary";
 import { resolveInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
 import styles from "./InstrumentSettingsDialog.module.css";
 
@@ -102,12 +103,10 @@ export function InstrumentSettingsDialog({
   );
   const resolvedAudioPreset = audioPresets[resolvedAudioPresetId];
   const hasInstrumentActions = Boolean(onClone || onRemove);
-  const instrumentActionsPreview = [
+  const instrumentActionsPreview = formatValueSummary([
     onClone ? "Duplicate" : undefined,
     onRemove ? "Remove" : undefined,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  ]);
 
   const handleAudioPresetChange = (nextAudioPresetId: AudioPresetId) => {
     onAudioPresetIdChange?.(nextAudioPresetId);
@@ -135,10 +134,10 @@ export function InstrumentSettingsDialog({
       <DialogContent className={styles.settingsContent}>
         <DisclosureList>
           <DisclosureListItem
-            ariaLabel={`Sound. Current: ${resolvedAudioPreset.label}`}
+            ariaLabel={`Playback sound. Current: ${resolvedAudioPreset.label}`}
             icon={<AudioWaveform />}
             isOpen={isChoiceOpen("sound")}
-            label="Sound"
+            label="Playback Sound"
             onToggle={() => toggleChoice("sound")}
             panelVariant="menu"
             preview={resolvedAudioPreset.label}
@@ -162,7 +161,7 @@ export function InstrumentSettingsDialog({
                   {group.presets.map((preset) => (
                     <DisclosureListChoice
                       key={preset.id}
-                      aria-label={`Use ${preset.label} sound`}
+                      aria-label={`Use ${preset.label} playback sound`}
                       disabled={!onAudioPresetIdChange}
                       label={preset.label}
                       onClick={() => handleAudioPresetChange(preset.id)}
@@ -194,10 +193,10 @@ export function InstrumentSettingsDialog({
 
           {hasInstrumentActions ? (
             <DisclosureListItem
-              ariaLabel="Instrument actions"
+              ariaLabel="Manage instrument"
               icon={<Wrench />}
               isOpen={isChoiceOpen("instrument")}
-              label="Instrument"
+              label="Manage Instrument"
               onToggle={() => toggleChoice("instrument")}
               panelVariant="menu"
               subtitle={instrumentActionsPreview}

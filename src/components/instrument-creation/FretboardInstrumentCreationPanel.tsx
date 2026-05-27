@@ -31,7 +31,7 @@ import {
 import { type FretboardIcon } from "@/data/fretboard/icons";
 import { createFretboardConfig } from "@/utils/fretboard/createFretboardConfig";
 import { areRangesEqual } from "@/utils/range/numberRange";
-import { DISPLAY_VALUE_SEPARATOR } from "@/utils/displayText";
+import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import { BoundedRangeSliderGroup } from "@/components/ui/range-slider/BoundedRangeSliderGroup";
 import { FretboardInlayPresetSwatch } from "@/components/instrument/InstrumentThemeSwatch";
 import { type FretboardInstrumentSelection } from "./instrumentCreationConfig";

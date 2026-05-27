@@ -30,7 +30,8 @@ export type DisclosureListPanelVariant = "editor" | "menu";
  * Case when naming a category or object setting: "Root Note", "Chord or Scale".
  * Subtitles are either explanatory microcopy in sentence case or compact value
  * summaries. Value summaries often use Title Case source labels joined with
- * DISPLAY_VALUE_SEPARATOR, such as "One Part • Root Note and Chord or Scale".
+ * DISPLAY_VALUE_SEPARATOR from "@/utils/valueSummary", such as
+ * "One Part • Root Note and Chord or Scale".
  * Previews are compact current values or tangible samples, not extra help text.
  *
  * Shared vertical menu pattern for object rows, action rows, and nested editors.
