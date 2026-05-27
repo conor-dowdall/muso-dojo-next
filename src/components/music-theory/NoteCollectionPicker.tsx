@@ -11,7 +11,7 @@ import { OptionButton } from "@/components/ui/buttons/OptionButton";
 import { Heading } from "@/components/ui/typography/Heading";
 
 interface NoteCollectionPickerProps {
-  value: NoteCollectionKey;
+  value?: NoteCollectionKey;
   onChange: (noteCollectionKey: NoteCollectionKey) => void;
 }
 

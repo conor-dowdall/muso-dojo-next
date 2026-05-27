@@ -12,7 +12,10 @@ import styles from "./OptionButton.module.css";
  * App-level option/action presentations built from Button's primitive layouts.
  *
  * media: icon or visual on the left, title/subtitle beside it.
- * tile: centered title/subtitle for compact grid choices.
+ * tile: centered content for compact grid choices. Use text-only tiles for
+ * dense verbal choices, such as display formats or note collections. Use
+ * icon-over-label tiles only when the icon is the option's primary visual
+ * meaning and the label names a short concrete state, such as note size.
  * list: title/subtitle on the left, selected marker on the right.
  * Visual hierarchy contract:
  * - Setting rows keep label stable, such as "Root Note" or "Range"; put the

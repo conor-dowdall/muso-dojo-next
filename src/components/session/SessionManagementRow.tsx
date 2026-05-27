@@ -1,6 +1,11 @@
 "use client";
 
-import { type SyntheticEvent, useEffect, useId, useState } from "react";
+import {
+  type SyntheticEvent,
+  useEffect,
+  useId,
+  useState,
+} from "react";
 import { Check, Copy, Settings, TextCursorInput, Trash2 } from "lucide-react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import {
@@ -14,7 +19,14 @@ import {
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { Text } from "@/components/ui/typography/Text";
 import { NoteColorSettings } from "@/components/note-colors/NoteColorSettings";
+import { type DisplayFormatId } from "@/data/displayFormats";
+import { type NoteCollectionKey } from "@musodojo/music-theory-data";
+import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type SessionNoteColorConfig } from "@/types/note-colors";
+import {
+  SessionBatchSettings,
+  type SessionBatchSettingChoice,
+} from "./SessionBatchSettings";
 import {
   getSessionSubtitle,
   normalizeSessionNameForComparison,
@@ -23,7 +35,10 @@ import {
 import styles from "./SessionManagementDialog.module.css";
 
 type SessionActionChoice = "settings";
-type SessionSettingChoice = "title" | "note-colors";
+type SessionSettingChoice =
+  | "title"
+  | "note-colors"
+  | SessionBatchSettingChoice;
 
 interface SessionManagementRowProps {
   session: SessionManagementSessionSummary;
@@ -35,9 +50,21 @@ interface SessionManagementRowProps {
   onCancelDeleteSession: () => void;
   onDeleteSession: (sessionId: string) => void;
   onDuplicateSession: (sessionId: string) => void;
+  onSessionDisplayFormatIdChange: (
+    sessionId: string,
+    displayFormatId: DisplayFormatId,
+  ) => void;
+  onSessionNoteCollectionKeyChange: (
+    sessionId: string,
+    noteCollectionKey: NoteCollectionKey,
+  ) => void;
   onNoteColorConfigChange: (
     sessionId: string,
     noteColorConfig: SessionNoteColorConfig,
+  ) => void;
+  onSessionNoteEmphasisChange: (
+    sessionId: string,
+    noteEmphasis: InstrumentNoteEmphasis,
   ) => void;
   onRenameSession: (sessionId: string, name: string) => void;
   onRequestDeleteSession: (sessionId: string) => void;
@@ -55,7 +82,10 @@ export function SessionManagementRow({
   onCancelDeleteSession,
   onDeleteSession,
   onDuplicateSession,
+  onSessionDisplayFormatIdChange,
+  onSessionNoteCollectionKeyChange,
   onNoteColorConfigChange,
+  onSessionNoteEmphasisChange,
   onRenameSession,
   onRequestDeleteSession,
   onToggleActions,
@@ -271,6 +301,15 @@ export function SessionManagementRow({
                 onChange={(noteColorConfig) =>
                   onNoteColorConfigChange(session.id, noteColorConfig)
                 }
+              />
+
+              <SessionBatchSettings
+                openSetting={openSessionSetting}
+                session={session}
+                onDisplayFormatIdChange={onSessionDisplayFormatIdChange}
+                onNoteCollectionKeyChange={onSessionNoteCollectionKeyChange}
+                onNoteEmphasisChange={onSessionNoteEmphasisChange}
+                onToggleSetting={toggleSessionSetting}
               />
             </DisclosureList>
           </DisclosureListItem>

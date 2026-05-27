@@ -42,9 +42,21 @@ export interface SessionActions {
   cloneSession: (sessionId: string) => string | undefined;
   removeSession: (sessionId: string) => void;
   renameSession: (sessionId: string, name: string) => void;
+  setSessionDisplayFormatId: (
+    sessionId: string,
+    displayFormatId: DisplayFormatId,
+  ) => void;
+  setSessionNoteCollectionKey: (
+    sessionId: string,
+    noteCollectionKey: NoteCollectionKey,
+  ) => void;
   setSessionNoteColorConfig: (
     sessionId: string,
     noteColorConfig: SessionNoteColorConfig,
+  ) => void;
+  setSessionNoteEmphasis: (
+    sessionId: string,
+    noteEmphasis: InstrumentNoteEmphasis,
   ) => void;
 }
 

@@ -2,14 +2,25 @@ import {
   normalizeRootNoteString,
   noteCollections,
 } from "@musodojo/music-theory-data";
+import { type DisplayFormatId } from "@/data/displayFormats";
+import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type MusicPartConfig, type SessionConfig } from "@/types/session";
 import { type SessionNoteColorConfig } from "@/types/note-colors";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/displayText";
+import { isInstrumentPartModule } from "@/utils/session/partModuleTypes";
+
+export interface SessionManagementInstrumentSummary {
+  id: string;
+  displayFormatId: DisplayFormatId;
+  noteEmphasis: InstrumentNoteEmphasis;
+}
 
 export type SessionManagementPartSummary = Pick<
   MusicPartConfig,
   "id" | "rootNote" | "noteCollectionKey"
->;
+> & {
+  instruments: SessionManagementInstrumentSummary[];
+};
 
 export interface SessionManagementSessionSummary {
   id: string;
@@ -86,6 +97,13 @@ export function createSessionPartSummary(
     id: part.id,
     rootNote: part.rootNote,
     noteCollectionKey: part.noteCollectionKey,
+    instruments: part.modules
+      .filter(isInstrumentPartModule)
+      .map((partModule) => ({
+        id: partModule.id,
+        displayFormatId: partModule.instrument.displayFormatId ?? "note-names",
+        noteEmphasis: partModule.instrument.noteEmphasis ?? "large",
+      })),
   };
 }
 
@@ -96,7 +114,25 @@ function partSummaryMatchesMusicPart(
   return (
     summary.id === part.id &&
     summary.rootNote === part.rootNote &&
-    summary.noteCollectionKey === part.noteCollectionKey
+    summary.noteCollectionKey === part.noteCollectionKey &&
+    summary.instruments.length ===
+      part.modules.filter(isInstrumentPartModule).length &&
+    summary.instruments.every((instrumentSummary) => {
+      const partModule = part.modules.find(
+        (candidateModule) => candidateModule.id === instrumentSummary.id,
+      );
+
+      if (!isInstrumentPartModule(partModule)) {
+        return false;
+      }
+
+      return (
+        instrumentSummary.displayFormatId ===
+          (partModule.instrument.displayFormatId ?? "note-names") &&
+        instrumentSummary.noteEmphasis ===
+          (partModule.instrument.noteEmphasis ?? "large")
+      );
+    })
   );
 }
 

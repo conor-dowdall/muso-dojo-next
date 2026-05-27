@@ -8,7 +8,7 @@ import {
 } from "@/data/displayFormats";
 
 interface DisplayFormatPickerProps {
-  value: DisplayFormatId;
+  value?: DisplayFormatId;
   onChange: (id: DisplayFormatId) => void;
 }
 
