@@ -1,9 +1,4 @@
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  flex-wrap: wrap;
   padding: var(--space-1) var(--space-1) var(--space-3);
   border-bottom: var(--border-width-base) solid var(--color-border);
 }
@@ -19,11 +14,19 @@
   color: var(--color-text);
 }
 
-.actions {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-1);
-  margin-inline-start: auto;
+.titleEditButton {
+  color: var(--color-text-muted);
+  opacity: 0.72;
+}
+
+@media (hover: hover) {
+  .header:not(:hover) .titleEditButton:not(:focus-visible) {
+    opacity: 0.56;
+  }
+}
+
+.titleEditButton:not(:disabled):hover,
+.titleEditButton:focus-visible {
+  color: var(--color-text);
+  opacity: 1;
 }

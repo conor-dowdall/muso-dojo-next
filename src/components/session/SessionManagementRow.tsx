@@ -4,6 +4,7 @@ import {
   type SyntheticEvent,
   useEffect,
   useId,
+  useRef,
   useState,
 } from "react";
 import { Check, Copy, Settings, TextCursorInput, Trash2 } from "lucide-react";
@@ -23,27 +24,21 @@ import { type DisplayFormatId } from "@/data/displayFormats";
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type SessionNoteColorConfig } from "@/types/note-colors";
-import {
-  SessionBatchSettings,
-  type SessionBatchSettingChoice,
-} from "./SessionBatchSettings";
+import { SessionBatchSettings } from "./SessionBatchSettings";
 import {
   getSessionSubtitle,
   normalizeSessionNameForComparison,
   type SessionManagementSessionSummary,
 } from "./sessionManagementFormatting";
+import { type SessionManagementSettingChoice } from "./sessionManagementTypes";
 import styles from "./SessionManagementDialog.module.css";
 
 type SessionActionChoice = "settings";
-type SessionSettingChoice =
-  | "title"
-  | "note-colors"
-  | SessionBatchSettingChoice;
 
 interface SessionManagementRowProps {
   session: SessionManagementSessionSummary;
   sessions: readonly SessionManagementSessionSummary[];
-  initialOpenNoteColors?: boolean;
+  initialOpenSetting?: SessionManagementSettingChoice | null;
   isActive: boolean;
   isDeleteConfirming: boolean;
   isOpen: boolean;
@@ -75,7 +70,7 @@ interface SessionManagementRowProps {
 export function SessionManagementRow({
   session,
   sessions,
-  initialOpenNoteColors = false,
+  initialOpenSetting = null,
   isActive,
   isDeleteConfirming,
   isOpen,
@@ -93,20 +88,22 @@ export function SessionManagementRow({
 }: SessionManagementRowProps) {
   const nameInputId = useId();
   const nameMessageId = useId();
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const hasFocusedInitialNameInput = useRef(false);
   const {
     closeAll: closeSessionActions,
     openChoice: openSessionAction,
     toggleChoice: toggleSessionAction,
   } = useDisclosureList<SessionActionChoice>(
-    initialOpenNoteColors ? "settings" : null,
+    initialOpenSetting ? "settings" : null,
   );
   const {
     closeAll: closeSessionSettings,
     closeChoice: closeSessionSettingChoice,
     openChoice: openSessionSetting,
     toggleChoice: toggleSessionSetting,
-  } = useDisclosureList<SessionSettingChoice>(
-    initialOpenNoteColors ? "note-colors" : null,
+  } = useDisclosureList<SessionManagementSettingChoice>(
+    initialOpenSetting,
   );
   const [draftSession, setDraftSession] = useState({
     id: session.id,
@@ -190,6 +187,45 @@ export function SessionManagementRow({
     isNameEmpty,
     message: renameMessage,
   } = getRenameState();
+  const shouldFocusNameInput = initialOpenSetting === "title";
+
+  useEffect(() => {
+    if (!shouldFocusNameInput || !isOpen) {
+      hasFocusedInitialNameInput.current = false;
+      return;
+    }
+
+    if (
+      hasFocusedInitialNameInput.current ||
+      openSessionAction !== "settings" ||
+      openSessionSetting !== "title"
+    ) {
+      return;
+    }
+
+    let secondFrameId: number | undefined;
+    const firstFrameId = window.requestAnimationFrame(() => {
+      secondFrameId = window.requestAnimationFrame(() => {
+        const input = nameInputRef.current;
+
+        if (!input) {
+          return;
+        }
+
+        input.scrollIntoView({ block: "nearest", inline: "nearest" });
+        input.focus();
+        input.select();
+        hasFocusedInitialNameInput.current = true;
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrameId);
+      if (secondFrameId !== undefined) {
+        window.cancelAnimationFrame(secondFrameId);
+      }
+    };
+  }, [isOpen, openSessionAction, openSessionSetting, shouldFocusNameInput]);
 
   return (
     <DisclosureListChoiceItem
@@ -260,6 +296,7 @@ export function SessionManagementRow({
                         autoComplete="off"
                         className={styles.nameInput}
                         id={nameInputId}
+                        ref={nameInputRef}
                         spellCheck={false}
                         value={draftName}
                         onChange={(event) =>

@@ -22,12 +22,8 @@ import {
   type NoteCollectionKey,
 } from "@musodojo/music-theory-data";
 import { type SessionManagementSessionSummary } from "./sessionManagementFormatting";
+import { type SessionBatchSettingChoice } from "./sessionManagementTypes";
 import styles from "./SessionManagementDialog.module.css";
-
-export type SessionBatchSettingChoice =
-  | "note-collection"
-  | "display-format"
-  | "note-emphasis";
 
 interface SettingAggregate<T> {
   isDisabled: boolean;

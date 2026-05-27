@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { AudioWaveform, Copy, Trash2, Type, Wrench } from "lucide-react";
+import {
+  AudioWaveform,
+  CaseSensitive,
+  Copy,
+  Trash2,
+  Wrench,
+} from "lucide-react";
 import {
   audioPresetCategoryLabels,
   audioPresetCategoryOrder,
@@ -170,12 +176,12 @@ export function InstrumentSettingsDialog({
           </DisclosureListItem>
 
           <DisclosureListItem
-            ariaLabel={`Display format. Current: ${getDisplayFormatLabel(
+            ariaLabel={`Display text. Current: ${getDisplayFormatLabel(
               displayFormatId,
             )}`}
-            icon={<Type />}
+            icon={<CaseSensitive />}
             isOpen={isChoiceOpen("display")}
-            label="Display"
+            label="Display Text"
             onToggle={() => toggleChoice("display")}
             panelVariant="menu"
             preview={getDisplayFormatLabel(displayFormatId)}

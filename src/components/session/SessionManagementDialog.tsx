@@ -21,10 +21,11 @@ import {
   sessionSummaryMatchesSession,
   type SessionManagementSnapshot,
 } from "./sessionManagementFormatting";
+import { type SessionManagementInitialSetting } from "./sessionManagementTypes";
 import styles from "./SessionManagementDialog.module.css";
 
 interface SessionManagementDialogProps {
-  initialOpenNoteColorsSessionId?: string | null;
+  initialOpenSetting?: SessionManagementInitialSetting | null;
   onClose: () => void;
 }
 
@@ -74,11 +75,11 @@ const selectSessionManagementSnapshot =
   createSessionManagementSnapshotSelector();
 
 export function SessionManagementDialog({
-  initialOpenNoteColorsSessionId = null,
+  initialOpenSetting = null,
   onClose,
 }: SessionManagementDialogProps) {
   const [openSessionId, setOpenSessionId] = useState<string | null>(
-    initialOpenNoteColorsSessionId,
+    initialOpenSetting?.sessionId ?? null,
   );
   const [deleteConfirmationSessionId, setDeleteConfirmationSessionId] =
     useState<string | null>(null);
@@ -172,8 +173,10 @@ export function SessionManagementDialog({
                     isDeleteConfirming={
                       deleteConfirmationSessionId === session.id
                     }
-                    initialOpenNoteColors={
-                      session.id === initialOpenNoteColorsSessionId
+                    initialOpenSetting={
+                      session.id === initialOpenSetting?.sessionId
+                        ? initialOpenSetting.setting
+                        : null
                     }
                     isOpen={session.id === openSessionId}
                     session={session}

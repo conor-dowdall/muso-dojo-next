@@ -50,7 +50,6 @@
   }
 
   .displayFormatButton {
-    inline-size: min-content;
     max-inline-size: min(8rem, 30vw);
   }
 

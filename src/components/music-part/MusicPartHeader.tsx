@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog/Dialog";
 import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
+import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 import { Tooltip } from "@/components/ui/tooltip/Tooltip";
 import { RootNotePicker } from "@/components/music-theory/RootNotePicker";
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
@@ -35,57 +36,60 @@ export function MusicPartHeader({
   const { rootNote, noteCollectionKey } = musicPart;
   const rootNoteLabel = normalizeRootNoteString(rootNote) || rootNote;
   const noteCollectionName = getNoteCollectionDisplayName(noteCollectionKey);
-  const headerClasses = [styles.musicPartHeader, className]
-    .filter(Boolean)
-    .join(" ");
 
   return (
-    <header className={headerClasses}>
-      <Heading as="h2" className={styles.titleWrapper}>
-        <Tooltip text="Change root note" describeChild={false}>
-          <Button
-            aria-label={`Change root note. Current: ${rootNoteLabel}`}
-            label={rootNoteLabel}
-            size="sm"
-            onClick={() => setDialogMode("root")}
-          />
-        </Tooltip>
-        <Tooltip text="Change chord or scale" describeChild={false}>
-          <Button
-            aria-label={`Change chord or scale. Current: ${noteCollectionName}`}
-            label={noteCollectionName}
-            size="sm"
-            onClick={() => setDialogMode("collection")}
-          />
-        </Tooltip>
-      </Heading>
-
-      <div className={styles.actionsWrapper}>
-        {musicPart.addPartModule && onOpenAddDialog ? (
-          <IconButton
-            aria-label="Add to part"
-            icon={<Plus />}
-            size="sm"
-            onClick={onOpenAddDialog}
-          />
-        ) : null}
-        {musicPart.clonePart ? (
-          <IconButton
-            aria-label="Duplicate part"
-            icon={<Copy />}
-            size="sm"
-            onClick={musicPart.clonePart}
-          />
-        ) : null}
-        {musicPart.removePart ? (
-          <IconButton
-            aria-label="Delete part"
-            icon={<X />}
-            size="sm"
-            onClick={musicPart.removePart}
-          />
-        ) : null}
-      </div>
+    <>
+      <ControlHeader
+        className={className}
+        primary={
+          <Heading as="h2" className={styles.titleWrapper}>
+            <Tooltip text="Change root note" describeChild={false}>
+              <Button
+                aria-label={`Change root note. Current: ${rootNoteLabel}`}
+                label={rootNoteLabel}
+                size="sm"
+                onClick={() => setDialogMode("root")}
+              />
+            </Tooltip>
+            <Tooltip text="Change chord or scale" describeChild={false}>
+              <Button
+                aria-label={`Change chord or scale. Current: ${noteCollectionName}`}
+                label={noteCollectionName}
+                size="sm"
+                onClick={() => setDialogMode("collection")}
+              />
+            </Tooltip>
+          </Heading>
+        }
+        actions={
+          <>
+            {musicPart.addPartModule && onOpenAddDialog ? (
+              <IconButton
+                aria-label="Add to part"
+                icon={<Plus />}
+                size="sm"
+                onClick={onOpenAddDialog}
+              />
+            ) : null}
+            {musicPart.clonePart ? (
+              <IconButton
+                aria-label="Duplicate part"
+                icon={<Copy />}
+                size="sm"
+                onClick={musicPart.clonePart}
+              />
+            ) : null}
+            {musicPart.removePart ? (
+              <IconButton
+                aria-label="Delete part"
+                icon={<X />}
+                size="sm"
+                onClick={musicPart.removePart}
+              />
+            ) : null}
+          </>
+        }
+      />
 
       <Dialog
         isOpen={dialogMode !== null}
@@ -119,6 +123,6 @@ export function MusicPartHeader({
           )}
         </DialogContent>
       </Dialog>
-    </header>
+    </>
   );
 }

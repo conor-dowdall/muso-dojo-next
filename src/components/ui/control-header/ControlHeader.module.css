@@ -1,0 +1,39 @@
+/*
+ * App control-header convention:
+ * - leading title/control content and trailing actions are separate wrap groups
+ * - trailing actions align to inline-end but wrap internally on tiny screens
+ * - min-inline-size: 0 is required so long titles and button labels wrap
+ */
+.controlHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.primary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-block-size: var(--control-size-sm);
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.actions {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  margin-inline-start: auto;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.actions[data-grow="true"] {
+  flex: 1 1 auto;
+}

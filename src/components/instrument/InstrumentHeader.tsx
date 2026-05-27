@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import styles from "./InstrumentHeader.module.css";
+import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 
 interface InstrumentHeaderProps {
   displayControls?: ReactNode;
@@ -13,11 +13,10 @@ export function InstrumentHeader({
   if (!displayControls && !children) return null;
 
   return (
-    <header className={styles.instrumentHeader}>
-      {displayControls ? (
-        <div className={styles.displayControlsWrapper}>{displayControls}</div>
-      ) : null}
-      <div className={styles.actionsWrapper}>{children}</div>
-    </header>
+    <ControlHeader
+      actions={children}
+      actionsGrow
+      primary={displayControls}
+    />
   );
 }

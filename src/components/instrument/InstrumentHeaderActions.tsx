@@ -10,7 +10,6 @@ import { type AudioPresetId } from "@/audio/types";
 import {
   type DisplayFormatId,
   type DisplayFormatSetter,
-  getDisplayFormatLabel,
 } from "@/data/displayFormats";
 import {
   type InstrumentNoteEmphasis,
@@ -29,9 +28,8 @@ import {
   SquarePen,
   Volume2,
 } from "lucide-react";
-import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
-import { Tooltip } from "@/components/ui/tooltip/Tooltip";
+import { DisplayFormatTriggerButton } from "@/components/music-theory/DisplayFormatTriggerButton";
 import {
   InstrumentSettingsDialog,
   type InstrumentSettingsChoice,
@@ -152,7 +150,6 @@ export const InstrumentHeaderActions = ({
       : isModified
         ? "Reset custom edits"
         : "No custom edits";
-  const displayFormatLabel = getDisplayFormatLabel(displayFormatId);
   const noteEmphasisLabel = noteEmphasisLabels[noteEmphasis];
   const activeNotesLockLabel = activeNotesLocked
     ? "Unlock notes"
@@ -203,16 +200,11 @@ export const InstrumentHeaderActions = ({
         role="group"
         aria-label="Display controls"
       >
-        <Tooltip text={`Display: ${displayFormatLabel}`} describeChild={false}>
-          <Button
-            aria-label={`Change display format. Current: ${displayFormatLabel}`}
-            className={styles.displayFormatButton}
-            density="compact"
-            label={displayFormatLabel}
-            size="sm"
-            onClick={() => openSettings("display")}
-          />
-        </Tooltip>
+        <DisplayFormatTriggerButton
+          className={styles.displayFormatButton}
+          value={displayFormatId}
+          onClick={() => openSettings("display")}
+        />
         <IconButton
           aria-label={`Change default note size. Current: ${noteEmphasisLabel}`}
           disabled={activeNotesLocked}
