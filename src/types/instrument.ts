@@ -8,6 +8,8 @@ import {
 import { type SettingSetter } from "@/types/state";
 import {
   type ActiveNotes,
+  type ActiveNotesLockSnapshot,
+  type ActiveNotesSourceKey,
   type ActiveNotesSetter,
 } from "./instrument-active-note";
 import { type InstrumentLayoutConfig } from "./instrument-layout";
@@ -23,6 +25,8 @@ import {
 export type {
   ActiveNote,
   ActiveNotes,
+  ActiveNotesLockSnapshot,
+  ActiveNotesSourceKey,
   ActiveNotesSetter,
   ActiveNotesValue,
 } from "./instrument-active-note";
@@ -50,7 +54,6 @@ export type {
 export interface InstrumentNotesLayerProps {
   activeNotes?: ActiveNotes;
   activeNotesLocked?: boolean;
-  activeNotesLockPreservesEdits?: boolean;
   audioPresetId?: AudioPresetId;
   onActiveNotesChange?: ActiveNotesSetter;
   rootNote?: string;
@@ -66,8 +69,8 @@ export interface InstrumentFrameProps {
   activeNotesLocked?: boolean;
   onActiveNotesLockChange?: (
     activeNotesLocked: boolean,
-    activeNotesSnapshot?: ActiveNotes,
-    activeNotesLockPreservesEdits?: boolean,
+    activeNotesLockSnapshot?: ActiveNotesLockSnapshot,
+    activeNotesSourceKey?: ActiveNotesSourceKey,
   ) => void;
   initialDisplayFormatId?: DisplayFormatId;
   onDisplayFormatIdChange?: DisplayFormatSetter;
@@ -93,6 +96,8 @@ export interface InstrumentPresentation {
   resetNotes: () => void;
   isModified: boolean;
   setIsModified: (isModified: boolean) => void;
-  getActiveNotesLockSnapshot: () => ActiveNotes | null;
-  setActiveNotesLockSnapshot: (snapshot: ActiveNotes) => void;
+  getActiveNotesLockSnapshot: () => ActiveNotesLockSnapshot | null;
+  setActiveNotesLockSnapshot: (snapshot: ActiveNotesLockSnapshot) => void;
+  getActiveNotesSourceKey: () => ActiveNotesSourceKey | null;
+  setActiveNotesSourceKey: (sourceKey: ActiveNotesSourceKey) => void;
 }

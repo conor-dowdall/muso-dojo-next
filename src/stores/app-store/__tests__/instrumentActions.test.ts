@@ -9,6 +9,14 @@ import {
   sessionId,
 } from "./appStoreTestUtils";
 
+const cMajorSourceKey = '["C","major","guitar"]';
+const dMajorSourceKey = '["D","major","guitar"]';
+const ebMajorSourceKey = '["Eb","major","guitar"]';
+const cMajorLockSnapshot = {
+  activeNotes: cMajorNotes,
+  sourceKey: cMajorSourceKey,
+};
+
 describe("instrument app store actions", () => {
   it("stores custom active notes for an instrument module", () => {
     const store = createTestStore();
@@ -41,7 +49,7 @@ describe("instrument app store actions", () => {
     expect(notificationCount).toBe(0);
   });
 
-  it("unlocks notes but keeps edits when the lock was preserving custom edits", () => {
+  it("unlocks notes but keeps the snapshot for same-context editing", () => {
     const store = createTestStore();
 
     store
@@ -51,18 +59,27 @@ describe("instrument app store actions", () => {
         partId,
         moduleId,
         true,
-        cMajorNotes,
-        true,
+        cMajorLockSnapshot,
       );
     store
       .getState()
-      .setInstrumentActiveNotesLock(sessionId, partId, moduleId, false);
+      .setInstrumentActiveNotesLock(
+        sessionId,
+        partId,
+        moduleId,
+        false,
+        undefined,
+        cMajorSourceKey,
+      );
 
     expect(getTestInstrument(store).activeNotes).toEqual(cMajorNotes);
     expect(getTestInstrument(store)).not.toHaveProperty("activeNotesLocked");
+    expect(getTestInstrument(store)).not.toHaveProperty(
+      "activeNotesLockSourceKey",
+    );
   });
 
-  it("keeps custom locked notes after the root changes and the instrument is unlocked", () => {
+  it("clears the locked snapshot when unlocking in a different source context", () => {
     const store = createTestStore();
 
     store
@@ -72,15 +89,74 @@ describe("instrument app store actions", () => {
         partId,
         moduleId,
         true,
-        cMajorNotes,
-        true,
+        cMajorLockSnapshot,
       );
-    store.getState().setPartRootNote(sessionId, partId, "D");
     store
       .getState()
-      .setInstrumentActiveNotesLock(sessionId, partId, moduleId, false);
+      .setInstrumentActiveNotesLock(
+        sessionId,
+        partId,
+        moduleId,
+        false,
+        undefined,
+        ebMajorSourceKey,
+      );
+
+    expect(getTestInstrument(store)).not.toHaveProperty("activeNotes");
+    expect(getTestInstrument(store)).not.toHaveProperty("activeNotesLocked");
+    expect(getTestInstrument(store)).not.toHaveProperty(
+      "activeNotesLockSourceKey",
+    );
+  });
+
+  it("keeps the frozen board through a root change while locked, then clears it on unlock", () => {
+    const store = createTestStore();
+
+    store
+      .getState()
+      .setInstrumentActiveNotesLock(
+        sessionId,
+        partId,
+        moduleId,
+        true,
+        cMajorLockSnapshot,
+      );
+    store.getState().setPartRootNote(sessionId, partId, "D");
 
     expect(getTestInstrument(store).activeNotes).toEqual(cMajorNotes);
+    expect(getTestInstrument(store).activeNotesLocked).toBe(true);
+    expect(getTestInstrument(store).activeNotesLockSourceKey).toBe(
+      cMajorSourceKey,
+    );
+
+    store
+      .getState()
+      .setInstrumentActiveNotesLock(
+        sessionId,
+        partId,
+        moduleId,
+        false,
+        undefined,
+        dMajorSourceKey,
+      );
+
+    expect(getTestInstrument(store)).not.toHaveProperty("activeNotes");
+    expect(getTestInstrument(store)).not.toHaveProperty("activeNotesLocked");
+    expect(getTestInstrument(store)).not.toHaveProperty(
+      "activeNotesLockSourceKey",
+    );
+  });
+
+  it("clears unlocked custom notes immediately when the part theory changes", () => {
+    const store = createTestStore(
+      createStoreSnapshot({
+        activeNotes: cMajorNotes,
+      }),
+    );
+
+    store.getState().setPartNoteCollectionKey(sessionId, partId, "minor");
+
+    expect(getTestInstrument(store)).not.toHaveProperty("activeNotes");
     expect(getTestInstrument(store)).not.toHaveProperty("activeNotesLocked");
   });
 
@@ -105,6 +181,7 @@ describe("instrument app store actions", () => {
       createStoreSnapshot({
         activeNotes: cMajorNotes,
         activeNotesLocked: true,
+        activeNotesLockSourceKey: cMajorSourceKey,
       }),
     );
     let notificationCount = 0;
@@ -119,61 +196,11 @@ describe("instrument app store actions", () => {
         partId,
         moduleId,
         true,
-        cMajorNotes,
-        true,
+        cMajorLockSnapshot,
       );
 
     unsubscribe();
     expect(notificationCount).toBe(0);
-  });
-
-  it("unlocks notes and clears the snapshot when the lock was not preserving edits", () => {
-    const store = createTestStore();
-
-    store
-      .getState()
-      .setInstrumentActiveNotesLock(
-        sessionId,
-        partId,
-        moduleId,
-        true,
-        cMajorNotes,
-        false,
-      );
-    store
-      .getState()
-      .setInstrumentActiveNotesLock(sessionId, partId, moduleId, false);
-
-    expect(getTestInstrument(store)).not.toHaveProperty("activeNotes");
-    expect(getTestInstrument(store)).not.toHaveProperty("activeNotesLocked");
-    expect(getTestInstrument(store)).not.toHaveProperty(
-      "activeNotesLockPreservesEdits",
-    );
-  });
-
-  it("clears generated locked notes after the root changes and the instrument is unlocked", () => {
-    const store = createTestStore();
-
-    store
-      .getState()
-      .setInstrumentActiveNotesLock(
-        sessionId,
-        partId,
-        moduleId,
-        true,
-        cMajorNotes,
-        false,
-      );
-    store.getState().setPartRootNote(sessionId, partId, "D");
-    store
-      .getState()
-      .setInstrumentActiveNotesLock(sessionId, partId, moduleId, false);
-
-    expect(getTestInstrument(store)).not.toHaveProperty("activeNotes");
-    expect(getTestInstrument(store)).not.toHaveProperty("activeNotesLocked");
-    expect(getTestInstrument(store)).not.toHaveProperty(
-      "activeNotesLockPreservesEdits",
-    );
   });
 
   it("clears stale lock metadata when active notes are cleared directly", () => {
@@ -181,7 +208,7 @@ describe("instrument app store actions", () => {
       createStoreSnapshot({
         activeNotes: cMajorNotes,
         activeNotesLocked: true,
-        activeNotesLockPreservesEdits: false,
+        activeNotesLockSourceKey: cMajorSourceKey,
       }),
     );
 
@@ -192,7 +219,7 @@ describe("instrument app store actions", () => {
     expect(getTestInstrument(store)).not.toHaveProperty("activeNotes");
     expect(getTestInstrument(store)).not.toHaveProperty("activeNotesLocked");
     expect(getTestInstrument(store)).not.toHaveProperty(
-      "activeNotesLockPreservesEdits",
+      "activeNotesLockSourceKey",
     );
   });
 
@@ -201,7 +228,7 @@ describe("instrument app store actions", () => {
       createStoreSnapshot({
         activeNotes: cMajorNotes,
         activeNotesLocked: true,
-        activeNotesLockPreservesEdits: true,
+        activeNotesLockSourceKey: cMajorSourceKey,
       }),
     );
 
@@ -214,7 +241,7 @@ describe("instrument app store actions", () => {
     expect(getTestInstrument(store)).not.toHaveProperty("activeNotes");
     expect(getTestInstrument(store)).not.toHaveProperty("activeNotesLocked");
     expect(getTestInstrument(store)).not.toHaveProperty(
-      "activeNotesLockPreservesEdits",
+      "activeNotesLockSourceKey",
     );
   });
 });

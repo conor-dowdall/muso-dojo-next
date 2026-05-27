@@ -1,8 +1,13 @@
-import { type ActiveNotes } from "@/types/instrument-active-note";
+import {
+  type ActiveNotes,
+  type ActiveNotesLockSnapshot,
+  type ActiveNotesSourceKey,
+} from "@/types/instrument-active-note";
 
 export function createActiveNotesLockSnapshot(
   activeNotes: ActiveNotes,
-): ActiveNotes {
+  sourceKey: ActiveNotesSourceKey,
+): ActiveNotesLockSnapshot {
   const snapshot: ActiveNotes = {};
 
   Object.entries(activeNotes).forEach(([key, note]) => {
@@ -12,5 +17,8 @@ export function createActiveNotesLockSnapshot(
     };
   });
 
-  return snapshot;
+  return {
+    activeNotes: snapshot,
+    sourceKey,
+  };
 }

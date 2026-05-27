@@ -98,9 +98,8 @@ function expectValidSnapshotInvariants(snapshot: AppStoreSnapshot) {
         const instrument = partModule.instrument;
         if (instrument.activeNotesLocked === true) {
           expect(instrument.activeNotes).toBeDefined();
-        } else {
-          expect(instrument).not.toHaveProperty(
-            "activeNotesLockPreservesEdits",
+          expect(instrument.activeNotesLockSourceKey).toEqual(
+            expect.any(String),
           );
         }
       });
@@ -208,6 +207,7 @@ describe("app store persistence", () => {
                         invalidNote: "not-a-note",
                       },
                       activeNotesLocked: true,
+                      activeNotesLockSourceKey: '["C","major","guitar"]',
                     },
                   },
                   {
@@ -254,6 +254,9 @@ describe("app store persistence", () => {
       valid: { midi: 60, emphasis: "small" },
     });
     expect(firstModule.instrument.activeNotesLocked).toBe(true);
+    expect(firstModule.instrument.activeNotesLockSourceKey).toBe(
+      '["C","major","guitar"]',
+    );
     expectValidSnapshotInvariants(migrated);
     expect(normalizeAppStoreSnapshot(migrated, fallbackSnapshot)).toEqual(
       migrated,
@@ -284,7 +287,6 @@ describe("app store persistence", () => {
                         invalidMidi: { midi: 200 },
                       },
                       activeNotesLocked: true,
-                      activeNotesLockPreservesEdits: false,
                     },
                   },
                 ],
@@ -301,8 +303,53 @@ describe("app store persistence", () => {
 
     expect(partModule.instrument).not.toHaveProperty("activeNotes");
     expect(partModule.instrument).not.toHaveProperty("activeNotesLocked");
+    expectValidSnapshotInvariants(migrated);
+  });
+
+  it("normalizes locked instruments without a source key to unlocked custom notes", () => {
+    const migrated = migrateAppStoreSnapshot(
+      {
+        activeSessionId: "session-a",
+        sessions: {
+          stored: {
+            id: "session-a",
+            name: "Session A",
+            lastModified: "2026-01-03T00:00:00.000Z",
+            parts: [
+              {
+                id: "part",
+                rootNote: "C",
+                noteCollectionKey: "major",
+                modules: [
+                  {
+                    id: "module",
+                    type: "instrument",
+                    instrument: {
+                      type: "fretboard",
+                      activeNotes: {
+                        c4: { midi: 60, emphasis: "small" },
+                      },
+                      activeNotesLocked: true,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+      0,
+      fallbackSnapshot,
+    );
+    const partModule = migrated.sessions["session-a"]?.parts[0]
+      ?.modules[0] as InstrumentPartModuleConfig;
+
+    expect(partModule.instrument.activeNotes).toEqual({
+      c4: { midi: 60, emphasis: "small" },
+    });
+    expect(partModule.instrument).not.toHaveProperty("activeNotesLocked");
     expect(partModule.instrument).not.toHaveProperty(
-      "activeNotesLockPreservesEdits",
+      "activeNotesLockSourceKey",
     );
     expectValidSnapshotInvariants(migrated);
   });

@@ -3,7 +3,10 @@ import {
   type InstrumentNoteEmphasis,
   type InstrumentNoteEmphasisSetter,
 } from "@/types/instrument-note-emphasis";
-import { type ActiveNotes } from "@/types/instrument-active-note";
+import {
+  type ActiveNotesLockSnapshot,
+  type ActiveNotesSourceKey,
+} from "@/types/instrument-active-note";
 import {
   type InstrumentNoteInteractionMode,
   type InstrumentNoteInteractionModeSetter,
@@ -66,16 +69,32 @@ export function useInstrumentPresentation({
   });
   const [emphasisResetKey, setEmphasisResetKey] = useState(0);
   const [isModified, setIsModified] = useState(initialIsModified);
-  const activeNotesLockSnapshotRef = useRef<ActiveNotes | null>(null);
+  const activeNotesLockSnapshotRef = useRef<ActiveNotesLockSnapshot | null>(
+    null,
+  );
+  const activeNotesSourceKeyRef = useRef<ActiveNotesSourceKey | null>(null);
 
   const resetNotes = () => setEmphasisResetKey((k) => k + 1);
   const getActiveNotesLockSnapshot = useCallback(
     () => activeNotesLockSnapshotRef.current,
     [],
   );
-  const setActiveNotesLockSnapshot = useCallback((snapshot: ActiveNotes) => {
-    activeNotesLockSnapshotRef.current = snapshot;
-  }, []);
+  const setActiveNotesLockSnapshot = useCallback(
+    (snapshot: ActiveNotesLockSnapshot) => {
+      activeNotesLockSnapshotRef.current = snapshot;
+    },
+    [],
+  );
+  const getActiveNotesSourceKey = useCallback(
+    () => activeNotesSourceKeyRef.current,
+    [],
+  );
+  const setActiveNotesSourceKey = useCallback(
+    (sourceKey: ActiveNotesSourceKey) => {
+      activeNotesSourceKeyRef.current = sourceKey;
+    },
+    [],
+  );
 
   return {
     activeDisplayFormatId,
@@ -90,5 +109,7 @@ export function useInstrumentPresentation({
     setIsModified,
     getActiveNotesLockSnapshot,
     setActiveNotesLockSnapshot,
+    getActiveNotesSourceKey,
+    setActiveNotesSourceKey,
   };
 }

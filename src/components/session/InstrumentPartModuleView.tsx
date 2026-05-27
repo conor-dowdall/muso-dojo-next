@@ -6,7 +6,7 @@ import { Keyboard } from "@/components/keyboard/Keyboard";
 import { useAppStore } from "@/stores/appStore";
 import { type AudioPresetId } from "@/audio/types";
 import { type DisplayFormatId } from "@/data/displayFormats";
-import { type ActiveNotes } from "@/types/instrument-active-note";
+import { type ActiveNotesLockSnapshot } from "@/types/instrument-active-note";
 import { type InstrumentNoteInteractionMode } from "@/types/instrument";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import {
@@ -123,16 +123,16 @@ export function InstrumentPartModuleView({
     activeNotesLocked: instrument.activeNotesLocked,
     onActiveNotesLockChange: (
       activeNotesLocked: boolean,
-      activeNotesSnapshot?: ActiveNotes,
-      activeNotesLockPreservesEdits?: boolean,
+      activeNotesLockSnapshot?: ActiveNotesLockSnapshot,
+      activeNotesSourceKey?: string,
     ) =>
       setInstrumentActiveNotesLock(
         sessionId,
         partId,
         moduleId,
         activeNotesLocked,
-        activeNotesSnapshot,
-        activeNotesLockPreservesEdits,
+        activeNotesLockSnapshot,
+        activeNotesSourceKey,
       ),
     layout: instrument.layout,
     noteInteractionMode,

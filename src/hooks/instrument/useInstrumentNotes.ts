@@ -3,6 +3,7 @@ import { useEffectiveMusicSystem } from "@/hooks/instrument/useEffectiveMusicSys
 import { useActiveNotes } from "@/hooks/instrument/useActiveNotes";
 import {
   type ActiveNotes,
+  type ActiveNotesLockSnapshot,
   type ActiveNotesSetter,
 } from "@/types/instrument-active-note";
 import { musoAudioEngine, type AudioPresetId } from "@/audio";
@@ -14,6 +15,11 @@ import { applyInstrumentNoteEdit } from "@/utils/instrument/applyInstrumentNoteE
 import { getNoteAriaLabel } from "@/utils/instrument/getNoteAriaLabel";
 import { areActiveNotesEqual } from "@/utils/instrument/areActiveNotesEqual";
 import { createActiveNotesLockSnapshot } from "@/utils/instrument/createActiveNotesLockSnapshot";
+import {
+  createActiveNotesDependencyKey,
+  createActiveNotesSourceKey,
+} from "@/utils/instrument/activeNotesSourceKey";
+import { resolveInstrumentNoteInteractionMode } from "@/utils/instrument/resolveInstrumentInteractionMode";
 import { useSessionNoteColors } from "@/components/note-colors/SessionNoteColorProvider";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
 import { assertNever } from "@/utils/assertNever";
@@ -31,7 +37,6 @@ interface UseInstrumentNotesParams {
   rootNote?: string;
   activeDisplayFormatId: DisplayFormatId;
   activeNotesLocked?: boolean;
-  activeNotesLockPreservesEdits?: boolean;
   noteInteractionMode: InstrumentNoteInteractionMode;
   noteTargets?: readonly InstrumentNoteInteractionTarget[];
   previewAudioPresetId: AudioPresetId;
@@ -44,7 +49,8 @@ interface UseInstrumentNotesParams {
     noteCollectionKey: NoteCollectionKey;
   }) => ActiveNotes;
   setIsModified?: (isModified: boolean) => void;
-  setActiveNotesLockSnapshot?: (snapshot: ActiveNotes) => void;
+  setActiveNotesLockSnapshot?: (snapshot: ActiveNotesLockSnapshot) => void;
+  setActiveNotesSourceKey?: (sourceKey: string) => void;
 }
 
 /**
@@ -59,7 +65,6 @@ export function useInstrumentNotes({
   rootNote,
   activeDisplayFormatId,
   activeNotesLocked = false,
-  activeNotesLockPreservesEdits = true,
   noteInteractionMode,
   noteTargets = [],
   previewAudioPresetId,
@@ -70,6 +75,7 @@ export function useInstrumentNotes({
   getInitialActiveNotes,
   setIsModified,
   setActiveNotesLockSnapshot,
+  setActiveNotesSourceKey,
 }: UseInstrumentNotesParams) {
   const musicSystem = useEffectiveMusicSystem({
     rootNote,
@@ -82,12 +88,15 @@ export function useInstrumentNotes({
   // noteEmphasis and activeDisplayFormatId are intentionally excluded —
   // they're display concerns, not data concerns.
   // emphasisResetKey triggers a full recalculation when the reset button is clicked.
-  const fullDependencies = [
-    musicSystem.effectiveRootNote,
-    musicSystem.effectiveNoteCollectionKey,
-    ...dependencies,
-    String(emphasisResetKey),
-  ].join("-");
+  const activeNotesSourceKey = createActiveNotesSourceKey({
+    rootNote: musicSystem.effectiveRootNote,
+    noteCollectionKey: musicSystem.effectiveNoteCollectionKey,
+    topologyKeys: dependencies,
+  });
+  const fullDependencies = createActiveNotesDependencyKey(
+    activeNotesSourceKey,
+    emphasisResetKey,
+  );
 
   const [activeNotes, onActiveNotesChange, initialActiveNotes] = useActiveNotes(
     externalActiveNotes,
@@ -100,7 +109,6 @@ export function useInstrumentNotes({
       }),
     {
       preserveOnDependencyChange: activeNotesLocked,
-      preserveStaleNotesOnUnlock: activeNotesLockPreservesEdits,
     },
   );
 
@@ -113,12 +121,25 @@ export function useInstrumentNotes({
   }, [isModified, setIsModified]);
 
   useLayoutEffect(() => {
-    setActiveNotesLockSnapshot?.(createActiveNotesLockSnapshot(activeNotes));
-  }, [activeNotes, setActiveNotesLockSnapshot]);
+    setActiveNotesSourceKey?.(activeNotesSourceKey);
 
-  const effectiveNoteInteractionMode = activeNotesLocked
-    ? "play"
-    : noteInteractionMode;
+    if (!activeNotesLocked) {
+      setActiveNotesLockSnapshot?.(
+        createActiveNotesLockSnapshot(activeNotes, activeNotesSourceKey),
+      );
+    }
+  }, [
+    activeNotes,
+    activeNotesLocked,
+    activeNotesSourceKey,
+    setActiveNotesLockSnapshot,
+    setActiveNotesSourceKey,
+  ]);
+
+  const effectiveNoteInteractionMode = resolveInstrumentNoteInteractionMode({
+    activeNotesLocked,
+    noteInteractionMode,
+  });
 
   const handleInteract = (target: InstrumentNoteInteractionTarget) => {
     switch (effectiveNoteInteractionMode) {

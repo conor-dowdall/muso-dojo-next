@@ -79,6 +79,7 @@ function FretboardInner({
           activeNotesLocked={activeNotesLocked}
           onActiveNotesLockChange={onActiveNotesLockChange}
           getActiveNotesLockSnapshot={presentation.getActiveNotesLockSnapshot}
+          getActiveNotesSourceKey={presentation.getActiveNotesSourceKey}
           noteInteractionMode={presentation.noteInteractionMode}
           setNoteInteractionMode={presentation.setNoteInteractionMode}
           onResetNotes={presentation.resetNotes}

@@ -15,7 +15,6 @@ import styles from "./Fretboard.module.css";
 export function FretboardNotesLayer({
   activeNotes: externalActiveNotes,
   activeNotesLocked = false,
-  activeNotesLockPreservesEdits,
   audioPresetId: externalAudioPresetId,
   onActiveNotesChange: externalOnChange,
   rootNote,
@@ -47,7 +46,6 @@ export function FretboardNotesLayer({
     noteCollectionKey,
     activeDisplayFormatId: presentation.activeDisplayFormatId,
     activeNotesLocked,
-    activeNotesLockPreservesEdits,
     noteInteractionMode: presentation.noteInteractionMode,
     noteTargets,
     previewAudioPresetId,
@@ -56,6 +54,7 @@ export function FretboardNotesLayer({
     emphasisResetKey: presentation.emphasisResetKey,
     setIsModified: presentation.setIsModified,
     setActiveNotesLockSnapshot: presentation.setActiveNotesLockSnapshot,
+    setActiveNotesSourceKey: presentation.setActiveNotesSourceKey,
     dependencies: [tuning.join(), fretRange.join()],
     getInitialActiveNotes: ({ rootNote, noteCollectionKey }) =>
       getFretboardActiveNotes({

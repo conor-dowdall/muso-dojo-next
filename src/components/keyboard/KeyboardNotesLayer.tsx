@@ -14,7 +14,6 @@ import styles from "./Keyboard.module.css";
 export function KeyboardNotesLayer({
   activeNotes: externalActiveNotes,
   activeNotesLocked = false,
-  activeNotesLockPreservesEdits,
   audioPresetId: externalAudioPresetId,
   onActiveNotesChange: externalOnChange,
   rootNote,
@@ -45,7 +44,6 @@ export function KeyboardNotesLayer({
     noteCollectionKey,
     activeDisplayFormatId: presentation.activeDisplayFormatId,
     activeNotesLocked,
-    activeNotesLockPreservesEdits,
     noteInteractionMode: presentation.noteInteractionMode,
     noteTargets,
     previewAudioPresetId,
@@ -53,6 +51,7 @@ export function KeyboardNotesLayer({
     emphasisResetKey: presentation.emphasisResetKey,
     setIsModified: presentation.setIsModified,
     setActiveNotesLockSnapshot: presentation.setActiveNotesLockSnapshot,
+    setActiveNotesSourceKey: presentation.setActiveNotesSourceKey,
     dependencies: [interactiveMidiRange.join()],
     getInitialActiveNotes: ({ rootNote, noteCollectionKey }) =>
       getKeyboardActiveNotes({

@@ -2,7 +2,7 @@
 
 import { type ReactNode, useState } from "react";
 import {
-  type ActiveNotes,
+  type ActiveNotesLockSnapshot,
   type InstrumentNoteInteractionMode,
   type InstrumentNoteInteractionModeSetter,
 } from "@/types/instrument";
@@ -36,6 +36,7 @@ import {
   InstrumentSettingsDialog,
   type InstrumentSettingsChoice,
 } from "./InstrumentSettingsDialog";
+import { resolveInstrumentNoteInteractionMode } from "@/utils/instrument/resolveInstrumentInteractionMode";
 import styles from "./InstrumentHeaderActions.module.css";
 
 interface InstrumentHeaderActionsProps {
@@ -48,13 +49,14 @@ interface InstrumentHeaderActionsProps {
   onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
   onActiveNotesLockChange?: (
     activeNotesLocked: boolean,
-    activeNotesSnapshot?: ActiveNotes,
-    activeNotesLockPreservesEdits?: boolean,
+    activeNotesLockSnapshot?: ActiveNotesLockSnapshot,
+    activeNotesSourceKey?: string,
   ) => void;
   onDisplayFormatIdChange: DisplayFormatSetter;
   onNoteEmphasisChange: InstrumentNoteEmphasisSetter;
   setNoteInteractionMode: InstrumentNoteInteractionModeSetter;
-  getActiveNotesLockSnapshot: () => ActiveNotes | null;
+  getActiveNotesLockSnapshot: () => ActiveNotesLockSnapshot | null;
+  getActiveNotesSourceKey: () => string | null;
   onResetNotes: () => void;
   isModified: boolean;
   onClone?: () => void;
@@ -127,6 +129,7 @@ export const InstrumentHeaderActions = ({
   onNoteEmphasisChange,
   setNoteInteractionMode,
   getActiveNotesLockSnapshot,
+  getActiveNotesSourceKey,
   onResetNotes,
   isModified,
   onClone,
@@ -136,9 +139,10 @@ export const InstrumentHeaderActions = ({
   const [settingsDialogKey, setSettingsDialogKey] = useState(0);
   const [settingsChoice, setSettingsChoice] =
     useState<InstrumentSettingsChoice | null>(null);
-  const effectiveNoteInteractionMode = activeNotesLocked
-    ? "play"
-    : noteInteractionMode;
+  const effectiveNoteInteractionMode = resolveInstrumentNoteInteractionMode({
+    activeNotesLocked,
+    noteInteractionMode,
+  });
   const isEditingNotes = effectiveNoteInteractionMode !== "play";
   const canResetNotes = !activeNotesLocked && isEditingNotes && isModified;
   const resetNotesLabel = activeNotesLocked
@@ -174,18 +178,22 @@ export const InstrumentHeaderActions = ({
     }
 
     if (activeNotesLocked) {
-      onActiveNotesLockChange(false);
+      onActiveNotesLockChange(
+        false,
+        undefined,
+        getActiveNotesSourceKey() ?? undefined,
+      );
       return;
     }
 
-    const activeNotesSnapshot = getActiveNotesLockSnapshot();
+    const activeNotesLockSnapshot = getActiveNotesLockSnapshot();
 
-    if (!activeNotesSnapshot) {
+    if (!activeNotesLockSnapshot) {
       return;
     }
 
     setNoteInteractionMode("play");
-    onActiveNotesLockChange(true, activeNotesSnapshot, isModified);
+    onActiveNotesLockChange(true, activeNotesLockSnapshot);
   };
 
   return (

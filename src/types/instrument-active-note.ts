@@ -8,6 +8,13 @@ export interface ActiveNote {
 
 export type ActiveNotes = Record<string, ActiveNote>;
 
+export type ActiveNotesSourceKey = string;
+
+export interface ActiveNotesLockSnapshot {
+  activeNotes: ActiveNotes;
+  sourceKey: ActiveNotesSourceKey;
+}
+
 export type ActiveNotesValue = ActiveNotes | undefined;
 
 export type ActiveNotesSetter = SettingSetter<ActiveNotesValue>;

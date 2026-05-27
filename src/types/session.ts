@@ -3,7 +3,10 @@ import { type AudioPresetId } from "@/audio/types";
 import { type FretboardThemeName } from "@/data/fretboard/themes";
 import { type KeyboardRangeName } from "@/data/keyboard/ranges";
 import { type KeyboardThemeName } from "@/data/keyboard/themes";
-import { type ActiveNotes } from "@/types/instrument-active-note";
+import {
+  type ActiveNotes,
+  type ActiveNotesSourceKey,
+} from "@/types/instrument-active-note";
 import { type InstrumentLayoutConfig } from "@/types/instrument-layout";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type MusicPartLayout } from "@/types/music-part";
@@ -22,7 +25,7 @@ export interface InstrumentInstanceBaseConfig {
   noteEmphasis?: InstrumentNoteEmphasis;
   activeNotes?: ActiveNotes;
   activeNotesLocked?: boolean;
-  activeNotesLockPreservesEdits?: boolean;
+  activeNotesLockSourceKey?: ActiveNotesSourceKey;
   layout?: InstrumentLayoutConfig;
   showHeader?: boolean;
 }

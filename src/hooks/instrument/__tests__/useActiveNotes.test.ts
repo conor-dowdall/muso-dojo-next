@@ -1,24 +1,44 @@
 import { describe, expect, it } from "vitest";
-import { shouldClearPreservedActiveNotesOnUnlock } from "@/hooks/instrument/useActiveNotes";
+import { shouldClearActiveNotesAfterUnlock } from "@/hooks/instrument/useActiveNotes";
 
-describe("shouldClearPreservedActiveNotesOnUnlock", () => {
-  it("keeps custom notes that were preserved through a locked dependency change", () => {
-    const shouldClear = shouldClearPreservedActiveNotesOnUnlock({
+describe("shouldClearActiveNotesAfterUnlock", () => {
+  it("keeps custom notes when the musical context did not change while locked", () => {
+    const shouldClear = shouldClearActiveNotesAfterUnlock({
       externalActiveNotes: {
+        c4: { midi: 60, emphasis: "small" },
+      },
+      initialActiveNotes: {
         c4: { midi: 60 },
       },
-      preserveStaleNotesOnUnlock: true,
+      hadLockedDependencyChange: false,
     });
 
     expect(shouldClear).toBe(false);
   });
 
-  it("clears generated snapshots that were preserved only while locked", () => {
-    const shouldClear = shouldClearPreservedActiveNotesOnUnlock({
+  it("clears notes when the musical context changed while locked", () => {
+    const shouldClear = shouldClearActiveNotesAfterUnlock({
       externalActiveNotes: {
         c4: { midi: 60 },
       },
-      preserveStaleNotesOnUnlock: false,
+      initialActiveNotes: {
+        eb4: { midi: 63 },
+      },
+      hadLockedDependencyChange: true,
+    });
+
+    expect(shouldClear).toBe(true);
+  });
+
+  it("clears redundant lock snapshots that match the generated notes", () => {
+    const shouldClear = shouldClearActiveNotesAfterUnlock({
+      externalActiveNotes: {
+        c4: { midi: 60 },
+      },
+      initialActiveNotes: {
+        c4: { midi: 60 },
+      },
+      hadLockedDependencyChange: false,
     });
 
     expect(shouldClear).toBe(true);

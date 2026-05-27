@@ -22,6 +22,7 @@ import { isInstrumentType } from "@/utils/session/partModuleTypes";
 import {
   isRecord,
   normalizeOptionalBoolean,
+  normalizeString,
 } from "@/utils/session/normalizationPrimitives";
 
 function normalizeOptionalDisplayFormatId(
@@ -40,12 +41,13 @@ function normalizeInstrumentBaseConfig(
     ? input.noteEmphasis
     : undefined;
   const activeNotes = normalizeActiveNotes(input.activeNotes);
+  const activeNotesLockSourceKey = normalizeString(
+    input.activeNotesLockSourceKey,
+  );
   const activeNotesLocked =
-    input.activeNotesLocked === true && activeNotes !== undefined;
-  const activeNotesLockPreservesEdits =
-    activeNotesLocked && input.activeNotesLockPreservesEdits === false
-      ? false
-      : undefined;
+    input.activeNotesLocked === true &&
+    activeNotes !== undefined &&
+    activeNotesLockSourceKey !== undefined;
   const layout = normalizeInstrumentLayoutConfig(input.layout);
   const showHeader = normalizeOptionalBoolean(input.showHeader, true);
 
@@ -54,9 +56,7 @@ function normalizeInstrumentBaseConfig(
     ...(noteEmphasis && noteEmphasis !== "large" ? { noteEmphasis } : {}),
     ...(activeNotes !== undefined ? { activeNotes } : {}),
     ...(activeNotesLocked ? { activeNotesLocked } : {}),
-    ...(activeNotesLockPreservesEdits === false
-      ? { activeNotesLockPreservesEdits }
-      : {}),
+    ...(activeNotesLocked ? { activeNotesLockSourceKey } : {}),
     ...(layout ? { layout } : {}),
     ...(showHeader !== undefined ? { showHeader } : {}),
   };

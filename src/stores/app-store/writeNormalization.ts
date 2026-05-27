@@ -63,12 +63,12 @@ export function clearInstrumentActiveNotesLock<
   T extends {
     activeNotes?: unknown;
     activeNotesLocked?: unknown;
-    activeNotesLockPreservesEdits?: unknown;
+    activeNotesLockSourceKey?: unknown;
   },
 >(instrument: T): T {
   const nextInstrument = clearInstrumentActiveNotes(instrument);
   delete nextInstrument.activeNotesLocked;
-  delete nextInstrument.activeNotesLockPreservesEdits;
+  delete nextInstrument.activeNotesLockSourceKey;
   return nextInstrument;
 }
 

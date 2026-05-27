@@ -24,9 +24,6 @@ import { areActiveNotesEqual } from "@/utils/instrument/areActiveNotesEqual";
  * @param options.preserveOnDependencyChange - Keep controlled overrides when
  *   dependencies change. Locked instruments use this so root/collection changes
  *   do not erase their stored note map until the instrument is unlocked.
- * @param options.preserveStaleNotesOnUnlock - Keep notes preserved through a
- *   locked dependency change after the instrument is unlocked. Custom edited
- *   note sets use this; generated lock snapshots should clear instead.
  */
 export function useActiveNotes(
   externalActiveNotes: ActiveNotes | undefined,
@@ -35,17 +32,13 @@ export function useActiveNotes(
   recalculate: () => ActiveNotes,
   options: {
     preserveOnDependencyChange?: boolean;
-    preserveStaleNotesOnUnlock?: boolean;
   } = {},
 ): [ActiveNotes, ActiveNotesSetter, ActiveNotes] {
   const isControlled = externalOnChange !== undefined;
-  const {
-    preserveOnDependencyChange = false,
-    preserveStaleNotesOnUnlock = false,
-  } = options;
+  const { preserveOnDependencyChange = false } = options;
   const initialActiveNotes = recalculate();
   const previousControlledDependencies = useRef(dependencies);
-  const hasStalePreservedControlledNotes = useRef(false);
+  const hadLockedDependencyChange = useRef(false);
   const [internalState, setInternalState] = useState(() => ({
     dependencies,
     activeNotes: externalActiveNotes ?? initialActiveNotes,
@@ -71,7 +64,7 @@ export function useActiveNotes(
   useLayoutEffect(() => {
     if (!isControlled) {
       previousControlledDependencies.current = dependencies;
-      hasStalePreservedControlledNotes.current = false;
+      hadLockedDependencyChange.current = false;
       return;
     }
 
@@ -79,17 +72,14 @@ export function useActiveNotes(
       previousControlledDependencies.current !== dependencies;
 
     if (!dependenciesDidChange) {
-      if (
-        !preserveOnDependencyChange &&
-        hasStalePreservedControlledNotes.current
-      ) {
-        const shouldClearPreservedNotes =
-          shouldClearPreservedActiveNotesOnUnlock({
-            externalActiveNotes,
-            preserveStaleNotesOnUnlock,
-          });
+      if (!preserveOnDependencyChange) {
+        const shouldClearPreservedNotes = shouldClearActiveNotesAfterUnlock({
+          externalActiveNotes,
+          initialActiveNotes,
+          hadLockedDependencyChange: hadLockedDependencyChange.current,
+        });
 
-        hasStalePreservedControlledNotes.current = false;
+        hadLockedDependencyChange.current = false;
 
         if (shouldClearPreservedNotes) {
           externalOnChange(undefined);
@@ -102,12 +92,11 @@ export function useActiveNotes(
     previousControlledDependencies.current = dependencies;
 
     if (preserveOnDependencyChange) {
-      hasStalePreservedControlledNotes.current =
-        externalActiveNotes !== undefined;
+      hadLockedDependencyChange.current = externalActiveNotes !== undefined;
       return;
     }
 
-    hasStalePreservedControlledNotes.current = false;
+    hadLockedDependencyChange.current = false;
 
     if (externalActiveNotes !== undefined) {
       externalOnChange(undefined);
@@ -116,9 +105,9 @@ export function useActiveNotes(
     dependencies,
     externalActiveNotes,
     externalOnChange,
+    initialActiveNotes,
     isControlled,
     preserveOnDependencyChange,
-    preserveStaleNotesOnUnlock,
   ]);
 
   const onActiveNotesChange = useCallback<ActiveNotesSetter>(
@@ -152,14 +141,20 @@ export function useActiveNotes(
   return [activeNotes, onActiveNotesChange, initialActiveNotes];
 }
 
-export function shouldClearPreservedActiveNotesOnUnlock({
+export function shouldClearActiveNotesAfterUnlock({
   externalActiveNotes,
-  preserveStaleNotesOnUnlock,
+  initialActiveNotes,
+  hadLockedDependencyChange,
 }: {
   externalActiveNotes: ActiveNotes | undefined;
-  preserveStaleNotesOnUnlock: boolean;
+  initialActiveNotes: ActiveNotes;
+  hadLockedDependencyChange: boolean;
 }) {
-  return externalActiveNotes !== undefined && !preserveStaleNotesOnUnlock;
+  return (
+    externalActiveNotes !== undefined &&
+    (hadLockedDependencyChange ||
+      areActiveNotesEqual(externalActiveNotes, initialActiveNotes))
+  );
 }
 
 function resolveActiveNotesValue(

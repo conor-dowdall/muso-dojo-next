@@ -165,8 +165,8 @@ export function createInstrumentActions(
       partId,
       moduleId,
       activeNotesLocked,
-      activeNotesSnapshot,
-      activeNotesLockPreservesEdits,
+      activeNotesLockSnapshot,
+      activeNotesSourceKey,
     ) => {
       const instrument = findInstrumentByModuleId(
         get().sessions[sessionId],
@@ -179,24 +179,21 @@ export function createInstrumentActions(
       }
 
       const currentActiveNotesLocked = instrument.activeNotesLocked === true;
-      const currentActiveNotesLockPreservesEdits =
-        instrument.activeNotesLockPreservesEdits !== false;
-      const nextActiveNotesLockPreservesEdits =
-        activeNotesLocked && activeNotesLockPreservesEdits !== false;
+      const isSameLockRequest =
+        activeNotesLockSnapshot !== undefined &&
+        areOptionalActiveNotesEqual(
+          instrument.activeNotes,
+          activeNotesLockSnapshot.activeNotes,
+        ) &&
+        instrument.activeNotesLockSourceKey === activeNotesLockSnapshot.sourceKey;
 
-      if (activeNotesLocked && activeNotesSnapshot === undefined) {
+      if (activeNotesLocked && activeNotesLockSnapshot === undefined) {
         return;
       }
 
       if (
         activeNotesLocked === currentActiveNotesLocked &&
-        (!activeNotesLocked ||
-          (currentActiveNotesLockPreservesEdits ===
-            nextActiveNotesLockPreservesEdits &&
-            areOptionalActiveNotesEqual(
-              instrument.activeNotes,
-              activeNotesSnapshot,
-            )))
+        (!activeNotesLocked || isSameLockRequest)
       ) {
         return;
       }
@@ -204,24 +201,36 @@ export function createInstrumentActions(
       set((state) =>
         updateSessionById(state, sessionId, (session) =>
           updatePartById(session, partId, (part) =>
-            updateInstrumentByModuleId(part, moduleId, (instrument) =>
-              normalizeInstrumentForWrite(
-                activeNotesLocked
-                  ? {
-                      ...instrument,
-                      activeNotes: activeNotesSnapshot,
-                      activeNotesLocked: true,
-                      activeNotesLockPreservesEdits:
-                        nextActiveNotesLockPreservesEdits,
-                    }
-                  : currentActiveNotesLockPreservesEdits
-                    ? {
-                        ...instrument,
-                        activeNotesLocked: false,
-                      }
-                    : clearInstrumentActiveNotesLock(instrument),
-              ),
-            ),
+            updateInstrumentByModuleId(part, moduleId, (instrument) => {
+              if (activeNotesLocked) {
+                const snapshot = activeNotesLockSnapshot;
+                if (!snapshot) {
+                  return undefined;
+                }
+
+                return normalizeInstrumentForWrite({
+                  ...instrument,
+                  activeNotes: snapshot.activeNotes,
+                  activeNotesLocked: true,
+                  activeNotesLockSourceKey: snapshot.sourceKey,
+                });
+              }
+
+              if (
+                instrument.activeNotesLockSourceKey &&
+                activeNotesSourceKey &&
+                instrument.activeNotesLockSourceKey !== activeNotesSourceKey
+              ) {
+                return normalizeInstrumentForWrite(
+                  clearInstrumentActiveNotesLock(instrument),
+                );
+              }
+
+              return normalizeInstrumentForWrite({
+                ...instrument,
+                activeNotesLocked: false,
+              });
+            }),
           ),
         ),
       );
