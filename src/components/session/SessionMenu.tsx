@@ -31,7 +31,11 @@ export function SessionMenu({
           onOpenNoteColors(activeSessionId);
         }}
       />
-      <ObjectMenuTriggerButton level="session" onClick={onOpenManageSessions} />
+      <ObjectMenuTriggerButton
+        aria-label="Manage sessions"
+        level="session"
+        onClick={onOpenManageSessions}
+      />
     </>
   );
 }
