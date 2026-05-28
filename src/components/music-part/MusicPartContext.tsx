@@ -2,19 +2,22 @@
 
 import { createContext, type ReactNode, use } from "react";
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
+import { type DisplayFormatId } from "@/data/displayFormats";
 import { type SettingSetter } from "@/types/state";
 import { type AddPartModuleHandler } from "@/types/session";
-import { type MusicPartLayout } from "@/types/music-part";
+import { type MusicPartInstrumentSettings } from "@/types/music-part";
+import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 
 export interface MusicPartContextValue {
   partId: string;
   moduleCount: number;
+  instrumentSettings: readonly MusicPartInstrumentSettings[];
   rootNote: string;
   noteCollectionKey: NoteCollectionKey;
-  layout: MusicPartLayout;
   setRootNote: SettingSetter<string>;
   setNoteCollectionKey: SettingSetter<NoteCollectionKey>;
-  setLayout?: SettingSetter<MusicPartLayout>;
+  setPartDisplayFormatId?: (displayFormatId: DisplayFormatId) => void;
+  setPartNoteEmphasis?: (noteEmphasis: InstrumentNoteEmphasis) => void;
   addPartModule?: AddPartModuleHandler;
   clonePart?: () => void;
   removePart?: () => void;

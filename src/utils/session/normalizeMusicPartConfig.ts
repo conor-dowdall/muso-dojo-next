@@ -1,4 +1,3 @@
-import { type MusicPartLayout } from "@/types/music-part";
 import { type MusicPartConfig, type PartModuleConfig } from "@/types/session";
 import { normalizePartModuleConfig } from "@/utils/session/normalizePartModuleConfig";
 import {
@@ -9,10 +8,6 @@ import {
   normalizeOptionalBoolean,
   normalizeRootNote,
 } from "@/utils/session/normalizationPrimitives";
-
-function normalizeLayout(value: unknown): MusicPartLayout | undefined {
-  return value === "row" || value === "column" ? value : undefined;
-}
 
 export function normalizeMusicPartConfig(
   value: unknown,
@@ -29,14 +24,12 @@ export function normalizeMusicPartConfig(
         )
         .filter((module): module is PartModuleConfig => Boolean(module))
     : [];
-  const layout = normalizeLayout(value.layout);
   const showHeader = normalizeOptionalBoolean(value.showHeader, true);
 
   return {
     id: normalizeId(value.id, `part-${index + 1}`),
     rootNote: normalizeRootNote(value.rootNote),
     noteCollectionKey: normalizeNoteCollectionKey(value.noteCollectionKey),
-    ...(layout && layout !== "column" ? { layout } : {}),
     ...(showHeader !== undefined ? { showHeader } : {}),
     modules: ensureUniqueIds(modules),
   };

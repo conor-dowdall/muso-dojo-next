@@ -1,17 +1,13 @@
 "use client";
 
-import { type ReactNode } from "react";
-import {
-  CaseSensitive,
-  Circle,
-  CircleDot,
-  CircleOff,
-  ListMusic,
-} from "lucide-react";
+import { CaseSensitive, Circle, ListMusic } from "lucide-react";
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
 import { DisplayFormatPicker } from "@/components/music-theory/DisplayFormatPicker";
-import { OptionButton } from "@/components/ui/buttons/OptionButton";
 import { DisclosureListItem } from "@/components/ui/disclosure-list/DisclosureList";
+import {
+  getInstrumentNoteEmphasisLabel,
+  InstrumentNoteEmphasisPicker,
+} from "@/components/instrument/InstrumentNoteEmphasisPicker";
 import {
   getDisplayFormatLabel,
   type DisplayFormatId,
@@ -23,39 +19,12 @@ import {
 } from "@musodojo/music-theory-data";
 import { type SessionManagementSessionSummary } from "./sessionManagementFormatting";
 import { type SessionBatchSettingChoice } from "./sessionManagementTypes";
-import styles from "./SessionManagementDialog.module.css";
 
 interface SettingAggregate<T> {
   isDisabled: boolean;
   preview: string;
   value?: T;
 }
-
-const noteEmphasisOptions = [
-  {
-    id: "large",
-    label: "Large",
-    icon: <Circle />,
-  },
-  {
-    id: "small",
-    label: "Small",
-    icon: <CircleDot />,
-  },
-  {
-    id: "hidden",
-    label: "Hidden",
-    icon: <CircleOff />,
-  },
-] as const satisfies readonly {
-  icon: ReactNode;
-  id: InstrumentNoteEmphasis;
-  label: string;
-}[];
-
-const noteEmphasisLabels = Object.fromEntries(
-  noteEmphasisOptions.map((option) => [option.id, option.label]),
-) as Record<InstrumentNoteEmphasis, string>;
 
 function getUniformAggregate<T>(
   values: readonly T[],
@@ -113,32 +82,8 @@ function getSessionNoteEmphasisAggregate(
     session.parts.flatMap((part) =>
       part.instruments.map((instrument) => instrument.noteEmphasis),
     ),
-    (noteEmphasis) => noteEmphasisLabels[noteEmphasis],
+    getInstrumentNoteEmphasisLabel,
     "No Instruments",
-  );
-}
-
-function NoteEmphasisPicker({
-  value,
-  onChange,
-}: {
-  value?: InstrumentNoteEmphasis;
-  onChange: (noteEmphasis: InstrumentNoteEmphasis) => void;
-}) {
-  return (
-    <div className={styles.noteEmphasisGrid}>
-      {noteEmphasisOptions.map((option) => (
-        <OptionButton
-          key={option.id}
-          density="compact"
-          icon={option.icon}
-          label={option.label}
-          presentation="tile"
-          selected={value === option.id}
-          onClick={() => onChange(option.id)}
-        />
-      ))}
-    </div>
   );
 }
 
@@ -226,7 +171,7 @@ export function SessionBatchSettings({
         subtitle="All Instruments"
         onToggle={() => onToggleSetting("note-emphasis")}
       >
-        <NoteEmphasisPicker
+        <InstrumentNoteEmphasisPicker
           value={noteEmphasisAggregate.value}
           onChange={(noteEmphasis) =>
             onNoteEmphasisChange(session.id, noteEmphasis)

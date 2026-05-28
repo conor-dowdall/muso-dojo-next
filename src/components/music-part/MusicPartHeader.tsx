@@ -37,9 +37,11 @@ export function MusicPartHeader({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const { rootNote, noteCollectionKey } = musicPart;
-  const setLayout = musicPart.setLayout;
   const hasPartMenu = Boolean(
-    setLayout || musicPart.clonePart || musicPart.removePart,
+    musicPart.setPartDisplayFormatId ||
+      musicPart.setPartNoteEmphasis ||
+      musicPart.clonePart ||
+      musicPart.removePart,
   );
   const rootNoteLabel = normalizeRootNoteString(rootNote) || rootNote;
   const noteCollectionName = getNoteCollectionDisplayName(noteCollectionKey);

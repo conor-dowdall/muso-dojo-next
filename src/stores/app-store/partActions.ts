@@ -13,12 +13,17 @@ import {
 } from "./sessionGraph";
 import {
   clearActiveNotesAffectedByPartTheory,
+  normalizeInstrumentForWrite,
   normalizeSessionForWrite,
 } from "./writeNormalization";
-import { type MusicPartLayout } from "@/types/music-part";
 import { type AppStoreGet, type AppStoreSet, type PartActions } from "./types";
-
-const DEFAULT_PART_LAYOUT = "column" satisfies MusicPartLayout;
+import { type DisplayFormatId } from "@/data/displayFormats";
+import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
+import {
+  type InstrumentInstanceConfig,
+  type MusicPartConfig,
+} from "@/types/session";
+import { isInstrumentPartModule } from "@/utils/session/partModuleTypes";
 
 function resolveTargetSessionId(
   get: AppStoreGet,
@@ -30,6 +35,67 @@ function resolveTargetSessionId(
   return targetSessionId && state.sessions[targetSessionId]
     ? targetSessionId
     : undefined;
+}
+
+function updatePartInstruments(
+  part: MusicPartConfig,
+  updater: (
+    instrument: InstrumentInstanceConfig,
+  ) => InstrumentInstanceConfig | undefined,
+) {
+  let partChanged = false;
+  const modules = part.modules.map((partModule) => {
+    if (!isInstrumentPartModule(partModule)) {
+      return partModule;
+    }
+
+    const nextInstrument = updater(partModule.instrument);
+
+    if (nextInstrument === undefined) {
+      return partModule;
+    }
+
+    partChanged = true;
+    return {
+      ...partModule,
+      instrument: nextInstrument,
+    };
+  });
+
+  return partChanged
+    ? {
+        ...part,
+        modules,
+      }
+    : undefined;
+}
+
+function setInstrumentDisplayFormat(
+  instrument: InstrumentInstanceConfig,
+  displayFormatId: DisplayFormatId,
+) {
+  const currentDisplayFormatId = instrument.displayFormatId ?? "note-names";
+
+  return currentDisplayFormatId === displayFormatId
+    ? undefined
+    : normalizeInstrumentForWrite({
+        ...instrument,
+        displayFormatId,
+      });
+}
+
+function setInstrumentNoteEmphasis(
+  instrument: InstrumentInstanceConfig,
+  noteEmphasis: InstrumentNoteEmphasis,
+) {
+  const currentNoteEmphasis = instrument.noteEmphasis ?? "large";
+
+  return currentNoteEmphasis === noteEmphasis
+    ? undefined
+    : normalizeInstrumentForWrite({
+        ...instrument,
+        noteEmphasis,
+      });
 }
 
 export function createPartActions(
@@ -186,23 +252,27 @@ export function createPartActions(
         noteCollectionKey: nextNoteCollectionKey,
       });
     },
-    setPartLayout: (sessionId, partId, layout) => {
-      const part = findPartById(get().sessions[sessionId], partId);
-
-      if (!part) {
-        return;
-      }
-
-      const currentLayout = part.layout ?? DEFAULT_PART_LAYOUT;
-      const nextLayout = resolveSettingValue(layout, currentLayout);
-
-      if (nextLayout === currentLayout) {
-        return;
-      }
-
-      get().updatePartSettings(sessionId, partId, {
-        layout: nextLayout,
-      });
+    setPartDisplayFormatId: (sessionId, partId, displayFormatId) => {
+      set((state) =>
+        updateSessionById(state, sessionId, (session) =>
+          updatePartById(session, partId, (part) =>
+            updatePartInstruments(part, (instrument) =>
+              setInstrumentDisplayFormat(instrument, displayFormatId),
+            ),
+          ),
+        ),
+      );
+    },
+    setPartNoteEmphasis: (sessionId, partId, noteEmphasis) => {
+      set((state) =>
+        updateSessionById(state, sessionId, (session) =>
+          updatePartById(session, partId, (part) =>
+            updatePartInstruments(part, (instrument) =>
+              setInstrumentNoteEmphasis(instrument, noteEmphasis),
+            ),
+          ),
+        ),
+      );
     },
   };
 }

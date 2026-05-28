@@ -1,18 +1,24 @@
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
+import { type DisplayFormatId } from "@/data/displayFormats";
+import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type SettingSetter } from "@/types/state";
 
-export type MusicPartLayout = "column" | "row";
+export interface MusicPartInstrumentSettings {
+  id: string;
+  displayFormatId: DisplayFormatId;
+  noteEmphasis: InstrumentNoteEmphasis;
+}
 
 export interface MusicPartSettings {
   rootNote?: string;
   noteCollectionKey?: NoteCollectionKey;
-  layout?: MusicPartLayout;
   showHeader?: boolean;
 }
 
 export interface MusicPartControlProps {
-  layout?: MusicPartLayout;
-  onLayoutChange?: SettingSetter<MusicPartLayout>;
+  instrumentSettings?: readonly MusicPartInstrumentSettings[];
+  onPartDisplayFormatIdChange?: (displayFormatId: DisplayFormatId) => void;
+  onPartNoteEmphasisChange?: (noteEmphasis: InstrumentNoteEmphasis) => void;
   rootNote?: string;
   initialRootNote?: string;
   onRootNoteChange?: SettingSetter<string>;

@@ -17,10 +17,7 @@ import {
 import { PartModuleCreationDialog } from "@/components/part-module-creation/PartModuleCreationDialog";
 import { Button } from "@/components/ui/buttons/Button";
 import { Dialog } from "@/components/ui/dialog/Dialog";
-import {
-  type MusicPartControlProps,
-  type MusicPartLayout,
-} from "@/types/music-part";
+import { type MusicPartControlProps } from "@/types/music-part";
 import { type AddPartModuleHandler } from "@/types/session";
 import { useControllableState } from "@/hooks/useControllableState";
 import styles from "./MusicPart.module.css";
@@ -41,12 +38,10 @@ type MusicPartComponentProps = MusicPartProps & MusicPartControlProps;
 
 function MusicPartContent({
   children,
-  layout,
   showHeader,
   headerClassName,
 }: {
   children: ReactNode;
-  layout: MusicPartLayout;
   showHeader: boolean;
   headerClassName?: string;
 }) {
@@ -55,7 +50,6 @@ function MusicPartContent({
   const [addDialogKey, setAddDialogKey] = useState(0);
   const hasContent = musicPart.moduleCount > 0;
   const canAddPartModule = musicPart.addPartModule !== undefined;
-  const usesComparisonSizing = layout === "row" && musicPart.moduleCount > 1;
   const openAddDialog = () => {
     setAddDialogKey((currentKey) => currentKey + 1);
     setIsAddDialogOpen(true);
@@ -73,8 +67,6 @@ function MusicPartContent({
       <div
         className={styles.content}
         data-empty={hasContent ? undefined : true}
-        data-instrument-comparison={usesComparisonSizing ? true : undefined}
-        data-layout={layout}
       >
         {hasContent ? children : null}
         {!hasContent && canAddPartModule ? (
@@ -107,8 +99,9 @@ export function MusicPart({
   className = "",
   headerClassName,
   accentColor,
-  layout = "column",
-  onLayoutChange,
+  instrumentSettings = [],
+  onPartDisplayFormatIdChange,
+  onPartNoteEmphasisChange,
   rootNote: controlledRootNote,
   initialRootNote = "C",
   onRootNoteChange,
@@ -138,12 +131,13 @@ export function MusicPart({
   const contextValue: MusicPartContextValue = {
     partId,
     moduleCount,
+    instrumentSettings,
     rootNote,
     noteCollectionKey,
-    layout,
     setRootNote,
     setNoteCollectionKey,
-    setLayout: onLayoutChange,
+    setPartDisplayFormatId: onPartDisplayFormatIdChange,
+    setPartNoteEmphasis: onPartNoteEmphasisChange,
     addPartModule: onAddPartModule,
     clonePart: onClonePart,
     removePart: onRemovePart,
@@ -162,7 +156,6 @@ export function MusicPart({
         >
           <MusicPartContent
             headerClassName={headerClassName}
-            layout={layout}
             showHeader={showHeader}
           >
             {children}

@@ -36,26 +36,6 @@
   min-width: 0;
 }
 
-:global([data-instrument-comparison="true"])
-  .instrumentContainer[data-width-mode="auto"] {
-  --instrument-comparison-column-width: calc(
-    (100% - var(--music-part-content-gap, var(--space-4))) / 2
-  );
-
-  flex: 1 1
-    clamp(
-      min(100%, var(--instrument-min-readable-width, 0px)),
-      var(--instrument-comparison-column-width),
-      min(100%, var(--instrument-preferred-width, 100%))
-    );
-  width: auto;
-  max-width: min(
-    100%,
-    var(--instrument-preferred-width, 100%),
-    var(--instrument-max-width, 100%)
-  );
-}
-
 .scrollArea {
   width: 100%;
   max-width: 100%;

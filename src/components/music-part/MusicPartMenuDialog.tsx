@@ -1,10 +1,12 @@
 "use client";
 
-import { type ReactNode } from "react";
-import { Columns2, LayoutGrid, Rows3 } from "lucide-react";
+import { CaseSensitive, Circle } from "lucide-react";
+import { DisplayFormatPicker } from "@/components/music-theory/DisplayFormatPicker";
 import {
-  DisclosureList,
-  DisclosureListChoice,
+  getInstrumentNoteEmphasisLabel,
+  InstrumentNoteEmphasisPicker,
+} from "@/components/instrument/InstrumentNoteEmphasisPicker";
+import {
   DisclosureListGroup,
   DisclosureListItem,
   useDisclosureList,
@@ -13,7 +15,11 @@ import {
   ObjectManagementGroup,
   ObjectMenuDialog,
 } from "@/components/ui/object-menu";
-import { type MusicPartLayout } from "@/types/music-part";
+import {
+  getDisplayFormatLabel,
+  type DisplayFormatId,
+} from "@/data/displayFormats";
+import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { useMusicPart } from "./MusicPartContext";
 
 interface MusicPartMenuDialogProps {
@@ -21,33 +27,39 @@ interface MusicPartMenuDialogProps {
   onClose: () => void;
 }
 
-type PartMenuChoice = "layout";
+type PartMenuChoice = "display-format" | "note-emphasis";
 
-const layoutOptions = [
-  {
-    layout: "column",
-    ariaLabel: "Stack instruments in this part",
-    label: "Stack",
-    subtitle: "One instrument per row.",
-    icon: <Rows3 />,
-  },
-  {
-    layout: "row",
-    ariaLabel: "Show instruments side by side in this part",
-    label: "Side by Side",
-    subtitle: "Fits instruments beside each other when there is room.",
-    icon: <Columns2 />,
-  },
-] as const satisfies readonly {
-  ariaLabel: string;
-  icon: ReactNode;
-  label: string;
-  layout: MusicPartLayout;
-  subtitle: string;
-}[];
+interface SettingAggregate<T> {
+  isDisabled: boolean;
+  preview: string;
+  value?: T;
+}
 
-function getLayoutLabel(layout: MusicPartLayout) {
-  return layoutOptions.find((option) => option.layout === layout)?.label;
+function getUniformAggregate<T>(
+  values: readonly T[],
+  getLabel: (value: T) => string,
+  emptyLabel: string,
+): SettingAggregate<T> {
+  if (values.length === 0) {
+    return {
+      isDisabled: true,
+      preview: emptyLabel,
+    };
+  }
+
+  const [firstValue] = values;
+  const isMixed = values.some((value) => value !== firstValue);
+
+  return isMixed
+    ? {
+        isDisabled: false,
+        preview: "Mixed",
+      }
+    : {
+        isDisabled: false,
+        preview: getLabel(firstValue),
+        value: firstValue,
+      };
 }
 
 export function MusicPartMenuDialog({
@@ -57,22 +69,21 @@ export function MusicPartMenuDialog({
   const musicPart = useMusicPart();
   const { isOpen: isChoiceOpen, toggleChoice } =
     useDisclosureList<PartMenuChoice>();
-  const setLayout = musicPart.setLayout;
-  const canChooseLayout = setLayout !== undefined && musicPart.moduleCount > 1;
-  const layoutLabel = getLayoutLabel(musicPart.layout) ?? "Stack";
-  const layoutSupportCopy = "Applies when this part has multiple instruments.";
-  const layoutAriaLabel = canChooseLayout
-    ? `Part layout. Current: ${layoutLabel}`
-    : `Part layout. Current: ${layoutLabel}. ${layoutSupportCopy}`;
-
-  const handleLayoutSelect = (layout: MusicPartLayout) => {
-    if (!canChooseLayout) {
-      return;
-    }
-
-    setLayout(layout);
-    onClose();
-  };
+  const hasBatchControls = Boolean(
+    musicPart.setPartDisplayFormatId || musicPart.setPartNoteEmphasis,
+  );
+  const displayFormatAggregate = getUniformAggregate<DisplayFormatId>(
+    musicPart.instrumentSettings.map(
+      (instrument) => instrument.displayFormatId,
+    ),
+    getDisplayFormatLabel,
+    "No Instruments",
+  );
+  const noteEmphasisAggregate = getUniformAggregate<InstrumentNoteEmphasis>(
+    musicPart.instrumentSettings.map((instrument) => instrument.noteEmphasis),
+    getInstrumentNoteEmphasisLabel,
+    "No Instruments",
+  );
 
   const handleClone = () => {
     musicPart.clonePart?.();
@@ -86,37 +97,47 @@ export function MusicPartMenuDialog({
 
   return (
     <ObjectMenuDialog isOpen={isOpen} level="part" onClose={onClose}>
-      {setLayout ? (
+      {hasBatchControls ? (
         <DisclosureListGroup>
-          <DisclosureListItem
-            ariaLabel={layoutAriaLabel}
-            disabled={!canChooseLayout}
-            icon={<LayoutGrid />}
-            isOpen={canChooseLayout ? isChoiceOpen("layout") : false}
-            label="Layout"
-            onToggle={() => {
-              if (canChooseLayout) {
-                toggleChoice("layout");
-              }
-            }}
-            panelVariant="menu"
-            preview={layoutLabel}
-            subtitle={!canChooseLayout ? layoutSupportCopy : undefined}
-          >
-            <DisclosureList density="compact">
-              {layoutOptions.map((option) => (
-                <DisclosureListChoice
-                  key={option.layout}
-                  aria-label={option.ariaLabel}
-                  icon={option.icon}
-                  label={option.label}
-                  selected={musicPart.layout === option.layout}
-                  subtitle={option.subtitle}
-                  onClick={() => handleLayoutSelect(option.layout)}
-                />
-              ))}
-            </DisclosureList>
-          </DisclosureListItem>
+          {musicPart.setPartDisplayFormatId ? (
+            <DisclosureListItem
+              ariaLabel="Set display text for all instruments in this part"
+              disabled={displayFormatAggregate.isDisabled}
+              icon={<CaseSensitive />}
+              isOpen={isChoiceOpen("display-format")}
+              keepMounted
+              label="Display Text"
+              panelVariant="menu"
+              preview={displayFormatAggregate.preview}
+              subtitle="All Instruments"
+              onToggle={() => toggleChoice("display-format")}
+            >
+              <DisplayFormatPicker
+                value={displayFormatAggregate.value}
+                onChange={musicPart.setPartDisplayFormatId}
+              />
+            </DisclosureListItem>
+          ) : null}
+
+          {musicPart.setPartNoteEmphasis ? (
+            <DisclosureListItem
+              ariaLabel="Set note size for all instruments in this part"
+              disabled={noteEmphasisAggregate.isDisabled}
+              icon={<Circle />}
+              isOpen={isChoiceOpen("note-emphasis")}
+              keepMounted
+              label="Note Size"
+              panelVariant="menu"
+              preview={noteEmphasisAggregate.preview}
+              subtitle="All Instruments"
+              onToggle={() => toggleChoice("note-emphasis")}
+            >
+              <InstrumentNoteEmphasisPicker
+                value={noteEmphasisAggregate.value}
+                onChange={musicPart.setPartNoteEmphasis}
+              />
+            </DisclosureListItem>
+          ) : null}
         </DisclosureListGroup>
       ) : null}
 

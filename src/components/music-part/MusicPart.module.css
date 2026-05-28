@@ -41,14 +41,3 @@
 .content[data-empty="true"] {
   align-items: center;
 }
-
-.content[data-layout="row"] {
-  flex-flow: row wrap;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-.content[data-layout="row"][data-empty="true"] {
-  align-items: center;
-  justify-content: center;
-}

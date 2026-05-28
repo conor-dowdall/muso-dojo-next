@@ -9,7 +9,6 @@ import {
 } from "@/types/instrument-active-note";
 import { type InstrumentLayoutConfig } from "@/types/instrument-layout";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
-import { type MusicPartLayout } from "@/types/music-part";
 import { type SessionNoteColorConfig } from "@/types/note-colors";
 import { type FretboardConfig } from "@/types/fretboard";
 import { type KeyboardConfig } from "@/types/keyboard";
@@ -108,7 +107,6 @@ export interface MusicPartConfig {
   id: string;
   rootNote: string;
   noteCollectionKey: NoteCollectionKey;
-  layout?: MusicPartLayout;
   showHeader?: boolean;
   modules: PartModuleConfig[];
 }
