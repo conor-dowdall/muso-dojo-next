@@ -53,8 +53,9 @@ function MusicPartContent({
   const musicPart = useMusicPart();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addDialogKey, setAddDialogKey] = useState(0);
-  const hasContent = Children.count(children) > 0;
+  const hasContent = musicPart.moduleCount > 0;
   const canAddPartModule = musicPart.addPartModule !== undefined;
+  const usesComparisonSizing = layout === "row" && musicPart.moduleCount > 1;
   const openAddDialog = () => {
     setAddDialogKey((currentKey) => currentKey + 1);
     setIsAddDialogOpen(true);
@@ -72,6 +73,7 @@ function MusicPartContent({
       <div
         className={styles.content}
         data-empty={hasContent ? undefined : true}
+        data-instrument-comparison={usesComparisonSizing ? true : undefined}
         data-layout={layout}
       >
         {hasContent ? children : null}
@@ -120,6 +122,7 @@ export function MusicPart({
 }: MusicPartComponentProps) {
   const autoId = useId();
   const partId = userPartId ?? autoId;
+  const moduleCount = Children.count(children);
 
   const [rootNote, setRootNote] = useControllableState({
     value: controlledRootNote,
@@ -134,6 +137,7 @@ export function MusicPart({
 
   const contextValue: MusicPartContextValue = {
     partId,
+    moduleCount,
     rootNote,
     noteCollectionKey,
     layout,

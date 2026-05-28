@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { Columns2, Rows3 } from "lucide-react";
+import { Columns2, LayoutGrid, Rows3 } from "lucide-react";
 import {
   DisclosureList,
   DisclosureListChoice,
@@ -28,12 +28,14 @@ const layoutOptions = [
     layout: "column",
     ariaLabel: "Stack instruments in this part",
     label: "Stack",
+    subtitle: "One instrument per row.",
     icon: <Rows3 />,
   },
   {
     layout: "row",
     ariaLabel: "Show instruments side by side in this part",
     label: "Side by Side",
+    subtitle: "Fits instruments beside each other when there is room.",
     icon: <Columns2 />,
   },
 ] as const satisfies readonly {
@@ -41,14 +43,11 @@ const layoutOptions = [
   icon: ReactNode;
   label: string;
   layout: MusicPartLayout;
+  subtitle: string;
 }[];
 
 function getLayoutLabel(layout: MusicPartLayout) {
   return layoutOptions.find((option) => option.layout === layout)?.label;
-}
-
-function getLayoutIcon(layout: MusicPartLayout) {
-  return layoutOptions.find((option) => option.layout === layout)?.icon;
 }
 
 export function MusicPartMenuDialog({
@@ -59,11 +58,19 @@ export function MusicPartMenuDialog({
   const { isOpen: isChoiceOpen, toggleChoice } =
     useDisclosureList<PartMenuChoice>();
   const setLayout = musicPart.setLayout;
+  const canChooseLayout = setLayout !== undefined && musicPart.moduleCount > 1;
   const layoutLabel = getLayoutLabel(musicPart.layout) ?? "Stack";
-  const layoutIcon = getLayoutIcon(musicPart.layout) ?? <Rows3 />;
+  const layoutSupportCopy = "Applies when this part has multiple instruments.";
+  const layoutAriaLabel = canChooseLayout
+    ? `Part layout. Current: ${layoutLabel}`
+    : `Part layout. Current: ${layoutLabel}. ${layoutSupportCopy}`;
 
   const handleLayoutSelect = (layout: MusicPartLayout) => {
-    setLayout?.(layout);
+    if (!canChooseLayout) {
+      return;
+    }
+
+    setLayout(layout);
     onClose();
   };
 
@@ -82,13 +89,19 @@ export function MusicPartMenuDialog({
       {setLayout ? (
         <DisclosureListGroup>
           <DisclosureListItem
-            ariaLabel={`Part layout. Current: ${layoutLabel}`}
-            icon={layoutIcon}
-            isOpen={isChoiceOpen("layout")}
+            ariaLabel={layoutAriaLabel}
+            disabled={!canChooseLayout}
+            icon={<LayoutGrid />}
+            isOpen={canChooseLayout ? isChoiceOpen("layout") : false}
             label="Layout"
-            onToggle={() => toggleChoice("layout")}
+            onToggle={() => {
+              if (canChooseLayout) {
+                toggleChoice("layout");
+              }
+            }}
             panelVariant="menu"
             preview={layoutLabel}
+            subtitle={!canChooseLayout ? layoutSupportCopy : undefined}
           >
             <DisclosureList density="compact">
               {layoutOptions.map((option) => (
@@ -98,6 +111,7 @@ export function MusicPartMenuDialog({
                   icon={option.icon}
                   label={option.label}
                   selected={musicPart.layout === option.layout}
+                  subtitle={option.subtitle}
                   onClick={() => handleLayoutSelect(option.layout)}
                 />
               ))}

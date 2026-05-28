@@ -8,6 +8,7 @@ import { type MusicPartLayout } from "@/types/music-part";
 
 export interface MusicPartContextValue {
   partId: string;
+  moduleCount: number;
   rootNote: string;
   noteCollectionKey: NoteCollectionKey;
   layout: MusicPartLayout;
