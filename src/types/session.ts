@@ -119,7 +119,12 @@ export interface SessionConfig {
   parts: MusicPartConfig[];
 }
 
+export interface AppPreferences {
+  defaultSessionNoteColorConfig?: SessionNoteColorConfig;
+}
+
 export interface AppStoreSnapshot {
   activeSessionId: string | null;
+  preferences: AppPreferences;
   sessions: Record<string, SessionConfig>;
 }

@@ -12,6 +12,7 @@ import {
   type PartModuleType,
   type SessionConfig,
 } from "@/types/session";
+import { type SessionNoteColorConfig } from "@/types/note-colors";
 import { normalizeInstrumentInstanceConfig } from "@/utils/session/normalizeInstrumentConfig";
 import { normalizeMusicPartConfig } from "@/utils/session/normalizeMusicPartConfig";
 import { normalizeSessionConfig } from "@/utils/session/normalizeSessionConfig";
@@ -38,6 +39,7 @@ interface CreateSessionConfigOptions {
   id?: string;
   name?: string;
   lastModified?: string;
+  noteColorConfig?: SessionNoteColorConfig;
 }
 
 export function createEntityId(prefix: string) {
@@ -127,11 +129,13 @@ export function createDefaultSessionConfig({
   id = createEntityId("session"),
   name = DEFAULT_SESSION_NAME,
   lastModified = new Date().toISOString(),
+  noteColorConfig,
 }: CreateSessionConfigOptions = {}): SessionConfig {
   return normalizeSessionConfig({
     id,
     name,
     lastModified,
+    ...(noteColorConfig ? { noteColorConfig } : {}),
     parts: [],
   });
 }

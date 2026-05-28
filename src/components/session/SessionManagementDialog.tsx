@@ -34,9 +34,13 @@ function createSessionManagementSnapshotSelector() {
 
   return (state: AppStore): SessionManagementSnapshot => {
     const sourceSessions = Object.values(state.sessions);
+    const defaultSessionNoteColorConfig =
+      state.preferences.defaultSessionNoteColorConfig;
     let canReuseSnapshot =
       previousSnapshot !== undefined &&
       previousSnapshot.activeSessionId === state.activeSessionId &&
+      previousSnapshot.defaultSessionNoteColorConfig ===
+        defaultSessionNoteColorConfig &&
       previousSnapshot.sessions.length === sourceSessions.length;
     const sessions = sourceSessions.map((session, index) => {
       const previousSession = previousSnapshot?.sessions[index];
@@ -64,6 +68,7 @@ function createSessionManagementSnapshotSelector() {
 
     previousSnapshot = {
       activeSessionId: state.activeSessionId,
+      defaultSessionNoteColorConfig,
       sessions,
     };
 
@@ -83,9 +88,11 @@ export function SessionManagementDialog({
   );
   const [deleteConfirmationSessionId, setDeleteConfirmationSessionId] =
     useState<string | null>(null);
-  const { activeSessionId, sessions: sessionList } = useAppStore(
-    selectSessionManagementSnapshot,
-  );
+  const {
+    activeSessionId,
+    defaultSessionNoteColorConfig,
+    sessions: sessionList,
+  } = useAppStore(selectSessionManagementSnapshot);
   const setActiveSessionId = useAppStore((state) => state.setActiveSessionId);
   const addSession = useAppStore((state) => state.addSession);
   const cloneSession = useAppStore((state) => state.cloneSession);
@@ -99,6 +106,9 @@ export function SessionManagementDialog({
   );
   const setSessionNoteColorConfig = useAppStore(
     (state) => state.setSessionNoteColorConfig,
+  );
+  const setDefaultSessionNoteColorConfig = useAppStore(
+    (state) => state.setDefaultSessionNoteColorConfig,
   );
   const setSessionNoteEmphasis = useAppStore(
     (state) => state.setSessionNoteEmphasis,
@@ -193,7 +203,13 @@ export function SessionManagementDialog({
                     onNoteColorConfigChange={(sessionId, noteColorConfig) =>
                       setSessionNoteColorConfig(sessionId, noteColorConfig)
                     }
+                    defaultSessionNoteColorConfig={
+                      defaultSessionNoteColorConfig
+                    }
                     onSessionNoteEmphasisChange={setSessionNoteEmphasis}
+                    onDefaultSessionNoteColorConfigChange={
+                      setDefaultSessionNoteColorConfig
+                    }
                     onRenameSession={renameSession}
                     onRequestDeleteSession={setDeleteConfirmationSessionId}
                     onToggleActions={handleSessionActionToggle}

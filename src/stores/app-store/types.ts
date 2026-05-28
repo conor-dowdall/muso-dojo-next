@@ -60,6 +60,12 @@ export interface SessionActions {
   ) => void;
 }
 
+export interface PreferenceActions {
+  setDefaultSessionNoteColorConfig: (
+    noteColorConfig: SessionNoteColorConfig,
+  ) => void;
+}
+
 export interface PartActions {
   addPart: (
     sessionId?: string,
@@ -168,6 +174,7 @@ export interface PartModuleActions {
 }
 
 export type AppStoreActions = SessionActions &
+  PreferenceActions &
   PartActions &
   PartModuleActions &
   InstrumentActions;

@@ -51,9 +51,13 @@ interface SessionManagementRowProps {
     sessionId: string,
     noteColorConfig: SessionNoteColorConfig,
   ) => void;
+  defaultSessionNoteColorConfig?: SessionNoteColorConfig;
   onSessionNoteEmphasisChange: (
     sessionId: string,
     noteEmphasis: InstrumentNoteEmphasis,
+  ) => void;
+  onDefaultSessionNoteColorConfigChange: (
+    noteColorConfig: SessionNoteColorConfig,
   ) => void;
   onRenameSession: (sessionId: string, name: string) => void;
   onRequestDeleteSession: (sessionId: string) => void;
@@ -74,7 +78,9 @@ export function SessionManagementRow({
   onSessionDisplayFormatIdChange,
   onSessionNoteCollectionKeyChange,
   onNoteColorConfigChange,
+  defaultSessionNoteColorConfig,
   onSessionNoteEmphasisChange,
+  onDefaultSessionNoteColorConfigChange,
   onRenameSession,
   onRequestDeleteSession,
   onToggleActions,
@@ -314,6 +320,7 @@ export function SessionManagementRow({
               </DisclosureListItem>
 
               <NoteColorSettings
+                defaultValue={defaultSessionNoteColorConfig}
                 isOpen={openSessionSetting === "note-colors"}
                 value={session.noteColorConfig}
                 onClose={() => closeSessionSettingChoice("note-colors")}
@@ -321,6 +328,7 @@ export function SessionManagementRow({
                 onChange={(noteColorConfig) =>
                   onNoteColorConfigChange(session.id, noteColorConfig)
                 }
+                onUseForNewSessions={onDefaultSessionNoteColorConfigChange}
               />
 
               <SessionBatchSettings

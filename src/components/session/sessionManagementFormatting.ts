@@ -31,6 +31,7 @@ export interface SessionManagementSessionSummary {
 
 export interface SessionManagementSnapshot {
   activeSessionId: string | null;
+  defaultSessionNoteColorConfig?: SessionNoteColorConfig;
   sessions: SessionManagementSessionSummary[];
 }
 

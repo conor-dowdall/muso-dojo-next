@@ -30,6 +30,7 @@ import {
   normalizeHexColor,
   normalizeNoteColorConfig,
 } from "@/utils/note-colors/createNoteColorConfig";
+import { noteColorConfigsAreEqual } from "@/utils/session/normalizeAppPreferences";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import { NoteColorPreview } from "./NoteColorPreview";
 import {
@@ -40,11 +41,13 @@ import {
 import styles from "./NoteColorSettings.module.css";
 
 interface NoteColorSettingsProps {
+  defaultValue?: SessionNoteColorConfig;
   isOpen?: boolean;
   onClose?: () => void;
   onToggle?: () => void;
   value?: SessionNoteColorConfig;
   onChange: (value: SessionNoteColorConfig) => void;
+  onUseForNewSessions?: (value: SessionNoteColorConfig) => void;
 }
 
 const themePreviewColors = createNoteColorTuple(
@@ -71,7 +74,7 @@ function getModeLabel(mode: NoteColorMode) {
 
 function getConfigLabel(config: SessionNoteColorConfig) {
   if (config.source === "theme") {
-    return "Default Color";
+    return "Plain Color";
   }
 
   if (config.source === "preset") {
@@ -148,11 +151,13 @@ function getColorInputValue(color: string | null, index: number) {
 }
 
 export function NoteColorSettings({
+  defaultValue,
   isOpen,
   onClose,
   onToggle,
   value,
   onChange,
+  onUseForNewSessions,
 }: NoteColorSettingsProps) {
   const { closeChoice, openChoice, toggleChoice } =
     useDisclosureList<NoteColorChoice>();
@@ -161,6 +166,7 @@ export function NoteColorSettings({
   );
   const [isCustomEditorOpen, setIsCustomEditorOpen] = useState(false);
   const config = getNormalizedConfig(value);
+  const defaultConfig = getNormalizedConfig(defaultValue);
   const customConfig = createCustomNoteColorConfig(config);
   const selectedCustomConfig =
     config.source === "custom" ? config : customConfig;
@@ -178,6 +184,10 @@ export function NoteColorSettings({
     selectedCustomConfig.colors[selectedCustomColorIndex];
   const isCustomSelected = config.source === "custom";
   const isCustomOpen = isCustomSelected && isCustomEditorOpen;
+  const isDefaultForNewSessions = noteColorConfigsAreEqual(
+    config,
+    defaultConfig,
+  );
 
   return (
     <DisclosureListItem
@@ -193,9 +203,9 @@ export function NoteColorSettings({
       <div className={styles.noteColorDisclosure}>
         <DisclosureList className={styles.noteColorOptions}>
           <DisclosureListChoice
-            aria-label="Use the default color for every note"
+            aria-label="Use one plain color for every note"
             density="compact"
-            label="Default Color"
+            label="Plain Color"
             preview={<NoteColorPreview colors={themePreviewColors} />}
             selected={config.source === "theme"}
             subtitle="Same for Every Note"
@@ -399,6 +409,24 @@ export function NoteColorSettings({
 
         {/* !!! LLM COPY CONVENTION: This is a local inline editor Done action. */}
         <DisclosureListPanelActions>
+          {onUseForNewSessions ? (
+            <Button
+              aria-label={
+                isDefaultForNewSessions
+                  ? "Current note colors are the default for new sessions"
+                  : "Use current note colors for new sessions"
+              }
+              disabled={isDefaultForNewSessions}
+              label={
+                isDefaultForNewSessions
+                  ? "Used for New Sessions"
+                  : "Use for New Sessions"
+              }
+              size="sm"
+              variant="ghost"
+              onClick={() => onUseForNewSessions(config)}
+            />
+          ) : null}
           <Button label="Done" size="sm" onClick={closeNoteColors} />
         </DisclosureListPanelActions>
       </div>

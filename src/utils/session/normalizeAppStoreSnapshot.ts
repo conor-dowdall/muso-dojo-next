@@ -1,4 +1,5 @@
 import { type AppStoreSnapshot } from "@/types/session";
+import { normalizeAppPreferences } from "@/utils/session/normalizeAppPreferences";
 import { normalizeSessionConfig } from "@/utils/session/normalizeSessionConfig";
 import {
   ensureUniqueIds,
@@ -19,6 +20,7 @@ export function createAppStoreSnapshot(
 
   return {
     activeSessionId: normalizedActiveSessionId,
+    preferences: {},
     sessions: {
       [normalizedSession.id]: normalizedSession,
     },
@@ -52,6 +54,7 @@ export function normalizeAppStoreSnapshot(
 
   return {
     activeSessionId,
+    preferences: normalizeAppPreferences(value.preferences),
     sessions,
   };
 }

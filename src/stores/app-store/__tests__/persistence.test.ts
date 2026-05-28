@@ -23,6 +23,7 @@ import {
   type AppStoreSnapshot,
   type InstrumentPartModuleConfig,
 } from "@/types/session";
+import { type SessionNoteColorConfig } from "@/types/note-colors";
 
 const fallbackSnapshot = createAppStoreSnapshot({
   id: "fallback-session",
@@ -34,6 +35,7 @@ const fallbackSnapshot = createAppStoreSnapshot({
 function createPersistedSnapshot(sessionId: string): AppStoreSnapshot {
   return {
     activeSessionId: sessionId,
+    preferences: {},
     sessions: {
       [sessionId]: {
         id: sessionId,
@@ -75,6 +77,8 @@ function createPersistedValue(
 }
 
 function expectValidSnapshotInvariants(snapshot: AppStoreSnapshot) {
+  expect(snapshot.preferences).toEqual(expect.any(Object));
+
   if (snapshot.activeSessionId !== null) {
     expect(snapshot.sessions[snapshot.activeSessionId]).toBeDefined();
   }
@@ -178,6 +182,82 @@ describe("app store persistence", () => {
     );
     expect(migrateAppStoreSnapshot([], 0, fallbackSnapshot)).toBe(
       fallbackSnapshot,
+    );
+  });
+
+  it("normalizes app preferences while ignoring invalid defaults", () => {
+    const persistedState = createPersistedSnapshot("persisted-session");
+    const presetDefault = {
+      source: "preset",
+      preset: "musoDojo",
+    } satisfies SessionNoteColorConfig;
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          preferences: {
+            defaultSessionNoteColorConfig: presetDefault,
+          },
+        },
+        fallbackSnapshot,
+      ).preferences.defaultSessionNoteColorConfig,
+    ).toEqual(presetDefault);
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          preferences: {
+            defaultSessionNoteColorConfig: {
+              source: "preset",
+              preset: "not-a-preset",
+            },
+          },
+        },
+        fallbackSnapshot,
+      ).preferences,
+    ).toEqual({});
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          preferences: {
+            defaultSessionNoteColorConfig: { source: "theme" },
+          },
+        },
+        fallbackSnapshot,
+      ).preferences,
+    ).toEqual({});
+  });
+
+  it("normalizes valid custom note color defaults", () => {
+    const persistedState = createPersistedSnapshot("persisted-session");
+    const normalized = normalizeAppStoreSnapshot(
+      {
+        ...persistedState,
+        preferences: {
+          defaultSessionNoteColorConfig: {
+            source: "custom",
+            name: "My Colors",
+            mode: "relative",
+            colors: Array.from({ length: 12 }, (_, index) =>
+              index % 2 === 0 ? "#ff0000" : null,
+            ),
+          },
+        },
+      },
+      fallbackSnapshot,
+    ).preferences.defaultSessionNoteColorConfig;
+
+    expect(normalized).toMatchObject({
+      source: "custom",
+      name: "My Colors",
+      mode: "relative",
+    });
+    expect(normalized?.source === "custom" && normalized.colors[0]).toBe(
+      "#FF0000",
     );
   });
 

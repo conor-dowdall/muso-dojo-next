@@ -22,6 +22,7 @@ export function createStoreSnapshot(
 ): AppStoreSnapshot {
   return {
     activeSessionId: sessionId,
+    preferences: {},
     sessions: {
       [sessionId]: {
         id: sessionId,

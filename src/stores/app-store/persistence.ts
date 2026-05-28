@@ -23,6 +23,7 @@ export function partializeAppStoreSnapshot(
 ): AppStorePersistedSnapshot {
   return {
     activeSessionId: state.activeSessionId,
+    preferences: state.preferences,
     sessions: state.sessions,
   };
 }

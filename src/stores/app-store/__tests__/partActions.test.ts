@@ -20,6 +20,7 @@ function getPartInstruments(
 function createMultiPartSnapshot() {
   return {
     activeSessionId: sessionId,
+    preferences: {},
     sessions: {
       [sessionId]: {
         id: sessionId,

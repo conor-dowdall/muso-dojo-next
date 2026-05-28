@@ -112,8 +112,13 @@ export function createSessionActions(
       set({ activeSessionId: sessionId });
     },
     addSession: (settings) => {
+      const defaultSessionNoteColorConfig =
+        get().preferences.defaultSessionNoteColorConfig;
       const session = createDefaultSessionConfig({
         ...settings,
+        ...(defaultSessionNoteColorConfig
+          ? { noteColorConfig: defaultSessionNoteColorConfig }
+          : {}),
         name: createUniqueSessionName(
           settings?.name,
           Object.values(get().sessions).map((session) => session.name),
