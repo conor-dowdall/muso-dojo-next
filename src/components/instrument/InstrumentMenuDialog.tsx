@@ -1,13 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import {
-  AudioWaveform,
-  CaseSensitive,
-  Copy,
-  Trash2,
-  Wrench,
-} from "lucide-react";
+import { AudioWaveform, CaseSensitive } from "lucide-react";
 import {
   audioPresetCategoryLabels,
   audioPresetCategoryOrder,
@@ -17,22 +10,17 @@ import {
   type AudioPresetId,
 } from "@/audio";
 import { DisplayFormatPicker } from "@/components/music-theory/DisplayFormatPicker";
-import { Button } from "@/components/ui/buttons/Button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-} from "@/components/ui/dialog/Dialog";
 import {
   DisclosureList,
-  DisclosureListAction,
   DisclosureListChoice,
-  DisclosureListConfirmAction,
   DisclosureListGroup,
   DisclosureListItem,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
+import {
+  ObjectManagementGroup,
+  ObjectMenuDialog,
+} from "@/components/ui/object-menu";
 import { Typography } from "@/components/ui/typography/Typography";
 import {
   type DisplayFormatId,
@@ -41,16 +29,15 @@ import {
 } from "@/data/displayFormats";
 import { type InstrumentType } from "@/types/session";
 import { type SettingSetter } from "@/types/state";
-import { formatValueSummary } from "@/utils/valueSummary";
 import { resolveInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
-import styles from "./InstrumentSettingsDialog.module.css";
+import styles from "./InstrumentMenuDialog.module.css";
 
-export type InstrumentSettingsChoice = "sound" | "display" | "instrument";
+export type InstrumentMenuChoice = "sound" | "display";
 
-interface InstrumentSettingsDialogProps {
+interface InstrumentMenuDialogProps {
   audioPresetId?: AudioPresetId;
   displayFormatId: DisplayFormatId;
-  initialOpenChoice?: InstrumentSettingsChoice | null;
+  initialOpenChoice?: InstrumentMenuChoice | null;
   instrumentType: InstrumentType;
   isOpen: boolean;
   onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
@@ -82,7 +69,7 @@ function auditionAudioPreset(audioPresetId: AudioPresetId) {
   });
 }
 
-export function InstrumentSettingsDialog({
+export function InstrumentMenuDialog({
   audioPresetId,
   displayFormatId,
   initialOpenChoice = null,
@@ -93,20 +80,14 @@ export function InstrumentSettingsDialog({
   onClose,
   onDisplayFormatIdChange,
   onRemove,
-}: InstrumentSettingsDialogProps) {
+}: InstrumentMenuDialogProps) {
   const { isOpen: isChoiceOpen, toggleChoice } =
-    useDisclosureList<InstrumentSettingsChoice>(initialOpenChoice);
-  const [isConfirmingRemove, setIsConfirmingRemove] = useState(false);
+    useDisclosureList<InstrumentMenuChoice>(initialOpenChoice);
   const resolvedAudioPresetId = resolveInstrumentAudioPresetId(
     instrumentType,
     audioPresetId,
   );
   const resolvedAudioPreset = audioPresets[resolvedAudioPresetId];
-  const hasInstrumentActions = Boolean(onClone || onRemove);
-  const instrumentActionsPreview = formatValueSummary([
-    onClone ? "Duplicate" : undefined,
-    onRemove ? "Remove" : undefined,
-  ]);
 
   const handleAudioPresetChange = (nextAudioPresetId: AudioPresetId) => {
     onAudioPresetIdChange?.(nextAudioPresetId);
@@ -129,112 +110,72 @@ export function InstrumentSettingsDialog({
   };
 
   return (
-    <Dialog isOpen={isOpen} onClose={onClose} size="md">
-      <DialogHeader title="Instrument Settings" onClose={onClose} />
-      <DialogContent className={styles.settingsContent}>
-        <DisclosureList>
-          <DisclosureListItem
-            ariaLabel={`Playback sound. Current: ${resolvedAudioPreset.label}`}
-            icon={<AudioWaveform />}
-            isOpen={isChoiceOpen("sound")}
-            label="Playback Sound"
-            onToggle={() => toggleChoice("sound")}
-            panelVariant="menu"
-            preview={resolvedAudioPreset.label}
-          >
-            <DisclosureList grouped groupGap="related" density="compact">
-              {previewAudioPresetGroups.map((group) => (
-                <DisclosureListGroup
-                  key={group.category}
-                  aria-label={group.label}
+    <ObjectMenuDialog isOpen={isOpen} level="instrument" onClose={onClose}>
+      <DisclosureListGroup>
+        <DisclosureListItem
+          ariaLabel={`Playback sound. Current: ${resolvedAudioPreset.label}`}
+          icon={<AudioWaveform />}
+          isOpen={isChoiceOpen("sound")}
+          label="Playback Sound"
+          onToggle={() => toggleChoice("sound")}
+          panelVariant="menu"
+          preview={resolvedAudioPreset.label}
+        >
+          <DisclosureList grouped groupGap="related" density="compact">
+            {previewAudioPresetGroups.map((group) => (
+              <DisclosureListGroup
+                key={group.category}
+                aria-label={group.label}
+              >
+                <Typography
+                  as="div"
+                  className={styles.groupLabel}
+                  size="xs"
+                  variant="muted"
+                  weight="semibold"
+                  caps
                 >
-                  <Typography
-                    as="div"
-                    className={styles.groupLabel}
-                    size="xs"
-                    variant="muted"
-                    weight="semibold"
-                    caps
-                  >
-                    {group.label}
-                  </Typography>
-                  {group.presets.map((preset) => (
-                    <DisclosureListChoice
-                      key={preset.id}
-                      aria-label={`Use ${preset.label} playback sound`}
-                      disabled={!onAudioPresetIdChange}
-                      label={preset.label}
-                      onClick={() => handleAudioPresetChange(preset.id)}
-                      selected={preset.id === resolvedAudioPresetId}
-                      subtitle={preset.description}
-                    />
-                  ))}
-                </DisclosureListGroup>
-              ))}
-            </DisclosureList>
-          </DisclosureListItem>
-
-          <DisclosureListItem
-            ariaLabel={`Display text. Current: ${getDisplayFormatLabel(
-              displayFormatId,
-            )}`}
-            icon={<CaseSensitive />}
-            isOpen={isChoiceOpen("display")}
-            label="Display Text"
-            onToggle={() => toggleChoice("display")}
-            panelVariant="menu"
-            preview={getDisplayFormatLabel(displayFormatId)}
-          >
-            <DisplayFormatPicker
-              value={displayFormatId}
-              onChange={handleDisplayFormatChange}
-            />
-          </DisclosureListItem>
-
-          {hasInstrumentActions ? (
-            <DisclosureListItem
-              ariaLabel="Manage instrument"
-              icon={<Wrench />}
-              isOpen={isChoiceOpen("instrument")}
-              label="Manage Instrument"
-              onToggle={() => toggleChoice("instrument")}
-              panelVariant="menu"
-              subtitle={instrumentActionsPreview}
-            >
-              <DisclosureList density="compact">
-                {onClone ? (
-                  <DisclosureListAction
-                    aria-label="Duplicate instrument"
-                    icon={<Copy />}
-                    label="Duplicate"
-                    onClick={handleClone}
+                  {group.label}
+                </Typography>
+                {group.presets.map((preset) => (
+                  <DisclosureListChoice
+                    key={preset.id}
+                    aria-label={`Use ${preset.label} playback sound`}
+                    disabled={!onAudioPresetIdChange}
+                    label={preset.label}
+                    onClick={() => handleAudioPresetChange(preset.id)}
+                    selected={preset.id === resolvedAudioPresetId}
+                    subtitle={preset.description}
                   />
-                ) : null}
-                {onRemove ? (
-                  <DisclosureListConfirmAction
-                    actionAriaLabel="Remove instrument"
-                    confirmAriaLabel="Confirm remove instrument"
-                    confirmButtonLabel="Remove"
-                    confirmLabel="Remove this instrument?"
-                    icon={<Trash2 />}
-                    isConfirming={isConfirmingRemove}
-                    label="Remove"
-                    onCancel={() => setIsConfirmingRemove(false)}
-                    onConfirm={handleRemove}
-                    onRequestConfirm={() => setIsConfirmingRemove(true)}
-                    tone="danger"
-                  />
-                ) : null}
-              </DisclosureList>
-            </DisclosureListItem>
-          ) : null}
-        </DisclosureList>
-      </DialogContent>
-      <DialogFooter className={styles.settingsFooter}>
-        <section className={styles.footerActions} aria-label="Dialog actions">
-          <Button label="Done" size="lg" variant="filled" onClick={onClose} />
-        </section>
-      </DialogFooter>
-    </Dialog>
+                ))}
+              </DisclosureListGroup>
+            ))}
+          </DisclosureList>
+        </DisclosureListItem>
+
+        <DisclosureListItem
+          ariaLabel={`Display text. Current: ${getDisplayFormatLabel(
+            displayFormatId,
+          )}`}
+          icon={<CaseSensitive />}
+          isOpen={isChoiceOpen("display")}
+          label="Display Text"
+          onToggle={() => toggleChoice("display")}
+          panelVariant="menu"
+          preview={getDisplayFormatLabel(displayFormatId)}
+        >
+          <DisplayFormatPicker
+            value={displayFormatId}
+            onChange={handleDisplayFormatChange}
+          />
+        </DisclosureListItem>
+      </DisclosureListGroup>
+
+      <ObjectManagementGroup
+        level="instrument"
+        onDanger={onRemove ? handleRemove : undefined}
+        onDuplicate={onClone ? handleClone : undefined}
+      />
+    </ObjectMenuDialog>
   );
 }

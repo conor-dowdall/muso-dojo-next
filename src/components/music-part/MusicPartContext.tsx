@@ -4,13 +4,16 @@ import { createContext, type ReactNode, use } from "react";
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { type SettingSetter } from "@/types/state";
 import { type AddPartModuleHandler } from "@/types/session";
+import { type MusicPartLayout } from "@/types/music-part";
 
 export interface MusicPartContextValue {
   partId: string;
   rootNote: string;
   noteCollectionKey: NoteCollectionKey;
+  layout: MusicPartLayout;
   setRootNote: SettingSetter<string>;
   setNoteCollectionKey: SettingSetter<NoteCollectionKey>;
+  setLayout?: SettingSetter<MusicPartLayout>;
   addPartModule?: AddPartModuleHandler;
   clonePart?: () => void;
   removePart?: () => void;

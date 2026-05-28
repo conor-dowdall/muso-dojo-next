@@ -16,8 +16,10 @@ import { RootNotePicker } from "@/components/music-theory/RootNotePicker";
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
 import { getNoteCollectionDisplayName } from "@/utils/music-theory/getNoteCollectionDisplayName";
 import styles from "./MusicPartHeader.module.css";
-import { Copy, Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Heading } from "@/components/ui/typography/Heading";
+import { ObjectMenuTriggerButton } from "@/components/ui/object-menu";
+import { MusicPartMenuDialog } from "./MusicPartMenuDialog";
 
 interface MusicPartHeaderProps {
   className?: string;
@@ -32,8 +34,13 @@ export function MusicPartHeader({
   const [dialogMode, setDialogMode] = useState<"root" | "collection" | null>(
     null,
   );
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const { rootNote, noteCollectionKey } = musicPart;
+  const setLayout = musicPart.setLayout;
+  const hasPartMenu = Boolean(
+    setLayout || musicPart.clonePart || musicPart.removePart,
+  );
   const rootNoteLabel = normalizeRootNoteString(rootNote) || rootNote;
   const noteCollectionName = getNoteCollectionDisplayName(noteCollectionKey);
 
@@ -71,25 +78,22 @@ export function MusicPartHeader({
                 onClick={onOpenAddDialog}
               />
             ) : null}
-            {musicPart.clonePart ? (
-              <IconButton
-                aria-label="Duplicate part"
-                icon={<Copy />}
-                size="sm"
-                onClick={musicPart.clonePart}
-              />
-            ) : null}
-            {musicPart.removePart ? (
-              <IconButton
-                aria-label="Delete part"
-                icon={<X />}
-                size="sm"
-                onClick={musicPart.removePart}
+            {hasPartMenu ? (
+              <ObjectMenuTriggerButton
+                level="part"
+                onClick={() => setIsMenuOpen(true)}
               />
             ) : null}
           </>
         }
       />
+
+      {hasPartMenu ? (
+        <MusicPartMenuDialog
+          isOpen={isMenuOpen}
+          onClose={() => setIsMenuOpen(false)}
+        />
+      ) : null}
 
       <Dialog
         isOpen={dialogMode !== null}

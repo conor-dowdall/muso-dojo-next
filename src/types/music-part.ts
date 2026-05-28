@@ -11,6 +11,8 @@ export interface MusicPartSettings {
 }
 
 export interface MusicPartControlProps {
+  layout?: MusicPartLayout;
+  onLayoutChange?: SettingSetter<MusicPartLayout>;
   rootNote?: string;
   initialRootNote?: string;
   onRootNoteChange?: SettingSetter<string>;

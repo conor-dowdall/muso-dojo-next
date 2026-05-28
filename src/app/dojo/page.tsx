@@ -24,12 +24,16 @@ function HydratedSession({
   onPerformanceModeChange,
 }: HydratedSessionProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [addDialogKey, setAddDialogKey] = useState(0);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
   const addPart = useAppStore((state) => state.addPart);
   const addParts = useAppStore((state) => state.addParts);
   const replaceParts = useAppStore((state) => state.replaceParts);
   const closeAddDialog = () => setIsAddDialogOpen(false);
-  const openAddDialog = () => setIsAddDialogOpen(true);
+  const openAddDialog = () => {
+    setAddDialogKey((currentKey) => currentKey + 1);
+    setIsAddDialogOpen(true);
+  };
   const enterPerformanceMode = () => {
     setIsAddDialogOpen(false);
     void musoAudioEngine.prime().catch(() => undefined);
@@ -123,6 +127,7 @@ function HydratedSession({
       ) : null}
       <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="lg">
         <AddToSessionDialog
+          key={addDialogKey}
           onAddCustomChordOrScale={({
             rootNote,
             noteCollectionKey,

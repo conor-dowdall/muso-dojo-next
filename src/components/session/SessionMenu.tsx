@@ -1,7 +1,8 @@
 "use client";
 
-import { MoreHorizontal, Palette } from "lucide-react";
+import { Palette } from "lucide-react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
+import { ObjectMenuTriggerButton } from "@/components/ui/object-menu";
 
 interface SessionMenuProps {
   activeSessionId: string | null;
@@ -30,12 +31,7 @@ export function SessionMenu({
           onOpenNoteColors(activeSessionId);
         }}
       />
-      <IconButton
-        aria-label="Session menu"
-        icon={<MoreHorizontal />}
-        size="sm"
-        onClick={onOpenManageSessions}
-      />
+      <ObjectMenuTriggerButton level="session" onClick={onOpenManageSessions} />
     </>
   );
 }

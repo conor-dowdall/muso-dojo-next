@@ -24,8 +24,7 @@ import {
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
-  defaultFretboardInstrumentSelection,
-  defaultKeyboardInstrumentSelection,
+  createDefaultInstrumentSelections,
   type FretboardInstrumentSelection,
   type KeyboardInstrumentSelection,
 } from "@/components/instrument-creation/instrumentCreationConfig";
@@ -145,10 +144,15 @@ export function AddToSessionDialog({
   const modeDisclosure = useDisclosureList<SessionAddMode>();
   const sessionDisclosure = useDisclosureList<SessionChoice>();
   const [moduleSettingsCloseSignal, setModuleSettingsCloseSignal] = useState(0);
+  const [initialSelections] = useState(() =>
+    createDefaultInstrumentSelections(),
+  );
   const [keyboardSelection, setKeyboardSelection] =
-    useState<KeyboardInstrumentSelection>(defaultKeyboardInstrumentSelection);
+    useState<KeyboardInstrumentSelection>(initialSelections.keyboardSelection);
   const [fretboardSelection, setFretboardSelection] =
-    useState<FretboardInstrumentSelection>(defaultFretboardInstrumentSelection);
+    useState<FretboardInstrumentSelection>(
+      initialSelections.fretboardSelection,
+    );
 
   const selectedRootNote =
     normalizeRootNoteString(rootNote) ?? DEFAULT_PART_ROOT_NOTE;

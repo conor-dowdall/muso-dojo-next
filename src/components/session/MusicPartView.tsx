@@ -43,6 +43,7 @@ export function MusicPartView({
   const setPartNoteCollectionKey = useAppStore(
     (state) => state.setPartNoteCollectionKey,
   );
+  const setPartLayout = useAppStore((state) => state.setPartLayout);
   const addPartModule = useAppStore((state) => state.addPartModule);
   const clonePart = useAppStore((state) => state.clonePart);
   const removePart = useAppStore((state) => state.removePart);
@@ -55,6 +56,7 @@ export function MusicPartView({
     <MusicPart
       partId={partId}
       layout={partSettings.layout}
+      onLayoutChange={(layout) => setPartLayout(sessionId, partId, layout)}
       rootNote={partSettings.rootNote}
       onRootNoteChange={(rootNote) =>
         setPartRootNote(sessionId, partId, rootNote)

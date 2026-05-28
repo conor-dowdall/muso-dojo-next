@@ -31,7 +31,6 @@ interface MusicPartProps {
   className?: string;
   headerClassName?: string;
   accentColor?: string;
-  layout?: MusicPartLayout;
   showHeader?: boolean;
   onAddPartModule?: AddPartModuleHandler;
   onClonePart?: () => void;
@@ -53,9 +52,13 @@ function MusicPartContent({
 }) {
   const musicPart = useMusicPart();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [addDialogKey, setAddDialogKey] = useState(0);
   const hasContent = Children.count(children) > 0;
   const canAddPartModule = musicPart.addPartModule !== undefined;
-  const openAddDialog = () => setIsAddDialogOpen(true);
+  const openAddDialog = () => {
+    setAddDialogKey((currentKey) => currentKey + 1);
+    setIsAddDialogOpen(true);
+  };
   const closeAddDialog = () => setIsAddDialogOpen(false);
 
   return (
@@ -85,6 +88,7 @@ function MusicPartContent({
       {musicPart.addPartModule ? (
         <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="lg">
           <PartModuleCreationDialog
+            key={addDialogKey}
             onAddPartModule={musicPart.addPartModule}
             onClose={closeAddDialog}
             title="Add to Part"
@@ -102,6 +106,7 @@ export function MusicPart({
   headerClassName,
   accentColor,
   layout = "column",
+  onLayoutChange,
   rootNote: controlledRootNote,
   initialRootNote = "C",
   onRootNoteChange,
@@ -131,8 +136,10 @@ export function MusicPart({
     partId,
     rootNote,
     noteCollectionKey,
+    layout,
     setRootNote,
     setNoteCollectionKey,
+    setLayout: onLayoutChange,
     addPartModule: onAddPartModule,
     clonePart: onClonePart,
     removePart: onRemovePart,

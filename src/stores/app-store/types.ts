@@ -8,6 +8,7 @@ import {
   type ActiveNotesSourceKey,
 } from "@/types/instrument-active-note";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
+import { type MusicPartLayout } from "@/types/music-part";
 import { type SessionNoteColorConfig } from "@/types/note-colors";
 import { type SettingValue } from "@/types/state";
 import {
@@ -94,6 +95,11 @@ export interface PartActions {
     sessionId: string,
     partId: string,
     noteCollectionKey: SettingValue<NoteCollectionKey>,
+  ) => void;
+  setPartLayout: (
+    sessionId: string,
+    partId: string,
+    layout: SettingValue<MusicPartLayout>,
   ) => void;
 }
 

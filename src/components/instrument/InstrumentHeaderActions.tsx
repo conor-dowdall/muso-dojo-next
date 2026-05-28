@@ -24,16 +24,16 @@ import {
   Eraser,
   Lock,
   Pencil,
-  Settings,
   SquarePen,
   Volume2,
 } from "lucide-react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { DisplayFormatTriggerButton } from "@/components/music-theory/DisplayFormatTriggerButton";
+import { ObjectMenuTriggerButton } from "@/components/ui/object-menu";
 import {
-  InstrumentSettingsDialog,
-  type InstrumentSettingsChoice,
-} from "./InstrumentSettingsDialog";
+  InstrumentMenuDialog,
+  type InstrumentMenuChoice,
+} from "./InstrumentMenuDialog";
 import { resolveInstrumentNoteInteractionMode } from "@/utils/instrument/resolveInstrumentInteractionMode";
 import styles from "./InstrumentHeaderActions.module.css";
 
@@ -133,10 +133,11 @@ export const InstrumentHeaderActions = ({
   onClone,
   onRemove,
 }: InstrumentHeaderActionsProps) => {
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [settingsDialogKey, setSettingsDialogKey] = useState(0);
-  const [settingsChoice, setSettingsChoice] =
-    useState<InstrumentSettingsChoice | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [menuDialogKey, setMenuDialogKey] = useState(0);
+  const [menuChoice, setMenuChoice] = useState<InstrumentMenuChoice | null>(
+    null,
+  );
   const effectiveNoteInteractionMode = resolveInstrumentNoteInteractionMode({
     activeNotesLocked,
     noteInteractionMode,
@@ -155,10 +156,10 @@ export const InstrumentHeaderActions = ({
     ? "Unlock notes"
     : "Lock current notes";
 
-  const openSettings = (choice: InstrumentSettingsChoice | null) => {
-    setSettingsChoice(choice);
-    setSettingsDialogKey((currentKey) => currentKey + 1);
-    setIsSettingsOpen(true);
+  const openMenu = (choice: InstrumentMenuChoice | null) => {
+    setMenuChoice(choice);
+    setMenuDialogKey((currentKey) => currentKey + 1);
+    setIsMenuOpen(true);
   };
 
   const cycleDefaultNoteSize = () => {
@@ -203,7 +204,7 @@ export const InstrumentHeaderActions = ({
         <DisplayFormatTriggerButton
           className={styles.displayFormatButton}
           value={displayFormatId}
-          onClick={() => openSettings("display")}
+          onClick={() => openMenu("display")}
         />
         <IconButton
           aria-label={`Change default note size. Current: ${noteEmphasisLabel}`}
@@ -284,24 +285,21 @@ export const InstrumentHeaderActions = ({
           role="group"
           aria-label="Instrument utilities"
         >
-          <IconButton
-            aria-label="Instrument settings"
-            icon={<Settings />}
-            size="sm"
-            tooltip="Instrument settings"
-            onClick={() => openSettings(null)}
+          <ObjectMenuTriggerButton
+            level="instrument"
+            onClick={() => openMenu(null)}
           />
         </span>
       </span>
 
-      <InstrumentSettingsDialog
-        key={settingsDialogKey}
+      <InstrumentMenuDialog
+        key={menuDialogKey}
         audioPresetId={audioPresetId}
         displayFormatId={displayFormatId}
-        initialOpenChoice={settingsChoice}
+        initialOpenChoice={menuChoice}
         instrumentType={instrumentType}
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
         onClone={onClone}
         onRemove={onRemove}
         onAudioPresetIdChange={onAudioPresetIdChange}

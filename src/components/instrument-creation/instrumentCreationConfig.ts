@@ -26,6 +26,7 @@ import {
 } from "@/types/session";
 
 export type KeyboardRangeSelection = KeyboardRangeName | "custom";
+export type InstrumentCreationViewportTier = "tiny" | "compact" | "regular";
 
 export interface KeyboardInstrumentSelection {
   range: KeyboardRangeSelection;
@@ -45,22 +46,105 @@ export interface FretboardInstrumentSelection {
   inlayPreset: CustomFretboardInlayPresetName;
 }
 
-export const defaultKeyboardInstrumentSelection: KeyboardInstrumentSelection = {
-  range: DEFAULT_KEYBOARD_RANGE,
-  midiRange: keyboardRanges[DEFAULT_KEYBOARD_RANGE].midiRange,
-  theme: DEFAULT_KEYBOARD_THEME,
-};
+export const instrumentCreationViewportBreakpoints = {
+  tinyMaxRem: 30,
+  compactMaxRem: 64,
+} as const;
 
-export const defaultFretboardInstrumentSelection: FretboardInstrumentSelection =
-  {
+const keyboardRangeByTier = {
+  tiny: "keys13",
+  compact: DEFAULT_KEYBOARD_RANGE,
+  regular: "keys37",
+} as const satisfies Record<InstrumentCreationViewportTier, KeyboardRangeName>;
+
+const fretRangeByTier = {
+  tiny: [0, 5],
+  compact: [0, 9],
+  regular: [0, 12],
+} as const satisfies Record<
+  InstrumentCreationViewportTier,
+  readonly [number, number]
+>;
+
+function getRootFontSizePx() {
+  if (typeof window === "undefined") {
+    return 16;
+  }
+
+  const fontSize = Number.parseFloat(
+    window.getComputedStyle(document.documentElement).fontSize,
+  );
+
+  return Number.isFinite(fontSize) && fontSize > 0 ? fontSize : 16;
+}
+
+function getViewportWidthPx() {
+  return typeof window === "undefined" ? undefined : window.innerWidth;
+}
+
+export function getInstrumentCreationViewportTier(
+  viewportWidthPx = getViewportWidthPx(),
+  rootFontSizePx = getRootFontSizePx(),
+): InstrumentCreationViewportTier {
+  if (viewportWidthPx === undefined) {
+    return "regular";
+  }
+
+  const widthRem = viewportWidthPx / rootFontSizePx;
+
+  if (widthRem < instrumentCreationViewportBreakpoints.tinyMaxRem) {
+    return "tiny";
+  }
+
+  if (widthRem < instrumentCreationViewportBreakpoints.compactMaxRem) {
+    return "compact";
+  }
+
+  return "regular";
+}
+
+export function createDefaultKeyboardInstrumentSelection(
+  tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
+): KeyboardInstrumentSelection {
+  const range = keyboardRangeByTier[tier];
+
+  return {
+    range,
+    midiRange: keyboardRanges[range].midiRange,
+    theme: DEFAULT_KEYBOARD_THEME,
+  };
+}
+
+export function createDefaultFretboardInstrumentSelection(
+  tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
+): FretboardInstrumentSelection {
+  const fretRange = fretRangeByTier[tier];
+
+  return {
     instrument: "guitar",
     tuningKey: stringInstruments.guitar.defaultTuning,
-    fretRange: [0, 12],
+    fretRange: [...fretRange],
     handedness: "right",
     appearanceSource: "auto",
     theme: getDefaultFretboardWoodThemeName("guitar"),
     inlayPreset: DEFAULT_CUSTOM_FRETBOARD_INLAY_PRESET,
   };
+}
+
+export function createDefaultInstrumentSelections(
+  tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
+) {
+  return {
+    keyboardSelection: createDefaultKeyboardInstrumentSelection(tier),
+    fretboardSelection: createDefaultFretboardInstrumentSelection(tier),
+  };
+}
+
+export const defaultKeyboardInstrumentSelection =
+  createDefaultKeyboardInstrumentSelection("regular");
+
+export const defaultFretboardInstrumentSelection =
+  createDefaultFretboardInstrumentSelection("regular");
 
 export function getKeyboardInstrumentCreationConfig(
   selection: KeyboardInstrumentSelection,

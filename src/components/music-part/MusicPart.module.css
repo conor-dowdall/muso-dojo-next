@@ -45,6 +45,7 @@
 .content[data-layout="row"] {
   flex-flow: row wrap;
   align-items: flex-start;
+  justify-content: center;
 }
 
 .content[data-layout="row"][data-empty="true"] {

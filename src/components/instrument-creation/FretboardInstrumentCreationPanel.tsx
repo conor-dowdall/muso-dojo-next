@@ -372,6 +372,7 @@ export function FretboardInstrumentCreationPanel({
 
 const fretRangeOptions = [
   [0, 5],
+  [0, 9],
   [0, 12],
   [0, 24],
 ] as const satisfies readonly (readonly [number, number])[];

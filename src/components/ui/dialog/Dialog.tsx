@@ -6,10 +6,22 @@ import { Heading } from "@/components/ui/typography/Heading";
 
 let lockedDialogCount = 0;
 let previousBodyOverflow = "";
+let previousBodyPaddingInlineEnd = "";
 
 function lockBodyScroll() {
   if (lockedDialogCount === 0) {
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
+
     previousBodyOverflow = document.body.style.overflow;
+    previousBodyPaddingInlineEnd = document.body.style.paddingInlineEnd;
+
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingInlineEnd = previousBodyPaddingInlineEnd
+        ? `calc(${previousBodyPaddingInlineEnd} + ${scrollbarWidth}px)`
+        : `${scrollbarWidth}px`;
+    }
+
     document.body.style.overflow = "hidden";
   }
 
@@ -20,7 +32,9 @@ function lockBodyScroll() {
 
     if (lockedDialogCount === 0) {
       document.body.style.overflow = previousBodyOverflow;
+      document.body.style.paddingInlineEnd = previousBodyPaddingInlineEnd;
       previousBodyOverflow = "";
+      previousBodyPaddingInlineEnd = "";
     }
   };
 }
@@ -108,7 +122,7 @@ interface DialogHeaderProps {
   /**
    * !!! LLM COPY CONVENTION: Dialog titles are headings.
    * Use Title Case, leaving minor words lowercase unless first/last:
-   * "Instrument Settings", "Add to Session", "Choose Root Note".
+   * "Instrument Menu", "Add to Session", "Choose Root Note".
    */
   title: string;
   onClose?: () => void;
@@ -159,10 +173,10 @@ interface DialogFooterProps {
 
 /**
  * !!! LLM COPY CONVENTION: Use DialogFooter for dialog-level decisions.
- * Add a Done footer when settings/management choices apply immediately and the
- * user needs an obvious close affordance. Omit Done when the footer already has
- * a primary commit/cancel flow, such as Add/Cancel. Local inline editor Done
- * buttons belong in DisclosureListPanelActions instead.
+ * Add a Done footer when menu/settings/management choices apply immediately
+ * and the user needs an obvious close affordance. Omit Done when the footer
+ * already has a primary commit/cancel flow, such as Add/Cancel. Local inline
+ * editor Done buttons belong in DisclosureListPanelActions instead.
  */
 export function DialogFooter({ children, className = "" }: DialogFooterProps) {
   return (

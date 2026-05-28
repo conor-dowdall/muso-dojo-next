@@ -1,0 +1,14 @@
+.menuContent {
+  --dialog-menu-section-gap: var(--space-4);
+  --dialog-menu-related-group-gap: var(--space-3);
+}
+
+.menuFooter {
+  container-type: inline-size;
+}
+
+.footerActions {
+  display: flex;
+  min-inline-size: 0;
+  justify-content: flex-end;
+}

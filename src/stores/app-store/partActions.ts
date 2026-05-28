@@ -15,7 +15,10 @@ import {
   clearActiveNotesAffectedByPartTheory,
   normalizeSessionForWrite,
 } from "./writeNormalization";
+import { type MusicPartLayout } from "@/types/music-part";
 import { type AppStoreGet, type AppStoreSet, type PartActions } from "./types";
+
+const DEFAULT_PART_LAYOUT = "column" satisfies MusicPartLayout;
 
 function resolveTargetSessionId(
   get: AppStoreGet,
@@ -181,6 +184,24 @@ export function createPartActions(
 
       get().updatePartSettings(sessionId, partId, {
         noteCollectionKey: nextNoteCollectionKey,
+      });
+    },
+    setPartLayout: (sessionId, partId, layout) => {
+      const part = findPartById(get().sessions[sessionId], partId);
+
+      if (!part) {
+        return;
+      }
+
+      const currentLayout = part.layout ?? DEFAULT_PART_LAYOUT;
+      const nextLayout = resolveSettingValue(layout, currentLayout);
+
+      if (nextLayout === currentLayout) {
+        return;
+      }
+
+      get().updatePartSettings(sessionId, partId, {
+        layout: nextLayout,
       });
     },
   };

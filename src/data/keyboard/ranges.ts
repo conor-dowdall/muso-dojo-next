@@ -12,6 +12,11 @@ export interface KeyboardRange {
 }
 
 export const keyboardRanges = {
+  keys13: {
+    title: "13 Key",
+    midiRange: [60, 72],
+    midiRangeNoteNames: ["C4", "C5"],
+  },
   keys25: {
     title: "25 Key",
     midiRange: [48, 72],

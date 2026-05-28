@@ -1,17 +1,17 @@
 "use client";
 
 import { type SyntheticEvent, useEffect, useId, useRef, useState } from "react";
-import { Check, Copy, Settings, TextCursorInput, Trash2 } from "lucide-react";
+import { Check, Settings, TextCursorInput } from "lucide-react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import {
   DisclosureList,
   DisclosureListAction,
   DisclosureListChoiceItem,
-  DisclosureListConfirmAction,
   DisclosureListGroup,
   DisclosureListItem,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
+import { ObjectManagementGroup } from "@/components/ui/object-menu";
 import { Text } from "@/components/ui/typography/Text";
 import { NoteColorSettings } from "@/components/note-colors/NoteColorSettings";
 import { type DisplayFormatId } from "@/data/displayFormats";
@@ -233,7 +233,7 @@ export function SessionManagementRow({
       subtitle={getSessionSubtitle(session.parts)}
       onToggle={() => onToggleActions(session.id)}
     >
-      <DisclosureList grouped groupGap="related">
+      <DisclosureList grouped groupGap="section">
         <DisclosureListGroup>
           {!isActive ? (
             <DisclosureListAction
@@ -245,15 +245,6 @@ export function SessionManagementRow({
               }}
             />
           ) : null}
-
-          <DisclosureListAction
-            icon={<Copy />}
-            label="Duplicate"
-            onClick={() => {
-              closeLocalMenus();
-              onDuplicateSession(session.id);
-            }}
-          />
 
           <DisclosureListItem
             ariaLabel={`Open settings for ${session.name}`}
@@ -344,20 +335,21 @@ export function SessionManagementRow({
           </DisclosureListItem>
         </DisclosureListGroup>
 
-        <DisclosureListGroup>
-          <DisclosureListConfirmAction
-            confirmAriaLabel={`Confirm deleting ${session.name}. This cannot be undone.`}
-            confirmButtonLabel="Delete"
-            confirmLabel={`Delete ${session.name}?`}
-            icon={<Trash2 />}
-            isConfirming={isDeleteConfirming}
-            label="Delete"
-            tone="danger"
-            onCancel={onCancelDeleteSession}
-            onConfirm={() => onDeleteSession(session.id)}
-            onRequestConfirm={() => onRequestDeleteSession(session.id)}
-          />
-        </DisclosureListGroup>
+        <ObjectManagementGroup
+          isDangerConfirming={isDeleteConfirming}
+          level="session"
+          objectName={session.name}
+          onCancelDangerConfirm={onCancelDeleteSession}
+          onDanger={() => {
+            closeLocalMenus();
+            onDeleteSession(session.id);
+          }}
+          onDuplicate={() => {
+            closeLocalMenus();
+            onDuplicateSession(session.id);
+          }}
+          onRequestDangerConfirm={() => onRequestDeleteSession(session.id)}
+        />
       </DisclosureList>
     </DisclosureListChoiceItem>
   );

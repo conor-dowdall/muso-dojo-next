@@ -12,8 +12,7 @@ import {
   type InstrumentType,
 } from "@/types/session";
 import {
-  defaultFretboardInstrumentSelection,
-  defaultKeyboardInstrumentSelection,
+  createDefaultInstrumentSelections,
   type FretboardInstrumentSelection,
   type KeyboardInstrumentSelection,
 } from "@/components/instrument-creation/instrumentCreationConfig";
@@ -44,12 +43,17 @@ export function PartModuleCreationDialog({
   title = "Add to Part",
 }: PartModuleCreationDialogProps) {
   const selectedModuleType = DEFAULT_PART_MODULE_TYPE;
+  const [initialSelections] = useState(() =>
+    createDefaultInstrumentSelections(),
+  );
   const [selectedInstrumentType, setSelectedInstrumentType] =
     useState<InstrumentType>(DEFAULT_INSTRUMENT_TYPE);
   const [keyboardSelection, setKeyboardSelection] =
-    useState<KeyboardInstrumentSelection>(defaultKeyboardInstrumentSelection);
+    useState<KeyboardInstrumentSelection>(initialSelections.keyboardSelection);
   const [fretboardSelection, setFretboardSelection] =
-    useState<FretboardInstrumentSelection>(defaultFretboardInstrumentSelection);
+    useState<FretboardInstrumentSelection>(
+      initialSelections.fretboardSelection,
+    );
 
   const creationDraft = {
     moduleType: selectedModuleType,

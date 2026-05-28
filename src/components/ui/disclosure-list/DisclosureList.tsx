@@ -26,21 +26,24 @@ export type DisclosureListPanelVariant = "editor" | "menu";
 
 /**
  * !!! LLM COPY CONVENTION: Disclosure lists are scan surfaces, not articles.
- * Top-level setting categories should use short, stable labels, usually Title
- * Case when naming a category or object setting: "Root Note", "Chord or Scale".
+ * Top-level menu rows and setting categories should use short, stable labels,
+ * usually Title Case when naming a category, object setting, or object action:
+ * "Root Note", "Chord or Scale", "Duplicate".
  * Subtitles are either explanatory microcopy in sentence case or compact value
  * summaries. Value summaries often use Title Case source labels joined with
  * DISPLAY_VALUE_SEPARATOR from "@/utils/valueSummary", such as
  * "One Part • Root Note and Chord or Scale".
  * Previews are compact current values or tangible samples, not extra help text.
  *
- * Shared vertical menu pattern for object rows, action rows, and nested editors.
- * Panels can stay mounted for calmer transitions while inert keeps closed inputs
- * out of the focus order. Panel actions give interactive editors a consistent
- * footer without teaching disclosure rows about a specific "Done" behavior.
+ * Shared vertical menu pattern for object rows, configuration rows, action rows,
+ * danger rows, and nested editors. Panels can stay mounted for calmer
+ * transitions while inert keeps closed inputs out of the focus order. Panel
+ * actions give interactive editors a consistent footer without teaching
+ * disclosure rows about a specific "Done" behavior.
  *
  * Row hierarchy:
- * - Use stable labels for setting rows so beginners can keep their place.
+ * - Use stable labels for menu and setting rows so beginners can keep their
+ *   place.
  * - Put compact current values or visual samples in preview. Use subtitle for
  *   explanatory text, examples, longer derived values, or readable summaries.
  *   Do not force sentence case when the subtitle is a title-cased value summary.
@@ -60,8 +63,9 @@ export type DisclosureListPanelVariant = "editor" | "menu";
  * Quick action boundary:
  * - Keep high-frequency, reversible, low-risk controls available as quick
  *   actions near the object they affect.
- * - Put lower-frequency configuration, management actions, and destructive
- *   actions inside a disclosure menu or dialog, with confirmation where needed.
+ * - Put lower-frequency configuration, object-management actions, and
+ *   destructive actions inside a disclosure menu or dialog, with confirmation
+ *   where needed.
  * - If a panel is a compact inline editor with several local controls, add a
  *   local DisclosureListPanelActions footer with a Done button. This closes the
  *   editor panel only; it is not a dialog-level commit action.

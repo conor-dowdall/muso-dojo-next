@@ -76,7 +76,7 @@
   --page-inline-gutter: clamp(var(--space-2), 3vw, var(--space-8));
   --page-block-gutter: clamp(var(--space-4), 4vw, var(--space-8));
   --content-max-inline-size: 50rem;
-  --session-max-inline-size: 88rem;
+  --session-max-inline-size: 104rem;
   --session-stack-gap: clamp(var(--space-4), 2vw, var(--space-6));
 
   /* Controls */
