@@ -36,8 +36,8 @@ export function MusicPartView({
   const instrumentSettingValues = useAppStore(
     useShallow(
       (state) =>
-        selectPart(state, sessionId, partId)?.modules
-          .filter(isInstrumentPartModule)
+        selectPart(state, sessionId, partId)
+          ?.modules.filter(isInstrumentPartModule)
           .flatMap((partModule) => [
             partModule.id,
             partModule.instrument.displayFormatId ?? "note-names",
@@ -51,7 +51,9 @@ export function MusicPartView({
     instrumentSettings.push({
       id: instrumentSettingValues[index] as string,
       displayFormatId: instrumentSettingValues[index + 1] as DisplayFormatId,
-      noteEmphasis: instrumentSettingValues[index + 2] as InstrumentNoteEmphasis,
+      noteEmphasis: instrumentSettingValues[
+        index + 2
+      ] as InstrumentNoteEmphasis,
     });
   }
   const moduleIds = useAppStore(

@@ -261,6 +261,71 @@ describe("app store persistence", () => {
     );
   });
 
+  it("normalizes remembered instrument creation defaults", () => {
+    const persistedState = createPersistedSnapshot("persisted-session");
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          preferences: {
+            instrumentCreationDefaults: {
+              keyboard: {
+                theme: "studio",
+              },
+              fretboard: {
+                instrument: "guitar",
+                tuningKey: "guitarDropD",
+                handedness: "left",
+                appearanceSource: "custom",
+                theme: "maple",
+                inlayPreset: "dots",
+                fretRange: [0, 24],
+              },
+            },
+          },
+        },
+        fallbackSnapshot,
+      ).preferences.instrumentCreationDefaults,
+    ).toEqual({
+      keyboard: {
+        theme: "studio",
+      },
+      fretboard: {
+        instrument: "guitar",
+        tuningKey: "guitarDropD",
+        handedness: "left",
+        appearanceSource: "custom",
+        theme: "maple",
+        inlayPreset: "dots",
+      },
+    });
+  });
+
+  it("ignores invalid remembered instrument creation defaults", () => {
+    const persistedState = createPersistedSnapshot("persisted-session");
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          preferences: {
+            instrumentCreationDefaults: {
+              keyboard: {
+                theme: "not-a-theme",
+              },
+              fretboard: {
+                instrument: "not-an-instrument",
+                tuningKey: "guitarDropD",
+              },
+            },
+          },
+        },
+        fallbackSnapshot,
+      ).preferences,
+    ).toEqual({});
+  });
+
   it("normalizes duplicate ids, invalid active notes, and missing active session ids", () => {
     const migrated = migrateAppStoreSnapshot(
       {

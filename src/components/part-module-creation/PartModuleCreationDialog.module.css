@@ -83,5 +83,42 @@
 .summarySection {
   display: flex;
   min-inline-size: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.secondaryActions,
+.primaryActions {
+  display: flex;
+  min-inline-size: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.secondaryActions {
+  flex: 1 1 auto;
+}
+
+.primaryActions {
+  flex: 0 0 auto;
   justify-content: flex-end;
+}
+
+@container (width < 30rem) {
+  .summarySection {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .secondaryActions,
+  .primaryActions {
+    inline-size: 100%;
+  }
+
+  .secondaryActions > *,
+  .primaryActions > * {
+    flex: 1 1 auto;
+  }
 }

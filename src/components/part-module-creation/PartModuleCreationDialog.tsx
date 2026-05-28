@@ -13,9 +13,13 @@ import {
 } from "@/types/session";
 import {
   createDefaultInstrumentSelections,
+  getInstrumentCreationDefault,
+  instrumentCreationDefaultMatchesSelection,
   type FretboardInstrumentSelection,
   type KeyboardInstrumentSelection,
 } from "@/components/instrument-creation/instrumentCreationConfig";
+import { InstrumentCreationDefaultButton } from "@/components/instrument-creation/InstrumentCreationDefaultButton";
+import { useAppStore } from "@/stores/appStore";
 import {
   DEFAULT_INSTRUMENT_TYPE,
   DEFAULT_PART_MODULE_TYPE,
@@ -43,8 +47,14 @@ export function PartModuleCreationDialog({
   title = "Add to Part",
 }: PartModuleCreationDialogProps) {
   const selectedModuleType = DEFAULT_PART_MODULE_TYPE;
+  const instrumentCreationDefaults = useAppStore(
+    (state) => state.preferences.instrumentCreationDefaults,
+  );
+  const setInstrumentCreationDefault = useAppStore(
+    (state) => state.setInstrumentCreationDefault,
+  );
   const [initialSelections] = useState(() =>
-    createDefaultInstrumentSelections(),
+    createDefaultInstrumentSelections(undefined, instrumentCreationDefaults),
   );
   const [selectedInstrumentType, setSelectedInstrumentType] =
     useState<InstrumentType>(DEFAULT_INSTRUMENT_TYPE);
@@ -62,6 +72,12 @@ export function PartModuleCreationDialog({
     fretboardSelection,
   } satisfies PartModuleCreationDraft;
   const addLabel = getPartModuleCreationActionLabel(creationDraft);
+  const isInstrumentSetupRemembered = instrumentCreationDefaultMatchesSelection(
+    selectedInstrumentType,
+    instrumentCreationDefaults,
+    keyboardSelection,
+    fretboardSelection,
+  );
   const moduleSettingsProps = {
     ...creationDraft,
     onFretboardSelectionChange: setFretboardSelection,
@@ -76,6 +92,16 @@ export function PartModuleCreationDialog({
     onAddPartModule(moduleType, moduleSettings);
     onClose();
   };
+  const handleRememberInstrumentSetup = () => {
+    setInstrumentCreationDefault(
+      selectedInstrumentType,
+      getInstrumentCreationDefault(
+        selectedInstrumentType,
+        keyboardSelection,
+        fretboardSelection,
+      ),
+    );
+  };
 
   return (
     <>
@@ -87,12 +113,21 @@ export function PartModuleCreationDialog({
       </DialogContent>
       <DialogFooter className={styles.footer}>
         <section className={styles.summarySection} aria-label="Selection">
-          <Button
-            label={addLabel}
-            size="lg"
-            variant="filled"
-            onClick={handleAddPartModule}
-          />
+          <div className={styles.secondaryActions}>
+            <InstrumentCreationDefaultButton
+              instrumentType={selectedInstrumentType}
+              isRemembered={isInstrumentSetupRemembered}
+              onRemember={handleRememberInstrumentSetup}
+            />
+          </div>
+          <div className={styles.primaryActions}>
+            <Button
+              label={addLabel}
+              size="lg"
+              variant="filled"
+              onClick={handleAddPartModule}
+            />
+          </div>
         </section>
       </DialogFooter>
     </>

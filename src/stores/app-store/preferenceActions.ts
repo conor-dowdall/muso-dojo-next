@@ -1,5 +1,7 @@
 import {
+  instrumentCreationDefaultsAreEqual,
   normalizeDefaultSessionNoteColorConfig,
+  normalizeInstrumentCreationDefault,
   noteColorConfigsAreEqual,
 } from "@/utils/session/normalizeAppPreferences";
 import {
@@ -34,6 +36,35 @@ export function createPreferenceActions(set: AppStoreSet): PreferenceActions {
           preferences: {
             ...state.preferences,
             defaultSessionNoteColorConfig,
+          },
+        };
+      });
+    },
+    setInstrumentCreationDefault: (instrumentType, creationDefault) => {
+      const normalizedDefault =
+        instrumentType === "keyboard"
+          ? normalizeInstrumentCreationDefault("keyboard", creationDefault)
+          : normalizeInstrumentCreationDefault("fretboard", creationDefault);
+
+      if (!normalizedDefault) {
+        return;
+      }
+
+      set((state) => {
+        const currentDefaults = state.preferences.instrumentCreationDefaults;
+        const nextDefaults = {
+          ...currentDefaults,
+          [instrumentType]: normalizedDefault,
+        };
+
+        if (instrumentCreationDefaultsAreEqual(currentDefaults, nextDefaults)) {
+          return state;
+        }
+
+        return {
+          preferences: {
+            ...state.preferences,
+            instrumentCreationDefaults: nextDefaults,
           },
         };
       });

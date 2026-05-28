@@ -1,14 +1,8 @@
-import {
-  stringInstruments,
-  type StringInstrumentKey,
-  type StringInstrumentTuningKey,
-} from "@musodojo/music-theory-data";
-import { type FretboardThemeName } from "@/data/fretboard/themes";
+import { stringInstruments } from "@musodojo/music-theory-data";
 import { getDefaultFretboardWoodThemeName } from "@/data/fretboard/instrumentDefaults";
 import {
   DEFAULT_CUSTOM_FRETBOARD_INLAY_PRESET,
   fretboardInlayPresets,
-  type CustomFretboardInlayPresetName,
 } from "@/data/fretboard/inlayPresets";
 import {
   DEFAULT_KEYBOARD_RANGE,
@@ -24,6 +18,12 @@ import {
   type InstrumentType,
   type PartModuleCreationConfig,
 } from "@/types/session";
+import {
+  type FretboardCreationAppearanceSource,
+  type FretboardCreationDefault,
+  type InstrumentCreationDefaults,
+  type KeyboardCreationDefault,
+} from "@/types/instrument-creation-defaults";
 
 export type KeyboardRangeSelection = KeyboardRangeName | "custom";
 export type InstrumentCreationViewportTier = "tiny" | "compact" | "regular";
@@ -34,16 +34,10 @@ export interface KeyboardInstrumentSelection {
   theme: KeyboardThemeName;
 }
 
-export type FretboardAppearanceSource = "auto" | "custom";
+export type FretboardAppearanceSource = FretboardCreationAppearanceSource;
 
-export interface FretboardInstrumentSelection {
-  instrument: StringInstrumentKey;
-  tuningKey: StringInstrumentTuningKey;
+export interface FretboardInstrumentSelection extends FretboardCreationDefault {
   fretRange: readonly [number, number];
-  handedness: "right" | "left";
-  appearanceSource: FretboardAppearanceSource;
-  theme: FretboardThemeName;
-  inlayPreset: CustomFretboardInlayPresetName;
 }
 
 export const instrumentCreationViewportBreakpoints = {
@@ -105,39 +99,109 @@ export function getInstrumentCreationViewportTier(
 
 export function createDefaultKeyboardInstrumentSelection(
   tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
+  defaults?: InstrumentCreationDefaults,
 ): KeyboardInstrumentSelection {
   const range = keyboardRangeByTier[tier];
 
   return {
     range,
     midiRange: keyboardRanges[range].midiRange,
-    theme: DEFAULT_KEYBOARD_THEME,
+    theme: defaults?.keyboard?.theme ?? DEFAULT_KEYBOARD_THEME,
   };
 }
 
 export function createDefaultFretboardInstrumentSelection(
   tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
+  defaults?: InstrumentCreationDefaults,
 ): FretboardInstrumentSelection {
   const fretRange = fretRangeByTier[tier];
+  const fretboardDefault = defaults?.fretboard;
 
   return {
-    instrument: "guitar",
-    tuningKey: stringInstruments.guitar.defaultTuning,
+    instrument: fretboardDefault?.instrument ?? "guitar",
+    tuningKey:
+      fretboardDefault?.tuningKey ?? stringInstruments.guitar.defaultTuning,
     fretRange: [...fretRange],
-    handedness: "right",
-    appearanceSource: "auto",
-    theme: getDefaultFretboardWoodThemeName("guitar"),
-    inlayPreset: DEFAULT_CUSTOM_FRETBOARD_INLAY_PRESET,
+    handedness: fretboardDefault?.handedness ?? "right",
+    appearanceSource: fretboardDefault?.appearanceSource ?? "auto",
+    theme:
+      fretboardDefault?.theme ??
+      getDefaultFretboardWoodThemeName(
+        fretboardDefault?.instrument ?? "guitar",
+      ),
+    inlayPreset:
+      fretboardDefault?.inlayPreset ?? DEFAULT_CUSTOM_FRETBOARD_INLAY_PRESET,
   };
 }
 
 export function createDefaultInstrumentSelections(
   tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
+  defaults?: InstrumentCreationDefaults,
 ) {
   return {
-    keyboardSelection: createDefaultKeyboardInstrumentSelection(tier),
-    fretboardSelection: createDefaultFretboardInstrumentSelection(tier),
+    keyboardSelection: createDefaultKeyboardInstrumentSelection(tier, defaults),
+    fretboardSelection: createDefaultFretboardInstrumentSelection(
+      tier,
+      defaults,
+    ),
   };
+}
+
+export function getKeyboardCreationDefault(
+  selection: KeyboardInstrumentSelection,
+): KeyboardCreationDefault {
+  return {
+    theme: selection.theme,
+  };
+}
+
+export function getFretboardCreationDefault(
+  selection: FretboardInstrumentSelection,
+): FretboardCreationDefault {
+  return {
+    instrument: selection.instrument,
+    tuningKey: selection.tuningKey,
+    handedness: selection.handedness,
+    appearanceSource: selection.appearanceSource,
+    theme: selection.theme,
+    inlayPreset: selection.inlayPreset,
+  };
+}
+
+export function getInstrumentCreationDefault(
+  instrumentType: InstrumentType,
+  keyboardSelection: KeyboardInstrumentSelection,
+  fretboardSelection: FretboardInstrumentSelection,
+) {
+  return instrumentType === "keyboard"
+    ? getKeyboardCreationDefault(keyboardSelection)
+    : getFretboardCreationDefault(fretboardSelection);
+}
+
+export function instrumentCreationDefaultMatchesSelection(
+  instrumentType: InstrumentType,
+  defaults: InstrumentCreationDefaults | undefined,
+  keyboardSelection: KeyboardInstrumentSelection,
+  fretboardSelection: FretboardInstrumentSelection,
+) {
+  if (instrumentType === "keyboard") {
+    return defaults?.keyboard?.theme === keyboardSelection.theme;
+  }
+
+  const fretboardDefault = defaults?.fretboard;
+
+  if (!fretboardDefault) {
+    return false;
+  }
+
+  return (
+    fretboardDefault.instrument === fretboardSelection.instrument &&
+    fretboardDefault.tuningKey === fretboardSelection.tuningKey &&
+    fretboardDefault.handedness === fretboardSelection.handedness &&
+    fretboardDefault.appearanceSource === fretboardSelection.appearanceSource &&
+    fretboardDefault.theme === fretboardSelection.theme &&
+    fretboardDefault.inlayPreset === fretboardSelection.inlayPreset
+  );
 }
 
 export const defaultKeyboardInstrumentSelection =

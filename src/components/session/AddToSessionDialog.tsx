@@ -25,9 +25,12 @@ import {
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
   createDefaultInstrumentSelections,
+  getInstrumentCreationDefault,
+  instrumentCreationDefaultMatchesSelection,
   type FretboardInstrumentSelection,
   type KeyboardInstrumentSelection,
 } from "@/components/instrument-creation/instrumentCreationConfig";
+import { InstrumentCreationDefaultButton } from "@/components/instrument-creation/InstrumentCreationDefaultButton";
 import {
   type PartModuleCreationDraft,
   getPartModuleCreationConfig,
@@ -42,6 +45,7 @@ import { AddToSessionRootNoteItem } from "@/components/session/AddToSessionRootN
 import { getChordProgressionDisplayLabels } from "@/utils/music-theory/chordProgressions";
 import { getNoteCollectionDisplayName } from "@/utils/music-theory/getNoteCollectionDisplayName";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
+import { useAppStore } from "@/stores/appStore";
 import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
 import localStyles from "./AddToSessionDialog.module.css";
 import {
@@ -138,6 +142,12 @@ export function AddToSessionDialog({
     useState<ChordProgressionChordListMode>("each-chord-once");
   const [replaceSession, setReplaceSession] = useState(false);
   const moduleType = DEFAULT_PART_MODULE_TYPE;
+  const instrumentCreationDefaults = useAppStore(
+    (state) => state.preferences.instrumentCreationDefaults,
+  );
+  const setInstrumentCreationDefault = useAppStore(
+    (state) => state.setInstrumentCreationDefault,
+  );
   const [instrumentType, setInstrumentType] = useState<InstrumentType>(
     DEFAULT_INSTRUMENT_TYPE,
   );
@@ -145,7 +155,7 @@ export function AddToSessionDialog({
   const sessionDisclosure = useDisclosureList<SessionChoice>();
   const [moduleSettingsCloseSignal, setModuleSettingsCloseSignal] = useState(0);
   const [initialSelections] = useState(() =>
-    createDefaultInstrumentSelections(),
+    createDefaultInstrumentSelections(undefined, instrumentCreationDefaults),
   );
   const [keyboardSelection, setKeyboardSelection] =
     useState<KeyboardInstrumentSelection>(initialSelections.keyboardSelection);
@@ -183,6 +193,12 @@ export function AddToSessionDialog({
     onInstrumentTypeChange: setInstrumentType,
     onKeyboardSelectionChange: setKeyboardSelection,
   } satisfies AddToSessionModuleSettingsProps;
+  const isInstrumentSetupRemembered = instrumentCreationDefaultMatchesSelection(
+    instrumentType,
+    instrumentCreationDefaults,
+    keyboardSelection,
+    fretboardSelection,
+  );
 
   const handleSessionChoiceToggle = (choice: SessionChoice) => {
     if (sessionDisclosure.openChoice !== choice) {
@@ -234,6 +250,16 @@ export function AddToSessionDialog({
       moduleSettings: partModuleCreation.moduleSettings,
     });
     onClose();
+  };
+  const handleRememberInstrumentSetup = () => {
+    setInstrumentCreationDefault(
+      instrumentType,
+      getInstrumentCreationDefault(
+        instrumentType,
+        keyboardSelection,
+        fretboardSelection,
+      ),
+    );
   };
 
   return (
@@ -375,22 +401,27 @@ export function AddToSessionDialog({
         </section>
       </DialogContent>
       <DialogFooter className={styles.footer}>
-        <section
-          className={`${styles.summarySection} ${localStyles.footerActions}`}
-          aria-label="Selection"
-        >
-          <CheckOptionButton
-            className={localStyles.replaceOption}
-            label="Replace Current Session"
-            selected={replaceSession}
-            onClick={() => setReplaceSession((currentValue) => !currentValue)}
-          />
-          <Button
-            label={actionLabel}
-            size="lg"
-            variant="filled"
-            onClick={handleSubmit}
-          />
+        <section className={styles.summarySection} aria-label="Selection">
+          <div className={styles.secondaryActions}>
+            <CheckOptionButton
+              label="Replace Current Session"
+              selected={replaceSession}
+              onClick={() => setReplaceSession((currentValue) => !currentValue)}
+            />
+            <InstrumentCreationDefaultButton
+              instrumentType={instrumentType}
+              isRemembered={isInstrumentSetupRemembered}
+              onRemember={handleRememberInstrumentSetup}
+            />
+          </div>
+          <div className={styles.primaryActions}>
+            <Button
+              label={actionLabel}
+              size="lg"
+              variant="filled"
+              onClick={handleSubmit}
+            />
+          </div>
         </section>
       </DialogFooter>
     </>

@@ -11,35 +11,3 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.footerActions {
-  min-inline-size: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.footerActions > :first-child {
-  flex: 0 1 auto;
-}
-
-.footerActions > :last-child {
-  flex: 0 0 auto;
-}
-
-.replaceOption {
-  flex: 0 1 auto;
-}
-
-@container (width < 30rem) {
-  .footerActions {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .footerActions > :first-child,
-  .footerActions > :last-child {
-    flex: 0 0 auto;
-    inline-size: 100%;
-  }
-}

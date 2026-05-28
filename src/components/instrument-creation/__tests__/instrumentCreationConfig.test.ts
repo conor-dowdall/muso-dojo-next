@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  createDefaultInstrumentSelections,
   createDefaultFretboardInstrumentSelection,
   createDefaultKeyboardInstrumentSelection,
+  getInstrumentCreationDefault,
   getInstrumentCreationViewportTier,
+  instrumentCreationDefaultMatchesSelection,
 } from "@/components/instrument-creation/instrumentCreationConfig";
 
 describe("instrument creation responsive defaults", () => {
@@ -38,5 +41,92 @@ describe("instrument creation responsive defaults", () => {
     expect(
       createDefaultFretboardInstrumentSelection("regular").fretRange,
     ).toEqual([0, 12]);
+  });
+
+  it("applies remembered setup defaults without overriding responsive ranges", () => {
+    const selections = createDefaultInstrumentSelections("tiny", {
+      keyboard: {
+        theme: "studio",
+      },
+      fretboard: {
+        instrument: "bass",
+        tuningKey: "bassFiveStringBeadg",
+        handedness: "left",
+        appearanceSource: "custom",
+        theme: "maple",
+        inlayPreset: "none",
+      },
+    });
+
+    expect(selections.keyboardSelection).toMatchObject({
+      range: "keys13",
+      midiRange: [60, 72],
+      theme: "studio",
+    });
+    expect(selections.fretboardSelection).toMatchObject({
+      instrument: "bass",
+      tuningKey: "bassFiveStringBeadg",
+      fretRange: [0, 5],
+      handedness: "left",
+      appearanceSource: "custom",
+      theme: "maple",
+      inlayPreset: "none",
+    });
+  });
+
+  it("creates remembered setup defaults without range settings", () => {
+    const selections = createDefaultInstrumentSelections("regular");
+    const keyboardDefault = getInstrumentCreationDefault(
+      "keyboard",
+      {
+        ...selections.keyboardSelection,
+        range: "custom",
+        midiRange: [48, 96],
+        theme: "inverted",
+      },
+      selections.fretboardSelection,
+    );
+    const fretboardDefault = getInstrumentCreationDefault(
+      "fretboard",
+      selections.keyboardSelection,
+      {
+        ...selections.fretboardSelection,
+        fretRange: [0, 24],
+        handedness: "left",
+      },
+    );
+
+    expect(keyboardDefault).toEqual({
+      theme: "inverted",
+    });
+    expect(fretboardDefault).not.toHaveProperty("fretRange");
+    expect(fretboardDefault).toMatchObject({
+      instrument: "guitar",
+      tuningKey: "guitarStandardE",
+      handedness: "left",
+    });
+  });
+
+  it("checks whether the current setup is already remembered", () => {
+    const selections = createDefaultInstrumentSelections("regular", {
+      keyboard: { theme: "studio" },
+    });
+
+    expect(
+      instrumentCreationDefaultMatchesSelection(
+        "keyboard",
+        { keyboard: { theme: "studio" } },
+        selections.keyboardSelection,
+        selections.fretboardSelection,
+      ),
+    ).toBe(true);
+    expect(
+      instrumentCreationDefaultMatchesSelection(
+        "keyboard",
+        { keyboard: { theme: "classic" } },
+        selections.keyboardSelection,
+        selections.fretboardSelection,
+      ),
+    ).toBe(false);
   });
 });

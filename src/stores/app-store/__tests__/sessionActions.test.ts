@@ -138,6 +138,60 @@ describe("session app store actions", () => {
     ).toEqual({ source: "theme" });
   });
 
+  it("stores remembered keyboard and fretboard creation setups", () => {
+    const store = createTestStore();
+
+    store.getState().setInstrumentCreationDefault("keyboard", {
+      theme: "studio",
+    });
+    store.getState().setInstrumentCreationDefault("fretboard", {
+      instrument: "guitar",
+      tuningKey: "guitarDropD",
+      handedness: "left",
+      appearanceSource: "custom",
+      theme: "maple",
+      inlayPreset: "dots",
+    });
+
+    expect(store.getState().preferences.instrumentCreationDefaults).toEqual({
+      keyboard: {
+        theme: "studio",
+      },
+      fretboard: {
+        instrument: "guitar",
+        tuningKey: "guitarDropD",
+        handedness: "left",
+        appearanceSource: "custom",
+        theme: "maple",
+        inlayPreset: "dots",
+      },
+    });
+  });
+
+  it("does not notify subscribers when remembering an unchanged setup", () => {
+    const store = createTestStore({
+      ...createStoreSnapshot(),
+      preferences: {
+        instrumentCreationDefaults: {
+          keyboard: {
+            theme: "studio",
+          },
+        },
+      },
+    });
+    let notificationCount = 0;
+    const unsubscribe = store.subscribe(() => {
+      notificationCount += 1;
+    });
+
+    store.getState().setInstrumentCreationDefault("keyboard", {
+      theme: "studio",
+    });
+
+    unsubscribe();
+    expect(notificationCount).toBe(0);
+  });
+
   it("does not notify subscribers when the requested active session is unchanged or missing", () => {
     const store = createTestStore();
     let notificationCount = 0;
