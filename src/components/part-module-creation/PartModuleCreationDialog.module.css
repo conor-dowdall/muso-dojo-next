@@ -84,7 +84,7 @@
   display: flex;
   min-inline-size: 0;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--space-3);
 }
 
@@ -99,6 +99,7 @@
 
 .secondaryActions {
   flex: 1 1 auto;
+  margin-inline-end: auto;
 }
 
 .primaryActions {

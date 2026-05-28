@@ -7,6 +7,7 @@ import {
   DialogHeader,
 } from "@/components/ui/dialog/Dialog";
 import { Button } from "@/components/ui/buttons/Button";
+import { DisclosureList } from "@/components/ui/disclosure-list/DisclosureList";
 import {
   type AddPartModuleHandler,
   type InstrumentType,
@@ -18,7 +19,7 @@ import {
   type FretboardInstrumentSelection,
   type KeyboardInstrumentSelection,
 } from "@/components/instrument-creation/instrumentCreationConfig";
-import { InstrumentCreationDefaultButton } from "@/components/instrument-creation/InstrumentCreationDefaultButton";
+import { InstrumentCreationDefaultAction } from "@/components/instrument-creation/InstrumentCreationDefaultAction";
 import { useAppStore } from "@/stores/appStore";
 import {
   DEFAULT_INSTRUMENT_TYPE,
@@ -110,16 +111,18 @@ export function PartModuleCreationDialog({
         <section className={styles.section} aria-label="Module settings">
           <PartModuleCreationSettingsMenu {...moduleSettingsProps} />
         </section>
-      </DialogContent>
-      <DialogFooter className={styles.footer}>
-        <section className={styles.summarySection} aria-label="Selection">
-          <div className={styles.secondaryActions}>
-            <InstrumentCreationDefaultButton
+        <section className={styles.section} aria-label="Creation default">
+          <DisclosureList>
+            <InstrumentCreationDefaultAction
               instrumentType={selectedInstrumentType}
               isRemembered={isInstrumentSetupRemembered}
               onRemember={handleRememberInstrumentSetup}
             />
-          </div>
+          </DisclosureList>
+        </section>
+      </DialogContent>
+      <DialogFooter className={styles.footer}>
+        <section className={styles.summarySection} aria-label="Selection">
           <div className={styles.primaryActions}>
             <Button
               label={addLabel}

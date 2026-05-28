@@ -30,7 +30,7 @@ import {
   type FretboardInstrumentSelection,
   type KeyboardInstrumentSelection,
 } from "@/components/instrument-creation/instrumentCreationConfig";
-import { InstrumentCreationDefaultButton } from "@/components/instrument-creation/InstrumentCreationDefaultButton";
+import { InstrumentCreationDefaultAction } from "@/components/instrument-creation/InstrumentCreationDefaultAction";
 import {
   type PartModuleCreationDraft,
   getPartModuleCreationConfig,
@@ -261,6 +261,15 @@ export function AddToSessionDialog({
       ),
     );
   };
+  const renderRememberInstrumentSetupAction = () => (
+    <DisclosureListGroup aria-label="Creation default">
+      <InstrumentCreationDefaultAction
+        instrumentType={instrumentType}
+        isRemembered={isInstrumentSetupRemembered}
+        onRemember={handleRememberInstrumentSetup}
+      />
+    </DisclosureListGroup>
+  );
 
   return (
     <>
@@ -308,6 +317,7 @@ export function AddToSessionDialog({
                 </DisclosureListGroup>
 
                 <AddToSessionModuleSettings {...moduleSettingsProps} />
+                {renderRememberInstrumentSetupAction()}
               </DisclosureList>
             </DisclosureListChoiceItem>
             <DisclosureListChoiceItem
@@ -395,6 +405,7 @@ export function AddToSessionDialog({
                 </DisclosureListGroup>
 
                 <AddToSessionModuleSettings {...moduleSettingsProps} />
+                {renderRememberInstrumentSetupAction()}
               </DisclosureList>
             </DisclosureListChoiceItem>
           </DisclosureList>
@@ -407,11 +418,6 @@ export function AddToSessionDialog({
               label="Replace Current Session"
               selected={replaceSession}
               onClick={() => setReplaceSession((currentValue) => !currentValue)}
-            />
-            <InstrumentCreationDefaultButton
-              instrumentType={instrumentType}
-              isRemembered={isInstrumentSetupRemembered}
-              onRemember={handleRememberInstrumentSetup}
             />
           </div>
           <div className={styles.primaryActions}>
