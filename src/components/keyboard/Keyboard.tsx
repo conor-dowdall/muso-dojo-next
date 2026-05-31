@@ -15,6 +15,7 @@ export function Keyboard({
   onAudioPresetIdChange,
   showHeader,
   layout,
+  onInstrumentDisplaySizeChange,
   activeNotesLocked,
   onActiveNotesLockChange,
   onClone,
@@ -28,6 +29,7 @@ export function Keyboard({
         onAudioPresetIdChange={onAudioPresetIdChange}
         showHeader={showHeader}
         layout={layout}
+        onInstrumentDisplaySizeChange={onInstrumentDisplaySizeChange}
         activeNotesLocked={activeNotesLocked}
         onActiveNotesLockChange={onActiveNotesLockChange}
         onClone={onClone}
@@ -45,6 +47,7 @@ function KeyboardInner({
   onAudioPresetIdChange,
   showHeader,
   layout,
+  onInstrumentDisplaySizeChange,
   activeNotesLocked,
   onActiveNotesLockChange,
   onClone,
@@ -56,6 +59,7 @@ function KeyboardInner({
   | "onAudioPresetIdChange"
   | "showHeader"
   | "layout"
+  | "onInstrumentDisplaySizeChange"
   | "activeNotesLocked"
   | "onActiveNotesLockChange"
   | "onClone"
@@ -69,12 +73,14 @@ function KeyboardInner({
       headerActions={
         <InstrumentHeaderActions
           instrumentType="keyboard"
+          layout={layout}
           displayFormatId={presentation.activeDisplayFormatId}
           onDisplayFormatIdChange={presentation.setActiveDisplayFormatId}
           noteEmphasis={presentation.noteEmphasis}
           onNoteEmphasisChange={presentation.setNoteEmphasis}
           audioPresetId={audioPresetId}
           onAudioPresetIdChange={onAudioPresetIdChange}
+          onInstrumentDisplaySizeChange={onInstrumentDisplaySizeChange}
           activeNotesLocked={activeNotesLocked}
           onActiveNotesLockChange={onActiveNotesLockChange}
           getActiveNotesLockSnapshot={presentation.getActiveNotesLockSnapshot}

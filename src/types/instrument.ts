@@ -12,7 +12,10 @@ import {
   type ActiveNotesSourceKey,
   type ActiveNotesSetter,
 } from "./instrument-active-note";
-import { type InstrumentLayoutConfig } from "./instrument-layout";
+import {
+  type InstrumentLayoutConfig,
+  type InstrumentSize,
+} from "./instrument-layout";
 import {
   type InstrumentNoteEmphasis,
   type InstrumentNoteEmphasisSetter,
@@ -65,6 +68,7 @@ export interface InstrumentFrameProps {
   audioPresetId?: AudioPresetId;
   onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
   layout?: InstrumentLayoutConfig;
+  onInstrumentDisplaySizeChange?: SettingSetter<InstrumentSize>;
   displayFormatId?: DisplayFormatId;
   activeNotesLocked?: boolean;
   onActiveNotesLockChange?: (

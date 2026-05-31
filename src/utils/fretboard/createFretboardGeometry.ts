@@ -4,47 +4,11 @@ import {
   type FretboardNoteCellInfo,
   type ResolvedFretboardConfig,
 } from "@/types/fretboard";
-import { type InstrumentIntrinsicSizing } from "@/types/instrument-layout";
 import {
   calculateFretboardGridColumns,
   getNumFrets,
 } from "@/utils/fretboard/fretboardGeometry";
-import { getDefaultFretboardVisualProfile } from "@/data/fretboard/instrumentDefaults";
-
-const FRETBOARD_SIZING = {
-  fretWidth: 54,
-  minFretWidth: 34,
-  minWidth: 280,
-  trailingWidth: 18,
-};
-
-function createFretboardSizing({
-  instrument,
-  numFrets,
-  stringCount,
-  showFretLabels,
-}: Pick<ResolvedFretboardConfig, "instrument" | "showFretLabels"> & {
-  numFrets: number;
-  stringCount: number;
-}): InstrumentIntrinsicSizing {
-  const visualProfile = getDefaultFretboardVisualProfile(instrument);
-  const fretLabelsHeight = showFretLabels ? visualProfile.fretLabelHeight : 0;
-
-  return {
-    preferredWidth: Math.max(
-      FRETBOARD_SIZING.minWidth,
-      numFrets * FRETBOARD_SIZING.fretWidth + FRETBOARD_SIZING.trailingWidth,
-    ),
-    preferredHeight:
-      stringCount * visualProfile.stringRowHeight + fretLabelsHeight,
-    minReadableWidth: Math.max(
-      FRETBOARD_SIZING.minWidth,
-      numFrets * FRETBOARD_SIZING.minFretWidth + FRETBOARD_SIZING.trailingWidth,
-    ),
-    minHeight: visualProfile.minHeight,
-    maxHeight: visualProfile.maxHeight,
-  };
-}
+import { createFretboardSizing } from "@/utils/fretboard/createFretboardSizing";
 
 export function createFretboardGeometry(
   config: ResolvedFretboardConfig,

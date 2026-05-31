@@ -8,6 +8,7 @@ import { type AudioPresetId } from "@/audio/types";
 import { type DisplayFormatId } from "@/data/displayFormats";
 import { type ActiveNotesLockSnapshot } from "@/types/instrument-active-note";
 import { type InstrumentNoteInteractionMode } from "@/types/instrument";
+import { type InstrumentSize } from "@/types/instrument-layout";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import {
   type FretboardInstrumentInstanceConfig,
@@ -91,6 +92,9 @@ export function InstrumentPartModuleView({
   const setInstrumentAudioPresetId = useAppStore(
     (state) => state.setInstrumentAudioPresetId,
   );
+  const setInstrumentDisplaySize = useAppStore(
+    (state) => state.setInstrumentDisplaySize,
+  );
   const setInstrumentActiveNotesLock = useAppStore(
     (state) => state.setInstrumentActiveNotesLock,
   );
@@ -120,6 +124,10 @@ export function InstrumentPartModuleView({
     audioPresetId: instrument.audioPresetId,
     onAudioPresetIdChange: (audioPresetId: SettingValue<AudioPresetId>) =>
       setInstrumentAudioPresetId(sessionId, partId, moduleId, audioPresetId),
+    onInstrumentDisplaySizeChange: isPerformanceMode
+      ? undefined
+      : (size: SettingValue<InstrumentSize>) =>
+          setInstrumentDisplaySize(sessionId, partId, moduleId, size),
     activeNotesLocked: instrument.activeNotesLocked,
     onActiveNotesLockChange: (
       activeNotesLocked: boolean,

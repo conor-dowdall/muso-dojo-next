@@ -16,6 +16,7 @@ import {
   type InstrumentActions,
 } from "./types";
 import { areOptionalActiveNotesEqual } from "@/utils/instrument/areActiveNotesEqual";
+import { createInstrumentLayoutConfig } from "@/utils/instrument/createInstrumentLayoutConfig";
 import { resolveInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
 
 export function createInstrumentActions(
@@ -132,6 +133,31 @@ export function createInstrumentActions(
 
       get().updateInstrumentSettings(sessionId, partId, moduleId, {
         audioPresetId: nextAudioPresetId,
+      });
+    },
+    setInstrumentDisplaySize: (sessionId, partId, moduleId, size) => {
+      const instrument = findInstrumentByModuleId(
+        get().sessions[sessionId],
+        partId,
+        moduleId,
+      );
+
+      if (!instrument) {
+        return;
+      }
+
+      const currentSize = createInstrumentLayoutConfig(instrument.layout).size;
+      const nextSize = resolveSettingValue(size, currentSize);
+
+      if (nextSize === currentSize) {
+        return;
+      }
+
+      get().updateInstrumentSettings(sessionId, partId, moduleId, {
+        layout: {
+          ...instrument.layout,
+          size: nextSize,
+        },
       });
     },
     setInstrumentActiveNotes: (sessionId, partId, moduleId, activeNotes) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioWaveform, CaseSensitive } from "lucide-react";
+import { AudioWaveform, CaseSensitive, Ruler } from "lucide-react";
 import {
   audioPresetCategoryLabels,
   audioPresetCategoryOrder,
@@ -27,23 +27,26 @@ import {
   type DisplayFormatSetter,
   getDisplayFormatLabel,
 } from "@/data/displayFormats";
+import { type InstrumentSize } from "@/types/instrument-layout";
 import { type InstrumentType } from "@/types/session";
 import { type SettingSetter } from "@/types/state";
 import { resolveInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
 import styles from "./InstrumentMenuDialog.module.css";
 
-export type InstrumentMenuChoice = "sound" | "display";
+export type InstrumentMenuChoice = "sound" | "display" | "size";
 
 interface InstrumentMenuDialogProps {
   audioPresetId?: AudioPresetId;
   displayFormatId: DisplayFormatId;
   initialOpenChoice?: InstrumentMenuChoice | null;
+  instrumentSize: InstrumentSize;
   instrumentType: InstrumentType;
   isOpen: boolean;
   onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
   onClone?: () => void;
   onClose: () => void;
   onDisplayFormatIdChange: DisplayFormatSetter;
+  onInstrumentDisplaySizeChange?: SettingSetter<InstrumentSize>;
   onRemove?: () => void;
 }
 
@@ -59,6 +62,28 @@ const previewAudioPresetGroups = audioPresetCategoryOrder
   }))
   .filter((group) => group.presets.length > 0);
 
+const instrumentSizeOptions = [
+  {
+    id: "compact",
+    label: "Compact",
+  },
+  {
+    id: "comfortable",
+    label: "Comfortable",
+  },
+  {
+    id: "large",
+    label: "Large",
+  },
+] as const satisfies readonly {
+  id: InstrumentSize;
+  label: string;
+}[];
+
+const instrumentSizeLabels = Object.fromEntries(
+  instrumentSizeOptions.map((option) => [option.id, option.label]),
+) as Record<InstrumentSize, string>;
+
 function auditionAudioPreset(audioPresetId: AudioPresetId) {
   void musoAudioEngine.playNote({
     durationSeconds: 0.72,
@@ -73,12 +98,14 @@ export function InstrumentMenuDialog({
   audioPresetId,
   displayFormatId,
   initialOpenChoice = null,
+  instrumentSize,
   instrumentType,
   isOpen,
   onAudioPresetIdChange,
   onClone,
   onClose,
   onDisplayFormatIdChange,
+  onInstrumentDisplaySizeChange,
   onRemove,
 }: InstrumentMenuDialogProps) {
   const { isOpen: isChoiceOpen, toggleChoice } =
@@ -96,6 +123,11 @@ export function InstrumentMenuDialog({
 
   const handleDisplayFormatChange = (displayFormatId: DisplayFormatId) => {
     onDisplayFormatIdChange(displayFormatId);
+    onClose();
+  };
+
+  const handleInstrumentDisplaySizeChange = (size: InstrumentSize) => {
+    onInstrumentDisplaySizeChange?.(size);
     onClose();
   };
 
@@ -154,12 +186,12 @@ export function InstrumentMenuDialog({
         </DisclosureListItem>
 
         <DisclosureListItem
-          ariaLabel={`Display text. Current: ${getDisplayFormatLabel(
+          ariaLabel={`Note labels. Current: ${getDisplayFormatLabel(
             displayFormatId,
           )}`}
           icon={<CaseSensitive />}
           isOpen={isChoiceOpen("display")}
-          label="Display Text"
+          label="Note Labels"
           onToggle={() => toggleChoice("display")}
           panelVariant="menu"
           preview={getDisplayFormatLabel(displayFormatId)}
@@ -168,6 +200,30 @@ export function InstrumentMenuDialog({
             value={displayFormatId}
             onChange={handleDisplayFormatChange}
           />
+        </DisclosureListItem>
+
+        <DisclosureListItem
+          ariaLabel={`Instrument size. Current: ${
+            instrumentSizeLabels[instrumentSize]
+          }`}
+          icon={<Ruler />}
+          isOpen={isChoiceOpen("size")}
+          label="Instrument Size"
+          onToggle={() => toggleChoice("size")}
+          panelVariant="menu"
+          preview={instrumentSizeLabels[instrumentSize]}
+        >
+          <DisclosureList>
+            {instrumentSizeOptions.map((option) => (
+              <DisclosureListChoice
+                key={option.id}
+                disabled={!onInstrumentDisplaySizeChange}
+                label={option.label}
+                onClick={() => handleInstrumentDisplaySizeChange(option.id)}
+                selected={option.id === instrumentSize}
+              />
+            ))}
+          </DisclosureList>
         </DisclosureListItem>
       </DisclosureListGroup>
 

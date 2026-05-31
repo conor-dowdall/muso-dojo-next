@@ -15,6 +15,10 @@ import {
   type InstrumentNoteEmphasis,
   type InstrumentNoteEmphasisSetter,
 } from "@/types/instrument-note-emphasis";
+import {
+  type InstrumentLayoutConfig,
+  type InstrumentSize,
+} from "@/types/instrument-layout";
 import { type InstrumentType } from "@/types/session";
 import { type SettingSetter } from "@/types/state";
 import {
@@ -34,6 +38,7 @@ import {
   InstrumentMenuDialog,
   type InstrumentMenuChoice,
 } from "./InstrumentMenuDialog";
+import { createInstrumentLayoutConfig } from "@/utils/instrument/createInstrumentLayoutConfig";
 import { resolveInstrumentNoteInteractionMode } from "@/utils/instrument/resolveInstrumentInteractionMode";
 import styles from "./InstrumentHeaderActions.module.css";
 
@@ -41,10 +46,12 @@ interface InstrumentHeaderActionsProps {
   audioPresetId?: AudioPresetId;
   displayFormatId: DisplayFormatId;
   instrumentType: InstrumentType;
+  layout?: InstrumentLayoutConfig;
   noteEmphasis: InstrumentNoteEmphasis;
   noteInteractionMode: InstrumentNoteInteractionMode;
   activeNotesLocked?: boolean;
   onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
+  onInstrumentDisplaySizeChange?: SettingSetter<InstrumentSize>;
   onActiveNotesLockChange?: (
     activeNotesLocked: boolean,
     activeNotesLockSnapshot?: ActiveNotesLockSnapshot,
@@ -118,10 +125,12 @@ export const InstrumentHeaderActions = ({
   audioPresetId,
   displayFormatId,
   instrumentType,
+  layout,
   noteEmphasis,
   noteInteractionMode,
   activeNotesLocked = false,
   onAudioPresetIdChange,
+  onInstrumentDisplaySizeChange,
   onActiveNotesLockChange,
   onDisplayFormatIdChange,
   onNoteEmphasisChange,
@@ -152,6 +161,7 @@ export const InstrumentHeaderActions = ({
         ? "Reset custom edits"
         : "No custom edits";
   const noteEmphasisLabel = noteEmphasisLabels[noteEmphasis];
+  const instrumentSize = createInstrumentLayoutConfig(layout).size;
   const activeNotesLockLabel = activeNotesLocked
     ? "Unlock notes"
     : "Lock current notes";
@@ -297,6 +307,7 @@ export const InstrumentHeaderActions = ({
         audioPresetId={audioPresetId}
         displayFormatId={displayFormatId}
         initialOpenChoice={menuChoice}
+        instrumentSize={instrumentSize}
         instrumentType={instrumentType}
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
@@ -304,6 +315,7 @@ export const InstrumentHeaderActions = ({
         onRemove={onRemove}
         onAudioPresetIdChange={onAudioPresetIdChange}
         onDisplayFormatIdChange={onDisplayFormatIdChange}
+        onInstrumentDisplaySizeChange={onInstrumentDisplaySizeChange}
       />
     </div>
   );

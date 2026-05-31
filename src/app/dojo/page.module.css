@@ -14,20 +14,13 @@
   gap: var(--session-stack-gap);
 }
 
-.container[data-performance-mode="true"] {
-  padding-block-start: calc(var(--control-size-sm) + var(--space-3));
-}
-
 .hydrated {
   animation: session-content-arrive var(--transition-medium) var(--ease-out)
     both;
 }
 
 .performanceModeExit {
-  position: fixed;
-  z-index: var(--z-index-max);
-  inset-block-start: calc(env(safe-area-inset-top, 0px) + var(--space-3));
-  inset-inline-end: calc(env(safe-area-inset-right, 0px) + var(--space-3));
+  align-self: flex-end;
   color: var(--color-text-muted);
 }
 

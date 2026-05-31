@@ -3,11 +3,10 @@ import { DEFAULT_FRETBOARD_THEME, type FretboardThemeName } from "./themes";
 
 export interface FretboardInstrumentVisualProfile {
   stringGaugeScale: number;
-  stringRowHeight: number;
+  preferredStringRowHeight: number;
   fretLabelHeight: number;
   proportionalInlaySizeCqh: number;
   proportionalInlayMaxPx: number;
-  minHeight: number;
   maxHeight: number;
 }
 
@@ -36,11 +35,10 @@ const FRETLESS_STYLE_INLAY_INSTRUMENTS = new Set<StringInstrumentKey>([
 
 const DEFAULT_FRETBOARD_VISUAL_PROFILE: FretboardInstrumentVisualProfile = {
   stringGaugeScale: 1,
-  stringRowHeight: 24,
+  preferredStringRowHeight: 24,
   fretLabelHeight: 12,
   proportionalInlaySizeCqh: 10.5,
   proportionalInlayMaxPx: 16,
-  minHeight: 96,
   maxHeight: 260,
 };
 
@@ -49,6 +47,10 @@ const DEFAULT_FRETBOARD_VISUAL_PROFILE: FretboardInstrumentVisualProfile = {
  * not the full instrument body or scale length. A 4-string bass is therefore
  * close to a 6-string guitar in board height, but reads heavier through wider
  * string lanes and thicker string gauges.
+ *
+ * preferredStringRowHeight is the visual identity of the instrument. The
+ * touch-friendly minimum height is derived from string count at geometry time,
+ * so naturally small instruments still remain pleasant to play.
  */
 const FRETBOARD_VISUAL_PROFILES: Record<
   StringInstrumentKey,
@@ -57,65 +59,58 @@ const FRETBOARD_VISUAL_PROFILES: Record<
   guitar: DEFAULT_FRETBOARD_VISUAL_PROFILE,
   bassGuitar: {
     stringGaugeScale: 1.36,
-    stringRowHeight: 33,
+    preferredStringRowHeight: 33,
     fretLabelHeight: 12,
     proportionalInlaySizeCqh: 12.5,
     proportionalInlayMaxPx: 18,
-    minHeight: 112,
     maxHeight: 290,
   },
   mandolin: {
     stringGaugeScale: 0.72,
-    stringRowHeight: 22,
+    preferredStringRowHeight: 22,
     fretLabelHeight: 12,
     proportionalInlaySizeCqh: 12,
     proportionalInlayMaxPx: 13,
-    minHeight: 88,
     maxHeight: 220,
   },
   ukulele: {
     stringGaugeScale: 0.78,
-    stringRowHeight: 23,
+    preferredStringRowHeight: 23,
     fretLabelHeight: 12,
     proportionalInlaySizeCqh: 11,
     proportionalInlayMaxPx: 13,
-    minHeight: 88,
     maxHeight: 230,
   },
   violin: {
     stringGaugeScale: 0.64,
-    stringRowHeight: 20,
+    preferredStringRowHeight: 20,
     fretLabelHeight: 11,
     proportionalInlaySizeCqh: 10.5,
     proportionalInlayMaxPx: 12,
-    minHeight: 84,
     maxHeight: 220,
   },
   viola: {
     stringGaugeScale: 0.76,
-    stringRowHeight: 21,
+    preferredStringRowHeight: 21,
     fretLabelHeight: 12,
     proportionalInlaySizeCqh: 11,
     proportionalInlayMaxPx: 13,
-    minHeight: 88,
     maxHeight: 230,
   },
   cello: {
     stringGaugeScale: 1.18,
-    stringRowHeight: 28,
+    preferredStringRowHeight: 28,
     fretLabelHeight: 12,
     proportionalInlaySizeCqh: 12,
     proportionalInlayMaxPx: 17,
-    minHeight: 104,
     maxHeight: 270,
   },
   doubleBass: {
     stringGaugeScale: 1.52,
-    stringRowHeight: 34,
+    preferredStringRowHeight: 34,
     fretLabelHeight: 12,
     proportionalInlaySizeCqh: 12.5,
     proportionalInlayMaxPx: 18,
-    minHeight: 116,
     maxHeight: 300,
   },
 };

@@ -33,7 +33,7 @@ export function DisplayFormatButton({
 
       <Dialog isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
         <DialogHeader
-          title="Choose Display Text"
+          title="Choose Note Labels"
           onClose={() => setIsDialogOpen(false)}
         />
         <DialogContent>

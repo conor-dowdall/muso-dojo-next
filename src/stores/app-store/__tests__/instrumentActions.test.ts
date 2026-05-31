@@ -244,4 +244,65 @@ describe("instrument app store actions", () => {
       "activeNotesLockSourceKey",
     );
   });
+
+  it("stores an instrument display size hint", () => {
+    const store = createTestStore();
+
+    store
+      .getState()
+      .setInstrumentDisplaySize(sessionId, partId, moduleId, "large");
+
+    expect(getTestInstrument(store).layout).toEqual({ size: "large" });
+  });
+
+  it("removes the size hint when restoring the comfortable default", () => {
+    const store = createTestStore(
+      createStoreSnapshot({
+        layout: { size: "compact" },
+      }),
+    );
+
+    store
+      .getState()
+      .setInstrumentDisplaySize(sessionId, partId, moduleId, "comfortable");
+
+    expect(getTestInstrument(store)).not.toHaveProperty("layout");
+  });
+
+  it("preserves advanced layout intent when changing display size", () => {
+    const store = createTestStore(
+      createStoreSnapshot({
+        layout: { scale: 1.5, widthMode: "scroll" },
+      }),
+    );
+
+    store
+      .getState()
+      .setInstrumentDisplaySize(sessionId, partId, moduleId, "compact");
+
+    expect(getTestInstrument(store).layout).toEqual({
+      size: "compact",
+      scale: 1.5,
+      widthMode: "scroll",
+    });
+  });
+
+  it("does not notify subscribers when the display size is unchanged", () => {
+    const store = createTestStore(
+      createStoreSnapshot({
+        layout: { size: "large" },
+      }),
+    );
+    let notificationCount = 0;
+    const unsubscribe = store.subscribe(() => {
+      notificationCount += 1;
+    });
+
+    store
+      .getState()
+      .setInstrumentDisplaySize(sessionId, partId, moduleId, "large");
+
+    unsubscribe();
+    expect(notificationCount).toBe(0);
+  });
 });

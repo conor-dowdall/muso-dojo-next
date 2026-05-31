@@ -9,6 +9,7 @@ import {
   type ActiveNotesSourceKey,
 } from "@/types/instrument-active-note";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
+import { type InstrumentSize } from "@/types/instrument-layout";
 import { type SessionNoteColorConfig } from "@/types/note-colors";
 import { type SettingValue } from "@/types/state";
 import {
@@ -119,6 +120,12 @@ export interface InstrumentActions {
     partId: string,
     moduleId: string,
     audioPresetId: SettingValue<AudioPresetId>,
+  ) => void;
+  setInstrumentDisplaySize: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    size: SettingValue<InstrumentSize>,
   ) => void;
   setInstrumentActiveNotes: (
     sessionId: string,
