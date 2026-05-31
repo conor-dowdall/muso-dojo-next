@@ -1,9 +1,8 @@
-import { BookmarkCheck, BookmarkPlus } from "lucide-react";
-import { DisclosureListAction } from "@/components/ui/disclosure-list/DisclosureList";
 import {
   FretboardInlayPresetSwatch,
   KeyboardThemeSwatch,
 } from "@/components/instrument/InstrumentThemeSwatch";
+import { DefaultPreferenceAction } from "@/components/ui/default-preference-action";
 import { DEFAULT_FRETBOARD_INLAY_PRESET } from "@/data/fretboard/inlayPresets";
 import { getDefaultFretboardWoodThemeName } from "@/data/fretboard/instrumentDefaults";
 import { type InstrumentType } from "@/types/session";
@@ -37,22 +36,15 @@ export function InstrumentCreationDefaultAction({
       : getFretboardSetupCopy(fretboardSelection);
 
   return (
-    <DisclosureListAction
-      aria-label={
-        isDefault
-          ? `${setupCopy.instrumentLabel} setup is the default for new instruments`
-          : `Remember ${setupCopy.instrumentLabel.toLowerCase()} setup for new instruments`
-      }
-      disabled={isDefault}
-      icon={isDefault ? <BookmarkCheck /> : <BookmarkPlus />}
-      label={
-        isDefault
-          ? "Used for New Instruments"
-          : "Use This Setup for New Instruments"
-      }
+    <DefaultPreferenceAction
+      actionAriaLabel={`Remember ${setupCopy.instrumentLabel.toLowerCase()} setup for new instruments`}
+      isDefault={isDefault}
       preview={setupCopy.preview}
-      selected={isDefault}
+      savedAriaLabel={`${setupCopy.instrumentLabel} setup is used for new instruments`}
       subtitle={setupCopy.summary}
+      targetLabel="New Instruments"
+      valueLabel="This Setup"
+      variant="row"
       onClick={onRemember}
     />
   );

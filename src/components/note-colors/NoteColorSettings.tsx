@@ -7,6 +7,7 @@ import {
   type ColorCollectionKey,
 } from "@musodojo/music-theory-data";
 import { Button } from "@/components/ui/buttons/Button";
+import { DefaultPreferenceAction } from "@/components/ui/default-preference-action";
 import {
   DisclosureList,
   DisclosureListChoice,
@@ -410,20 +411,13 @@ export function NoteColorSettings({
         {/* !!! LLM COPY CONVENTION: This is a local inline editor Done action. */}
         <DisclosureListPanelActions>
           {onUseForNewSessions ? (
-            <Button
-              aria-label={
-                isDefaultForNewSessions
-                  ? "Current note colors are the default for new sessions"
-                  : "Use current note colors for new sessions"
-              }
-              disabled={isDefaultForNewSessions}
-              label={
-                isDefaultForNewSessions
-                  ? "Used for New Sessions"
-                  : "Use for New Sessions"
-              }
-              size="sm"
-              variant="ghost"
+            <DefaultPreferenceAction
+              actionAriaLabel="Use current note colors for new sessions"
+              isDefault={isDefaultForNewSessions}
+              savedAriaLabel="Current note colors are used for new sessions"
+              targetLabel="New Sessions"
+              valueLabel="These Colors"
+              variant="footer"
               onClick={() => onUseForNewSessions(config)}
             />
           ) : null}

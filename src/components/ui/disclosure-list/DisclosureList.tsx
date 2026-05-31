@@ -59,11 +59,12 @@ export type DisclosureListPanelVariant = "editor" | "menu";
  * - Avoid icon noise in short, obvious setting groups and in long peer lists
  *   where every row would receive a generic decoration. Visual samples belong
  *   in preview instead.
- * - For future-default action rows, keep the label behavior-first, such as
- *   "Use This Setup for New Instruments". Put the exact saved scope in subtitle
- *   using DISPLAY_VALUE_SEPARATOR, and use preview for compact visual state.
- *   The saved summary may intentionally differ from nearby creation summaries
- *   when responsive or local settings are not saved.
+ * - Use DefaultPreferenceAction for "Use X for New Y" preference actions.
+ *   Use its row variant when the default action is part of the main scan
+ *   surface, and its footer variant when it supports a dense inline editor.
+ *   Keep labels behavior-first, such as "Use This Setup for New Instruments".
+ *   Row subtitles may put the exact saved scope in a DISPLAY_VALUE_SEPARATOR
+ *   summary, and row previews should carry compact visual state.
  *
  * Quick action boundary:
  * - Keep high-frequency, reversible, low-risk controls available as quick
