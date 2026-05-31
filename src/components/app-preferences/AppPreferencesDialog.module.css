@@ -1,0 +1,42 @@
+.content {
+  --dialog-menu-row-gap: var(--space-2);
+  --dialog-menu-section-gap: var(--space-4);
+  --dialog-menu-panel-content-gap: var(--space-2);
+  --dialog-menu-submenu-panel-content-gap: var(--space-2);
+
+  container-type: inline-size;
+}
+
+.footerActions {
+  display: flex;
+  min-inline-size: 0;
+  justify-content: flex-end;
+}
+
+.themePreview {
+  display: inline-flex;
+  min-inline-size: 0;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+.themeSwatch {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: var(--border-width-base) solid var(--color-border-subtle);
+  border-radius: var(--radius-full);
+  background-color: var(--color-control-outline-background);
+}
+
+.themeSwatchChip {
+  inline-size: 0.55rem;
+  block-size: 0.55rem;
+  border-radius: var(--radius-full);
+  box-shadow: inset 0 0 0 var(--space-px) rgb(255 255 255 / 0.2);
+}

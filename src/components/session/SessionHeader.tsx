@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Maximize2, Pencil, Plus } from "lucide-react";
+import { Maximize2, Pencil, Plus, SlidersHorizontal } from "lucide-react";
 import { Heading } from "@/components/ui/typography/Heading";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 import { Dialog } from "@/components/ui/dialog/Dialog";
+import { AppPreferencesDialog } from "@/components/app-preferences/AppPreferencesDialog";
 import { useAppStore } from "@/stores/appStore";
 import { SessionManagementDialog } from "./SessionManagementDialog";
 import { type SessionManagementSettingChoice } from "./sessionManagementTypes";
@@ -23,6 +24,7 @@ export function SessionHeader({
 }: SessionHeaderProps) {
   const [dialogIntent, setDialogIntent] = useState<
     | { kind: "manage" }
+    | { kind: "preferences" }
     | {
         kind: "setting";
         sessionId: string;
@@ -43,6 +45,7 @@ export function SessionHeader({
   const openDialog = (
     intent:
       | { kind: "manage" }
+      | { kind: "preferences" }
       | {
           kind: "setting";
           sessionId: string;
@@ -107,23 +110,39 @@ export function SessionHeader({
                 openSessionSetting(sessionId, "note-colors")
               }
             />
+            <IconButton
+              aria-label="App settings"
+              className={styles.appSettingsButton}
+              icon={<SlidersHorizontal />}
+              size="sm"
+              tooltip="App settings"
+              onClick={() => openDialog({ kind: "preferences" })}
+            />
           </>
         }
       />
 
-      <Dialog isOpen={isDialogOpen} onClose={closeDialog} size="lg">
-        <SessionManagementDialog
-          key={dialogKey}
-          initialOpenSetting={
-            dialogIntent?.kind === "setting"
-              ? {
-                  sessionId: dialogIntent.sessionId,
-                  setting: dialogIntent.setting,
-                }
-              : null
-          }
-          onClose={closeDialog}
-        />
+      <Dialog
+        isOpen={isDialogOpen}
+        onClose={closeDialog}
+        size={dialogIntent?.kind === "preferences" ? "md" : "lg"}
+      >
+        {dialogIntent?.kind === "preferences" ? (
+          <AppPreferencesDialog key={dialogKey} onClose={closeDialog} />
+        ) : (
+          <SessionManagementDialog
+            key={dialogKey}
+            initialOpenSetting={
+              dialogIntent?.kind === "setting"
+                ? {
+                    sessionId: dialogIntent.sessionId,
+                    setting: dialogIntent.setting,
+                  }
+                : null
+            }
+            onClose={closeDialog}
+          />
+        )}
       </Dialog>
     </>
   );

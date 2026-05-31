@@ -1,6 +1,7 @@
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { type StateCreator } from "zustand";
 import { type AudioPresetId } from "@/audio/types";
+import { type AppThemeChoice } from "@/data/appThemes";
 import { type DisplayFormatId } from "@/data/displayFormats";
 import { type InstrumentCreationDefault } from "@/types/instrument-creation-defaults";
 import {
@@ -51,6 +52,7 @@ export interface SessionActions {
 }
 
 export interface PreferenceActions {
+  setAppThemePreference: (theme: AppThemeChoice) => void;
   setDefaultSessionNoteColorConfig: (
     noteColorConfig: SessionNoteColorConfig,
   ) => void;

@@ -30,3 +30,7 @@
   color: var(--color-text);
   opacity: 1;
 }
+
+.appSettingsButton {
+  margin-inline-start: var(--space-1);
+}

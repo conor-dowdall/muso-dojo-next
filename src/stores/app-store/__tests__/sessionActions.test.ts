@@ -13,6 +13,45 @@ const musoDojoNoteColors = {
 } as const;
 
 describe("session app store actions", () => {
+  it("stores the selected app theme preference", () => {
+    const store = createTestStore();
+
+    store.getState().setAppThemePreference("ocean");
+
+    expect(store.getState().preferences.appTheme).toBe("ocean");
+  });
+
+  it("clears the stored app theme preference when using the system theme", () => {
+    const store = createTestStore({
+      ...createStoreSnapshot(),
+      preferences: {
+        appTheme: "purple",
+      },
+    });
+
+    store.getState().setAppThemePreference("system");
+
+    expect(store.getState().preferences).toEqual({});
+  });
+
+  it("does not notify subscribers when the selected app theme is unchanged", () => {
+    const store = createTestStore({
+      ...createStoreSnapshot(),
+      preferences: {
+        appTheme: "ocean",
+      },
+    });
+    let notificationCount = 0;
+    const unsubscribe = store.subscribe(() => {
+      notificationCount += 1;
+    });
+
+    store.getState().setAppThemePreference("ocean");
+
+    unsubscribe();
+    expect(notificationCount).toBe(0);
+  });
+
   it("stores default note colors for new sessions", () => {
     const store = createTestStore();
 

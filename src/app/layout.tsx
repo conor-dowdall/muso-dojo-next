@@ -3,6 +3,8 @@ import { type Metadata, type Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { type ReactNode } from "react";
+import { AppThemeProvider } from "@/components/app-theme/AppThemeProvider";
+import { getAppThemeInitScript } from "@/utils/app-theme/getAppThemeInitScript";
 
 const inter = localFont({
   src: "../../public/fonts/InterVariable.woff2",
@@ -63,11 +65,14 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body>
-        <SerwistProvider swUrl="/sw.js" reloadOnOnline={false}>
-          {children}
-        </SerwistProvider>
+        <script dangerouslySetInnerHTML={{ __html: getAppThemeInitScript() }} />
+        <AppThemeProvider>
+          <SerwistProvider swUrl="/sw.js" reloadOnOnline={false}>
+            {children}
+          </SerwistProvider>
+        </AppThemeProvider>
       </body>
     </html>
   );

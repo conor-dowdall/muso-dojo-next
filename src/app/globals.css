@@ -10,19 +10,19 @@
 :root {
   color-scheme: dark;
 
-  --color-base: #000000;
-  --color-text: #ffffff;
-  --color-text-muted: #a1a1aa;
-  --color-accent: #c4c9d1;
+  --color-base: #08090d;
+  --color-text: #f7f8fb;
+  --color-text-muted: #a7acb6;
+  --color-accent: #d4dae4;
   --color-danger: #f87171;
-  --color-page-gradient: rgb(196 201 209 / 0.08);
+  --color-page-gradient: rgb(212 218 228 / 0.09);
   --color-page-gradient-secondary: color-mix(
     in srgb,
     var(--color-page-gradient) 68%,
     transparent
   );
-  --color-page-background-lift: white;
-  --color-page-background-shade: black;
+  --color-page-background-lift: #262b35;
+  --color-page-background-shade: #000000;
   --color-page-background-start: color-mix(
     in srgb,
     var(--color-base) 92%,
@@ -33,12 +33,12 @@
     var(--color-base) 88%,
     var(--color-page-background-shade) 12%
   );
-  --color-surface: #121214;
-  --color-surface-hover: #1f1f23;
-  --color-border: rgb(255 255 255 / 0.26);
-  --color-border-subtle: rgb(255 255 255 / 0.14);
-  --color-surface-highlight: rgb(255 255 255 / 0.04);
-  --color-control-outline-background: rgb(0 0 0 / 0.18);
+  --color-surface: #14161b;
+  --color-surface-hover: #20232a;
+  --color-border: rgb(255 255 255 / 0.24);
+  --color-border-subtle: rgb(255 255 255 / 0.13);
+  --color-surface-highlight: rgb(255 255 255 / 0.05);
+  --color-control-outline-background: rgb(0 0 0 / 0.2);
   --color-interaction-ring-light: rgb(255 255 255 / 0.82);
   --color-interaction-ring-dark: rgb(0 0 0 / 0.62);
   --color-focus-ring: var(--color-accent);
@@ -180,16 +180,18 @@
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
     color-scheme: light;
-    --color-base: #ffffff;
-    --color-text: #000000;
-    --color-text-muted: #71717a;
-    --color-accent: #4f5661;
+    --color-base: #fbfbfd;
+    --color-text: #18181b;
+    --color-text-muted: #6f747d;
+    --color-accent: #334155;
     --color-danger: #dc2626;
-    --color-page-gradient: rgb(79 86 97 / 0.08);
-    --color-surface: #f5f5f6;
-    --color-surface-hover: #e8e8ea;
-    --color-border: rgb(0 0 0 / 0.22);
-    --color-border-subtle: rgb(0 0 0 / 0.12);
+    --color-page-gradient: rgb(51 65 85 / 0.08);
+    --color-page-background-lift: #f7fbff;
+    --color-page-background-shade: #e7ebf1;
+    --color-surface: #f1f3f6;
+    --color-surface-hover: #e4e8ee;
+    --color-border: rgb(24 24 27 / 0.2);
+    --color-border-subtle: rgb(24 24 27 / 0.11);
     --color-surface-highlight: rgb(255 255 255 / 0.72);
     --color-control-outline-background: rgb(0 0 0 / 0.04);
     --color-interaction-ring-light: rgb(255 255 255 / 0.94);
@@ -200,21 +202,40 @@
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --color-page-gradient: rgb(196 201 209 / 0.08);
+  --color-base: #08090d;
+  --color-text: #f7f8fb;
+  --color-text-muted: #a7acb6;
+  --color-accent: #d4dae4;
+  --color-danger: #f87171;
+  --color-page-gradient: rgb(212 218 228 / 0.09);
+  --color-page-background-lift: #262b35;
+  --color-page-background-shade: #000000;
+  --color-surface: #14161b;
+  --color-surface-hover: #20232a;
+  --color-border: rgb(255 255 255 / 0.24);
+  --color-border-subtle: rgb(255 255 255 / 0.13);
+  --color-surface-highlight: rgb(255 255 255 / 0.05);
+  --color-control-outline-background: rgb(0 0 0 / 0.2);
+  --color-interaction-ring-light: rgb(255 255 255 / 0.82);
+  --color-interaction-ring-dark: rgb(0 0 0 / 0.62);
+  --color-focus-ring: var(--color-accent);
+  --color-focus-ring-contrast: rgb(0 0 0 / 0.82);
 }
 
 [data-theme="light"] {
   color-scheme: light;
-  --color-base: #ffffff;
-  --color-text: #000000;
-  --color-text-muted: #71717a;
-  --color-accent: #4f5661;
+  --color-base: #fbfbfd;
+  --color-text: #18181b;
+  --color-text-muted: #6f747d;
+  --color-accent: #334155;
   --color-danger: #dc2626;
-  --color-page-gradient: rgb(79 86 97 / 0.08);
-  --color-surface: #f5f5f6;
-  --color-surface-hover: #e8e8ea;
-  --color-border: rgb(0 0 0 / 0.22);
-  --color-border-subtle: rgb(0 0 0 / 0.12);
+  --color-page-gradient: rgb(51 65 85 / 0.08);
+  --color-page-background-lift: #f7fbff;
+  --color-page-background-shade: #e7ebf1;
+  --color-surface: #f1f3f6;
+  --color-surface-hover: #e4e8ee;
+  --color-border: rgb(24 24 27 / 0.2);
+  --color-border-subtle: rgb(24 24 27 / 0.11);
   --color-surface-highlight: rgb(255 255 255 / 0.72);
   --color-control-outline-background: rgb(0 0 0 / 0.04);
   --color-interaction-ring-light: rgb(255 255 255 / 0.94);
@@ -224,20 +245,46 @@
 
 [data-theme="ocean"] {
   color-scheme: dark;
-  --color-base: #0f172a;
-  --color-text: #f8fafc;
-  --color-text-muted: #94a3b8;
-  --color-accent: #38bdf8;
-  --color-page-gradient: rgb(56 189 248 / 0.1);
+  --color-base: #06131e;
+  --color-text: #eefbff;
+  --color-text-muted: #93b8c9;
+  --color-accent: #5eead4;
+  --color-danger: #fb7185;
+  --color-page-gradient: rgb(94 234 212 / 0.13);
+  --color-page-background-lift: #124962;
+  --color-page-background-shade: #02070d;
+  --color-surface: #0d1d2a;
+  --color-surface-hover: #142f42;
+  --color-border: rgb(186 230 253 / 0.26);
+  --color-border-subtle: rgb(186 230 253 / 0.14);
+  --color-surface-highlight: rgb(255 255 255 / 0.055);
+  --color-control-outline-background: rgb(0 10 18 / 0.32);
+  --color-interaction-ring-light: rgb(207 250 254 / 0.82);
+  --color-interaction-ring-dark: rgb(0 21 32 / 0.68);
+  --color-focus-ring: #67e8f9;
+  --color-focus-ring-contrast: rgb(0 22 31 / 0.88);
 }
 
 [data-theme="purple"] {
   color-scheme: dark;
-  --color-base: #261443;
-  --color-text: #b6bdd7;
-  --color-text-muted: #765b83;
-  --color-accent: #5e6bdd;
-  --color-page-gradient: rgb(94 107 221 / 0.12);
+  --color-base: #140f22;
+  --color-text: #f7f1ff;
+  --color-text-muted: #baa8d5;
+  --color-accent: #c084fc;
+  --color-danger: #fb7185;
+  --color-page-gradient: rgb(192 132 252 / 0.14);
+  --color-page-background-lift: #3d2464;
+  --color-page-background-shade: #080511;
+  --color-surface: #21162f;
+  --color-surface-hover: #302147;
+  --color-border: rgb(216 180 254 / 0.27);
+  --color-border-subtle: rgb(216 180 254 / 0.15);
+  --color-surface-highlight: rgb(255 255 255 / 0.06);
+  --color-control-outline-background: rgb(13 5 24 / 0.34);
+  --color-interaction-ring-light: rgb(243 232 255 / 0.82);
+  --color-interaction-ring-dark: rgb(20 8 37 / 0.72);
+  --color-focus-ring: #d8b4fe;
+  --color-focus-ring-contrast: rgb(24 7 43 / 0.9);
 }
 
 body {

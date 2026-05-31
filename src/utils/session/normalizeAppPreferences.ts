@@ -11,6 +11,7 @@ import {
 } from "@/data/fretboard/inlayPresets";
 import { getDefaultFretboardWoodThemeName } from "@/data/fretboard/instrumentDefaults";
 import { normalizeFretboardThemeName } from "@/data/fretboard/themes";
+import { normalizeAppThemePreference } from "@/data/appThemes";
 import { normalizeKeyboardThemeName } from "@/data/keyboard/themes";
 import { DEFAULT_NOTE_COLOR_CONFIG } from "@/data/noteColors";
 import {
@@ -229,6 +230,7 @@ export function normalizeAppPreferences(value: unknown): AppPreferences {
     return {};
   }
 
+  const appTheme = normalizeAppThemePreference(value.appTheme);
   const defaultSessionNoteColorConfig = normalizeDefaultSessionNoteColorConfig(
     value.defaultSessionNoteColorConfig,
   );
@@ -237,6 +239,7 @@ export function normalizeAppPreferences(value: unknown): AppPreferences {
   );
 
   return {
+    ...(appTheme ? { appTheme } : {}),
     ...(defaultSessionNoteColorConfig ? { defaultSessionNoteColorConfig } : {}),
     ...(defaultInstrumentSetup ? { defaultInstrumentSetup } : {}),
   };

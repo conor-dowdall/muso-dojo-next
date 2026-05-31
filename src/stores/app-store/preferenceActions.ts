@@ -1,3 +1,4 @@
+import { normalizeAppThemePreference } from "@/data/appThemes";
 import {
   defaultInstrumentSetupsAreEqual,
   normalizeDefaultInstrumentSetup,
@@ -11,6 +12,29 @@ import {
 
 export function createPreferenceActions(set: AppStoreSet): PreferenceActions {
   return {
+    setAppThemePreference: (themeChoice) => {
+      const appTheme = normalizeAppThemePreference(themeChoice);
+
+      set((state) => {
+        if (state.preferences.appTheme === appTheme) {
+          return state;
+        }
+
+        if (!appTheme) {
+          const preferences = { ...state.preferences };
+          delete preferences.appTheme;
+
+          return { preferences };
+        }
+
+        return {
+          preferences: {
+            ...state.preferences,
+            appTheme,
+          },
+        };
+      });
+    },
     setDefaultSessionNoteColorConfig: (noteColorConfig) => {
       const defaultSessionNoteColorConfig =
         normalizeDefaultSessionNoteColorConfig(noteColorConfig);

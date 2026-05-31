@@ -197,6 +197,42 @@ describe("app store persistence", () => {
         {
           ...persistedState,
           preferences: {
+            appTheme: "ocean",
+          },
+        },
+        fallbackSnapshot,
+      ).preferences.appTheme,
+    ).toBe("ocean");
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          preferences: {
+            appTheme: "system",
+          },
+        },
+        fallbackSnapshot,
+      ).preferences,
+    ).toEqual({});
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          preferences: {
+            appTheme: "not-a-theme",
+          },
+        },
+        fallbackSnapshot,
+      ).preferences,
+    ).toEqual({});
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          preferences: {
             defaultSessionNoteColorConfig: presetDefault,
           },
         },

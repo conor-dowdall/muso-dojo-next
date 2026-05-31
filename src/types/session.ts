@@ -14,6 +14,7 @@ import { type SessionNoteColorConfig } from "@/types/note-colors";
 import { type FretboardConfig } from "@/types/fretboard";
 import { type KeyboardConfig } from "@/types/keyboard";
 import { type DisplayFormatId } from "@/data/displayFormats";
+import { type AppThemeName } from "@/data/appThemes";
 
 export type ChordProgressionChordListMode =
   | "each-chord-once"
@@ -121,6 +122,7 @@ export interface SessionConfig {
 }
 
 export interface AppPreferences {
+  appTheme?: AppThemeName;
   defaultSessionNoteColorConfig?: SessionNoteColorConfig;
   defaultInstrumentSetup?: InstrumentCreationDefault;
 }
