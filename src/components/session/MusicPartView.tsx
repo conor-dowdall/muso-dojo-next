@@ -5,9 +5,6 @@ import { MusicPart } from "@/components/music-part/MusicPart";
 import { useAppStore } from "@/stores/appStore";
 import { PartModuleView } from "./PartModuleView";
 import { selectPart } from "./sessionSelectors";
-import { isInstrumentPartModule } from "@/utils/session/partModuleTypes";
-import { type DisplayFormatId } from "@/data/displayFormats";
-import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 
 interface MusicPartViewProps {
   sessionId: string;
@@ -33,29 +30,6 @@ export function MusicPartView({
         : undefined;
     }),
   );
-  const instrumentSettingValues = useAppStore(
-    useShallow(
-      (state) =>
-        selectPart(state, sessionId, partId)
-          ?.modules.filter(isInstrumentPartModule)
-          .flatMap((partModule) => [
-            partModule.id,
-            partModule.instrument.displayFormatId ?? "note-names",
-            partModule.instrument.noteEmphasis ?? "large",
-          ]) ?? [],
-    ),
-  );
-  const instrumentSettings = [];
-
-  for (let index = 0; index < instrumentSettingValues.length; index += 3) {
-    instrumentSettings.push({
-      id: instrumentSettingValues[index] as string,
-      displayFormatId: instrumentSettingValues[index + 1] as DisplayFormatId,
-      noteEmphasis: instrumentSettingValues[
-        index + 2
-      ] as InstrumentNoteEmphasis,
-    });
-  }
   const moduleIds = useAppStore(
     useShallow(
       (state) =>
@@ -68,10 +42,6 @@ export function MusicPartView({
   const setPartNoteCollectionKey = useAppStore(
     (state) => state.setPartNoteCollectionKey,
   );
-  const setPartDisplayFormatId = useAppStore(
-    (state) => state.setPartDisplayFormatId,
-  );
-  const setPartNoteEmphasis = useAppStore((state) => state.setPartNoteEmphasis);
   const addPartModule = useAppStore((state) => state.addPartModule);
   const clonePart = useAppStore((state) => state.clonePart);
   const removePart = useAppStore((state) => state.removePart);
@@ -83,19 +53,6 @@ export function MusicPartView({
   return (
     <MusicPart
       partId={partId}
-      instrumentSettings={instrumentSettings}
-      onPartDisplayFormatIdChange={
-        isPerformanceMode
-          ? undefined
-          : (displayFormatId) =>
-              setPartDisplayFormatId(sessionId, partId, displayFormatId)
-      }
-      onPartNoteEmphasisChange={
-        isPerformanceMode
-          ? undefined
-          : (noteEmphasis) =>
-              setPartNoteEmphasis(sessionId, partId, noteEmphasis)
-      }
       rootNote={partSettings.rootNote}
       onRootNoteChange={(rootNote) =>
         setPartRootNote(sessionId, partId, rootNote)

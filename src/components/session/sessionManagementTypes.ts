@@ -1,12 +1,4 @@
-export type SessionBatchSettingChoice =
-  | "note-collection"
-  | "display-format"
-  | "note-emphasis";
-
-export type SessionManagementSettingChoice =
-  | "title"
-  | "note-colors"
-  | SessionBatchSettingChoice;
+export type SessionManagementSettingChoice = "title" | "note-colors";
 
 export interface SessionManagementInitialSetting {
   sessionId: string;

@@ -14,11 +14,7 @@ import {
 import { ObjectManagementGroup } from "@/components/ui/object-menu";
 import { Text } from "@/components/ui/typography/Text";
 import { NoteColorSettings } from "@/components/note-colors/NoteColorSettings";
-import { type DisplayFormatId } from "@/data/displayFormats";
-import { type NoteCollectionKey } from "@musodojo/music-theory-data";
-import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type SessionNoteColorConfig } from "@/types/note-colors";
-import { SessionBatchSettings } from "./SessionBatchSettings";
 import {
   getSessionSubtitle,
   normalizeSessionNameForComparison,
@@ -39,23 +35,11 @@ interface SessionManagementRowProps {
   onCancelDeleteSession: () => void;
   onDeleteSession: (sessionId: string) => void;
   onDuplicateSession: (sessionId: string) => void;
-  onSessionDisplayFormatIdChange: (
-    sessionId: string,
-    displayFormatId: DisplayFormatId,
-  ) => void;
-  onSessionNoteCollectionKeyChange: (
-    sessionId: string,
-    noteCollectionKey: NoteCollectionKey,
-  ) => void;
   onNoteColorConfigChange: (
     sessionId: string,
     noteColorConfig: SessionNoteColorConfig,
   ) => void;
   defaultSessionNoteColorConfig?: SessionNoteColorConfig;
-  onSessionNoteEmphasisChange: (
-    sessionId: string,
-    noteEmphasis: InstrumentNoteEmphasis,
-  ) => void;
   onDefaultSessionNoteColorConfigChange: (
     noteColorConfig: SessionNoteColorConfig,
   ) => void;
@@ -75,11 +59,8 @@ export function SessionManagementRow({
   onCancelDeleteSession,
   onDeleteSession,
   onDuplicateSession,
-  onSessionDisplayFormatIdChange,
-  onSessionNoteCollectionKeyChange,
   onNoteColorConfigChange,
   defaultSessionNoteColorConfig,
-  onSessionNoteEmphasisChange,
   onDefaultSessionNoteColorConfigChange,
   onRenameSession,
   onRequestDeleteSession,
@@ -329,15 +310,6 @@ export function SessionManagementRow({
                   onNoteColorConfigChange(session.id, noteColorConfig)
                 }
                 onUseForNewSessions={onDefaultSessionNoteColorConfigChange}
-              />
-
-              <SessionBatchSettings
-                openSetting={openSessionSetting}
-                session={session}
-                onDisplayFormatIdChange={onSessionDisplayFormatIdChange}
-                onNoteCollectionKeyChange={onSessionNoteCollectionKeyChange}
-                onNoteEmphasisChange={onSessionNoteEmphasisChange}
-                onToggleSetting={toggleSessionSetting}
               />
             </DisclosureList>
           </DisclosureListItem>

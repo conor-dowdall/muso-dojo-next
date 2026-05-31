@@ -98,20 +98,11 @@ export function SessionManagementDialog({
   const cloneSession = useAppStore((state) => state.cloneSession);
   const removeSession = useAppStore((state) => state.removeSession);
   const renameSession = useAppStore((state) => state.renameSession);
-  const setSessionDisplayFormatId = useAppStore(
-    (state) => state.setSessionDisplayFormatId,
-  );
-  const setSessionNoteCollectionKey = useAppStore(
-    (state) => state.setSessionNoteCollectionKey,
-  );
   const setSessionNoteColorConfig = useAppStore(
     (state) => state.setSessionNoteColorConfig,
   );
   const setDefaultSessionNoteColorConfig = useAppStore(
     (state) => state.setDefaultSessionNoteColorConfig,
-  );
-  const setSessionNoteEmphasis = useAppStore(
-    (state) => state.setSessionNoteEmphasis,
   );
 
   const activeSession =
@@ -196,17 +187,12 @@ export function SessionManagementDialog({
                     }
                     onDeleteSession={handleDeleteSession}
                     onDuplicateSession={handleCloneSession}
-                    onSessionDisplayFormatIdChange={setSessionDisplayFormatId}
-                    onSessionNoteCollectionKeyChange={
-                      setSessionNoteCollectionKey
-                    }
                     onNoteColorConfigChange={(sessionId, noteColorConfig) =>
                       setSessionNoteColorConfig(sessionId, noteColorConfig)
                     }
                     defaultSessionNoteColorConfig={
                       defaultSessionNoteColorConfig
                     }
-                    onSessionNoteEmphasisChange={setSessionNoteEmphasis}
                     onDefaultSessionNoteColorConfigChange={
                       setDefaultSessionNoteColorConfig
                     }
