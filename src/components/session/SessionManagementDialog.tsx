@@ -4,10 +4,9 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import {
   DialogContent,
-  DialogFooter,
+  DialogDoneFooter,
   DialogHeader,
 } from "@/components/ui/dialog/Dialog";
-import { Button } from "@/components/ui/buttons/Button";
 import { Text } from "@/components/ui/typography/Text";
 import {
   DisclosureList,
@@ -207,11 +206,7 @@ export function SessionManagementDialog({
           </DisclosureList>
         </section>
       </DialogContent>
-      <DialogFooter className={styles.footer}>
-        <section className={styles.footerActions} aria-label="Dialog actions">
-          <Button label="Done" size="lg" variant="filled" onClick={onClose} />
-        </section>
-      </DialogFooter>
+      <DialogDoneFooter className={styles.footer} onDone={onClose} />
     </>
   );
 }

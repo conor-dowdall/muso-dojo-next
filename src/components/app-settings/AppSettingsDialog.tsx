@@ -1,10 +1,9 @@
 "use client";
 
 import { Palette } from "lucide-react";
-import { Button } from "@/components/ui/buttons/Button";
 import {
   DialogContent,
-  DialogFooter,
+  DialogDoneFooter,
   DialogHeader,
 } from "@/components/ui/dialog/Dialog";
 import {
@@ -16,15 +15,16 @@ import {
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
   appThemeOptions,
+  getAppThemeAriaLabel,
   getAppThemeChoice,
   getAppThemeLabel,
   getAppThemeOption,
   type AppThemeOption,
 } from "@/data/appThemes";
 import { useAppStore } from "@/stores/appStore";
-import styles from "./AppPreferencesDialog.module.css";
+import styles from "./AppSettingsDialog.module.css";
 
-interface AppPreferencesDialogProps {
+interface AppSettingsDialogProps {
   onClose: () => void;
 }
 
@@ -35,7 +35,7 @@ interface AppPreferencesDialogProps {
  * themes, and accessibility here unless a contextual "Use for New..." action
  * is clearly closer to the edited setting.
  */
-export function AppPreferencesDialog({ onClose }: AppPreferencesDialogProps) {
+export function AppSettingsDialog({ onClose }: AppSettingsDialogProps) {
   const { isOpen, toggleChoice } = useDisclosureList<"theme">("theme");
   const appThemePreference = useAppStore((state) => state.preferences.appTheme);
   const setAppThemePreference = useAppStore(
@@ -68,7 +68,7 @@ export function AppPreferencesDialog({ onClose }: AppPreferencesDialogProps) {
                 {appThemeOptions.map((option) => (
                   <DisclosureListChoice
                     key={option.id}
-                    aria-label={`Use ${option.label} theme`}
+                    aria-label={getAppThemeAriaLabel(option)}
                     label={option.label}
                     preview={<ThemeSwatch option={option} />}
                     selected={option.id === appThemeChoice}
@@ -80,11 +80,7 @@ export function AppPreferencesDialog({ onClose }: AppPreferencesDialogProps) {
           </DisclosureListGroup>
         </DisclosureList>
       </DialogContent>
-      <DialogFooter>
-        <section className={styles.footerActions} aria-label="Dialog actions">
-          <Button label="Done" size="lg" variant="filled" onClick={onClose} />
-        </section>
-      </DialogFooter>
+      <DialogDoneFooter onDone={onClose} />
     </>
   );
 }

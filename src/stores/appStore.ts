@@ -10,6 +10,7 @@ import {
 import { createFallbackSessionConfig } from "@/utils/session/createSessionEntities";
 import {
   APP_STORE_VERSION,
+  APP_STORE_STORAGE_KEY,
   type AppStorePersistedSnapshot,
   createDebouncedAppStoreStorage,
   migrateAppStoreSnapshot,
@@ -35,7 +36,7 @@ export const useAppStore = create<AppStore>()(
         ...createAppStoreActions(set, get),
       }),
       {
-        name: "muso-dojo-app-store",
+        name: APP_STORE_STORAGE_KEY,
         version: APP_STORE_VERSION,
         storage: createDebouncedAppStoreStorage(() => localStorage),
         partialize: partializeAppStoreSnapshot,

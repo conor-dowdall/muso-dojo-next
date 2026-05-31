@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   DialogContent,
   DialogFooter,
@@ -8,21 +7,10 @@ import {
 } from "@/components/ui/dialog/Dialog";
 import { Button } from "@/components/ui/buttons/Button";
 import { DisclosureList } from "@/components/ui/disclosure-list/DisclosureList";
-import {
-  type AddPartModuleHandler,
-  type InstrumentType,
-} from "@/types/session";
-import {
-  createDefaultInstrumentSelections,
-  getDefaultInstrumentType,
-  getInstrumentCreationDefault,
-  instrumentCreationDefaultMatchesSelection,
-  type FretboardInstrumentSelection,
-  type InstrumentCreationRangeContext,
-  type KeyboardInstrumentSelection,
-} from "@/components/instrument-creation/instrumentCreationConfig";
+import { type AddPartModuleHandler } from "@/types/session";
+import { type InstrumentCreationRangeContext } from "@/components/instrument-creation/instrumentCreationConfig";
 import { InstrumentCreationDefaultAction } from "@/components/instrument-creation/InstrumentCreationDefaultAction";
-import { useAppStore } from "@/stores/appStore";
+import { useInstrumentCreationDraft } from "@/components/instrument-creation/useInstrumentCreationDraft";
 import { DEFAULT_PART_MODULE_TYPE } from "@/utils/session/sessionDefaults";
 import {
   type PartModuleCreationDraft,
@@ -49,48 +37,30 @@ export function PartModuleCreationDialog({
   title = "Add to Part",
 }: PartModuleCreationDialogProps) {
   const selectedModuleType = DEFAULT_PART_MODULE_TYPE;
-  const defaultInstrumentSetup = useAppStore(
-    (state) => state.preferences.defaultInstrumentSetup,
-  );
-  const setDefaultInstrumentSetup = useAppStore(
-    (state) => state.setDefaultInstrumentSetup,
-  );
-  const [initialSelections] = useState(() =>
-    createDefaultInstrumentSelections(
-      undefined,
-      defaultInstrumentSetup,
-      instrumentCreationRangeContext,
-    ),
-  );
-  const [selectedInstrumentType, setSelectedInstrumentType] =
-    useState<InstrumentType>(() =>
-      getDefaultInstrumentType(defaultInstrumentSetup),
-    );
-  const [keyboardSelection, setKeyboardSelection] =
-    useState<KeyboardInstrumentSelection>(initialSelections.keyboardSelection);
-  const [fretboardSelection, setFretboardSelection] =
-    useState<FretboardInstrumentSelection>(
-      initialSelections.fretboardSelection,
-    );
+  const {
+    defaultInstrumentSetup,
+    fretboardSelection,
+    instrumentType,
+    isDefaultInstrumentSetup,
+    keyboardSelection,
+    setFretboardSelection,
+    setInstrumentType,
+    setKeyboardSelection,
+    useCurrentSetupForNewInstruments,
+  } = useInstrumentCreationDraft(instrumentCreationRangeContext);
 
   const creationDraft = {
     moduleType: selectedModuleType,
-    instrumentType: selectedInstrumentType,
+    instrumentType,
     keyboardSelection,
     fretboardSelection,
   } satisfies PartModuleCreationDraft;
   const addLabel = getPartModuleCreationActionLabel(creationDraft);
-  const isDefaultInstrumentSetup = instrumentCreationDefaultMatchesSelection(
-    selectedInstrumentType,
-    defaultInstrumentSetup,
-    keyboardSelection,
-    fretboardSelection,
-  );
   const moduleSettingsProps = {
     ...creationDraft,
     defaultInstrumentSetup,
     onFretboardSelectionChange: setFretboardSelection,
-    onInstrumentTypeChange: setSelectedInstrumentType,
+    onInstrumentTypeChange: setInstrumentType,
     onKeyboardSelectionChange: setKeyboardSelection,
   } satisfies PartModuleCreationSettingsMenuProps;
 
@@ -100,15 +70,6 @@ export function PartModuleCreationDialog({
 
     onAddPartModule(moduleType, moduleSettings);
     onClose();
-  };
-  const handleRememberInstrumentSetup = () => {
-    setDefaultInstrumentSetup(
-      getInstrumentCreationDefault(
-        selectedInstrumentType,
-        keyboardSelection,
-        fretboardSelection,
-      ),
-    );
   };
 
   return (
@@ -122,10 +83,10 @@ export function PartModuleCreationDialog({
           <DisclosureList>
             <InstrumentCreationDefaultAction
               fretboardSelection={fretboardSelection}
-              instrumentType={selectedInstrumentType}
+              instrumentType={instrumentType}
               isDefault={isDefaultInstrumentSetup}
               keyboardSelection={keyboardSelection}
-              onRemember={handleRememberInstrumentSetup}
+              onUseForNewInstruments={useCurrentSetupForNewInstruments}
             />
           </DisclosureList>
         </section>

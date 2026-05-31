@@ -172,7 +172,7 @@ export const InstrumentHeaderActions = ({
     setIsMenuOpen(true);
   };
 
-  const cycleDefaultNoteSize = () => {
+  const cycleNoteSize = () => {
     onNoteEmphasisChange((prev) => {
       if (prev === "large") return "small";
       if (prev === "small") return "hidden";
@@ -217,15 +217,15 @@ export const InstrumentHeaderActions = ({
           onClick={() => openMenu("display")}
         />
         <IconButton
-          aria-label={`Change default note size. Current: ${noteEmphasisLabel}`}
+          aria-label={`Change note size. Current: ${noteEmphasisLabel}`}
           disabled={activeNotesLocked}
           icon={getNoteEmphasisIcon(noteEmphasis)}
           size="sm"
-          onClick={cycleDefaultNoteSize}
+          onClick={cycleNoteSize}
           tooltip={
             activeNotesLocked
-              ? "Unlock to change default note size"
-              : `Default note size: ${noteEmphasisLabel}`
+              ? "Unlock to change note size"
+              : `Note size: ${noteEmphasisLabel}`
           }
         />
       </span>

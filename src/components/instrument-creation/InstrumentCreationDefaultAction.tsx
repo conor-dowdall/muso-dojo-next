@@ -20,7 +20,7 @@ interface InstrumentCreationDefaultActionProps {
   instrumentType: InstrumentType;
   isDefault: boolean;
   keyboardSelection: KeyboardInstrumentSelection;
-  onRemember: () => void;
+  onUseForNewInstruments: () => void;
 }
 
 export function InstrumentCreationDefaultAction({
@@ -28,7 +28,7 @@ export function InstrumentCreationDefaultAction({
   instrumentType,
   isDefault,
   keyboardSelection,
-  onRemember,
+  onUseForNewInstruments,
 }: InstrumentCreationDefaultActionProps) {
   const setupCopy =
     instrumentType === "keyboard"
@@ -37,7 +37,7 @@ export function InstrumentCreationDefaultAction({
 
   return (
     <DefaultPreferenceAction
-      actionAriaLabel={`Remember ${setupCopy.instrumentLabel.toLowerCase()} setup for new instruments`}
+      actionAriaLabel={`Use ${setupCopy.instrumentLabel.toLowerCase()} setup for new instruments`}
       isDefault={isDefault}
       preview={setupCopy.preview}
       savedAriaLabel={`${setupCopy.instrumentLabel} setup is used for new instruments`}
@@ -45,7 +45,7 @@ export function InstrumentCreationDefaultAction({
       targetLabel="New Instruments"
       valueLabel="This Setup"
       variant="row"
-      onClick={onRemember}
+      onClick={onUseForNewInstruments}
     />
   );
 }

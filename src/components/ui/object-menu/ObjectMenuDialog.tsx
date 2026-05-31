@@ -1,11 +1,10 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { Button } from "@/components/ui/buttons/Button";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
+  DialogDoneFooter,
   DialogHeader,
 } from "@/components/ui/dialog/Dialog";
 import { DisclosureList } from "@/components/ui/disclosure-list/DisclosureList";
@@ -48,11 +47,7 @@ export function ObjectMenuDialog({
           {children}
         </DisclosureList>
       </DialogContent>
-      <DialogFooter className={styles.menuFooter}>
-        <section className={styles.footerActions} aria-label="Dialog actions">
-          <Button label="Done" size="lg" variant="filled" onClick={onClose} />
-        </section>
-      </DialogFooter>
+      <DialogDoneFooter className={styles.menuFooter} onDone={onClose} />
     </Dialog>
   );
 }

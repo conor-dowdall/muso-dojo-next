@@ -31,7 +31,7 @@ describe("default preference action copy", () => {
   it("allows surface-specific copy overrides", () => {
     expect(
       getDefaultPreferenceActionCopy({
-        actionAriaLabel: "Remember keyboard setup for new instruments",
+        actionAriaLabel: "Use keyboard setup for new instruments",
         actionLabel: "Use This Setup for New Instruments",
         isDefault: false,
         savedAriaLabel: "Keyboard setup is used for new instruments",
@@ -40,7 +40,7 @@ describe("default preference action copy", () => {
         targetLabel: "New Instruments",
       }),
     ).toEqual({
-      ariaLabel: "Remember keyboard setup for new instruments",
+      ariaLabel: "Use keyboard setup for new instruments",
       label: "Use This Setup for New Instruments",
     });
 

@@ -6,7 +6,7 @@ import { Heading } from "@/components/ui/typography/Heading";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 import { Dialog } from "@/components/ui/dialog/Dialog";
-import { AppPreferencesDialog } from "@/components/app-preferences/AppPreferencesDialog";
+import { AppSettingsDialog } from "@/components/app-settings/AppSettingsDialog";
 import { useAppStore } from "@/stores/appStore";
 import { SessionManagementDialog } from "./SessionManagementDialog";
 import { type SessionManagementSettingChoice } from "./sessionManagementTypes";
@@ -24,7 +24,7 @@ export function SessionHeader({
 }: SessionHeaderProps) {
   const [dialogIntent, setDialogIntent] = useState<
     | { kind: "manage" }
-    | { kind: "preferences" }
+    | { kind: "settings" }
     | {
         kind: "setting";
         sessionId: string;
@@ -45,7 +45,7 @@ export function SessionHeader({
   const openDialog = (
     intent:
       | { kind: "manage" }
-      | { kind: "preferences" }
+      | { kind: "settings" }
       | {
           kind: "setting";
           sessionId: string;
@@ -116,7 +116,7 @@ export function SessionHeader({
               icon={<SlidersHorizontal />}
               size="sm"
               tooltip="App settings"
-              onClick={() => openDialog({ kind: "preferences" })}
+              onClick={() => openDialog({ kind: "settings" })}
             />
           </>
         }
@@ -125,10 +125,10 @@ export function SessionHeader({
       <Dialog
         isOpen={isDialogOpen}
         onClose={closeDialog}
-        size={dialogIntent?.kind === "preferences" ? "md" : "lg"}
+        size={dialogIntent?.kind === "settings" ? "md" : "lg"}
       >
-        {dialogIntent?.kind === "preferences" ? (
-          <AppPreferencesDialog key={dialogKey} onClose={closeDialog} />
+        {dialogIntent?.kind === "settings" ? (
+          <AppSettingsDialog key={dialogKey} onClose={closeDialog} />
         ) : (
           <SessionManagementDialog
             key={dialogKey}

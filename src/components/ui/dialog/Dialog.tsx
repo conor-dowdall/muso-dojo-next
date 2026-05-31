@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
 import styles from "./Dialog.module.css";
+import { Button, type ButtonProps } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { Heading } from "@/components/ui/typography/Heading";
 
@@ -176,12 +177,43 @@ interface DialogFooterProps {
  * Add a Done footer when menu/settings/management choices apply immediately
  * and the user needs an obvious close affordance. Omit Done when the footer
  * already has a primary commit/cancel flow, such as Add/Cancel. Local inline
- * editor Done buttons belong in DisclosureListPanelActions instead.
+ * editor Done buttons belong in DisclosureListPanelActions instead. Use
+ * DialogDoneFooter for the standard immediate-apply Done footer.
  */
 export function DialogFooter({ children, className = "" }: DialogFooterProps) {
   return (
     <footer className={`${styles.dialogFooter} ${className}`}>
       {children}
     </footer>
+  );
+}
+
+interface DialogDoneFooterProps {
+  buttonSize?: ButtonProps["size"];
+  className?: string;
+  label?: string;
+  onDone: () => void;
+}
+
+export function DialogDoneFooter({
+  buttonSize = "lg",
+  className = "",
+  label = "Done",
+  onDone,
+}: DialogDoneFooterProps) {
+  return (
+    <DialogFooter className={className}>
+      <section
+        className={styles.dialogFooterActions}
+        aria-label="Dialog actions"
+      >
+        <Button
+          label={label}
+          size={buttonSize}
+          variant="filled"
+          onClick={onDone}
+        />
+      </section>
+    </DialogFooter>
   );
 }

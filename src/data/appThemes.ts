@@ -68,3 +68,9 @@ export function getAppThemeOption(choice: AppThemeChoice): AppThemeOption {
 export function getAppThemeLabel(choice: AppThemeChoice) {
   return getAppThemeOption(choice).label;
 }
+
+export function getAppThemeAriaLabel(option: AppThemeOption) {
+  return option.id === DEFAULT_APP_THEME_CHOICE
+    ? "Follow system theme"
+    : `Use ${option.label} theme`;
+}

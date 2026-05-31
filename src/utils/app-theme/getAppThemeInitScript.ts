@@ -1,7 +1,8 @@
 import { appThemeNames } from "@/data/appThemes";
+import { APP_STORE_STORAGE_KEY } from "@/stores/app-store/persistence";
 
 const appThemeNameList = JSON.stringify(appThemeNames);
-const appStoreStorageKey = JSON.stringify("muso-dojo-app-store");
+const appStoreStorageKey = JSON.stringify(APP_STORE_STORAGE_KEY);
 
 export function getAppThemeInitScript() {
   return `

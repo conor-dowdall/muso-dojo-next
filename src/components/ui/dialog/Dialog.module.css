@@ -142,3 +142,9 @@
   padding: var(--space-4);
   border-top: var(--border-width-base) solid var(--color-border);
 }
+
+.dialogFooterActions {
+  display: flex;
+  min-inline-size: 0;
+  justify-content: flex-end;
+}

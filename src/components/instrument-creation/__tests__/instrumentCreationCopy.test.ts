@@ -25,10 +25,10 @@ describe("instrument creation copy", () => {
     } as const;
 
     expect(formatFretboardCreationSummary(selection)).toBe(
-      "Guitar • Standard E • Left-Handed • Frets 0 to 5",
+      "Guitar • Standard E • Left Handed • Frets 0 to 5",
     );
     expect(formatFretboardDefaultSetupSummary(selection)).toBe(
-      "Guitar • Standard E • Left-Handed",
+      "Guitar • Standard E • Left Handed",
     );
   });
 

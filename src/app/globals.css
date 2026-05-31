@@ -7,7 +7,8 @@
   initial-value: 0px;
 }
 
-:root {
+:root,
+[data-theme="dark"] {
   color-scheme: dark;
 
   --color-base: #08090d;
@@ -198,28 +199,6 @@
     --color-interaction-ring-dark: rgb(0 0 0 / 0.46);
     --color-focus-ring-contrast: rgb(255 255 255 / 0.96);
   }
-}
-
-[data-theme="dark"] {
-  color-scheme: dark;
-  --color-base: #08090d;
-  --color-text: #f7f8fb;
-  --color-text-muted: #a7acb6;
-  --color-accent: #d4dae4;
-  --color-danger: #f87171;
-  --color-page-gradient: rgb(212 218 228 / 0.09);
-  --color-page-background-lift: #262b35;
-  --color-page-background-shade: #000000;
-  --color-surface: #14161b;
-  --color-surface-hover: #20232a;
-  --color-border: rgb(255 255 255 / 0.24);
-  --color-border-subtle: rgb(255 255 255 / 0.13);
-  --color-surface-highlight: rgb(255 255 255 / 0.05);
-  --color-control-outline-background: rgb(0 0 0 / 0.2);
-  --color-interaction-ring-light: rgb(255 255 255 / 0.82);
-  --color-interaction-ring-dark: rgb(0 0 0 / 0.62);
-  --color-focus-ring: var(--color-accent);
-  --color-focus-ring-contrast: rgb(0 0 0 / 0.82);
 }
 
 [data-theme="light"] {
