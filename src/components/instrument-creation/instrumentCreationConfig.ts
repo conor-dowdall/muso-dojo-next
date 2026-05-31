@@ -41,6 +41,13 @@ export interface FretboardInstrumentSelection extends FretboardCreationDefault {
   fretRange: readonly [number, number];
 }
 
+// Instrument ranges are intentionally local setup, not remembered defaults:
+// creation starts from nearby same-type instruments, then falls back to viewport.
+export interface InstrumentCreationRangeContext {
+  fretboard?: Pick<FretboardInstrumentSelection, "fretRange">;
+  keyboard?: Pick<KeyboardInstrumentSelection, "midiRange" | "range">;
+}
+
 export const instrumentCreationViewportBreakpoints = {
   tinyMaxRem: 30,
   compactMaxRem: 64,
@@ -101,8 +108,14 @@ export function getInstrumentCreationViewportTier(
 export function createDefaultKeyboardInstrumentSelection(
   tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
   defaultSetup?: InstrumentCreationDefault,
+  rangeContext?: InstrumentCreationRangeContext,
 ): KeyboardInstrumentSelection {
-  const range = keyboardRangeByTier[tier];
+  const contextKeyboard = rangeContext?.keyboard;
+  const responsiveRange = keyboardRangeByTier[tier];
+  const range = contextKeyboard?.range ?? responsiveRange;
+  const midiRange = contextKeyboard
+    ? contextKeyboard.midiRange
+    : keyboardRanges[responsiveRange].midiRange;
   const keyboardDefault =
     defaultSetup?.instrumentType === "keyboard"
       ? defaultSetup.setup
@@ -110,7 +123,7 @@ export function createDefaultKeyboardInstrumentSelection(
 
   return {
     range,
-    midiRange: keyboardRanges[range].midiRange,
+    midiRange: [midiRange[0], midiRange[1]],
     theme: keyboardDefault?.theme ?? DEFAULT_KEYBOARD_THEME,
   };
 }
@@ -118,8 +131,9 @@ export function createDefaultKeyboardInstrumentSelection(
 export function createDefaultFretboardInstrumentSelection(
   tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
   defaultSetup?: InstrumentCreationDefault,
+  rangeContext?: InstrumentCreationRangeContext,
 ): FretboardInstrumentSelection {
-  const fretRange = fretRangeByTier[tier];
+  const fretRange = rangeContext?.fretboard?.fretRange ?? fretRangeByTier[tier];
   const fretboardDefault =
     defaultSetup?.instrumentType === "fretboard"
       ? defaultSetup.setup
@@ -129,7 +143,7 @@ export function createDefaultFretboardInstrumentSelection(
     instrument: fretboardDefault?.instrument ?? "guitar",
     tuningKey:
       fretboardDefault?.tuningKey ?? stringInstruments.guitar.defaultTuning,
-    fretRange: [...fretRange],
+    fretRange: [fretRange[0], fretRange[1]],
     handedness: fretboardDefault?.handedness ?? "right",
     appearanceSource: fretboardDefault?.appearanceSource ?? "auto",
     theme:
@@ -145,15 +159,18 @@ export function createDefaultFretboardInstrumentSelection(
 export function createDefaultInstrumentSelections(
   tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
   defaultSetup?: InstrumentCreationDefault,
+  rangeContext?: InstrumentCreationRangeContext,
 ) {
   return {
     keyboardSelection: createDefaultKeyboardInstrumentSelection(
       tier,
       defaultSetup,
+      rangeContext,
     ),
     fretboardSelection: createDefaultFretboardInstrumentSelection(
       tier,
       defaultSetup,
+      rangeContext,
     ),
   };
 }

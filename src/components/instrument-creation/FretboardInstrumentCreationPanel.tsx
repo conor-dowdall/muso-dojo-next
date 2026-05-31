@@ -35,6 +35,7 @@ import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import { BoundedRangeSliderGroup } from "@/components/ui/range-slider/BoundedRangeSliderGroup";
 import { FretboardInlayPresetSwatch } from "@/components/instrument/InstrumentThemeSwatch";
 import { type FretboardInstrumentSelection } from "./instrumentCreationConfig";
+import { formatFretRange } from "./instrumentCreationCopy";
 import {
   formatOpenStringNotes,
   fretboardInstrumentGroups,
@@ -270,6 +271,7 @@ export function FretboardInstrumentCreationPanel({
           label="Appearance"
           preview={
             <FretboardInlayPresetSwatch
+              handedness={value.handedness}
               instrument={value.instrument}
               presetName={effectiveInlayPresetName}
               themeName={effectiveThemeName}
@@ -309,6 +311,7 @@ export function FretboardInstrumentCreationPanel({
                 <div className={styles.appearanceCustomPanel}>
                   <div className={styles.appearancePreviewFrame}>
                     <FretboardInlayPresetSwatch
+                      handedness={value.handedness}
                       instrument={value.instrument}
                       presetName={value.inlayPreset}
                       size="featured"
@@ -376,10 +379,6 @@ const fretRangeOptions = [
   [0, 12],
   [0, 24],
 ] as const satisfies readonly (readonly [number, number])[];
-
-function formatFretRange([start, end]: readonly [number, number]) {
-  return `Frets ${start} to ${end}`;
-}
 
 function formatFretPosition(fret: number) {
   return `Fret ${fret}`;

@@ -18,6 +18,7 @@ import {
   getInstrumentCreationDefault,
   instrumentCreationDefaultMatchesSelection,
   type FretboardInstrumentSelection,
+  type InstrumentCreationRangeContext,
   type KeyboardInstrumentSelection,
 } from "@/components/instrument-creation/instrumentCreationConfig";
 import { InstrumentCreationDefaultAction } from "@/components/instrument-creation/InstrumentCreationDefaultAction";
@@ -35,12 +36,14 @@ import {
 import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
 
 interface PartModuleCreationDialogProps {
+  instrumentCreationRangeContext?: InstrumentCreationRangeContext;
   onAddPartModule: AddPartModuleHandler;
   onClose: () => void;
   title?: string;
 }
 
 export function PartModuleCreationDialog({
+  instrumentCreationRangeContext,
   onAddPartModule,
   onClose,
   title = "Add to Part",
@@ -53,7 +56,11 @@ export function PartModuleCreationDialog({
     (state) => state.setDefaultInstrumentSetup,
   );
   const [initialSelections] = useState(() =>
-    createDefaultInstrumentSelections(undefined, defaultInstrumentSetup),
+    createDefaultInstrumentSelections(
+      undefined,
+      defaultInstrumentSetup,
+      instrumentCreationRangeContext,
+    ),
   );
   const [selectedInstrumentType, setSelectedInstrumentType] =
     useState<InstrumentType>(() =>
@@ -114,8 +121,10 @@ export function PartModuleCreationDialog({
         <section className={styles.section} aria-label="Creation default">
           <DisclosureList>
             <InstrumentCreationDefaultAction
+              fretboardSelection={fretboardSelection}
               instrumentType={selectedInstrumentType}
               isDefault={isDefaultInstrumentSetup}
+              keyboardSelection={keyboardSelection}
               onRemember={handleRememberInstrumentSetup}
             />
           </DisclosureList>

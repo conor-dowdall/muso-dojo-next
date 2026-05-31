@@ -2,6 +2,10 @@
 
 import { useShallow } from "zustand/react/shallow";
 import { MusicPart } from "@/components/music-part/MusicPart";
+import {
+  createInstrumentCreationRangeContextFromSignature,
+  createInstrumentCreationRangeContextSignature,
+} from "@/components/instrument-creation/instrumentCreationRangeContext";
 import { useAppStore } from "@/stores/appStore";
 import { PartModuleView } from "./PartModuleView";
 import { selectPart } from "./sessionSelectors";
@@ -45,6 +49,17 @@ export function MusicPartView({
   const addPartModule = useAppStore((state) => state.addPartModule);
   const clonePart = useAppStore((state) => state.clonePart);
   const removePart = useAppStore((state) => state.removePart);
+  const instrumentCreationRangeContextSignature = useAppStore(
+    useShallow((state) => {
+      const part = selectPart(state, sessionId, partId);
+
+      return createInstrumentCreationRangeContextSignature(part ? [part] : []);
+    }),
+  );
+  const instrumentCreationRangeContext =
+    createInstrumentCreationRangeContextFromSignature(
+      instrumentCreationRangeContextSignature,
+    );
 
   if (!partSettings) {
     return null;
@@ -53,6 +68,7 @@ export function MusicPartView({
   return (
     <MusicPart
       partId={partId}
+      instrumentCreationRangeContext={instrumentCreationRangeContext}
       rootNote={partSettings.rootNote}
       onRootNoteChange={(rootNote) =>
         setPartRootNote(sessionId, partId, rootNote)

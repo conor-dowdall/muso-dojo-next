@@ -79,6 +79,10 @@
   --fretboard-swatch-marker-position: 55cqi;
 }
 
+.fretboardSwatch[data-handedness="left"] {
+  transform: scaleX(-1);
+}
+
 .fretboardSwatchNut,
 .fretboardSwatchFret,
 .fretboardSwatchStrings {

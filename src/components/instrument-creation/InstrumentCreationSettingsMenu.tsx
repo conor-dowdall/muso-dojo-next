@@ -1,18 +1,12 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from "react";
-import {
-  stringInstrumentTunings,
-  stringInstruments,
-} from "@musodojo/music-theory-data";
 import { Guitar, Piano } from "lucide-react";
 import {
   DisclosureList,
   DisclosureListChoiceItem,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
-import { keyboardRanges } from "@/data/keyboard/ranges";
-import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import {
   type FretboardInstrumentSelection,
   instrumentCreationDefaultMatchesSelection,
@@ -23,10 +17,10 @@ import { type InstrumentType } from "@/types/session";
 import { FretboardInstrumentCreationPanel } from "./FretboardInstrumentCreationPanel";
 import { KeyboardInstrumentCreationPanel } from "./KeyboardInstrumentCreationPanel";
 import {
-  formatKeyboardMidiRange,
-  formatKeyboardRangeNoteNames,
-  instrumentCreationOptions,
-} from "./options";
+  formatFretboardCreationSummary,
+  formatKeyboardCreationSummary,
+} from "./instrumentCreationCopy";
+import { instrumentCreationOptions } from "./options";
 
 const instrumentCreationIcons = {
   fretboard: <Guitar />,
@@ -100,8 +94,8 @@ export function InstrumentCreationSettingsMenu({
         const isOpen = openChoice === option.id;
         const summary =
           option.id === "keyboard"
-            ? formatKeyboardSummary(keyboardSelection)
-            : formatFretboardSummary(fretboardSelection);
+            ? formatKeyboardCreationSummary(keyboardSelection)
+            : formatFretboardCreationSummary(fretboardSelection);
 
         return (
           <DisclosureListChoiceItem
@@ -139,21 +133,4 @@ export function InstrumentCreationSettingsMenu({
       })}
     </DisclosureList>
   );
-}
-
-function formatKeyboardSummary(selection: KeyboardInstrumentSelection) {
-  const range =
-    selection.range === "custom" ? undefined : keyboardRanges[selection.range];
-  const rangeTitle = range?.title ?? "Custom Range";
-  const rangeNotes = range
-    ? formatKeyboardRangeNoteNames(range.midiRangeNoteNames)
-    : formatKeyboardMidiRange(selection.midiRange);
-
-  return `${rangeTitle}${DISPLAY_VALUE_SEPARATOR}${rangeNotes}`;
-}
-
-function formatFretboardSummary(selection: FretboardInstrumentSelection) {
-  return `${stringInstruments[selection.instrument].primaryName}${DISPLAY_VALUE_SEPARATOR}${
-    stringInstrumentTunings[selection.tuningKey].primaryName
-  }`;
 }

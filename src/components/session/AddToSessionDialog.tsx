@@ -29,6 +29,7 @@ import {
   getInstrumentCreationDefault,
   instrumentCreationDefaultMatchesSelection,
   type FretboardInstrumentSelection,
+  type InstrumentCreationRangeContext,
   type KeyboardInstrumentSelection,
 } from "@/components/instrument-creation/instrumentCreationConfig";
 import { InstrumentCreationDefaultAction } from "@/components/instrument-creation/InstrumentCreationDefaultAction";
@@ -64,6 +65,7 @@ type SessionAddMode = "custom-chord-or-scale" | "chord-progression";
 type SessionChoice = "key" | "collection" | "progression" | "chord-list";
 
 interface AddToSessionDialogProps {
+  instrumentCreationRangeContext?: InstrumentCreationRangeContext;
   onAddCustomChordOrScale: (
     settings: {
       rootNote: RootNote;
@@ -124,6 +126,7 @@ function getChordListOption(mode: ChordProgressionChordListMode) {
 }
 
 export function AddToSessionDialog({
+  instrumentCreationRangeContext,
   onAddCustomChordOrScale,
   onAddChordProgression,
   onClose,
@@ -155,7 +158,11 @@ export function AddToSessionDialog({
   const sessionDisclosure = useDisclosureList<SessionChoice>();
   const [moduleSettingsCloseSignal, setModuleSettingsCloseSignal] = useState(0);
   const [initialSelections] = useState(() =>
-    createDefaultInstrumentSelections(undefined, defaultInstrumentSetup),
+    createDefaultInstrumentSelections(
+      undefined,
+      defaultInstrumentSetup,
+      instrumentCreationRangeContext,
+    ),
   );
   const [keyboardSelection, setKeyboardSelection] =
     useState<KeyboardInstrumentSelection>(initialSelections.keyboardSelection);
@@ -264,8 +271,10 @@ export function AddToSessionDialog({
   const renderRememberInstrumentSetupAction = () => (
     <DisclosureListGroup aria-label="Creation default">
       <InstrumentCreationDefaultAction
+        fretboardSelection={fretboardSelection}
         instrumentType={instrumentType}
         isDefault={isDefaultInstrumentSetup}
+        keyboardSelection={keyboardSelection}
         onRemember={handleRememberInstrumentSetup}
       />
     </DisclosureListGroup>

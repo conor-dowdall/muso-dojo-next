@@ -92,11 +92,13 @@ export function FretboardThemeSwatch({
 }
 
 export function FretboardInlayPresetSwatch({
+  handedness = "right",
   instrument,
   presetName,
   size = "compact",
   themeName,
 }: {
+  handedness?: "right" | "left";
   instrument: StringInstrumentKey;
   presetName: FretboardInlayPresetName;
   size?: "compact" | "featured";
@@ -115,6 +117,7 @@ export function FretboardInlayPresetSwatch({
     <span
       aria-hidden="true"
       className={`${styles.fretboardSwatch} ${styles.inlayPresetSwatch}`}
+      data-handedness={handedness}
       data-preset={presetName}
       data-size={size}
       style={

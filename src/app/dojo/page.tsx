@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
 import styles from "./page.module.css";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { Dialog } from "@/components/ui/dialog/Dialog";
@@ -9,6 +10,10 @@ import { AddToSessionDialog } from "@/components/session/AddToSessionDialog";
 import { SessionHeader } from "@/components/session/SessionHeader";
 import { SessionLoader } from "@/components/session/SessionLoader";
 import { SessionView } from "@/components/session/SessionView";
+import {
+  createInstrumentCreationRangeContextFromSignature,
+  createInstrumentCreationRangeContextSignature,
+} from "@/components/instrument-creation/instrumentCreationRangeContext";
 import { musoAudioEngine } from "@/audio";
 import { useAppStore, useHydrateAppStore } from "@/stores/appStore";
 import { createChordProgressionParts } from "@/utils/music-part/createChordProgressionParts";
@@ -26,10 +31,23 @@ function HydratedSession({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addDialogKey, setAddDialogKey] = useState(0);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
+  const instrumentCreationRangeContextSignature = useAppStore(
+    useShallow((state) =>
+      createInstrumentCreationRangeContextSignature(
+        state.activeSessionId
+          ? (state.sessions[state.activeSessionId]?.parts ?? [])
+          : [],
+      ),
+    ),
+  );
   const addPart = useAppStore((state) => state.addPart);
   const addParts = useAppStore((state) => state.addParts);
   const replaceParts = useAppStore((state) => state.replaceParts);
   const closeAddDialog = () => setIsAddDialogOpen(false);
+  const instrumentCreationRangeContext =
+    createInstrumentCreationRangeContextFromSignature(
+      instrumentCreationRangeContextSignature,
+    );
   const openAddDialog = () => {
     setAddDialogKey((currentKey) => currentKey + 1);
     setIsAddDialogOpen(true);
@@ -128,6 +146,7 @@ function HydratedSession({
       <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="lg">
         <AddToSessionDialog
           key={addDialogKey}
+          instrumentCreationRangeContext={instrumentCreationRangeContext}
           onAddCustomChordOrScale={({
             rootNote,
             noteCollectionKey,

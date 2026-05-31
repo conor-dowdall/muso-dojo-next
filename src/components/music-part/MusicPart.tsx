@@ -17,6 +17,7 @@ import {
 import { PartModuleCreationDialog } from "@/components/part-module-creation/PartModuleCreationDialog";
 import { Button } from "@/components/ui/buttons/Button";
 import { Dialog } from "@/components/ui/dialog/Dialog";
+import { type InstrumentCreationRangeContext } from "@/components/instrument-creation/instrumentCreationConfig";
 import { type MusicPartControlProps } from "@/types/music-part";
 import { type AddPartModuleHandler } from "@/types/session";
 import { useControllableState } from "@/hooks/useControllableState";
@@ -28,6 +29,7 @@ interface MusicPartProps {
   className?: string;
   headerClassName?: string;
   accentColor?: string;
+  instrumentCreationRangeContext?: InstrumentCreationRangeContext;
   showHeader?: boolean;
   onAddPartModule?: AddPartModuleHandler;
   onClonePart?: () => void;
@@ -83,6 +85,9 @@ function MusicPartContent({
         <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="lg">
           <PartModuleCreationDialog
             key={addDialogKey}
+            instrumentCreationRangeContext={
+              musicPart.instrumentCreationRangeContext
+            }
             onAddPartModule={musicPart.addPartModule}
             onClose={closeAddDialog}
             title="Add to Part"
@@ -99,6 +104,7 @@ export function MusicPart({
   className = "",
   headerClassName,
   accentColor,
+  instrumentCreationRangeContext,
   rootNote: controlledRootNote,
   initialRootNote = "C",
   onRootNoteChange,
@@ -132,6 +138,7 @@ export function MusicPart({
     noteCollectionKey,
     setRootNote,
     setNoteCollectionKey,
+    instrumentCreationRangeContext,
     addPartModule: onAddPartModule,
     clonePart: onClonePart,
     removePart: onRemovePart,

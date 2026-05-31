@@ -8,6 +8,12 @@ import {
   getInstrumentCreationViewportTier,
   instrumentCreationDefaultMatchesSelection,
 } from "@/components/instrument-creation/instrumentCreationConfig";
+import {
+  createInstrumentCreationRangeContext,
+  createInstrumentCreationRangeContextFromSignature,
+  createInstrumentCreationRangeContextSignature,
+} from "@/components/instrument-creation/instrumentCreationRangeContext";
+import { type MusicPartConfig } from "@/types/session";
 
 describe("instrument creation responsive defaults", () => {
   it("maps viewport widths to tiny, compact, and regular tiers", () => {
@@ -83,6 +89,49 @@ describe("instrument creation responsive defaults", () => {
       theme: "maple",
       inlayPreset: "none",
     });
+  });
+
+  it("uses context ranges before viewport ranges without saving them in setup defaults", () => {
+    const selections = createDefaultInstrumentSelections(
+      "tiny",
+      {
+        instrumentType: "fretboard",
+        setup: {
+          instrument: "bass",
+          tuningKey: "bassFiveStringBeadg",
+          handedness: "left",
+          appearanceSource: "custom",
+          theme: "maple",
+          inlayPreset: "none",
+        },
+      },
+      {
+        keyboard: {
+          range: "keys37",
+          midiRange: [36, 72],
+        },
+        fretboard: {
+          fretRange: [0, 12],
+        },
+      },
+    );
+
+    expect(selections.keyboardSelection).toMatchObject({
+      range: "keys37",
+      midiRange: [36, 72],
+    });
+    expect(selections.fretboardSelection).toMatchObject({
+      instrument: "bass",
+      fretRange: [0, 12],
+      handedness: "left",
+    });
+    expect(
+      getInstrumentCreationDefault(
+        "fretboard",
+        selections.keyboardSelection,
+        selections.fretboardSelection,
+      ).setup,
+    ).not.toHaveProperty("fretRange");
   });
 
   it("creates remembered setup defaults without range settings", () => {
@@ -172,5 +221,116 @@ describe("instrument creation responsive defaults", () => {
         selections.fretboardSelection,
       ),
     ).toBe(true);
+  });
+
+  it("creates range context from the most recent same-type instruments", () => {
+    const parts = [
+      {
+        id: "part-1",
+        rootNote: "C",
+        noteCollectionKey: "major",
+        modules: [
+          {
+            id: "module-1",
+            type: "instrument",
+            instrument: {
+              type: "fretboard",
+              config: {
+                fretRange: [0, 9],
+              },
+            },
+          },
+          {
+            id: "module-2",
+            type: "instrument",
+            instrument: {
+              type: "keyboard",
+              range: "keys25",
+            },
+          },
+        ],
+      },
+      {
+        id: "part-2",
+        rootNote: "D",
+        noteCollectionKey: "minor",
+        modules: [
+          {
+            id: "module-3",
+            type: "instrument",
+            instrument: {
+              type: "keyboard",
+              config: {
+                midiRange: [36, 84],
+              },
+            },
+          },
+          {
+            id: "module-4",
+            type: "instrument",
+            instrument: {
+              type: "fretboard",
+              config: {
+                fretRange: [0, 5],
+              },
+            },
+          },
+        ],
+      },
+    ] satisfies MusicPartConfig[];
+
+    const expectedContext = {
+      keyboard: {
+        range: "keys49",
+        midiRange: [36, 84],
+      },
+      fretboard: {
+        fretRange: [0, 5],
+      },
+    };
+    const signature = createInstrumentCreationRangeContextSignature(parts);
+
+    expect(createInstrumentCreationRangeContext(parts)).toEqual(
+      expectedContext,
+    );
+    expect(
+      createInstrumentCreationRangeContextFromSignature(signature),
+    ).toEqual(expectedContext);
+  });
+
+  it("uses built-in ranges when context instruments omit persisted range data", () => {
+    const parts = [
+      {
+        id: "part-1",
+        rootNote: "C",
+        noteCollectionKey: "major",
+        modules: [
+          {
+            id: "module-1",
+            type: "instrument",
+            instrument: {
+              type: "keyboard",
+            },
+          },
+          {
+            id: "module-2",
+            type: "instrument",
+            instrument: {
+              type: "fretboard",
+            },
+          },
+        ],
+      },
+    ] satisfies MusicPartConfig[];
+
+    expect(createInstrumentCreationRangeContext(parts)).toEqual({
+      keyboard: {
+        range: "keys25",
+        midiRange: [48, 72],
+      },
+      fretboard: {
+        fretRange: [0, 12],
+      },
+    });
   });
 });

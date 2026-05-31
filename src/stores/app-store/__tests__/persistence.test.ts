@@ -298,7 +298,7 @@ describe("app store persistence", () => {
     });
   });
 
-  it("normalizes legacy remembered instrument creation defaults", () => {
+  it("ignores stale remembered instrument setup shapes", () => {
     const persistedState = createPersistedSnapshot("persisted-session");
 
     expect(
@@ -314,13 +314,8 @@ describe("app store persistence", () => {
           },
         },
         fallbackSnapshot,
-      ).preferences.defaultInstrumentSetup,
-    ).toEqual({
-      instrumentType: "keyboard",
-      setup: {
-        theme: "studio",
-      },
-    });
+      ).preferences,
+    ).toEqual({});
   });
 
   it("ignores invalid remembered default instrument setup", () => {
