@@ -16,12 +16,16 @@ import { DEFAULT_NOTE_COLOR_CONFIG } from "@/data/noteColors";
 import {
   type FretboardCreationAppearanceSource,
   type FretboardCreationDefault,
-  type InstrumentCreationDefaults,
+  type InstrumentCreationDefault,
   type KeyboardCreationDefault,
 } from "@/types/instrument-creation-defaults";
 import { type SessionNoteColorConfig } from "@/types/note-colors";
 import { type AppPreferences } from "@/types/session";
 import { normalizeNoteColorConfig } from "@/utils/note-colors/createNoteColorConfig";
+import {
+  defaultInstrumentSetupsMatchRaw,
+  isBuiltInDefaultInstrumentSetup,
+} from "@/utils/instrument-creation/defaultInstrumentSetup";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 
 function normalizedNoteColorConfig(value: SessionNoteColorConfig | undefined) {
@@ -172,39 +176,78 @@ export function normalizeInstrumentCreationDefault(
     : normalizeFretboardCreationDefault(value);
 }
 
-function normalizeInstrumentCreationDefaults(
+function normalizeDefaultInstrumentSetupValue(
   value: unknown,
-): InstrumentCreationDefaults | undefined {
+): InstrumentCreationDefault | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
 
-  const keyboard = normalizeKeyboardCreationDefault(value.keyboard);
-  const fretboard = normalizeFretboardCreationDefault(value.fretboard);
+  if (value.instrumentType === "keyboard") {
+    const setup = normalizeKeyboardCreationDefault(value.setup);
 
-  if (!keyboard && !fretboard) {
+    return setup ? { instrumentType: "keyboard", setup } : undefined;
+  }
+
+  if (value.instrumentType === "fretboard") {
+    const setup = normalizeFretboardCreationDefault(value.setup);
+
+    return setup ? { instrumentType: "fretboard", setup } : undefined;
+  }
+
+  return undefined;
+}
+
+function normalizeLegacyInstrumentCreationDefaults(
+  value: unknown,
+): InstrumentCreationDefault | undefined {
+  if (!isRecord(value)) {
     return undefined;
   }
 
-  return {
-    ...(keyboard ? { keyboard } : {}),
-    ...(fretboard ? { fretboard } : {}),
-  };
+  const fretboard = normalizeFretboardCreationDefault(value.fretboard);
+  if (fretboard) {
+    return {
+      instrumentType: "fretboard",
+      setup: fretboard,
+    };
+  }
+
+  const keyboard = normalizeKeyboardCreationDefault(value.keyboard);
+  return keyboard
+    ? {
+        instrumentType: "keyboard",
+        setup: keyboard,
+      }
+    : undefined;
 }
 
-export function instrumentCreationDefaultsAreEqual(
-  left: InstrumentCreationDefaults | undefined,
-  right: InstrumentCreationDefaults | undefined,
+export function normalizeDefaultInstrumentSetup(
+  value: unknown,
+): InstrumentCreationDefault | undefined {
+  const defaultInstrumentSetup =
+    normalizeDefaultInstrumentSetupValue(value) ??
+    normalizeLegacyInstrumentCreationDefaults(value);
+
+  if (
+    !defaultInstrumentSetup ||
+    isBuiltInDefaultInstrumentSetup(defaultInstrumentSetup)
+  ) {
+    return undefined;
+  }
+
+  return defaultInstrumentSetup;
+}
+
+export function defaultInstrumentSetupsAreEqual(
+  left: InstrumentCreationDefault | undefined,
+  right: InstrumentCreationDefault | undefined,
 ) {
-  return (
-    left?.keyboard?.theme === right?.keyboard?.theme &&
-    left?.fretboard?.instrument === right?.fretboard?.instrument &&
-    left?.fretboard?.tuningKey === right?.fretboard?.tuningKey &&
-    left?.fretboard?.handedness === right?.fretboard?.handedness &&
-    left?.fretboard?.appearanceSource === right?.fretboard?.appearanceSource &&
-    left?.fretboard?.theme === right?.fretboard?.theme &&
-    left?.fretboard?.inlayPreset === right?.fretboard?.inlayPreset
-  );
+  if (!left || !right) {
+    return left === right;
+  }
+
+  return defaultInstrumentSetupsMatchRaw(left, right);
 }
 
 export function normalizeAppPreferences(value: unknown): AppPreferences {
@@ -215,12 +258,12 @@ export function normalizeAppPreferences(value: unknown): AppPreferences {
   const defaultSessionNoteColorConfig = normalizeDefaultSessionNoteColorConfig(
     value.defaultSessionNoteColorConfig,
   );
-  const instrumentCreationDefaults = normalizeInstrumentCreationDefaults(
-    value.instrumentCreationDefaults,
-  );
+  const defaultInstrumentSetup =
+    normalizeDefaultInstrumentSetup(value.defaultInstrumentSetup) ??
+    normalizeDefaultInstrumentSetup(value.instrumentCreationDefaults);
 
   return {
     ...(defaultSessionNoteColorConfig ? { defaultSessionNoteColorConfig } : {}),
-    ...(instrumentCreationDefaults ? { instrumentCreationDefaults } : {}),
+    ...(defaultInstrumentSetup ? { defaultInstrumentSetup } : {}),
   };
 }

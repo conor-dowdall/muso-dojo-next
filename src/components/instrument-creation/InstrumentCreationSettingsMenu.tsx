@@ -15,8 +15,10 @@ import { keyboardRanges } from "@/data/keyboard/ranges";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import {
   type FretboardInstrumentSelection,
+  instrumentCreationDefaultMatchesSelection,
   type KeyboardInstrumentSelection,
 } from "./instrumentCreationConfig";
+import { type InstrumentCreationDefault } from "@/types/instrument-creation-defaults";
 import { type InstrumentType } from "@/types/session";
 import { FretboardInstrumentCreationPanel } from "./FretboardInstrumentCreationPanel";
 import { KeyboardInstrumentCreationPanel } from "./KeyboardInstrumentCreationPanel";
@@ -33,6 +35,7 @@ const instrumentCreationIcons = {
 
 export interface InstrumentCreationSettingsMenuProps {
   closeSignal?: number;
+  defaultInstrumentSetup?: InstrumentCreationDefault;
   fretboardSelection: FretboardInstrumentSelection;
   instrumentType: InstrumentType;
   keyboardSelection: KeyboardInstrumentSelection;
@@ -44,6 +47,7 @@ export interface InstrumentCreationSettingsMenuProps {
 
 export function InstrumentCreationSettingsMenu({
   closeSignal = 0,
+  defaultInstrumentSetup,
   fretboardSelection,
   instrumentType,
   keyboardSelection,
@@ -87,6 +91,12 @@ export function InstrumentCreationSettingsMenu({
     <DisclosureList aria-label="Views">
       {instrumentCreationOptions.map((option) => {
         const isSelected = instrumentType === option.id;
+        const isDefault = instrumentCreationDefaultMatchesSelection(
+          option.id,
+          defaultInstrumentSetup,
+          keyboardSelection,
+          fretboardSelection,
+        );
         const isOpen = openChoice === option.id;
         const summary =
           option.id === "keyboard"
@@ -98,12 +108,13 @@ export function InstrumentCreationSettingsMenu({
             key={option.id}
             ariaLabel={`${option.title}, ${summary}${
               isSelected ? ", selected" : ""
-            }`}
+            }${isDefault ? ", default" : ""}`}
             isOpen={isOpen}
             icon={instrumentCreationIcons[option.id]}
             keepMounted
             label={option.title}
             panelVariant="menu"
+            preview={isDefault ? "Default" : undefined}
             selected={isSelected}
             subtitle={summary}
             onToggle={() => handleInstrumentToggle(option.id)}

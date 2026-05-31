@@ -21,7 +21,12 @@ export interface KeyboardCreationDefault {
   theme: KeyboardThemeName;
 }
 
-export interface InstrumentCreationDefaults {
-  fretboard?: FretboardCreationDefault;
-  keyboard?: KeyboardCreationDefault;
-}
+export type InstrumentCreationDefault =
+  | {
+      instrumentType: "fretboard";
+      setup: FretboardCreationDefault;
+    }
+  | {
+      instrumentType: "keyboard";
+      setup: KeyboardCreationDefault;
+    };

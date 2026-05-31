@@ -5,28 +5,26 @@ import { type InstrumentType } from "@/types/session";
 const instrumentSetupCopy = {
   fretboard: {
     label: "Fretboard Setup",
-    summary: "Instrument, tuning, hand and appearance",
-    target: "new fretboards",
+    instrumentLabel: "fretboard",
   },
   keyboard: {
     label: "Keyboard Setup",
-    summary: "Appearance",
-    target: "new keyboards",
+    instrumentLabel: "keyboard",
   },
 } as const satisfies Record<
   InstrumentType,
-  { label: string; summary: string; target: string }
+  { label: string; instrumentLabel: string }
 >;
 
 interface InstrumentCreationDefaultActionProps {
   instrumentType: InstrumentType;
-  isRemembered: boolean;
+  isDefault: boolean;
   onRemember: () => void;
 }
 
 export function InstrumentCreationDefaultAction({
   instrumentType,
-  isRemembered,
+  isDefault,
   onRemember,
 }: InstrumentCreationDefaultActionProps) {
   const setupCopy = instrumentSetupCopy[instrumentType];
@@ -34,20 +32,18 @@ export function InstrumentCreationDefaultAction({
   return (
     <DisclosureListAction
       aria-label={
-        isRemembered
-          ? `${setupCopy.label} is remembered for ${setupCopy.target}`
-          : `Remember ${setupCopy.label.toLowerCase()} for ${setupCopy.target}`
+        isDefault
+          ? `This ${setupCopy.instrumentLabel} setup is the default for new instruments`
+          : `Remember this ${setupCopy.instrumentLabel} setup for new instruments`
       }
-      disabled={isRemembered}
-      icon={isRemembered ? <BookmarkCheck /> : <BookmarkPlus />}
+      disabled={isDefault}
+      icon={isDefault ? <BookmarkCheck /> : <BookmarkPlus />}
       label={
-        isRemembered
-          ? `${setupCopy.label} Remembered`
-          : `Remember ${setupCopy.label}`
+        isDefault ? "Default Instrument Setup" : `Remember ${setupCopy.label}`
       }
-      selected={isRemembered}
+      selected={isDefault}
       subtitle={
-        isRemembered ? `Used for ${setupCopy.target}` : setupCopy.summary
+        isDefault ? "Used for new instruments" : "Use this for new instruments"
       }
       onClick={onRemember}
     />

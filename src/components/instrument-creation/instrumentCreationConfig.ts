@@ -21,9 +21,10 @@ import {
 import {
   type FretboardCreationAppearanceSource,
   type FretboardCreationDefault,
-  type InstrumentCreationDefaults,
+  type InstrumentCreationDefault,
   type KeyboardCreationDefault,
 } from "@/types/instrument-creation-defaults";
+import { createBuiltInDefaultInstrumentSetup } from "@/utils/instrument-creation/defaultInstrumentSetup";
 
 export type KeyboardRangeSelection = KeyboardRangeName | "custom";
 export type InstrumentCreationViewportTier = "tiny" | "compact" | "regular";
@@ -99,23 +100,30 @@ export function getInstrumentCreationViewportTier(
 
 export function createDefaultKeyboardInstrumentSelection(
   tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
-  defaults?: InstrumentCreationDefaults,
+  defaultSetup?: InstrumentCreationDefault,
 ): KeyboardInstrumentSelection {
   const range = keyboardRangeByTier[tier];
+  const keyboardDefault =
+    defaultSetup?.instrumentType === "keyboard"
+      ? defaultSetup.setup
+      : undefined;
 
   return {
     range,
     midiRange: keyboardRanges[range].midiRange,
-    theme: defaults?.keyboard?.theme ?? DEFAULT_KEYBOARD_THEME,
+    theme: keyboardDefault?.theme ?? DEFAULT_KEYBOARD_THEME,
   };
 }
 
 export function createDefaultFretboardInstrumentSelection(
   tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
-  defaults?: InstrumentCreationDefaults,
+  defaultSetup?: InstrumentCreationDefault,
 ): FretboardInstrumentSelection {
   const fretRange = fretRangeByTier[tier];
-  const fretboardDefault = defaults?.fretboard;
+  const fretboardDefault =
+    defaultSetup?.instrumentType === "fretboard"
+      ? defaultSetup.setup
+      : undefined;
 
   return {
     instrument: fretboardDefault?.instrument ?? "guitar",
@@ -136,15 +144,24 @@ export function createDefaultFretboardInstrumentSelection(
 
 export function createDefaultInstrumentSelections(
   tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
-  defaults?: InstrumentCreationDefaults,
+  defaultSetup?: InstrumentCreationDefault,
 ) {
   return {
-    keyboardSelection: createDefaultKeyboardInstrumentSelection(tier, defaults),
+    keyboardSelection: createDefaultKeyboardInstrumentSelection(
+      tier,
+      defaultSetup,
+    ),
     fretboardSelection: createDefaultFretboardInstrumentSelection(
       tier,
-      defaults,
+      defaultSetup,
     ),
   };
+}
+
+export function getDefaultInstrumentType(
+  defaultSetup?: InstrumentCreationDefault,
+): InstrumentType {
+  return defaultSetup?.instrumentType ?? "fretboard";
 }
 
 export function getKeyboardCreationDefault(
@@ -172,23 +189,42 @@ export function getInstrumentCreationDefault(
   instrumentType: InstrumentType,
   keyboardSelection: KeyboardInstrumentSelection,
   fretboardSelection: FretboardInstrumentSelection,
-) {
+): InstrumentCreationDefault {
   return instrumentType === "keyboard"
-    ? getKeyboardCreationDefault(keyboardSelection)
-    : getFretboardCreationDefault(fretboardSelection);
+    ? {
+        instrumentType,
+        setup: getKeyboardCreationDefault(keyboardSelection),
+      }
+    : {
+        instrumentType,
+        setup: getFretboardCreationDefault(fretboardSelection),
+      };
 }
 
 export function instrumentCreationDefaultMatchesSelection(
   instrumentType: InstrumentType,
-  defaults: InstrumentCreationDefaults | undefined,
+  defaultSetup: InstrumentCreationDefault | undefined,
   keyboardSelection: KeyboardInstrumentSelection,
   fretboardSelection: FretboardInstrumentSelection,
 ) {
-  if (instrumentType === "keyboard") {
-    return defaults?.keyboard?.theme === keyboardSelection.theme;
+  const effectiveDefault =
+    defaultSetup ?? createBuiltInDefaultInstrumentSetup();
+
+  if (effectiveDefault.instrumentType !== instrumentType) {
+    return false;
   }
 
-  const fretboardDefault = defaults?.fretboard;
+  if (instrumentType === "keyboard") {
+    return (
+      effectiveDefault.instrumentType === "keyboard" &&
+      effectiveDefault.setup.theme === keyboardSelection.theme
+    );
+  }
+
+  const fretboardDefault =
+    effectiveDefault.instrumentType === "fretboard"
+      ? effectiveDefault.setup
+      : undefined;
 
   if (!fretboardDefault) {
     return false;

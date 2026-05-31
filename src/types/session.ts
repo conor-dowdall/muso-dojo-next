@@ -9,7 +9,7 @@ import {
 } from "@/types/instrument-active-note";
 import { type InstrumentLayoutConfig } from "@/types/instrument-layout";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
-import { type InstrumentCreationDefaults } from "@/types/instrument-creation-defaults";
+import { type InstrumentCreationDefault } from "@/types/instrument-creation-defaults";
 import { type SessionNoteColorConfig } from "@/types/note-colors";
 import { type FretboardConfig } from "@/types/fretboard";
 import { type KeyboardConfig } from "@/types/keyboard";
@@ -122,7 +122,7 @@ export interface SessionConfig {
 
 export interface AppPreferences {
   defaultSessionNoteColorConfig?: SessionNoteColorConfig;
-  instrumentCreationDefaults?: InstrumentCreationDefaults;
+  defaultInstrumentSetup?: InstrumentCreationDefault;
 }
 
 export interface AppStoreSnapshot {

@@ -2,7 +2,7 @@ import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { type StateCreator } from "zustand";
 import { type AudioPresetId } from "@/audio/types";
 import { type DisplayFormatId } from "@/data/displayFormats";
-import { type InstrumentCreationDefaults } from "@/types/instrument-creation-defaults";
+import { type InstrumentCreationDefault } from "@/types/instrument-creation-defaults";
 import {
   type ActiveNotes,
   type ActiveNotesLockSnapshot,
@@ -17,7 +17,6 @@ import {
   type InstrumentInstanceBaseConfig,
   type KeyboardInstrumentInstanceConfig,
   type MusicPartConfig,
-  type InstrumentType,
   type PartModuleCreationConfig,
   type PartModuleType,
   type SessionConfig,
@@ -54,11 +53,8 @@ export interface PreferenceActions {
   setDefaultSessionNoteColorConfig: (
     noteColorConfig: SessionNoteColorConfig,
   ) => void;
-  setInstrumentCreationDefault: (
-    instrumentType: InstrumentType,
-    creationDefault: NonNullable<
-      InstrumentCreationDefaults[keyof InstrumentCreationDefaults]
-    >,
+  setDefaultInstrumentSetup: (
+    creationDefault: InstrumentCreationDefault,
   ) => void;
 }
 

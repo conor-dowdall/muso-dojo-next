@@ -5,6 +5,7 @@ import {
   sessionId,
 } from "./appStoreTestUtils";
 import { type SessionConfig } from "@/types/session";
+import { createBuiltInDefaultInstrumentSetup } from "@/utils/instrument-creation/defaultInstrumentSetup";
 
 const musoDojoNoteColors = {
   source: "preset",
@@ -83,26 +84,30 @@ describe("session app store actions", () => {
     ).toEqual({ source: "theme" });
   });
 
-  it("stores remembered keyboard and fretboard creation setups", () => {
+  it("stores one remembered instrument creation setup", () => {
     const store = createTestStore();
 
-    store.getState().setInstrumentCreationDefault("keyboard", {
-      theme: "studio",
-    });
-    store.getState().setInstrumentCreationDefault("fretboard", {
-      instrument: "guitar",
-      tuningKey: "guitarDropD",
-      handedness: "left",
-      appearanceSource: "custom",
-      theme: "maple",
-      inlayPreset: "dots",
-    });
-
-    expect(store.getState().preferences.instrumentCreationDefaults).toEqual({
-      keyboard: {
+    store.getState().setDefaultInstrumentSetup({
+      instrumentType: "keyboard",
+      setup: {
         theme: "studio",
       },
-      fretboard: {
+    });
+    store.getState().setDefaultInstrumentSetup({
+      instrumentType: "fretboard",
+      setup: {
+        instrument: "guitar",
+        tuningKey: "guitarDropD",
+        handedness: "left",
+        appearanceSource: "custom",
+        theme: "maple",
+        inlayPreset: "dots",
+      },
+    });
+
+    expect(store.getState().preferences.defaultInstrumentSetup).toEqual({
+      instrumentType: "fretboard",
+      setup: {
         instrument: "guitar",
         tuningKey: "guitarDropD",
         handedness: "left",
@@ -117,8 +122,9 @@ describe("session app store actions", () => {
     const store = createTestStore({
       ...createStoreSnapshot(),
       preferences: {
-        instrumentCreationDefaults: {
-          keyboard: {
+        defaultInstrumentSetup: {
+          instrumentType: "keyboard",
+          setup: {
             theme: "studio",
           },
         },
@@ -129,12 +135,35 @@ describe("session app store actions", () => {
       notificationCount += 1;
     });
 
-    store.getState().setInstrumentCreationDefault("keyboard", {
-      theme: "studio",
+    store.getState().setDefaultInstrumentSetup({
+      instrumentType: "keyboard",
+      setup: {
+        theme: "studio",
+      },
     });
 
     unsubscribe();
     expect(notificationCount).toBe(0);
+  });
+
+  it("clears remembered instrument setup when restoring the built-in default", () => {
+    const store = createTestStore({
+      ...createStoreSnapshot(),
+      preferences: {
+        defaultInstrumentSetup: {
+          instrumentType: "keyboard",
+          setup: {
+            theme: "studio",
+          },
+        },
+      },
+    });
+
+    store
+      .getState()
+      .setDefaultInstrumentSetup(createBuiltInDefaultInstrumentSetup());
+
+    expect(store.getState().preferences).toEqual({});
   });
 
   it("does not notify subscribers when the requested active session is unchanged or missing", () => {

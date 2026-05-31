@@ -3,6 +3,7 @@ import {
   createDefaultInstrumentSelections,
   createDefaultFretboardInstrumentSelection,
   createDefaultKeyboardInstrumentSelection,
+  getDefaultInstrumentType,
   getInstrumentCreationDefault,
   getInstrumentCreationViewportTier,
   instrumentCreationDefaultMatchesSelection,
@@ -44,11 +45,15 @@ describe("instrument creation responsive defaults", () => {
   });
 
   it("applies remembered setup defaults without overriding responsive ranges", () => {
-    const selections = createDefaultInstrumentSelections("tiny", {
-      keyboard: {
+    const keyboardSelections = createDefaultInstrumentSelections("tiny", {
+      instrumentType: "keyboard",
+      setup: {
         theme: "studio",
       },
-      fretboard: {
+    });
+    const fretboardSelections = createDefaultInstrumentSelections("tiny", {
+      instrumentType: "fretboard",
+      setup: {
         instrument: "bass",
         tuningKey: "bassFiveStringBeadg",
         handedness: "left",
@@ -58,12 +63,18 @@ describe("instrument creation responsive defaults", () => {
       },
     });
 
-    expect(selections.keyboardSelection).toMatchObject({
+    expect(
+      getDefaultInstrumentType({
+        instrumentType: "keyboard",
+        setup: { theme: "studio" },
+      }),
+    ).toBe("keyboard");
+    expect(keyboardSelections.keyboardSelection).toMatchObject({
       range: "keys13",
       midiRange: [60, 72],
       theme: "studio",
     });
-    expect(selections.fretboardSelection).toMatchObject({
+    expect(fretboardSelections.fretboardSelection).toMatchObject({
       instrument: "bass",
       tuningKey: "bassFiveStringBeadg",
       fretRange: [0, 5],
@@ -97,25 +108,36 @@ describe("instrument creation responsive defaults", () => {
     );
 
     expect(keyboardDefault).toEqual({
-      theme: "inverted",
+      instrumentType: "keyboard",
+      setup: {
+        theme: "inverted",
+      },
     });
-    expect(fretboardDefault).not.toHaveProperty("fretRange");
+    expect(fretboardDefault.setup).not.toHaveProperty("fretRange");
     expect(fretboardDefault).toMatchObject({
-      instrument: "guitar",
-      tuningKey: "guitarStandardE",
-      handedness: "left",
+      instrumentType: "fretboard",
+      setup: {
+        instrument: "guitar",
+        tuningKey: "guitarStandardE",
+        handedness: "left",
+      },
     });
   });
 
   it("checks whether the current setup is already remembered", () => {
-    const selections = createDefaultInstrumentSelections("regular", {
-      keyboard: { theme: "studio" },
-    });
+    const keyboardDefault = {
+      instrumentType: "keyboard",
+      setup: { theme: "studio" },
+    } as const;
+    const selections = createDefaultInstrumentSelections(
+      "regular",
+      keyboardDefault,
+    );
 
     expect(
       instrumentCreationDefaultMatchesSelection(
         "keyboard",
-        { keyboard: { theme: "studio" } },
+        keyboardDefault,
         selections.keyboardSelection,
         selections.fretboardSelection,
       ),
@@ -123,10 +145,32 @@ describe("instrument creation responsive defaults", () => {
     expect(
       instrumentCreationDefaultMatchesSelection(
         "keyboard",
-        { keyboard: { theme: "classic" } },
+        { instrumentType: "keyboard", setup: { theme: "classic" } },
         selections.keyboardSelection,
         selections.fretboardSelection,
       ),
     ).toBe(false);
+    expect(
+      instrumentCreationDefaultMatchesSelection(
+        "fretboard",
+        keyboardDefault,
+        selections.keyboardSelection,
+        selections.fretboardSelection,
+      ),
+    ).toBe(false);
+  });
+
+  it("treats the built-in fretboard as the default setup when no preference is saved", () => {
+    const selections = createDefaultInstrumentSelections("regular");
+
+    expect(getDefaultInstrumentType()).toBe("fretboard");
+    expect(
+      instrumentCreationDefaultMatchesSelection(
+        "fretboard",
+        undefined,
+        selections.keyboardSelection,
+        selections.fretboardSelection,
+      ),
+    ).toBe(true);
   });
 });

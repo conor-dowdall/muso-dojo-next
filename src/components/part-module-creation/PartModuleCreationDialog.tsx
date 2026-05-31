@@ -14,6 +14,7 @@ import {
 } from "@/types/session";
 import {
   createDefaultInstrumentSelections,
+  getDefaultInstrumentType,
   getInstrumentCreationDefault,
   instrumentCreationDefaultMatchesSelection,
   type FretboardInstrumentSelection,
@@ -21,10 +22,7 @@ import {
 } from "@/components/instrument-creation/instrumentCreationConfig";
 import { InstrumentCreationDefaultAction } from "@/components/instrument-creation/InstrumentCreationDefaultAction";
 import { useAppStore } from "@/stores/appStore";
-import {
-  DEFAULT_INSTRUMENT_TYPE,
-  DEFAULT_PART_MODULE_TYPE,
-} from "@/utils/session/sessionDefaults";
+import { DEFAULT_PART_MODULE_TYPE } from "@/utils/session/sessionDefaults";
 import {
   type PartModuleCreationDraft,
   getPartModuleCreationActionLabel,
@@ -48,17 +46,19 @@ export function PartModuleCreationDialog({
   title = "Add to Part",
 }: PartModuleCreationDialogProps) {
   const selectedModuleType = DEFAULT_PART_MODULE_TYPE;
-  const instrumentCreationDefaults = useAppStore(
-    (state) => state.preferences.instrumentCreationDefaults,
+  const defaultInstrumentSetup = useAppStore(
+    (state) => state.preferences.defaultInstrumentSetup,
   );
-  const setInstrumentCreationDefault = useAppStore(
-    (state) => state.setInstrumentCreationDefault,
+  const setDefaultInstrumentSetup = useAppStore(
+    (state) => state.setDefaultInstrumentSetup,
   );
   const [initialSelections] = useState(() =>
-    createDefaultInstrumentSelections(undefined, instrumentCreationDefaults),
+    createDefaultInstrumentSelections(undefined, defaultInstrumentSetup),
   );
   const [selectedInstrumentType, setSelectedInstrumentType] =
-    useState<InstrumentType>(DEFAULT_INSTRUMENT_TYPE);
+    useState<InstrumentType>(() =>
+      getDefaultInstrumentType(defaultInstrumentSetup),
+    );
   const [keyboardSelection, setKeyboardSelection] =
     useState<KeyboardInstrumentSelection>(initialSelections.keyboardSelection);
   const [fretboardSelection, setFretboardSelection] =
@@ -73,14 +73,15 @@ export function PartModuleCreationDialog({
     fretboardSelection,
   } satisfies PartModuleCreationDraft;
   const addLabel = getPartModuleCreationActionLabel(creationDraft);
-  const isInstrumentSetupRemembered = instrumentCreationDefaultMatchesSelection(
+  const isDefaultInstrumentSetup = instrumentCreationDefaultMatchesSelection(
     selectedInstrumentType,
-    instrumentCreationDefaults,
+    defaultInstrumentSetup,
     keyboardSelection,
     fretboardSelection,
   );
   const moduleSettingsProps = {
     ...creationDraft,
+    defaultInstrumentSetup,
     onFretboardSelectionChange: setFretboardSelection,
     onInstrumentTypeChange: setSelectedInstrumentType,
     onKeyboardSelectionChange: setKeyboardSelection,
@@ -94,8 +95,7 @@ export function PartModuleCreationDialog({
     onClose();
   };
   const handleRememberInstrumentSetup = () => {
-    setInstrumentCreationDefault(
-      selectedInstrumentType,
+    setDefaultInstrumentSetup(
       getInstrumentCreationDefault(
         selectedInstrumentType,
         keyboardSelection,
@@ -115,7 +115,7 @@ export function PartModuleCreationDialog({
           <DisclosureList>
             <InstrumentCreationDefaultAction
               instrumentType={selectedInstrumentType}
-              isRemembered={isInstrumentSetupRemembered}
+              isDefault={isDefaultInstrumentSetup}
               onRemember={handleRememberInstrumentSetup}
             />
           </DisclosureList>

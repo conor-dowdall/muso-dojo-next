@@ -261,7 +261,7 @@ describe("app store persistence", () => {
     );
   });
 
-  it("normalizes remembered instrument creation defaults", () => {
+  it("normalizes remembered default instrument setup", () => {
     const persistedState = createPersistedSnapshot("persisted-session");
 
     expect(
@@ -269,11 +269,9 @@ describe("app store persistence", () => {
         {
           ...persistedState,
           preferences: {
-            instrumentCreationDefaults: {
-              keyboard: {
-                theme: "studio",
-              },
-              fretboard: {
+            defaultInstrumentSetup: {
+              instrumentType: "fretboard",
+              setup: {
                 instrument: "guitar",
                 tuningKey: "guitarDropD",
                 handedness: "left",
@@ -286,12 +284,10 @@ describe("app store persistence", () => {
           },
         },
         fallbackSnapshot,
-      ).preferences.instrumentCreationDefaults,
+      ).preferences.defaultInstrumentSetup,
     ).toEqual({
-      keyboard: {
-        theme: "studio",
-      },
-      fretboard: {
+      instrumentType: "fretboard",
+      setup: {
         instrument: "guitar",
         tuningKey: "guitarDropD",
         handedness: "left",
@@ -302,7 +298,7 @@ describe("app store persistence", () => {
     });
   });
 
-  it("ignores invalid remembered instrument creation defaults", () => {
+  it("normalizes legacy remembered instrument creation defaults", () => {
     const persistedState = createPersistedSnapshot("persisted-session");
 
     expect(
@@ -312,9 +308,32 @@ describe("app store persistence", () => {
           preferences: {
             instrumentCreationDefaults: {
               keyboard: {
-                theme: "not-a-theme",
+                theme: "studio",
               },
-              fretboard: {
+            },
+          },
+        },
+        fallbackSnapshot,
+      ).preferences.defaultInstrumentSetup,
+    ).toEqual({
+      instrumentType: "keyboard",
+      setup: {
+        theme: "studio",
+      },
+    });
+  });
+
+  it("ignores invalid remembered default instrument setup", () => {
+    const persistedState = createPersistedSnapshot("persisted-session");
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          preferences: {
+            defaultInstrumentSetup: {
+              instrumentType: "fretboard",
+              setup: {
                 instrument: "not-an-instrument",
                 tuningKey: "guitarDropD",
               },

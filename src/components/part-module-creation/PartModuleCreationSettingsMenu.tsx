@@ -5,11 +5,13 @@ import {
   type FretboardInstrumentSelection,
   type KeyboardInstrumentSelection,
 } from "@/components/instrument-creation/instrumentCreationConfig";
+import { type InstrumentCreationDefault } from "@/types/instrument-creation-defaults";
 import { type InstrumentType } from "@/types/session";
 import { assertNever } from "@/utils/assertNever";
 
 interface InstrumentPartModuleCreationSettingsMenuProps {
   closeSignal?: number;
+  defaultInstrumentSetup?: InstrumentCreationDefault;
   fretboardSelection: FretboardInstrumentSelection;
   instrumentType: InstrumentType;
   keyboardSelection: KeyboardInstrumentSelection;
@@ -31,6 +33,7 @@ export function PartModuleCreationSettingsMenu(
       return (
         <InstrumentCreationSettingsMenu
           closeSignal={props.closeSignal}
+          defaultInstrumentSetup={props.defaultInstrumentSetup}
           fretboardSelection={props.fretboardSelection}
           instrumentType={props.instrumentType}
           keyboardSelection={props.keyboardSelection}

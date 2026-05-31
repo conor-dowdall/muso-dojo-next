@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
   createDefaultInstrumentSelections,
+  getDefaultInstrumentType,
   getInstrumentCreationDefault,
   instrumentCreationDefaultMatchesSelection,
   type FretboardInstrumentSelection,
@@ -54,7 +55,6 @@ import {
   type PartModuleCreationRequest,
 } from "@/types/session";
 import {
-  DEFAULT_INSTRUMENT_TYPE,
   DEFAULT_PART_MODULE_TYPE,
   DEFAULT_PART_NOTE_COLLECTION_KEY,
   DEFAULT_PART_ROOT_NOTE,
@@ -142,20 +142,20 @@ export function AddToSessionDialog({
     useState<ChordProgressionChordListMode>("each-chord-once");
   const [replaceSession, setReplaceSession] = useState(false);
   const moduleType = DEFAULT_PART_MODULE_TYPE;
-  const instrumentCreationDefaults = useAppStore(
-    (state) => state.preferences.instrumentCreationDefaults,
+  const defaultInstrumentSetup = useAppStore(
+    (state) => state.preferences.defaultInstrumentSetup,
   );
-  const setInstrumentCreationDefault = useAppStore(
-    (state) => state.setInstrumentCreationDefault,
+  const setDefaultInstrumentSetup = useAppStore(
+    (state) => state.setDefaultInstrumentSetup,
   );
-  const [instrumentType, setInstrumentType] = useState<InstrumentType>(
-    DEFAULT_INSTRUMENT_TYPE,
+  const [instrumentType, setInstrumentType] = useState<InstrumentType>(() =>
+    getDefaultInstrumentType(defaultInstrumentSetup),
   );
   const modeDisclosure = useDisclosureList<SessionAddMode>();
   const sessionDisclosure = useDisclosureList<SessionChoice>();
   const [moduleSettingsCloseSignal, setModuleSettingsCloseSignal] = useState(0);
   const [initialSelections] = useState(() =>
-    createDefaultInstrumentSelections(undefined, instrumentCreationDefaults),
+    createDefaultInstrumentSelections(undefined, defaultInstrumentSetup),
   );
   const [keyboardSelection, setKeyboardSelection] =
     useState<KeyboardInstrumentSelection>(initialSelections.keyboardSelection);
@@ -188,14 +188,15 @@ export function AddToSessionDialog({
   const moduleSettingsProps = {
     ...creationDraft,
     closeSignal: moduleSettingsCloseSignal,
+    defaultInstrumentSetup,
     onChoiceOpen: sessionDisclosure.closeAll,
     onFretboardSelectionChange: setFretboardSelection,
     onInstrumentTypeChange: setInstrumentType,
     onKeyboardSelectionChange: setKeyboardSelection,
   } satisfies AddToSessionModuleSettingsProps;
-  const isInstrumentSetupRemembered = instrumentCreationDefaultMatchesSelection(
+  const isDefaultInstrumentSetup = instrumentCreationDefaultMatchesSelection(
     instrumentType,
-    instrumentCreationDefaults,
+    defaultInstrumentSetup,
     keyboardSelection,
     fretboardSelection,
   );
@@ -252,8 +253,7 @@ export function AddToSessionDialog({
     onClose();
   };
   const handleRememberInstrumentSetup = () => {
-    setInstrumentCreationDefault(
-      instrumentType,
+    setDefaultInstrumentSetup(
       getInstrumentCreationDefault(
         instrumentType,
         keyboardSelection,
@@ -265,7 +265,7 @@ export function AddToSessionDialog({
     <DisclosureListGroup aria-label="Creation default">
       <InstrumentCreationDefaultAction
         instrumentType={instrumentType}
-        isRemembered={isInstrumentSetupRemembered}
+        isDefault={isDefaultInstrumentSetup}
         onRemember={handleRememberInstrumentSetup}
       />
     </DisclosureListGroup>
