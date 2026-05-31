@@ -212,6 +212,28 @@ export function FretboardInstrumentCreationPanel({
         </DisclosureListItem>
 
         <DisclosureListItem
+          ariaLabel={`Choose hand, ${formatHandedness(value.handedness)} selected`}
+          isOpen={openChoice === "handedness"}
+          keepMounted
+          label="Hand"
+          preview={formatHandedness(value.handedness)}
+          onToggle={() => handleToggleChoice("handedness")}
+        >
+          <DisclosureList>
+            <DisclosureListChoice
+              label={formatHandedness("right")}
+              selected={value.handedness === "right"}
+              onClick={() => handleHandednessSelect("right")}
+            />
+            <DisclosureListChoice
+              label={formatHandedness("left")}
+              selected={value.handedness === "left"}
+              onClick={() => handleHandednessSelect("left")}
+            />
+          </DisclosureList>
+        </DisclosureListItem>
+
+        <DisclosureListItem
           ariaLabel={`Choose fret range, ${formatFretRange(value.fretRange)} selected`}
           isOpen={openChoice === "fretRange"}
           keepMounted
@@ -240,28 +262,6 @@ export function FretboardInstrumentCreationPanel({
             valueFormatter={formatFretPosition}
             onChange={handleFretRangeChange}
           />
-        </DisclosureListItem>
-
-        <DisclosureListItem
-          ariaLabel={`Choose hand, ${formatHandedness(value.handedness)} selected`}
-          isOpen={openChoice === "handedness"}
-          keepMounted
-          label="Hand"
-          preview={formatHandedness(value.handedness)}
-          onToggle={() => handleToggleChoice("handedness")}
-        >
-          <DisclosureList>
-            <DisclosureListChoice
-              label={formatHandedness("right")}
-              selected={value.handedness === "right"}
-              onClick={() => handleHandednessSelect("right")}
-            />
-            <DisclosureListChoice
-              label={formatHandedness("left")}
-              selected={value.handedness === "left"}
-              onClick={() => handleHandednessSelect("left")}
-            />
-          </DisclosureList>
         </DisclosureListItem>
 
         <DisclosureListItem
