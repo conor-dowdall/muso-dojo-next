@@ -8,8 +8,8 @@ import {
 
 export interface ResolvedHarmonicVoiceConfig {
   envelope: HarmonicVoiceConfig["envelope"];
-  effects: NonNullable<HarmonicVoiceConfig["effects"]>;
   gain: number;
+  insertEffects: NonNullable<HarmonicVoiceConfig["insertEffects"]>;
   partials: readonly HarmonicPartialConfig[];
   unison: HarmonicVoiceConfig["unison"];
 }
@@ -102,10 +102,10 @@ export function resolveHarmonicVoiceConfig(
 ): ResolvedHarmonicVoiceConfig {
   return {
     envelope: voice.envelope,
-    effects: voice.effects ?? [],
     gain:
       voice.gain *
       (voice.pitchGain ? getPitchGain(midiNote, voice.pitchGain) : 1),
+    insertEffects: voice.insertEffects ?? [],
     partials: mergePartials(voice.partials, voice.lowPitchAssist, midiNote),
     unison: voice.unison,
   };

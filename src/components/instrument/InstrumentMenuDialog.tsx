@@ -5,7 +5,7 @@ import {
   audioPresetCategoryLabels,
   audioPresetCategoryOrder,
   audioPresets,
-  isAudioPresetSupportedForUse,
+  isAudioPresetRecommendedForUse,
   musoAudioEngine,
   type AudioPresetId,
 } from "@/audio";
@@ -30,13 +30,17 @@ import {
 import { type InstrumentSize } from "@/types/instrument-layout";
 import { type InstrumentType } from "@/types/session";
 import { type SettingSetter } from "@/types/state";
-import { resolveInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
+import {
+  resolveInstrumentAudioPresetId,
+  type InstrumentAudioPresetContext,
+} from "@/utils/instrument/resolveInstrumentAudioPreset";
 import styles from "./InstrumentMenuDialog.module.css";
 
 export type InstrumentMenuChoice = "sound" | "display" | "size";
 
 interface InstrumentMenuDialogProps {
   audioPresetId?: AudioPresetId;
+  audioPresetContext?: InstrumentAudioPresetContext;
   displayFormatId: DisplayFormatId;
   initialOpenChoice?: InstrumentMenuChoice | null;
   instrumentSize: InstrumentSize;
@@ -57,7 +61,7 @@ const previewAudioPresetGroups = audioPresetCategoryOrder
     presets: Object.values(audioPresets).filter(
       (preset) =>
         preset.category === category &&
-        isAudioPresetSupportedForUse(preset, "preview"),
+        isAudioPresetRecommendedForUse(preset, "preview"),
     ),
   }))
   .filter((group) => group.presets.length > 0);
@@ -86,7 +90,6 @@ const instrumentSizeLabels = Object.fromEntries(
 
 function auditionAudioPreset(audioPresetId: AudioPresetId) {
   void musoAudioEngine.playNote({
-    durationSeconds: 0.72,
     midiNote: 60,
     presetId: audioPresetId,
     use: "preview",
@@ -96,6 +99,7 @@ function auditionAudioPreset(audioPresetId: AudioPresetId) {
 
 export function InstrumentMenuDialog({
   audioPresetId,
+  audioPresetContext,
   displayFormatId,
   initialOpenChoice = null,
   instrumentSize,
@@ -113,6 +117,7 @@ export function InstrumentMenuDialog({
   const resolvedAudioPresetId = resolveInstrumentAudioPresetId(
     instrumentType,
     audioPresetId,
+    audioPresetContext,
   );
   const resolvedAudioPreset = audioPresets[resolvedAudioPresetId];
 

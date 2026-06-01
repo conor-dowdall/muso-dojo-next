@@ -2,24 +2,21 @@ export type AudioUse = "preview" | "tuning" | "drone" | "exercise";
 
 export type AudioPresetId =
   | "reference-tone"
-  | "pluck"
-  | "round-pluck"
-  | "nylon-ish"
   | "piano"
-  | "muted-keys"
-  | "tape-keys"
+  | "electric-keys"
+  | "steel-string"
+  | "distortion-guitar"
+  | "nylon-string"
+  | "picked-bass"
+  | "mandolin"
+  | "bowed-strings"
+  | "bowed-sustain"
   | "soft-organ"
-  | "reed-organ"
-  | "soft-pad"
-  | "bright-tone"
+  | "warm-pad"
   | "glass-bell"
   | "hollow-synth"
-  | "warm-drive"
   | "fuzz-pluck"
-  | "broken-organ"
-  | "detuned-stack"
-  | "bit-glow"
-  | "ghost-harmonics";
+  | "bit-glow";
 
 export type AudioPresetFamily = "generated" | "sample";
 export type AudioPresetCategory = "core" | "instrument" | "character" | "weird";
@@ -64,25 +61,18 @@ export interface DistortionConfig {
   oversample?: OverSampleType;
 }
 
-export type AudioEffectPlacement = "pre-envelope" | "post-envelope";
-
-interface BaseAudioEffectConfig {
-  placement?: AudioEffectPlacement;
-}
-
-export interface DistortionEffectConfig
-  extends BaseAudioEffectConfig, DistortionConfig {
+export interface DistortionEffectConfig extends DistortionConfig {
   type: "distortion";
 }
 
-export interface DelayEffectConfig extends BaseAudioEffectConfig {
+export interface DelayEffectConfig {
   feedback: number;
   mix: number;
   timeSeconds: number;
   type: "delay";
 }
 
-export interface ChorusEffectConfig extends BaseAudioEffectConfig {
+export interface ChorusEffectConfig {
   delaySeconds?: number;
   depthSeconds: number;
   feedback?: number;
@@ -91,7 +81,7 @@ export interface ChorusEffectConfig extends BaseAudioEffectConfig {
   type: "chorus";
 }
 
-export interface ReverbEffectConfig extends BaseAudioEffectConfig {
+export interface ReverbEffectConfig {
   decaySeconds: number;
   mix: number;
   preDelaySeconds?: number;
@@ -99,11 +89,15 @@ export interface ReverbEffectConfig extends BaseAudioEffectConfig {
   type: "reverb";
 }
 
-export type AudioEffectConfig =
+export type VoiceInsertEffectConfig =
   | ChorusEffectConfig
-  | DelayEffectConfig
-  | DistortionEffectConfig
-  | ReverbEffectConfig;
+  | DistortionEffectConfig;
+
+export type MasterAmbienceEffectConfig = DelayEffectConfig | ReverbEffectConfig;
+
+export type AudioEffectConfig =
+  | MasterAmbienceEffectConfig
+  | VoiceInsertEffectConfig;
 
 export interface UnisonConfig {
   detuneCents: readonly number[];
@@ -111,8 +105,8 @@ export interface UnisonConfig {
 
 export interface HarmonicVoiceConfig {
   envelope: EnvelopeConfig;
-  effects?: readonly AudioEffectConfig[];
   gain: number;
+  insertEffects?: readonly VoiceInsertEffectConfig[];
   lowPitchAssist?: LowPitchAssistConfig;
   partials: readonly HarmonicPartialConfig[];
   pitchGain?: PitchGainConfig;
@@ -121,11 +115,12 @@ export interface HarmonicVoiceConfig {
 
 export interface AudioPreset {
   category: AudioPresetCategory;
+  defaultDurationSeconds: number;
   description?: string;
   family: AudioPresetFamily;
   id: AudioPresetId;
   label: string;
-  supports: readonly AudioUse[];
+  recommendedUses: readonly AudioUse[];
   voice: HarmonicVoiceConfig;
 }
 
@@ -137,7 +132,7 @@ interface BaseAudioRequest {
 }
 
 export interface PlayNoteRequest extends BaseAudioRequest {
-  durationSeconds: number;
+  durationSeconds?: number;
   midiNote: number;
 }
 
@@ -153,7 +148,7 @@ export type MasterAmbiencePresetId =
 
 export interface MasterAmbiencePreset {
   description?: string;
-  effects: readonly AudioEffectConfig[];
+  effects: readonly MasterAmbienceEffectConfig[];
   id: MasterAmbiencePresetId;
   label: string;
 }

@@ -39,11 +39,13 @@ import {
   type InstrumentMenuChoice,
 } from "./InstrumentMenuDialog";
 import { createInstrumentLayoutConfig } from "@/utils/instrument/createInstrumentLayoutConfig";
+import { type InstrumentAudioPresetContext } from "@/utils/instrument/resolveInstrumentAudioPreset";
 import { resolveInstrumentNoteInteractionMode } from "@/utils/instrument/resolveInstrumentInteractionMode";
 import styles from "./InstrumentHeaderActions.module.css";
 
 interface InstrumentHeaderActionsProps {
   audioPresetId?: AudioPresetId;
+  audioPresetContext?: InstrumentAudioPresetContext;
   displayFormatId: DisplayFormatId;
   instrumentType: InstrumentType;
   layout?: InstrumentLayoutConfig;
@@ -123,6 +125,7 @@ function getNoteEmphasisIcon(noteEmphasis: InstrumentNoteEmphasis) {
 
 export const InstrumentHeaderActions = ({
   audioPresetId,
+  audioPresetContext,
   displayFormatId,
   instrumentType,
   layout,
@@ -305,6 +308,7 @@ export const InstrumentHeaderActions = ({
       <InstrumentMenuDialog
         key={menuDialogKey}
         audioPresetId={audioPresetId}
+        audioPresetContext={audioPresetContext}
         displayFormatId={displayFormatId}
         initialOpenChoice={menuChoice}
         instrumentSize={instrumentSize}

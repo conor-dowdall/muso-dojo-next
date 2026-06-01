@@ -4,18 +4,16 @@ import {
   scheduleAttackDecayEnvelope,
   scheduleOneShotEnvelope,
 } from "./envelope";
-import {
-  connectAudioEffectChain,
-  type ConnectedAudioEffectChain,
-} from "./effects";
 import { createHarmonicWaveCache } from "./harmonicWave";
-import {
-  DEFAULT_MASTER_AMBIENCE_PRESET_ID,
-  getMasterAmbiencePreset,
-} from "./masterAmbience";
+import { DEFAULT_MASTER_AMBIENCE_PRESET_ID } from "./masterAmbience";
+import { createAudioMixer, type AudioMixer } from "./mixer";
 import { normalizePositiveNumber } from "./numeric";
 import { midiToFrequency, isPlayableMidiNote } from "./pitch";
-import { audioPresets, resolveAudioPreset } from "./presets";
+import {
+  audioPresets,
+  getDefaultAudioPresetId,
+  resolveAudioPreset,
+} from "./presets";
 import { createHarmonicVoice, type ActiveVoice } from "./voice";
 import { resolveHarmonicVoiceConfig } from "./voiceConfig";
 import {
@@ -31,12 +29,6 @@ import {
 
 const DEFAULT_AUDIO_USE = "preview" satisfies AudioUse;
 const DEFAULT_DRONE_USE = "drone" satisfies AudioUse;
-const DEFAULT_MASTER_GAIN = 0.72;
-const MASTER_COMPRESSOR_ATTACK_SECONDS = 0.004;
-const MASTER_COMPRESSOR_KNEE_DB = 18;
-const MASTER_COMPRESSOR_RATIO = 4;
-const MASTER_COMPRESSOR_RELEASE_SECONDS = 0.16;
-const MASTER_COMPRESSOR_THRESHOLD_DB = -10;
 const MIN_NOTE_DURATION_SECONDS = 0.02;
 const CLEANUP_DELAY_SECONDS = 0.05;
 const SILENT_UNLOCK_PULSE_SECONDS = 0.01;
@@ -47,23 +39,11 @@ interface ActiveDrone {
   voices: ActiveVoice[];
 }
 
-interface MasterBus {
-  compressor: DynamicsCompressorNode;
-  context: AudioContext;
-  effectChain: ConnectedAudioEffectChain;
-  input: GainNode;
-}
-
-const emptyEffectChain = {
-  dispose: () => undefined,
-  tailSeconds: 0,
-} satisfies ConnectedAudioEffectChain;
-
 export function createWebAudioEngine(): AudioEngine {
   let audioContext: AudioContext | undefined;
   let masterAmbiencePresetId: MasterAmbiencePresetId =
     DEFAULT_MASTER_AMBIENCE_PRESET_ID;
-  let masterBus: MasterBus | undefined;
+  let audioMixer: AudioMixer | undefined;
   let primedContext: AudioContext | undefined;
   let readyContextPromise: Promise<AudioContext | undefined> | undefined;
   let nextVoiceId = 0;
@@ -73,8 +53,14 @@ export function createWebAudioEngine(): AudioEngine {
   const harmonicWaveCache = createHarmonicWaveCache();
 
   function clearContextReferences() {
+    try {
+      audioMixer?.dispose();
+    } catch {
+      // The browser may already have torn down the underlying audio graph.
+    }
+
     audioContext = undefined;
-    masterBus = undefined;
+    audioMixer = undefined;
     primedContext = undefined;
     readyContextPromise = undefined;
   }
@@ -145,62 +131,15 @@ export function createWebAudioEngine(): AudioEngine {
     return readyContextPromise;
   }
 
-  function configureMasterCompressor(
-    compressor: DynamicsCompressorNode,
-    context: AudioContext,
-  ) {
-    compressor.threshold.setValueAtTime(
-      MASTER_COMPRESSOR_THRESHOLD_DB,
-      context.currentTime,
-    );
-    compressor.knee.setValueAtTime(
-      MASTER_COMPRESSOR_KNEE_DB,
-      context.currentTime,
-    );
-    compressor.ratio.setValueAtTime(
-      MASTER_COMPRESSOR_RATIO,
-      context.currentTime,
-    );
-    compressor.attack.setValueAtTime(
-      MASTER_COMPRESSOR_ATTACK_SECONDS,
-      context.currentTime,
-    );
-    compressor.release.setValueAtTime(
-      MASTER_COMPRESSOR_RELEASE_SECONDS,
-      context.currentTime,
-    );
-  }
-
-  function reconnectMasterBusEffects(bus: MasterBus) {
-    bus.input.disconnect();
-    bus.effectChain.dispose();
-    bus.effectChain = connectAudioEffectChain({
-      context: bus.context,
-      destination: bus.compressor,
-      effects: getMasterAmbiencePreset(masterAmbiencePresetId).effects,
-      source: bus.input,
-    });
-  }
-
-  function getMasterInput(context: AudioContext) {
-    if (!masterBus || masterBus.context !== context) {
-      const compressor = context.createDynamicsCompressor();
-      const input = context.createGain();
-
-      configureMasterCompressor(compressor, context);
-      input.gain.setValueAtTime(DEFAULT_MASTER_GAIN, context.currentTime);
-      compressor.connect(context.destination);
-
-      masterBus = {
-        compressor,
+  function getAudioMixer(context: AudioContext) {
+    if (!audioMixer) {
+      audioMixer = createAudioMixer({
         context,
-        effectChain: emptyEffectChain,
-        input,
-      };
-      reconnectMasterBusEffects(masterBus);
+        masterAmbiencePresetId,
+      });
     }
 
-    return masterBus.input;
+    return audioMixer;
   }
 
   function warmPresetWaves(context: AudioContext) {
@@ -215,7 +154,7 @@ export function createWebAudioEngine(): AudioEngine {
   }
 
   function primeContext(context: AudioContext) {
-    const destination = getMasterInput(context);
+    const destination = getAudioMixer(context).getInput(DEFAULT_AUDIO_USE);
 
     if (primedContext === context) {
       return;
@@ -263,6 +202,7 @@ export function createWebAudioEngine(): AudioEngine {
     midiNote,
     preset,
     startTime,
+    use,
     velocity,
   }: {
     context: AudioContext;
@@ -270,12 +210,13 @@ export function createWebAudioEngine(): AudioEngine {
     midiNote: number;
     preset: AudioPreset;
     startTime: number;
+    use: AudioUse;
     velocity: number | undefined;
   }) {
     const handle = `voice-${nextVoiceId++}` as AudioVoiceHandle;
     const voice = createHarmonicVoice({
       context,
-      destination: getMasterInput(context),
+      destination: getAudioMixer(context).getInput(use),
       frequency,
       getPeriodicWave: harmonicWaveCache.getPeriodicWave,
       handle,
@@ -299,11 +240,14 @@ export function createWebAudioEngine(): AudioEngine {
     request: PlayNoteRequest,
   ) {
     const use = request.use ?? DEFAULT_AUDIO_USE;
-    const preset = resolveAudioPreset(use, request.presetId);
+    const preset = resolveAudioPreset(
+      request.presetId,
+      getDefaultAudioPresetId(use),
+    );
     const durationSeconds = Math.max(
       MIN_NOTE_DURATION_SECONDS,
       normalizePositiveNumber(
-        request.durationSeconds,
+        request.durationSeconds ?? preset.defaultDurationSeconds,
         MIN_NOTE_DURATION_SECONDS,
       ),
     );
@@ -314,6 +258,7 @@ export function createWebAudioEngine(): AudioEngine {
       midiNote: request.midiNote,
       preset,
       startTime,
+      use,
       velocity: request.velocity,
     });
 
@@ -354,7 +299,10 @@ export function createWebAudioEngine(): AudioEngine {
     }
 
     const use = request.use ?? DEFAULT_DRONE_USE;
-    const preset = resolveAudioPreset(use, request.presetId);
+    const preset = resolveAudioPreset(
+      request.presetId,
+      getDefaultAudioPresetId(use),
+    );
     const startTime = context.currentTime;
     const voices = midiNotes
       .map((midiNote) =>
@@ -364,6 +312,7 @@ export function createWebAudioEngine(): AudioEngine {
           midiNote,
           preset,
           startTime,
+          use,
           velocity: request.velocity,
         }),
       )
@@ -429,10 +378,7 @@ export function createWebAudioEngine(): AudioEngine {
     },
     setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => {
       masterAmbiencePresetId = presetId;
-
-      if (masterBus) {
-        reconnectMasterBusEffects(masterBus);
-      }
+      audioMixer?.setMasterAmbiencePresetId(presetId);
     },
     startDrone: (request: DroneRequest) => {
       if (!request.midiNotes.some(isPlayableMidiNote)) {

@@ -28,8 +28,6 @@ import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type DisplayFormatId } from "@/data/displayFormats";
 
-const DEFAULT_PREVIEW_NOTE_DURATION_SECONDS = 0.6;
-
 interface UseInstrumentNotesParams {
   activeNotes?: ActiveNotes;
   onActiveNotesChange?: ActiveNotesSetter;
@@ -40,7 +38,6 @@ interface UseInstrumentNotesParams {
   noteInteractionMode: InstrumentNoteInteractionMode;
   noteTargets?: readonly InstrumentNoteInteractionTarget[];
   previewAudioPresetId: AudioPresetId;
-  previewDurationSeconds?: number;
   noteEmphasis?: InstrumentNoteEmphasis;
   emphasisResetKey?: number;
   dependencies?: string[];
@@ -68,7 +65,6 @@ export function useInstrumentNotes({
   noteInteractionMode,
   noteTargets = [],
   previewAudioPresetId,
-  previewDurationSeconds = DEFAULT_PREVIEW_NOTE_DURATION_SECONDS,
   noteEmphasis = "large",
   emphasisResetKey = 0,
   dependencies = [],
@@ -147,7 +143,6 @@ export function useInstrumentNotes({
         void musoAudioEngine
           .playNote({
             midiNote: target.midi,
-            durationSeconds: previewDurationSeconds,
             use: "preview",
             presetId: previewAudioPresetId,
           })

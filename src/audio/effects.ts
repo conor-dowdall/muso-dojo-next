@@ -6,7 +6,6 @@ import {
 } from "./numeric";
 import {
   type AudioEffectConfig,
-  type AudioEffectPlacement,
   type ChorusEffectConfig,
   type DelayEffectConfig,
   type ReverbEffectConfig,
@@ -387,12 +386,6 @@ function createReverbEffect({
     output,
     tailSeconds: getReverbTailSeconds(config),
   };
-}
-
-export function getAudioEffectPlacement(
-  config: AudioEffectConfig,
-): AudioEffectPlacement {
-  return config.placement ?? "pre-envelope";
 }
 
 export function getAudioEffectConfigTailSeconds(config: AudioEffectConfig) {

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   getAudioEffectChainTailSeconds,
   getAudioEffectConfigTailSeconds,
-  getAudioEffectPlacement,
 } from "@/audio/effects";
 import {
   DEFAULT_MASTER_AMBIENCE_PRESET_ID,
@@ -13,27 +12,24 @@ import {
 } from "@/audio/masterAmbience";
 
 describe("audio effects", () => {
-  it("keeps tone-shaping effects before the amp envelope by default", () => {
+  it("models tone-shaping effects without release tails", () => {
     const effect = {
       type: "distortion",
       amount: 0.2,
       mix: 0.5,
     } as const;
 
-    expect(getAudioEffectPlacement(effect)).toBe("pre-envelope");
     expect(getAudioEffectConfigTailSeconds(effect)).toBe(0);
   });
 
-  it("allows time effects to opt into post-envelope tails", () => {
+  it("estimates reverb tails from pre-delay and decay", () => {
     const effect = {
       type: "reverb",
       decaySeconds: 1.4,
       mix: 0.2,
-      placement: "post-envelope",
       preDelaySeconds: 0.03,
     } as const;
 
-    expect(getAudioEffectPlacement(effect)).toBe("post-envelope");
     expect(getAudioEffectConfigTailSeconds(effect)).toBeCloseTo(1.43);
   });
 

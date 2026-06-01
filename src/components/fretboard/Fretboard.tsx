@@ -80,6 +80,7 @@ function FretboardInner({
           noteEmphasis={presentation.noteEmphasis}
           onNoteEmphasisChange={presentation.setNoteEmphasis}
           audioPresetId={audioPresetId}
+          audioPresetContext={{ fretboardInstrument: geometry.instrument }}
           onAudioPresetIdChange={onAudioPresetIdChange}
           onInstrumentDisplaySizeChange={onInstrumentDisplaySizeChange}
           activeNotesLocked={activeNotesLocked}

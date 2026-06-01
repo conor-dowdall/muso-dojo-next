@@ -75,18 +75,19 @@ export function normalizeInstrumentInstanceConfig(
 
   const type = value.type;
   const baseConfig = normalizeInstrumentBaseConfig(value);
-  const audioPresetId = normalizeInstrumentAudioPresetId(
-    type,
-    value.audioPresetId,
-  );
-  const baseInstrumentConfig = {
-    ...baseConfig,
-    ...(audioPresetId ? { audioPresetId } : {}),
-  };
 
   if (type === "fretboard") {
     const theme = normalizeFretboardThemeName(value.theme);
     const config = normalizeFretboardConfig(value.config, theme);
+    const audioPresetId = normalizeInstrumentAudioPresetId(
+      type,
+      value.audioPresetId,
+      { fretboardInstrument: config?.instrument },
+    );
+    const baseInstrumentConfig = {
+      ...baseConfig,
+      ...(audioPresetId ? { audioPresetId } : {}),
+    };
 
     return {
       ...baseInstrumentConfig,
@@ -99,6 +100,14 @@ export function normalizeInstrumentInstanceConfig(
   const range = normalizeKeyboardRange(value.range);
   const theme = normalizeKeyboardThemeName(value.theme);
   const config = normalizeKeyboardConfig(value.config, range, theme);
+  const audioPresetId = normalizeInstrumentAudioPresetId(
+    type,
+    value.audioPresetId,
+  );
+  const baseInstrumentConfig = {
+    ...baseConfig,
+    ...(audioPresetId ? { audioPresetId } : {}),
+  };
 
   return {
     ...baseInstrumentConfig,

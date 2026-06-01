@@ -15,9 +15,25 @@ import {
   type AppStoreSet,
   type InstrumentActions,
 } from "./types";
+import { type InstrumentInstanceConfig } from "@/types/session";
 import { areOptionalActiveNotesEqual } from "@/utils/instrument/areActiveNotesEqual";
 import { createInstrumentLayoutConfig } from "@/utils/instrument/createInstrumentLayoutConfig";
-import { resolveInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
+import {
+  resolveInstrumentAudioPresetId,
+  type InstrumentAudioPresetContext,
+} from "@/utils/instrument/resolveInstrumentAudioPreset";
+
+function getInstrumentAudioPresetContext(
+  instrument: InstrumentInstanceConfig,
+): InstrumentAudioPresetContext | undefined {
+  if (instrument.type !== "fretboard") {
+    return undefined;
+  }
+
+  return {
+    fretboardInstrument: instrument.config?.instrument,
+  };
+}
 
 export function createInstrumentActions(
   set: AppStoreSet,
@@ -118,13 +134,16 @@ export function createInstrumentActions(
         return;
       }
 
+      const audioPresetContext = getInstrumentAudioPresetContext(instrument);
       const currentAudioPresetId = resolveInstrumentAudioPresetId(
         instrument.type,
         instrument.audioPresetId,
+        audioPresetContext,
       );
       const nextAudioPresetId = resolveInstrumentAudioPresetId(
         instrument.type,
         resolveSettingValue(audioPresetId, currentAudioPresetId),
+        audioPresetContext,
       );
 
       if (nextAudioPresetId === currentAudioPresetId) {

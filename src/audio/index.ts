@@ -12,9 +12,10 @@ export {
   audioPresetCategoryOrder,
   audioPresets,
   defaultAudioPresetIds,
+  getAudioPresetsRecommendedForUse,
   getDefaultAudioPresetId,
   isAudioPresetId,
-  isAudioPresetSupportedForUse,
+  isAudioPresetRecommendedForUse,
   resolveAudioPreset,
 } from "./presets";
 export {
@@ -25,9 +26,8 @@ export {
   resolveMasterAmbiencePresetId,
 } from "./masterAmbience";
 export type {
-  AudioEffectConfig,
-  AudioEffectPlacement,
   AudioEngine,
+  AudioEffectConfig,
   AudioPreset,
   AudioPresetCategory,
   AudioPresetFamily,
@@ -44,10 +44,12 @@ export type {
   HarmonicPartialConfig,
   HarmonicVoiceConfig,
   LowPitchAssistConfig,
+  MasterAmbienceEffectConfig,
   MasterAmbiencePreset,
   MasterAmbiencePresetId,
   PlayNoteRequest,
   PitchGainConfig,
   ReverbEffectConfig,
   UnisonConfig,
+  VoiceInsertEffectConfig,
 } from "./types";

@@ -30,6 +30,7 @@ export function FretboardNotesLayer({
   const previewAudioPresetId = resolveInstrumentAudioPresetId(
     "fretboard",
     externalAudioPresetId,
+    { fretboardInstrument: geometry.instrument },
   );
 
   const {
@@ -49,7 +50,6 @@ export function FretboardNotesLayer({
     noteInteractionMode: presentation.noteInteractionMode,
     noteTargets,
     previewAudioPresetId,
-    previewDurationSeconds: 0.72,
     noteEmphasis: presentation.noteEmphasis,
     emphasisResetKey: presentation.emphasisResetKey,
     setIsModified: presentation.setIsModified,

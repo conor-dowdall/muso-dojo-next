@@ -3,6 +3,7 @@ import {
   type AudioPresetCategory,
   type AudioPresetId,
   type AudioUse,
+  type ChorusEffectConfig,
   type DistortionEffectConfig,
   type LowPitchAssistConfig,
   type PitchGainConfig,
@@ -11,15 +12,15 @@ import {
 const previewPitchGain = {
   referenceMidi: 60,
   lowMidi: 36,
-  lowGain: 1.5,
+  lowGain: 1.42,
   highMidi: 84,
-  highGain: 0.46,
+  highGain: 0.48,
 } as const satisfies PitchGainConfig;
 
 const continuousPitchGain = {
   referenceMidi: 60,
   lowMidi: 36,
-  lowGain: 1.28,
+  lowGain: 1.24,
   highMidi: 84,
   highGain: 0.58,
 } as const satisfies PitchGainConfig;
@@ -27,9 +28,17 @@ const continuousPitchGain = {
 const brightPitchGain = {
   referenceMidi: 60,
   lowMidi: 36,
-  lowGain: 1.18,
+  lowGain: 1.14,
   highMidi: 84,
   highGain: 0.34,
+} as const satisfies PitchGainConfig;
+
+const bassPitchGain = {
+  referenceMidi: 48,
+  lowMidi: 28,
+  lowGain: 1.32,
+  highMidi: 76,
+  highGain: 0.4,
 } as const satisfies PitchGainConfig;
 
 const lowSpeakerAssist = {
@@ -37,10 +46,10 @@ const lowSpeakerAssist = {
   fadeOutMidi: 62,
   partials: [
     { multiple: 2, gain: 0.34 },
-    { multiple: 3, gain: 0.28 },
-    { multiple: 4, gain: 0.17 },
-    { multiple: 5, gain: 0.08 },
-    { multiple: 6, gain: 0.035 },
+    { multiple: 3, gain: 0.26 },
+    { multiple: 4, gain: 0.16 },
+    { multiple: 5, gain: 0.075 },
+    { multiple: 6, gain: 0.03 },
   ],
 } as const satisfies LowPitchAssistConfig;
 
@@ -48,9 +57,20 @@ const subtleLowSpeakerAssist = {
   fullBelowMidi: 40,
   fadeOutMidi: 60,
   partials: [
-    { multiple: 2, gain: 0.22 },
-    { multiple: 3, gain: 0.16 },
-    { multiple: 4, gain: 0.08 },
+    { multiple: 2, gain: 0.2 },
+    { multiple: 3, gain: 0.14 },
+    { multiple: 4, gain: 0.07 },
+  ],
+} as const satisfies LowPitchAssistConfig;
+
+const bassLowSpeakerAssist = {
+  fullBelowMidi: 43,
+  fadeOutMidi: 64,
+  partials: [
+    { multiple: 2, gain: 0.48 },
+    { multiple: 3, gain: 0.26 },
+    { multiple: 4, gain: 0.12 },
+    { multiple: 5, gain: 0.055 },
   ],
 } as const satisfies LowPitchAssistConfig;
 
@@ -68,44 +88,62 @@ const harmonicLowSpeakerAssist = {
 
 const lightEdge = {
   type: "distortion",
-  amount: 0.1,
-  mix: 0.18,
+  amount: 0.08,
+  mix: 0.16,
   oversample: "2x",
 } as const satisfies DistortionEffectConfig;
 
 const tapeEdge = {
   type: "distortion",
-  amount: 0.12,
-  mix: 0.28,
+  amount: 0.13,
+  mix: 0.3,
   oversample: "2x",
 } as const satisfies DistortionEffectConfig;
 
 const warmDrive = {
   type: "distortion",
   amount: 0.24,
-  mix: 0.46,
+  mix: 0.42,
+  oversample: "4x",
+} as const satisfies DistortionEffectConfig;
+
+const electricGuitarDrive = {
+  type: "distortion",
+  amount: 0.36,
+  mix: 0.64,
   oversample: "4x",
 } as const satisfies DistortionEffectConfig;
 
 const fuzzDrive = {
   type: "distortion",
-  amount: 0.46,
+  amount: 0.48,
   mix: 0.64,
   oversample: "4x",
 } as const satisfies DistortionEffectConfig;
 
-const brokenDrive = {
-  type: "distortion",
-  amount: 0.34,
-  mix: 0.52,
-  oversample: "2x",
-} as const satisfies DistortionEffectConfig;
+const softChorus = {
+  type: "chorus",
+  delaySeconds: 0.017,
+  depthSeconds: 0.004,
+  feedback: 0.08,
+  mix: 0.18,
+  rateHz: 0.32,
+} as const satisfies ChorusEffectConfig;
+
+const stringChorus = {
+  type: "chorus",
+  delaySeconds: 0.014,
+  depthSeconds: 0.003,
+  feedback: 0.04,
+  mix: 0.14,
+  rateHz: 0.22,
+} as const satisfies ChorusEffectConfig;
 
 export const defaultAudioPresetIds = {
-  preview: "pluck",
+  preview: "piano",
   tuning: "reference-tone",
   drone: "soft-organ",
-  exercise: "reference-tone",
+  exercise: "piano",
 } as const satisfies Record<AudioUse, AudioPresetId>;
 
 export const audioPresetCategoryOrder = [
@@ -117,305 +155,226 @@ export const audioPresetCategoryOrder = [
 
 export const audioPresetCategoryLabels = {
   core: "Core",
-  instrument: "Instrument-ish",
+  instrument: "Instruments",
   character: "Character",
-  weird: "Weird",
+  weird: "Experimental",
 } as const satisfies Record<AudioPresetCategory, string>;
 
 export const audioPresets = {
   "reference-tone": {
     category: "core",
+    defaultDurationSeconds: 1.1,
     description: "Plain, steady, and useful for checking pitch.",
     family: "generated",
     id: "reference-tone",
     label: "Reference Tone",
-    supports: ["preview", "tuning", "drone", "exercise"],
+    recommendedUses: ["preview", "tuning", "drone", "exercise"],
     voice: {
-      gain: 0.56,
+      gain: 0.54,
       pitchGain: continuousPitchGain,
       lowPitchAssist: subtleLowSpeakerAssist,
       envelope: {
         attackSeconds: 0.025,
-        decaySeconds: 0.09,
+        decaySeconds: 0.08,
         sustainGain: 0.82,
         releaseSeconds: 0.2,
       },
       partials: [
         { multiple: 1, gain: 1 },
-        { multiple: 2, gain: 0.22 },
-        { multiple: 3, gain: 0.08 },
-        { multiple: 4, gain: 0.03 },
-      ],
-    },
-  },
-  pluck: {
-    category: "core",
-    description: "Clean, fast, and balanced for fretboards.",
-    family: "generated",
-    id: "pluck",
-    label: "Pluck",
-    supports: ["preview", "exercise"],
-    voice: {
-      gain: 0.56,
-      pitchGain: previewPitchGain,
-      lowPitchAssist: lowSpeakerAssist,
-      envelope: {
-        attackSeconds: 0.004,
-        decaySeconds: 0.58,
-        sustainGain: 0.018,
-        releaseSeconds: 0.055,
-      },
-      partials: [
-        { multiple: 1, gain: 0.9 },
-        { multiple: 2, gain: 0.32 },
-        { multiple: 3, gain: 0.16 },
-        { multiple: 4, gain: 0.08 },
-        { multiple: 5, gain: 0.04 },
-        { multiple: 7, gain: 0.018 },
-      ],
-    },
-  },
-  "round-pluck": {
-    category: "instrument",
-    description: "A softer pluck with less bite and a little more body.",
-    family: "generated",
-    id: "round-pluck",
-    label: "Round Pluck",
-    supports: ["preview", "exercise"],
-    voice: {
-      gain: 0.6,
-      pitchGain: previewPitchGain,
-      lowPitchAssist: lowSpeakerAssist,
-      envelope: {
-        attackSeconds: 0.006,
-        decaySeconds: 0.68,
-        sustainGain: 0.035,
-        releaseSeconds: 0.08,
-      },
-      partials: [
-        { multiple: 1, gain: 0.94 },
-        { multiple: 2, gain: 0.24 },
-        { multiple: 3, gain: 0.1 },
-        { multiple: 4, gain: 0.04 },
-        { multiple: 5, gain: 0.025 },
-      ],
-    },
-  },
-  "nylon-ish": {
-    category: "instrument",
-    description: "Warm string color with a gentle attack.",
-    family: "generated",
-    id: "nylon-ish",
-    label: "Nylon-ish",
-    supports: ["preview", "exercise"],
-    voice: {
-      gain: 0.58,
-      pitchGain: previewPitchGain,
-      lowPitchAssist: lowSpeakerAssist,
-      envelope: {
-        attackSeconds: 0.007,
-        decaySeconds: 0.74,
-        sustainGain: 0.042,
-        releaseSeconds: 0.11,
-      },
-      partials: [
-        { multiple: 1, gain: 0.94 },
         { multiple: 2, gain: 0.2 },
-        { multiple: 3, gain: 0.12 },
-        { multiple: 4, gain: 0.055 },
-        { multiple: 5, gain: 0.024 },
-        { multiple: 7, gain: 0.012 },
+        { multiple: 3, gain: 0.07 },
+        { multiple: 4, gain: 0.025 },
       ],
     },
   },
   piano: {
     category: "core",
-    description: "Percussive keys with a quick, musical tail.",
+    defaultDurationSeconds: 0.9,
+    description: "Clear piano-like attack with a musical synthetic body.",
     family: "generated",
     id: "piano",
     label: "Piano",
-    supports: ["preview", "exercise"],
+    recommendedUses: ["preview", "tuning", "exercise"],
     voice: {
-      gain: 0.5,
+      gain: 0.48,
       pitchGain: previewPitchGain,
       lowPitchAssist: lowSpeakerAssist,
-      effects: [
-        {
-          type: "distortion",
-          amount: 0.045,
-          mix: 0.12,
-          oversample: "2x",
-        },
-      ],
+      insertEffects: [lightEdge],
       envelope: {
         attackSeconds: 0.002,
-        decaySeconds: 0.78,
-        sustainGain: 0.065,
-        releaseSeconds: 0.14,
+        decaySeconds: 0.92,
+        sustainGain: 0.055,
+        releaseSeconds: 0.16,
       },
       partials: [
         { multiple: 1, gain: 1 },
-        { multiple: 2, gain: 0.62 },
-        { multiple: 3, gain: 0.38 },
-        { multiple: 4, gain: 0.24 },
-        { multiple: 5, gain: 0.16 },
-        { multiple: 6, gain: 0.1 },
-        { multiple: 8, gain: 0.055 },
-        { multiple: 10, gain: 0.028 },
+        { multiple: 2, gain: 0.58 },
+        { multiple: 3, gain: 0.36 },
+        { multiple: 4, gain: 0.22 },
+        { multiple: 5, gain: 0.14 },
+        { multiple: 6, gain: 0.085 },
+        { multiple: 8, gain: 0.045 },
+        { multiple: 10, gain: 0.02 },
       ],
     },
   },
-  "muted-keys": {
-    category: "instrument",
-    description: "Short, soft keys that stay tidy on dense passages.",
+  "steel-string": {
+    category: "core",
+    defaultDurationSeconds: 0.72,
+    description: "Bright picked string for guitar and general frets.",
     family: "generated",
-    id: "muted-keys",
-    label: "Muted Keys",
-    supports: ["preview", "exercise"],
+    id: "steel-string",
+    label: "Steel String",
+    recommendedUses: ["preview", "exercise"],
     voice: {
-      gain: 0.56,
+      gain: 0.54,
       pitchGain: previewPitchGain,
       lowPitchAssist: lowSpeakerAssist,
       envelope: {
         attackSeconds: 0.003,
-        decaySeconds: 0.42,
-        sustainGain: 0.045,
-        releaseSeconds: 0.09,
+        decaySeconds: 0.68,
+        sustainGain: 0.025,
+        releaseSeconds: 0.08,
       },
       partials: [
-        { multiple: 1, gain: 0.86 },
-        { multiple: 2, gain: 0.45 },
-        { multiple: 3, gain: 0.24 },
-        { multiple: 4, gain: 0.12 },
-        { multiple: 5, gain: 0.06 },
-        { multiple: 7, gain: 0.025 },
+        { multiple: 1, gain: 0.9 },
+        { multiple: 2, gain: 0.34 },
+        { multiple: 3, gain: 0.2 },
+        { multiple: 4, gain: 0.11 },
+        { multiple: 5, gain: 0.055 },
+        { multiple: 7, gain: 0.03 },
+        { multiple: 9, gain: 0.012 },
       ],
     },
   },
-  "tape-keys": {
-    category: "character",
-    description: "Slightly worn keys with mild drive and detune.",
+  "distortion-guitar": {
+    category: "instrument",
+    defaultDurationSeconds: 0.68,
+    description: "Direct electric guitar bite with a driven amp-like edge.",
     family: "generated",
-    id: "tape-keys",
-    label: "Tape Keys",
-    supports: ["preview", "exercise"],
+    id: "distortion-guitar",
+    label: "Distortion Guitar",
+    recommendedUses: ["preview", "exercise"],
     voice: {
-      gain: 0.42,
+      gain: 0.36,
       pitchGain: previewPitchGain,
       lowPitchAssist: lowSpeakerAssist,
-      effects: [tapeEdge],
-      unison: {
-        detuneCents: [-3, 0, 3],
-      },
+      insertEffects: [electricGuitarDrive],
       envelope: {
-        attackSeconds: 0.006,
-        decaySeconds: 0.82,
-        sustainGain: 0.08,
-        releaseSeconds: 0.16,
+        attackSeconds: 0.003,
+        decaySeconds: 0.72,
+        sustainGain: 0.075,
+        releaseSeconds: 0.1,
       },
       partials: [
-        { multiple: 1, gain: 0.82 },
+        { multiple: 1, gain: 0.76 },
         { multiple: 2, gain: 0.48 },
-        { multiple: 3, gain: 0.25 },
-        { multiple: 4, gain: 0.1 },
-        { multiple: 6, gain: 0.04 },
+        { multiple: 3, gain: 0.34 },
+        { multiple: 4, gain: 0.22 },
+        { multiple: 5, gain: 0.15 },
+        { multiple: 7, gain: 0.1 },
+        { multiple: 9, gain: 0.05 },
+        { multiple: 12, gain: 0.025 },
       ],
     },
   },
   "soft-organ": {
     category: "core",
+    defaultDurationSeconds: 1.15,
     description: "Smooth sustained tone for drones and held notes.",
     family: "generated",
     id: "soft-organ",
     label: "Soft Organ",
-    supports: ["preview", "tuning", "drone", "exercise"],
+    recommendedUses: ["preview", "tuning", "drone", "exercise"],
     voice: {
-      gain: 0.44,
+      gain: 0.42,
       pitchGain: continuousPitchGain,
       lowPitchAssist: subtleLowSpeakerAssist,
       envelope: {
         attackSeconds: 0.08,
         decaySeconds: 0.12,
         sustainGain: 0.78,
-        releaseSeconds: 0.44,
+        releaseSeconds: 0.42,
       },
       partials: [
         { multiple: 1, gain: 1 },
-        { multiple: 2, gain: 0.34 },
-        { multiple: 3, gain: 0.18 },
-        { multiple: 4, gain: 0.08 },
-        { multiple: 5, gain: 0.035 },
+        { multiple: 2, gain: 0.32 },
+        { multiple: 3, gain: 0.16 },
+        { multiple: 4, gain: 0.07 },
+        { multiple: 5, gain: 0.03 },
       ],
     },
   },
-  "reed-organ": {
+  "electric-keys": {
     category: "instrument",
-    description: "Nasal, compact, and useful for melody lines.",
+    defaultDurationSeconds: 1,
+    description: "Rounded electric piano color with a soft edge.",
     family: "generated",
-    id: "reed-organ",
-    label: "Reed Organ",
-    supports: ["preview", "drone", "exercise"],
+    id: "electric-keys",
+    label: "Electric Keys",
+    recommendedUses: ["preview", "exercise"],
     voice: {
-      gain: 0.38,
-      pitchGain: continuousPitchGain,
+      gain: 0.44,
+      pitchGain: previewPitchGain,
       lowPitchAssist: subtleLowSpeakerAssist,
-      effects: [lightEdge],
+      insertEffects: [tapeEdge],
       envelope: {
-        attackSeconds: 0.045,
-        decaySeconds: 0.1,
-        sustainGain: 0.82,
-        releaseSeconds: 0.3,
+        attackSeconds: 0.004,
+        decaySeconds: 1.05,
+        sustainGain: 0.12,
+        releaseSeconds: 0.22,
       },
       partials: [
-        { multiple: 1, gain: 0.75 },
-        { multiple: 2, gain: 0.15 },
-        { multiple: 3, gain: 0.48 },
-        { multiple: 4, gain: 0.08 },
-        { multiple: 5, gain: 0.28 },
-        { multiple: 7, gain: 0.12 },
+        { multiple: 1, gain: 0.86 },
+        { multiple: 2, gain: 0.46 },
+        { multiple: 3, gain: 0.2 },
+        { multiple: 4, gain: 0.16 },
+        { multiple: 6, gain: 0.07 },
+        { multiple: 8, gain: 0.028 },
       ],
     },
   },
-  "soft-pad": {
-    category: "character",
-    description: "Slow, wide, and gentle for sustained harmony.",
+  "nylon-string": {
+    category: "instrument",
+    defaultDurationSeconds: 0.82,
+    description: "Warm plucked string for classical guitar and ukulele.",
     family: "generated",
-    id: "soft-pad",
-    label: "Soft Pad",
-    supports: ["preview", "drone", "exercise"],
+    id: "nylon-string",
+    label: "Nylon String",
+    recommendedUses: ["preview", "exercise"],
     voice: {
-      gain: 0.28,
-      pitchGain: continuousPitchGain,
-      lowPitchAssist: subtleLowSpeakerAssist,
-      unison: {
-        detuneCents: [-5, 0, 5],
-      },
+      gain: 0.56,
+      pitchGain: previewPitchGain,
+      lowPitchAssist: lowSpeakerAssist,
       envelope: {
-        attackSeconds: 0.18,
-        decaySeconds: 0.24,
-        sustainGain: 0.72,
-        releaseSeconds: 0.52,
+        attackSeconds: 0.007,
+        decaySeconds: 0.86,
+        sustainGain: 0.04,
+        releaseSeconds: 0.12,
       },
       partials: [
-        { multiple: 1, gain: 0.85 },
-        { multiple: 2, gain: 0.3 },
-        { multiple: 3, gain: 0.14 },
-        { multiple: 4, gain: 0.06 },
+        { multiple: 1, gain: 0.94 },
+        { multiple: 2, gain: 0.24 },
+        { multiple: 3, gain: 0.12 },
+        { multiple: 4, gain: 0.052 },
+        { multiple: 5, gain: 0.024 },
+        { multiple: 7, gain: 0.01 },
       ],
     },
   },
-  "bright-tone": {
-    category: "core",
-    description: "Clear, bright, and easy to hear on small speakers.",
+  "picked-bass": {
+    category: "instrument",
+    defaultDurationSeconds: 0.72,
+    description: "Full picked bass with extra low-end weight and definition.",
     family: "generated",
-    id: "bright-tone",
-    label: "Bright Tone",
-    supports: ["preview", "tuning", "exercise"],
+    id: "picked-bass",
+    label: "Picked Bass",
+    recommendedUses: ["preview", "exercise"],
     voice: {
-      gain: 0.38,
-      pitchGain: brightPitchGain,
-      lowPitchAssist: subtleLowSpeakerAssist,
-      effects: [
+      gain: 0.68,
+      pitchGain: bassPitchGain,
+      lowPitchAssist: bassLowSpeakerAssist,
+      insertEffects: [
         {
           type: "distortion",
           amount: 0.08,
@@ -424,58 +383,189 @@ export const audioPresets = {
         },
       ],
       envelope: {
-        attackSeconds: 0.01,
-        decaySeconds: 0.07,
-        sustainGain: 0.7,
-        releaseSeconds: 0.16,
+        attackSeconds: 0.004,
+        decaySeconds: 0.66,
+        sustainGain: 0.13,
+        releaseSeconds: 0.12,
+      },
+      partials: [
+        { multiple: 1, gain: 1 },
+        { multiple: 2, gain: 0.54 },
+        { multiple: 3, gain: 0.3 },
+        { multiple: 4, gain: 0.16 },
+        { multiple: 5, gain: 0.075 },
+        { multiple: 6, gain: 0.036 },
+      ],
+    },
+  },
+  mandolin: {
+    category: "instrument",
+    defaultDurationSeconds: 0.5,
+    description: "Bright paired-course pluck with a quick treble shimmer.",
+    family: "generated",
+    id: "mandolin",
+    label: "Mandolin",
+    recommendedUses: ["preview", "exercise"],
+    voice: {
+      gain: 0.42,
+      pitchGain: brightPitchGain,
+      lowPitchAssist: subtleLowSpeakerAssist,
+      unison: {
+        detuneCents: [-4.5, 4.5],
+      },
+      envelope: {
+        attackSeconds: 0.0015,
+        decaySeconds: 0.36,
+        sustainGain: 0.012,
+        releaseSeconds: 0.055,
+      },
+      partials: [
+        { multiple: 1, gain: 0.62 },
+        { multiple: 2, gain: 0.52 },
+        { multiple: 3, gain: 0.37 },
+        { multiple: 4, gain: 0.24 },
+        { multiple: 5, gain: 0.15 },
+        { multiple: 7, gain: 0.09 },
+        { multiple: 9, gain: 0.045 },
+        { multiple: 12, gain: 0.018 },
+      ],
+    },
+  },
+  "bowed-strings": {
+    category: "instrument",
+    defaultDurationSeconds: 0.92,
+    description: "Short bowed string tone for violin, viola, cello, and bass.",
+    family: "generated",
+    id: "bowed-strings",
+    label: "Bowed Strings",
+    recommendedUses: ["preview", "drone", "exercise"],
+    voice: {
+      gain: 0.32,
+      pitchGain: continuousPitchGain,
+      lowPitchAssist: harmonicLowSpeakerAssist,
+      insertEffects: [stringChorus],
+      unison: {
+        detuneCents: [-3, 0, 3],
+      },
+      envelope: {
+        attackSeconds: 0.07,
+        decaySeconds: 0.18,
+        sustainGain: 0.58,
+        releaseSeconds: 0.28,
+      },
+      partials: [
+        { multiple: 1, gain: 0.82 },
+        { multiple: 2, gain: 0.38 },
+        { multiple: 3, gain: 0.28 },
+        { multiple: 4, gain: 0.16 },
+        { multiple: 5, gain: 0.09 },
+        { multiple: 6, gain: 0.045 },
+        { multiple: 8, gain: 0.02 },
+      ],
+    },
+  },
+  "bowed-sustain": {
+    category: "instrument",
+    defaultDurationSeconds: 1.45,
+    description: "Longer bowed swell for sustained string color.",
+    family: "generated",
+    id: "bowed-sustain",
+    label: "Long Bow",
+    recommendedUses: ["preview", "drone", "exercise"],
+    voice: {
+      gain: 0.31,
+      pitchGain: continuousPitchGain,
+      lowPitchAssist: harmonicLowSpeakerAssist,
+      insertEffects: [stringChorus],
+      unison: {
+        detuneCents: [-3, 0, 3],
+      },
+      envelope: {
+        attackSeconds: 0.16,
+        decaySeconds: 0.22,
+        sustainGain: 0.72,
+        releaseSeconds: 0.42,
+      },
+      partials: [
+        { multiple: 1, gain: 0.82 },
+        { multiple: 2, gain: 0.38 },
+        { multiple: 3, gain: 0.28 },
+        { multiple: 4, gain: 0.16 },
+        { multiple: 5, gain: 0.09 },
+        { multiple: 6, gain: 0.045 },
+        { multiple: 8, gain: 0.02 },
+      ],
+    },
+  },
+  "warm-pad": {
+    category: "character",
+    defaultDurationSeconds: 1.45,
+    description: "Wide, gentle sustain for harmony and drones.",
+    family: "generated",
+    id: "warm-pad",
+    label: "Warm Pad",
+    recommendedUses: ["preview", "drone", "exercise"],
+    voice: {
+      gain: 0.27,
+      pitchGain: continuousPitchGain,
+      lowPitchAssist: subtleLowSpeakerAssist,
+      insertEffects: [softChorus],
+      unison: {
+        detuneCents: [-6, 0, 6],
+      },
+      envelope: {
+        attackSeconds: 0.22,
+        decaySeconds: 0.28,
+        sustainGain: 0.74,
+        releaseSeconds: 0.58,
       },
       partials: [
         { multiple: 1, gain: 0.85 },
-        { multiple: 2, gain: 0.55 },
-        { multiple: 3, gain: 0.32 },
-        { multiple: 4, gain: 0.18 },
-        { multiple: 5, gain: 0.09 },
-        { multiple: 6, gain: 0.045 },
+        { multiple: 2, gain: 0.3 },
+        { multiple: 3, gain: 0.13 },
+        { multiple: 4, gain: 0.05 },
       ],
     },
   },
   "glass-bell": {
-    category: "instrument",
-    description: "Bell-like highs with a clean, ringing decay.",
+    category: "character",
+    defaultDurationSeconds: 1.18,
+    description: "Clean ringing highs for ear-training accents.",
     family: "generated",
     id: "glass-bell",
     label: "Glass Bell",
-    supports: ["preview", "exercise"],
+    recommendedUses: ["preview", "exercise"],
     voice: {
-      gain: 0.34,
+      gain: 0.32,
       pitchGain: brightPitchGain,
       lowPitchAssist: subtleLowSpeakerAssist,
       envelope: {
         attackSeconds: 0.003,
-        decaySeconds: 0.95,
-        sustainGain: 0.01,
-        releaseSeconds: 0.18,
+        decaySeconds: 1.08,
+        sustainGain: 0.008,
+        releaseSeconds: 0.2,
       },
       partials: [
-        { multiple: 1, gain: 0.62 },
-        { multiple: 2, gain: 0.18 },
-        { multiple: 3, gain: 0.06 },
-        { multiple: 5, gain: 0.28 },
-        { multiple: 8, gain: 0.22 },
+        { multiple: 1, gain: 0.58 },
+        { multiple: 2, gain: 0.16 },
+        { multiple: 3, gain: 0.055 },
+        { multiple: 5, gain: 0.3 },
+        { multiple: 8, gain: 0.24 },
         { multiple: 12, gain: 0.12 },
         { multiple: 16, gain: 0.05 },
       ],
     },
   },
   "hollow-synth": {
-    category: "character",
+    category: "weird",
+    defaultDurationSeconds: 0.72,
     description: "Odd harmonics with a woody, hollow center.",
     family: "generated",
     id: "hollow-synth",
     label: "Hollow Synth",
-    supports: ["preview", "exercise"],
+    recommendedUses: ["preview", "exercise"],
     voice: {
-      gain: 0.42,
+      gain: 0.4,
       pitchGain: previewPitchGain,
       lowPitchAssist: harmonicLowSpeakerAssist,
       unison: {
@@ -483,7 +573,7 @@ export const audioPresets = {
       },
       envelope: {
         attackSeconds: 0.01,
-        decaySeconds: 0.52,
+        decaySeconds: 0.54,
         sustainGain: 0.12,
         releaseSeconds: 0.12,
       },
@@ -496,50 +586,22 @@ export const audioPresets = {
       ],
     },
   },
-  "warm-drive": {
-    category: "character",
-    description: "Rounded overdrive that thickens low notes.",
-    family: "generated",
-    id: "warm-drive",
-    label: "Warm Drive",
-    supports: ["preview", "exercise"],
-    voice: {
-      gain: 0.46,
-      pitchGain: previewPitchGain,
-      lowPitchAssist: lowSpeakerAssist,
-      effects: [warmDrive],
-      envelope: {
-        attackSeconds: 0.006,
-        decaySeconds: 0.72,
-        sustainGain: 0.055,
-        releaseSeconds: 0.1,
-      },
-      partials: [
-        { multiple: 1, gain: 0.75 },
-        { multiple: 2, gain: 0.38 },
-        { multiple: 3, gain: 0.22 },
-        { multiple: 4, gain: 0.12 },
-        { multiple: 5, gain: 0.07 },
-        { multiple: 7, gain: 0.035 },
-        { multiple: 9, gain: 0.018 },
-      ],
-    },
-  },
   "fuzz-pluck": {
-    category: "character",
+    category: "weird",
+    defaultDurationSeconds: 0.58,
     description: "Compressed, buzzy, and deliberately rough.",
     family: "generated",
     id: "fuzz-pluck",
     label: "Fuzz Pluck",
-    supports: ["preview", "exercise"],
+    recommendedUses: ["preview", "exercise"],
     voice: {
       gain: 0.34,
       pitchGain: previewPitchGain,
       lowPitchAssist: lowSpeakerAssist,
-      effects: [fuzzDrive],
+      insertEffects: [fuzzDrive],
       envelope: {
         attackSeconds: 0.004,
-        decaySeconds: 0.5,
+        decaySeconds: 0.48,
         sustainGain: 0.045,
         releaseSeconds: 0.08,
       },
@@ -554,97 +616,23 @@ export const audioPresets = {
       ],
     },
   },
-  "broken-organ": {
-    category: "weird",
-    description: "Detuned organ color with unstable, gritty edges.",
-    family: "generated",
-    id: "broken-organ",
-    label: "Broken Organ",
-    supports: ["preview", "drone", "exercise"],
-    voice: {
-      gain: 0.28,
-      pitchGain: continuousPitchGain,
-      lowPitchAssist: harmonicLowSpeakerAssist,
-      effects: [brokenDrive],
-      unison: {
-        detuneCents: [-8, 0, 7],
-      },
-      envelope: {
-        attackSeconds: 0.035,
-        decaySeconds: 0.13,
-        sustainGain: 0.76,
-        releaseSeconds: 0.25,
-      },
-      partials: [
-        { multiple: 1, gain: 0.68 },
-        { multiple: 2, gain: 0.18 },
-        { multiple: 3, gain: 0.52 },
-        { multiple: 4, gain: 0.1 },
-        { multiple: 5, gain: 0.28 },
-        { multiple: 7, gain: 0.18 },
-        { multiple: 11, gain: 0.06 },
-      ],
-    },
-  },
-  "detuned-stack": {
-    category: "character",
-    description: "Wide stacked oscillators with soft motion.",
-    family: "generated",
-    id: "detuned-stack",
-    label: "Detuned Stack",
-    supports: ["preview", "drone", "exercise"],
-    voice: {
-      gain: 0.28,
-      pitchGain: previewPitchGain,
-      lowPitchAssist: subtleLowSpeakerAssist,
-      effects: [
-        {
-          type: "distortion",
-          amount: 0.06,
-          mix: 0.12,
-          oversample: "2x",
-        },
-      ],
-      unison: {
-        detuneCents: [-9, -3, 3, 9],
-      },
-      envelope: {
-        attackSeconds: 0.018,
-        decaySeconds: 0.46,
-        sustainGain: 0.35,
-        releaseSeconds: 0.18,
-      },
-      partials: [
-        { multiple: 1, gain: 0.72 },
-        { multiple: 2, gain: 0.28 },
-        { multiple: 3, gain: 0.18 },
-        { multiple: 5, gain: 0.08 },
-      ],
-    },
-  },
   "bit-glow": {
     category: "weird",
+    defaultDurationSeconds: 0.68,
     description: "Sharp digital color with a bright upper shimmer.",
     family: "generated",
     id: "bit-glow",
     label: "Bit Glow",
-    supports: ["preview", "exercise"],
+    recommendedUses: ["preview", "exercise"],
     voice: {
       gain: 0.32,
       pitchGain: brightPitchGain,
       lowPitchAssist: harmonicLowSpeakerAssist,
-      effects: [
-        {
-          type: "distortion",
-          amount: 0.18,
-          mix: 0.5,
-          oversample: "2x",
-        },
-      ],
+      insertEffects: [warmDrive],
       envelope: {
         attackSeconds: 0.002,
-        decaySeconds: 0.38,
-        sustainGain: 0.16,
+        decaySeconds: 0.4,
+        sustainGain: 0.14,
         releaseSeconds: 0.12,
       },
       partials: [
@@ -654,35 +642,6 @@ export const audioPresets = {
         { multiple: 8, gain: 0.24 },
         { multiple: 16, gain: 0.14 },
         { multiple: 24, gain: 0.06 },
-      ],
-    },
-  },
-  "ghost-harmonics": {
-    category: "weird",
-    description: "Airy upper partials that make low notes speak.",
-    family: "generated",
-    id: "ghost-harmonics",
-    label: "Ghost Harmonics",
-    supports: ["preview", "exercise"],
-    voice: {
-      gain: 0.4,
-      pitchGain: brightPitchGain,
-      lowPitchAssist: harmonicLowSpeakerAssist,
-      envelope: {
-        attackSeconds: 0.02,
-        decaySeconds: 0.86,
-        sustainGain: 0.05,
-        releaseSeconds: 0.24,
-      },
-      partials: [
-        { multiple: 1, gain: 0.28 },
-        { multiple: 2, gain: 0.18 },
-        { multiple: 3, gain: 0.08 },
-        { multiple: 4, gain: 0.25 },
-        { multiple: 5, gain: 0.04 },
-        { multiple: 7, gain: 0.18 },
-        { multiple: 9, gain: 0.12 },
-        { multiple: 12, gain: 0.08 },
       ],
     },
   },
@@ -699,19 +658,24 @@ export function isAudioPresetId(value: unknown): value is AudioPresetId {
   );
 }
 
-export function isAudioPresetSupportedForUse(
+export function isAudioPresetRecommendedForUse(
   preset: AudioPreset,
   use: AudioUse,
 ) {
-  return preset.supports.includes(use);
+  return preset.recommendedUses.includes(use);
 }
 
-export function resolveAudioPreset(use: AudioUse, presetId?: AudioPresetId) {
-  const requestedPreset = presetId ? audioPresets[presetId] : undefined;
+export function getAudioPresetsRecommendedForUse(use: AudioUse) {
+  return Object.values(audioPresets).filter((preset) =>
+    isAudioPresetRecommendedForUse(preset, use),
+  );
+}
 
-  if (requestedPreset && isAudioPresetSupportedForUse(requestedPreset, use)) {
-    return requestedPreset;
-  }
-
-  return audioPresets[getDefaultAudioPresetId(use)];
+export function resolveAudioPreset(
+  presetId: unknown,
+  fallbackPresetId: AudioPresetId,
+) {
+  return isAudioPresetId(presetId)
+    ? audioPresets[presetId]
+    : audioPresets[fallbackPresetId];
 }
