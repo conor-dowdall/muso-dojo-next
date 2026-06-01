@@ -3,12 +3,25 @@
  * - leading title/control content and trailing actions are separate wrap groups
  * - trailing actions align to inline-end but wrap internally on tiny screens
  * - min-inline-size: 0 is required so long titles and button labels wrap
+ * - gap tokens carry semantic weight:
+ *   peer gap: controls that form one idea
+ *   cluster gap: related but different action groups
+ *   region gap: left presentation controls vs right operational controls
+ *   wrap gap: vertical breathing room when header content wraps
  */
 .controlHeader {
+  --control-header-peer-gap: var(--space-1);
+  --control-header-wrap-gap: var(--space-2);
+  --control-header-cluster-gap: var(--space-3);
+  --control-header-region-gap: var(--space-4);
+  --control-header-cluster-gap-offset: calc(
+    var(--control-header-cluster-gap) - var(--control-header-peer-gap)
+  );
+
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--control-header-wrap-gap);
   min-inline-size: 0;
 }
 
@@ -16,7 +29,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--control-header-peer-gap);
   min-block-size: var(--control-size-sm);
   min-inline-size: 0;
   max-inline-size: 100%;
@@ -28,7 +41,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-1);
+  gap: var(--control-header-peer-gap);
   margin-inline-start: auto;
   min-inline-size: 0;
   max-inline-size: 100%;

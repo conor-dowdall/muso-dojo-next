@@ -34,3 +34,29 @@
   border-radius: var(--radius-full);
   box-shadow: inset 0 0 0 var(--space-px) rgb(255 255 255 / 0.2);
 }
+
+.themeSwatchChip[data-token="base"],
+.themeSwatchChipHalf[data-token="base"] {
+  background-color: var(--color-base);
+}
+
+.themeSwatchChip[data-token="surface"],
+.themeSwatchChipHalf[data-token="surface"] {
+  background-color: var(--color-surface);
+}
+
+.themeSwatchChip[data-token="accent"],
+.themeSwatchChipHalf[data-token="accent"] {
+  background-color: var(--color-accent);
+}
+
+.themeSwatchSplitChip {
+  display: inline-flex;
+  overflow: hidden;
+  background: none;
+}
+
+.themeSwatchChipHalf {
+  flex: 1 1 50%;
+  min-inline-size: 0;
+}

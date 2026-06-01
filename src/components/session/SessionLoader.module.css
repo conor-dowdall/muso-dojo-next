@@ -82,62 +82,50 @@
 }
 
 .pitchPoint:nth-of-type(1) {
-  color: var(--pitch-0);
   animation-delay: 0ms;
 }
 
 .pitchPoint:nth-of-type(2) {
-  color: var(--pitch-1);
   animation-delay: 140ms;
 }
 
 .pitchPoint:nth-of-type(3) {
-  color: var(--pitch-2);
   animation-delay: 280ms;
 }
 
 .pitchPoint:nth-of-type(4) {
-  color: var(--pitch-3);
   animation-delay: 420ms;
 }
 
 .pitchPoint:nth-of-type(5) {
-  color: var(--pitch-4);
   animation-delay: 560ms;
 }
 
 .pitchPoint:nth-of-type(6) {
-  color: var(--pitch-5);
   animation-delay: 700ms;
 }
 
 .pitchPoint:nth-of-type(7) {
-  color: var(--pitch-6);
   animation-delay: 840ms;
 }
 
 .pitchPoint:nth-of-type(8) {
-  color: var(--pitch-7);
   animation-delay: 980ms;
 }
 
 .pitchPoint:nth-of-type(9) {
-  color: var(--pitch-8);
   animation-delay: 1120ms;
 }
 
 .pitchPoint:nth-of-type(10) {
-  color: var(--pitch-9);
   animation-delay: 1260ms;
 }
 
 .pitchPoint:nth-of-type(11) {
-  color: var(--pitch-10);
   animation-delay: 1400ms;
 }
 
 .pitchPoint:nth-of-type(12) {
-  color: var(--pitch-11);
   animation-delay: 1540ms;
 }
 

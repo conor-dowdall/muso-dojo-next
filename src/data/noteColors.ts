@@ -32,11 +32,17 @@ export const noteColorPresetKeys = Object.keys(
 
 export const createNoteColorTuple = createChromaticTuple;
 
-export const defaultCustomNoteColors = createNoteColorTuple(
+export const DEFAULT_NOTE_COLOR_VALUES = createNoteColorTuple(
   colorCollections[DEFAULT_NOTE_COLOR_PRESET].colors.map(
     (color) => color ?? NOTE_COLOR_NEUTRAL_VALUE,
   ),
 );
+
+export const defaultCustomNoteColors = DEFAULT_NOTE_COLOR_VALUES;
+
+export function getDefaultNoteColorValue(index: number) {
+  return DEFAULT_NOTE_COLOR_VALUES[normalizeChromaticIndex(Math.trunc(index))];
+}
 
 export function getNoteColorLabel(mode: NoteColorMode, index: number) {
   const labels =

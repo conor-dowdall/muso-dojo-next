@@ -1,3 +1,4 @@
+import { DEFAULT_NOTE_COLOR_VALUES } from "@/data/noteColors";
 import styles from "./SessionLoader.module.css";
 
 const primaryWavePath =
@@ -20,6 +21,14 @@ const pitchPoints = [
   ["120", "36"],
 ] as const;
 
+const waveGradientStops = [
+  { offset: "0%", pitchIndex: 0 },
+  { offset: "24%", pitchIndex: 4 },
+  { offset: "48%", pitchIndex: 7 },
+  { offset: "72%", pitchIndex: 2 },
+  { offset: "100%", pitchIndex: 9 },
+] as const;
+
 export function SessionLoader() {
   return (
     <div className={styles.loader} role="status" aria-live="polite">
@@ -39,11 +48,13 @@ export function SessionLoader() {
               y1="0"
               y2="0"
             >
-              <stop offset="0%" stopColor="var(--pitch-0)" />
-              <stop offset="24%" stopColor="var(--pitch-4)" />
-              <stop offset="48%" stopColor="var(--pitch-7)" />
-              <stop offset="72%" stopColor="var(--pitch-2)" />
-              <stop offset="100%" stopColor="var(--pitch-9)" />
+              {waveGradientStops.map(({ offset, pitchIndex }) => (
+                <stop
+                  key={pitchIndex}
+                  offset={offset}
+                  stopColor={DEFAULT_NOTE_COLOR_VALUES[pitchIndex]}
+                />
+              ))}
             </linearGradient>
           </defs>
           <path className={styles.waveEcho} d={primaryWavePath} />
@@ -57,6 +68,7 @@ export function SessionLoader() {
               cx={x}
               cy={y}
               r="3"
+              style={{ color: DEFAULT_NOTE_COLOR_VALUES[pitchClass] }}
             />
           ))}
         </svg>

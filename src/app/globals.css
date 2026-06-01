@@ -146,19 +146,6 @@
 
   --icon-size-base: 1em;
 
-  --pitch-0: #ed2929;
-  --pitch-1: #9f000f;
-  --pitch-2: #78c7c7;
-  --pitch-3: #00008b;
-  --pitch-4: #ff9933;
-  --pitch-5: #ebeb19;
-  --pitch-6: #286704;
-  --pitch-7: #99cc33;
-  --pitch-8: #660099;
-  --pitch-9: #cc00ff;
-  --pitch-10: #bf6a1f;
-  --pitch-11: #ff9ee6;
-
   /* Neutral note markers stay stable across app themes. */
   --note-color-neutral: #454c56;
   --note-color-theme: var(--note-color-neutral);

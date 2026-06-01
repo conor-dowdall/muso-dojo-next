@@ -31,6 +31,7 @@
   opacity: 1;
 }
 
-.appSettingsButton {
-  margin-inline-start: var(--space-1);
+.dojoSettingsButton {
+  margin-inline-end: var(--control-header-cluster-gap-offset);
+  margin-inline-start: var(--control-header-cluster-gap-offset);
 }

@@ -6,7 +6,7 @@ import { Heading } from "@/components/ui/typography/Heading";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 import { Dialog } from "@/components/ui/dialog/Dialog";
-import { AppSettingsDialog } from "@/components/app-settings/AppSettingsDialog";
+import { DojoSettingsDialog } from "@/components/app-settings/DojoSettingsDialog";
 import { useAppStore } from "@/stores/appStore";
 import { SessionManagementDialog } from "./SessionManagementDialog";
 import { type SessionManagementSettingChoice } from "./sessionManagementTypes";
@@ -105,18 +105,20 @@ export function SessionHeader({
             />
             <SessionMenu
               activeSessionId={activeSessionId}
+              beforeMenuTrigger={
+                <IconButton
+                  aria-label="Dojo settings"
+                  className={styles.dojoSettingsButton}
+                  icon={<SlidersHorizontal />}
+                  size="sm"
+                  tooltip="Dojo settings"
+                  onClick={() => openDialog({ kind: "settings" })}
+                />
+              }
               onOpenManageSessions={() => openDialog({ kind: "manage" })}
               onOpenNoteColors={(sessionId) =>
                 openSessionSetting(sessionId, "note-colors")
               }
-            />
-            <IconButton
-              aria-label="App settings"
-              className={styles.appSettingsButton}
-              icon={<SlidersHorizontal />}
-              size="sm"
-              tooltip="App settings"
-              onClick={() => openDialog({ kind: "settings" })}
             />
           </>
         }
@@ -128,7 +130,7 @@ export function SessionHeader({
         size={dialogIntent?.kind === "settings" ? "md" : "lg"}
       >
         {dialogIntent?.kind === "settings" ? (
-          <AppSettingsDialog key={dialogKey} onClose={closeDialog} />
+          <DojoSettingsDialog key={dialogKey} onClose={closeDialog} />
         ) : (
           <SessionManagementDialog
             key={dialogKey}

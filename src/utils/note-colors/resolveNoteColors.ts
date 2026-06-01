@@ -12,6 +12,7 @@ import {
   NOTE_COLOR_NEUTRAL_VALUE,
   NOTE_COLOR_THEME_VALUE,
   createNoteColorTuple,
+  getDefaultNoteColorValue,
 } from "@/data/noteColors";
 import {
   type InstrumentNoteColor,
@@ -105,7 +106,7 @@ export function getNoteColorIndex(
 export function getSessionNoteColorVariable(index: number) {
   const colorIndex = normalizeChromaticIndex(Math.trunc(index));
 
-  return `var(--session-note-color-${colorIndex}, var(--pitch-${colorIndex}))`;
+  return `var(--session-note-color-${colorIndex}, ${getDefaultNoteColorValue(colorIndex)})`;
 }
 
 export function resolveInstrumentNoteColor({

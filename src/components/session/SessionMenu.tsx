@@ -1,17 +1,20 @@
 "use client";
 
+import { type ReactNode } from "react";
 import { Palette } from "lucide-react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { ObjectMenuTriggerButton } from "@/components/ui/object-menu";
 
 interface SessionMenuProps {
   activeSessionId: string | null;
+  beforeMenuTrigger?: ReactNode;
   onOpenManageSessions: () => void;
   onOpenNoteColors: (sessionId: string) => void;
 }
 
 export function SessionMenu({
   activeSessionId,
+  beforeMenuTrigger,
   onOpenManageSessions,
   onOpenNoteColors,
 }: SessionMenuProps) {
@@ -31,6 +34,7 @@ export function SessionMenu({
           onOpenNoteColors(activeSessionId);
         }}
       />
+      {beforeMenuTrigger}
       <ObjectMenuTriggerButton
         aria-label="Manage sessions"
         level="session"

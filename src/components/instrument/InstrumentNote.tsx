@@ -1,5 +1,6 @@
 import { type ActiveNote } from "@/types/instrument-active-note";
 import { type InstrumentNoteColor } from "@/types/note-colors";
+import { getDefaultNoteColorValue } from "@/data/noteColors";
 import styles from "./InstrumentNote.module.css";
 import { type CSSProperties, type ReactNode } from "react";
 
@@ -38,7 +39,8 @@ export function InstrumentNote({
   const emphasis = note.emphasis;
   const isHidden = emphasis === "hidden";
   const noteColorIndex = noteColor?.index ?? note.midi % 12;
-  const noteColorValue = noteColor?.value ?? `var(--pitch-${noteColorIndex})`;
+  const noteColorValue =
+    noteColor?.value ?? getDefaultNoteColorValue(noteColorIndex);
 
   // Physical size is stabilized to prevent layout reflows.
   const effectiveWidth = width ?? largeSize;

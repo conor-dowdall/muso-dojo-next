@@ -21,10 +21,10 @@ describe("app themes", () => {
 
   it("formats theme choice aria labels", () => {
     expect(getAppThemeAriaLabel(getAppThemeOption("system"))).toBe(
-      "Follow system theme",
+      "Follow system Dojo theme",
     );
     expect(getAppThemeAriaLabel(getAppThemeOption("purple"))).toBe(
-      "Use Purple theme",
+      "Use Purple Dojo theme",
     );
   });
 });
