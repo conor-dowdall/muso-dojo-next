@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioLines, Palette } from "lucide-react";
+import { AudioLines, SwatchBook } from "lucide-react";
 import {
   masterAmbiencePresets,
   musoAudioEngine,
@@ -25,11 +25,23 @@ import {
   getAppThemeChoice,
   getAppThemeLabel,
   getAppThemeOption,
+  type AppThemeChoice,
   type AppThemeName,
   type AppThemeOption,
 } from "@/data/appThemes";
 import { useAppStore } from "@/stores/appStore";
+import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import styles from "./DojoSettingsDialog.module.css";
+
+type ThemeSwatchToken = "base" | "surface-hover" | "accent";
+
+const appThemeSubtitles = {
+  system: "Follows Device Appearance",
+  dark: "Neutral Low-Light Appearance",
+  light: "Neutral Bright Appearance",
+  ocean: "Cool High-Contrast Appearance",
+  purple: "Violet High-Contrast Appearance",
+} as const satisfies Record<AppThemeChoice, string>;
 
 interface DojoSettingsDialogProps {
   onClose: () => void;
@@ -56,6 +68,7 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
   );
   const appThemeChoice = getAppThemeChoice(appThemePreference);
   const appThemeLabel = getAppThemeLabel(appThemeChoice);
+  const appThemeSubtitle = appThemeSubtitles[appThemeChoice];
   const masterAmbiencePresetId = resolveMasterAmbiencePresetId(
     masterAmbiencePreference,
   );
@@ -91,7 +104,7 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
                   {masterAmbiencePreset.label}
                 </span>
               }
-              subtitle="Shared room and echo for all playback."
+              subtitle={masterAmbiencePreset.description}
               onToggle={() => toggleChoice("sound")}
             >
               <DisclosureList>
@@ -110,16 +123,14 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
 
             <DisclosureListItem
               ariaLabel={`Dojo theme. Current: ${appThemeLabel}`}
-              icon={<Palette />}
+              icon={<SwatchBook />}
               isOpen={isOpen("theme")}
               label="Dojo Theme"
               panelVariant="menu"
               preview={
-                <span className={styles.themePreview}>
-                  <ThemeSwatch option={getAppThemeOption(appThemeChoice)} />
-                  <span>{appThemeLabel}</span>
-                </span>
+                <ThemeSwatch option={getAppThemeOption(appThemeChoice)} />
               }
+              subtitle={`${appThemeLabel}${DISPLAY_VALUE_SEPARATOR}${appThemeSubtitle}`}
               onToggle={() => toggleChoice("theme")}
             >
               <DisclosureList>
@@ -130,6 +141,7 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
                     label={option.label}
                     preview={<ThemeSwatch option={option} />}
                     selected={option.id === appThemeChoice}
+                    subtitle={appThemeSubtitles[option.id]}
                     onClick={() => setAppThemePreference(option.id)}
                   />
                 ))}
@@ -146,52 +158,42 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
 function ThemeSwatch({ option }: { option: AppThemeOption }) {
   if (option.id === "system") {
     return (
-      <span className={styles.themeSwatch} aria-hidden="true">
-        <ThemeSwatchChip theme="dark" token="base" />
-        <ThemeSwatchChip theme="light" token="base" />
-        <span
-          className={`${styles.themeSwatchChip} ${styles.themeSwatchSplitChip}`}
-        >
-          <span
-            className={styles.themeSwatchChipHalf}
-            data-theme="dark"
-            data-token="accent"
-          />
-          <span
-            className={styles.themeSwatchChipHalf}
-            data-theme="light"
-            data-token="accent"
-          />
-        </span>
+      <span className={styles.themeSwatchSystem} aria-hidden="true">
+        <ThemeSwatchPalette
+          className={styles.themeSwatchSystemDark}
+          theme="dark"
+        />
+        <ThemeSwatchPalette
+          className={styles.themeSwatchSystemLight}
+          theme="light"
+        />
       </span>
     );
   }
 
+  return <ThemeSwatchPalette theme={option.id} />;
+}
+
+function ThemeSwatchPalette({
+  className,
+  theme,
+}: {
+  className?: string;
+  theme: AppThemeName;
+}) {
   return (
     <span
-      className={styles.themeSwatch}
-      data-theme={option.id}
+      className={[styles.themeSwatch, className].filter(Boolean).join(" ")}
+      data-theme={theme}
       aria-hidden="true"
     >
       <ThemeSwatchChip token="base" />
-      <ThemeSwatchChip token="surface" />
+      <ThemeSwatchChip token="surface-hover" />
       <ThemeSwatchChip token="accent" />
     </span>
   );
 }
 
-function ThemeSwatchChip({
-  theme,
-  token,
-}: {
-  theme?: AppThemeName;
-  token: "base" | "surface" | "accent";
-}) {
-  return (
-    <span
-      className={styles.themeSwatchChip}
-      data-theme={theme}
-      data-token={token}
-    />
-  );
+function ThemeSwatchChip({ token }: { token: ThemeSwatchToken }) {
+  return <span className={styles.themeSwatchChip} data-token={token} />;
 }
