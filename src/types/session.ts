@@ -1,5 +1,5 @@
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
-import { type AudioPresetId } from "@/audio/types";
+import { type AudioPresetId, type MasterAmbiencePresetId } from "@/audio/types";
 import { type FretboardThemeName } from "@/data/fretboard/themes";
 import { type KeyboardRangeName } from "@/data/keyboard/ranges";
 import { type KeyboardThemeName } from "@/data/keyboard/themes";
@@ -125,6 +125,7 @@ export interface AppPreferences {
   appTheme?: AppThemeName;
   defaultSessionNoteColorConfig?: SessionNoteColorConfig;
   defaultInstrumentSetup?: InstrumentCreationDefault;
+  masterAmbiencePresetId?: MasterAmbiencePresetId;
 }
 
 export interface AppStoreSnapshot {

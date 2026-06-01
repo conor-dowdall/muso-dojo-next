@@ -1,0 +1,17 @@
+.identity {
+  display: inline-flex;
+  align-items: center;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-block-size: var(--control-size-xs);
+  padding-inline: var(--space-1);
+  color: var(--color-text-muted);
+}
+
+.label {
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  letter-spacing: 0;
+  overflow-wrap: normal;
+  white-space: nowrap;
+}

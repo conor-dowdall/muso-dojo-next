@@ -8,20 +8,26 @@
 }
 
 .presentationControlsGroup,
+.identitySlot,
 .rightControlsGroup,
 .noteEditActionsGroup,
 .utilityControlsGroup,
 .noteInteractionModeGroup {
   display: flex;
   align-items: center;
-  gap: var(--control-header-peer-gap);
+  gap: var(--control-header-wrap-gap) var(--control-header-peer-gap);
   min-inline-size: 0;
+  max-inline-size: 100%;
 }
 
 .presentationControlsGroup {
   flex: 1 1 auto;
   flex-wrap: wrap;
   margin-inline-end: auto;
+}
+
+.identitySlot {
+  flex: 0 1 auto;
 }
 
 .rightControlsGroup {

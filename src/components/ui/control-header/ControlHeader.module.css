@@ -1,7 +1,7 @@
 /*
  * App control-header convention:
  * - leading title/control content and trailing actions are separate wrap groups
- * - trailing actions align to inline-end but wrap internally on tiny screens
+ * - trailing actions align to inline-end but wrap internally when constrained
  * - min-inline-size: 0 is required so long titles and button labels wrap
  * - gap tokens carry semantic weight:
  *   peer gap: controls that form one idea
@@ -29,7 +29,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--control-header-peer-gap);
+  gap: var(--control-header-wrap-gap) var(--control-header-peer-gap);
   min-block-size: var(--control-size-sm);
   min-inline-size: 0;
   max-inline-size: 100%;
@@ -41,7 +41,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--control-header-peer-gap);
+  gap: var(--control-header-wrap-gap) var(--control-header-peer-gap);
   margin-inline-start: auto;
   min-inline-size: 0;
   max-inline-size: 100%;

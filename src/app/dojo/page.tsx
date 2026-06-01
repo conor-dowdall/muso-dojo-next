@@ -14,7 +14,7 @@ import {
   createInstrumentCreationRangeContextFromSignature,
   createInstrumentCreationRangeContextSignature,
 } from "@/components/instrument-creation/instrumentCreationRangeContext";
-import { musoAudioEngine } from "@/audio";
+import { musoAudioEngine, resolveMasterAmbiencePresetId } from "@/audio";
 import { useAppStore, useHydrateAppStore } from "@/stores/appStore";
 import { createChordProgressionParts } from "@/utils/music-part/createChordProgressionParts";
 import { createDefaultMusicPartConfig } from "@/utils/session/createSessionEntities";
@@ -31,6 +31,9 @@ function HydratedSession({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addDialogKey, setAddDialogKey] = useState(0);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
+  const masterAmbiencePresetId = useAppStore((state) =>
+    resolveMasterAmbiencePresetId(state.preferences.masterAmbiencePresetId),
+  );
   const instrumentCreationRangeContextSignature = useAppStore(
     useShallow((state) =>
       createInstrumentCreationRangeContextSignature(
@@ -58,6 +61,10 @@ function HydratedSession({
     onPerformanceModeChange(true);
   };
   const exitPerformanceMode = () => onPerformanceModeChange(false);
+
+  useEffect(() => {
+    musoAudioEngine.setMasterAmbiencePresetId(masterAmbiencePresetId);
+  }, [masterAmbiencePresetId]);
 
   useEffect(() => {
     if (!activeSessionId || !musoAudioEngine.isSupported()) {

@@ -48,6 +48,7 @@ interface InstrumentHeaderActionsProps {
   audioPresetContext?: InstrumentAudioPresetContext;
   displayFormatId: DisplayFormatId;
   instrumentType: InstrumentType;
+  identity?: ReactNode;
   layout?: InstrumentLayoutConfig;
   noteEmphasis: InstrumentNoteEmphasis;
   noteInteractionMode: InstrumentNoteInteractionMode;
@@ -128,6 +129,7 @@ export const InstrumentHeaderActions = ({
   audioPresetContext,
   displayFormatId,
   instrumentType,
+  identity,
   layout,
   noteEmphasis,
   noteInteractionMode,
@@ -231,6 +233,9 @@ export const InstrumentHeaderActions = ({
               : `Note size: ${noteEmphasisLabel}`
           }
         />
+        {identity ? (
+          <span className={styles.identitySlot}>{identity}</span>
+        ) : null}
       </span>
 
       <span

@@ -1,45 +1,27 @@
 "use client";
 
-import { type ReactNode } from "react";
-import { Palette } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
-import { ObjectMenuTriggerButton } from "@/components/ui/object-menu";
+import styles from "./SessionMenu.module.css";
 
 interface SessionMenuProps {
-  activeSessionId: string | null;
-  beforeMenuTrigger?: ReactNode;
-  onOpenManageSessions: () => void;
-  onOpenNoteColors: (sessionId: string) => void;
+  onOpenDojoSettings: () => void;
 }
 
-export function SessionMenu({
-  activeSessionId,
-  beforeMenuTrigger,
-  onOpenManageSessions,
-  onOpenNoteColors,
-}: SessionMenuProps) {
+export function SessionMenu({ onOpenDojoSettings }: SessionMenuProps) {
   return (
-    <>
+    <span
+      className={styles.dojoSettingsGroup}
+      role="group"
+      aria-label="Dojo settings"
+    >
       <IconButton
-        aria-label="Edit session note colors"
-        disabled={!activeSessionId}
-        icon={<Palette />}
+        aria-label="Dojo settings"
+        icon={<Settings2 />}
         size="sm"
-        tooltip="Session note colors"
-        onClick={() => {
-          if (!activeSessionId) {
-            return;
-          }
-
-          onOpenNoteColors(activeSessionId);
-        }}
+        tooltip="Dojo settings"
+        onClick={onOpenDojoSettings}
       />
-      {beforeMenuTrigger}
-      <ObjectMenuTriggerButton
-        aria-label="Manage sessions"
-        level="session"
-        onClick={onOpenManageSessions}
-      />
-    </>
+    </span>
   );
 }

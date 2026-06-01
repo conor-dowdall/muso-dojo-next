@@ -42,20 +42,20 @@ export const masterAmbiencePresets = {
     label: "Warm Hall",
   },
   "soft-echo": {
-    description: "A gentle repeat with a little shared room.",
+    description: "A tight slapback echo that thickens the note.",
     effects: [
       {
         type: "delay",
-        feedback: 0.24,
-        mix: 0.11,
-        timeSeconds: 0.28,
+        feedback: 0.06,
+        mix: 0.15,
+        timeSeconds: 0.095,
       },
       {
         type: "reverb",
-        decaySeconds: 1.35,
-        mix: 0.12,
-        preDelaySeconds: 0.018,
-        toneHz: 6400,
+        decaySeconds: 0.9,
+        mix: 0.08,
+        preDelaySeconds: 0.014,
+        toneHz: 7200,
       },
     ],
     id: "soft-echo",

@@ -266,6 +266,42 @@ describe("app store persistence", () => {
         fallbackSnapshot,
       ).preferences,
     ).toEqual({});
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          preferences: {
+            masterAmbiencePresetId: "soft-echo",
+          },
+        },
+        fallbackSnapshot,
+      ).preferences.masterAmbiencePresetId,
+    ).toBe("soft-echo");
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          preferences: {
+            masterAmbiencePresetId: "dojo-room",
+          },
+        },
+        fallbackSnapshot,
+      ).preferences,
+    ).toEqual({});
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          preferences: {
+            masterAmbiencePresetId: "not-a-sound",
+          },
+        },
+        fallbackSnapshot,
+      ).preferences,
+    ).toEqual({});
   });
 
   it("normalizes valid custom note color defaults", () => {

@@ -1,6 +1,7 @@
 import { normalizeAppThemePreference } from "@/data/appThemes";
 import {
   defaultInstrumentSetupsAreEqual,
+  normalizeMasterAmbiencePreference,
   normalizeDefaultInstrumentSetup,
   normalizeDefaultSessionNoteColorConfig,
   noteColorConfigsAreEqual,
@@ -31,6 +32,32 @@ export function createPreferenceActions(set: AppStoreSet): PreferenceActions {
           preferences: {
             ...state.preferences,
             appTheme,
+          },
+        };
+      });
+    },
+    setMasterAmbiencePresetId: (presetId) => {
+      const masterAmbiencePresetId =
+        normalizeMasterAmbiencePreference(presetId);
+
+      set((state) => {
+        if (
+          state.preferences.masterAmbiencePresetId === masterAmbiencePresetId
+        ) {
+          return state;
+        }
+
+        if (!masterAmbiencePresetId) {
+          const preferences = { ...state.preferences };
+          delete preferences.masterAmbiencePresetId;
+
+          return { preferences };
+        }
+
+        return {
+          preferences: {
+            ...state.preferences,
+            masterAmbiencePresetId,
           },
         };
       });

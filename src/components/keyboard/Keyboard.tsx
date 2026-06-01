@@ -6,6 +6,7 @@ import {
 } from "./KeyboardContext";
 import { InstrumentHeaderActions } from "@/components/instrument/InstrumentHeaderActions";
 import { InstrumentContainer } from "@/components/instrument/InstrumentContainer";
+import { InstrumentIdentity } from "@/components/instrument/InstrumentIdentity";
 import { KeyboardBackground } from "./KeyboardBackground";
 import styles from "./Keyboard.module.css";
 
@@ -72,6 +73,7 @@ function KeyboardInner({
     <InstrumentContainer
       headerActions={
         <InstrumentHeaderActions
+          identity={<InstrumentIdentity label="Keyboard" />}
           instrumentType="keyboard"
           layout={layout}
           displayFormatId={presentation.activeDisplayFormatId}

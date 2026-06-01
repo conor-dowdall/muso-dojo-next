@@ -14,24 +14,29 @@
   color: var(--color-text);
 }
 
-.titleEditButton {
+.titleUtilityButton {
   color: var(--color-text-muted);
   opacity: 0.72;
 }
 
 @media (hover: hover) {
-  .header:not(:hover) .titleEditButton:not(:focus-visible) {
+  .header:not(:hover) .titleUtilityButton:not(:focus-visible) {
     opacity: 0.56;
   }
 }
 
-.titleEditButton:not(:disabled):hover,
-.titleEditButton:focus-visible {
+.titleUtilityButton:not(:disabled):hover,
+.titleUtilityButton:focus-visible {
   color: var(--color-text);
   opacity: 1;
 }
 
-.dojoSettingsButton {
-  margin-inline-end: var(--control-header-cluster-gap-offset);
-  margin-inline-start: var(--control-header-cluster-gap-offset);
+.sessionActionGroup {
+  display: inline-flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--control-header-wrap-gap) var(--control-header-peer-gap);
+  min-inline-size: 0;
+  max-inline-size: 100%;
 }

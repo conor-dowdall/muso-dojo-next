@@ -2,7 +2,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--control-header-peer-gap);
+  gap: var(--control-header-wrap-gap) var(--control-header-peer-gap);
   min-block-size: var(--control-size-sm);
   min-inline-size: 0;
+  max-inline-size: 100%;
 }

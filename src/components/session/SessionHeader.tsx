@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Maximize2, Pencil, Plus, SlidersHorizontal } from "lucide-react";
+import { Maximize2, Palette, Pencil, Plus } from "lucide-react";
 import { Heading } from "@/components/ui/typography/Heading";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 import { Dialog } from "@/components/ui/dialog/Dialog";
 import { DojoSettingsDialog } from "@/components/app-settings/DojoSettingsDialog";
 import { useAppStore } from "@/stores/appStore";
+import { ObjectMenuTriggerButton } from "@/components/ui/object-menu";
 import { SessionManagementDialog } from "./SessionManagementDialog";
 import { type SessionManagementSettingChoice } from "./sessionManagementTypes";
 import { SessionMenu } from "./SessionMenu";
@@ -75,7 +76,7 @@ export function SessionHeader({
             {activeSessionId ? (
               <IconButton
                 aria-label="Rename session"
-                className={styles.titleEditButton}
+                className={styles.titleUtilityButton}
                 icon={<Pencil />}
                 size="xs"
                 tooltip="Rename session"
@@ -87,38 +88,49 @@ export function SessionHeader({
         }
         actions={
           <>
-            <IconButton
-              aria-label="Add to session"
-              disabled={!hasActiveSession}
-              icon={<Plus />}
-              size="sm"
-              onClick={onOpenAddDialog}
-            />
-            <IconButton
-              aria-label="Enter performance mode"
-              disabled={!hasActiveSession || !onEnterPerformanceMode}
-              icon={<Maximize2 />}
-              size="sm"
-              shouldYield={false}
-              tooltip="Performance mode"
-              onClick={onEnterPerformanceMode}
-            />
+            <span
+              className={styles.sessionActionGroup}
+              role="group"
+              aria-label="Session actions"
+            >
+              <IconButton
+                aria-label="Add to session"
+                disabled={!hasActiveSession}
+                icon={<Plus />}
+                size="sm"
+                onClick={onOpenAddDialog}
+              />
+              <IconButton
+                aria-label="Enter performance mode"
+                disabled={!hasActiveSession || !onEnterPerformanceMode}
+                icon={<Maximize2 />}
+                size="sm"
+                shouldYield={false}
+                tooltip="Performance mode"
+                onClick={onEnterPerformanceMode}
+              />
+              <IconButton
+                aria-label="Edit session note colors"
+                disabled={!activeSessionId}
+                icon={<Palette />}
+                size="sm"
+                tooltip="Session note colors"
+                onClick={() => {
+                  if (!activeSessionId) {
+                    return;
+                  }
+
+                  openSessionSetting(activeSessionId, "note-colors");
+                }}
+              />
+              <ObjectMenuTriggerButton
+                aria-label="Manage sessions"
+                level="session"
+                onClick={() => openDialog({ kind: "manage" })}
+              />
+            </span>
             <SessionMenu
-              activeSessionId={activeSessionId}
-              beforeMenuTrigger={
-                <IconButton
-                  aria-label="Dojo settings"
-                  className={styles.dojoSettingsButton}
-                  icon={<SlidersHorizontal />}
-                  size="sm"
-                  tooltip="Dojo settings"
-                  onClick={() => openDialog({ kind: "settings" })}
-                />
-              }
-              onOpenManageSessions={() => openDialog({ kind: "manage" })}
-              onOpenNoteColors={(sessionId) =>
-                openSessionSetting(sessionId, "note-colors")
-              }
+              onOpenDojoSettings={() => openDialog({ kind: "settings" })}
             />
           </>
         }

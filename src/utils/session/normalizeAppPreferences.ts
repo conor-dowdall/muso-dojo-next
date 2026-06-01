@@ -15,6 +15,11 @@ import { normalizeAppThemePreference } from "@/data/appThemes";
 import { normalizeKeyboardThemeName } from "@/data/keyboard/themes";
 import { DEFAULT_NOTE_COLOR_CONFIG } from "@/data/noteColors";
 import {
+  DEFAULT_MASTER_AMBIENCE_PRESET_ID,
+  resolveMasterAmbiencePresetId,
+} from "@/audio/masterAmbience";
+import { type MasterAmbiencePresetId } from "@/audio/types";
+import {
   type FretboardCreationAppearanceSource,
   type FretboardCreationDefault,
   type InstrumentCreationDefault,
@@ -214,6 +219,14 @@ export function normalizeDefaultInstrumentSetup(
   return defaultInstrumentSetup;
 }
 
+export function normalizeMasterAmbiencePreference(
+  value: unknown,
+): MasterAmbiencePresetId | undefined {
+  const presetId = resolveMasterAmbiencePresetId(value);
+
+  return presetId === DEFAULT_MASTER_AMBIENCE_PRESET_ID ? undefined : presetId;
+}
+
 export function defaultInstrumentSetupsAreEqual(
   left: InstrumentCreationDefault | undefined,
   right: InstrumentCreationDefault | undefined,
@@ -237,10 +250,14 @@ export function normalizeAppPreferences(value: unknown): AppPreferences {
   const defaultInstrumentSetup = normalizeDefaultInstrumentSetup(
     value.defaultInstrumentSetup,
   );
+  const masterAmbiencePresetId = normalizeMasterAmbiencePreference(
+    value.masterAmbiencePresetId,
+  );
 
   return {
     ...(appTheme ? { appTheme } : {}),
     ...(defaultSessionNoteColorConfig ? { defaultSessionNoteColorConfig } : {}),
     ...(defaultInstrumentSetup ? { defaultInstrumentSetup } : {}),
+    ...(masterAmbiencePresetId ? { masterAmbiencePresetId } : {}),
   };
 }

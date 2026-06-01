@@ -52,6 +52,29 @@ describe("session app store actions", () => {
     expect(notificationCount).toBe(0);
   });
 
+  it("stores the selected dojo sound preference", () => {
+    const store = createTestStore();
+
+    store.getState().setMasterAmbiencePresetId("warm-hall");
+
+    expect(store.getState().preferences.masterAmbiencePresetId).toBe(
+      "warm-hall",
+    );
+  });
+
+  it("clears the stored dojo sound preference when using the built-in default", () => {
+    const store = createTestStore({
+      ...createStoreSnapshot(),
+      preferences: {
+        masterAmbiencePresetId: "dry",
+      },
+    });
+
+    store.getState().setMasterAmbiencePresetId("dojo-room");
+
+    expect(store.getState().preferences).toEqual({});
+  });
+
   it("stores default note colors for new sessions", () => {
     const store = createTestStore();
 

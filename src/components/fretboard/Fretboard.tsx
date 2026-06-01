@@ -1,4 +1,5 @@
 import { type CSSProperties } from "react";
+import { stringInstruments } from "@musodojo/music-theory-data";
 import { type FretboardProps } from "@/types/fretboard";
 import {
   FretboardProvider,
@@ -7,6 +8,7 @@ import {
 } from "./FretboardContext";
 import { InstrumentHeaderActions } from "@/components/instrument/InstrumentHeaderActions";
 import { InstrumentContainer } from "@/components/instrument/InstrumentContainer";
+import { InstrumentIdentity } from "@/components/instrument/InstrumentIdentity";
 import { FretboardBackground } from "./FretboardBackground";
 import styles from "./Fretboard.module.css";
 
@@ -68,11 +70,13 @@ function FretboardInner({
 >) {
   const presentation = useFretboardPresentation();
   const geometry = useFretboardGeometry();
+  const instrumentLabel = stringInstruments[geometry.instrument].primaryName;
 
   return (
     <InstrumentContainer
       headerActions={
         <InstrumentHeaderActions
+          identity={<InstrumentIdentity label={instrumentLabel} />}
           instrumentType="fretboard"
           layout={layout}
           displayFormatId={presentation.activeDisplayFormatId}
