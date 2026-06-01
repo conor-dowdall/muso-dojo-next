@@ -7,8 +7,8 @@ import {
 } from "./types";
 
 export interface ResolvedHarmonicVoiceConfig {
-  distortion: HarmonicVoiceConfig["distortion"];
   envelope: HarmonicVoiceConfig["envelope"];
+  effects: NonNullable<HarmonicVoiceConfig["effects"]>;
   gain: number;
   partials: readonly HarmonicPartialConfig[];
   unison: HarmonicVoiceConfig["unison"];
@@ -101,8 +101,8 @@ export function resolveHarmonicVoiceConfig(
   midiNote: number,
 ): ResolvedHarmonicVoiceConfig {
   return {
-    distortion: voice.distortion,
     envelope: voice.envelope,
+    effects: voice.effects ?? [],
     gain:
       voice.gain *
       (voice.pitchGain ? getPitchGain(midiNote, voice.pitchGain) : 1),

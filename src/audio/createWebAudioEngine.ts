@@ -4,7 +4,15 @@ import {
   scheduleAttackDecayEnvelope,
   scheduleOneShotEnvelope,
 } from "./envelope";
+import {
+  connectAudioEffectChain,
+  type ConnectedAudioEffectChain,
+} from "./effects";
 import { createHarmonicWaveCache } from "./harmonicWave";
+import {
+  DEFAULT_MASTER_AMBIENCE_PRESET_ID,
+  getMasterAmbiencePreset,
+} from "./masterAmbience";
 import { normalizePositiveNumber } from "./numeric";
 import { midiToFrequency, isPlayableMidiNote } from "./pitch";
 import { audioPresets, resolveAudioPreset } from "./presets";
@@ -17,6 +25,7 @@ import {
   type AudioVoiceHandle,
   type DroneHandle,
   type DroneRequest,
+  type MasterAmbiencePresetId,
   type PlayNoteRequest,
 } from "./types";
 
@@ -38,10 +47,23 @@ interface ActiveDrone {
   voices: ActiveVoice[];
 }
 
+interface MasterBus {
+  compressor: DynamicsCompressorNode;
+  context: AudioContext;
+  effectChain: ConnectedAudioEffectChain;
+  input: GainNode;
+}
+
+const emptyEffectChain = {
+  dispose: () => undefined,
+  tailSeconds: 0,
+} satisfies ConnectedAudioEffectChain;
+
 export function createWebAudioEngine(): AudioEngine {
   let audioContext: AudioContext | undefined;
-  let masterCompressor: DynamicsCompressorNode | undefined;
-  let masterGain: GainNode | undefined;
+  let masterAmbiencePresetId: MasterAmbiencePresetId =
+    DEFAULT_MASTER_AMBIENCE_PRESET_ID;
+  let masterBus: MasterBus | undefined;
   let primedContext: AudioContext | undefined;
   let readyContextPromise: Promise<AudioContext | undefined> | undefined;
   let nextVoiceId = 0;
@@ -52,8 +74,7 @@ export function createWebAudioEngine(): AudioEngine {
 
   function clearContextReferences() {
     audioContext = undefined;
-    masterCompressor = undefined;
-    masterGain = undefined;
+    masterBus = undefined;
     primedContext = undefined;
     readyContextPromise = undefined;
   }
@@ -124,37 +145,62 @@ export function createWebAudioEngine(): AudioEngine {
     return readyContextPromise;
   }
 
-  function getMasterGain(context: AudioContext) {
-    if (!masterGain || masterGain.context !== context) {
-      masterCompressor = context.createDynamicsCompressor();
-      masterCompressor.threshold.setValueAtTime(
-        MASTER_COMPRESSOR_THRESHOLD_DB,
-        context.currentTime,
-      );
-      masterCompressor.knee.setValueAtTime(
-        MASTER_COMPRESSOR_KNEE_DB,
-        context.currentTime,
-      );
-      masterCompressor.ratio.setValueAtTime(
-        MASTER_COMPRESSOR_RATIO,
-        context.currentTime,
-      );
-      masterCompressor.attack.setValueAtTime(
-        MASTER_COMPRESSOR_ATTACK_SECONDS,
-        context.currentTime,
-      );
-      masterCompressor.release.setValueAtTime(
-        MASTER_COMPRESSOR_RELEASE_SECONDS,
-        context.currentTime,
-      );
+  function configureMasterCompressor(
+    compressor: DynamicsCompressorNode,
+    context: AudioContext,
+  ) {
+    compressor.threshold.setValueAtTime(
+      MASTER_COMPRESSOR_THRESHOLD_DB,
+      context.currentTime,
+    );
+    compressor.knee.setValueAtTime(
+      MASTER_COMPRESSOR_KNEE_DB,
+      context.currentTime,
+    );
+    compressor.ratio.setValueAtTime(
+      MASTER_COMPRESSOR_RATIO,
+      context.currentTime,
+    );
+    compressor.attack.setValueAtTime(
+      MASTER_COMPRESSOR_ATTACK_SECONDS,
+      context.currentTime,
+    );
+    compressor.release.setValueAtTime(
+      MASTER_COMPRESSOR_RELEASE_SECONDS,
+      context.currentTime,
+    );
+  }
 
-      masterGain = context.createGain();
-      masterGain.gain.setValueAtTime(DEFAULT_MASTER_GAIN, context.currentTime);
-      masterGain.connect(masterCompressor);
-      masterCompressor.connect(context.destination);
+  function reconnectMasterBusEffects(bus: MasterBus) {
+    bus.input.disconnect();
+    bus.effectChain.dispose();
+    bus.effectChain = connectAudioEffectChain({
+      context: bus.context,
+      destination: bus.compressor,
+      effects: getMasterAmbiencePreset(masterAmbiencePresetId).effects,
+      source: bus.input,
+    });
+  }
+
+  function getMasterInput(context: AudioContext) {
+    if (!masterBus || masterBus.context !== context) {
+      const compressor = context.createDynamicsCompressor();
+      const input = context.createGain();
+
+      configureMasterCompressor(compressor, context);
+      input.gain.setValueAtTime(DEFAULT_MASTER_GAIN, context.currentTime);
+      compressor.connect(context.destination);
+
+      masterBus = {
+        compressor,
+        context,
+        effectChain: emptyEffectChain,
+        input,
+      };
+      reconnectMasterBusEffects(masterBus);
     }
 
-    return masterGain;
+    return masterBus.input;
   }
 
   function warmPresetWaves(context: AudioContext) {
@@ -169,7 +215,7 @@ export function createWebAudioEngine(): AudioEngine {
   }
 
   function primeContext(context: AudioContext) {
-    const destination = getMasterGain(context);
+    const destination = getMasterInput(context);
 
     if (primedContext === context) {
       return;
@@ -200,8 +246,10 @@ export function createWebAudioEngine(): AudioEngine {
 
   function scheduleVoiceCleanup(voice: ActiveVoice, cleanupTime: number) {
     const context = voice.envelope.context;
+    const cleanupTimeWithTail = cleanupTime + voice.tailSeconds;
     const delaySeconds =
-      Math.max(0, cleanupTime - context.currentTime) + CLEANUP_DELAY_SECONDS;
+      Math.max(0, cleanupTimeWithTail - context.currentTime) +
+      CLEANUP_DELAY_SECONDS;
 
     window.setTimeout(() => {
       voice.disconnect();
@@ -227,7 +275,7 @@ export function createWebAudioEngine(): AudioEngine {
     const handle = `voice-${nextVoiceId++}` as AudioVoiceHandle;
     const voice = createHarmonicVoice({
       context,
-      destination: getMasterGain(context),
+      destination: getMasterInput(context),
       frequency,
       getPeriodicWave: harmonicWaveCache.getPeriodicWave,
       handle,
@@ -358,6 +406,7 @@ export function createWebAudioEngine(): AudioEngine {
   }
 
   return {
+    getMasterAmbiencePresetId: () => masterAmbiencePresetId,
     isSupported: () => getAudioContextConstructor() !== undefined,
     prime: async () => {
       const context = await getReadyAudioContext();
@@ -377,6 +426,13 @@ export function createWebAudioEngine(): AudioEngine {
       return runWithReadyContext((context) =>
         playNoteWithContext(context, request),
       );
+    },
+    setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => {
+      masterAmbiencePresetId = presetId;
+
+      if (masterBus) {
+        reconnectMasterBusEffects(masterBus);
+      }
     },
     startDrone: (request: DroneRequest) => {
       if (!request.midiNotes.some(isPlayableMidiNote)) {

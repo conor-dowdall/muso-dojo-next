@@ -2,7 +2,7 @@ import {
   getAttackDecayEnvelopeGainAtTime,
   releaseAudioParam,
 } from "./envelope";
-import { connectDistortion } from "./distortion";
+import { connectAudioEffectChain, getAudioEffectPlacement } from "./effects";
 import {
   type AudioPreset,
   type AudioVoiceHandle,
@@ -21,6 +21,7 @@ export interface ActiveVoice {
   scheduleStop: (stopTime: number) => void;
   stop: (stopTime?: number) => void;
   stopping: boolean;
+  tailSeconds: number;
 }
 
 export function createHarmonicVoice({
@@ -87,11 +88,23 @@ export function createHarmonicVoice({
 
     return oscillator;
   });
-  const effectNodes = connectDistortion({
-    config: voiceConfig.distortion,
+  const preEnvelopeEffects = voiceConfig.effects.filter(
+    (effect) => getAudioEffectPlacement(effect) === "pre-envelope",
+  );
+  const postEnvelopeEffects = voiceConfig.effects.filter(
+    (effect) => getAudioEffectPlacement(effect) === "post-envelope",
+  );
+  const preEnvelopeEffectChain = connectAudioEffectChain({
     context,
     destination: envelope,
+    effects: preEnvelopeEffects,
     source: sourceMixer,
+  });
+  const postEnvelopeEffectChain = connectAudioEffectChain({
+    context,
+    destination,
+    effects: postEnvelopeEffects,
+    source: envelope,
   });
   let disconnected = false;
 
@@ -100,7 +113,6 @@ export function createHarmonicVoice({
     1 / Math.sqrt(Math.max(1, oscillators.length)),
     startTime,
   );
-  envelope.connect(destination);
 
   const voice: ActiveVoice = {
     handle,
@@ -132,7 +144,8 @@ export function createHarmonicVoice({
       disconnected = true;
       oscillators.forEach((oscillator) => oscillator.disconnect());
       sourceMixer.disconnect();
-      effectNodes.forEach((node) => node.disconnect());
+      preEnvelopeEffectChain.dispose();
+      postEnvelopeEffectChain.dispose();
       envelope.disconnect();
     },
     stop: (stopTime = context.currentTime) => {
@@ -159,6 +172,7 @@ export function createHarmonicVoice({
       voice.scheduleStop(releaseEnd);
       onEnded(voice, releaseEnd);
     },
+    tailSeconds: postEnvelopeEffectChain.tailSeconds,
   };
 
   oscillators.forEach((oscillator) => oscillator.start(startTime));

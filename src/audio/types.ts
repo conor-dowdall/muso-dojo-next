@@ -64,13 +64,54 @@ export interface DistortionConfig {
   oversample?: OverSampleType;
 }
 
+export type AudioEffectPlacement = "pre-envelope" | "post-envelope";
+
+interface BaseAudioEffectConfig {
+  placement?: AudioEffectPlacement;
+}
+
+export interface DistortionEffectConfig
+  extends BaseAudioEffectConfig, DistortionConfig {
+  type: "distortion";
+}
+
+export interface DelayEffectConfig extends BaseAudioEffectConfig {
+  feedback: number;
+  mix: number;
+  timeSeconds: number;
+  type: "delay";
+}
+
+export interface ChorusEffectConfig extends BaseAudioEffectConfig {
+  delaySeconds?: number;
+  depthSeconds: number;
+  feedback?: number;
+  mix: number;
+  rateHz: number;
+  type: "chorus";
+}
+
+export interface ReverbEffectConfig extends BaseAudioEffectConfig {
+  decaySeconds: number;
+  mix: number;
+  preDelaySeconds?: number;
+  toneHz?: number;
+  type: "reverb";
+}
+
+export type AudioEffectConfig =
+  | ChorusEffectConfig
+  | DelayEffectConfig
+  | DistortionEffectConfig
+  | ReverbEffectConfig;
+
 export interface UnisonConfig {
   detuneCents: readonly number[];
 }
 
 export interface HarmonicVoiceConfig {
-  distortion?: DistortionConfig;
   envelope: EnvelopeConfig;
+  effects?: readonly AudioEffectConfig[];
   gain: number;
   lowPitchAssist?: LowPitchAssistConfig;
   partials: readonly HarmonicPartialConfig[];
@@ -104,10 +145,25 @@ export interface DroneRequest extends BaseAudioRequest {
   midiNotes: readonly number[];
 }
 
+export type MasterAmbiencePresetId =
+  | "dry"
+  | "dojo-room"
+  | "warm-hall"
+  | "soft-echo";
+
+export interface MasterAmbiencePreset {
+  description?: string;
+  effects: readonly AudioEffectConfig[];
+  id: MasterAmbiencePresetId;
+  label: string;
+}
+
 export interface AudioEngine {
+  getMasterAmbiencePresetId: () => MasterAmbiencePresetId;
   isSupported: () => boolean;
   prime: () => Promise<boolean>;
   playNote: (request: PlayNoteRequest) => Promise<AudioVoiceHandle | undefined>;
+  setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => void;
   startDrone: (request: DroneRequest) => Promise<DroneHandle | undefined>;
   stopDrone: (handle: DroneHandle) => void;
   stopAll: () => void;

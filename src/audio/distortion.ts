@@ -35,46 +35,49 @@ function getSoftClipCurve(amount: number) {
   return curve;
 }
 
-export function connectDistortion({
+export function createDistortionEffect({
   config,
   context,
-  destination,
-  source,
 }: {
-  config: DistortionConfig | undefined;
+  config: DistortionConfig;
   context: AudioContext;
-  destination: AudioNode;
-  source: AudioNode;
 }) {
-  const curve = config ? getSoftClipCurve(config.amount) : undefined;
-  const wetMix = clampUnit(config?.mix, 1);
+  const curve = getSoftClipCurve(config.amount);
+  const wetMix = clampUnit(config.mix, 1);
 
   if (!curve || wetMix <= 0) {
-    source.connect(destination);
-    return [];
+    return undefined;
   }
 
+  const input = context.createGain();
+  const output = context.createGain();
   const shaper = context.createWaveShaper();
+  const nodes: AudioNode[] = [input, output, shaper];
+
   shaper.curve = curve;
-  shaper.oversample = config?.oversample ?? DEFAULT_OVERSAMPLE;
+  shaper.oversample = config.oversample ?? DEFAULT_OVERSAMPLE;
 
   if (wetMix >= 1) {
-    source.connect(shaper);
-    shaper.connect(destination);
-    return [shaper];
+    input.connect(shaper);
+    shaper.connect(output);
+  } else {
+    const dryGain = context.createGain();
+    const wetGain = context.createGain();
+
+    dryGain.gain.setValueAtTime(1 - wetMix, context.currentTime);
+    wetGain.gain.setValueAtTime(wetMix, context.currentTime);
+    input.connect(dryGain);
+    dryGain.connect(output);
+    input.connect(shaper);
+    shaper.connect(wetGain);
+    wetGain.connect(output);
+    nodes.push(dryGain, wetGain);
   }
 
-  const dryGain = context.createGain();
-  const wetGain = context.createGain();
-
-  dryGain.gain.setValueAtTime(1 - wetMix, context.currentTime);
-  wetGain.gain.setValueAtTime(wetMix, context.currentTime);
-
-  source.connect(dryGain);
-  dryGain.connect(destination);
-  source.connect(shaper);
-  shaper.connect(wetGain);
-  wetGain.connect(destination);
-
-  return [dryGain, shaper, wetGain];
+  return {
+    dispose: () => nodes.forEach((node) => node.disconnect()),
+    input,
+    output,
+    tailSeconds: 0,
+  };
 }

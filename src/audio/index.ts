@@ -17,7 +17,16 @@ export {
   isAudioPresetSupportedForUse,
   resolveAudioPreset,
 } from "./presets";
+export {
+  DEFAULT_MASTER_AMBIENCE_PRESET_ID,
+  getMasterAmbiencePreset,
+  isMasterAmbiencePresetId,
+  masterAmbiencePresets,
+  resolveMasterAmbiencePresetId,
+} from "./masterAmbience";
 export type {
+  AudioEffectConfig,
+  AudioEffectPlacement,
   AudioEngine,
   AudioPreset,
   AudioPresetCategory,
@@ -25,14 +34,20 @@ export type {
   AudioPresetId,
   AudioUse,
   AudioVoiceHandle,
+  ChorusEffectConfig,
+  DelayEffectConfig,
   DroneHandle,
   DroneRequest,
   DistortionConfig,
+  DistortionEffectConfig,
   EnvelopeConfig,
   HarmonicPartialConfig,
   HarmonicVoiceConfig,
   LowPitchAssistConfig,
+  MasterAmbiencePreset,
+  MasterAmbiencePresetId,
   PlayNoteRequest,
   PitchGainConfig,
+  ReverbEffectConfig,
   UnisonConfig,
 } from "./types";

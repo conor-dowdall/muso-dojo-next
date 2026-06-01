@@ -3,7 +3,7 @@ import {
   type AudioPresetCategory,
   type AudioPresetId,
   type AudioUse,
-  type DistortionConfig,
+  type DistortionEffectConfig,
   type LowPitchAssistConfig,
   type PitchGainConfig,
 } from "./types";
@@ -67,34 +67,39 @@ const harmonicLowSpeakerAssist = {
 } as const satisfies LowPitchAssistConfig;
 
 const lightEdge = {
+  type: "distortion",
   amount: 0.1,
   mix: 0.18,
   oversample: "2x",
-} as const satisfies DistortionConfig;
+} as const satisfies DistortionEffectConfig;
 
 const tapeEdge = {
+  type: "distortion",
   amount: 0.12,
   mix: 0.28,
   oversample: "2x",
-} as const satisfies DistortionConfig;
+} as const satisfies DistortionEffectConfig;
 
 const warmDrive = {
+  type: "distortion",
   amount: 0.24,
   mix: 0.46,
   oversample: "4x",
-} as const satisfies DistortionConfig;
+} as const satisfies DistortionEffectConfig;
 
 const fuzzDrive = {
+  type: "distortion",
   amount: 0.46,
   mix: 0.64,
   oversample: "4x",
-} as const satisfies DistortionConfig;
+} as const satisfies DistortionEffectConfig;
 
 const brokenDrive = {
+  type: "distortion",
   amount: 0.34,
   mix: 0.52,
   oversample: "2x",
-} as const satisfies DistortionConfig;
+} as const satisfies DistortionEffectConfig;
 
 export const defaultAudioPresetIds = {
   preview: "pluck",
@@ -234,11 +239,14 @@ export const audioPresets = {
       gain: 0.5,
       pitchGain: previewPitchGain,
       lowPitchAssist: lowSpeakerAssist,
-      distortion: {
-        amount: 0.045,
-        mix: 0.12,
-        oversample: "2x",
-      },
+      effects: [
+        {
+          type: "distortion",
+          amount: 0.045,
+          mix: 0.12,
+          oversample: "2x",
+        },
+      ],
       envelope: {
         attackSeconds: 0.002,
         decaySeconds: 0.78,
@@ -295,7 +303,7 @@ export const audioPresets = {
       gain: 0.42,
       pitchGain: previewPitchGain,
       lowPitchAssist: lowSpeakerAssist,
-      distortion: tapeEdge,
+      effects: [tapeEdge],
       unison: {
         detuneCents: [-3, 0, 3],
       },
@@ -351,7 +359,7 @@ export const audioPresets = {
       gain: 0.38,
       pitchGain: continuousPitchGain,
       lowPitchAssist: subtleLowSpeakerAssist,
-      distortion: lightEdge,
+      effects: [lightEdge],
       envelope: {
         attackSeconds: 0.045,
         decaySeconds: 0.1,
@@ -407,11 +415,14 @@ export const audioPresets = {
       gain: 0.38,
       pitchGain: brightPitchGain,
       lowPitchAssist: subtleLowSpeakerAssist,
-      distortion: {
-        amount: 0.08,
-        mix: 0.2,
-        oversample: "2x",
-      },
+      effects: [
+        {
+          type: "distortion",
+          amount: 0.08,
+          mix: 0.2,
+          oversample: "2x",
+        },
+      ],
       envelope: {
         attackSeconds: 0.01,
         decaySeconds: 0.07,
@@ -496,7 +507,7 @@ export const audioPresets = {
       gain: 0.46,
       pitchGain: previewPitchGain,
       lowPitchAssist: lowSpeakerAssist,
-      distortion: warmDrive,
+      effects: [warmDrive],
       envelope: {
         attackSeconds: 0.006,
         decaySeconds: 0.72,
@@ -525,7 +536,7 @@ export const audioPresets = {
       gain: 0.34,
       pitchGain: previewPitchGain,
       lowPitchAssist: lowSpeakerAssist,
-      distortion: fuzzDrive,
+      effects: [fuzzDrive],
       envelope: {
         attackSeconds: 0.004,
         decaySeconds: 0.5,
@@ -554,7 +565,7 @@ export const audioPresets = {
       gain: 0.28,
       pitchGain: continuousPitchGain,
       lowPitchAssist: harmonicLowSpeakerAssist,
-      distortion: brokenDrive,
+      effects: [brokenDrive],
       unison: {
         detuneCents: [-8, 0, 7],
       },
@@ -586,11 +597,14 @@ export const audioPresets = {
       gain: 0.28,
       pitchGain: previewPitchGain,
       lowPitchAssist: subtleLowSpeakerAssist,
-      distortion: {
-        amount: 0.06,
-        mix: 0.12,
-        oversample: "2x",
-      },
+      effects: [
+        {
+          type: "distortion",
+          amount: 0.06,
+          mix: 0.12,
+          oversample: "2x",
+        },
+      ],
       unison: {
         detuneCents: [-9, -3, 3, 9],
       },
@@ -619,11 +633,14 @@ export const audioPresets = {
       gain: 0.32,
       pitchGain: brightPitchGain,
       lowPitchAssist: harmonicLowSpeakerAssist,
-      distortion: {
-        amount: 0.18,
-        mix: 0.5,
-        oversample: "2x",
-      },
+      effects: [
+        {
+          type: "distortion",
+          amount: 0.18,
+          mix: 0.5,
+          oversample: "2x",
+        },
+      ],
       envelope: {
         attackSeconds: 0.002,
         decaySeconds: 0.38,
