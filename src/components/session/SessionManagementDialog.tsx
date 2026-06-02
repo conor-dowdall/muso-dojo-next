@@ -90,8 +90,8 @@ export function SessionManagementDialog({
       : undefined) ?? sessionList[0];
 
   const handleAddSession = () => {
-    const sessionId = addSession();
-    setOpenSessionId(sessionId);
+    addSession();
+    setOpenSessionId(null);
     setDeleteConfirmationSessionId(null);
   };
 
@@ -113,8 +113,8 @@ export function SessionManagementDialog({
   };
 
   const handleCloneSession = (sessionId: string) => {
-    const clonedSessionId = cloneSession(sessionId);
-    setOpenSessionId(clonedSessionId ?? null);
+    cloneSession(sessionId);
+    setOpenSessionId(null);
     setDeleteConfirmationSessionId(null);
   };
 
