@@ -272,19 +272,19 @@ describe("app store persistence", () => {
         {
           ...persistedState,
           preferences: {
-            masterAmbiencePresetId: "soft-echo",
+            masterAmbiencePresetId: "short-echo",
           },
         },
         fallbackSnapshot,
       ).preferences.masterAmbiencePresetId,
-    ).toBe("soft-echo");
+    ).toBe("short-echo");
 
     expect(
       normalizeAppStoreSnapshot(
         {
           ...persistedState,
           preferences: {
-            masterAmbiencePresetId: "dojo-room",
+            masterAmbiencePresetId: "studio-room",
           },
         },
         fallbackSnapshot,

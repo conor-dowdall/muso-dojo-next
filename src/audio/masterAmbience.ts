@@ -4,7 +4,7 @@ import {
 } from "./types";
 
 export const DEFAULT_MASTER_AMBIENCE_PRESET_ID =
-  "dojo-room" satisfies MasterAmbiencePresetId;
+  "studio-room" satisfies MasterAmbiencePresetId;
 
 export const masterAmbiencePresets = {
   dry: {
@@ -13,53 +13,53 @@ export const masterAmbiencePresets = {
     id: "dry",
     label: "Dry",
   },
-  "dojo-room": {
-    description: "A small, clear room that keeps note practice focused.",
+  "studio-room": {
+    description: "A close, polished room with a natural bloom.",
     effects: [
       {
         type: "reverb",
-        decaySeconds: 0.82,
-        mix: 0.1,
+        decaySeconds: 1.14,
+        mix: 0.16,
         preDelaySeconds: 0.012,
-        toneHz: 7200,
+        toneHz: 7600,
       },
     ],
-    id: "dojo-room",
-    label: "Dojo Room",
+    id: "studio-room",
+    label: "Studio Room",
   },
   "warm-hall": {
-    description: "A wider tail for held harmony and drones.",
+    description: "A warm, longer hall for held harmony and drones.",
     effects: [
       {
         type: "reverb",
-        decaySeconds: 2.35,
-        mix: 0.18,
-        preDelaySeconds: 0.028,
-        toneHz: 5600,
+        decaySeconds: 2.65,
+        mix: 0.22,
+        preDelaySeconds: 0.034,
+        toneHz: 5200,
       },
     ],
     id: "warm-hall",
     label: "Warm Hall",
   },
-  "soft-echo": {
-    description: "A tight slapback echo that thickens the note.",
+  "short-echo": {
+    description: "A clear short echo with a small polished tail.",
     effects: [
       {
         type: "delay",
-        feedback: 0.06,
-        mix: 0.15,
-        timeSeconds: 0.095,
+        feedback: 0.22,
+        mix: 0.26,
+        timeSeconds: 0.12,
       },
       {
         type: "reverb",
-        decaySeconds: 0.9,
-        mix: 0.08,
-        preDelaySeconds: 0.014,
-        toneHz: 7200,
+        decaySeconds: 0.95,
+        mix: 0.12,
+        preDelaySeconds: 0.012,
+        toneHz: 7800,
       },
     ],
-    id: "soft-echo",
-    label: "Soft Echo",
+    id: "short-echo",
+    label: "Short Echo",
   },
 } as const satisfies Record<MasterAmbiencePresetId, MasterAmbiencePreset>;
 

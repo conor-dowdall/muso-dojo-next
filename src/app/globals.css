@@ -97,6 +97,11 @@
   --radius-surface: 16px;
   --radius-full: 9999px;
 
+  /* Shared compact swatch shape for theme and color previews. */
+  --theme-swatch-width: var(--control-size-2xl);
+  --theme-swatch-height: var(--control-size-xs);
+  --theme-swatch-radius: var(--radius-small);
+
   --shadow-highlight-inset: inset 0 var(--space-px) 0
     var(--color-surface-highlight);
   --shadow-surface-raised: 0 10px 28px rgb(0 0 0 / 0.12);

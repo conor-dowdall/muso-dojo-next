@@ -1,7 +1,7 @@
 .noteColorDisclosure {
   --note-color-swatch-radius: var(
     --instrument-theme-swatch-radius,
-    var(--radius-small)
+    var(--theme-swatch-radius)
   );
 
   display: flex;
@@ -69,7 +69,7 @@
 .customColorSwatch {
   display: block;
   min-inline-size: 0;
-  block-size: var(--instrument-theme-swatch-height, var(--control-size-xs));
+  block-size: var(--instrument-theme-swatch-height, var(--theme-swatch-height));
   overflow: hidden;
   border-radius: var(--note-color-swatch-radius);
   box-shadow:
@@ -153,8 +153,8 @@
 
 .customColorChoiceInput {
   appearance: none;
-  inline-size: var(--instrument-theme-swatch-width, var(--control-size-2xl));
-  block-size: var(--instrument-theme-swatch-height, var(--control-size-xs));
+  inline-size: var(--instrument-theme-swatch-width, var(--theme-swatch-width));
+  block-size: var(--instrument-theme-swatch-height, var(--theme-swatch-height));
   padding: 0;
   border: 0;
   border-radius: var(--note-color-swatch-radius);
@@ -185,8 +185,8 @@
 
 .customColorChoicePreview {
   display: block;
-  inline-size: var(--instrument-theme-swatch-width, var(--control-size-2xl));
-  block-size: var(--instrument-theme-swatch-height, var(--control-size-xs));
+  inline-size: var(--instrument-theme-swatch-width, var(--theme-swatch-width));
+  block-size: var(--instrument-theme-swatch-height, var(--theme-swatch-height));
   overflow: hidden;
   border-radius: var(--note-color-swatch-radius);
   box-shadow:

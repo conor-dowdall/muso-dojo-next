@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioLines, SwatchBook } from "lucide-react";
+import { PaintbrushVertical, Waves } from "lucide-react";
 import {
   masterAmbiencePresets,
   musoAudioEngine,
@@ -25,23 +25,11 @@ import {
   getAppThemeChoice,
   getAppThemeLabel,
   getAppThemeOption,
-  type AppThemeChoice,
   type AppThemeName,
   type AppThemeOption,
 } from "@/data/appThemes";
 import { useAppStore } from "@/stores/appStore";
-import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import styles from "./DojoSettingsDialog.module.css";
-
-type ThemeSwatchToken = "base" | "surface-hover" | "accent";
-
-const appThemeSubtitles = {
-  system: "Follows Device Appearance",
-  dark: "Neutral Low-Light Appearance",
-  light: "Neutral Bright Appearance",
-  ocean: "Cool High-Contrast Appearance",
-  purple: "Violet High-Contrast Appearance",
-} as const satisfies Record<AppThemeChoice, string>;
 
 interface DojoSettingsDialogProps {
   onClose: () => void;
@@ -68,7 +56,6 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
   );
   const appThemeChoice = getAppThemeChoice(appThemePreference);
   const appThemeLabel = getAppThemeLabel(appThemeChoice);
-  const appThemeSubtitle = appThemeSubtitles[appThemeChoice];
   const masterAmbiencePresetId = resolveMasterAmbiencePresetId(
     masterAmbiencePreference,
   );
@@ -94,27 +81,25 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
         <DisclosureList grouped groupGap="section">
           <DisclosureListGroup>
             <DisclosureListItem
-              ariaLabel={`Dojo sound. Current: ${masterAmbiencePreset.label}`}
-              icon={<AudioLines />}
+              ariaLabel={`Reverb. Current: ${masterAmbiencePreset.label}`}
+              icon={<Waves />}
               isOpen={isOpen("sound")}
-              label="Dojo Sound"
+              label="Reverb"
               panelVariant="menu"
               preview={
                 <span className={styles.soundPreview}>
                   {masterAmbiencePreset.label}
                 </span>
               }
-              subtitle={masterAmbiencePreset.description}
               onToggle={() => toggleChoice("sound")}
             >
               <DisclosureList>
                 {Object.values(masterAmbiencePresets).map((preset) => (
                   <DisclosureListChoice
                     key={preset.id}
-                    aria-label={`Use ${preset.label} dojo sound`}
+                    aria-label={`Use ${preset.label} reverb`}
                     label={preset.label}
                     selected={preset.id === masterAmbiencePresetId}
-                    subtitle={preset.description}
                     onClick={() => handleMasterAmbiencePresetChange(preset.id)}
                   />
                 ))}
@@ -122,15 +107,15 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
             </DisclosureListItem>
 
             <DisclosureListItem
-              ariaLabel={`Dojo theme. Current: ${appThemeLabel}`}
-              icon={<SwatchBook />}
+              ariaLabel={`Theme. Current: ${appThemeLabel}`}
+              icon={<PaintbrushVertical />}
               isOpen={isOpen("theme")}
-              label="Dojo Theme"
+              label="Theme"
               panelVariant="menu"
               preview={
                 <ThemeSwatch option={getAppThemeOption(appThemeChoice)} />
               }
-              subtitle={`${appThemeLabel}${DISPLAY_VALUE_SEPARATOR}${appThemeSubtitle}`}
+              subtitle={appThemeLabel}
               onToggle={() => toggleChoice("theme")}
             >
               <DisclosureList>
@@ -141,7 +126,6 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
                     label={option.label}
                     preview={<ThemeSwatch option={option} />}
                     selected={option.id === appThemeChoice}
-                    subtitle={appThemeSubtitles[option.id]}
                     onClick={() => setAppThemePreference(option.id)}
                   />
                 ))}
@@ -187,13 +171,7 @@ function ThemeSwatchPalette({
       data-theme={theme}
       aria-hidden="true"
     >
-      <ThemeSwatchChip token="base" />
-      <ThemeSwatchChip token="surface-hover" />
-      <ThemeSwatchChip token="accent" />
+      <span className={styles.themeSwatchAccent} />
     </span>
   );
-}
-
-function ThemeSwatchChip({ token }: { token: ThemeSwatchToken }) {
-  return <span className={styles.themeSwatchChip} data-token={token} />;
 }

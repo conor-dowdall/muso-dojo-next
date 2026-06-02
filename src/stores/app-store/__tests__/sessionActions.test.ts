@@ -52,7 +52,7 @@ describe("session app store actions", () => {
     expect(notificationCount).toBe(0);
   });
 
-  it("stores the selected dojo sound preference", () => {
+  it("stores the selected reverb preference", () => {
     const store = createTestStore();
 
     store.getState().setMasterAmbiencePresetId("warm-hall");
@@ -62,7 +62,7 @@ describe("session app store actions", () => {
     );
   });
 
-  it("clears the stored dojo sound preference when using the built-in default", () => {
+  it("clears the stored reverb preference when using the built-in default", () => {
     const store = createTestStore({
       ...createStoreSnapshot(),
       preferences: {
@@ -70,7 +70,7 @@ describe("session app store actions", () => {
       },
     });
 
-    store.getState().setMasterAmbiencePresetId("dojo-room");
+    store.getState().setMasterAmbiencePresetId("studio-room");
 
     expect(store.getState().preferences).toEqual({});
   });

@@ -142,9 +142,9 @@ export interface DroneRequest extends BaseAudioRequest {
 
 export type MasterAmbiencePresetId =
   | "dry"
-  | "dojo-room"
+  | "studio-room"
   | "warm-hall"
-  | "soft-echo";
+  | "short-echo";
 
 export interface MasterAmbiencePreset {
   description?: string;

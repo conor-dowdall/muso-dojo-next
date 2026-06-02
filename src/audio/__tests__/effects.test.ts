@@ -72,7 +72,7 @@ describe("audio effects", () => {
   });
 
   it("defines a focused default master ambience and a dry escape hatch", () => {
-    expect(DEFAULT_MASTER_AMBIENCE_PRESET_ID).toBe("dojo-room");
+    expect(DEFAULT_MASTER_AMBIENCE_PRESET_ID).toBe("studio-room");
     expect(getMasterAmbiencePreset("dry").effects).toHaveLength(0);
     expect(
       masterAmbiencePresets[DEFAULT_MASTER_AMBIENCE_PRESET_ID].effects.length,
@@ -81,5 +81,26 @@ describe("audio effects", () => {
     expect(resolveMasterAmbiencePresetId("missing")).toBe(
       DEFAULT_MASTER_AMBIENCE_PRESET_ID,
     );
+  });
+
+  it("curates focused, character, and large ambience presets", () => {
+    const studioRoom = getMasterAmbiencePreset("studio-room");
+    const shortEcho = getMasterAmbiencePreset("short-echo");
+    const warmHall = getMasterAmbiencePreset("warm-hall");
+    const studioRoomTailSeconds = getAudioEffectChainTailSeconds(
+      studioRoom.effects,
+    );
+    const shortEchoTailSeconds = getAudioEffectChainTailSeconds(
+      shortEcho.effects,
+    );
+    const warmHallTailSeconds = getAudioEffectChainTailSeconds(
+      warmHall.effects,
+    );
+
+    expect(studioRoom.label).toBe("Studio Room");
+    expect(shortEcho.label).toBe("Short Echo");
+    expect(warmHall.label).toBe("Warm Hall");
+    expect(studioRoomTailSeconds).toBeLessThan(shortEchoTailSeconds);
+    expect(shortEchoTailSeconds).toBeLessThan(warmHallTailSeconds);
   });
 });
