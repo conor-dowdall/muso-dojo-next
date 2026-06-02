@@ -1,12 +1,3 @@
-.content {
-  --dialog-menu-row-gap: var(--space-2);
-  --dialog-menu-section-gap: var(--space-4);
-  --dialog-menu-panel-content-gap: var(--space-2);
-  --dialog-menu-submenu-panel-content-gap: var(--space-2);
-
-  container-type: inline-size;
-}
-
 .soundPreview {
   color: var(--color-text-muted);
   font-size: var(--text-sm);
@@ -18,11 +9,11 @@
   container-type: size;
   display: block;
   flex: 0 0 auto;
-  inline-size: var(--theme-swatch-width);
-  block-size: var(--theme-swatch-height);
+  inline-size: var(--preview-swatch-width);
+  block-size: var(--preview-swatch-height);
   overflow: hidden;
   border: var(--border-width-base) solid var(--color-border-subtle);
-  border-radius: var(--theme-swatch-radius);
+  border-radius: var(--preview-swatch-radius);
   background:
     radial-gradient(
       circle at 32% 18%,

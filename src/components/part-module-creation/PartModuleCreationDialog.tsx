@@ -2,7 +2,10 @@
 
 import {
   DialogContent,
+  DialogContentSection,
   DialogFooter,
+  DialogFooterActionBar,
+  DialogFooterActionGroup,
   DialogHeader,
 } from "@/components/ui/dialog/Dialog";
 import { Button } from "@/components/ui/buttons/Button";
@@ -21,7 +24,6 @@ import {
   PartModuleCreationSettingsMenu,
   type PartModuleCreationSettingsMenuProps,
 } from "@/components/part-module-creation/PartModuleCreationSettingsMenu";
-import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
 
 interface PartModuleCreationDialogProps {
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
@@ -75,11 +77,11 @@ export function PartModuleCreationDialog({
   return (
     <>
       <DialogHeader title={title} onClose={onClose} />
-      <DialogContent className={styles.content}>
-        <section className={styles.section} aria-label="Module settings">
+      <DialogContent layout="stack" menuRhythm="standard">
+        <DialogContentSection ariaLabel="Module settings">
           <PartModuleCreationSettingsMenu {...moduleSettingsProps} />
-        </section>
-        <section className={styles.section} aria-label="Creation default">
+        </DialogContentSection>
+        <DialogContentSection ariaLabel="Creation default">
           <DisclosureList>
             <InstrumentCreationDefaultAction
               fretboardSelection={fretboardSelection}
@@ -89,19 +91,19 @@ export function PartModuleCreationDialog({
               onUseForNewInstruments={useCurrentSetupForNewInstruments}
             />
           </DisclosureList>
-        </section>
+        </DialogContentSection>
       </DialogContent>
-      <DialogFooter className={styles.footer}>
-        <section className={styles.summarySection} aria-label="Selection">
-          <div className={styles.primaryActions}>
+      <DialogFooter>
+        <DialogFooterActionBar ariaLabel="Selection">
+          <DialogFooterActionGroup placement="primary">
             <Button
               label={addLabel}
               size="lg"
               variant="filled"
               onClick={handleAddPartModule}
             />
-          </div>
-        </section>
+          </DialogFooterActionGroup>
+        </DialogFooterActionBar>
       </DialogFooter>
     </>
   );

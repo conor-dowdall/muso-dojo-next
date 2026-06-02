@@ -10,7 +10,10 @@ import {
 import { ListChecks, ListMusic, Music3, Shapes } from "lucide-react";
 import {
   DialogContent,
+  DialogContentSection,
   DialogFooter,
+  DialogFooterActionBar,
+  DialogFooterActionGroup,
   DialogHeader,
 } from "@/components/ui/dialog/Dialog";
 import { Button } from "@/components/ui/buttons/Button";
@@ -40,7 +43,6 @@ import { AddToSessionRootNoteItem } from "@/components/session/AddToSessionRootN
 import { getChordProgressionDisplayLabels } from "@/utils/music-theory/chordProgressions";
 import { getNoteCollectionDisplayName } from "@/utils/music-theory/getNoteCollectionDisplayName";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
-import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
 import localStyles from "./AddToSessionDialog.module.css";
 import {
   type ChordProgressionChordListMode,
@@ -248,8 +250,8 @@ export function AddToSessionDialog({
   return (
     <>
       <DialogHeader title="Add to Session" onClose={onClose} />
-      <DialogContent className={styles.content}>
-        <section className={styles.section} aria-label="Session content type">
+      <DialogContent layout="stack" menuRhythm="standard">
+        <DialogContentSection ariaLabel="Session content type">
           <DisclosureList>
             <DisclosureListChoiceItem
               ariaLabel="Configure a chord or scale"
@@ -383,26 +385,27 @@ export function AddToSessionDialog({
               </DisclosureList>
             </DisclosureListChoiceItem>
           </DisclosureList>
-        </section>
+        </DialogContentSection>
       </DialogContent>
-      <DialogFooter className={styles.footer}>
-        <section className={styles.summarySection} aria-label="Selection">
-          <div className={styles.secondaryActions}>
+      <DialogFooter>
+        <DialogFooterActionBar ariaLabel="Selection">
+          <DialogFooterActionGroup placement="secondary">
             <CheckOptionButton
               label="Replace Current Session"
               selected={replaceSession}
+              subtitle="Clears current parts before adding"
               onClick={() => setReplaceSession((currentValue) => !currentValue)}
             />
-          </div>
-          <div className={styles.primaryActions}>
+          </DialogFooterActionGroup>
+          <DialogFooterActionGroup placement="primary">
             <Button
               label={actionLabel}
               size="lg"
               variant="filled"
               onClick={handleSubmit}
             />
-          </div>
-        </section>
+          </DialogFooterActionGroup>
+        </DialogFooterActionBar>
       </DialogFooter>
     </>
   );

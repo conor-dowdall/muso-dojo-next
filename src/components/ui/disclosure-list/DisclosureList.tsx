@@ -26,7 +26,7 @@ export type DisclosureListPanelVariant = "editor" | "menu";
 
 /**
  * !!! LLM COPY CONVENTION: Disclosure lists are scan surfaces, not articles.
- * Top-level menu rows and setting categories should use short, stable labels,
+ * Top-level option/action rows and setting categories should use short, stable labels,
  * usually Title Case when naming a category, object setting, or object action:
  * "Root Note", "Chord or Scale", "Duplicate".
  * Subtitles are either explanatory microcopy in sentence case or compact value
@@ -35,7 +35,7 @@ export type DisclosureListPanelVariant = "editor" | "menu";
  * "One Part • Root Note and Chord or Scale".
  * Previews are compact current values or tangible samples, not extra help text.
  *
- * Shared vertical menu pattern for object rows, configuration rows, action rows,
+ * Shared vertical option pattern for object rows, configuration rows, action rows,
  * danger rows, and nested editors. Panels can stay mounted for calmer
  * transitions while inert keeps closed inputs out of the focus order. Panel
  * actions give interactive editors a consistent footer without teaching
@@ -70,7 +70,7 @@ export type DisclosureListPanelVariant = "editor" | "menu";
  * - Keep high-frequency, reversible, low-risk controls available as quick
  *   actions near the object they affect.
  * - Put lower-frequency configuration, object-management actions, and
- *   destructive actions inside a disclosure menu or dialog, with confirmation
+ *   destructive actions inside a disclosure list or dialog, with confirmation
  *   where needed.
  * - If a panel is a compact inline editor with several local controls, add a
  *   local DisclosureListPanelActions footer with a Done button. This closes the

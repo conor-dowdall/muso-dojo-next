@@ -9,11 +9,11 @@ import {
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
   getObjectManagementActions,
-  type ObjectMenuLevel,
+  type ManagedObjectKind,
 } from "./objectMenuCopy";
 
 interface ObjectManagementGroupBaseProps {
-  level: ObjectMenuLevel;
+  kind: ManagedObjectKind;
   objectName?: string;
   onDanger?: () => void;
   onDuplicate?: () => void;
@@ -36,7 +36,7 @@ type ObjectManagementGroupProps = ObjectManagementGroupBaseProps &
 
 export function ObjectManagementGroup({
   isDangerConfirming,
-  level,
+  kind,
   objectName,
   onCancelDangerConfirm,
   onDanger,
@@ -44,7 +44,7 @@ export function ObjectManagementGroup({
   onRequestDangerConfirm,
 }: ObjectManagementGroupProps) {
   const [localIsDangerConfirming, setLocalIsDangerConfirming] = useState(false);
-  const [duplicateCopy, dangerCopy] = getObjectManagementActions(level, {
+  const [duplicateCopy, dangerCopy] = getObjectManagementActions(kind, {
     objectName,
   });
   const isConfirming = isDangerConfirming ?? localIsDangerConfirming;

@@ -97,10 +97,10 @@
   --radius-surface: 16px;
   --radius-full: 9999px;
 
-  /* Shared compact swatch shape for theme and color previews. */
-  --theme-swatch-width: var(--control-size-2xl);
-  --theme-swatch-height: var(--control-size-xs);
-  --theme-swatch-radius: var(--radius-small);
+  /* Shared compact swatch shape for previews and status markers. */
+  --preview-swatch-width: var(--control-size-2xl);
+  --preview-swatch-height: var(--control-size-xs);
+  --preview-swatch-radius: var(--radius-small);
 
   --shadow-highlight-inset: inset 0 var(--space-px) 0
     var(--color-surface-highlight);

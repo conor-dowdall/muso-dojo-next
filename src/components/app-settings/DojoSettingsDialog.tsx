@@ -37,10 +37,10 @@ interface DojoSettingsDialogProps {
 
 /**
  * !!! LLM COPY CONVENTION: Dojo Settings are workspace-level behavior.
- * Launch them from the Dojo settings header action. Keep object menus about
- * the current Session, Part, or Instrument; keep Dojo-wide defaults, themes,
- * sound, and accessibility here unless a contextual "Use for New..." action
- * is clearly closer to the edited setting.
+ * Launch them from the Dojo settings header action. Keep current-object
+ * overflow surfaces about Session Options, Part Actions, or Instrument Options;
+ * keep Dojo-wide defaults, themes, sound, and accessibility here unless a
+ * contextual "Use for New..." action is clearly closer to the edited setting.
  */
 export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
   const { isOpen, toggleChoice } = useDisclosureList<"sound" | "theme">();
@@ -77,7 +77,7 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
   return (
     <>
       <DialogHeader title="Dojo Settings" onClose={onClose} />
-      <DialogContent className={styles.content}>
+      <DialogContent menuRhythm="compact">
         <DisclosureList grouped groupGap="section">
           <DisclosureListGroup>
             <DisclosureListItem

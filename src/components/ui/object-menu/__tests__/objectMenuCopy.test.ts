@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
-import {
-  getObjectManagementActions,
-  getObjectMenuTitle,
-  getObjectMenuTriggerLabel,
-} from "../objectMenuCopy";
+import { getObjectManagementActions } from "../objectMenuCopy";
 
-describe("object menu copy", () => {
+describe("object management copy", () => {
   it("uses Delete for sessions", () => {
     const [, dangerCopy] = getObjectManagementActions("session");
 
@@ -24,13 +20,14 @@ describe("object menu copy", () => {
     expect(instrumentDangerCopy.confirmLabel).toBe("Remove this instrument?");
   });
 
-  it("keeps menu titles and trigger labels consistent", () => {
-    expect(getObjectMenuTitle("session")).toBe("Session Menu");
-    expect(getObjectMenuTriggerLabel("session")).toBe("Session menu");
-    expect(getObjectMenuTitle("part")).toBe("Part Menu");
-    expect(getObjectMenuTriggerLabel("part")).toBe("Part menu");
-    expect(getObjectMenuTitle("instrument")).toBe("Instrument Menu");
-    expect(getObjectMenuTriggerLabel("instrument")).toBe("Instrument menu");
+  it("keeps management labels scoped to object lifecycle actions", () => {
+    const [sessionDuplicate] = getObjectManagementActions("session");
+    const [partDuplicate] = getObjectManagementActions("part");
+    const [instrumentDuplicate] = getObjectManagementActions("instrument");
+
+    expect(sessionDuplicate.ariaLabel).toBe("Duplicate session");
+    expect(partDuplicate.ariaLabel).toBe("Duplicate part");
+    expect(instrumentDuplicate.ariaLabel).toBe("Duplicate instrument");
   });
 
   it("keeps management actions ordered as duplicate then danger", () => {

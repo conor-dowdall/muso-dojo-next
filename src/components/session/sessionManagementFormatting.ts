@@ -3,7 +3,6 @@ import {
   noteCollections,
 } from "@musodojo/music-theory-data";
 import { type MusicPartConfig, type SessionConfig } from "@/types/session";
-import { type SessionNoteColorConfig } from "@/types/note-colors";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 
 export type SessionManagementPartSummary = Pick<
@@ -14,13 +13,11 @@ export type SessionManagementPartSummary = Pick<
 export interface SessionManagementSessionSummary {
   id: string;
   name: string;
-  noteColorConfig?: SessionNoteColorConfig;
   parts: SessionManagementPartSummary[];
 }
 
 export interface SessionManagementSnapshot {
   activeSessionId: string | null;
-  defaultSessionNoteColorConfig?: SessionNoteColorConfig;
   sessions: SessionManagementSessionSummary[];
 }
 
@@ -108,7 +105,6 @@ export function sessionSummaryMatchesSession(
   return (
     summary.id === session.id &&
     summary.name === session.name &&
-    summary.noteColorConfig === session.noteColorConfig &&
     summary.parts.length === session.parts.length &&
     summary.parts.every((partSummary, index) =>
       partSummaryMatchesMusicPart(partSummary, session.parts[index]),

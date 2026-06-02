@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { DisplayFormatTriggerButton } from "@/components/music-theory/DisplayFormatTriggerButton";
-import { ObjectMenuTriggerButton } from "@/components/ui/object-menu";
+import { OverflowMenuButton } from "@/components/ui/object-menu";
 import {
   InstrumentMenuDialog,
   type InstrumentMenuChoice,
@@ -303,8 +303,8 @@ export const InstrumentHeaderActions = ({
           role="group"
           aria-label="Instrument utilities"
         >
-          <ObjectMenuTriggerButton
-            level="instrument"
+          <OverflowMenuButton
+            aria-label="Instrument options"
             onClick={() => openMenu(null)}
           />
         </span>

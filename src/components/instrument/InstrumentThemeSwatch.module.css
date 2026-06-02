@@ -2,12 +2,18 @@
   display: grid;
   position: relative;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  inline-size: var(--instrument-theme-swatch-width, var(--theme-swatch-width));
-  block-size: var(--instrument-theme-swatch-height, var(--theme-swatch-height));
+  inline-size: var(
+    --instrument-theme-swatch-width,
+    var(--preview-swatch-width)
+  );
+  block-size: var(
+    --instrument-theme-swatch-height,
+    var(--preview-swatch-height)
+  );
   overflow: hidden;
   border-radius: var(
     --instrument-theme-swatch-radius,
-    var(--theme-swatch-radius)
+    var(--preview-swatch-radius)
   );
   background: var(--keyboard-swatch-white-key-background);
   box-shadow: inset 0 0 0 var(--border-width-base) rgb(0 0 0 / 0.18);
@@ -65,12 +71,18 @@
   display: block;
   position: relative;
   container-type: size;
-  inline-size: var(--instrument-theme-swatch-width, var(--theme-swatch-width));
-  block-size: var(--instrument-theme-swatch-height, var(--theme-swatch-height));
+  inline-size: var(
+    --instrument-theme-swatch-width,
+    var(--preview-swatch-width)
+  );
+  block-size: var(
+    --instrument-theme-swatch-height,
+    var(--preview-swatch-height)
+  );
   overflow: hidden;
   border-radius: var(
     --instrument-theme-swatch-radius,
-    var(--theme-swatch-radius)
+    var(--preview-swatch-radius)
   );
   background: var(--fretboard-swatch-background);
   background-position: center;

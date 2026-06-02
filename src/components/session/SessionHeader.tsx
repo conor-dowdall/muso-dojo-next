@@ -1,17 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Maximize2, Palette, Pencil, Plus } from "lucide-react";
+import { Maximize2, Plus } from "lucide-react";
 import { Heading } from "@/components/ui/typography/Heading";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 import { Dialog } from "@/components/ui/dialog/Dialog";
 import { DojoSettingsDialog } from "@/components/app-settings/DojoSettingsDialog";
 import { useAppStore } from "@/stores/appStore";
-import { ObjectMenuTriggerButton } from "@/components/ui/object-menu";
+import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { SessionManagementDialog } from "./SessionManagementDialog";
-import { type SessionManagementSettingChoice } from "./sessionManagementTypes";
 import { SessionMenu } from "./SessionMenu";
+import { SessionOptionsDialog } from "./SessionOptionsDialog";
 import styles from "./SessionHeader.module.css";
 
 interface SessionHeaderProps {
@@ -24,13 +24,9 @@ export function SessionHeader({
   onOpenAddDialog,
 }: SessionHeaderProps) {
   const [dialogIntent, setDialogIntent] = useState<
-    | { kind: "manage" }
+    | { kind: "session-options" }
+    | { kind: "sessions" }
     | { kind: "settings" }
-    | {
-        kind: "setting";
-        sessionId: string;
-        setting: SessionManagementSettingChoice;
-      }
     | null
   >(null);
   const [dialogKey, setDialogKey] = useState(0);
@@ -42,25 +38,19 @@ export function SessionHeader({
   );
   const hasActiveSession = activeSessionId !== null;
   const isDialogOpen = dialogIntent !== null;
+  const sessionOverflowLabel = hasActiveSession
+    ? "Session options"
+    : "Sessions";
 
   const openDialog = (
     intent:
-      | { kind: "manage" }
-      | { kind: "settings" }
-      | {
-          kind: "setting";
-          sessionId: string;
-          setting: SessionManagementSettingChoice;
-        },
+      | { kind: "session-options" }
+      | { kind: "sessions" }
+      | { kind: "settings" },
   ) => {
     setDialogKey((currentKey) => currentKey + 1);
     setDialogIntent(intent);
   };
-
-  const openSessionSetting = (
-    sessionId: string,
-    setting: SessionManagementSettingChoice,
-  ) => openDialog({ kind: "setting", sessionId, setting });
 
   const closeDialog = () => setDialogIntent(null);
 
@@ -73,17 +63,6 @@ export function SessionHeader({
             <Heading as="h1" className={styles.title} size="base">
               {sessionName}
             </Heading>
-            {activeSessionId ? (
-              <IconButton
-                aria-label="Rename session"
-                className={styles.titleUtilityButton}
-                icon={<Pencil />}
-                size="xs"
-                tooltip="Rename session"
-                variant="ghost"
-                onClick={() => openSessionSetting(activeSessionId, "title")}
-              />
-            ) : null}
           </>
         }
         actions={
@@ -91,13 +70,15 @@ export function SessionHeader({
             <span
               className={styles.sessionActionGroup}
               role="group"
-              aria-label="Session actions"
+              aria-label="Session controls"
             >
               <IconButton
                 aria-label="Add to session"
                 disabled={!hasActiveSession}
                 icon={<Plus />}
                 size="sm"
+                tooltip="Add to session"
+                variant="filled"
                 onClick={onOpenAddDialog}
               />
               <IconButton
@@ -109,24 +90,13 @@ export function SessionHeader({
                 tooltip="Performance mode"
                 onClick={onEnterPerformanceMode}
               />
-              <IconButton
-                aria-label="Edit session note colors"
-                disabled={!activeSessionId}
-                icon={<Palette />}
-                size="sm"
-                tooltip="Session note colors"
-                onClick={() => {
-                  if (!activeSessionId) {
-                    return;
-                  }
-
-                  openSessionSetting(activeSessionId, "note-colors");
-                }}
-              />
-              <ObjectMenuTriggerButton
-                aria-label="Manage sessions"
-                level="session"
-                onClick={() => openDialog({ kind: "manage" })}
+              <OverflowMenuButton
+                aria-label={sessionOverflowLabel}
+                onClick={() =>
+                  openDialog({
+                    kind: hasActiveSession ? "session-options" : "sessions",
+                  })
+                }
               />
             </span>
             <SessionMenu
@@ -136,27 +106,18 @@ export function SessionHeader({
         }
       />
 
-      <Dialog
-        isOpen={isDialogOpen}
-        onClose={closeDialog}
-        size={dialogIntent?.kind === "settings" ? "md" : "lg"}
-      >
+      <Dialog isOpen={isDialogOpen} onClose={closeDialog} size="standard">
         {dialogIntent?.kind === "settings" ? (
           <DojoSettingsDialog key={dialogKey} onClose={closeDialog} />
-        ) : (
-          <SessionManagementDialog
+        ) : dialogIntent?.kind === "session-options" ? (
+          <SessionOptionsDialog
             key={dialogKey}
-            initialOpenSetting={
-              dialogIntent?.kind === "setting"
-                ? {
-                    sessionId: dialogIntent.sessionId,
-                    setting: dialogIntent.setting,
-                  }
-                : null
-            }
             onClose={closeDialog}
+            onOpenSessions={() => openDialog({ kind: "sessions" })}
           />
-        )}
+        ) : dialogIntent?.kind === "sessions" ? (
+          <SessionManagementDialog key={dialogKey} onClose={closeDialog} />
+        ) : null}
       </Dialog>
     </>
   );

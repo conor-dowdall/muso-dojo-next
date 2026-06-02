@@ -147,7 +147,11 @@ export function InstrumentMenuDialog({
   };
 
   return (
-    <ObjectMenuDialog isOpen={isOpen} level="instrument" onClose={onClose}>
+    <ObjectMenuDialog
+      isOpen={isOpen}
+      title="Instrument Options"
+      onClose={onClose}
+    >
       <DisclosureListGroup>
         <DisclosureListItem
           ariaLabel={`Playback sound. Current: ${resolvedAudioPreset.label}`}
@@ -233,7 +237,7 @@ export function InstrumentMenuDialog({
       </DisclosureListGroup>
 
       <ObjectManagementGroup
-        level="instrument"
+        kind="instrument"
         onDanger={onRemove ? handleRemove : undefined}
         onDuplicate={onClone ? handleClone : undefined}
       />

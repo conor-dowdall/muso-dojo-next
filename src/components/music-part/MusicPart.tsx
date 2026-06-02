@@ -82,7 +82,7 @@ function MusicPartContent({
         ) : null}
       </div>
       {musicPart.addPartModule ? (
-        <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="lg">
+        <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="wide">
           <PartModuleCreationDialog
             key={addDialogKey}
             instrumentCreationRangeContext={

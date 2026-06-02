@@ -28,9 +28,14 @@ export function MusicPartMenuDialog({
   };
 
   return (
-    <ObjectMenuDialog isOpen={isOpen} level="part" onClose={onClose}>
+    <ObjectMenuDialog
+      isOpen={isOpen}
+      size="compact"
+      title="Part Actions"
+      onClose={onClose}
+    >
       <ObjectManagementGroup
-        level="part"
+        kind="part"
         onDanger={musicPart.removePart ? handleRemove : undefined}
         onDuplicate={musicPart.clonePart ? handleClone : undefined}
       />

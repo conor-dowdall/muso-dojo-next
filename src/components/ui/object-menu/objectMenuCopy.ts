@@ -1,13 +1,11 @@
-export type ObjectMenuLevel = "session" | "part" | "instrument";
+export type ManagedObjectKind = "session" | "part" | "instrument";
 
 export type ObjectManagementActionKind = "duplicate" | "danger";
 
-interface ObjectMenuCopy {
+interface ObjectManagementCopy {
   dangerGerund: string;
   dangerVerb: "Delete" | "Remove";
   noun: string;
-  title: string;
-  triggerLabel: string;
 }
 
 interface ObjectManagementCopyOptions {
@@ -29,47 +27,33 @@ interface ObjectManagementDangerCopy {
   label: "Delete" | "Remove";
 }
 
-const objectMenuCopy = {
+const objectManagementCopy = {
   session: {
     dangerGerund: "deleting",
     dangerVerb: "Delete",
     noun: "session",
-    title: "Session Menu",
-    triggerLabel: "Session menu",
   },
   part: {
     dangerGerund: "removing",
     dangerVerb: "Remove",
     noun: "part",
-    title: "Part Menu",
-    triggerLabel: "Part menu",
   },
   instrument: {
     dangerGerund: "removing",
     dangerVerb: "Remove",
     noun: "instrument",
-    title: "Instrument Menu",
-    triggerLabel: "Instrument menu",
   },
-} as const satisfies Record<ObjectMenuLevel, ObjectMenuCopy>;
+} as const satisfies Record<ManagedObjectKind, ObjectManagementCopy>;
 
-export function getObjectMenuTitle(level: ObjectMenuLevel) {
-  return objectMenuCopy[level].title;
-}
-
-export function getObjectMenuTriggerLabel(level: ObjectMenuLevel) {
-  return objectMenuCopy[level].triggerLabel;
-}
-
-export function getObjectMenuDangerVerb(level: ObjectMenuLevel) {
-  return objectMenuCopy[level].dangerVerb;
+export function getObjectManagementDangerVerb(kind: ManagedObjectKind) {
+  return objectManagementCopy[kind].dangerVerb;
 }
 
 export function getObjectManagementActions(
-  level: ObjectMenuLevel,
+  kind: ManagedObjectKind,
   { objectName }: ObjectManagementCopyOptions = {},
 ): readonly [ObjectManagementDuplicateCopy, ObjectManagementDangerCopy] {
-  const copy = objectMenuCopy[level];
+  const copy = objectManagementCopy[kind];
   const trimmedObjectName = objectName?.trim();
   const confirmTarget = trimmedObjectName || `this ${copy.noun}`;
   const confirmAriaTarget = trimmedObjectName || copy.noun;

@@ -1,0 +1,69 @@
+.rowCluster {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--selectable-overflow-row-panel-gap, var(--space-0));
+}
+
+.row {
+  --selectable-overflow-row-control-size: var(--control-size-xl);
+
+  display: grid;
+  min-inline-size: 0;
+  grid-template-columns:
+    minmax(0, 1fr)
+    var(--selectable-overflow-row-control-size);
+  gap: var(--selectable-overflow-row-gap, var(--space-2));
+  align-items: stretch;
+}
+
+.selectButton {
+  --option-button-list-size: var(--selectable-overflow-row-control-size);
+
+  min-inline-size: 0;
+}
+
+.currentMarker {
+  display: inline-flex;
+  box-sizing: border-box;
+  inline-size: var(--preview-swatch-width);
+  block-size: var(--preview-swatch-height);
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--space-2);
+  border: var(--border-width-base) solid
+    color-mix(in srgb, var(--color-accent) 58%, var(--color-border));
+  border-radius: var(--preview-swatch-radius);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-accent) 34%, var(--color-surface)),
+      color-mix(
+        in srgb,
+        var(--color-accent) 14%,
+        var(--color-control-outline-background)
+      )
+    ),
+    var(--color-control-outline-background);
+  color: var(--color-text);
+  font-size: var(--text-2xs);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-none);
+  text-transform: uppercase;
+  box-shadow: inset 0 var(--space-px) 0 var(--color-surface-highlight);
+}
+
+.overflowButton {
+  --button-control-size: var(--selectable-overflow-row-control-size);
+  --button-icon-size: var(--text-base);
+
+  inline-size: var(--selectable-overflow-row-control-size);
+  block-size: 100%;
+  color: var(--color-text-muted);
+}
+
+.overflowButton[data-selected="true"],
+.overflowButton:not(:disabled):hover,
+.overflowButton:focus-visible {
+  color: var(--color-text);
+}

@@ -20,11 +20,9 @@ import {
   sessionSummaryMatchesSession,
   type SessionManagementSnapshot,
 } from "./sessionManagementFormatting";
-import { type SessionManagementInitialSetting } from "./sessionManagementTypes";
 import styles from "./SessionManagementDialog.module.css";
 
 interface SessionManagementDialogProps {
-  initialOpenSetting?: SessionManagementInitialSetting | null;
   onClose: () => void;
 }
 
@@ -33,13 +31,9 @@ function createSessionManagementSnapshotSelector() {
 
   return (state: AppStore): SessionManagementSnapshot => {
     const sourceSessions = Object.values(state.sessions);
-    const defaultSessionNoteColorConfig =
-      state.preferences.defaultSessionNoteColorConfig;
     let canReuseSnapshot =
       previousSnapshot !== undefined &&
       previousSnapshot.activeSessionId === state.activeSessionId &&
-      previousSnapshot.defaultSessionNoteColorConfig ===
-        defaultSessionNoteColorConfig &&
       previousSnapshot.sessions.length === sourceSessions.length;
     const sessions = sourceSessions.map((session, index) => {
       const previousSession = previousSnapshot?.sessions[index];
@@ -56,7 +50,6 @@ function createSessionManagementSnapshotSelector() {
       return {
         id: session.id,
         name: session.name,
-        noteColorConfig: session.noteColorConfig,
         parts: session.parts.map(createSessionPartSummary),
       };
     });
@@ -67,7 +60,6 @@ function createSessionManagementSnapshotSelector() {
 
     previousSnapshot = {
       activeSessionId: state.activeSessionId,
-      defaultSessionNoteColorConfig,
       sessions,
     };
 
@@ -79,30 +71,18 @@ const selectSessionManagementSnapshot =
   createSessionManagementSnapshotSelector();
 
 export function SessionManagementDialog({
-  initialOpenSetting = null,
   onClose,
 }: SessionManagementDialogProps) {
-  const [openSessionId, setOpenSessionId] = useState<string | null>(
-    initialOpenSetting?.sessionId ?? null,
-  );
+  const [openSessionId, setOpenSessionId] = useState<string | null>(null);
   const [deleteConfirmationSessionId, setDeleteConfirmationSessionId] =
     useState<string | null>(null);
-  const {
-    activeSessionId,
-    defaultSessionNoteColorConfig,
-    sessions: sessionList,
-  } = useAppStore(selectSessionManagementSnapshot);
+  const { activeSessionId, sessions: sessionList } = useAppStore(
+    selectSessionManagementSnapshot,
+  );
   const setActiveSessionId = useAppStore((state) => state.setActiveSessionId);
   const addSession = useAppStore((state) => state.addSession);
   const cloneSession = useAppStore((state) => state.cloneSession);
   const removeSession = useAppStore((state) => state.removeSession);
-  const renameSession = useAppStore((state) => state.renameSession);
-  const setSessionNoteColorConfig = useAppStore(
-    (state) => state.setSessionNoteColorConfig,
-  );
-  const setDefaultSessionNoteColorConfig = useAppStore(
-    (state) => state.setDefaultSessionNoteColorConfig,
-  );
 
   const activeSession =
     (activeSessionId
@@ -115,7 +95,7 @@ export function SessionManagementDialog({
     setDeleteConfirmationSessionId(null);
   };
 
-  const handleSessionActionToggle = (sessionId: string) => {
+  const handleSessionOptionsToggle = (sessionId: string) => {
     setOpenSessionId((currentSessionId) =>
       currentSessionId === sessionId ? null : sessionId,
     );
@@ -128,6 +108,7 @@ export function SessionManagementDialog({
     }
 
     setActiveSessionId(sessionId);
+    setOpenSessionId(null);
     setDeleteConfirmationSessionId(null);
   };
 
@@ -145,8 +126,8 @@ export function SessionManagementDialog({
 
   return (
     <>
-      <DialogHeader title="Manage Sessions" onClose={onClose} />
-      <DialogContent className={styles.content}>
+      <DialogHeader title="Sessions" onClose={onClose} />
+      <DialogContent menuRhythm="standard">
         <section
           className={styles.sessionListSection}
           aria-label="Session choices"
@@ -173,31 +154,15 @@ export function SessionManagementDialog({
                     isDeleteConfirming={
                       deleteConfirmationSessionId === session.id
                     }
-                    initialOpenSetting={
-                      session.id === initialOpenSetting?.sessionId
-                        ? initialOpenSetting.setting
-                        : null
-                    }
                     isOpen={session.id === openSessionId}
                     session={session}
-                    sessions={sessionList}
                     onCancelDeleteSession={() =>
                       setDeleteConfirmationSessionId(null)
                     }
                     onDeleteSession={handleDeleteSession}
                     onDuplicateSession={handleCloneSession}
-                    onNoteColorConfigChange={(sessionId, noteColorConfig) =>
-                      setSessionNoteColorConfig(sessionId, noteColorConfig)
-                    }
-                    defaultSessionNoteColorConfig={
-                      defaultSessionNoteColorConfig
-                    }
-                    onDefaultSessionNoteColorConfigChange={
-                      setDefaultSessionNoteColorConfig
-                    }
-                    onRenameSession={renameSession}
                     onRequestDeleteSession={setDeleteConfirmationSessionId}
-                    onToggleActions={handleSessionActionToggle}
+                    onToggleOptions={handleSessionOptionsToggle}
                     onUseSession={handleSelectSession}
                   />
                 ))
@@ -206,7 +171,7 @@ export function SessionManagementDialog({
           </DisclosureList>
         </section>
       </DialogContent>
-      <DialogDoneFooter className={styles.footer} onDone={onClose} />
+      <DialogDoneFooter onDone={onClose} />
     </>
   );
 }

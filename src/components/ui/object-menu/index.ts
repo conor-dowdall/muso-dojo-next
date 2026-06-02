@@ -1,11 +1,9 @@
 export { ObjectManagementGroup } from "./ObjectManagementGroup";
 export { ObjectMenuDialog } from "./ObjectMenuDialog";
-export { ObjectMenuTriggerButton } from "./ObjectMenuTriggerButton";
+export { OverflowMenuButton } from "./OverflowMenuButton";
 export {
   getObjectManagementActions,
-  getObjectMenuDangerVerb,
-  getObjectMenuTitle,
-  getObjectMenuTriggerLabel,
+  getObjectManagementDangerVerb,
   type ObjectManagementActionKind,
-  type ObjectMenuLevel,
+  type ManagedObjectKind,
 } from "./objectMenuCopy";

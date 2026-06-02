@@ -150,7 +150,7 @@ function HydratedSession({
           onOpenAddDialog={isPerformanceMode ? undefined : openAddDialog}
         />
       ) : null}
-      <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="lg">
+      <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="wide">
         <AddToSessionDialog
           key={addDialogKey}
           instrumentCreationRangeContext={instrumentCreationRangeContext}

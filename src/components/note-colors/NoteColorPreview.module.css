@@ -1,7 +1,13 @@
 .preview {
   display: grid;
-  inline-size: var(--instrument-theme-swatch-width, var(--theme-swatch-width));
-  block-size: var(--instrument-theme-swatch-height, var(--theme-swatch-height));
+  inline-size: var(
+    --instrument-theme-swatch-width,
+    var(--preview-swatch-width)
+  );
+  block-size: var(
+    --instrument-theme-swatch-height,
+    var(--preview-swatch-height)
+  );
   grid-template-columns: repeat(6, minmax(0, 1fr));
   grid-template-rows: repeat(2, minmax(0, 1fr));
   gap: var(--space-px);
@@ -9,7 +15,7 @@
   padding: var(--space-0_5);
   border-radius: var(
     --note-color-swatch-radius,
-    var(--instrument-theme-swatch-radius, var(--theme-swatch-radius))
+    var(--instrument-theme-swatch-radius, var(--preview-swatch-radius))
   );
   background-color: var(--color-surface);
   box-shadow: inset 0 0 0 var(--border-width-base) rgb(0 0 0 / 0.18);

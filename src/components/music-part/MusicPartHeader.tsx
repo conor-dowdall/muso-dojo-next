@@ -18,7 +18,7 @@ import { getNoteCollectionDisplayName } from "@/utils/music-theory/getNoteCollec
 import styles from "./MusicPartHeader.module.css";
 import { Plus } from "lucide-react";
 import { Heading } from "@/components/ui/typography/Heading";
-import { ObjectMenuTriggerButton } from "@/components/ui/object-menu";
+import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { MusicPartMenuDialog } from "./MusicPartMenuDialog";
 
 interface MusicPartHeaderProps {
@@ -76,8 +76,8 @@ export function MusicPartHeader({
               />
             ) : null}
             {hasPartMenu ? (
-              <ObjectMenuTriggerButton
-                level="part"
+              <OverflowMenuButton
+                aria-label="Part actions"
                 onClick={() => setIsMenuOpen(true)}
               />
             ) : null}
@@ -95,7 +95,7 @@ export function MusicPartHeader({
       <Dialog
         isOpen={dialogMode !== null}
         onClose={() => setDialogMode(null)}
-        size={dialogMode === "root" ? "sm" : "md"}
+        size={dialogMode === "root" ? "compact" : "standard"}
       >
         <DialogHeader
           title={
