@@ -1,19 +1,19 @@
 # Muso Dojo
 
-**Muso Dojo** is a modern web application for music education.
+Muso Dojo is a free collection of interactive music tools for teachers and students.
 
-**Goal**: Empower music teachers and students through interactive music tools.
+It focuses on clear, hands-on ways to explore notes, instruments, and musical patterns.
 
 ## Demo
 
-Visit Muso Dojo at https://musodojo.vercel.app/.
+https://musodojo.vercel.app/
 
 ## Contributing
 
-Thanks for your interest in Muso Dojo! This is a solo project, and while it is open-source, I am not accepting external Pull Requests right now.
+Solo project. Issues and suggestions are welcome; external pull requests are not open yet.
 
-For bug reports and suggestions, please see [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-This project is licensed under the AGPL-3.0-only License - see the [LICENSE](LICENSE) file for details.
+AGPL-3.0-only. See [LICENSE](LICENSE).
