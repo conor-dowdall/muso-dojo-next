@@ -12,7 +12,7 @@ import {
   type CustomNoteColorConfig,
   type NoteColorMode,
   type NoteColorTuple,
-  type SessionNoteColorConfig,
+  type NoteColorConfig,
 } from "@/types/note-colors";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -70,7 +70,7 @@ export function normalizeCustomNoteColors(
 }
 
 export function createCustomNoteColorConfig(
-  sourceConfig?: SessionNoteColorConfig,
+  sourceConfig?: NoteColorConfig,
 ): CustomNoteColorConfig {
   if (sourceConfig?.source === "custom") {
     return sourceConfig;
@@ -99,7 +99,7 @@ export function createCustomNoteColorConfig(
 
 export function normalizeNoteColorConfig(
   value: unknown,
-): SessionNoteColorConfig | undefined {
+): NoteColorConfig | undefined {
   if (!isRecord(value)) {
     return undefined;
   }

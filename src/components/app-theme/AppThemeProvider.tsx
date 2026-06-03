@@ -25,7 +25,7 @@ export function applyAppThemeChoice(
 export function AppThemeProvider({ children }: { children: ReactNode }) {
   const hasHydrated = useHydrateAppStore();
   const appThemeChoice = useAppStore(
-    (state) => state.preferences.appTheme ?? DEFAULT_APP_THEME_CHOICE,
+    (state) => state.dojoSettings.appTheme ?? DEFAULT_APP_THEME_CHOICE,
   );
 
   useEffect(() => {

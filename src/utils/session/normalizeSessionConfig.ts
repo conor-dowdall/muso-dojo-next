@@ -1,5 +1,4 @@
 import { type MusicPartConfig, type SessionConfig } from "@/types/session";
-import { normalizeNoteColorConfig } from "@/utils/note-colors/createNoteColorConfig";
 import { normalizeMusicPartConfig } from "@/utils/session/normalizeMusicPartConfig";
 import {
   ensureUniqueIds,
@@ -15,7 +14,6 @@ import {
 
 export function normalizeSessionConfig(value: unknown): SessionConfig {
   const input = isRecord(value) ? value : {};
-  const noteColorConfig = normalizeNoteColorConfig(input.noteColorConfig);
   const parts = Array.isArray(input.parts)
     ? input.parts
         .map((part, partIndex) => normalizeMusicPartConfig(part, partIndex))
@@ -26,7 +24,6 @@ export function normalizeSessionConfig(value: unknown): SessionConfig {
     id: normalizeId(input.id, FALLBACK_SESSION_ID),
     name: normalizeString(input.name) ?? DEFAULT_SESSION_NAME,
     lastModified: normalizeString(input.lastModified) ?? FALLBACK_LAST_MODIFIED,
-    ...(noteColorConfig ? { noteColorConfig } : {}),
     parts: ensureUniqueIds(parts),
   };
 }

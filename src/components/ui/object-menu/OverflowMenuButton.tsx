@@ -16,9 +16,9 @@ type OverflowMenuButtonProps = Omit<
 
 /**
  * !!! LLM COPY CONVENTION: Ellipsis means overflow, not a specific task.
- * Pass truthful copy for the surface it opens: "Session options",
- * "Part actions", "Instrument options". Prefer Actions for lifecycle commands,
- * Options for configuration surfaces, and Sessions for the session library.
+ * Pass truthful copy for the surface it opens: "Sessions", "Part actions",
+ * "Instrument options". Prefer Actions for lifecycle commands, Options for
+ * configuration surfaces, and Sessions for the session library.
  */
 export function OverflowMenuButton({
   "aria-label": ariaLabel,

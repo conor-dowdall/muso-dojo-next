@@ -123,7 +123,10 @@ export function updateSessionById(
     return state;
   }
 
-  const nextSession = normalizeSessionForWrite(updatedSession);
+  const nextSession = normalizeSessionForWrite({
+    ...updatedSession,
+    id: session.id,
+  });
 
   return {
     sessions: {

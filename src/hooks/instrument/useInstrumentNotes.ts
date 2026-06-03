@@ -20,7 +20,7 @@ import {
   createActiveNotesSourceKey,
 } from "@/utils/instrument/activeNotesSourceKey";
 import { resolveInstrumentNoteInteractionMode } from "@/utils/instrument/resolveInstrumentInteractionMode";
-import { useSessionNoteColors } from "@/components/note-colors/SessionNoteColorProvider";
+import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
 import { assertNever } from "@/utils/assertNever";
 
@@ -78,7 +78,7 @@ export function useInstrumentNotes({
     noteCollectionKey,
     activeDisplayFormatId,
   });
-  const sessionNoteColors = useSessionNoteColors();
+  const noteColors = useNoteColors();
 
   // Build dependency string for useActiveNotes.
   // noteEmphasis and activeDisplayFormatId are intentionally excluded —
@@ -226,7 +226,7 @@ export function useInstrumentNotes({
   const getNoteColor = (midi: number) =>
     resolveInstrumentNoteColor({
       midi,
-      mode: sessionNoteColors.mode,
+      mode: noteColors.mode,
       rootNote: musicSystem.normalizedRootNote,
     });
 

@@ -11,7 +11,7 @@ import {
 } from "@/types/instrument-active-note";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type InstrumentSize } from "@/types/instrument-layout";
-import { type SessionNoteColorConfig } from "@/types/note-colors";
+import { type NoteColorConfig } from "@/types/note-colors";
 import { type SettingValue } from "@/types/state";
 import {
   type AppStoreSnapshot,
@@ -38,6 +38,15 @@ export type PartSettingsPatch = Partial<
   Omit<MusicPartConfig, "id" | "modules">
 >;
 
+export interface DojoSettingsActions {
+  setAppTheme: (theme: AppThemeChoice) => void;
+  setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => void;
+  setNoteColorConfig: (noteColorConfig: NoteColorConfig) => void;
+  setDefaultInstrumentSetup: (
+    creationDefault: InstrumentCreationDefault,
+  ) => void;
+}
+
 export interface SessionActions {
   setActiveSessionId: (sessionId: string) => void;
   addSession: (settings?: { name?: string }) => string;
@@ -45,21 +54,6 @@ export interface SessionActions {
   cloneSession: (sessionId: string) => string | undefined;
   removeSession: (sessionId: string) => void;
   renameSession: (sessionId: string, name: string) => void;
-  setSessionNoteColorConfig: (
-    sessionId: string,
-    noteColorConfig: SessionNoteColorConfig,
-  ) => void;
-}
-
-export interface PreferenceActions {
-  setAppThemePreference: (theme: AppThemeChoice) => void;
-  setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => void;
-  setDefaultSessionNoteColorConfig: (
-    noteColorConfig: SessionNoteColorConfig,
-  ) => void;
-  setDefaultInstrumentSetup: (
-    creationDefault: InstrumentCreationDefault,
-  ) => void;
 }
 
 export interface PartActions {
@@ -165,8 +159,10 @@ export interface PartModuleActions {
   ) => void;
 }
 
-export type AppStoreActions = SessionActions &
-  PreferenceActions &
+// Action slices follow the product hierarchy: Dojo -> Session -> Part ->
+// Module -> Instrument.
+export type AppStoreActions = DojoSettingsActions &
+  SessionActions &
   PartActions &
   PartModuleActions &
   InstrumentActions;

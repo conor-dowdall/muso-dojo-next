@@ -1,7 +1,7 @@
+import { createDojoSettingsActions } from "./dojoSettingsActions";
 import { createInstrumentActions } from "./instrumentActions";
 import { createPartActions } from "./partActions";
 import { createPartModuleActions } from "./partModuleActions";
-import { createPreferenceActions } from "./preferenceActions";
 import { createSessionActions } from "./sessionActions";
 import {
   type AppStoreActions,
@@ -14,10 +14,10 @@ export function createAppStoreActions(
   get: AppStoreGet,
 ): AppStoreActions {
   return {
+    ...createDojoSettingsActions(set),
     ...createSessionActions(set, get),
     ...createPartActions(set, get),
     ...createPartModuleActions(set, get),
     ...createInstrumentActions(set, get),
-    ...createPreferenceActions(set),
   };
 }

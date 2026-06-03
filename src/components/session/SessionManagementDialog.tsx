@@ -74,6 +74,9 @@ export function SessionManagementDialog({
   onClose,
 }: SessionManagementDialogProps) {
   const [openSessionId, setOpenSessionId] = useState<string | null>(null);
+  const [openRenameSessionId, setOpenRenameSessionId] = useState<string | null>(
+    null,
+  );
   const [deleteConfirmationSessionId, setDeleteConfirmationSessionId] =
     useState<string | null>(null);
   const { activeSessionId, sessions: sessionList } = useAppStore(
@@ -83,6 +86,7 @@ export function SessionManagementDialog({
   const addSession = useAppStore((state) => state.addSession);
   const cloneSession = useAppStore((state) => state.cloneSession);
   const removeSession = useAppStore((state) => state.removeSession);
+  const renameSession = useAppStore((state) => state.renameSession);
 
   const activeSession =
     (activeSessionId
@@ -92,13 +96,15 @@ export function SessionManagementDialog({
   const handleAddSession = () => {
     addSession();
     setOpenSessionId(null);
+    setOpenRenameSessionId(null);
     setDeleteConfirmationSessionId(null);
   };
 
-  const handleSessionOptionsToggle = (sessionId: string) => {
+  const handleSessionActionsToggle = (sessionId: string) => {
     setOpenSessionId((currentSessionId) =>
       currentSessionId === sessionId ? null : sessionId,
     );
+    setOpenRenameSessionId(null);
     setDeleteConfirmationSessionId(null);
   };
 
@@ -109,18 +115,28 @@ export function SessionManagementDialog({
 
     setActiveSessionId(sessionId);
     setOpenSessionId(null);
+    setOpenRenameSessionId(null);
     setDeleteConfirmationSessionId(null);
   };
 
   const handleCloneSession = (sessionId: string) => {
     cloneSession(sessionId);
     setOpenSessionId(null);
+    setOpenRenameSessionId(null);
     setDeleteConfirmationSessionId(null);
   };
 
   const handleDeleteSession = (sessionId: string) => {
     removeSession(sessionId);
     setOpenSessionId(null);
+    setOpenRenameSessionId(null);
+    setDeleteConfirmationSessionId(null);
+  };
+
+  const handleRenameToggle = (sessionId: string) => {
+    setOpenRenameSessionId((currentSessionId) =>
+      currentSessionId === sessionId ? null : sessionId,
+    );
     setDeleteConfirmationSessionId(null);
   };
 
@@ -155,14 +171,25 @@ export function SessionManagementDialog({
                       deleteConfirmationSessionId === session.id
                     }
                     isOpen={session.id === openSessionId}
+                    isRenameOpen={session.id === openRenameSessionId}
                     session={session}
+                    sessions={sessionList}
                     onCancelDeleteSession={() =>
                       setDeleteConfirmationSessionId(null)
                     }
+                    onCloseRename={() =>
+                      setOpenRenameSessionId((currentSessionId) =>
+                        currentSessionId === session.id
+                          ? null
+                          : currentSessionId,
+                      )
+                    }
                     onDeleteSession={handleDeleteSession}
                     onDuplicateSession={handleCloneSession}
+                    onRenameSession={renameSession}
                     onRequestDeleteSession={setDeleteConfirmationSessionId}
-                    onToggleOptions={handleSessionOptionsToggle}
+                    onToggleActions={handleSessionActionsToggle}
+                    onToggleRename={handleRenameToggle}
                     onUseSession={handleSelectSession}
                   />
                 ))

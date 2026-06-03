@@ -22,7 +22,7 @@ export function createStoreSnapshot(
 ): AppStoreSnapshot {
   return {
     activeSessionId: sessionId,
-    preferences: {},
+    dojoSettings: {},
     sessions: {
       [sessionId]: {
         id: sessionId,

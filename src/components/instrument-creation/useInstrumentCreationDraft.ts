@@ -16,7 +16,7 @@ export function useInstrumentCreationDraft(
   instrumentCreationRangeContext?: InstrumentCreationRangeContext,
 ) {
   const defaultInstrumentSetup = useAppStore(
-    (state) => state.preferences.defaultInstrumentSetup,
+    (state) => state.dojoSettings.defaultInstrumentSetup,
   );
   const setDefaultInstrumentSetup = useAppStore(
     (state) => state.setDefaultInstrumentSetup,

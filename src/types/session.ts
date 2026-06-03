@@ -10,7 +10,7 @@ import {
 import { type InstrumentLayoutConfig } from "@/types/instrument-layout";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type InstrumentCreationDefault } from "@/types/instrument-creation-defaults";
-import { type SessionNoteColorConfig } from "@/types/note-colors";
+import { type NoteColorConfig } from "@/types/note-colors";
 import { type FretboardConfig } from "@/types/fretboard";
 import { type KeyboardConfig } from "@/types/keyboard";
 import { type DisplayFormatId } from "@/data/displayFormats";
@@ -117,19 +117,23 @@ export interface SessionConfig {
   id: string;
   name: string;
   lastModified: string;
-  noteColorConfig?: SessionNoteColorConfig;
   parts: MusicPartConfig[];
 }
 
-export interface AppPreferences {
+/**
+ * Dojo-level settings apply across sessions. Keep musical workspace data in
+ * SessionConfig, content structure in MusicPartConfig/PartModuleConfig, and
+ * instrument behavior in InstrumentInstanceConfig.
+ */
+export interface DojoSettings {
   appTheme?: AppThemeName;
-  defaultSessionNoteColorConfig?: SessionNoteColorConfig;
+  noteColorConfig?: NoteColorConfig;
   defaultInstrumentSetup?: InstrumentCreationDefault;
   masterAmbiencePresetId?: MasterAmbiencePresetId;
 }
 
 export interface AppStoreSnapshot {
   activeSessionId: string | null;
-  preferences: AppPreferences;
+  dojoSettings: DojoSettings;
   sessions: Record<string, SessionConfig>;
 }

@@ -11,7 +11,7 @@ export function getAppThemeInitScript() {
     const validThemes = new Set(${appThemeNameList});
     const persisted = localStorage.getItem(${appStoreStorageKey});
     const theme = persisted
-      ? JSON.parse(persisted)?.state?.preferences?.appTheme
+      ? JSON.parse(persisted)?.state?.dojoSettings?.appTheme
       : undefined;
 
     if (validThemes.has(theme)) {

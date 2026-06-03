@@ -27,7 +27,7 @@ export interface CustomNoteColorConfig {
   colors: NoteColorTuple<string | null>;
 }
 
-export type SessionNoteColorConfig =
+export type NoteColorConfig =
   | ThemeNoteColorConfig
   | PresetNoteColorConfig
   | CustomNoteColorConfig;

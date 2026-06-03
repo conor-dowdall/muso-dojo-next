@@ -6,12 +6,12 @@ describe("default preference action copy", () => {
     expect(
       getDefaultPreferenceActionCopy({
         isDefault: false,
-        valueLabel: "These Colors",
-        targetLabel: "New Sessions",
+        valueLabel: "This Setup",
+        targetLabel: "New Instruments",
       }),
     ).toEqual({
-      ariaLabel: "Use these colors for new sessions",
-      label: "Use These Colors for New Sessions",
+      ariaLabel: "Use this setup for new instruments",
+      label: "Use This Setup for New Instruments",
     });
   });
 
@@ -47,14 +47,14 @@ describe("default preference action copy", () => {
     expect(
       getDefaultPreferenceActionCopy({
         isDefault: true,
-        savedAriaLabel: "Current note colors are used for new sessions",
-        savedLabel: "Used for New Sessions",
-        valueLabel: "These Colors",
-        targetLabel: "New Sessions",
+        savedAriaLabel: "Current setup is used for new instruments",
+        savedLabel: "Used for New Instruments",
+        valueLabel: "This Setup",
+        targetLabel: "New Instruments",
       }),
     ).toEqual({
-      ariaLabel: "Current note colors are used for new sessions",
-      label: "Used for New Sessions",
+      ariaLabel: "Current setup is used for new instruments",
+      label: "Used for New Instruments",
     });
   });
 });

@@ -2,7 +2,7 @@
 
 import { useShallow } from "zustand/react/shallow";
 import { Plus } from "lucide-react";
-import { SessionNoteColorProvider } from "@/components/note-colors/SessionNoteColorProvider";
+import { NoteColorProvider } from "@/components/note-colors/NoteColorProvider";
 import { Button } from "@/components/ui/buttons/Button";
 import { useAppStore } from "@/stores/appStore";
 import { MusicPartView } from "./MusicPartView";
@@ -20,7 +20,7 @@ export function SessionView({
   isPerformanceMode = false,
 }: SessionViewProps) {
   const noteColorConfig = useAppStore(
-    (state) => state.sessions[sessionId]?.noteColorConfig,
+    (state) => state.dojoSettings.noteColorConfig,
   );
   const partIds = useAppStore(
     useShallow(
@@ -29,7 +29,7 @@ export function SessionView({
   );
 
   return (
-    <SessionNoteColorProvider config={noteColorConfig}>
+    <NoteColorProvider config={noteColorConfig}>
       {partIds.length === 0 && onOpenAddDialog ? (
         <div className={styles.emptySession}>
           <Button
@@ -50,6 +50,6 @@ export function SessionView({
           />
         ))
       )}
-    </SessionNoteColorProvider>
+    </NoteColorProvider>
   );
 }

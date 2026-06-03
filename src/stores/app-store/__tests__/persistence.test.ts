@@ -23,7 +23,7 @@ import {
   type AppStoreSnapshot,
   type InstrumentPartModuleConfig,
 } from "@/types/session";
-import { type SessionNoteColorConfig } from "@/types/note-colors";
+import { type NoteColorConfig } from "@/types/note-colors";
 
 const fallbackSnapshot = createAppStoreSnapshot({
   id: "fallback-session",
@@ -35,7 +35,7 @@ const fallbackSnapshot = createAppStoreSnapshot({
 function createPersistedSnapshot(sessionId: string): AppStoreSnapshot {
   return {
     activeSessionId: sessionId,
-    preferences: {},
+    dojoSettings: {},
     sessions: {
       [sessionId]: {
         id: sessionId,
@@ -77,7 +77,7 @@ function createPersistedValue(
 }
 
 function expectValidSnapshotInvariants(snapshot: AppStoreSnapshot) {
-  expect(snapshot.preferences).toEqual(expect.any(Object));
+  expect(snapshot.dojoSettings).toEqual(expect.any(Object));
 
   if (snapshot.activeSessionId !== null) {
     expect(snapshot.sessions[snapshot.activeSessionId]).toBeDefined();
@@ -146,8 +146,8 @@ describe("app store persistence", () => {
     vi.useRealTimers();
   });
 
-  it("declares the first stable persisted store version", () => {
-    expect(APP_STORE_VERSION).toBe(1);
+  it("declares the current persisted store version", () => {
+    expect(APP_STORE_VERSION).toBe(2);
   });
 
   it("normalizes unversioned persisted snapshots without resetting sessions", () => {
@@ -185,132 +185,132 @@ describe("app store persistence", () => {
     );
   });
 
-  it("normalizes app preferences while ignoring invalid defaults", () => {
+  it("normalizes dojo settings while ignoring invalid settings", () => {
     const persistedState = createPersistedSnapshot("persisted-session");
     const presetDefault = {
       source: "preset",
       preset: "musoDojo",
-    } satisfies SessionNoteColorConfig;
+    } satisfies NoteColorConfig;
 
     expect(
       normalizeAppStoreSnapshot(
         {
           ...persistedState,
-          preferences: {
+          dojoSettings: {
             appTheme: "ocean",
           },
         },
         fallbackSnapshot,
-      ).preferences.appTheme,
+      ).dojoSettings.appTheme,
     ).toBe("ocean");
 
     expect(
       normalizeAppStoreSnapshot(
         {
           ...persistedState,
-          preferences: {
+          dojoSettings: {
             appTheme: "system",
           },
         },
         fallbackSnapshot,
-      ).preferences,
+      ).dojoSettings,
     ).toEqual({});
 
     expect(
       normalizeAppStoreSnapshot(
         {
           ...persistedState,
-          preferences: {
+          dojoSettings: {
             appTheme: "not-a-theme",
           },
         },
         fallbackSnapshot,
-      ).preferences,
+      ).dojoSettings,
     ).toEqual({});
 
     expect(
       normalizeAppStoreSnapshot(
         {
           ...persistedState,
-          preferences: {
-            defaultSessionNoteColorConfig: presetDefault,
+          dojoSettings: {
+            noteColorConfig: presetDefault,
           },
         },
         fallbackSnapshot,
-      ).preferences.defaultSessionNoteColorConfig,
+      ).dojoSettings.noteColorConfig,
     ).toEqual(presetDefault);
 
     expect(
       normalizeAppStoreSnapshot(
         {
           ...persistedState,
-          preferences: {
-            defaultSessionNoteColorConfig: {
+          dojoSettings: {
+            noteColorConfig: {
               source: "preset",
               preset: "not-a-preset",
             },
           },
         },
         fallbackSnapshot,
-      ).preferences,
+      ).dojoSettings,
     ).toEqual({});
 
     expect(
       normalizeAppStoreSnapshot(
         {
           ...persistedState,
-          preferences: {
-            defaultSessionNoteColorConfig: { source: "theme" },
+          dojoSettings: {
+            noteColorConfig: { source: "theme" },
           },
         },
         fallbackSnapshot,
-      ).preferences,
+      ).dojoSettings,
     ).toEqual({});
 
     expect(
       normalizeAppStoreSnapshot(
         {
           ...persistedState,
-          preferences: {
+          dojoSettings: {
             masterAmbiencePresetId: "short-echo",
           },
         },
         fallbackSnapshot,
-      ).preferences.masterAmbiencePresetId,
+      ).dojoSettings.masterAmbiencePresetId,
     ).toBe("short-echo");
 
     expect(
       normalizeAppStoreSnapshot(
         {
           ...persistedState,
-          preferences: {
+          dojoSettings: {
             masterAmbiencePresetId: "studio-room",
           },
         },
         fallbackSnapshot,
-      ).preferences,
+      ).dojoSettings,
     ).toEqual({});
 
     expect(
       normalizeAppStoreSnapshot(
         {
           ...persistedState,
-          preferences: {
+          dojoSettings: {
             masterAmbiencePresetId: "not-a-sound",
           },
         },
         fallbackSnapshot,
-      ).preferences,
+      ).dojoSettings,
     ).toEqual({});
   });
 
-  it("normalizes valid custom note color defaults", () => {
+  it("normalizes valid custom dojo note colors", () => {
     const persistedState = createPersistedSnapshot("persisted-session");
     const normalized = normalizeAppStoreSnapshot(
       {
         ...persistedState,
-        preferences: {
-          defaultSessionNoteColorConfig: {
+        dojoSettings: {
+          noteColorConfig: {
             source: "custom",
             name: "My Colors",
             mode: "relative",
@@ -321,7 +321,7 @@ describe("app store persistence", () => {
         },
       },
       fallbackSnapshot,
-    ).preferences.defaultSessionNoteColorConfig;
+    ).dojoSettings.noteColorConfig;
 
     expect(normalized).toMatchObject({
       source: "custom",
@@ -340,7 +340,7 @@ describe("app store persistence", () => {
       normalizeAppStoreSnapshot(
         {
           ...persistedState,
-          preferences: {
+          dojoSettings: {
             defaultInstrumentSetup: {
               instrumentType: "fretboard",
               setup: {
@@ -356,7 +356,7 @@ describe("app store persistence", () => {
           },
         },
         fallbackSnapshot,
-      ).preferences.defaultInstrumentSetup,
+      ).dojoSettings.defaultInstrumentSetup,
     ).toEqual({
       instrumentType: "fretboard",
       setup: {
@@ -377,7 +377,7 @@ describe("app store persistence", () => {
       normalizeAppStoreSnapshot(
         {
           ...persistedState,
-          preferences: {
+          dojoSettings: {
             instrumentCreationDefaults: {
               keyboard: {
                 theme: "studio",
@@ -386,7 +386,7 @@ describe("app store persistence", () => {
           },
         },
         fallbackSnapshot,
-      ).preferences,
+      ).dojoSettings,
     ).toEqual({});
   });
 
@@ -397,7 +397,7 @@ describe("app store persistence", () => {
       normalizeAppStoreSnapshot(
         {
           ...persistedState,
-          preferences: {
+          dojoSettings: {
             defaultInstrumentSetup: {
               instrumentType: "fretboard",
               setup: {
@@ -408,7 +408,7 @@ describe("app store persistence", () => {
           },
         },
         fallbackSnapshot,
-      ).preferences,
+      ).dojoSettings,
     ).toEqual({});
   });
 

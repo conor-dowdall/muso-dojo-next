@@ -32,7 +32,7 @@ function HydratedSession({
   const [addDialogKey, setAddDialogKey] = useState(0);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
   const masterAmbiencePresetId = useAppStore((state) =>
-    resolveMasterAmbiencePresetId(state.preferences.masterAmbiencePresetId),
+    resolveMasterAmbiencePresetId(state.dojoSettings.masterAmbiencePresetId),
   );
   const instrumentCreationRangeContextSignature = useAppStore(
     useShallow((state) =>

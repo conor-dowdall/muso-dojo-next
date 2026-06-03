@@ -7,7 +7,6 @@ import {
   type ColorCollectionKey,
 } from "@musodojo/music-theory-data";
 import { Button } from "@/components/ui/buttons/Button";
-import { DefaultPreferenceAction } from "@/components/ui/default-preference-action";
 import {
   DisclosureList,
   DisclosureListChoice,
@@ -31,24 +30,21 @@ import {
   normalizeHexColor,
   normalizeNoteColorConfig,
 } from "@/utils/note-colors/createNoteColorConfig";
-import { noteColorConfigsAreEqual } from "@/utils/session/normalizeAppPreferences";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import { NoteColorPreview } from "./NoteColorPreview";
 import {
   type CustomNoteColorConfig,
   type NoteColorMode,
-  type SessionNoteColorConfig,
+  type NoteColorConfig,
 } from "@/types/note-colors";
 import styles from "./NoteColorSettings.module.css";
 
 interface NoteColorSettingsProps {
-  defaultValue?: SessionNoteColorConfig;
   isOpen?: boolean;
   onClose?: () => void;
   onToggle?: () => void;
-  value?: SessionNoteColorConfig;
-  onChange: (value: SessionNoteColorConfig) => void;
-  onUseForNewSessions?: (value: SessionNoteColorConfig) => void;
+  value?: NoteColorConfig;
+  onChange: (value: NoteColorConfig) => void;
 }
 
 const themePreviewColors = createNoteColorTuple(
@@ -57,7 +53,7 @@ const themePreviewColors = createNoteColorTuple(
 const colorInputFallbackValue = "#737373";
 type NoteColorChoice = "note-colors";
 
-function getNormalizedConfig(value: SessionNoteColorConfig | undefined) {
+function getNormalizedConfig(value: NoteColorConfig | undefined) {
   return normalizeNoteColorConfig(value) ?? DEFAULT_NOTE_COLOR_CONFIG;
 }
 
@@ -73,7 +69,7 @@ function getModeLabel(mode: NoteColorMode) {
   return mode === "relative" ? "Relative to Root" : "Fixed to Notes";
 }
 
-function getConfigLabel(config: SessionNoteColorConfig) {
+function getConfigLabel(config: NoteColorConfig) {
   if (config.source === "theme") {
     return "Plain Color";
   }
@@ -85,7 +81,7 @@ function getConfigLabel(config: SessionNoteColorConfig) {
   return config.name;
 }
 
-function getConfigSubtitle(config: SessionNoteColorConfig) {
+function getConfigSubtitle(config: NoteColorConfig) {
   if (config.source === "theme") {
     return "Same for Every Note";
   }
@@ -97,7 +93,7 @@ function getConfigSubtitle(config: SessionNoteColorConfig) {
   return getModeLabel(config.mode);
 }
 
-function getConfigPreviewColors(config: SessionNoteColorConfig) {
+function getConfigPreviewColors(config: NoteColorConfig) {
   if (config.source === "theme") {
     return themePreviewColors;
   }
@@ -109,7 +105,7 @@ function getConfigPreviewColors(config: SessionNoteColorConfig) {
   return config.colors;
 }
 
-function getConfigSummary(config: SessionNoteColorConfig) {
+function getConfigSummary(config: NoteColorConfig) {
   return `${getConfigLabel(config)}${DISPLAY_VALUE_SEPARATOR}${getConfigSubtitle(
     config,
   )}`;
@@ -152,13 +148,11 @@ function getColorInputValue(color: string | null, index: number) {
 }
 
 export function NoteColorSettings({
-  defaultValue,
   isOpen,
   onClose,
   onToggle,
   value,
   onChange,
-  onUseForNewSessions,
 }: NoteColorSettingsProps) {
   const { closeChoice, openChoice, toggleChoice } =
     useDisclosureList<NoteColorChoice>();
@@ -167,7 +161,6 @@ export function NoteColorSettings({
   );
   const [isCustomEditorOpen, setIsCustomEditorOpen] = useState(false);
   const config = getNormalizedConfig(value);
-  const defaultConfig = getNormalizedConfig(defaultValue);
   const customConfig = createCustomNoteColorConfig(config);
   const selectedCustomConfig =
     config.source === "custom" ? config : customConfig;
@@ -185,10 +178,6 @@ export function NoteColorSettings({
     selectedCustomConfig.colors[selectedCustomColorIndex];
   const isCustomSelected = config.source === "custom";
   const isCustomOpen = isCustomSelected && isCustomEditorOpen;
-  const isDefaultForNewSessions = noteColorConfigsAreEqual(
-    config,
-    defaultConfig,
-  );
 
   return (
     <DisclosureListItem
@@ -410,17 +399,6 @@ export function NoteColorSettings({
 
         {/* !!! LLM COPY CONVENTION: This is a local inline editor Done action. */}
         <DisclosureListPanelActions>
-          {onUseForNewSessions ? (
-            <DefaultPreferenceAction
-              actionAriaLabel="Use current note colors for new sessions"
-              isDefault={isDefaultForNewSessions}
-              savedAriaLabel="Current note colors are used for new sessions"
-              targetLabel="New Sessions"
-              valueLabel="These Colors"
-              variant="footer"
-              onClick={() => onUseForNewSessions(config)}
-            />
-          ) : null}
           <Button label="Done" size="sm" onClick={closeNoteColors} />
         </DisclosureListPanelActions>
       </div>

@@ -5,10 +5,10 @@ import {
   DEFAULT_NOTE_COLOR_VALUES,
   getDefaultNoteColorValue,
 } from "@/data/noteColors";
-import { getSessionNoteColorVariable } from "@/utils/note-colors/resolveNoteColors";
+import { getDojoNoteColorVariable } from "@/utils/note-colors/resolveNoteColors";
 
 describe("note colors", () => {
-  it("uses the Muso Dojo package colors as the app default note colors", () => {
+  it("uses the Muso Dojo package colors as fallback note colors", () => {
     expect(DEFAULT_NOTE_COLOR_VALUES).toEqual(
       colorCollections[DEFAULT_NOTE_COLOR_PRESET].colors,
     );
@@ -19,12 +19,12 @@ describe("note colors", () => {
     expect(getDefaultNoteColorValue(-1)).toBe(DEFAULT_NOTE_COLOR_VALUES[11]);
   });
 
-  it("uses package colors as session note color variable fallbacks", () => {
-    expect(getSessionNoteColorVariable(0)).toBe(
-      `var(--session-note-color-0, ${DEFAULT_NOTE_COLOR_VALUES[0]})`,
+  it("uses package colors as dojo note color variable fallbacks", () => {
+    expect(getDojoNoteColorVariable(0)).toBe(
+      `var(--dojo-note-color-0, ${DEFAULT_NOTE_COLOR_VALUES[0]})`,
     );
-    expect(getSessionNoteColorVariable(13)).toBe(
-      `var(--session-note-color-1, ${DEFAULT_NOTE_COLOR_VALUES[1]})`,
+    expect(getDojoNoteColorVariable(13)).toBe(
+      `var(--dojo-note-color-1, ${DEFAULT_NOTE_COLOR_VALUES[1]})`,
     );
   });
 });

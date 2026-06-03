@@ -1,17 +1,17 @@
 "use client";
 
 import { type SyntheticEvent, useEffect, useId, useRef, useState } from "react";
-import { Check, TextCursorInput } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
-import { DisclosureListItem } from "@/components/ui/disclosure-list/DisclosureList";
+import { DisclosureListActionItem } from "@/components/ui/disclosure-list/DisclosureList";
 import { Text } from "@/components/ui/typography/Text";
 import {
   normalizeSessionNameForComparison,
   type SessionManagementSessionSummary,
 } from "./sessionManagementFormatting";
-import styles from "./SessionNameSettingsItem.module.css";
+import styles from "./SessionRenameActionItem.module.css";
 
-interface SessionNameSettingsItemProps {
+interface SessionRenameActionItemProps {
   isOpen: boolean;
   onClose: () => void;
   onRenameSession: (sessionId: string, name: string) => void;
@@ -21,7 +21,12 @@ interface SessionNameSettingsItemProps {
   shouldFocusInput?: boolean;
 }
 
-export function SessionNameSettingsItem({
+/**
+ * Row action for the Sessions library surface.
+ * Keep the visible row action-oriented ("Rename"), while the inline editor
+ * labels the editable field ("Session Name").
+ */
+export function SessionRenameActionItem({
   isOpen,
   onClose,
   onRenameSession,
@@ -29,7 +34,7 @@ export function SessionNameSettingsItem({
   session,
   sessions,
   shouldFocusInput = false,
-}: SessionNameSettingsItemProps) {
+}: SessionRenameActionItemProps) {
   const nameInputId = useId();
   const nameMessageId = useId();
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -140,13 +145,12 @@ export function SessionNameSettingsItem({
   }, [isOpen, shouldFocusInput]);
 
   return (
-    <DisclosureListItem
-      ariaLabel={`Edit session name. Current: ${session.name}`}
-      icon={<TextCursorInput />}
+    <DisclosureListActionItem
+      ariaLabel={`Rename session. Current name: ${session.name}`}
+      icon={<Pencil />}
       isOpen={isOpen}
       keepMounted
-      label="Name"
-      preview={draftName}
+      label="Rename"
       onToggle={onToggle}
     >
       <form className={styles.nameForm} onSubmit={handleRename}>
@@ -189,6 +193,6 @@ export function SessionNameSettingsItem({
           ) : null}
         </div>
       </form>
-    </DisclosureListItem>
+    </DisclosureListActionItem>
   );
 }

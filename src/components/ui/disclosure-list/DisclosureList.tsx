@@ -72,6 +72,9 @@ export type DisclosureListPanelVariant = "editor" | "menu";
  * - Put lower-frequency configuration, object-management actions, and
  *   destructive actions inside a disclosure list or dialog, with confirmation
  *   where needed.
+ * - Use DisclosureListActionItem for an action row that reveals a compact
+ *   inline editor. Keep its label verb-first, such as "Rename", and avoid
+ *   presenting it as a setting category.
  * - If a panel is a compact inline editor with several local controls, add a
  *   local DisclosureListPanelActions footer with a Done button. This closes the
  *   editor panel only; it is not a dialog-level commit action.
@@ -244,6 +247,33 @@ export function DisclosureListItem({
         {children}
       </DisclosureListPanel>
     </div>
+  );
+}
+
+type DisclosureListActionItemProps = Omit<
+  DisclosureListItemProps,
+  "disclosureIndicator" | "disclosureSemantics" | "showSelectionIndicator"
+>;
+
+/**
+ * !!! LLM COPY CONVENTION: Use this for object actions that reveal a local
+ * editor, such as "Rename". The row is still an accessible disclosure, but it
+ * should read visually as an action instead of a settings submenu.
+ */
+export function DisclosureListActionItem({
+  isOpen,
+  selected,
+  ...props
+}: DisclosureListActionItemProps) {
+  return (
+    <DisclosureListItem
+      {...props}
+      disclosureIndicator={false}
+      disclosureSemantics
+      isOpen={isOpen}
+      selected={selected ?? isOpen}
+      showSelectionIndicator={false}
+    />
   );
 }
 

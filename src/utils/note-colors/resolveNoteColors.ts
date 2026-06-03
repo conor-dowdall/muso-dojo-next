@@ -19,18 +19,16 @@ import {
   type NoteColorMode,
   type NoteColorSource,
   type NoteColorTuple,
-  type SessionNoteColorConfig,
+  type NoteColorConfig,
 } from "@/types/note-colors";
 
-export interface ResolvedSessionNoteColors {
+export interface ResolvedNoteColors {
   source: NoteColorSource;
   mode: NoteColorMode;
   colors: NoteColorTuple<string>;
 }
 
-function resolvePresetNoteColors(
-  config: SessionNoteColorConfig,
-): ResolvedSessionNoteColors {
+function resolvePresetNoteColors(config: NoteColorConfig): ResolvedNoteColors {
   const preset =
     config.source === "preset" ? config.preset : DEFAULT_NOTE_COLOR_PRESET;
   const collection = colorCollections[preset];
@@ -44,9 +42,9 @@ function resolvePresetNoteColors(
   };
 }
 
-export function resolveSessionNoteColors(
-  config: SessionNoteColorConfig | undefined,
-): ResolvedSessionNoteColors {
+export function resolveNoteColors(
+  config: NoteColorConfig | undefined,
+): ResolvedNoteColors {
   if (config?.source === "theme") {
     return {
       source: "theme",
@@ -68,18 +66,18 @@ export function resolveSessionNoteColors(
   }
 
   if (config === undefined) {
-    return resolveSessionNoteColors(DEFAULT_NOTE_COLOR_CONFIG);
+    return resolveNoteColors(DEFAULT_NOTE_COLOR_CONFIG);
   }
 
   return resolvePresetNoteColors(config);
 }
 
-export function createSessionNoteColorStyle(
+export function createNoteColorStyle(
   colors: NoteColorTuple<string>,
 ): Record<string, string> {
   return Object.fromEntries(
     NOTE_COLOR_INDEXES.map((index) => [
-      `--session-note-color-${index}`,
+      `--dojo-note-color-${index}`,
       colors[index],
     ]),
   );
@@ -103,10 +101,10 @@ export function getNoteColorIndex(
   });
 }
 
-export function getSessionNoteColorVariable(index: number) {
+export function getDojoNoteColorVariable(index: number) {
   const colorIndex = normalizeChromaticIndex(Math.trunc(index));
 
-  return `var(--session-note-color-${colorIndex}, ${getDefaultNoteColorValue(colorIndex)})`;
+  return `var(--dojo-note-color-${colorIndex}, ${getDefaultNoteColorValue(colorIndex)})`;
 }
 
 export function resolveInstrumentNoteColor({
@@ -122,6 +120,6 @@ export function resolveInstrumentNoteColor({
 
   return {
     index,
-    value: getSessionNoteColorVariable(index),
+    value: getDojoNoteColorVariable(index),
   };
 }

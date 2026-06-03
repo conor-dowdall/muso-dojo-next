@@ -10,7 +10,7 @@ import {
   type ColorCollectionKey,
   type NoteColorMode,
 } from "@musodojo/music-theory-data";
-import { type SessionNoteColorConfig } from "@/types/note-colors";
+import { type NoteColorConfig } from "@/types/note-colors";
 
 export const NOTE_COLOR_COUNT = CHROMATIC_NOTE_COUNT;
 export const NOTE_COLOR_INDEXES = CHROMATIC_INDEXES;
@@ -21,7 +21,7 @@ export const DEFAULT_NOTE_COLOR_PRESET =
 
 export const DEFAULT_NOTE_COLOR_CONFIG = {
   source: "theme",
-} as const satisfies SessionNoteColorConfig;
+} as const satisfies NoteColorConfig;
 
 export const NOTE_COLOR_THEME_VALUE = "var(--note-color-theme)";
 export const NOTE_COLOR_NEUTRAL_VALUE = "var(--note-color-neutral)";

@@ -12,6 +12,7 @@ import {
   DialogDoneFooter,
   DialogHeader,
 } from "@/components/ui/dialog/Dialog";
+import { NoteColorSettings } from "@/components/note-colors/NoteColorSettings";
 import {
   DisclosureList,
   DisclosureListChoice,
@@ -37,27 +38,31 @@ interface DojoSettingsDialogProps {
 
 /**
  * !!! LLM COPY CONVENTION: Dojo Settings are workspace-level behavior.
- * Launch them from the Dojo settings header action. Keep current-object
- * overflow surfaces about Session Options, Part Actions, or Instrument Options;
- * keep Dojo-wide defaults, themes, sound, and accessibility here unless a
- * contextual "Use for New..." action is clearly closer to the edited setting.
+ * Launch them from the Dojo settings header action. Keep Dojo-wide appearance,
+ * sound, defaults, and accessibility here. Sessions manage musical workspaces;
+ * object overflow surfaces such as Part Actions and Instrument Options manage
+ * the object beside their ellipsis.
  */
 export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
-  const { isOpen, toggleChoice } = useDisclosureList<"sound" | "theme">();
-  const appThemePreference = useAppStore((state) => state.preferences.appTheme);
-  const masterAmbiencePreference = useAppStore(
-    (state) => state.preferences.masterAmbiencePresetId,
+  const { closeChoice, isOpen, toggleChoice } = useDisclosureList<
+    "note-colors" | "sound" | "theme"
+  >();
+  const appThemeSetting = useAppStore((state) => state.dojoSettings.appTheme);
+  const noteColorConfig = useAppStore(
+    (state) => state.dojoSettings.noteColorConfig,
   );
-  const setAppThemePreference = useAppStore(
-    (state) => state.setAppThemePreference,
+  const masterAmbienceSetting = useAppStore(
+    (state) => state.dojoSettings.masterAmbiencePresetId,
   );
+  const setAppTheme = useAppStore((state) => state.setAppTheme);
+  const setNoteColorConfig = useAppStore((state) => state.setNoteColorConfig);
   const setMasterAmbiencePresetId = useAppStore(
     (state) => state.setMasterAmbiencePresetId,
   );
-  const appThemeChoice = getAppThemeChoice(appThemePreference);
+  const appThemeChoice = getAppThemeChoice(appThemeSetting);
   const appThemeLabel = getAppThemeLabel(appThemeChoice);
   const masterAmbiencePresetId = resolveMasterAmbiencePresetId(
-    masterAmbiencePreference,
+    masterAmbienceSetting,
   );
   const masterAmbiencePreset = masterAmbiencePresets[masterAmbiencePresetId];
 
@@ -81,6 +86,42 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
         <DisclosureList grouped groupGap="section">
           <DisclosureListGroup>
             <DisclosureListItem
+              ariaLabel={`Theme. Current: ${appThemeLabel}`}
+              icon={<PaintbrushVertical />}
+              isOpen={isOpen("theme")}
+              label="Theme"
+              panelVariant="menu"
+              preview={
+                <ThemeSwatch option={getAppThemeOption(appThemeChoice)} />
+              }
+              subtitle={appThemeLabel}
+              onToggle={() => toggleChoice("theme")}
+            >
+              <DisclosureList>
+                {appThemeOptions.map((option) => (
+                  <DisclosureListChoice
+                    key={option.id}
+                    aria-label={getAppThemeAriaLabel(option)}
+                    label={option.label}
+                    preview={<ThemeSwatch option={option} />}
+                    selected={option.id === appThemeChoice}
+                    onClick={() => setAppTheme(option.id)}
+                  />
+                ))}
+              </DisclosureList>
+            </DisclosureListItem>
+
+            <NoteColorSettings
+              isOpen={isOpen("note-colors")}
+              value={noteColorConfig}
+              onClose={() => closeChoice("note-colors")}
+              onToggle={() => toggleChoice("note-colors")}
+              onChange={setNoteColorConfig}
+            />
+          </DisclosureListGroup>
+
+          <DisclosureListGroup>
+            <DisclosureListItem
               ariaLabel={`Reverb. Current: ${masterAmbiencePreset.label}`}
               icon={<Waves />}
               isOpen={isOpen("sound")}
@@ -101,32 +142,6 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
                     label={preset.label}
                     selected={preset.id === masterAmbiencePresetId}
                     onClick={() => handleMasterAmbiencePresetChange(preset.id)}
-                  />
-                ))}
-              </DisclosureList>
-            </DisclosureListItem>
-
-            <DisclosureListItem
-              ariaLabel={`Theme. Current: ${appThemeLabel}`}
-              icon={<PaintbrushVertical />}
-              isOpen={isOpen("theme")}
-              label="Theme"
-              panelVariant="menu"
-              preview={
-                <ThemeSwatch option={getAppThemeOption(appThemeChoice)} />
-              }
-              subtitle={appThemeLabel}
-              onToggle={() => toggleChoice("theme")}
-            >
-              <DisclosureList>
-                {appThemeOptions.map((option) => (
-                  <DisclosureListChoice
-                    key={option.id}
-                    aria-label={getAppThemeAriaLabel(option)}
-                    label={option.label}
-                    preview={<ThemeSwatch option={option} />}
-                    selected={option.id === appThemeChoice}
-                    onClick={() => setAppThemePreference(option.id)}
                   />
                 ))}
               </DisclosureList>

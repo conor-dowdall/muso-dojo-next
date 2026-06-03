@@ -6,12 +6,11 @@ import { Heading } from "@/components/ui/typography/Heading";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 import { Dialog } from "@/components/ui/dialog/Dialog";
-import { DojoSettingsDialog } from "@/components/app-settings/DojoSettingsDialog";
+import { DojoSettingsDialog } from "@/components/dojo-settings/DojoSettingsDialog";
 import { useAppStore } from "@/stores/appStore";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { SessionManagementDialog } from "./SessionManagementDialog";
 import { SessionMenu } from "./SessionMenu";
-import { SessionOptionsDialog } from "./SessionOptionsDialog";
 import styles from "./SessionHeader.module.css";
 
 interface SessionHeaderProps {
@@ -24,10 +23,7 @@ export function SessionHeader({
   onOpenAddDialog,
 }: SessionHeaderProps) {
   const [dialogIntent, setDialogIntent] = useState<
-    | { kind: "session-options" }
-    | { kind: "sessions" }
-    | { kind: "settings" }
-    | null
+    { kind: "sessions" } | { kind: "settings" } | null
   >(null);
   const [dialogKey, setDialogKey] = useState(0);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
@@ -38,16 +34,9 @@ export function SessionHeader({
   );
   const hasActiveSession = activeSessionId !== null;
   const isDialogOpen = dialogIntent !== null;
-  const sessionOverflowLabel = hasActiveSession
-    ? "Session options"
-    : "Sessions";
+  const sessionOverflowLabel = "Sessions";
 
-  const openDialog = (
-    intent:
-      | { kind: "session-options" }
-      | { kind: "sessions" }
-      | { kind: "settings" },
-  ) => {
+  const openDialog = (intent: { kind: "sessions" } | { kind: "settings" }) => {
     setDialogKey((currentKey) => currentKey + 1);
     setDialogIntent(intent);
   };
@@ -92,11 +81,7 @@ export function SessionHeader({
               />
               <OverflowMenuButton
                 aria-label={sessionOverflowLabel}
-                onClick={() =>
-                  openDialog({
-                    kind: hasActiveSession ? "session-options" : "sessions",
-                  })
-                }
+                onClick={() => openDialog({ kind: "sessions" })}
               />
             </span>
             <SessionMenu
@@ -109,12 +94,6 @@ export function SessionHeader({
       <Dialog isOpen={isDialogOpen} onClose={closeDialog} size="standard">
         {dialogIntent?.kind === "settings" ? (
           <DojoSettingsDialog key={dialogKey} onClose={closeDialog} />
-        ) : dialogIntent?.kind === "session-options" ? (
-          <SessionOptionsDialog
-            key={dialogKey}
-            onClose={closeDialog}
-            onOpenSessions={() => openDialog({ kind: "sessions" })}
-          />
         ) : dialogIntent?.kind === "sessions" ? (
           <SessionManagementDialog key={dialogKey} onClose={closeDialog} />
         ) : null}

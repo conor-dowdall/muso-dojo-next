@@ -25,8 +25,8 @@ import {
   type InstrumentCreationDefault,
   type KeyboardCreationDefault,
 } from "@/types/instrument-creation-defaults";
-import { type SessionNoteColorConfig } from "@/types/note-colors";
-import { type AppPreferences } from "@/types/session";
+import { type NoteColorConfig } from "@/types/note-colors";
+import { type DojoSettings } from "@/types/session";
 import { normalizeNoteColorConfig } from "@/utils/note-colors/createNoteColorConfig";
 import {
   defaultInstrumentSetupsMatchRaw,
@@ -34,13 +34,13 @@ import {
 } from "@/utils/instrument-creation/defaultInstrumentSetup";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 
-function normalizedNoteColorConfig(value: SessionNoteColorConfig | undefined) {
+function normalizedNoteColorConfig(value: NoteColorConfig | undefined) {
   return normalizeNoteColorConfig(value) ?? DEFAULT_NOTE_COLOR_CONFIG;
 }
 
 export function noteColorConfigsAreEqual(
-  left: SessionNoteColorConfig | undefined,
-  right: SessionNoteColorConfig | undefined,
+  left: NoteColorConfig | undefined,
+  right: NoteColorConfig | undefined,
 ) {
   const normalizedLeft = normalizedNoteColorConfig(left);
   const normalizedRight = normalizedNoteColorConfig(right);
@@ -70,9 +70,9 @@ export function noteColorConfigsAreEqual(
   );
 }
 
-export function normalizeDefaultSessionNoteColorConfig(
+export function normalizeNoteColorSetting(
   value: unknown,
-): SessionNoteColorConfig | undefined {
+): NoteColorConfig | undefined {
   const noteColorConfig = normalizeNoteColorConfig(value);
 
   if (
@@ -219,7 +219,7 @@ export function normalizeDefaultInstrumentSetup(
   return defaultInstrumentSetup;
 }
 
-export function normalizeMasterAmbiencePreference(
+export function normalizeMasterAmbienceSetting(
   value: unknown,
 ): MasterAmbiencePresetId | undefined {
   const presetId = resolveMasterAmbiencePresetId(value);
@@ -238,25 +238,23 @@ export function defaultInstrumentSetupsAreEqual(
   return defaultInstrumentSetupsMatchRaw(left, right);
 }
 
-export function normalizeAppPreferences(value: unknown): AppPreferences {
+export function normalizeDojoSettings(value: unknown): DojoSettings {
   if (!isRecord(value)) {
     return {};
   }
 
   const appTheme = normalizeAppThemePreference(value.appTheme);
-  const defaultSessionNoteColorConfig = normalizeDefaultSessionNoteColorConfig(
-    value.defaultSessionNoteColorConfig,
-  );
+  const noteColorConfig = normalizeNoteColorSetting(value.noteColorConfig);
   const defaultInstrumentSetup = normalizeDefaultInstrumentSetup(
     value.defaultInstrumentSetup,
   );
-  const masterAmbiencePresetId = normalizeMasterAmbiencePreference(
+  const masterAmbiencePresetId = normalizeMasterAmbienceSetting(
     value.masterAmbiencePresetId,
   );
 
   return {
     ...(appTheme ? { appTheme } : {}),
-    ...(defaultSessionNoteColorConfig ? { defaultSessionNoteColorConfig } : {}),
+    ...(noteColorConfig ? { noteColorConfig } : {}),
     ...(defaultInstrumentSetup ? { defaultInstrumentSetup } : {}),
     ...(masterAmbiencePresetId ? { masterAmbiencePresetId } : {}),
   };
