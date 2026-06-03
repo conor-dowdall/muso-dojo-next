@@ -1,8 +1,5 @@
 import { DEFAULT_KEYBOARD_THEME } from "@/data/keyboard/themes";
 import { assertNever } from "@/utils/assertNever";
-import { normalizeDroneAudioPresetId } from "@/utils/drone/resolveDroneAudioPreset";
-import { DEFAULT_DRONE_OCTAVE } from "@/utils/drone/droneDefaults";
-import { normalizeDroneOctave } from "@/utils/drone/dronePitch";
 import {
   type DronePartModuleConfig,
   type InstrumentCreationConfig,
@@ -81,17 +78,9 @@ export function createDefaultPartModuleConfig<T extends PartModuleType>(
 ): PartModuleConfig {
   switch (request.type) {
     case "drone": {
-      const settings = request.settings;
-      const octave = normalizeDroneOctave(settings?.octave);
-      const audioPresetId = normalizeDroneAudioPresetId(
-        settings?.audioPresetId,
-      );
-
       return {
         id: createEntityId("module"),
         type: request.type,
-        ...(audioPresetId ? { audioPresetId } : {}),
-        ...(octave !== DEFAULT_DRONE_OCTAVE ? { octave } : {}),
       } satisfies DronePartModuleConfig;
     }
     case "instrument": {

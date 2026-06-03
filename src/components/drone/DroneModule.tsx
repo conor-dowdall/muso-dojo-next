@@ -1,88 +1,98 @@
 "use client";
 
-import { type CSSProperties, useCallback, useState } from "react";
-import { AudioWaveform, Minus, Play, Plus, Square } from "lucide-react";
-import { musoAudioEngine, type AudioPresetId, type DroneHandle } from "@/audio";
-import { InstrumentNote } from "@/components/instrument/InstrumentNote";
+import { useEffect, useMemo, useState } from "react";
+import { type NoteCollectionKey } from "@musodojo/music-theory-data";
+import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
-import { Button } from "@/components/ui/buttons/Button";
-import { IconButton } from "@/components/ui/buttons/IconButton";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
-import { useManualPlayback } from "@/hooks/audio/useManualPlayback";
-import { type SettingSetter } from "@/types/state";
-import {
-  DRONE_OCTAVE_MAX,
-  DRONE_OCTAVE_MIN,
-} from "@/utils/drone/droneDefaults";
-import { resolveDronePitch } from "@/utils/drone/dronePitch";
-import { resolveDroneAudioPresetId } from "@/utils/drone/resolveDroneAudioPreset";
+import { useDroneNotePlayback } from "@/hooks/audio/useDroneNotePlayback";
+import { useInstrumentNavigation } from "@/hooks/instrument/useInstrumentNavigation";
+import { resolveDroneNotes } from "@/utils/drone/droneNotes";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
 import { DroneOptionsDialog } from "./DroneOptionsDialog";
 import styles from "./DroneModule.module.css";
 
 interface DroneModuleProps {
-  audioPresetId?: AudioPresetId;
-  octave?: number;
-  onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
+  noteCollectionKey?: NoteCollectionKey;
   onClone?: () => void;
-  onOctaveChange?: SettingSetter<number>;
   onRemove?: () => void;
   rootNote?: string;
   showHeader?: boolean;
 }
 
 export function DroneModule({
-  audioPresetId,
-  octave,
-  onAudioPresetIdChange,
+  noteCollectionKey,
   onClone,
-  onOctaveChange,
   onRemove,
   rootNote,
   showHeader = true,
 }: DroneModuleProps) {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const noteColors = useNoteColors();
-  const pitch = resolveDronePitch({ rootNote, octave });
-  const resolvedAudioPresetId = resolveDroneAudioPresetId(audioPresetId);
-  const noteColor = resolveInstrumentNoteColor({
-    midi: pitch.midi,
-    mode: noteColors.mode,
-    rootNote: pitch.rootNote,
-  });
-  const playbackRequestKey = `${pitch.midi}:${resolvedAudioPresetId}`;
-  const startDrone = useCallback(
+  const droneNotes = useMemo(
     () =>
-      musoAudioEngine.startDrone({
-        midiNotes: [pitch.midi],
-        presetId: resolvedAudioPresetId,
-        use: "drone",
-        velocity: 0.78,
+      resolveDroneNotes({
+        noteCollectionKey,
+        rootNote,
       }),
-    [pitch.midi, resolvedAudioPresetId],
+    [noteCollectionKey, rootNote],
   );
-  const stopDrone = useCallback(
-    (handle: DroneHandle) => musoAudioEngine.stopDrone(handle),
-    [],
+  const noteKeys = useMemo(
+    () => droneNotes.notes.map((note) => String(note.interval)),
+    [droneNotes.notes],
   );
-  const playback = useManualPlayback({
-    restartKey: playbackRequestKey,
-    start: startDrone,
-    stop: stopDrone,
+  const initialFocusedKey = noteKeys[0] ?? "";
+  const noteByKey = useMemo(
+    () =>
+      new Map(droneNotes.notes.map((note) => [String(note.interval), note])),
+    [droneNotes.notes],
+  );
+  const { isNoteActive, toggleNote } = useDroneNotePlayback({
+    notes: droneNotes.notes,
   });
-  const isDroneActive = playback.isActive;
-  const canLowerOctave = pitch.octave > DRONE_OCTAVE_MIN;
-  const canRaiseOctave = pitch.octave < DRONE_OCTAVE_MAX;
-  const playLabel = isDroneActive ? "Stop Drone" : "Play Drone";
+  const {
+    focusedKey,
+    setFocusedKey,
+    setItemRef,
+    handleKeyDown,
+    handleItemInteraction,
+  } = useInstrumentNavigation<HTMLElement>({
+    initialFocusedKey,
+    onInteract: (target) => {
+      const note = noteByKey.get(target.key);
 
-  const lowerOctave = () => {
-    onOctaveChange?.((currentOctave) => currentOctave - 1);
-  };
+      if (note) {
+        toggleNote(note);
+      }
+    },
+    getMidiForKey: (key) => noteByKey.get(key)?.midi ?? 60,
+    onNavigate: (currentKey, direction) => {
+      if (direction === "up" || direction === "down") {
+        return currentKey;
+      }
 
-  const raiseOctave = () => {
-    onOctaveChange?.((currentOctave) => currentOctave + 1);
-  };
+      const currentIndex = noteKeys.indexOf(currentKey);
+      const nextIndex =
+        currentIndex < 0
+          ? 0
+          : Math.min(
+              noteKeys.length - 1,
+              Math.max(0, currentIndex + (direction === "left" ? -1 : 1)),
+            );
+
+      return noteKeys[nextIndex] ?? currentKey;
+    },
+  });
+  const canManageModule = onClone !== undefined || onRemove !== undefined;
+
+  useEffect(() => {
+    if (focusedKey === initialFocusedKey || noteByKey.has(focusedKey)) {
+      return;
+    }
+
+    setFocusedKey(initialFocusedKey);
+  }, [focusedKey, initialFocusedKey, noteByKey, setFocusedKey]);
 
   return (
     <>
@@ -90,89 +100,53 @@ export function DroneModule({
         bodyClassName={styles.droneBody}
         className={styles.droneFrame}
         headerActions={
-          <OverflowMenuButton
-            aria-label="Drone options"
-            onClick={() => setIsOptionsOpen(true)}
-          />
-        }
-        headerPrimary={
-          <span className={styles.droneIdentity}>
-            <AudioWaveform />
-            <span>Drone</span>
-          </span>
+          showHeader && canManageModule ? (
+            <OverflowMenuButton
+              aria-label="Drone options"
+              onClick={() => setIsOptionsOpen(true)}
+            />
+          ) : undefined
         }
         showHeader={showHeader}
-        style={
-          {
-            "--drone-note-color": noteColor.value,
-          } as CSSProperties
-        }
         widthMode="fill"
       >
-        <div className={styles.droneSurface} data-active={isDroneActive}>
-          <div className={styles.pitchPanel}>
-            <span className={styles.noteSwatch}>
-              <InstrumentNote
-                note={{ midi: pitch.midi, emphasis: "large" }}
-                label={pitch.label}
+        <div className={styles.noteRow}>
+          {droneNotes.notes.map((note) => {
+            const noteColor = resolveInstrumentNoteColor({
+              midi: note.midi,
+              mode: noteColors.mode,
+              rootNote: droneNotes.rootNote,
+            });
+            const noteKey = String(note.interval);
+            const isActive = isNoteActive(note.interval);
+
+            return (
+              <InstrumentNoteCell
+                key={noteKey}
+                noteKey={noteKey}
+                note={{ midi: note.midi, emphasis: "large" }}
                 noteColor={noteColor}
+                midi={note.midi}
+                label={note.label}
+                ariaLabel={`${isActive ? "Stop" : "Start"} ${
+                  note.label
+                } drone note`}
+                isFocused={focusedKey === noteKey}
+                isToggleButton
+                isPressed={isActive}
+                setItemRef={setItemRef}
+                handleKeyDown={handleKeyDown}
+                onInteract={handleItemInteraction}
+                className={styles.noteButton}
               />
-            </span>
-            <span className={styles.pitchText}>
-              <span className={styles.pitchLabel}>{pitch.label}</span>
-              <span className={styles.pitchCaption}>Root Tone</span>
-            </span>
-          </div>
-
-          <Button
-            aria-label={
-              isDroneActive
-                ? `Stop ${pitch.label} drone`
-                : `Play ${pitch.label} drone`
-            }
-            className={styles.playButton}
-            icon={isDroneActive ? <Square /> : <Play />}
-            label={playLabel}
-            layout="media"
-            onClick={playback.toggle}
-            selected={isDroneActive}
-            size="xl"
-            subtitle={pitch.label}
-            variant={isDroneActive ? "filled" : "outline"}
-          />
-
-          <div
-            className={styles.octaveStepper}
-            role="group"
-            aria-label={`Drone octave. Current: ${pitch.octave}`}
-          >
-            <IconButton
-              aria-label="Lower drone octave"
-              disabled={!onOctaveChange || !canLowerOctave}
-              icon={<Minus />}
-              onClick={lowerOctave}
-              size="sm"
-            />
-            <span className={styles.octaveReadout}>
-              <span className={styles.octaveValue}>{pitch.octave}</span>
-              <span className={styles.octaveLabel}>Octave</span>
-            </span>
-            <IconButton
-              aria-label="Raise drone octave"
-              disabled={!onOctaveChange || !canRaiseOctave}
-              icon={<Plus />}
-              onClick={raiseOctave}
-              size="sm"
-            />
-          </div>
+            );
+          })}
         </div>
       </PartModuleFrame>
 
-      {showHeader ? (
+      {showHeader && canManageModule ? (
         <DroneOptionsDialog
-          audioPresetId={audioPresetId}
           isOpen={isOptionsOpen}
-          onAudioPresetIdChange={onAudioPresetIdChange}
           onClone={onClone}
           onClose={() => setIsOptionsOpen(false)}
           onRemove={onRemove}

@@ -22,6 +22,7 @@ interface InstrumentNoteCellProps {
   setItemRef: (key: string, el: HTMLElement | null) => void;
   handleKeyDown: (e: KeyboardEvent, key: string) => void;
   isToggleButton?: boolean;
+  isPressed?: boolean;
   notePlacement?: "center" | "bottom";
   onPointerDown?: () => void;
   onInteract?: (target: InstrumentNoteInteractionTarget) => void;
@@ -47,6 +48,7 @@ function InstrumentNoteCellBase({
   setItemRef,
   handleKeyDown,
   isToggleButton = false,
+  isPressed,
   notePlacement = "center",
   onPointerDown,
   onInteract,
@@ -70,6 +72,7 @@ function InstrumentNoteCellBase({
     ...(note ?? { midi }),
     emphasis: note?.emphasis ?? (note ? undefined : "hidden"),
   };
+  const pressed = isPressed ?? effectiveNote.emphasis !== "hidden";
 
   return (
     <button
@@ -78,9 +81,7 @@ function InstrumentNoteCellBase({
       className={`${styles.noteCell} ${className}`}
       tabIndex={isFocused ? 0 : -1}
       aria-label={ariaLabel}
-      aria-pressed={
-        isToggleButton ? effectiveNote.emphasis !== "hidden" : undefined
-      }
+      aria-pressed={isToggleButton ? pressed : undefined}
       data-note-placement={notePlacement}
       style={style}
       onPointerDown={handlePointerDown}
@@ -135,6 +136,7 @@ function instrumentNoteCellPropsAreEqual(
     previous.setItemRef === next.setItemRef &&
     previous.handleKeyDown === next.handleKeyDown &&
     previous.isToggleButton === next.isToggleButton &&
+    previous.isPressed === next.isPressed &&
     previous.notePlacement === next.notePlacement &&
     previous.onPointerDown === next.onPointerDown &&
     previous.onInteract === next.onInteract &&

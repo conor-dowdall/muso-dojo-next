@@ -24,7 +24,7 @@ describe("part module app store actions", () => {
     });
   });
 
-  it("adds and updates a drone module", () => {
+  it("adds a drone module", () => {
     const store = createTestStore();
 
     const addedModuleId = store.getState().addPartModule(sessionId, partId, {
@@ -37,11 +37,6 @@ describe("part module app store actions", () => {
       throw new Error("Expected a drone module id");
     }
 
-    store.getState().setDroneOctave(sessionId, partId, addedModuleId, 5);
-    store
-      .getState()
-      .setDroneAudioPresetId(sessionId, partId, addedModuleId, "warm-pad");
-
     const addedModule = store
       .getState()
       .sessions[
@@ -51,8 +46,6 @@ describe("part module app store actions", () => {
     expect(addedModule).toMatchObject({
       id: addedModuleId,
       type: "drone",
-      octave: 5,
-      audioPresetId: "warm-pad",
     });
   });
 
@@ -60,10 +53,6 @@ describe("part module app store actions", () => {
     const store = createTestStore();
     const addedModuleId = store.getState().addPartModule(sessionId, partId, {
       type: "drone",
-      settings: {
-        octave: 4,
-        audioPresetId: "warm-pad",
-      },
     });
 
     if (!addedModuleId) {
@@ -84,8 +73,6 @@ describe("part module app store actions", () => {
     expect(clonedModule).toMatchObject({
       id: clonedModuleId,
       type: "drone",
-      octave: 4,
-      audioPresetId: "warm-pad",
     });
   });
 });

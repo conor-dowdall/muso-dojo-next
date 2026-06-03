@@ -15,7 +15,6 @@ import { type NoteColorConfig } from "@/types/note-colors";
 import { type SettingValue } from "@/types/state";
 import {
   type AppStoreSnapshot,
-  type DronePartModuleConfig,
   type FretboardInstrumentInstanceConfig,
   type InstrumentInstanceBaseConfig,
   type KeyboardInstrumentInstanceConfig,
@@ -152,24 +151,6 @@ export interface PartModuleActions {
     sessionId: string,
     partId: string,
     moduleId: string,
-  ) => void;
-  setDroneAudioPresetId: (
-    sessionId: string,
-    partId: string,
-    moduleId: string,
-    audioPresetId: SettingValue<AudioPresetId>,
-  ) => void;
-  setDroneOctave: (
-    sessionId: string,
-    partId: string,
-    moduleId: string,
-    octave: SettingValue<number>,
-  ) => void;
-  updateDroneSettings: (
-    sessionId: string,
-    partId: string,
-    moduleId: string,
-    patch: Partial<Omit<DronePartModuleConfig, "id" | "type">>,
   ) => void;
 }
 

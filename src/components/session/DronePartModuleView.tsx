@@ -3,8 +3,6 @@
 import { useShallow } from "zustand/react/shallow";
 import { DroneModule } from "@/components/drone/DroneModule";
 import { useAppStore } from "@/stores/appStore";
-import { type SettingValue } from "@/types/state";
-import { type AudioPresetId } from "@/audio/types";
 import {
   selectDronePartModule,
   selectPart,
@@ -30,17 +28,12 @@ export function DronePartModuleView({
 
       return part && drone
         ? {
-            audioPresetId: drone.audioPresetId,
-            octave: drone.octave,
+            noteCollectionKey: part.noteCollectionKey,
             rootNote: part.rootNote,
           }
         : undefined;
     }),
   );
-  const setDroneAudioPresetId = useAppStore(
-    (state) => state.setDroneAudioPresetId,
-  );
-  const setDroneOctave = useAppStore((state) => state.setDroneOctave);
   const clonePartModule = useAppStore((state) => state.clonePartModule);
   const removePartModule = useAppStore((state) => state.removePartModule);
 
@@ -50,26 +43,13 @@ export function DronePartModuleView({
 
   return (
     <DroneModule
-      audioPresetId={model.audioPresetId}
-      octave={model.octave}
+      noteCollectionKey={model.noteCollectionKey}
       rootNote={model.rootNote}
       showHeader={!isPerformanceMode}
-      onAudioPresetIdChange={
-        isPerformanceMode
-          ? undefined
-          : (audioPresetId: SettingValue<AudioPresetId>) =>
-              setDroneAudioPresetId(sessionId, partId, moduleId, audioPresetId)
-      }
       onClone={
         isPerformanceMode
           ? undefined
           : () => clonePartModule(sessionId, partId, moduleId)
-      }
-      onOctaveChange={
-        isPerformanceMode
-          ? undefined
-          : (octave: SettingValue<number>) =>
-              setDroneOctave(sessionId, partId, moduleId, octave)
       }
       onRemove={
         isPerformanceMode

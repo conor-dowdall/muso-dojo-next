@@ -71,8 +71,6 @@ export interface InstrumentPartModuleConfig extends PartModuleBaseConfig<"instru
 
 export interface DronePartModuleConfig extends PartModuleBaseConfig<"drone"> {
   type: "drone";
-  audioPresetId?: AudioPresetId;
-  octave?: number;
 }
 
 export interface PartModuleConfigByType {
@@ -91,7 +89,7 @@ export interface InstrumentPartModuleCreationConfig<
 }
 
 export interface PartModuleCreationConfigByType {
-  drone: Partial<Omit<DronePartModuleConfig, "id" | "type">>;
+  drone: Record<string, never>;
   instrument: InstrumentPartModuleCreationConfig;
 }
 
