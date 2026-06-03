@@ -24,7 +24,8 @@ type CreateChordProgressionPartsOptions<
   rootNote: string;
   progressionKey: ChordProgressionKey;
   chordListMode?: ChordProgressionChordListMode;
-} & PartModuleCreationRequest<T>;
+  initialModule: PartModuleCreationRequest<T>;
+};
 
 function createProgressionPartId(
   progressionKey: ChordProgressionKey,
@@ -34,19 +35,19 @@ function createProgressionPartId(
 }
 
 function createPartFromReference<T extends PartModuleType>({
+  initialModule,
   partId,
-  moduleSettings,
-  moduleType,
   reference,
 }: {
+  initialModule: PartModuleCreationRequest<T>;
   partId: string;
   reference: ChordProgressionChordReference;
-} & PartModuleCreationRequest<T>): MusicPartConfig {
+}): MusicPartConfig {
   const part = normalizeMusicPartConfig({
     id: partId,
     rootNote: reference.rootNote,
     noteCollectionKey: reference.noteCollectionKey,
-    modules: [createDefaultPartModuleConfig(moduleType, moduleSettings)],
+    modules: [createDefaultPartModuleConfig(initialModule)],
   });
 
   if (!part) {
@@ -62,8 +63,7 @@ export function createChordProgressionParts<
   rootNote,
   progressionKey,
   chordListMode = "each-chord-once",
-  moduleType,
-  moduleSettings,
+  initialModule,
 }: CreateChordProgressionPartsOptions<T>): MusicPartConfig[] {
   const normalizedRootNote =
     normalizeRootNoteString(rootNote) ?? DEFAULT_PART_ROOT_NOTE;
@@ -80,9 +80,8 @@ export function createChordProgressionParts<
 
   return references.map((reference, index) =>
     createPartFromReference({
+      initialModule,
       partId: createProgressionPartId(progressionKey, index),
-      moduleSettings,
-      moduleType,
       reference,
     }),
   );

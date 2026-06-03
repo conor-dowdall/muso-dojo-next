@@ -1,4 +1,3 @@
-import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { DEFAULT_KEYBOARD_THEME } from "@/data/keyboard/themes";
 import { assertNever } from "@/utils/assertNever";
 import {
@@ -6,9 +5,10 @@ import {
   type InstrumentInstanceConfig,
   type InstrumentPartModuleCreationConfig,
   type InstrumentType,
+  type MusicPartCreationRequest,
   type MusicPartConfig,
   type PartModuleConfig,
-  type PartModuleCreationConfig,
+  type PartModuleCreationRequest,
   type PartModuleType,
   type SessionConfig,
 } from "@/types/session";
@@ -26,12 +26,9 @@ import {
 
 interface CreateMusicPartConfigOptions<
   T extends PartModuleType = PartModuleType,
-> {
+> extends Omit<MusicPartCreationRequest, "initialModule"> {
   id?: string;
-  rootNote?: string;
-  noteCollectionKey?: NoteCollectionKey;
-  moduleType?: T;
-  moduleSettings?: PartModuleCreationConfig<T>;
+  initialModule?: PartModuleCreationRequest<T>;
 }
 
 interface CreateSessionConfigOptions {
@@ -76,17 +73,16 @@ function resolveInstrumentModuleCreationConfig(
 }
 
 export function createDefaultPartModuleConfig<T extends PartModuleType>(
-  type: T,
-  settings?: PartModuleCreationConfig<T>,
+  request: PartModuleCreationRequest<T>,
 ): PartModuleConfig {
-  switch (type) {
+  switch (request.type) {
     case "instrument": {
       const { instrumentType, instrumentSettings } =
-        resolveInstrumentModuleCreationConfig(settings);
+        resolveInstrumentModuleCreationConfig(request.settings);
 
       return {
         id: createEntityId("module"),
-        type,
+        type: request.type,
         instrument: createDefaultInstrumentConfig(
           instrumentType,
           instrumentSettings,
@@ -94,7 +90,7 @@ export function createDefaultPartModuleConfig<T extends PartModuleType>(
       };
     }
     default:
-      return assertNever(type, "Unsupported part module type");
+      return assertNever(request.type, "Unsupported part module type");
   }
 }
 
@@ -104,15 +100,14 @@ export function createDefaultMusicPartConfig<
   id = createEntityId("part"),
   rootNote = DEFAULT_PART_ROOT_NOTE,
   noteCollectionKey = DEFAULT_PART_NOTE_COLLECTION_KEY,
-  moduleType,
-  moduleSettings,
+  initialModule,
 }: CreateMusicPartConfigOptions<T> = {}): MusicPartConfig {
   const part = normalizeMusicPartConfig({
     id,
     rootNote,
     noteCollectionKey,
-    modules: moduleType
-      ? [createDefaultPartModuleConfig(moduleType, moduleSettings)]
+    modules: initialModule
+      ? [createDefaultPartModuleConfig(initialModule)]
       : [],
   });
 

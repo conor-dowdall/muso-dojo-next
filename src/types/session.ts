@@ -91,18 +91,28 @@ export type PartModuleCreationConfig<
   T extends PartModuleType = PartModuleType,
 > = T extends PartModuleType ? PartModuleCreationConfigByType[T] : never;
 
+/**
+ * Keep the module type and its creation settings in the same object at
+ * boundary APIs. This prevents an instrument request being paired with Drone
+ * or Looper settings as PartModuleType grows.
+ */
 export type PartModuleCreationRequest<
   T extends PartModuleType = PartModuleType,
 > = T extends PartModuleType
   ? {
-      moduleType: T;
-      moduleSettings: PartModuleCreationConfig<T>;
+      type: T;
+      settings?: PartModuleCreationConfig<T>;
     }
   : never;
 
+export interface MusicPartCreationRequest {
+  rootNote?: string;
+  noteCollectionKey?: NoteCollectionKey;
+  initialModule?: PartModuleCreationRequest;
+}
+
 export type AddPartModuleHandler = <T extends PartModuleType>(
-  type: T,
-  settings?: PartModuleCreationConfig<T>,
+  request: PartModuleCreationRequest<T>,
 ) => string | undefined | void;
 
 export interface MusicPartConfig {
@@ -110,6 +120,10 @@ export interface MusicPartConfig {
   rootNote: string;
   noteCollectionKey: NoteCollectionKey;
   showHeader?: boolean;
+  /**
+   * Part modules consume the shared part context. Practice modules such as
+   * Drone should follow rootNote unless they explicitly introduce an override.
+   */
   modules: PartModuleConfig[];
 }
 

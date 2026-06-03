@@ -31,7 +31,7 @@ import { InstrumentCreationDefaultAction } from "@/components/instrument-creatio
 import { useInstrumentCreationDraft } from "@/components/instrument-creation/useInstrumentCreationDraft";
 import {
   type PartModuleCreationDraft,
-  getPartModuleCreationConfig,
+  getPartModuleCreationRequest,
 } from "@/components/part-module-creation/partModuleCreationConfig";
 import { ChordProgressionPicker } from "@/components/music-theory/ChordProgressionPicker";
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
@@ -59,21 +59,19 @@ type SessionChoice = "key" | "collection" | "progression" | "chord-list";
 
 interface AddToSessionDialogProps {
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
-  onAddCustomChordOrScale: (
-    settings: {
-      rootNote: RootNote;
-      noteCollectionKey: NoteCollectionKey;
-      replaceSession: boolean;
-    } & PartModuleCreationRequest,
-  ) => void;
-  onAddChordProgression: (
-    settings: {
-      rootNote: RootNote;
-      progressionKey: ChordProgressionKey;
-      chordListMode: ChordProgressionChordListMode;
-      replaceSession: boolean;
-    } & PartModuleCreationRequest,
-  ) => void;
+  onAddCustomChordOrScale: (settings: {
+    rootNote: RootNote;
+    noteCollectionKey: NoteCollectionKey;
+    initialModule: PartModuleCreationRequest;
+    replaceSession: boolean;
+  }) => void;
+  onAddChordProgression: (settings: {
+    rootNote: RootNote;
+    progressionKey: ChordProgressionKey;
+    chordListMode: ChordProgressionChordListMode;
+    initialModule: PartModuleCreationRequest;
+    replaceSession: boolean;
+  }) => void;
   onClose: () => void;
 }
 
@@ -211,14 +209,13 @@ export function AddToSessionDialog({
   };
 
   const handleSubmit = () => {
-    const partModuleCreation = getPartModuleCreationConfig(creationDraft);
+    const initialModule = getPartModuleCreationRequest(creationDraft);
 
     if (selectedMode === "custom-chord-or-scale") {
       onAddCustomChordOrScale({
         rootNote: selectedRootNote,
         noteCollectionKey,
-        moduleType: partModuleCreation.moduleType,
-        moduleSettings: partModuleCreation.moduleSettings,
+        initialModule,
         replaceSession,
       });
       onClose();
@@ -229,9 +226,8 @@ export function AddToSessionDialog({
       rootNote: selectedRootNote,
       progressionKey,
       chordListMode,
-      moduleType: partModuleCreation.moduleType,
+      initialModule,
       replaceSession,
-      moduleSettings: partModuleCreation.moduleSettings,
     });
     onClose();
   };

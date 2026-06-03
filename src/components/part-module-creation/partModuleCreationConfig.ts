@@ -31,14 +31,14 @@ export function getPartModuleCreationActionLabel(
   }
 }
 
-export function getPartModuleCreationConfig(
+export function getPartModuleCreationRequest(
   draft: PartModuleCreationDraft,
 ): PartModuleCreationRequest {
   switch (draft.moduleType) {
     case "instrument":
       return {
-        moduleType: draft.moduleType,
-        moduleSettings: getInstrumentPartModuleCreationConfig(
+        type: draft.moduleType,
+        settings: getInstrumentPartModuleCreationConfig(
           draft.instrumentType,
           draft.keyboardSelection,
           draft.fretboardSelection,

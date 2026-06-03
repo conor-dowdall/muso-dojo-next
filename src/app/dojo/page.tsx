@@ -157,8 +157,7 @@ function HydratedSession({
           onAddCustomChordOrScale={({
             rootNote,
             noteCollectionKey,
-            moduleType,
-            moduleSettings,
+            initialModule,
             replaceSession,
           }) => {
             if (!activeSessionId) {
@@ -168,8 +167,7 @@ function HydratedSession({
             const partSettings = {
               rootNote,
               noteCollectionKey,
-              moduleType,
-              moduleSettings,
+              initialModule,
             };
 
             if (replaceSession) {

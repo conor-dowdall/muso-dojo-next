@@ -18,7 +18,7 @@ import { DEFAULT_PART_MODULE_TYPE } from "@/utils/session/sessionDefaults";
 import {
   type PartModuleCreationDraft,
   getPartModuleCreationActionLabel,
-  getPartModuleCreationConfig,
+  getPartModuleCreationRequest,
 } from "@/components/part-module-creation/partModuleCreationConfig";
 import {
   PartModuleCreationSettingsMenu,
@@ -67,10 +67,7 @@ export function PartModuleCreationDialog({
   } satisfies PartModuleCreationSettingsMenuProps;
 
   const handleAddPartModule = () => {
-    const { moduleType, moduleSettings } =
-      getPartModuleCreationConfig(creationDraft);
-
-    onAddPartModule(moduleType, moduleSettings);
+    onAddPartModule(getPartModuleCreationRequest(creationDraft));
     onClose();
   };
 

@@ -81,7 +81,7 @@ export function MusicPartView({
       onAddPartModule={
         isPerformanceMode
           ? undefined
-          : (type, settings) => addPartModule(sessionId, partId, type, settings)
+          : (request) => addPartModule(sessionId, partId, request)
       }
       onClonePart={
         isPerformanceMode ? undefined : () => clonePart(sessionId, partId)

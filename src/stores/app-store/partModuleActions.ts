@@ -20,14 +20,14 @@ export function createPartModuleActions(
   get: AppStoreGet,
 ): PartModuleActions {
   return {
-    addPartModule: (sessionId, partId, type, settings) => {
+    addPartModule: (sessionId, partId, request) => {
       const part = findPartById(get().sessions[sessionId], partId);
 
       if (!part) {
         return undefined;
       }
 
-      const partModule = createDefaultPartModuleConfig(type, settings);
+      const partModule = createDefaultPartModuleConfig(request);
 
       set((state) =>
         updateSessionById(state, sessionId, (session) =>

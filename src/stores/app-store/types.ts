@@ -18,8 +18,9 @@ import {
   type FretboardInstrumentInstanceConfig,
   type InstrumentInstanceBaseConfig,
   type KeyboardInstrumentInstanceConfig,
+  type MusicPartCreationRequest,
   type MusicPartConfig,
-  type PartModuleCreationConfig,
+  type PartModuleCreationRequest,
   type PartModuleType,
   type SessionConfig,
 } from "@/types/session";
@@ -59,12 +60,7 @@ export interface SessionActions {
 export interface PartActions {
   addPart: (
     sessionId?: string,
-    settings?: {
-      rootNote?: string;
-      noteCollectionKey?: NoteCollectionKey;
-      moduleType?: PartModuleType;
-      moduleSettings?: PartModuleCreationConfig;
-    },
+    settings?: MusicPartCreationRequest,
   ) => string | undefined;
   addParts: (
     sessionId: string | undefined,
@@ -144,8 +140,7 @@ export interface PartModuleActions {
   addPartModule: <T extends PartModuleType>(
     sessionId: string,
     partId: string,
-    type: T,
-    settings?: PartModuleCreationConfig<T>,
+    request: PartModuleCreationRequest<T>,
   ) => string | undefined;
   clonePartModule: (
     sessionId: string,
