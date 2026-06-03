@@ -2,6 +2,7 @@
 
 import { useAppStore } from "@/stores/appStore";
 import { assertNever } from "@/utils/assertNever";
+import { DronePartModuleView } from "./DronePartModuleView";
 import { InstrumentPartModuleView } from "./InstrumentPartModuleView";
 import { selectPartModule } from "./sessionSelectors";
 
@@ -25,6 +26,15 @@ export function PartModuleView({
   switch (moduleType) {
     case undefined:
       return null;
+    case "drone":
+      return (
+        <DronePartModuleView
+          sessionId={sessionId}
+          partId={partId}
+          moduleId={moduleId}
+          isPerformanceMode={isPerformanceMode}
+        />
+      );
     case "instrument":
       return (
         <InstrumentPartModuleView

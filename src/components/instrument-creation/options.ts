@@ -19,6 +19,9 @@ import {
 } from "@/data/keyboard/ranges";
 import { keyboardThemes, type KeyboardThemeName } from "@/data/keyboard/themes";
 import { type InstrumentType } from "@/types/session";
+import { formatMidiNote } from "@/utils/music-theory/midiNote";
+
+export { formatMidiNote } from "@/utils/music-theory/midiNote";
 
 export interface DialogOption<T extends string> {
   id: T;
@@ -105,27 +108,6 @@ export function formatKeyboardRangeNoteNames([
   endNoteName,
 ]: KeyboardMidiRangeNoteNames) {
   return `${startNoteName} to ${endNoteName}`;
-}
-
-const NOTE_NAMES = [
-  "C",
-  "C#",
-  "D",
-  "D#",
-  "E",
-  "F",
-  "F#",
-  "G",
-  "G#",
-  "A",
-  "A#",
-  "B",
-] as const;
-
-export function formatMidiNote(midi: number) {
-  const noteName = NOTE_NAMES[((midi % 12) + 12) % 12];
-  const octave = Math.floor(midi / 12) - 1;
-  return `${noteName}${octave}`;
 }
 
 export function formatKeyboardMidiRange([start, end]: readonly [

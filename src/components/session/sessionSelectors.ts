@@ -1,5 +1,8 @@
 import { type AppStore } from "@/stores/appStore";
-import { isInstrumentPartModule } from "@/utils/session/partModuleTypes";
+import {
+  isDronePartModule,
+  isInstrumentPartModule,
+} from "@/utils/session/partModuleTypes";
 
 export function selectPart(state: AppStore, sessionId: string, partId: string) {
   return state.sessions[sessionId]?.parts.find((part) => part.id === partId);
@@ -25,4 +28,15 @@ export function selectInstrumentForModule(
   const partModule = selectPartModule(state, sessionId, partId, moduleId);
 
   return isInstrumentPartModule(partModule) ? partModule.instrument : undefined;
+}
+
+export function selectDronePartModule(
+  state: AppStore,
+  sessionId: string,
+  partId: string,
+  moduleId: string,
+) {
+  const partModule = selectPartModule(state, sessionId, partId, moduleId);
+
+  return isDronePartModule(partModule) ? partModule : undefined;
 }

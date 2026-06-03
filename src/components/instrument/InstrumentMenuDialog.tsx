@@ -1,14 +1,8 @@
 "use client";
 
 import { AudioWaveform, CaseSensitive, Ruler } from "lucide-react";
-import {
-  audioPresetCategoryLabels,
-  audioPresetCategoryOrder,
-  audioPresets,
-  isAudioPresetRecommendedForUse,
-  musoAudioEngine,
-  type AudioPresetId,
-} from "@/audio";
+import { audioPresets, musoAudioEngine, type AudioPresetId } from "@/audio";
+import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
 import { DisplayFormatPicker } from "@/components/music-theory/DisplayFormatPicker";
 import {
   DisclosureList,
@@ -21,7 +15,6 @@ import {
   ObjectManagementGroup,
   ObjectMenuDialog,
 } from "@/components/ui/object-menu";
-import { Typography } from "@/components/ui/typography/Typography";
 import {
   type DisplayFormatId,
   type DisplayFormatSetter,
@@ -34,7 +27,6 @@ import {
   resolveInstrumentAudioPresetId,
   type InstrumentAudioPresetContext,
 } from "@/utils/instrument/resolveInstrumentAudioPreset";
-import styles from "./InstrumentMenuDialog.module.css";
 
 export type InstrumentMenuChoice = "sound" | "display" | "size";
 
@@ -53,18 +45,6 @@ interface InstrumentMenuDialogProps {
   onInstrumentDisplaySizeChange?: SettingSetter<InstrumentSize>;
   onRemove?: () => void;
 }
-
-const previewAudioPresetGroups = audioPresetCategoryOrder
-  .map((category) => ({
-    category,
-    label: audioPresetCategoryLabels[category],
-    presets: Object.values(audioPresets).filter(
-      (preset) =>
-        preset.category === category &&
-        isAudioPresetRecommendedForUse(preset, "preview"),
-    ),
-  }))
-  .filter((group) => group.presets.length > 0);
 
 const instrumentSizeOptions = [
   {
@@ -162,36 +142,15 @@ export function InstrumentMenuDialog({
           panelVariant="menu"
           preview={resolvedAudioPreset.label}
         >
-          <DisclosureList grouped groupGap="related" density="compact">
-            {previewAudioPresetGroups.map((group) => (
-              <DisclosureListGroup
-                key={group.category}
-                aria-label={group.label}
-              >
-                <Typography
-                  as="div"
-                  className={styles.groupLabel}
-                  size="xs"
-                  variant="muted"
-                  weight="semibold"
-                  caps
-                >
-                  {group.label}
-                </Typography>
-                {group.presets.map((preset) => (
-                  <DisclosureListChoice
-                    key={preset.id}
-                    aria-label={`Use ${preset.label} playback sound`}
-                    disabled={!onAudioPresetIdChange}
-                    label={preset.label}
-                    onClick={() => handleAudioPresetChange(preset.id)}
-                    selected={preset.id === resolvedAudioPresetId}
-                    subtitle={preset.description}
-                  />
-                ))}
-              </DisclosureListGroup>
-            ))}
-          </DisclosureList>
+          <AudioPresetChoiceList
+            disabled={!onAudioPresetIdChange}
+            getChoiceAriaLabel={(preset) =>
+              `Use ${preset.label} playback sound`
+            }
+            onChange={handleAudioPresetChange}
+            recommendedUse="preview"
+            selectedPresetId={resolvedAudioPresetId}
+          />
         </DisclosureListItem>
 
         <DisclosureListItem

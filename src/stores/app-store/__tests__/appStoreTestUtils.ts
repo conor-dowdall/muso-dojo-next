@@ -6,6 +6,7 @@ import {
   type AppStoreSnapshot,
   type FretboardInstrumentInstanceConfig,
 } from "@/types/session";
+import { isInstrumentPartModule } from "@/utils/session/partModuleTypes";
 
 export const sessionId = "session-1";
 export const partId = "part-1";
@@ -58,12 +59,11 @@ export function createTestStore(snapshot = createStoreSnapshot()) {
 }
 
 export function getTestInstrument(store: ReturnType<typeof createTestStore>) {
-  const instrument =
-    store.getState().sessions[sessionId]?.parts[0]?.modules[0]?.instrument;
+  const partModule = store.getState().sessions[sessionId]?.parts[0]?.modules[0];
 
-  if (!instrument) {
+  if (!isInstrumentPartModule(partModule)) {
     throw new Error("Expected the test instrument to exist");
   }
 
-  return instrument;
+  return partModule.instrument;
 }

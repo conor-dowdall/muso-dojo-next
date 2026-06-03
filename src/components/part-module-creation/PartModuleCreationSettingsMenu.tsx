@@ -22,13 +22,20 @@ interface InstrumentPartModuleCreationSettingsMenuProps {
   onKeyboardSelectionChange: (value: KeyboardInstrumentSelection) => void;
 }
 
+interface DronePartModuleCreationSettingsMenuProps {
+  moduleType: "drone";
+}
+
 export type PartModuleCreationSettingsMenuProps =
-  InstrumentPartModuleCreationSettingsMenuProps;
+  | DronePartModuleCreationSettingsMenuProps
+  | InstrumentPartModuleCreationSettingsMenuProps;
 
 export function PartModuleCreationSettingsMenu(
   props: PartModuleCreationSettingsMenuProps,
 ) {
   switch (props.moduleType) {
+    case "drone":
+      return null;
     case "instrument":
       return (
         <InstrumentCreationSettingsMenu
@@ -44,6 +51,6 @@ export function PartModuleCreationSettingsMenu(
         />
       );
     default:
-      return assertNever(props.moduleType, "Unsupported part module type");
+      return assertNever(props, "Unsupported part module type");
   }
 }

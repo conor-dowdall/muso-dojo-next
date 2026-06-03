@@ -23,4 +23,69 @@ describe("part module app store actions", () => {
       },
     });
   });
+
+  it("adds and updates a drone module", () => {
+    const store = createTestStore();
+
+    const addedModuleId = store.getState().addPartModule(sessionId, partId, {
+      type: "drone",
+    });
+
+    expect(addedModuleId).toEqual(expect.any(String));
+
+    if (!addedModuleId) {
+      throw new Error("Expected a drone module id");
+    }
+
+    store.getState().setDroneOctave(sessionId, partId, addedModuleId, 5);
+    store
+      .getState()
+      .setDroneAudioPresetId(sessionId, partId, addedModuleId, "warm-pad");
+
+    const addedModule = store
+      .getState()
+      .sessions[
+        sessionId
+      ]?.parts[0]?.modules.find((candidateModule) => candidateModule.id === addedModuleId);
+
+    expect(addedModule).toMatchObject({
+      id: addedModuleId,
+      type: "drone",
+      octave: 5,
+      audioPresetId: "warm-pad",
+    });
+  });
+
+  it("clones a drone module", () => {
+    const store = createTestStore();
+    const addedModuleId = store.getState().addPartModule(sessionId, partId, {
+      type: "drone",
+      settings: {
+        octave: 4,
+        audioPresetId: "warm-pad",
+      },
+    });
+
+    if (!addedModuleId) {
+      throw new Error("Expected a drone module id");
+    }
+
+    const clonedModuleId = store
+      .getState()
+      .clonePartModule(sessionId, partId, addedModuleId);
+    const clonedModule = store
+      .getState()
+      .sessions[
+        sessionId
+      ]?.parts[0]?.modules.find((candidateModule) => candidateModule.id === clonedModuleId);
+
+    expect(clonedModuleId).toEqual(expect.any(String));
+    expect(clonedModuleId).not.toBe(addedModuleId);
+    expect(clonedModule).toMatchObject({
+      id: clonedModuleId,
+      type: "drone",
+      octave: 4,
+      audioPresetId: "warm-pad",
+    });
+  });
 });

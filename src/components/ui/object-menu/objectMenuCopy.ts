@@ -1,4 +1,4 @@
-export type ManagedObjectKind = "session" | "part" | "instrument";
+export type ManagedObjectKind = "session" | "part" | "instrument" | "drone";
 
 export type ObjectManagementActionKind = "duplicate" | "danger";
 
@@ -42,6 +42,11 @@ const objectManagementCopy = {
     dangerGerund: "removing",
     dangerVerb: "Remove",
     noun: "instrument",
+  },
+  drone: {
+    dangerGerund: "removing",
+    dangerVerb: "Remove",
+    noun: "drone",
   },
 } as const satisfies Record<ManagedObjectKind, ObjectManagementCopy>;
 

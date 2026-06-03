@@ -24,4 +24,25 @@ describe("createSessionEntities", () => {
       },
     });
   });
+
+  it("creates a music part with an initial drone module request", () => {
+    const part = createDefaultMusicPartConfig({
+      rootNote: "C",
+      noteCollectionKey: "major",
+      initialModule: {
+        type: "drone",
+        settings: {
+          octave: 4,
+          audioPresetId: "warm-pad",
+        },
+      },
+    });
+
+    expect(part.modules).toHaveLength(1);
+    expect(part.modules[0]).toMatchObject({
+      type: "drone",
+      octave: 4,
+      audioPresetId: "warm-pad",
+    });
+  });
 });

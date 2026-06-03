@@ -76,6 +76,8 @@ function clearModuleActiveNotesAffectedByPartTheory(
   module: PartModuleConfig,
 ): PartModuleConfig {
   switch (module.type) {
+    case "drone":
+      return module;
     case "instrument":
       if (module.instrument.activeNotesLocked) {
         return module;
@@ -86,7 +88,7 @@ function clearModuleActiveNotesAffectedByPartTheory(
         instrument: clearInstrumentActiveNotes(module.instrument),
       };
     default:
-      return assertNever(module.type, "Unsupported part module type");
+      return assertNever(module, "Unsupported part module type");
   }
 }
 

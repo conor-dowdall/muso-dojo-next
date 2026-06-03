@@ -1,12 +1,11 @@
 import { type ReactNode, type CSSProperties } from "react";
-import { InstrumentHeader } from "./InstrumentHeader";
+import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import {
   type InstrumentIntrinsicSizing,
   type InstrumentLayoutConfig,
 } from "@/types/instrument-layout";
 import { resolveInstrumentLayout } from "@/utils/instrument/resolveInstrumentLayout";
-import styles from "./InstrumentContainer.module.css";
 
 interface InstrumentContainerProps {
   displayControls?: ReactNode;
@@ -40,20 +39,18 @@ export function InstrumentContainer({
   const resolvedLayout = resolveInstrumentLayout(sizing, layout);
 
   return (
-    <div
-      className={`${styles.instrumentContainer} ${className}`}
+    <PartModuleFrame
+      bodyClassName={bodyClassName}
+      className={className}
+      headerActions={headerActions}
+      headerActionsGrow
+      headerPrimary={displayControls}
+      noteEmphasis={noteEmphasis}
+      showHeader={showHeader}
       style={{ ...resolvedLayout.style, ...style }}
-      data-width-mode={resolvedLayout.widthMode}
-      data-note-emphasis={noteEmphasis}
+      widthMode={resolvedLayout.widthMode}
     >
-      {showHeader && (displayControls || headerActions) ? (
-        <InstrumentHeader displayControls={displayControls}>
-          {headerActions}
-        </InstrumentHeader>
-      ) : null}
-      <div className={styles.scrollArea}>
-        <div className={`${styles.content} ${bodyClassName}`}>{children}</div>
-      </div>
-    </div>
+      {children}
+    </PartModuleFrame>
   );
 }

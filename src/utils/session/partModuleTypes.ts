@@ -1,4 +1,5 @@
 import {
+  type DronePartModuleConfig,
   type InstrumentPartModuleConfig,
   type InstrumentType,
   type PartModuleConfig,
@@ -6,6 +7,7 @@ import {
 } from "@/types/session";
 
 const partModuleTypes = {
+  drone: true,
   instrument: true,
 } satisfies Record<PartModuleType, true>;
 
@@ -26,4 +28,10 @@ export function isInstrumentPartModule(
   module: PartModuleConfig | undefined,
 ): module is InstrumentPartModuleConfig {
   return module?.type === "instrument";
+}
+
+export function isDronePartModule(
+  module: PartModuleConfig | undefined,
+): module is DronePartModuleConfig {
+  return module?.type === "drone";
 }
