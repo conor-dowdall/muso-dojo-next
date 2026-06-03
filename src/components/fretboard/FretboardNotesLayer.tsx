@@ -40,6 +40,7 @@ export function FretboardNotesLayer({
     handleInteract,
     getAriaLabel,
     getNoteColor,
+    previewActiveKeys,
   } = useInstrumentNotes({
     activeNotes: externalActiveNotes,
     onActiveNotesChange: externalOnChange,
@@ -92,6 +93,11 @@ export function FretboardNotesLayer({
           noteCell.midi,
         )}
         isFocused={focusedKey === noteCell.key}
+        isHighlighted={
+          noteInteractionMode === "play"
+            ? previewActiveKeys.has(noteCell.key)
+            : undefined
+        }
         setItemRef={setItemRef}
         handleKeyDown={handleKeyDown}
         onInteract={handleItemInteraction}

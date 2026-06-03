@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useEffectiveMusicSystem } from "@/hooks/instrument/useEffectiveMusicSystem";
 import { useActiveNotes } from "@/hooks/instrument/useActiveNotes";
 import {
@@ -6,7 +6,12 @@ import {
   type ActiveNotesLockSnapshot,
   type ActiveNotesSetter,
 } from "@/types/instrument-active-note";
-import { musoAudioEngine, type AudioPresetId } from "@/audio";
+import {
+  getDefaultAudioPresetId,
+  musoAudioEngine,
+  resolveAudioPreset,
+  type AudioPresetId,
+} from "@/audio";
 import {
   type InstrumentNoteInteractionMode,
   type InstrumentNoteInteractionTarget,
@@ -73,6 +78,13 @@ export function useInstrumentNotes({
   setActiveNotesLockSnapshot,
   setActiveNotesSourceKey,
 }: UseInstrumentNotesParams) {
+  const [previewActiveKeys, setPreviewActiveKeys] = useState<
+    ReadonlySet<string>
+  >(() => new Set());
+  const previewActiveTokensRef = useRef(new Map<string, number>());
+  const previewActiveTimeoutsRef = useRef(
+    new Map<string, ReturnType<typeof setTimeout>>(),
+  );
   const musicSystem = useEffectiveMusicSystem({
     rootNote,
     noteCollectionKey,
@@ -136,18 +148,97 @@ export function useInstrumentNotes({
     activeNotesLocked,
     noteInteractionMode,
   });
+  const clearPreviewActiveKey = (key: string, token?: number) => {
+    if (
+      token !== undefined &&
+      previewActiveTokensRef.current.get(key) !== token
+    ) {
+      return;
+    }
+
+    const timeout = previewActiveTimeoutsRef.current.get(key);
+
+    if (timeout !== undefined) {
+      clearTimeout(timeout);
+      previewActiveTimeoutsRef.current.delete(key);
+    }
+
+    previewActiveTokensRef.current.delete(key);
+    setPreviewActiveKeys((currentKeys) => {
+      if (!currentKeys.has(key)) {
+        return currentKeys;
+      }
+
+      const nextKeys = new Set(currentKeys);
+      nextKeys.delete(key);
+      return nextKeys;
+    });
+  };
+  const markPreviewActiveKey = (key: string, durationSeconds: number) => {
+    const token = (previewActiveTokensRef.current.get(key) ?? 0) + 1;
+    const currentTimeout = previewActiveTimeoutsRef.current.get(key);
+
+    if (currentTimeout !== undefined) {
+      clearTimeout(currentTimeout);
+    }
+
+    previewActiveTokensRef.current.set(key, token);
+    setPreviewActiveKeys((currentKeys) => {
+      if (currentKeys.has(key)) {
+        return currentKeys;
+      }
+
+      const nextKeys = new Set(currentKeys);
+      nextKeys.add(key);
+      return nextKeys;
+    });
+
+    const timeout = setTimeout(
+      () => clearPreviewActiveKey(key, token),
+      Math.max(0, durationSeconds) * 1000,
+    );
+    previewActiveTimeoutsRef.current.set(key, timeout);
+
+    return token;
+  };
+
+  useEffect(
+    () => () => {
+      previewActiveTimeoutsRef.current.forEach((timeout) =>
+        clearTimeout(timeout),
+      );
+      previewActiveTimeoutsRef.current.clear();
+      previewActiveTokensRef.current.clear();
+    },
+    [],
+  );
 
   const handleInteract = (target: InstrumentNoteInteractionTarget) => {
     switch (effectiveNoteInteractionMode) {
-      case "play":
+      case "play": {
+        const preset = resolveAudioPreset(
+          previewAudioPresetId,
+          getDefaultAudioPresetId("preview"),
+        );
+        const token = markPreviewActiveKey(
+          target.key,
+          preset.defaultDurationSeconds,
+        );
+
         void musoAudioEngine
           .playNote({
             midiNote: target.midi,
             use: "preview",
             presetId: previewAudioPresetId,
           })
-          .catch(() => undefined);
+          .then((handle) => {
+            if (handle === undefined) {
+              clearPreviewActiveKey(target.key, token);
+            }
+          })
+          .catch(() => clearPreviewActiveKey(target.key, token));
         return;
+      }
       case "edit-one":
         if (activeNotesLocked) {
           return;
@@ -240,5 +331,6 @@ export function useInstrumentNotes({
     getNoteLabel,
     getNoteColor,
     noteLabels,
+    previewActiveKeys,
   };
 }

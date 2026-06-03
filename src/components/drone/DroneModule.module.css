@@ -1,9 +1,45 @@
 .droneFrame {
+  --drone-note-button-width: calc(var(--space-18) + var(--space-1));
+  --drone-note-button-height: var(--space-18);
+  --drone-row-gap: var(--space-2);
+  --drone-column-gap: var(--space-2);
+  --drone-body-padding: var(--space-3);
+  --drone-content-height: calc(
+    var(--drone-note-button-height) + var(--drone-body-padding) +
+      var(--drone-body-padding)
+  );
+
   --part-module-body-radius: var(--radius-subtle);
-  --part-module-min-readable-width: 14rem;
-  --part-module-min-height: var(--space-20);
-  --part-module-preferred-height: var(--space-24);
-  --part-module-max-height: var(--space-28);
+  --part-module-min-readable-width: 0;
+  --part-module-min-height: var(--drone-content-height);
+  --part-module-preferred-height: var(--drone-content-height);
+  --part-module-max-height: var(--drone-content-height);
+}
+
+.droneRows2 {
+  --drone-content-height: calc(
+    var(--drone-note-button-height) + var(--drone-note-button-height) +
+      var(--drone-row-gap) + var(--drone-body-padding) +
+      var(--drone-body-padding)
+  );
+}
+
+.droneRows3 {
+  --drone-content-height: calc(
+    var(--drone-note-button-height) + var(--drone-note-button-height) +
+      var(--drone-note-button-height) + var(--drone-row-gap) +
+      var(--drone-row-gap) + var(--drone-body-padding) +
+      var(--drone-body-padding)
+  );
+}
+
+.droneRows4 {
+  --drone-content-height: calc(
+    var(--drone-note-button-height) + var(--drone-note-button-height) +
+      var(--drone-note-button-height) + var(--drone-note-button-height) +
+      var(--drone-row-gap) + var(--drone-row-gap) + var(--drone-row-gap) +
+      var(--drone-body-padding) + var(--drone-body-padding)
+  );
 }
 
 .droneBody {
@@ -16,40 +52,156 @@
     var(--color-control-outline-background);
 }
 
-.noteRow {
+.droneHeaderActions,
+.droneControlGroup {
+  display: flex;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  align-items: center;
+}
+
+.droneHeaderActions {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--control-header-wrap-gap) var(--control-header-cluster-gap);
+}
+
+.droneControlGroup {
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: var(--control-header-wrap-gap) var(--control-header-peer-gap);
+}
+
+.noteStack {
+  box-sizing: border-box;
   display: flex;
   width: 100%;
   height: 100%;
   min-inline-size: 0;
   align-items: center;
-  gap: var(--space-3);
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: var(--space-3);
+  justify-content: center;
+  align-items: safe center;
+  justify-content: safe center;
+  overflow: auto;
+  padding: var(--drone-body-padding);
   scrollbar-color: var(--color-border) transparent;
   scrollbar-width: thin;
 }
 
-.noteButton {
-  --drone-note-button-size: var(--space-14);
+.noteRows {
+  display: flex;
+  min-inline-size: max-content;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--drone-row-gap);
+  margin: auto;
+}
 
-  inline-size: var(--drone-note-button-size);
-  block-size: var(--drone-note-button-size);
+.noteRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--drone-column-gap);
+}
+
+.noteButton {
+  inline-size: var(--drone-note-button-width);
+  block-size: var(--drone-note-button-height);
   flex: 0 0 auto;
+  padding: var(--space-0);
+}
+
+.noteButton [data-emphasis] {
+  position: relative;
+  border-radius: calc(var(--radius-control) + var(--space-0_5));
+}
+
+.droneTileLabelStack {
+  position: relative;
+  box-sizing: border-box;
+  display: grid;
+  inline-size: 100%;
+  block-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 0;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   padding: var(--space-1);
+  pointer-events: none;
+}
+
+.droneTileLabelStack::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline: 18%;
+  block-size: var(--space-px);
+  background: color-mix(in srgb, var(--note-label-color) 45%, transparent);
+  box-shadow: 0 var(--space-px) 0 rgb(0 0 0 / 0.18);
+  transform: translateY(-50%);
+}
+
+.droneTileLabelSlot {
+  display: flex;
+  min-inline-size: 0;
+  min-block-size: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.droneTileText {
+  max-inline-size: 100%;
+  color: var(--note-label-color);
+  font-size: min(32cqi, 34cqb);
+  font-weight: var(--font-bold);
+  letter-spacing: 0;
+  line-height: var(--leading-none);
+  -webkit-text-stroke: var(--note-label-stroke-width)
+    var(--note-label-stroke-color);
+  paint-order: stroke fill;
+  pointer-events: none;
+  text-shadow: var(--note-label-shadow);
+  text-box: trim-both cap alphabetic;
+  white-space: nowrap;
+}
+
+.droneTileText[data-chars="2"] {
+  font-size: min(28cqi, 34cqb);
+}
+
+.droneTileText[data-chars="3"] {
+  font-size: min(24cqi, 34cqb);
+}
+
+.droneTileText[data-chars="4"] {
+  font-size: min(21cqi, 34cqb);
+}
+
+.droneTileText[data-is-placeholder="true"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-box: none;
+}
+
+.droneTileText[data-is-placeholder="true"]::before {
+  content: "";
+  display: block;
+  inline-size: 0.5em;
+  block-size: max(2px, 0.08em);
+  border-radius: var(--radius-full);
+  background-color: currentColor;
 }
 
 @media (max-width: 34rem) {
   .droneFrame {
+    --drone-note-button-width: var(--space-16);
+    --drone-note-button-height: var(--space-16);
+    --drone-row-gap: var(--space-1);
+    --drone-column-gap: var(--space-1);
+    --drone-body-padding: var(--space-2);
+
     --part-module-min-readable-width: 0;
-  }
-
-  .noteRow {
-    gap: var(--space-2);
-    padding: var(--space-2);
-  }
-
-  .noteButton {
-    --drone-note-button-size: var(--space-12);
   }
 }

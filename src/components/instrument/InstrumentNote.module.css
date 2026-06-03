@@ -16,6 +16,8 @@
     var(--color-interaction-ring-light)
   );
   --note-focus-contrast-color: var(--color-focus-ring-contrast);
+  --note-active-ring-color: var(--note-focus-ring-color);
+  --note-active-contrast-color: var(--note-focus-contrast-color);
   box-shadow: inset 0 0 0 0 transparent;
   transition:
     transform var(--transition-fast) var(--ease-out),
@@ -184,6 +186,20 @@
     inset 0 0 var(--space-4) var(--note-hover-ring-color);
 }
 
+.noteCell[data-note-highlighted="true"] .note {
+  border-color: var(--note-active-ring-color);
+  box-shadow:
+    inset 0 0 0 var(--border-width-medium) var(--note-active-contrast-color),
+    inset 0 0 0 var(--border-width-wide) var(--note-active-ring-color),
+    inset 0 0 var(--space-5) var(--note-active-ring-color);
+}
+
+.noteCell[data-note-highlighted="true"] .note[data-emphasis="hidden"] {
+  visibility: visible !important;
+  opacity: var(--note-opacity-large) !important;
+  --note-scale: var(--note-scale-large) !important;
+}
+
 .noteCell:active .note {
   transition-duration: var(--transition-snap);
 }
@@ -193,7 +209,7 @@
   z-index: var(--z-index-max);
 }
 
-.noteCell:focus .note {
+.noteCell:focus-visible .note {
   border-color: var(--note-focus-ring-color);
   outline: none;
   box-shadow:
@@ -203,7 +219,8 @@
 }
 
 /* Give hidden notes a "ghost" outline when focused so the active cell is visible */
-.noteCell:focus .note[data-emphasis="hidden"] {
+.noteCell:focus-visible:not([data-note-highlighted="true"])
+  .note[data-emphasis="hidden"] {
   transition: none;
   visibility: visible !important;
   opacity: var(--note-opacity-large) !important;
@@ -212,7 +229,9 @@
   border: none !important;
 }
 
-.noteCell:focus .note[data-emphasis="hidden"] .label {
+.noteCell:focus-visible:not([data-note-highlighted="true"])
+  .note[data-emphasis="hidden"]
+  .label {
   opacity: var(--note-opacity-hidden) !important;
 }
 

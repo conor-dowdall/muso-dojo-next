@@ -22,6 +22,7 @@ interface InstrumentNoteCellProps {
   setItemRef: (key: string, el: HTMLElement | null) => void;
   handleKeyDown: (e: KeyboardEvent, key: string) => void;
   isToggleButton?: boolean;
+  isHighlighted?: boolean;
   isPressed?: boolean;
   notePlacement?: "center" | "bottom";
   onPointerDown?: () => void;
@@ -48,6 +49,7 @@ function InstrumentNoteCellBase({
   setItemRef,
   handleKeyDown,
   isToggleButton = false,
+  isHighlighted,
   isPressed,
   notePlacement = "center",
   onPointerDown,
@@ -82,6 +84,7 @@ function InstrumentNoteCellBase({
       tabIndex={isFocused ? 0 : -1}
       aria-label={ariaLabel}
       aria-pressed={isToggleButton ? pressed : undefined}
+      data-note-highlighted={isHighlighted ? true : undefined}
       data-note-placement={notePlacement}
       style={style}
       onPointerDown={handlePointerDown}
@@ -136,6 +139,7 @@ function instrumentNoteCellPropsAreEqual(
     previous.setItemRef === next.setItemRef &&
     previous.handleKeyDown === next.handleKeyDown &&
     previous.isToggleButton === next.isToggleButton &&
+    previous.isHighlighted === next.isHighlighted &&
     previous.isPressed === next.isPressed &&
     previous.notePlacement === next.notePlacement &&
     previous.onPointerDown === next.onPointerDown &&

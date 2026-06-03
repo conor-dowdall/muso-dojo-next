@@ -37,6 +37,7 @@ export function KeyboardNotesLayer({
     handleInteract,
     getAriaLabel,
     getNoteColor,
+    previewActiveKeys,
   } = useInstrumentNotes({
     activeNotes: externalActiveNotes,
     onActiveNotesChange: externalOnChange,
@@ -87,6 +88,11 @@ export function KeyboardNotesLayer({
         )}
         isFocused={focusedKey === noteCell.key}
         isToggleButton={isToggleButton}
+        isHighlighted={
+          noteInteractionMode === "play"
+            ? previewActiveKeys.has(noteCell.key)
+            : undefined
+        }
         setItemRef={setItemRef}
         handleKeyDown={handleKeyDown}
         onInteract={handleItemInteraction}
