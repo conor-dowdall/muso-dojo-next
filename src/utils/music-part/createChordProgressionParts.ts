@@ -6,7 +6,7 @@ import {
   type ChordProgressionKey,
 } from "@musodojo/music-theory-data";
 import {
-  createDefaultPartModuleConfig,
+  createDefaultPartModuleConfigs,
   createEntityId,
 } from "@/utils/session/createSessionEntities";
 import { normalizeMusicPartConfig } from "@/utils/session/normalizeMusicPartConfig";
@@ -24,7 +24,7 @@ type CreateChordProgressionPartsOptions<
   rootNote: string;
   progressionKey: ChordProgressionKey;
   chordListMode?: ChordProgressionChordListMode;
-  initialModule: PartModuleCreationRequest<T>;
+  moduleRequests: PartModuleCreationRequest<T>[];
 };
 
 function createProgressionPartId(
@@ -35,11 +35,11 @@ function createProgressionPartId(
 }
 
 function createPartFromReference<T extends PartModuleType>({
-  initialModule,
+  moduleRequests,
   partId,
   reference,
 }: {
-  initialModule: PartModuleCreationRequest<T>;
+  moduleRequests: PartModuleCreationRequest<T>[];
   partId: string;
   reference: ChordProgressionChordReference;
 }): MusicPartConfig {
@@ -47,7 +47,7 @@ function createPartFromReference<T extends PartModuleType>({
     id: partId,
     rootNote: reference.rootNote,
     noteCollectionKey: reference.noteCollectionKey,
-    modules: [createDefaultPartModuleConfig(initialModule)],
+    modules: createDefaultPartModuleConfigs(moduleRequests),
   });
 
   if (!part) {
@@ -63,7 +63,7 @@ export function createChordProgressionParts<
   rootNote,
   progressionKey,
   chordListMode = "each-chord-once",
-  initialModule,
+  moduleRequests,
 }: CreateChordProgressionPartsOptions<T>): MusicPartConfig[] {
   const normalizedRootNote =
     normalizeRootNoteString(rootNote) ?? DEFAULT_PART_ROOT_NOTE;
@@ -80,7 +80,7 @@ export function createChordProgressionParts<
 
   return references.map((reference, index) =>
     createPartFromReference({
-      initialModule,
+      moduleRequests,
       partId: createProgressionPartId(progressionKey, index),
       reference,
     }),

@@ -27,9 +27,9 @@ import {
 
 interface CreateMusicPartConfigOptions<
   T extends PartModuleType = PartModuleType,
-> extends Omit<MusicPartCreationRequest, "initialModule"> {
+> extends Omit<MusicPartCreationRequest, "moduleRequests"> {
   id?: string;
-  initialModule?: PartModuleCreationRequest<T>;
+  moduleRequests?: PartModuleCreationRequest<T>[];
 }
 
 interface CreateSessionConfigOptions {
@@ -101,21 +101,25 @@ export function createDefaultPartModuleConfig<T extends PartModuleType>(
   }
 }
 
+export function createDefaultPartModuleConfigs<T extends PartModuleType>(
+  requests: readonly PartModuleCreationRequest<T>[],
+): PartModuleConfig[] {
+  return requests.map((request) => createDefaultPartModuleConfig(request));
+}
+
 export function createDefaultMusicPartConfig<
   T extends PartModuleType = PartModuleType,
 >({
   id = createEntityId("part"),
   rootNote = DEFAULT_PART_ROOT_NOTE,
   noteCollectionKey = DEFAULT_PART_NOTE_COLLECTION_KEY,
-  initialModule,
+  moduleRequests = [],
 }: CreateMusicPartConfigOptions<T> = {}): MusicPartConfig {
   const part = normalizeMusicPartConfig({
     id,
     rootNote,
     noteCollectionKey,
-    modules: initialModule
-      ? [createDefaultPartModuleConfig(initialModule)]
-      : [],
+    modules: createDefaultPartModuleConfigs(moduleRequests),
   });
 
   if (!part) {

@@ -67,7 +67,7 @@ export function MusicPartHeader({
         }
         actions={
           <>
-            {musicPart.addPartModule && onOpenAddDialog ? (
+            {musicPart.addPartModules && onOpenAddDialog ? (
               <IconButton
                 aria-label="Add to part"
                 icon={<Plus />}

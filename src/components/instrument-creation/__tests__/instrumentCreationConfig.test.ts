@@ -4,7 +4,7 @@ import {
   createDefaultFretboardInstrumentSelection,
   createDefaultKeyboardInstrumentSelection,
   getDefaultInstrumentType,
-  getInstrumentCreationDefault,
+  getInstrumentModuleCreationDefault,
   getInstrumentCreationViewportTier,
   instrumentCreationDefaultMatchesSelection,
 } from "@/components/instrument-creation/instrumentCreationConfig";
@@ -13,6 +13,7 @@ import {
   createInstrumentCreationRangeContextFromSignature,
   createInstrumentCreationRangeContextSignature,
 } from "@/components/instrument-creation/instrumentCreationRangeContext";
+import { type ModuleCreationDefaults } from "@/types/instrument-creation-defaults";
 import { type MusicPartConfig } from "@/types/session";
 
 describe("instrument creation responsive defaults", () => {
@@ -51,15 +52,12 @@ describe("instrument creation responsive defaults", () => {
   });
 
   it("applies remembered setup defaults without overriding responsive ranges", () => {
-    const keyboardSelections = createDefaultInstrumentSelections("tiny", {
-      instrumentType: "keyboard",
-      setup: {
+    const moduleCreationDefaults = {
+      sessionModuleKinds: ["keyboard"],
+      keyboard: {
         theme: "studio",
       },
-    });
-    const fretboardSelections = createDefaultInstrumentSelections("tiny", {
-      instrumentType: "fretboard",
-      setup: {
+      fretboard: {
         instrument: "bass",
         tuningKey: "bassFiveStringBeadg",
         handedness: "left",
@@ -67,20 +65,21 @@ describe("instrument creation responsive defaults", () => {
         theme: "maple",
         inlayPreset: "none",
       },
-    });
+    } satisfies ModuleCreationDefaults;
+    const selections = createDefaultInstrumentSelections(
+      "tiny",
+      moduleCreationDefaults,
+    );
 
-    expect(
-      getDefaultInstrumentType({
-        instrumentType: "keyboard",
-        setup: { theme: "studio" },
-      }),
-    ).toBe("keyboard");
-    expect(keyboardSelections.keyboardSelection).toMatchObject({
+    expect(getDefaultInstrumentType(moduleCreationDefaults, "session")).toBe(
+      "keyboard",
+    );
+    expect(selections.keyboardSelection).toMatchObject({
       range: "keys13",
       midiRange: [60, 72],
       theme: "studio",
     });
-    expect(fretboardSelections.fretboardSelection).toMatchObject({
+    expect(selections.fretboardSelection).toMatchObject({
       instrument: "bass",
       tuningKey: "bassFiveStringBeadg",
       fretRange: [0, 5],
@@ -95,8 +94,7 @@ describe("instrument creation responsive defaults", () => {
     const selections = createDefaultInstrumentSelections(
       "tiny",
       {
-        instrumentType: "fretboard",
-        setup: {
+        fretboard: {
           instrument: "bass",
           tuningKey: "bassFiveStringBeadg",
           handedness: "left",
@@ -126,17 +124,17 @@ describe("instrument creation responsive defaults", () => {
       handedness: "left",
     });
     expect(
-      getInstrumentCreationDefault(
+      getInstrumentModuleCreationDefault(
         "fretboard",
         selections.keyboardSelection,
         selections.fretboardSelection,
-      ).setup,
-    ).not.toHaveProperty("fretRange");
+      ),
+    ).not.toHaveProperty("range");
   });
 
   it("creates remembered setup defaults without range settings", () => {
     const selections = createDefaultInstrumentSelections("regular");
-    const keyboardDefault = getInstrumentCreationDefault(
+    const keyboardDefault = getInstrumentModuleCreationDefault(
       "keyboard",
       {
         ...selections.keyboardSelection,
@@ -146,7 +144,7 @@ describe("instrument creation responsive defaults", () => {
       },
       selections.fretboardSelection,
     );
-    const fretboardDefault = getInstrumentCreationDefault(
+    const fretboardDefault = getInstrumentModuleCreationDefault(
       "fretboard",
       selections.keyboardSelection,
       {
@@ -157,27 +155,77 @@ describe("instrument creation responsive defaults", () => {
     );
 
     expect(keyboardDefault).toEqual({
-      instrumentType: "keyboard",
-      setup: {
-        theme: "inverted",
+      theme: "inverted",
+    });
+    expect(fretboardDefault).not.toHaveProperty("range");
+    expect(fretboardDefault).toMatchObject({
+      instrument: "guitar",
+      tuningKey: "guitarStandardE",
+      handedness: "left",
+    });
+  });
+
+  it("creates remembered setup defaults with explicit range settings", () => {
+    const selections = createDefaultInstrumentSelections("regular");
+    const keyboardDefault = getInstrumentModuleCreationDefault(
+      "keyboard",
+      {
+        ...selections.keyboardSelection,
+        range: "custom",
+        midiRange: [48, 96],
+      },
+      selections.fretboardSelection,
+    );
+    const fretboardDefault = getInstrumentModuleCreationDefault(
+      "fretboard",
+      selections.keyboardSelection,
+      {
+        ...selections.fretboardSelection,
+        fretRange: [0, 24],
+      },
+    );
+
+    expect(keyboardDefault).not.toHaveProperty("range");
+    expect(fretboardDefault).not.toHaveProperty("range");
+    expect(
+      getInstrumentModuleCreationDefault(
+        "keyboard",
+        {
+          ...selections.keyboardSelection,
+          range: "custom",
+          midiRange: [48, 96],
+        },
+        selections.fretboardSelection,
+        { includeRange: true },
+      ),
+    ).toMatchObject({
+      range: {
+        source: "custom",
+        midiRange: [48, 96],
       },
     });
-    expect(fretboardDefault.setup).not.toHaveProperty("fretRange");
-    expect(fretboardDefault).toMatchObject({
-      instrumentType: "fretboard",
-      setup: {
-        instrument: "guitar",
-        tuningKey: "guitarStandardE",
-        handedness: "left",
+    expect(
+      getInstrumentModuleCreationDefault(
+        "fretboard",
+        selections.keyboardSelection,
+        {
+          ...selections.fretboardSelection,
+          fretRange: [0, 24],
+        },
+        { includeRange: true },
+      ),
+    ).toMatchObject({
+      range: {
+        source: "custom",
+        fretRange: [0, 24],
       },
     });
   });
 
   it("checks whether the current setup is already remembered", () => {
     const keyboardDefault = {
-      instrumentType: "keyboard",
-      setup: { theme: "studio" },
-    } as const;
+      keyboard: { theme: "studio" },
+    } satisfies ModuleCreationDefaults;
     const selections = createDefaultInstrumentSelections(
       "regular",
       keyboardDefault,
@@ -194,7 +242,7 @@ describe("instrument creation responsive defaults", () => {
     expect(
       instrumentCreationDefaultMatchesSelection(
         "keyboard",
-        { instrumentType: "keyboard", setup: { theme: "classic" } },
+        { keyboard: { theme: "classic" } },
         selections.keyboardSelection,
         selections.fretboardSelection,
       ),
@@ -209,10 +257,10 @@ describe("instrument creation responsive defaults", () => {
     ).toBe(false);
   });
 
-  it("treats the built-in fretboard as the default setup when no preference is saved", () => {
+  it("defaults to fretboard when no module creation memory is saved", () => {
     const selections = createDefaultInstrumentSelections("regular");
 
-    expect(getDefaultInstrumentType()).toBe("fretboard");
+    expect(getDefaultInstrumentType(undefined, "session")).toBe("fretboard");
     expect(
       instrumentCreationDefaultMatchesSelection(
         "fretboard",
@@ -220,7 +268,7 @@ describe("instrument creation responsive defaults", () => {
         selections.keyboardSelection,
         selections.fretboardSelection,
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("creates range context from the most recent same-type instruments", () => {

@@ -12,7 +12,7 @@ import {
   instrumentCreationDefaultMatchesSelection,
   type KeyboardInstrumentSelection,
 } from "./instrumentCreationConfig";
-import { type InstrumentCreationDefault } from "@/types/instrument-creation-defaults";
+import { type ModuleCreationDefaults } from "@/types/instrument-creation-defaults";
 import { type InstrumentType } from "@/types/session";
 import { FretboardInstrumentCreationPanel } from "./FretboardInstrumentCreationPanel";
 import { KeyboardInstrumentCreationPanel } from "./KeyboardInstrumentCreationPanel";
@@ -29,7 +29,7 @@ const instrumentCreationIcons = {
 
 export interface InstrumentCreationSettingsMenuProps {
   closeSignal?: number;
-  defaultInstrumentSetup?: InstrumentCreationDefault;
+  moduleCreationDefaults?: ModuleCreationDefaults;
   fretboardSelection: FretboardInstrumentSelection;
   instrumentType: InstrumentType;
   keyboardSelection: KeyboardInstrumentSelection;
@@ -41,7 +41,7 @@ export interface InstrumentCreationSettingsMenuProps {
 
 export function InstrumentCreationSettingsMenu({
   closeSignal = 0,
-  defaultInstrumentSetup,
+  moduleCreationDefaults,
   fretboardSelection,
   instrumentType,
   keyboardSelection,
@@ -87,7 +87,7 @@ export function InstrumentCreationSettingsMenu({
         const isSelected = instrumentType === option.id;
         const isDefault = instrumentCreationDefaultMatchesSelection(
           option.id,
-          defaultInstrumentSetup,
+          moduleCreationDefaults,
           keyboardSelection,
           fretboardSelection,
         );

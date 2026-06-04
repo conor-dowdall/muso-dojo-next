@@ -4,7 +4,6 @@ import {
   createTestStore,
   sessionId,
 } from "./appStoreTestUtils";
-import { createBuiltInDefaultInstrumentSetup } from "@/utils/instrument-creation/defaultInstrumentSetup";
 
 const musoDojoNoteColors = {
   source: "preset",
@@ -145,18 +144,20 @@ describe("dojo settings app store actions", () => {
     );
   });
 
-  it("stores one remembered instrument creation setup", () => {
+  it("stores remembered module creation selections and setup", () => {
     const store = createTestStore();
 
-    store.getState().setDefaultInstrumentSetup({
-      instrumentType: "keyboard",
-      setup: {
+    store.getState().rememberModuleCreation({
+      context: "session",
+      moduleKinds: ["keyboard", "drone", "keyboard"],
+      keyboard: {
         theme: "studio",
       },
     });
-    store.getState().setDefaultInstrumentSetup({
-      instrumentType: "fretboard",
-      setup: {
+    store.getState().rememberModuleCreation({
+      context: "part",
+      moduleKinds: ["fretboard", "drone"],
+      fretboard: {
         instrument: "guitar",
         tuningKey: "guitarDropD",
         handedness: "left",
@@ -166,9 +167,13 @@ describe("dojo settings app store actions", () => {
       },
     });
 
-    expect(store.getState().dojoSettings.defaultInstrumentSetup).toEqual({
-      instrumentType: "fretboard",
-      setup: {
+    expect(store.getState().dojoSettings.moduleCreationDefaults).toEqual({
+      sessionModuleKinds: ["keyboard", "drone"],
+      partModuleKinds: ["fretboard", "drone"],
+      keyboard: {
+        theme: "studio",
+      },
+      fretboard: {
         instrument: "guitar",
         tuningKey: "guitarDropD",
         handedness: "left",
@@ -179,13 +184,13 @@ describe("dojo settings app store actions", () => {
     });
   });
 
-  it("does not notify subscribers when remembering an unchanged setup", () => {
+  it("does not notify subscribers when remembered module creation is unchanged", () => {
     const store = createTestStore({
       ...createStoreSnapshot(),
       dojoSettings: {
-        defaultInstrumentSetup: {
-          instrumentType: "keyboard",
-          setup: {
+        moduleCreationDefaults: {
+          sessionModuleKinds: ["keyboard"],
+          keyboard: {
             theme: "studio",
           },
         },
@@ -196,9 +201,10 @@ describe("dojo settings app store actions", () => {
       notificationCount += 1;
     });
 
-    store.getState().setDefaultInstrumentSetup({
-      instrumentType: "keyboard",
-      setup: {
+    store.getState().rememberModuleCreation({
+      context: "session",
+      moduleKinds: ["keyboard"],
+      keyboard: {
         theme: "studio",
       },
     });
@@ -207,22 +213,20 @@ describe("dojo settings app store actions", () => {
     expect(notificationCount).toBe(0);
   });
 
-  it("clears remembered instrument setup when restoring the built-in default", () => {
+  it("clears remembered module creation when restoring the built-in default", () => {
     const store = createTestStore({
       ...createStoreSnapshot(),
       dojoSettings: {
-        defaultInstrumentSetup: {
-          instrumentType: "keyboard",
-          setup: {
-            theme: "studio",
-          },
+        moduleCreationDefaults: {
+          sessionModuleKinds: ["keyboard"],
         },
       },
     });
 
-    store
-      .getState()
-      .setDefaultInstrumentSetup(createBuiltInDefaultInstrumentSetup());
+    store.getState().rememberModuleCreation({
+      context: "session",
+      moduleKinds: ["fretboard"],
+    });
 
     expect(store.getState().dojoSettings).toEqual({});
   });

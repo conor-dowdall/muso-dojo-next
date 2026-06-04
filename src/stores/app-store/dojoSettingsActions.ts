@@ -1,8 +1,8 @@
 import { normalizeAppThemePreference } from "@/data/appThemes";
 import {
-  defaultInstrumentSetupsAreEqual,
   normalizeMasterAmbienceSetting,
-  normalizeDefaultInstrumentSetup,
+  moduleCreationDefaultsAreEqual,
+  normalizeModuleCreationDefaults,
   normalizeNoteColorSetting,
   noteColorConfigsAreEqual,
 } from "@/utils/session/normalizeDojoSettings";
@@ -11,6 +11,7 @@ import {
   type DojoSettingsActions,
 } from "@/stores/app-store/types";
 import { type DojoSettings } from "@/types/session";
+import { type RememberModuleCreationRequest } from "@/types/instrument-creation-defaults";
 
 function setOptionalDojoSetting<TKey extends keyof DojoSettings>(
   set: AppStoreSet,
@@ -45,6 +46,44 @@ function setOptionalDojoSetting<TKey extends keyof DojoSettings>(
 export function createDojoSettingsActions(
   set: AppStoreSet,
 ): DojoSettingsActions {
+  const rememberModuleCreation = (request: RememberModuleCreationRequest) => {
+    set((state) => {
+      const moduleKindsKey =
+        request.context === "session"
+          ? "sessionModuleKinds"
+          : "partModuleKinds";
+      const moduleCreationDefaults = normalizeModuleCreationDefaults({
+        ...state.dojoSettings.moduleCreationDefaults,
+        [moduleKindsKey]: request.moduleKinds,
+        ...(request.fretboard ? { fretboard: request.fretboard } : {}),
+        ...(request.keyboard ? { keyboard: request.keyboard } : {}),
+      });
+
+      if (
+        moduleCreationDefaultsAreEqual(
+          state.dojoSettings.moduleCreationDefaults,
+          moduleCreationDefaults,
+        )
+      ) {
+        return state;
+      }
+
+      if (!moduleCreationDefaults) {
+        const dojoSettings = { ...state.dojoSettings };
+        delete dojoSettings.moduleCreationDefaults;
+
+        return { dojoSettings };
+      }
+
+      return {
+        dojoSettings: {
+          ...state.dojoSettings,
+          moduleCreationDefaults,
+        },
+      };
+    });
+  };
+
   return {
     setAppTheme: (themeChoice) => {
       const appTheme = normalizeAppThemePreference(themeChoice);
@@ -71,16 +110,6 @@ export function createDojoSettingsActions(
         noteColorConfigsAreEqual,
       );
     },
-    setDefaultInstrumentSetup: (creationDefault) => {
-      const normalizedDefault =
-        normalizeDefaultInstrumentSetup(creationDefault);
-
-      setOptionalDojoSetting(
-        set,
-        "defaultInstrumentSetup",
-        normalizedDefault,
-        defaultInstrumentSetupsAreEqual,
-      );
-    },
+    rememberModuleCreation,
   };
 }

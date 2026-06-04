@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/buttons/Button";
 import { Dialog } from "@/components/ui/dialog/Dialog";
 import { type InstrumentCreationRangeContext } from "@/components/instrument-creation/instrumentCreationConfig";
 import { type MusicPartControlProps } from "@/types/music-part";
-import { type AddPartModuleHandler } from "@/types/session";
+import { type AddPartModulesHandler } from "@/types/session";
 import { useControllableState } from "@/hooks/useControllableState";
 import styles from "./MusicPart.module.css";
 
@@ -31,7 +31,7 @@ interface MusicPartProps {
   accentColor?: string;
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
   showHeader?: boolean;
-  onAddPartModule?: AddPartModuleHandler;
+  onAddPartModules?: AddPartModulesHandler;
   onClonePart?: () => void;
   onRemovePart?: () => void;
 }
@@ -51,7 +51,7 @@ function MusicPartContent({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addDialogKey, setAddDialogKey] = useState(0);
   const hasContent = musicPart.moduleCount > 0;
-  const canAddPartModule = musicPart.addPartModule !== undefined;
+  const canAddPartModules = musicPart.addPartModules !== undefined;
   const openAddDialog = () => {
     setAddDialogKey((currentKey) => currentKey + 1);
     setIsAddDialogOpen(true);
@@ -63,7 +63,7 @@ function MusicPartContent({
       {showHeader ? (
         <MusicPartHeader
           className={headerClassName}
-          onOpenAddDialog={canAddPartModule ? openAddDialog : undefined}
+          onOpenAddDialog={canAddPartModules ? openAddDialog : undefined}
         />
       ) : null}
       <div
@@ -71,7 +71,7 @@ function MusicPartContent({
         data-empty={hasContent ? undefined : true}
       >
         {hasContent ? children : null}
-        {!hasContent && canAddPartModule ? (
+        {!hasContent && canAddPartModules ? (
           <Button
             icon={<Plus />}
             label="Add to Part"
@@ -81,14 +81,14 @@ function MusicPartContent({
           />
         ) : null}
       </div>
-      {musicPart.addPartModule ? (
+      {musicPart.addPartModules ? (
         <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="wide">
           <PartModuleCreationDialog
             key={addDialogKey}
             instrumentCreationRangeContext={
               musicPart.instrumentCreationRangeContext
             }
-            onAddPartModule={musicPart.addPartModule}
+            onAddPartModules={musicPart.addPartModules}
             onClose={closeAddDialog}
             title="Add to Part"
           />
@@ -112,7 +112,7 @@ export function MusicPart({
   initialNoteCollectionKey = "major",
   onNoteCollectionKeyChange,
   showHeader = true,
-  onAddPartModule,
+  onAddPartModules,
   onClonePart,
   onRemovePart,
 }: MusicPartComponentProps) {
@@ -139,7 +139,7 @@ export function MusicPart({
     setRootNote,
     setNoteCollectionKey,
     instrumentCreationRangeContext,
-    addPartModule: onAddPartModule,
+    addPartModules: onAddPartModules,
     clonePart: onClonePart,
     removePart: onRemovePart,
   };

@@ -333,7 +333,7 @@ describe("app store persistence", () => {
     );
   });
 
-  it("normalizes remembered default instrument setup", () => {
+  it("normalizes remembered module creation defaults", () => {
     const persistedState = createPersistedSnapshot("persisted-session");
 
     expect(
@@ -341,31 +341,53 @@ describe("app store persistence", () => {
         {
           ...persistedState,
           dojoSettings: {
-            defaultInstrumentSetup: {
-              instrumentType: "fretboard",
-              setup: {
+            moduleCreationDefaults: {
+              sessionModuleKinds: ["keyboard", "drone", "keyboard"],
+              partModuleKinds: ["fretboard"],
+              fretboard: {
                 instrument: "guitar",
                 tuningKey: "guitarDropD",
                 handedness: "left",
                 appearanceSource: "custom",
                 theme: "maple",
                 inlayPreset: "dots",
-                fretRange: [0, 24],
+                range: {
+                  source: "custom",
+                  fretRange: [0, 24],
+                },
+              },
+              keyboard: {
+                theme: "studio",
+                range: {
+                  source: "named",
+                  range: "keys61",
+                },
               },
             },
           },
         },
         fallbackSnapshot,
-      ).dojoSettings.defaultInstrumentSetup,
+      ).dojoSettings.moduleCreationDefaults,
     ).toEqual({
-      instrumentType: "fretboard",
-      setup: {
+      sessionModuleKinds: ["keyboard", "drone"],
+      fretboard: {
         instrument: "guitar",
         tuningKey: "guitarDropD",
         handedness: "left",
         appearanceSource: "custom",
         theme: "maple",
         inlayPreset: "dots",
+        range: {
+          source: "custom",
+          fretRange: [0, 24],
+        },
+      },
+      keyboard: {
+        theme: "studio",
+        range: {
+          source: "named",
+          range: "keys61",
+        },
       },
     });
   });
@@ -378,6 +400,12 @@ describe("app store persistence", () => {
         {
           ...persistedState,
           dojoSettings: {
+            defaultInstrumentSetup: {
+              instrumentType: "keyboard",
+              setup: {
+                theme: "studio",
+              },
+            },
             instrumentCreationDefaults: {
               keyboard: {
                 theme: "studio",
@@ -390,7 +418,7 @@ describe("app store persistence", () => {
     ).toEqual({});
   });
 
-  it("ignores invalid remembered default instrument setup", () => {
+  it("ignores invalid remembered module creation defaults", () => {
     const persistedState = createPersistedSnapshot("persisted-session");
 
     expect(
@@ -398,9 +426,9 @@ describe("app store persistence", () => {
         {
           ...persistedState,
           dojoSettings: {
-            defaultInstrumentSetup: {
-              instrumentType: "fretboard",
-              setup: {
+            moduleCreationDefaults: {
+              sessionModuleKinds: ["not-a-module"],
+              fretboard: {
                 instrument: "not-an-instrument",
                 tuningKey: "guitarDropD",
               },

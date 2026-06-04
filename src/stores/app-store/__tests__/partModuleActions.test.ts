@@ -49,6 +49,39 @@ describe("part module app store actions", () => {
     });
   });
 
+  it("adds multiple modules in order", () => {
+    const store = createTestStore();
+
+    const addedModuleIds = store.getState().addPartModules(sessionId, partId, [
+      {
+        type: "instrument",
+        settings: {
+          instrumentType: "keyboard",
+        },
+      },
+      {
+        type: "drone",
+      },
+    ]);
+
+    const modules = store.getState().sessions[sessionId]?.parts[0]?.modules;
+
+    expect(addedModuleIds).toHaveLength(2);
+    expect(modules).toHaveLength(3);
+    expect(modules?.slice(1).map((module) => module.id)).toEqual(
+      addedModuleIds,
+    );
+    expect(modules?.[1]).toMatchObject({
+      type: "instrument",
+      instrument: {
+        type: "keyboard",
+      },
+    });
+    expect(modules?.[2]).toMatchObject({
+      type: "drone",
+    });
+  });
+
   it("clones a drone module", () => {
     const store = createTestStore();
     const addedModuleId = store.getState().addPartModule(sessionId, partId, {

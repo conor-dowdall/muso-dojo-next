@@ -9,7 +9,7 @@ import {
 } from "@/types/instrument-active-note";
 import { type InstrumentLayoutConfig } from "@/types/instrument-layout";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
-import { type InstrumentCreationDefault } from "@/types/instrument-creation-defaults";
+import { type ModuleCreationDefaults } from "@/types/instrument-creation-defaults";
 import { type NoteColorConfig } from "@/types/note-colors";
 import { type FretboardConfig } from "@/types/fretboard";
 import { type KeyboardConfig } from "@/types/keyboard";
@@ -114,12 +114,16 @@ export type PartModuleCreationRequest<
 export interface MusicPartCreationRequest {
   rootNote?: string;
   noteCollectionKey?: NoteCollectionKey;
-  initialModule?: PartModuleCreationRequest;
+  moduleRequests?: PartModuleCreationRequest[];
 }
 
 export type AddPartModuleHandler = <T extends PartModuleType>(
   request: PartModuleCreationRequest<T>,
 ) => string | undefined | void;
+
+export type AddPartModulesHandler = (
+  requests: PartModuleCreationRequest[],
+) => string[] | undefined | void;
 
 export interface MusicPartConfig {
   id: string;
@@ -148,7 +152,7 @@ export interface SessionConfig {
 export interface DojoSettings {
   appTheme?: AppThemeName;
   noteColorConfig?: NoteColorConfig;
-  defaultInstrumentSetup?: InstrumentCreationDefault;
+  moduleCreationDefaults?: ModuleCreationDefaults;
   masterAmbiencePresetId?: MasterAmbiencePresetId;
 }
 

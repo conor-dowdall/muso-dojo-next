@@ -2,41 +2,55 @@ import { describe, expect, it } from "vitest";
 import { createDefaultMusicPartConfig } from "@/utils/session/createSessionEntities";
 
 describe("createSessionEntities", () => {
-  it("creates a music part with an initial module request", () => {
+  it("creates a music part with module requests", () => {
     const part = createDefaultMusicPartConfig({
       rootNote: "D",
       noteCollectionKey: "minor",
-      initialModule: {
-        type: "instrument",
-        settings: {
-          instrumentType: "keyboard",
+      moduleRequests: [
+        {
+          type: "instrument",
+          settings: {
+            instrumentType: "fretboard",
+          },
         },
-      },
+        {
+          type: "instrument",
+          settings: {
+            instrumentType: "keyboard",
+          },
+        },
+        {
+          type: "drone",
+        },
+      ],
     });
 
     expect(part.rootNote).toBe("D");
     expect(part.noteCollectionKey).toBe("minor");
-    expect(part.modules).toHaveLength(1);
+    expect(part.modules).toHaveLength(3);
     expect(part.modules[0]).toMatchObject({
+      type: "instrument",
+      instrument: {
+        type: "fretboard",
+      },
+    });
+    expect(part.modules[1]).toMatchObject({
       type: "instrument",
       instrument: {
         type: "keyboard",
       },
     });
+    expect(part.modules[2]).toMatchObject({
+      type: "drone",
+    });
   });
 
-  it("creates a music part with an initial drone module request", () => {
+  it("creates a music part without module requests", () => {
     const part = createDefaultMusicPartConfig({
       rootNote: "C",
       noteCollectionKey: "major",
-      initialModule: {
-        type: "drone",
-      },
     });
 
-    expect(part.modules).toHaveLength(1);
-    expect(part.modules[0]).toMatchObject({
-      type: "drone",
-    });
+    expect(part.modules).toHaveLength(0);
   });
 });

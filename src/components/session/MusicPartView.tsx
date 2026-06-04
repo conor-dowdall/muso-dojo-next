@@ -46,7 +46,7 @@ export function MusicPartView({
   const setPartNoteCollectionKey = useAppStore(
     (state) => state.setPartNoteCollectionKey,
   );
-  const addPartModule = useAppStore((state) => state.addPartModule);
+  const addPartModules = useAppStore((state) => state.addPartModules);
   const clonePart = useAppStore((state) => state.clonePart);
   const removePart = useAppStore((state) => state.removePart);
   const instrumentCreationRangeContextSignature = useAppStore(
@@ -78,10 +78,10 @@ export function MusicPartView({
         setPartNoteCollectionKey(sessionId, partId, noteCollectionKey)
       }
       showHeader={!isPerformanceMode && partSettings.showHeader}
-      onAddPartModule={
+      onAddPartModules={
         isPerformanceMode
           ? undefined
-          : (request) => addPartModule(sessionId, partId, request)
+          : (requests) => addPartModules(sessionId, partId, requests)
       }
       onClonePart={
         isPerformanceMode ? undefined : () => clonePart(sessionId, partId)

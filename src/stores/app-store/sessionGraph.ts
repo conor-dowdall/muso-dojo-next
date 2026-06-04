@@ -192,9 +192,16 @@ export function appendPartModule(
   part: MusicPartConfig,
   partModule: PartModuleConfig,
 ): MusicPartConfig {
+  return appendPartModules(part, [partModule]);
+}
+
+export function appendPartModules(
+  part: MusicPartConfig,
+  partModules: PartModuleConfig[],
+): MusicPartConfig {
   return {
     ...part,
-    modules: [...part.modules, normalizePartModuleForWrite(partModule)],
+    modules: [...part.modules, ...partModules.map(normalizePartModuleForWrite)],
   };
 }
 

@@ -3,6 +3,11 @@
   padding-block-end: var(--space-1);
 }
 
+.sectionHeading {
+  padding-inline: var(--space-1);
+  text-transform: uppercase;
+}
+
 .progressionChordPreview {
   display: block;
   min-inline-size: 0;

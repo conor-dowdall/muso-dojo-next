@@ -21,10 +21,13 @@ import {
 import {
   type FretboardCreationAppearanceSource,
   type FretboardCreationDefault,
-  type InstrumentCreationDefault,
   type KeyboardCreationDefault,
+  type FretboardModuleCreationDefault,
+  type KeyboardModuleCreationDefault,
+  type ModuleCreationContext,
+  type ModuleCreationDefaults,
+  type ModuleCreationKind,
 } from "@/types/instrument-creation-defaults";
-import { createBuiltInDefaultInstrumentSetup } from "@/utils/instrument-creation/defaultInstrumentSetup";
 
 export type KeyboardRangeSelection = KeyboardRangeName | "custom";
 export type InstrumentCreationViewportTier = "tiny" | "compact" | "regular";
@@ -68,6 +71,12 @@ const fretRangeByTier = {
   readonly [number, number]
 >;
 
+function isInstrumentModuleCreationKind(
+  moduleKind: ModuleCreationKind,
+): moduleKind is InstrumentType {
+  return moduleKind === "fretboard" || moduleKind === "keyboard";
+}
+
 function getRootFontSizePx() {
   if (typeof window === "undefined") {
     return 16;
@@ -107,19 +116,25 @@ export function getInstrumentCreationViewportTier(
 
 export function createDefaultKeyboardInstrumentSelection(
   tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
-  defaultSetup?: InstrumentCreationDefault,
+  moduleCreationDefaults?: ModuleCreationDefaults,
   rangeContext?: InstrumentCreationRangeContext,
 ): KeyboardInstrumentSelection {
   const contextKeyboard = rangeContext?.keyboard;
   const responsiveRange = keyboardRangeByTier[tier];
-  const range = contextKeyboard?.range ?? responsiveRange;
-  const midiRange = contextKeyboard
-    ? contextKeyboard.midiRange
-    : keyboardRanges[responsiveRange].midiRange;
-  const keyboardDefault =
-    defaultSetup?.instrumentType === "keyboard"
-      ? defaultSetup.setup
-      : undefined;
+  const keyboardDefault = moduleCreationDefaults?.keyboard;
+  const rememberedRange = keyboardDefault?.range;
+  const range =
+    contextKeyboard?.range ??
+    (rememberedRange?.source === "named"
+      ? rememberedRange.range
+      : rememberedRange?.source === "custom"
+        ? "custom"
+        : responsiveRange);
+  const midiRange =
+    contextKeyboard?.midiRange ??
+    (rememberedRange?.source === "custom"
+      ? rememberedRange.midiRange
+      : keyboardRanges[range === "custom" ? responsiveRange : range].midiRange);
 
   return {
     range,
@@ -130,14 +145,14 @@ export function createDefaultKeyboardInstrumentSelection(
 
 export function createDefaultFretboardInstrumentSelection(
   tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
-  defaultSetup?: InstrumentCreationDefault,
+  moduleCreationDefaults?: ModuleCreationDefaults,
   rangeContext?: InstrumentCreationRangeContext,
 ): FretboardInstrumentSelection {
-  const fretRange = rangeContext?.fretboard?.fretRange ?? fretRangeByTier[tier];
-  const fretboardDefault =
-    defaultSetup?.instrumentType === "fretboard"
-      ? defaultSetup.setup
-      : undefined;
+  const fretboardDefault = moduleCreationDefaults?.fretboard;
+  const fretRange =
+    rangeContext?.fretboard?.fretRange ??
+    fretboardDefault?.range?.fretRange ??
+    fretRangeByTier[tier];
 
   return {
     instrument: fretboardDefault?.instrument ?? "guitar",
@@ -158,27 +173,34 @@ export function createDefaultFretboardInstrumentSelection(
 
 export function createDefaultInstrumentSelections(
   tier: InstrumentCreationViewportTier = getInstrumentCreationViewportTier(),
-  defaultSetup?: InstrumentCreationDefault,
+  moduleCreationDefaults?: ModuleCreationDefaults,
   rangeContext?: InstrumentCreationRangeContext,
 ) {
   return {
     keyboardSelection: createDefaultKeyboardInstrumentSelection(
       tier,
-      defaultSetup,
+      moduleCreationDefaults,
       rangeContext,
     ),
     fretboardSelection: createDefaultFretboardInstrumentSelection(
       tier,
-      defaultSetup,
+      moduleCreationDefaults,
       rangeContext,
     ),
   };
 }
 
 export function getDefaultInstrumentType(
-  defaultSetup?: InstrumentCreationDefault,
+  moduleCreationDefaults: ModuleCreationDefaults | undefined,
+  context: ModuleCreationContext,
 ): InstrumentType {
-  return defaultSetup?.instrumentType ?? "fretboard";
+  const moduleKinds =
+    context === "session"
+      ? moduleCreationDefaults?.sessionModuleKinds
+      : moduleCreationDefaults?.partModuleKinds;
+  const firstInstrumentKind = moduleKinds?.find(isInstrumentModuleCreationKind);
+
+  return firstInstrumentKind ?? "fretboard";
 }
 
 export function getKeyboardCreationDefault(
@@ -186,6 +208,29 @@ export function getKeyboardCreationDefault(
 ): KeyboardCreationDefault {
   return {
     theme: selection.theme,
+  };
+}
+
+export function getKeyboardModuleCreationDefault(
+  selection: KeyboardInstrumentSelection,
+  options: { includeRange?: boolean } = {},
+): KeyboardModuleCreationDefault {
+  return {
+    ...getKeyboardCreationDefault(selection),
+    ...(options.includeRange
+      ? {
+          range:
+            selection.range === "custom"
+              ? {
+                  source: "custom",
+                  midiRange: [selection.midiRange[0], selection.midiRange[1]],
+                }
+              : {
+                  source: "named",
+                  range: selection.range,
+                },
+        }
+      : {}),
   };
 }
 
@@ -202,46 +247,50 @@ export function getFretboardCreationDefault(
   };
 }
 
-export function getInstrumentCreationDefault(
+export function getFretboardModuleCreationDefault(
+  selection: FretboardInstrumentSelection,
+  options: { includeRange?: boolean } = {},
+): FretboardModuleCreationDefault {
+  return {
+    ...getFretboardCreationDefault(selection),
+    ...(options.includeRange
+      ? {
+          range: {
+            source: "custom",
+            fretRange: [selection.fretRange[0], selection.fretRange[1]],
+          },
+        }
+      : {}),
+  };
+}
+
+export function getInstrumentModuleCreationDefault(
   instrumentType: InstrumentType,
   keyboardSelection: KeyboardInstrumentSelection,
   fretboardSelection: FretboardInstrumentSelection,
-): InstrumentCreationDefault {
+  options: { includeRange?: boolean } = {},
+): FretboardModuleCreationDefault | KeyboardModuleCreationDefault {
   return instrumentType === "keyboard"
-    ? {
-        instrumentType,
-        setup: getKeyboardCreationDefault(keyboardSelection),
-      }
-    : {
-        instrumentType,
-        setup: getFretboardCreationDefault(fretboardSelection),
-      };
+    ? getKeyboardModuleCreationDefault(keyboardSelection, options)
+    : getFretboardModuleCreationDefault(fretboardSelection, options);
 }
 
 export function instrumentCreationDefaultMatchesSelection(
   instrumentType: InstrumentType,
-  defaultSetup: InstrumentCreationDefault | undefined,
+  moduleCreationDefaults: ModuleCreationDefaults | undefined,
   keyboardSelection: KeyboardInstrumentSelection,
   fretboardSelection: FretboardInstrumentSelection,
 ) {
-  const effectiveDefault =
-    defaultSetup ?? createBuiltInDefaultInstrumentSetup();
-
-  if (effectiveDefault.instrumentType !== instrumentType) {
-    return false;
-  }
-
   if (instrumentType === "keyboard") {
+    const keyboardDefault = moduleCreationDefaults?.keyboard;
+
     return (
-      effectiveDefault.instrumentType === "keyboard" &&
-      effectiveDefault.setup.theme === keyboardSelection.theme
+      keyboardDefault !== undefined &&
+      keyboardDefault.theme === keyboardSelection.theme
     );
   }
 
-  const fretboardDefault =
-    effectiveDefault.instrumentType === "fretboard"
-      ? effectiveDefault.setup
-      : undefined;
+  const fretboardDefault = moduleCreationDefaults?.fretboard;
 
   if (!fretboardDefault) {
     return false;

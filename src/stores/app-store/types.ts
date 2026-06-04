@@ -3,7 +3,7 @@ import { type StateCreator } from "zustand";
 import { type AudioPresetId, type MasterAmbiencePresetId } from "@/audio/types";
 import { type AppThemeChoice } from "@/data/appThemes";
 import { type DisplayFormatId } from "@/data/displayFormats";
-import { type InstrumentCreationDefault } from "@/types/instrument-creation-defaults";
+import { type RememberModuleCreationRequest } from "@/types/instrument-creation-defaults";
 import {
   type ActiveNotes,
   type ActiveNotesLockSnapshot,
@@ -43,9 +43,7 @@ export interface DojoSettingsActions {
   setAppTheme: (theme: AppThemeChoice) => void;
   setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => void;
   setNoteColorConfig: (noteColorConfig: NoteColorConfig) => void;
-  setDefaultInstrumentSetup: (
-    creationDefault: InstrumentCreationDefault,
-  ) => void;
+  rememberModuleCreation: (request: RememberModuleCreationRequest) => void;
 }
 
 export interface SessionActions {
@@ -142,6 +140,11 @@ export interface PartModuleActions {
     partId: string,
     request: PartModuleCreationRequest<T>,
   ) => string | undefined;
+  addPartModules: (
+    sessionId: string,
+    partId: string,
+    requests: PartModuleCreationRequest[],
+  ) => string[];
   clonePartModule: (
     sessionId: string,
     partId: string,

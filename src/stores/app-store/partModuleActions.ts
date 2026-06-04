@@ -1,7 +1,7 @@
-import { createDefaultPartModuleConfig } from "@/utils/session/createSessionEntities";
+import { createDefaultPartModuleConfigs } from "@/utils/session/createSessionEntities";
 import { clonePartModuleConfig } from "./cloneConfig";
 import {
-  appendPartModule,
+  appendPartModules,
   findPartById,
   findPartModuleById,
   insertPartModuleAfter,
@@ -21,23 +21,30 @@ export function createPartModuleActions(
 ): PartModuleActions {
   return {
     addPartModule: (sessionId, partId, request) => {
+      return get().addPartModules(sessionId, partId, [request])[0];
+    },
+    addPartModules: (sessionId, partId, requests) => {
+      if (requests.length === 0) {
+        return [];
+      }
+
       const part = findPartById(get().sessions[sessionId], partId);
 
       if (!part) {
-        return undefined;
+        return [];
       }
 
-      const partModule = createDefaultPartModuleConfig(request);
+      const partModules = createDefaultPartModuleConfigs(requests);
 
       set((state) =>
         updateSessionById(state, sessionId, (session) =>
           updatePartById(session, partId, (part) =>
-            appendPartModule(part, partModule),
+            appendPartModules(part, partModules),
           ),
         ),
       );
 
-      return partModule.id;
+      return partModules.map((partModule) => partModule.id);
     },
     clonePartModule: (sessionId, partId, moduleId) => {
       const session = get().sessions[sessionId];

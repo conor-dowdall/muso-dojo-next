@@ -3,7 +3,7 @@
 import { createContext, type ReactNode, use } from "react";
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { type SettingSetter } from "@/types/state";
-import { type AddPartModuleHandler } from "@/types/session";
+import { type AddPartModulesHandler } from "@/types/session";
 import { type InstrumentCreationRangeContext } from "@/components/instrument-creation/instrumentCreationConfig";
 
 export interface MusicPartContextValue {
@@ -14,7 +14,7 @@ export interface MusicPartContextValue {
   setRootNote: SettingSetter<string>;
   setNoteCollectionKey: SettingSetter<NoteCollectionKey>;
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
-  addPartModule?: AddPartModuleHandler;
+  addPartModules?: AddPartModulesHandler;
   clonePart?: () => void;
   removePart?: () => void;
 }

@@ -46,6 +46,11 @@ function HydratedSession({
   const addPart = useAppStore((state) => state.addPart);
   const addParts = useAppStore((state) => state.addParts);
   const replaceParts = useAppStore((state) => state.replaceParts);
+  const activeSessionPartCount = useAppStore((state) =>
+    state.activeSessionId
+      ? (state.sessions[state.activeSessionId]?.parts.length ?? 0)
+      : 0,
+  );
   const closeAddDialog = () => setIsAddDialogOpen(false);
   const instrumentCreationRangeContext =
     createInstrumentCreationRangeContextFromSignature(
@@ -153,11 +158,12 @@ function HydratedSession({
       <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="wide">
         <AddToSessionDialog
           key={addDialogKey}
+          canReplaceSession={activeSessionPartCount > 0}
           instrumentCreationRangeContext={instrumentCreationRangeContext}
           onAddCustomChordOrScale={({
             rootNote,
             noteCollectionKey,
-            initialModule,
+            moduleRequests,
             replaceSession,
           }) => {
             if (!activeSessionId) {
@@ -167,7 +173,7 @@ function HydratedSession({
             const partSettings = {
               rootNote,
               noteCollectionKey,
-              initialModule,
+              moduleRequests,
             };
 
             if (replaceSession) {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { AudioWaveform, CircleDot } from "lucide-react";
 import {
   DialogContent,
   DialogContentSection,
@@ -11,87 +10,70 @@ import {
   DialogHeader,
 } from "@/components/ui/dialog/Dialog";
 import { Button } from "@/components/ui/buttons/Button";
-import {
-  DisclosureList,
-  DisclosureListChoice,
-  DisclosureListChoiceItem,
-} from "@/components/ui/disclosure-list/DisclosureList";
-import {
-  type AddPartModuleHandler,
-  type PartModuleType,
-} from "@/types/session";
+import { useAppStore } from "@/stores/appStore";
+import { type AddPartModulesHandler } from "@/types/session";
 import { type InstrumentCreationRangeContext } from "@/components/instrument-creation/instrumentCreationConfig";
-import { InstrumentCreationDefaultAction } from "@/components/instrument-creation/InstrumentCreationDefaultAction";
-import { useInstrumentCreationDraft } from "@/components/instrument-creation/useInstrumentCreationDraft";
-import { DEFAULT_PART_MODULE_TYPE } from "@/utils/session/sessionDefaults";
 import {
-  type PartModuleCreationDraft,
-  getPartModuleCreationActionLabel,
-  getPartModuleCreationRequest,
-  partModuleCreationOptions,
-} from "@/components/part-module-creation/partModuleCreationConfig";
-import {
-  PartModuleCreationSettingsMenu,
-  type PartModuleCreationSettingsMenuProps,
-} from "@/components/part-module-creation/PartModuleCreationSettingsMenu";
+  ModuleCreationList,
+  type ModuleCreationListDraft,
+} from "@/components/part-module-creation/ModuleCreationList";
+import { type ModuleCreationKind } from "@/types/instrument-creation-defaults";
 
 interface PartModuleCreationDialogProps {
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
-  onAddPartModule: AddPartModuleHandler;
+  onAddPartModules: AddPartModulesHandler;
   onClose: () => void;
   title?: string;
 }
 
+const moduleKindLabels = {
+  drone: "Drone",
+  fretboard: "Fretboard",
+  keyboard: "Keyboard",
+} as const satisfies Record<ModuleCreationKind, string>;
+
+const emptyDraft = {
+  moduleKinds: [],
+  moduleRequests: [],
+} satisfies ModuleCreationListDraft;
+
+function getAddLabel(moduleKinds: readonly ModuleCreationKind[]) {
+  if (moduleKinds.length === 0) {
+    return "Add Modules";
+  }
+
+  if (moduleKinds.length === 1) {
+    return `Add ${moduleKindLabels[moduleKinds[0]]}`;
+  }
+
+  return `Add ${moduleKinds.length} Modules`;
+}
+
 export function PartModuleCreationDialog({
   instrumentCreationRangeContext,
-  onAddPartModule,
+  onAddPartModules,
   onClose,
   title = "Add to Part",
 }: PartModuleCreationDialogProps) {
-  const [selectedModuleType, setSelectedModuleType] = useState<PartModuleType>(
-    DEFAULT_PART_MODULE_TYPE,
+  const [draft, setDraft] = useState<ModuleCreationListDraft>(emptyDraft);
+  const rememberModuleCreation = useAppStore(
+    (state) => state.rememberModuleCreation,
   );
-  const {
-    defaultInstrumentSetup,
-    fretboardSelection,
-    instrumentType,
-    isDefaultInstrumentSetup,
-    keyboardSelection,
-    setFretboardSelection,
-    setInstrumentType,
-    setKeyboardSelection,
-    useCurrentSetupForNewInstruments,
-  } = useInstrumentCreationDraft(instrumentCreationRangeContext);
-
-  const creationDraft =
-    selectedModuleType === "instrument"
-      ? ({
-          moduleType: selectedModuleType,
-          instrumentType,
-          keyboardSelection,
-          fretboardSelection,
-        } satisfies PartModuleCreationDraft)
-      : ({
-          moduleType: selectedModuleType,
-        } satisfies PartModuleCreationDraft);
-  const addLabel = getPartModuleCreationActionLabel(creationDraft);
-  const moduleSettingsProps =
-    creationDraft.moduleType === "instrument"
-      ? ({
-          ...creationDraft,
-          defaultInstrumentSetup,
-          onFretboardSelectionChange: setFretboardSelection,
-          onInstrumentTypeChange: setInstrumentType,
-          onKeyboardSelectionChange: setKeyboardSelection,
-        } satisfies PartModuleCreationSettingsMenuProps)
-      : ({
-          moduleType: "drone",
-        } satisfies PartModuleCreationSettingsMenuProps);
-  const selectedInstrumentLabel =
-    instrumentType === "keyboard" ? "Keyboard" : "Fretboard";
+  const canAddModules = draft.moduleRequests.length > 0;
+  const addLabel = getAddLabel(draft.moduleKinds);
 
   const handleAddPartModule = () => {
-    onAddPartModule(getPartModuleCreationRequest(creationDraft));
+    if (!canAddModules) {
+      return;
+    }
+
+    onAddPartModules(draft.moduleRequests);
+    rememberModuleCreation({
+      context: "part",
+      moduleKinds: draft.moduleKinds,
+      ...(draft.fretboard ? { fretboard: draft.fretboard } : {}),
+      ...(draft.keyboard ? { keyboard: draft.keyboard } : {}),
+    });
     onClose();
   };
 
@@ -99,62 +81,19 @@ export function PartModuleCreationDialog({
     <>
       <DialogHeader title={title} onClose={onClose} />
       <DialogContent layout="stack" menuRhythm="standard">
-        <DialogContentSection ariaLabel="Module type">
-          <DisclosureList>
-            {partModuleCreationOptions.map((option) => {
-              const selected = option.id === selectedModuleType;
-
-              if (option.id === "instrument") {
-                return (
-                  <DisclosureListChoiceItem
-                    key={option.id}
-                    ariaLabel="Choose Instrument module"
-                    icon={<CircleDot />}
-                    isOpen={selected}
-                    label={option.label}
-                    onToggle={() => setSelectedModuleType(option.id)}
-                    panelVariant="menu"
-                    preview={selected ? selectedInstrumentLabel : undefined}
-                    selected={selected}
-                    subtitle={option.subtitle}
-                  >
-                    <PartModuleCreationSettingsMenu {...moduleSettingsProps} />
-                  </DisclosureListChoiceItem>
-                );
-              }
-
-              return (
-                <DisclosureListChoice
-                  key={option.id}
-                  aria-label="Choose Drone module"
-                  icon={<AudioWaveform />}
-                  label={option.label}
-                  onClick={() => setSelectedModuleType(option.id)}
-                  selected={selected}
-                  subtitle={option.subtitle}
-                />
-              );
-            })}
-          </DisclosureList>
+        <DialogContentSection ariaLabel="Modules">
+          <ModuleCreationList
+            context="part"
+            instrumentCreationRangeContext={instrumentCreationRangeContext}
+            onDraftChange={setDraft}
+          />
         </DialogContentSection>
-        {selectedModuleType === "instrument" ? (
-          <DialogContentSection ariaLabel="Creation default">
-            <DisclosureList>
-              <InstrumentCreationDefaultAction
-                fretboardSelection={fretboardSelection}
-                instrumentType={instrumentType}
-                isDefault={isDefaultInstrumentSetup}
-                keyboardSelection={keyboardSelection}
-                onUseForNewInstruments={useCurrentSetupForNewInstruments}
-              />
-            </DisclosureList>
-          </DialogContentSection>
-        ) : null}
       </DialogContent>
       <DialogFooter>
         <DialogFooterActionBar ariaLabel="Selection">
           <DialogFooterActionGroup placement="primary">
             <Button
+              disabled={!canAddModules}
               label={addLabel}
               size="lg"
               variant="filled"
