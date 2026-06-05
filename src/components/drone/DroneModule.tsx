@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { ArrowDown, ArrowUp, Minus, Plus } from "lucide-react";
+import { getDefaultAudioPresetId, type AudioPresetId } from "@/audio";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
@@ -10,6 +11,8 @@ import { IconButton } from "@/components/ui/buttons/IconButton";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { useDroneNotePlayback } from "@/hooks/audio/useDroneNotePlayback";
 import { useInstrumentNavigation } from "@/hooks/instrument/useInstrumentNavigation";
+import { useControllableState } from "@/hooks/useControllableState";
+import { type SettingSetter } from "@/types/state";
 import {
   DRONE_MAX_OCTAVE_OFFSET,
   DRONE_MAX_OCTAVE_ROWS,
@@ -22,8 +25,13 @@ import { DroneOptionsDialog } from "./DroneOptionsDialog";
 import styles from "./DroneModule.module.css";
 
 interface DroneModuleProps {
+  audioPresetId?: AudioPresetId;
   noteCollectionKey?: NoteCollectionKey;
-  onClone?: () => void;
+  octaveOffset?: number;
+  octaveRowCount?: number;
+  onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
+  onOctaveOffsetChange?: SettingSetter<number>;
+  onOctaveRowCountChange?: SettingSetter<number>;
   onRemove?: () => void;
   rootNote?: string;
   showHeader?: boolean;
@@ -51,7 +59,7 @@ function getDroneRowClassName(rowCount: number) {
 }
 
 function getDroneLabelCharCount(label: string) {
-  return Math.min(label.length, 4);
+  return Math.min(Array.from(label).length, 4);
 }
 
 function DroneTileLabel({ label }: { label: string }) {
@@ -67,15 +75,42 @@ function DroneTileLabel({ label }: { label: string }) {
 }
 
 export function DroneModule({
+  audioPresetId: controlledAudioPresetId,
   noteCollectionKey,
-  onClone,
+  octaveOffset: controlledOctaveOffset,
+  octaveRowCount: controlledOctaveRowCount,
+  onAudioPresetIdChange,
+  onOctaveOffsetChange,
+  onOctaveRowCountChange,
   onRemove,
   rootNote,
   showHeader = true,
 }: DroneModuleProps) {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
-  const [octaveOffset, setOctaveOffset] = useState(0);
-  const [octaveRowCount, setOctaveRowCount] = useState(DRONE_MIN_OCTAVE_ROWS);
+  const [audioPresetId, setAudioPresetId] = useControllableState({
+    value: controlledAudioPresetId,
+    defaultValue: getDefaultAudioPresetId("drone"),
+    onChange: onAudioPresetIdChange,
+    controlled:
+      controlledAudioPresetId !== undefined ||
+      onAudioPresetIdChange !== undefined,
+  });
+  const [octaveOffset, setOctaveOffset] = useControllableState({
+    value: controlledOctaveOffset,
+    defaultValue: 0,
+    onChange: onOctaveOffsetChange,
+    controlled:
+      controlledOctaveOffset !== undefined ||
+      onOctaveOffsetChange !== undefined,
+  });
+  const [octaveRowCount, setOctaveRowCount] = useControllableState({
+    value: controlledOctaveRowCount,
+    defaultValue: DRONE_MIN_OCTAVE_ROWS,
+    onChange: onOctaveRowCountChange,
+    controlled:
+      controlledOctaveRowCount !== undefined ||
+      onOctaveRowCountChange !== undefined,
+  });
   const noteColors = useNoteColors();
   const droneNotes = useMemo(
     () =>
@@ -134,6 +169,7 @@ export function DroneModule({
     }).hasUnplayableNotes;
   }, [noteCollectionKey, octaveOffset, octaveRowCount, rootNote]);
   const { isNoteActive, toggleNote } = useDroneNotePlayback({
+    audioPresetId,
     notes: droneNotes.notes,
   });
   const {
@@ -177,7 +213,6 @@ export function DroneModule({
       return noteKeys[nextIndex] ?? currentKey;
     },
   });
-  const canManageModule = onClone !== undefined || onRemove !== undefined;
   const octaveOffsetLabel = formatOctaveOffset(octaveOffset);
   const droneFrameClassName = [
     styles.droneFrame,
@@ -193,6 +228,30 @@ export function DroneModule({
     setFocusedKey(initialFocusedKey);
   }, [focusedKey, initialFocusedKey, noteByKey, setFocusedKey]);
 
+  const shiftOctaveDown = () => {
+    setOctaveOffset((current) =>
+      Math.max(DRONE_MIN_OCTAVE_OFFSET, current - 1),
+    );
+  };
+
+  const shiftOctaveUp = () => {
+    setOctaveOffset((current) =>
+      Math.min(DRONE_MAX_OCTAVE_OFFSET, current + 1),
+    );
+  };
+
+  const removeOctaveRow = () => {
+    setOctaveRowCount((current) =>
+      Math.max(DRONE_MIN_OCTAVE_ROWS, current - 1),
+    );
+  };
+
+  const addOctaveRow = () => {
+    setOctaveRowCount((current) =>
+      Math.min(DRONE_MAX_OCTAVE_ROWS, current + 1),
+    );
+  };
+
   return (
     <>
       <PartModuleFrame
@@ -201,21 +260,35 @@ export function DroneModule({
         headerActions={
           showHeader ? (
             <div className={styles.droneHeaderActions}>
+              <OverflowMenuButton
+                aria-label="Drone options"
+                onClick={() => setIsOptionsOpen(true)}
+              />
+            </div>
+          ) : undefined
+        }
+        headerActionsGrow
+        showHeader={showHeader}
+      >
+        <div className={styles.droneToolSurface}>
+          {showHeader ? (
+            <div
+              className={styles.droneToolControls}
+              role="group"
+              aria-label="Drone octave and row controls"
+            >
               <span
-                className={styles.droneControlGroup}
+                className={styles.droneToolControlGroup}
                 role="group"
                 aria-label="Drone octave controls"
               >
                 <IconButton
                   aria-label={`Shift drone down one octave. Current octave offset: ${octaveOffsetLabel}`}
+                  className={styles.droneToolButton}
                   disabled={!canShiftOctaveDown}
                   icon={<ArrowDown />}
-                  size="sm"
-                  onClick={() =>
-                    setOctaveOffset((current) =>
-                      Math.max(DRONE_MIN_OCTAVE_OFFSET, current - 1),
-                    )
-                  }
+                  size="md"
+                  onClick={shiftOctaveDown}
                   tooltip={
                     canShiftOctaveDown
                       ? "Shift octave down"
@@ -224,14 +297,11 @@ export function DroneModule({
                 />
                 <IconButton
                   aria-label={`Shift drone up one octave. Current octave offset: ${octaveOffsetLabel}`}
+                  className={styles.droneToolButton}
                   disabled={!canShiftOctaveUp}
                   icon={<ArrowUp />}
-                  size="sm"
-                  onClick={() =>
-                    setOctaveOffset((current) =>
-                      Math.min(DRONE_MAX_OCTAVE_OFFSET, current + 1),
-                    )
-                  }
+                  size="md"
+                  onClick={shiftOctaveUp}
                   tooltip={
                     canShiftOctaveUp
                       ? "Shift octave up"
@@ -240,20 +310,17 @@ export function DroneModule({
                 />
               </span>
               <span
-                className={styles.droneControlGroup}
+                className={styles.droneToolControlGroup}
                 role="group"
                 aria-label="Drone row controls"
               >
                 <IconButton
                   aria-label={`Remove final octave row. Current rows: ${octaveRowCount}`}
+                  className={styles.droneToolButton}
                   disabled={!canRemoveOctaveRow}
                   icon={<Minus />}
-                  size="sm"
-                  onClick={() =>
-                    setOctaveRowCount((current) =>
-                      Math.max(DRONE_MIN_OCTAVE_ROWS, current - 1),
-                    )
-                  }
+                  size="md"
+                  onClick={removeOctaveRow}
                   tooltip={
                     canRemoveOctaveRow
                       ? "Remove final octave row"
@@ -262,14 +329,11 @@ export function DroneModule({
                 />
                 <IconButton
                   aria-label={`Add octave row. Current rows: ${octaveRowCount}`}
+                  className={styles.droneToolButton}
                   disabled={!canAddOctaveRow}
                   icon={<Plus />}
-                  size="sm"
-                  onClick={() =>
-                    setOctaveRowCount((current) =>
-                      Math.min(DRONE_MAX_OCTAVE_ROWS, current + 1),
-                    )
-                  }
+                  size="md"
+                  onClick={addOctaveRow}
                   tooltip={
                     canAddOctaveRow
                       ? "Add octave row"
@@ -277,71 +341,63 @@ export function DroneModule({
                   }
                 />
               </span>
-              {canManageModule ? (
-                <OverflowMenuButton
-                  aria-label="Drone options"
-                  onClick={() => setIsOptionsOpen(true)}
-                />
-              ) : null}
             </div>
-          ) : undefined
-        }
-        headerActionsGrow
-        showHeader={showHeader}
-      >
-        <div className={styles.noteStack}>
-          <div className={styles.noteRows}>
-            {droneNotes.rows.map((row, rowIndex) => (
-              <div key={rowIndex} className={styles.noteRow}>
-                {row.map((note) => {
-                  const noteColor = resolveInstrumentNoteColor({
-                    midi: note.midi,
-                    mode: noteColors.mode,
-                    rootNote: droneNotes.rootNote,
-                  });
-                  const isActive = isNoteActive(note.interval);
+          ) : null}
+          <div className={styles.noteStack}>
+            <div className={styles.noteRows}>
+              {droneNotes.rows.map((row, rowIndex) => (
+                <div key={rowIndex} className={styles.noteRow}>
+                  {row.map((note) => {
+                    const noteColor = resolveInstrumentNoteColor({
+                      midi: note.midi,
+                      mode: noteColors.mode,
+                      rootNote: droneNotes.rootNote,
+                    });
+                    const isActive = isNoteActive(note.interval);
 
-                  return (
-                    <InstrumentNoteCell
-                      key={note.key}
-                      noteKey={note.key}
-                      note={{ midi: note.midi, emphasis: "large" }}
-                      noteColor={noteColor}
-                      midi={note.midi}
-                      ariaLabel={`${isActive ? "Stop" : "Start"} ${
-                        note.label
-                      } ${note.intervalLabel} drone note`}
-                      isFocused={focusedKey === note.key}
-                      isToggleButton
-                      isHighlighted={isActive}
-                      isPressed={isActive}
-                      setItemRef={setItemRef}
-                      handleKeyDown={handleKeyDown}
-                      onInteract={handleItemInteraction}
-                      className={styles.noteButton}
-                      largeSize="100%"
-                    >
-                      <span className={styles.droneTileLabelStack}>
-                        <span className={styles.droneTileLabelSlot}>
-                          <DroneTileLabel label={note.label} />
+                    return (
+                      <InstrumentNoteCell
+                        key={note.key}
+                        noteKey={note.key}
+                        note={{ midi: note.midi, emphasis: "large" }}
+                        noteColor={noteColor}
+                        midi={note.midi}
+                        ariaLabel={`${isActive ? "Stop" : "Start"} ${
+                          note.label
+                        } ${note.intervalLabel} drone note`}
+                        isFocused={focusedKey === note.key}
+                        isToggleButton
+                        isHighlighted={isActive}
+                        isPressed={isActive}
+                        setItemRef={setItemRef}
+                        handleKeyDown={handleKeyDown}
+                        onInteract={handleItemInteraction}
+                        className={styles.noteButton}
+                        largeSize="100%"
+                      >
+                        <span className={styles.droneTileLabelStack}>
+                          <span className={styles.droneTileNoteSlot}>
+                            <DroneTileLabel label={note.label} />
+                          </span>
+                          <span className={styles.droneTileIntervalSlot}>
+                            <DroneTileLabel label={note.intervalLabel} />
+                          </span>
                         </span>
-                        <span className={styles.droneTileLabelSlot}>
-                          <DroneTileLabel label={note.intervalLabel} />
-                        </span>
-                      </span>
-                    </InstrumentNoteCell>
-                  );
-                })}
-              </div>
-            ))}
+                      </InstrumentNoteCell>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </PartModuleFrame>
 
-      {showHeader && canManageModule ? (
+      {showHeader ? (
         <DroneOptionsDialog
+          audioPresetId={audioPresetId}
           isOpen={isOptionsOpen}
-          onClone={onClone}
+          onAudioPresetIdChange={setAudioPresetId}
           onClose={() => setIsOptionsOpen(false)}
           onRemove={onRemove}
         />

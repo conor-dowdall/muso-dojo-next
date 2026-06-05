@@ -90,11 +90,13 @@ function resolveOctaveOffset(value: unknown) {
   );
 }
 
-function offsetIntervalLabel(intervalLabel: string, rowIndex: number) {
+function getDroneRowIntervalLabel(intervalLabel: string, rowIndex: number) {
   if (rowIndex === 0) {
     return intervalLabel;
   }
 
+  // Drone rows repeat the same collection in higher octaves, so the display
+  // label raises the generic interval number by one diatonic octave per row.
   const match = intervalLabel.match(/^([^\d]*)(\d+)$/);
 
   if (!match) {
@@ -195,7 +197,7 @@ export function resolveDroneNotes({
       }
 
       const pitchClass = (rootInteger + interval) % DRONE_SEMITONES_PER_OCTAVE;
-      const intervalLabel = offsetIntervalLabel(
+      const intervalLabel = getDroneRowIntervalLabel(
         baseNote.baseIntervalLabel,
         rowIndex,
       );

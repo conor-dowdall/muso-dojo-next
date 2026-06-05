@@ -3,10 +3,65 @@ import {
   type InstrumentPartModuleConfig,
   type PartModuleConfig,
 } from "@/types/session";
+import { getDefaultAudioPresetId, isAudioPresetId } from "@/audio/presets";
 import { assertNever } from "@/utils/assertNever";
 import { normalizeInstrumentInstanceConfig } from "@/utils/session/normalizeInstrumentConfig";
 import { isPartModuleType } from "@/utils/session/partModuleTypes";
 import { isRecord, normalizeId } from "@/utils/session/normalizationPrimitives";
+import {
+  DRONE_MAX_OCTAVE_OFFSET,
+  DRONE_MAX_OCTAVE_ROWS,
+  DRONE_MIN_OCTAVE_OFFSET,
+  DRONE_MIN_OCTAVE_ROWS,
+} from "@/utils/drone/droneNotes";
+
+function normalizeDroneAudioPresetId(value: unknown) {
+  return isAudioPresetId(value) && value !== getDefaultAudioPresetId("drone")
+    ? value
+    : undefined;
+}
+
+function normalizeOptionalDroneInteger({
+  defaultValue,
+  max,
+  min,
+  value,
+}: {
+  defaultValue: number;
+  max: number;
+  min: number;
+  value: unknown;
+}) {
+  if (
+    typeof value !== "number" ||
+    !Number.isInteger(value) ||
+    value < min ||
+    value > max ||
+    value === defaultValue
+  ) {
+    return undefined;
+  }
+
+  return value;
+}
+
+function normalizeDroneOctaveOffset(value: unknown) {
+  return normalizeOptionalDroneInteger({
+    defaultValue: 0,
+    max: DRONE_MAX_OCTAVE_OFFSET,
+    min: DRONE_MIN_OCTAVE_OFFSET,
+    value,
+  });
+}
+
+function normalizeDroneOctaveRowCount(value: unknown) {
+  return normalizeOptionalDroneInteger({
+    defaultValue: DRONE_MIN_OCTAVE_ROWS,
+    max: DRONE_MAX_OCTAVE_ROWS,
+    min: DRONE_MIN_OCTAVE_ROWS,
+    value,
+  });
+}
 
 export function normalizePartModuleConfig(
   value: unknown,
@@ -18,8 +73,15 @@ export function normalizePartModuleConfig(
 
   switch (value.type) {
     case "drone": {
+      const audioPresetId = normalizeDroneAudioPresetId(value.audioPresetId);
+      const octaveOffset = normalizeDroneOctaveOffset(value.octaveOffset);
+      const octaveRowCount = normalizeDroneOctaveRowCount(value.octaveRowCount);
+
       return {
         id: normalizeId(value.id, `module-${index + 1}`),
+        ...(audioPresetId ? { audioPresetId } : {}),
+        ...(octaveOffset !== undefined ? { octaveOffset } : {}),
+        ...(octaveRowCount !== undefined ? { octaveRowCount } : {}),
         type: value.type,
       } satisfies DronePartModuleConfig;
     }

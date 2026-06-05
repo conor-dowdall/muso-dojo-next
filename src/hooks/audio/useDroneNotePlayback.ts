@@ -1,17 +1,31 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { musoAudioEngine, type DroneHandle } from "@/audio";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  getDefaultAudioPresetId,
+  musoAudioEngine,
+  type AudioPresetId,
+  type DroneHandle,
+} from "@/audio";
+
+const DRONE_BASE_VELOCITY = 0.78;
+const DRONE_HIGH_BALANCE_START_MIDI = 60;
+const DRONE_HIGH_BALANCE_END_MIDI = 84;
+const DRONE_HIGH_BALANCE_MIN_SCALE = 0.72;
 
 export interface DroneNotePlaybackNote {
+  audioPresetId?: AudioPresetId;
   interval: number;
   midi: number;
+  velocity?: number;
 }
 
 interface ActiveDroneNote<THandle> {
+  audioPresetId?: AudioPresetId;
   handle?: THandle;
   midi: number;
   token: number;
+  velocity?: number;
 }
 
 interface DroneNotePlaybackControllerOptions<THandle> {
@@ -21,6 +35,7 @@ interface DroneNotePlaybackControllerOptions<THandle> {
 }
 
 interface UseDroneNotePlaybackOptions {
+  audioPresetId?: AudioPresetId;
   notes: readonly DroneNotePlaybackNote[];
 }
 
@@ -28,6 +43,46 @@ function getSortedIntervals<THandle>(
   activeNotes: Map<number, ActiveDroneNote<THandle>>,
 ) {
   return [...activeNotes.keys()].sort((left, right) => left - right);
+}
+
+function activeNoteMatches<THandle>(
+  current: ActiveDroneNote<THandle> | undefined,
+  note: DroneNotePlaybackNote,
+) {
+  return (
+    current?.audioPresetId === note.audioPresetId &&
+    current?.midi === note.midi &&
+    current?.velocity === note.velocity
+  );
+}
+
+export function getDronePlaybackVelocity(midi: number) {
+  if (midi <= DRONE_HIGH_BALANCE_START_MIDI) {
+    return DRONE_BASE_VELOCITY;
+  }
+
+  const progress = Math.min(
+    1,
+    Math.max(
+      0,
+      (midi - DRONE_HIGH_BALANCE_START_MIDI) /
+        (DRONE_HIGH_BALANCE_END_MIDI - DRONE_HIGH_BALANCE_START_MIDI),
+    ),
+  );
+  const scale = 1 - progress * (1 - DRONE_HIGH_BALANCE_MIN_SCALE);
+
+  return DRONE_BASE_VELOCITY * scale;
+}
+
+function createPlaybackNote(
+  note: DroneNotePlaybackNote,
+  audioPresetId: AudioPresetId,
+): DroneNotePlaybackNote {
+  return {
+    ...note,
+    audioPresetId,
+    velocity: getDronePlaybackVelocity(note.midi),
+  };
 }
 
 export function createDroneNotePlaybackController<THandle>({
@@ -48,7 +103,7 @@ export function createDroneNotePlaybackController<THandle>({
       const handle = await startOperation(note);
       const current = activeNotes.get(note.interval);
 
-      if (!current || current.token !== token || current.midi !== note.midi) {
+      if (!activeNoteMatches(current, note) || current?.token !== token) {
         if (handle !== undefined) {
           stopOperation(handle);
         }
@@ -75,7 +130,7 @@ export function createDroneNotePlaybackController<THandle>({
   const startNote = async (note: DroneNotePlaybackNote) => {
     const current = activeNotes.get(note.interval);
 
-    if (current?.midi === note.midi) {
+    if (activeNoteMatches(current, note)) {
       return;
     }
 
@@ -85,8 +140,10 @@ export function createDroneNotePlaybackController<THandle>({
 
     const token = (current?.token ?? 0) + 1;
     activeNotes.set(note.interval, {
+      audioPresetId: note.audioPresetId,
       midi: note.midi,
       token,
+      velocity: note.velocity,
     });
 
     if (!current) {
@@ -140,7 +197,7 @@ export function createDroneNotePlaybackController<THandle>({
           return;
         }
 
-        if (nextNote.midi !== activeNote.midi) {
+        if (!activeNoteMatches(activeNote, nextNote)) {
           void startNote(nextNote);
         }
       });
@@ -169,7 +226,16 @@ export function createDroneNotePlaybackController<THandle>({
   };
 }
 
-export function useDroneNotePlayback({ notes }: UseDroneNotePlaybackOptions) {
+export function useDroneNotePlayback({
+  audioPresetId,
+  notes,
+}: UseDroneNotePlaybackOptions) {
+  const resolvedAudioPresetId =
+    audioPresetId ?? getDefaultAudioPresetId("drone");
+  const playbackNotes = useMemo(
+    () => notes.map((note) => createPlaybackNote(note, resolvedAudioPresetId)),
+    [notes, resolvedAudioPresetId],
+  );
   const [activeIntervals, setActiveIntervals] = useState<number[]>([]);
   const [controller] = useState(() =>
     createDroneNotePlaybackController<DroneHandle>({
@@ -177,8 +243,9 @@ export function useDroneNotePlayback({ notes }: UseDroneNotePlaybackOptions) {
       start: (note) =>
         musoAudioEngine.startDrone({
           midiNotes: [note.midi],
+          presetId: note.audioPresetId,
           use: "drone",
-          velocity: 0.78,
+          velocity: note.velocity,
         }),
       stop: (handle) => musoAudioEngine.stopDrone(handle),
     }),
@@ -188,8 +255,9 @@ export function useDroneNotePlayback({ notes }: UseDroneNotePlaybackOptions) {
     (note: DroneNotePlaybackNote) =>
       musoAudioEngine.startDrone({
         midiNotes: [note.midi],
+        presetId: note.audioPresetId,
         use: "drone",
-        velocity: 0.78,
+        velocity: note.velocity,
       }),
     [],
   );
@@ -203,8 +271,8 @@ export function useDroneNotePlayback({ notes }: UseDroneNotePlaybackOptions) {
   }, [controller, start, stop]);
 
   useEffect(() => {
-    controller.reconcileNotes(notes);
-  }, [controller, notes]);
+    controller.reconcileNotes(playbackNotes);
+  }, [controller, playbackNotes]);
 
   useEffect(
     () => () => {
@@ -216,6 +284,7 @@ export function useDroneNotePlayback({ notes }: UseDroneNotePlaybackOptions) {
   return {
     activeIntervals,
     isNoteActive: (interval: number) => activeIntervals.includes(interval),
-    toggleNote: (note: DroneNotePlaybackNote) => controller.toggleNote(note),
+    toggleNote: (note: DroneNotePlaybackNote) =>
+      controller.toggleNote(createPlaybackNote(note, resolvedAudioPresetId)),
   };
 }

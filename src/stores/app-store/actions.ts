@@ -1,4 +1,5 @@
 import { createDojoSettingsActions } from "./dojoSettingsActions";
+import { createDroneActions } from "./droneActions";
 import { createInstrumentActions } from "./instrumentActions";
 import { createPartActions } from "./partActions";
 import { createPartModuleActions } from "./partModuleActions";
@@ -18,6 +19,7 @@ export function createAppStoreActions(
     ...createSessionActions(set, get),
     ...createPartActions(set, get),
     ...createPartModuleActions(set, get),
+    ...createDroneActions(set, get),
     ...createInstrumentActions(set, get),
   };
 }

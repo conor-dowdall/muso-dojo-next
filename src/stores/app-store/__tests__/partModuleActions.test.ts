@@ -108,4 +108,74 @@ describe("part module app store actions", () => {
       type: "drone",
     });
   });
+
+  it("updates drone module settings", () => {
+    const store = createTestStore();
+    const addedModuleId = store.getState().addPartModule(sessionId, partId, {
+      type: "drone",
+    });
+
+    if (!addedModuleId) {
+      throw new Error("Expected a drone module id");
+    }
+
+    store
+      .getState()
+      .setDroneAudioPresetId(sessionId, partId, addedModuleId, "warm-pad");
+    store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 2);
+    store
+      .getState()
+      .setDroneOctaveRowCount(sessionId, partId, addedModuleId, 3);
+
+    const updatedModule = store
+      .getState()
+      .sessions[
+        sessionId
+      ]?.parts[0]?.modules.find((candidateModule) => candidateModule.id === addedModuleId);
+
+    expect(updatedModule).toMatchObject({
+      audioPresetId: "warm-pad",
+      id: addedModuleId,
+      octaveOffset: 2,
+      octaveRowCount: 3,
+      type: "drone",
+    });
+  });
+
+  it("omits default drone module settings after updates", () => {
+    const store = createTestStore();
+    const addedModuleId = store.getState().addPartModule(sessionId, partId, {
+      type: "drone",
+    });
+
+    if (!addedModuleId) {
+      throw new Error("Expected a drone module id");
+    }
+
+    store
+      .getState()
+      .setDroneAudioPresetId(sessionId, partId, addedModuleId, "warm-pad");
+    store
+      .getState()
+      .setDroneAudioPresetId(sessionId, partId, addedModuleId, "soft-organ");
+    store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 1);
+    store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 0);
+    store
+      .getState()
+      .setDroneOctaveRowCount(sessionId, partId, addedModuleId, 2);
+    store
+      .getState()
+      .setDroneOctaveRowCount(sessionId, partId, addedModuleId, 1);
+
+    const updatedModule = store
+      .getState()
+      .sessions[
+        sessionId
+      ]?.parts[0]?.modules.find((candidateModule) => candidateModule.id === addedModuleId);
+
+    expect(updatedModule).toStrictEqual({
+      id: addedModuleId,
+      type: "drone",
+    });
+  });
 });

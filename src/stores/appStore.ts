@@ -20,6 +20,7 @@ import { createAppStoreActions } from "@/stores/app-store/actions";
 import { type AppStore } from "@/stores/app-store/types";
 
 export type {
+  DroneSettingsPatch,
   AppStore,
   InstrumentSettingsPatch,
 } from "@/stores/app-store/types";

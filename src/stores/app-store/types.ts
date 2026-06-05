@@ -15,6 +15,7 @@ import { type NoteColorConfig } from "@/types/note-colors";
 import { type SettingValue } from "@/types/state";
 import {
   type AppStoreSnapshot,
+  type DronePartModuleConfig,
   type FretboardInstrumentInstanceConfig,
   type InstrumentInstanceBaseConfig,
   type KeyboardInstrumentInstanceConfig,
@@ -38,6 +39,10 @@ export type InstrumentSettingsPatch = Partial<InstrumentInstanceBaseConfig> & {
 
 export type PartSettingsPatch = Partial<
   Omit<MusicPartConfig, "id" | "modules">
+>;
+
+export type DroneSettingsPatch = Partial<
+  Omit<DronePartModuleConfig, "id" | "type">
 >;
 
 export interface DojoSettingsActions {
@@ -161,12 +166,40 @@ export interface PartModuleActions {
   ) => void;
 }
 
+export interface DroneActions {
+  updateDroneSettings: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    patch: DroneSettingsPatch,
+  ) => void;
+  setDroneAudioPresetId: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    audioPresetId: SettingValue<AudioPresetId>,
+  ) => void;
+  setDroneOctaveOffset: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    octaveOffset: SettingValue<number>,
+  ) => void;
+  setDroneOctaveRowCount: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    octaveRowCount: SettingValue<number>,
+  ) => void;
+}
+
 // Action slices follow the product hierarchy: Dojo -> Session -> Part ->
 // Module -> Instrument.
 export type AppStoreActions = DojoSettingsActions &
   SessionActions &
   PartActions &
   PartModuleActions &
+  DroneActions &
   InstrumentActions;
 export type AppStore = AppStoreSnapshot & AppStoreActions;
 export type AppStoreSet = Parameters<StateCreator<AppStore>>[0];

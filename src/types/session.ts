@@ -87,6 +87,9 @@ export interface InstrumentPartModuleConfig extends PartModuleBaseConfig<"instru
 }
 
 export interface DronePartModuleConfig extends PartModuleBaseConfig<"drone"> {
+  audioPresetId?: AudioPresetId;
+  octaveOffset?: number;
+  octaveRowCount?: number;
   type: "drone";
 }
 

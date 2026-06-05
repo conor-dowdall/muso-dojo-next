@@ -60,6 +60,63 @@ describe("createDroneNotePlaybackController", () => {
     expect(stop).toHaveBeenCalledWith("handle-1");
   });
 
+  it("restarts an active interval when its playback sound changes", async () => {
+    let handleIndex = 0;
+    const stop = vi.fn();
+    const start = vi.fn(async () => `handle-${++handleIndex}`);
+    const controller = createDroneNotePlaybackController({
+      start,
+      stop,
+    });
+
+    await controller.startNote({
+      audioPresetId: "soft-organ",
+      interval: 0,
+      midi: 48,
+      velocity: 0.78,
+    });
+    controller.reconcileNotes([
+      {
+        audioPresetId: "warm-pad",
+        interval: 0,
+        midi: 48,
+        velocity: 0.78,
+      },
+    ]);
+    await Promise.resolve();
+
+    expect(controller.getActiveIntervals()).toStrictEqual([0]);
+    expect(stop).toHaveBeenCalledWith("handle-1");
+    expect(start).toHaveBeenLastCalledWith({
+      audioPresetId: "warm-pad",
+      interval: 0,
+      midi: 48,
+      velocity: 0.78,
+    });
+  });
+
+  it("restarts an active interval when its balanced velocity changes", async () => {
+    let handleIndex = 0;
+    const stop = vi.fn();
+    const start = vi.fn(async () => `handle-${++handleIndex}`);
+    const controller = createDroneNotePlaybackController({
+      start,
+      stop,
+    });
+
+    await controller.startNote({ interval: 0, midi: 48, velocity: 0.78 });
+    controller.reconcileNotes([{ interval: 0, midi: 48, velocity: 0.62 }]);
+    await Promise.resolve();
+
+    expect(controller.getActiveIntervals()).toStrictEqual([0]);
+    expect(stop).toHaveBeenCalledWith("handle-1");
+    expect(start).toHaveBeenLastCalledWith({
+      interval: 0,
+      midi: 48,
+      velocity: 0.62,
+    });
+  });
+
   it("stops active notes that leave the available note row", async () => {
     const stop = vi.fn();
     const controller = createDroneNotePlaybackController({
