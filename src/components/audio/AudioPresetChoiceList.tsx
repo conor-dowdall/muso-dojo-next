@@ -39,6 +39,10 @@ export function getAudioPresetGroupsForUse(recommendedUse: AudioUse) {
     .filter((group) => group.presets.length > 0);
 }
 
+function formatAudioPresetOptionSubtitle(description: string | undefined) {
+  return description?.replace(/\.$/, "");
+}
+
 export function AudioPresetChoiceList({
   disabled,
   getChoiceAriaLabel,
@@ -70,7 +74,7 @@ export function AudioPresetChoiceList({
               label={preset.label}
               onClick={() => onChange(preset.id)}
               selected={preset.id === selectedPresetId}
-              subtitle={preset.description}
+              subtitle={formatAudioPresetOptionSubtitle(preset.description)}
             />
           ))}
         </DisclosureListGroup>

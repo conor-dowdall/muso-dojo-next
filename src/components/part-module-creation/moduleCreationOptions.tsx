@@ -36,7 +36,7 @@ export const MODULE_CREATION_OPTIONS = [
     icon: <AudioLines />,
     kind: "drone",
     label: MODULE_CREATION_KIND_LABELS.drone,
-    subtitle: "Sustained root tone",
+    subtitle: "Sustained notes",
   },
 ] as const satisfies readonly ModuleCreationOption[];
 

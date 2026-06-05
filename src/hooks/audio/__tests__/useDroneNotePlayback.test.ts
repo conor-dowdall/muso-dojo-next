@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { createDroneNotePlaybackController } from "@/hooks/audio/useDroneNotePlayback";
+import {
+  createDroneNotePlaybackController,
+  getDronePlaybackVelocity,
+} from "@/hooks/audio/useDroneNotePlayback";
 
 function createDeferred<T>() {
   let resolve: (value: T) => void = () => undefined;
@@ -42,6 +45,25 @@ describe("createDroneNotePlaybackController", () => {
 
     expect(controller.getActiveIntervals()).toStrictEqual([]);
     expect(stop).toHaveBeenCalledWith("late-handle");
+  });
+
+  it("stops all active drone notes at once", async () => {
+    const activeIntervals: number[][] = [];
+    const stop = vi.fn();
+    const controller = createDroneNotePlaybackController({
+      onActiveIntervalsChange: (intervals) => activeIntervals.push(intervals),
+      start: vi.fn(async (note) => `handle-${note.interval}`),
+      stop,
+    });
+
+    await controller.startNote({ interval: 0, midi: 48 });
+    await controller.startNote({ interval: 7, midi: 55 });
+    controller.stopAll();
+
+    expect(controller.getActiveIntervals()).toStrictEqual([]);
+    expect(activeIntervals).toStrictEqual([[0], [0, 7], []]);
+    expect(stop).toHaveBeenCalledWith("handle-0");
+    expect(stop).toHaveBeenCalledWith("handle-7");
   });
 
   it("restarts an active interval when its sounding midi changes", async () => {
@@ -129,5 +151,23 @@ describe("createDroneNotePlaybackController", () => {
 
     expect(controller.getActiveIntervals()).toStrictEqual([]);
     expect(stop).toHaveBeenCalledWith("handle-14");
+  });
+});
+
+describe("getDronePlaybackVelocity", () => {
+  it("keeps the root strongest and lowers pitches above it", () => {
+    const root = getDronePlaybackVelocity({ interval: 0 });
+    const third = getDronePlaybackVelocity({ interval: 4 });
+    const fifth = getDronePlaybackVelocity({ interval: 7 });
+    const octave = getDronePlaybackVelocity({ interval: 12 });
+    const doubleOctave = getDronePlaybackVelocity({
+      interval: 24,
+    });
+
+    expect(root).toBeCloseTo(0.78);
+    expect(third).toBeLessThan(root);
+    expect(fifth).toBeLessThan(third);
+    expect(octave).toBeLessThan(fifth);
+    expect(doubleOctave).toBeLessThan(octave);
   });
 });

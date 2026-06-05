@@ -9,9 +9,9 @@ import {
 } from "@/audio";
 
 const DRONE_BASE_VELOCITY = 0.78;
-const DRONE_HIGH_BALANCE_START_MIDI = 60;
-const DRONE_HIGH_BALANCE_END_MIDI = 84;
-const DRONE_HIGH_BALANCE_MIN_SCALE = 0.72;
+const DRONE_BALANCE_REFERENCE_INTERVAL = 24;
+const DRONE_ABOVE_ROOT_INITIAL_SCALE = 0.94;
+const DRONE_ABOVE_ROOT_MIN_SCALE = 0.66;
 
 export interface DroneNotePlaybackNote {
   audioPresetId?: AudioPresetId;
@@ -56,20 +56,22 @@ function activeNoteMatches<THandle>(
   );
 }
 
-export function getDronePlaybackVelocity(midi: number) {
-  if (midi <= DRONE_HIGH_BALANCE_START_MIDI) {
+export function getDronePlaybackVelocity({
+  interval,
+}: Pick<DroneNotePlaybackNote, "interval">) {
+  const semitonesAboveRoot = Math.max(0, interval);
+
+  if (semitonesAboveRoot === 0) {
     return DRONE_BASE_VELOCITY;
   }
 
   const progress = Math.min(
     1,
-    Math.max(
-      0,
-      (midi - DRONE_HIGH_BALANCE_START_MIDI) /
-        (DRONE_HIGH_BALANCE_END_MIDI - DRONE_HIGH_BALANCE_START_MIDI),
-    ),
+    semitonesAboveRoot / DRONE_BALANCE_REFERENCE_INTERVAL,
   );
-  const scale = 1 - progress * (1 - DRONE_HIGH_BALANCE_MIN_SCALE);
+  const scale =
+    DRONE_ABOVE_ROOT_INITIAL_SCALE -
+    progress * (DRONE_ABOVE_ROOT_INITIAL_SCALE - DRONE_ABOVE_ROOT_MIN_SCALE);
 
   return DRONE_BASE_VELOCITY * scale;
 }
@@ -81,7 +83,7 @@ function createPlaybackNote(
   return {
     ...note,
     audioPresetId,
-    velocity: getDronePlaybackVelocity(note.midi),
+    velocity: getDronePlaybackVelocity(note),
   };
 }
 
@@ -212,7 +214,21 @@ export function createDroneNotePlaybackController<THandle>({
     startNote,
     stopAll: () => {
       const intervals = getSortedIntervals(activeNotes);
-      intervals.forEach(stopNote);
+
+      if (intervals.length === 0) {
+        return;
+      }
+
+      intervals.forEach((interval) => {
+        const current = activeNotes.get(interval);
+
+        activeNotes.delete(interval);
+
+        if (current?.handle !== undefined) {
+          stopOperation(current.handle);
+        }
+      });
+      emitActiveIntervals();
     },
     stopNote,
     toggleNote: (note: DroneNotePlaybackNote) => {
@@ -284,6 +300,7 @@ export function useDroneNotePlayback({
   return {
     activeIntervals,
     isNoteActive: (interval: number) => activeIntervals.includes(interval),
+    stopAll: () => controller.stopAll(),
     toggleNote: (note: DroneNotePlaybackNote) =>
       controller.toggleNote(createPlaybackNote(note, resolvedAudioPresetId)),
   };
