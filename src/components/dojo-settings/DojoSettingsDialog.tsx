@@ -1,6 +1,6 @@
 "use client";
 
-import { PaintbrushVertical, Waves } from "lucide-react";
+import { CloudFog, PaintbrushVertical } from "lucide-react";
 import {
   masterAmbiencePresets,
   musoAudioEngine,
@@ -123,7 +123,7 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
           <DisclosureListGroup>
             <DisclosureListItem
               ariaLabel={`Reverb. Current: ${masterAmbiencePreset.label}`}
-              icon={<Waves />}
+              icon={<CloudFog />}
               isOpen={isOpen("sound")}
               label="Reverb"
               panelVariant="menu"

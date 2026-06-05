@@ -249,7 +249,7 @@ export function ModuleCreationList({
             label={option.label}
             selected={selected}
             selectedAriaLabel={`Remove ${option.label} module`}
-            selectedPreviewLabel="ADDED"
+            selectedPreviewKind="included"
             selectedSelectBehavior="enabled"
             selectAriaLabel={`Add ${option.label} module`}
             subtitle={summary}

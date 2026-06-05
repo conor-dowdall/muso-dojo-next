@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { Guitar, Piano, RadioTower } from "lucide-react";
+import { AudioLines, Guitar, Piano } from "lucide-react";
 import { type ModuleCreationKind } from "@/types/instrument-creation-defaults";
 
 export interface ModuleCreationOption {
@@ -33,7 +33,7 @@ export const MODULE_CREATION_OPTIONS = [
     subtitle: "Piano key view",
   },
   {
-    icon: <RadioTower />,
+    icon: <AudioLines />,
     kind: "drone",
     label: MODULE_CREATION_KIND_LABELS.drone,
     subtitle: "Sustained root tone",

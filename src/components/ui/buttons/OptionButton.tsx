@@ -16,7 +16,8 @@ import styles from "./OptionButton.module.css";
  * dense verbal choices, such as display formats or note collections. Use
  * icon-over-label tiles only when the icon is the option's primary visual
  * meaning and the label names a short concrete state, such as note size.
- * list: title/subtitle on the left, selected marker on the right.
+ * list: title/subtitle on the left, preview and disclosure affordances on the
+ * right.
  * Visual hierarchy contract:
  * - Setting rows keep label stable, such as "Root Note" or "Range"; put the
  *   compact current value or visual sample in preview.
@@ -64,7 +65,6 @@ export type OptionButtonProps = Omit<
    */
   preview?: ReactNode;
   selected?: boolean;
-  showSelectionIndicator?: boolean;
   /**
    * Secondary text that belongs to the row identity: examples, descriptions,
    * resolved values, mode names, or comparison details.
@@ -92,16 +92,12 @@ export function OptionButton({
   presentation = "media",
   preview,
   selected,
-  showSelectionIndicator,
   subtitle,
   variant,
   ...props
 }: OptionButtonProps) {
-  const shouldShowSelectionIndicator =
-    showSelectionIndicator ?? presentation === "list";
   const hasPreview = preview !== undefined;
-  const hasAccessory =
-    hasPreview || shouldShowSelectionIndicator || disclosureState !== undefined;
+  const hasAccessory = hasPreview || disclosureState !== undefined;
   const buttonClasses = [
     styles.optionButton,
     fullWidth ? styles.fullWidth : "",
@@ -120,13 +116,6 @@ export function OptionButton({
               <span className={styles.preview} aria-hidden="true">
                 {preview}
               </span>
-            ) : null}
-            {shouldShowSelectionIndicator ? (
-              <span
-                aria-hidden="true"
-                className={`${styles.selectionIndicator} ${styles.selectionDot}`}
-                data-selected={selected === true}
-              />
             ) : null}
             {disclosureState !== undefined ? (
               <span

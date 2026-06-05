@@ -12,6 +12,10 @@ import {
   type OptionButtonProps,
 } from "@/components/ui/buttons/OptionButton";
 import { Button } from "@/components/ui/buttons/Button";
+import {
+  SelectionPreviewLabel,
+  type SelectionPreviewKind,
+} from "@/components/ui/selection-preview";
 import styles from "./DisclosureList.module.css";
 
 function cx(...classes: Array<string | false | null | undefined>) {
@@ -24,6 +28,26 @@ export type DisclosureListDensity = "comfortable" | "compact";
 export type DisclosureListGroupGap = "related" | "section";
 export type DisclosureListPanelVariant = "editor" | "menu";
 
+function resolveSelectedPreview({
+  preview,
+  selected,
+  selectedPreviewKind,
+  selectedPreviewLabel,
+}: {
+  preview: ReactNode | undefined;
+  selected: boolean;
+  selectedPreviewKind: SelectionPreviewKind;
+  selectedPreviewLabel: ReactNode | undefined;
+}) {
+  return selected && preview === undefined ? (
+    <SelectionPreviewLabel kind={selectedPreviewKind}>
+      {selectedPreviewLabel}
+    </SelectionPreviewLabel>
+  ) : (
+    preview
+  );
+}
+
 /**
  * !!! LLM COPY CONVENTION: Disclosure lists are scan surfaces, not articles.
  * Top-level option/action rows and setting categories should use short, stable labels,
@@ -34,6 +58,11 @@ export type DisclosureListPanelVariant = "editor" | "menu";
  * DISPLAY_VALUE_SEPARATOR from "@/utils/valueSummary", such as
  * "One Part • Root Note and Chord or Scale".
  * Previews are compact current values or tangible samples, not extra help text.
+ * Preview is also the app's selected-state convention. Prefer a useful value
+ * or sample; fall back to a shared state badge only when the row has no better
+ * preview. Use CURRENT for the active existing object, INCLUDED for staged
+ * creation checklists, and SELECTED for plain peer-choice fallbacks. Chevrons
+ * disclose nested content only.
  *
  * Shared vertical option pattern for object rows, configuration rows, action rows,
  * danger rows, and nested editors. Panels can stay mounted for calmer
@@ -167,7 +196,6 @@ interface DisclosureListItemProps {
   panelVariant?: DisclosureListPanelVariant;
   preview?: ReactNode;
   selected?: boolean;
-  showSelectionIndicator?: OptionButtonProps["showSelectionIndicator"];
   subtitle?: ReactNode;
   tone?: OptionButtonProps["tone"];
   variant?: OptionButtonProps["variant"];
@@ -195,7 +223,6 @@ export function DisclosureListItem({
   panelVariant,
   preview,
   selected,
-  showSelectionIndicator,
   subtitle,
   tone,
   variant,
@@ -229,7 +256,6 @@ export function DisclosureListItem({
         preview={preview}
         selected={isSelected}
         selectionSemantics="visual"
-        showSelectionIndicator={showSelectionIndicator ?? false}
         subtitle={subtitle}
         tone={tone}
         variant={variant}
@@ -252,7 +278,7 @@ export function DisclosureListItem({
 
 type DisclosureListActionItemProps = Omit<
   DisclosureListItemProps,
-  "disclosureIndicator" | "disclosureSemantics" | "showSelectionIndicator"
+  "disclosureIndicator" | "disclosureSemantics"
 >;
 
 /**
@@ -272,7 +298,6 @@ export function DisclosureListActionItem({
       disclosureSemantics
       isOpen={isOpen}
       selected={selected ?? isOpen}
-      showSelectionIndicator={false}
     />
   );
 }
@@ -284,7 +309,6 @@ type DisclosureListActionProps = OptionButtonProps & {
 export function DisclosureListAction({
   className = "",
   containerClassName = "",
-  showSelectionIndicator = false,
   ...props
 }: DisclosureListActionProps) {
   const clusterClasses = cx(styles.itemCluster, containerClassName);
@@ -292,49 +316,74 @@ export function DisclosureListAction({
 
   return (
     <div className={clusterClasses}>
-      <OptionButton
-        {...props}
-        className={itemClasses}
-        presentation="list"
-        showSelectionIndicator={showSelectionIndicator}
-      />
+      <OptionButton {...props} className={itemClasses} presentation="list" />
     </div>
   );
 }
 
 type DisclosureListChoiceProps = Omit<
   DisclosureListActionProps,
-  "showSelectionIndicator"
+  "preview" | "selected"
 > & {
+  preview?: ReactNode;
   selected: boolean;
+  selectedPreviewKind?: SelectionPreviewKind;
+  selectedPreviewLabel?: ReactNode;
 };
 
 export function DisclosureListChoice({
+  preview,
   selected,
+  selectedPreviewKind = "selected",
+  selectedPreviewLabel,
   ...props
 }: DisclosureListChoiceProps) {
+  const resolvedPreview = resolveSelectedPreview({
+    preview,
+    selected,
+    selectedPreviewKind,
+    selectedPreviewLabel,
+  });
+
   return (
     <DisclosureListAction
       {...props}
+      preview={resolvedPreview}
       selected={selected}
-      showSelectionIndicator
     />
   );
 }
 
 type DisclosureListChoiceItemProps = Omit<
   DisclosureListItemProps,
-  "selected" | "showSelectionIndicator"
+  "preview" | "selected"
 > & {
+  preview?: ReactNode;
   selected: boolean;
+  selectedPreviewKind?: SelectionPreviewKind;
+  selectedPreviewLabel?: ReactNode;
 };
 
 export function DisclosureListChoiceItem({
+  preview,
   selected,
+  selectedPreviewKind = "selected",
+  selectedPreviewLabel,
   ...props
 }: DisclosureListChoiceItemProps) {
+  const resolvedPreview = resolveSelectedPreview({
+    preview,
+    selected,
+    selectedPreviewKind,
+    selectedPreviewLabel,
+  });
+
   return (
-    <DisclosureListItem {...props} selected={selected} showSelectionIndicator />
+    <DisclosureListItem
+      {...props}
+      preview={resolvedPreview}
+      selected={selected}
+    />
   );
 }
 

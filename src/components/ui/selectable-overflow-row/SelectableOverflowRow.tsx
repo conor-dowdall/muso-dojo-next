@@ -11,6 +11,10 @@ import {
   IconButton,
   type IconButtonProps,
 } from "@/components/ui/buttons/IconButton";
+import {
+  SelectionPreviewLabel,
+  type SelectionPreviewKind,
+} from "@/components/ui/selection-preview";
 import styles from "./SelectableOverflowRow.module.css";
 
 export interface SelectableActionRowProps {
@@ -37,15 +41,17 @@ export interface SelectableActionRowProps {
   selectedAriaCurrent?: ComponentPropsWithoutRef<"button">["aria-current"];
   selectAriaLabel: string;
   selectedAriaLabel: string;
-  selectedPreviewLabel?: string;
+  selectedPreviewKind?: SelectionPreviewKind;
+  selectedPreviewLabel?: ReactNode;
   selectedSelectBehavior?: "disabled" | "enabled";
-  showSelectionIndicator?: boolean;
   subtitle?: ReactNode;
 }
 
 /**
  * Shared row convention for scan-first lists with one primary row action and
  * one trailing detail/action affordance. The main row owns selection; the
+ * selected preview owns the visible state. Use selectedPreviewKind for standard
+ * state language, and selectedPreviewLabel only for a scoped override. The
  * trailing control owns secondary options or inline settings. Use the
  * ellipsis-backed SelectableOverflowRow for object lifecycle menus, and use a
  * semantic action icon here for local settings such as module setup.
@@ -74,9 +80,9 @@ export function SelectableActionRow({
   selectedAriaCurrent,
   selectAriaLabel,
   selectedAriaLabel,
-  selectedPreviewLabel = "CURRENT",
+  selectedPreviewKind = "current",
+  selectedPreviewLabel,
   selectedSelectBehavior = "disabled",
-  showSelectionIndicator,
   subtitle,
 }: SelectableActionRowProps) {
   const generatedPanelId = useId();
@@ -105,14 +111,13 @@ export function SelectableActionRow({
           presentation="list"
           preview={
             selected ? (
-              <span className={styles.selectedPreviewMarker}>
+              <SelectionPreviewLabel kind={selectedPreviewKind}>
                 {selectedPreviewLabel}
-              </span>
+              </SelectionPreviewLabel>
             ) : undefined
           }
           selected={selected}
           selectionSemantics="visual"
-          showSelectionIndicator={showSelectionIndicator}
           subtitle={subtitle}
           onClick={() => {
             if (!selectDisabled) {
@@ -160,7 +165,7 @@ export function SelectableActionRow({
 interface SelectableOverflowRowProps {
   actionsLabel: string;
   children: ReactNode;
-  currentLabel?: string;
+  currentLabel?: ReactNode;
   isActionsOpen: boolean;
   label: ReactNode;
   onSelect: () => void;
