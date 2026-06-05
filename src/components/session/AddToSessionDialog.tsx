@@ -40,13 +40,18 @@ import localStyles from "./AddToSessionDialog.module.css";
 import {
   type ChordProgressionChordListMode,
   type PartModuleCreationRequest,
+  type SessionMaterialCreationKind,
 } from "@/types/session";
 import {
   DEFAULT_PART_NOTE_COLLECTION_KEY,
   DEFAULT_PART_ROOT_NOTE,
 } from "@/utils/session/sessionDefaults";
+import {
+  DEFAULT_SESSION_MATERIAL_CREATION_CHORD_LIST_MODE,
+  DEFAULT_SESSION_MATERIAL_CREATION_KIND,
+  DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY,
+} from "@/utils/session/sessionMaterialCreationDefaults";
 
-type SessionAddMode = "custom-chord-or-scale" | "chord-progression";
 type SessionChoice = "key" | "collection" | "progression" | "chord-list";
 
 interface AddToSessionDialogProps {
@@ -71,7 +76,7 @@ interface AddToSessionDialogProps {
 const sessionAddOptions = [
   {
     icon: <Shapes />,
-    id: "custom-chord-or-scale",
+    id: "part",
     title: "Part",
     subtitle: `One Part${DISPLAY_VALUE_SEPARATOR}Root Note and Chord or Scale`,
   },
@@ -83,12 +88,11 @@ const sessionAddOptions = [
   },
 ] as const satisfies readonly {
   icon: ReactNode;
-  id: SessionAddMode;
+  id: SessionMaterialCreationKind;
   title: string;
   subtitle: string;
 }[];
 
-const defaultProgressionKey = "oneOneFiveFive" satisfies ChordProgressionKey;
 const chordListOptions = [
   {
     id: "each-chord-once",
@@ -124,24 +128,43 @@ export function AddToSessionDialog({
   onAddChordProgression,
   onClose,
 }: AddToSessionDialogProps) {
-  const [selectedMode, setSelectedMode] = useState<SessionAddMode>(
-    "custom-chord-or-scale",
+  const sessionMaterialCreationDefaults = useAppStore(
+    (state) => state.dojoSettings.sessionMaterialCreationDefaults,
   );
-  const [rootNote, setRootNote] = useState<RootNote>(DEFAULT_PART_ROOT_NOTE);
+  const [selectedMode, setSelectedMode] =
+    useState<SessionMaterialCreationKind>(
+      () =>
+        sessionMaterialCreationDefaults?.materialKind ??
+        DEFAULT_SESSION_MATERIAL_CREATION_KIND,
+    );
+  const [rootNote, setRootNote] = useState<RootNote>(
+    () => sessionMaterialCreationDefaults?.rootNote ?? DEFAULT_PART_ROOT_NOTE,
+  );
   const [noteCollectionKey, setNoteCollectionKey] = useState<NoteCollectionKey>(
-    DEFAULT_PART_NOTE_COLLECTION_KEY,
+    () =>
+      sessionMaterialCreationDefaults?.noteCollectionKey ??
+      DEFAULT_PART_NOTE_COLLECTION_KEY,
   );
   const [progressionKey, setProgressionKey] = useState<ChordProgressionKey>(
-    defaultProgressionKey,
+    () =>
+      sessionMaterialCreationDefaults?.progressionKey ??
+      DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY,
   );
   const [chordListMode, setChordListMode] =
-    useState<ChordProgressionChordListMode>("each-chord-once");
+    useState<ChordProgressionChordListMode>(
+      () =>
+        sessionMaterialCreationDefaults?.chordListMode ??
+        DEFAULT_SESSION_MATERIAL_CREATION_CHORD_LIST_MODE,
+    );
   const [replaceSession, setReplaceSession] = useState(false);
   const [moduleDraft, setModuleDraft] =
     useState<ModuleCreationListDraft>(emptyModuleDraft);
   const sessionDisclosure = useDisclosureList<SessionChoice>();
   const rememberModuleCreation = useAppStore(
     (state) => state.rememberModuleCreation,
+  );
+  const rememberSessionMaterialCreation = useAppStore(
+    (state) => state.rememberSessionMaterialCreation,
   );
 
   const selectedRootNote =
@@ -158,11 +181,11 @@ export function AddToSessionDialog({
   const effectiveReplaceSession = canReplaceSession && replaceSession;
   const actionLabel = effectiveReplaceSession
     ? "Replace Session"
-    : selectedMode === "custom-chord-or-scale"
+    : selectedMode === "part"
       ? "Add Part"
       : "Add Progression";
 
-  const handleModeSelect = (mode: SessionAddMode) => {
+  const handleModeSelect = (mode: SessionMaterialCreationKind) => {
     setSelectedMode(mode);
     sessionDisclosure.closeAll();
   };
@@ -181,10 +204,19 @@ export function AddToSessionDialog({
 
   const rememberSessionModuleCreation = () => {
     rememberModuleCreation({
-      context: "session",
       moduleKinds: moduleDraft.moduleKinds,
       ...(moduleDraft.fretboard ? { fretboard: moduleDraft.fretboard } : {}),
       ...(moduleDraft.keyboard ? { keyboard: moduleDraft.keyboard } : {}),
+    });
+  };
+
+  const rememberSessionMaterial = () => {
+    rememberSessionMaterialCreation({
+      chordListMode,
+      materialKind: selectedMode,
+      noteCollectionKey,
+      progressionKey,
+      rootNote: selectedRootNote,
     });
   };
 
@@ -193,13 +225,14 @@ export function AddToSessionDialog({
       return;
     }
 
-    if (selectedMode === "custom-chord-or-scale") {
+    if (selectedMode === "part") {
       onAddCustomChordOrScale({
         rootNote: selectedRootNote,
         noteCollectionKey,
         moduleRequests: moduleDraft.moduleRequests,
         replaceSession: effectiveReplaceSession,
       });
+      rememberSessionMaterial();
       rememberSessionModuleCreation();
       onClose();
       return;
@@ -212,6 +245,7 @@ export function AddToSessionDialog({
       moduleRequests: moduleDraft.moduleRequests,
       replaceSession: effectiveReplaceSession,
     });
+    rememberSessionMaterial();
     rememberSessionModuleCreation();
     onClose();
   };
@@ -237,7 +271,7 @@ export function AddToSessionDialog({
 
         <DialogContentSection ariaLabel="Music">
           <DisclosureList>
-            {selectedMode === "custom-chord-or-scale" ? (
+            {selectedMode === "part" ? (
               <>
                 <AddToSessionRootNoteItem
                   icon={<Music3 />}
@@ -344,7 +378,6 @@ export function AddToSessionDialog({
 
         <DialogContentSection ariaLabel="Start With">
           <ModuleCreationList
-            context="session"
             instrumentCreationRangeContext={instrumentCreationRangeContext}
             onDraftChange={setModuleDraft}
           />

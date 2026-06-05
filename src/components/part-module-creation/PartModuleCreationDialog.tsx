@@ -18,6 +18,7 @@ import {
   type ModuleCreationListDraft,
 } from "@/components/part-module-creation/ModuleCreationList";
 import { type ModuleCreationKind } from "@/types/instrument-creation-defaults";
+import { getModuleCreationKindLabel } from "@/components/part-module-creation/moduleCreationOptions";
 
 interface PartModuleCreationDialogProps {
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
@@ -25,12 +26,6 @@ interface PartModuleCreationDialogProps {
   onClose: () => void;
   title?: string;
 }
-
-const moduleKindLabels = {
-  drone: "Drone",
-  fretboard: "Fretboard",
-  keyboard: "Keyboard",
-} as const satisfies Record<ModuleCreationKind, string>;
 
 const emptyDraft = {
   moduleKinds: [],
@@ -43,7 +38,7 @@ function getAddLabel(moduleKinds: readonly ModuleCreationKind[]) {
   }
 
   if (moduleKinds.length === 1) {
-    return `Add ${moduleKindLabels[moduleKinds[0]]}`;
+    return `Add ${getModuleCreationKindLabel(moduleKinds[0])}`;
   }
 
   return `Add ${moduleKinds.length} Modules`;
@@ -69,7 +64,6 @@ export function PartModuleCreationDialog({
 
     onAddPartModules(draft.moduleRequests);
     rememberModuleCreation({
-      context: "part",
       moduleKinds: draft.moduleKinds,
       ...(draft.fretboard ? { fretboard: draft.fretboard } : {}),
       ...(draft.keyboard ? { keyboard: draft.keyboard } : {}),
@@ -83,7 +77,6 @@ export function PartModuleCreationDialog({
       <DialogContent layout="stack" menuRhythm="standard">
         <DialogContentSection ariaLabel="Modules">
           <ModuleCreationList
-            context="part"
             instrumentCreationRangeContext={instrumentCreationRangeContext}
             onDraftChange={setDraft}
           />

@@ -13,7 +13,9 @@ import {
   DEFAULT_PART_ROOT_NOTE,
 } from "@/utils/session/sessionDefaults";
 
-const DRONE_NOTE_DISPLAY_OCTAVE = 3;
+// Middle-register anchor for generated drone pitches; octave controls offset
+// from here before the notes are handed to the audio engine.
+const DRONE_BASE_PITCH_OCTAVE = 3;
 const DRONE_NOTE_INTERVAL_MIN = 0;
 const DRONE_NOTE_INTERVAL_MAX = 24;
 const DRONE_SEMITONES_PER_OCTAVE = 12;
@@ -116,7 +118,7 @@ function getDisplayMidi(
 ) {
   const rootInteger = rootNoteToIntegerMap.get(rootNote) ?? 0;
   const midi =
-    (DRONE_NOTE_DISPLAY_OCTAVE + 1 + octaveOffset) * 12 +
+    (DRONE_BASE_PITCH_OCTAVE + 1 + octaveOffset) * 12 +
     rootInteger +
     Math.round(interval);
 

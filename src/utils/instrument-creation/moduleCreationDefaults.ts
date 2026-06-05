@@ -112,11 +112,7 @@ export function moduleCreationDefaultsAreEqual(
   }
 
   if (
-    !moduleCreationKindsAreEqual(
-      left.sessionModuleKinds,
-      right.sessionModuleKinds,
-    ) ||
-    !moduleCreationKindsAreEqual(left.partModuleKinds, right.partModuleKinds)
+    !moduleCreationKindsAreEqual(left.moduleKinds, right.moduleKinds)
   ) {
     return false;
   }

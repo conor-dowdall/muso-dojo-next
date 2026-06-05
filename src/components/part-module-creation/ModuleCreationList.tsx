@@ -1,7 +1,7 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { Guitar, Piano, RadioTower, SlidersHorizontal } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { SlidersHorizontal } from "lucide-react";
 import {
   getFretboardModuleCreationDefault,
   getInstrumentPartModuleCreationConfig,
@@ -19,11 +19,11 @@ import {
 } from "@/components/instrument-creation/instrumentCreationCopy";
 import { DisclosureList } from "@/components/ui/disclosure-list/DisclosureList";
 import { SelectableActionRow } from "@/components/ui/selectable-overflow-row";
+import { MODULE_CREATION_OPTIONS } from "@/components/part-module-creation/moduleCreationOptions";
 import { useAppStore } from "@/stores/appStore";
 import {
   type FretboardModuleCreationDefault,
   type KeyboardModuleCreationDefault,
-  type ModuleCreationContext,
   type ModuleCreationDefaults,
   type ModuleCreationKind,
 } from "@/types/instrument-creation-defaults";
@@ -39,47 +39,20 @@ export interface ModuleCreationListDraft {
 }
 
 interface ModuleCreationListProps {
-  context: ModuleCreationContext;
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
   onDraftChange: (draft: ModuleCreationListDraft) => void;
 }
 
-const moduleOptions = [
-  {
-    icon: <Guitar />,
-    kind: "fretboard",
-    label: "Fretboard",
-    subtitle: "String instrument view",
-  },
-  {
-    icon: <Piano />,
-    kind: "keyboard",
-    label: "Keyboard",
-    subtitle: "Piano key view",
-  },
-  {
-    icon: <RadioTower />,
-    kind: "drone",
-    label: "Drone",
-    subtitle: "Sustained root tone",
-  },
-] as const satisfies readonly {
-  icon: ReactNode;
-  kind: ModuleCreationKind;
-  label: string;
-  subtitle: string;
-}[];
+function hasCreationSettings(kind: ModuleCreationKind) {
+  return kind === "fretboard" || kind === "keyboard";
+}
 
 function getInitialModuleKinds(
   moduleCreationDefaults: ModuleCreationDefaults | undefined,
-  context: ModuleCreationContext,
 ) {
-  const rememberedKinds =
-    context === "session"
-      ? moduleCreationDefaults?.sessionModuleKinds
-      : moduleCreationDefaults?.partModuleKinds;
-
-  return [...(rememberedKinds ?? DEFAULT_MODULE_CREATION_KINDS)];
+  return [
+    ...(moduleCreationDefaults?.moduleKinds ?? DEFAULT_MODULE_CREATION_KINDS),
+  ];
 }
 
 function includesKind(
@@ -123,7 +96,6 @@ function getModuleCreationRequest({
 }
 
 export function ModuleCreationList({
-  context,
   instrumentCreationRangeContext,
   onDraftChange,
 }: ModuleCreationListProps) {
@@ -138,7 +110,7 @@ export function ModuleCreationList({
     ),
   );
   const [moduleKinds, setModuleKinds] = useState<ModuleCreationKind[]>(() =>
-    getInitialModuleKinds(moduleCreationDefaults, context),
+    getInitialModuleKinds(moduleCreationDefaults),
   );
   const [fretboardSelection, setFretboardSelection] =
     useState<FretboardInstrumentSelection>(
@@ -247,10 +219,9 @@ export function ModuleCreationList({
 
   return (
     <DisclosureList>
-      {moduleOptions.map((option) => {
+      {MODULE_CREATION_OPTIONS.map((option) => {
         const selected = includesKind(moduleKinds, option.kind);
-        const isInstrument =
-          option.kind === "fretboard" || option.kind === "keyboard";
+        const hasSettings = hasCreationSettings(option.kind);
         const isSettingsOpen = selected && openSettingsKind === option.kind;
         const summary =
           option.kind === "fretboard"
@@ -262,30 +233,32 @@ export function ModuleCreationList({
         return (
           <SelectableActionRow
             key={option.kind}
-            actionDisabled={isInstrument ? !selected : undefined}
-            actionIcon={isInstrument ? <SlidersHorizontal /> : undefined}
-            actionLabel={isInstrument ? `${option.label} settings` : undefined}
+            actionDisabled={hasSettings ? !selected : undefined}
+            actionIcon={hasSettings ? <SlidersHorizontal /> : undefined}
+            actionLabel={hasSettings ? `${option.label} settings` : undefined}
             actionTooltip={
-              isInstrument
+              hasSettings
                 ? selected
                   ? `${option.label} settings`
                   : `Add ${option.label} to edit settings`
                 : undefined
             }
-            currentLabel="ADDED"
             icon={option.icon}
             isActionOpen={isSettingsOpen}
-            keepPanelMounted={isInstrument}
+            keepPanelMounted={hasSettings}
             label={option.label}
             selected={selected}
             selectedAriaLabel={`Remove ${option.label} module`}
+            selectedPreviewLabel="ADDED"
             selectedSelectBehavior="enabled"
             selectAriaLabel={`Add ${option.label} module`}
             subtitle={summary}
-            onAction={() => toggleSettingsKind(option.kind)}
+            onAction={
+              hasSettings ? () => toggleSettingsKind(option.kind) : undefined
+            }
             onSelect={() => toggleModuleKind(option.kind)}
           >
-            {isInstrument ? (
+            {hasSettings ? (
               <>
                 {option.kind === "fretboard" ? (
                   <FretboardInstrumentCreationPanel

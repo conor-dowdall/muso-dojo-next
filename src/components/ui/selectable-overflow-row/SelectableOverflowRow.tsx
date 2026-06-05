@@ -24,7 +24,6 @@ export interface SelectableActionRowProps {
   actionTooltip?: IconButtonProps["tooltip"];
   actionVariant?: IconButtonProps["variant"];
   children?: ReactNode;
-  currentLabel?: string;
   icon?: ReactNode;
   isActionOpen?: boolean;
   keepPanelMounted?: boolean;
@@ -38,6 +37,7 @@ export interface SelectableActionRowProps {
   selectedAriaCurrent?: ComponentPropsWithoutRef<"button">["aria-current"];
   selectAriaLabel: string;
   selectedAriaLabel: string;
+  selectedPreviewLabel?: string;
   selectedSelectBehavior?: "disabled" | "enabled";
   showSelectionIndicator?: boolean;
   subtitle?: ReactNode;
@@ -46,7 +46,9 @@ export interface SelectableActionRowProps {
 /**
  * Shared row convention for scan-first lists with one primary row action and
  * one trailing detail/action affordance. The main row owns selection; the
- * trailing control owns secondary options or inline settings.
+ * trailing control owns secondary options or inline settings. Use the
+ * ellipsis-backed SelectableOverflowRow for object lifecycle menus, and use a
+ * semantic action icon here for local settings such as module setup.
  */
 export function SelectableActionRow({
   actionControls,
@@ -59,7 +61,6 @@ export function SelectableActionRow({
   actionTooltip,
   actionVariant,
   children,
-  currentLabel = "CURRENT",
   icon,
   isActionOpen = false,
   keepPanelMounted = false,
@@ -73,13 +74,17 @@ export function SelectableActionRow({
   selectedAriaCurrent,
   selectAriaLabel,
   selectedAriaLabel,
+  selectedPreviewLabel = "CURRENT",
   selectedSelectBehavior = "disabled",
   showSelectionIndicator,
   subtitle,
 }: SelectableActionRowProps) {
   const generatedPanelId = useId();
   const resolvedPanelId = panelId ?? generatedPanelId;
-  const hasAction = actionIcon !== undefined && actionLabel !== undefined;
+  const hasAction =
+    actionIcon !== undefined &&
+    actionLabel !== undefined &&
+    onAction !== undefined;
   const hasPanel = children !== undefined;
   const selectDisabled = selected && selectedSelectBehavior === "disabled";
   const controlledPanelId =
@@ -100,7 +105,9 @@ export function SelectableActionRow({
           presentation="list"
           preview={
             selected ? (
-              <span className={styles.currentMarker}>{currentLabel}</span>
+              <span className={styles.selectedPreviewMarker}>
+                {selectedPreviewLabel}
+              </span>
             ) : undefined
           }
           selected={selected}
@@ -188,13 +195,13 @@ export function SelectableOverflowRow({
       actionIcon={<MoreHorizontal />}
       actionLabel={actionsLabel}
       actionSelected={isActionsOpen}
-      currentLabel={currentLabel}
       isActionOpen={isActionsOpen}
       label={label}
       selected={selected}
       selectedAriaCurrent="true"
       selectAriaLabel={selectAriaLabel}
       selectedAriaLabel={selectedAriaLabel}
+      selectedPreviewLabel={currentLabel}
       subtitle={subtitle}
       onAction={onToggleActions}
       onSelect={onSelect}

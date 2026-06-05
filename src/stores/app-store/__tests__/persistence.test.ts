@@ -333,6 +333,74 @@ describe("app store persistence", () => {
     );
   });
 
+  it("normalizes remembered session material creation defaults", () => {
+    const persistedState = createPersistedSnapshot("persisted-session");
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          dojoSettings: {
+            sessionMaterialCreationDefaults: {
+              chordListMode: "full-song-order",
+              materialKind: "chord-progression",
+              noteCollectionKey: "minor",
+              progressionKey: "majorTwoFiveOne",
+              rootNote: "D",
+            },
+          },
+        },
+        fallbackSnapshot,
+      ).dojoSettings.sessionMaterialCreationDefaults,
+    ).toEqual({
+      chordListMode: "full-song-order",
+      materialKind: "chord-progression",
+      noteCollectionKey: "minor",
+      progressionKey: "majorTwoFiveOne",
+      rootNote: "D",
+    });
+  });
+
+  it("drops built-in and invalid session material creation defaults", () => {
+    const persistedState = createPersistedSnapshot("persisted-session");
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          dojoSettings: {
+            sessionMaterialCreationDefaults: {
+              chordListMode: "each-chord-once",
+              materialKind: "part",
+              noteCollectionKey: "major",
+              progressionKey: "oneOneFiveFive",
+              rootNote: "C",
+            },
+          },
+        },
+        fallbackSnapshot,
+      ).dojoSettings,
+    ).toEqual({});
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          dojoSettings: {
+            sessionMaterialCreationDefaults: {
+              chordListMode: "not-a-mode",
+              materialKind: "not-a-kind",
+              noteCollectionKey: "not-a-collection",
+              progressionKey: "not-a-progression",
+              rootNote: "not-a-note",
+            },
+          },
+        },
+        fallbackSnapshot,
+      ).dojoSettings,
+    ).toEqual({});
+  });
+
   it("normalizes remembered module creation defaults", () => {
     const persistedState = createPersistedSnapshot("persisted-session");
 
@@ -342,8 +410,7 @@ describe("app store persistence", () => {
           ...persistedState,
           dojoSettings: {
             moduleCreationDefaults: {
-              sessionModuleKinds: ["keyboard", "drone", "keyboard"],
-              partModuleKinds: ["fretboard"],
+              moduleKinds: ["keyboard", "drone", "keyboard"],
               fretboard: {
                 instrument: "guitar",
                 tuningKey: "guitarDropD",
@@ -369,7 +436,7 @@ describe("app store persistence", () => {
         fallbackSnapshot,
       ).dojoSettings.moduleCreationDefaults,
     ).toEqual({
-      sessionModuleKinds: ["keyboard", "drone"],
+      moduleKinds: ["keyboard", "drone"],
       fretboard: {
         instrument: "guitar",
         tuningKey: "guitarDropD",
@@ -418,6 +485,25 @@ describe("app store persistence", () => {
     ).toEqual({});
   });
 
+  it("ignores stale per-context module creation recipes", () => {
+    const persistedState = createPersistedSnapshot("persisted-session");
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          dojoSettings: {
+            moduleCreationDefaults: {
+              sessionModuleKinds: ["keyboard"],
+              partModuleKinds: ["drone"],
+            },
+          },
+        },
+        fallbackSnapshot,
+      ).dojoSettings,
+    ).toEqual({});
+  });
+
   it("ignores invalid remembered module creation defaults", () => {
     const persistedState = createPersistedSnapshot("persisted-session");
 
@@ -427,7 +513,7 @@ describe("app store persistence", () => {
           ...persistedState,
           dojoSettings: {
             moduleCreationDefaults: {
-              sessionModuleKinds: ["not-a-module"],
+              moduleKinds: ["not-a-module"],
               fretboard: {
                 instrument: "not-an-instrument",
                 tuningKey: "guitarDropD",

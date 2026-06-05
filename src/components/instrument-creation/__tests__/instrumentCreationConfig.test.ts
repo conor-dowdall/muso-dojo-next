@@ -53,7 +53,7 @@ describe("instrument creation responsive defaults", () => {
 
   it("applies remembered setup defaults without overriding responsive ranges", () => {
     const moduleCreationDefaults = {
-      sessionModuleKinds: ["keyboard"],
+      moduleKinds: ["keyboard"],
       keyboard: {
         theme: "studio",
       },
@@ -71,9 +71,7 @@ describe("instrument creation responsive defaults", () => {
       moduleCreationDefaults,
     );
 
-    expect(getDefaultInstrumentType(moduleCreationDefaults, "session")).toBe(
-      "keyboard",
-    );
+    expect(getDefaultInstrumentType(moduleCreationDefaults)).toBe("keyboard");
     expect(selections.keyboardSelection).toMatchObject({
       range: "keys13",
       midiRange: [60, 72],
@@ -260,7 +258,7 @@ describe("instrument creation responsive defaults", () => {
   it("defaults to fretboard when no module creation memory is saved", () => {
     const selections = createDefaultInstrumentSelections("regular");
 
-    expect(getDefaultInstrumentType(undefined, "session")).toBe("fretboard");
+    expect(getDefaultInstrumentType(undefined)).toBe("fretboard");
     expect(
       instrumentCreationDefaultMatchesSelection(
         "fretboard",

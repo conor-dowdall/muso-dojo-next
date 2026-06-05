@@ -1,4 +1,8 @@
-import { type NoteCollectionKey } from "@musodojo/music-theory-data";
+import {
+  type ChordProgressionKey,
+  type NoteCollectionKey,
+  type RootNote,
+} from "@musodojo/music-theory-data";
 import { type AudioPresetId, type MasterAmbiencePresetId } from "@/audio/types";
 import { type FretboardThemeName } from "@/data/fretboard/themes";
 import { type KeyboardRangeName } from "@/data/keyboard/ranges";
@@ -19,6 +23,19 @@ import { type AppThemeName } from "@/data/appThemes";
 export type ChordProgressionChordListMode =
   | "each-chord-once"
   | "full-song-order";
+
+export type SessionMaterialCreationKind = "part" | "chord-progression";
+
+export interface SessionMaterialCreationDefaults {
+  chordListMode?: ChordProgressionChordListMode;
+  materialKind?: SessionMaterialCreationKind;
+  noteCollectionKey?: NoteCollectionKey;
+  progressionKey?: ChordProgressionKey;
+  rootNote?: RootNote;
+}
+
+export type RememberSessionMaterialCreationRequest =
+  SessionMaterialCreationDefaults;
 
 export interface InstrumentInstanceBaseConfig {
   audioPresetId?: AudioPresetId;
@@ -153,6 +170,7 @@ export interface DojoSettings {
   appTheme?: AppThemeName;
   noteColorConfig?: NoteColorConfig;
   moduleCreationDefaults?: ModuleCreationDefaults;
+  sessionMaterialCreationDefaults?: SessionMaterialCreationDefaults;
   masterAmbiencePresetId?: MasterAmbiencePresetId;
 }
 

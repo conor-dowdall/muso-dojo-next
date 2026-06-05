@@ -22,6 +22,7 @@ import {
   type MusicPartConfig,
   type PartModuleCreationRequest,
   type PartModuleType,
+  type RememberSessionMaterialCreationRequest,
   type SessionConfig,
 } from "@/types/session";
 
@@ -44,6 +45,9 @@ export interface DojoSettingsActions {
   setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => void;
   setNoteColorConfig: (noteColorConfig: NoteColorConfig) => void;
   rememberModuleCreation: (request: RememberModuleCreationRequest) => void;
+  rememberSessionMaterialCreation: (
+    request: RememberSessionMaterialCreationRequest,
+  ) => void;
 }
 
 export interface SessionActions {

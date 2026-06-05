@@ -7,10 +7,17 @@ import {
   noteColorConfigsAreEqual,
 } from "@/utils/session/normalizeDojoSettings";
 import {
+  normalizeSessionMaterialCreationDefaults,
+  sessionMaterialCreationDefaultsAreEqual,
+} from "@/utils/session/sessionMaterialCreationDefaults";
+import {
   type AppStoreSet,
   type DojoSettingsActions,
 } from "@/stores/app-store/types";
-import { type DojoSettings } from "@/types/session";
+import {
+  type DojoSettings,
+  type RememberSessionMaterialCreationRequest,
+} from "@/types/session";
 import { type RememberModuleCreationRequest } from "@/types/instrument-creation-defaults";
 
 function setOptionalDojoSetting<TKey extends keyof DojoSettings>(
@@ -48,13 +55,9 @@ export function createDojoSettingsActions(
 ): DojoSettingsActions {
   const rememberModuleCreation = (request: RememberModuleCreationRequest) => {
     set((state) => {
-      const moduleKindsKey =
-        request.context === "session"
-          ? "sessionModuleKinds"
-          : "partModuleKinds";
       const moduleCreationDefaults = normalizeModuleCreationDefaults({
         ...state.dojoSettings.moduleCreationDefaults,
-        [moduleKindsKey]: request.moduleKinds,
+        moduleKinds: request.moduleKinds,
         ...(request.fretboard ? { fretboard: request.fretboard } : {}),
         ...(request.keyboard ? { keyboard: request.keyboard } : {}),
       });
@@ -79,6 +82,41 @@ export function createDojoSettingsActions(
         dojoSettings: {
           ...state.dojoSettings,
           moduleCreationDefaults,
+        },
+      };
+    });
+  };
+
+  const rememberSessionMaterialCreation = (
+    request: RememberSessionMaterialCreationRequest,
+  ) => {
+    set((state) => {
+      const sessionMaterialCreationDefaults =
+        normalizeSessionMaterialCreationDefaults({
+          ...state.dojoSettings.sessionMaterialCreationDefaults,
+          ...request,
+        });
+
+      if (
+        sessionMaterialCreationDefaultsAreEqual(
+          state.dojoSettings.sessionMaterialCreationDefaults,
+          sessionMaterialCreationDefaults,
+        )
+      ) {
+        return state;
+      }
+
+      if (!sessionMaterialCreationDefaults) {
+        const dojoSettings = { ...state.dojoSettings };
+        delete dojoSettings.sessionMaterialCreationDefaults;
+
+        return { dojoSettings };
+      }
+
+      return {
+        dojoSettings: {
+          ...state.dojoSettings,
+          sessionMaterialCreationDefaults,
         },
       };
     });
@@ -111,5 +149,6 @@ export function createDojoSettingsActions(
       );
     },
     rememberModuleCreation,
+    rememberSessionMaterialCreation,
   };
 }

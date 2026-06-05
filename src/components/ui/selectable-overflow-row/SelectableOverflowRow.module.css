@@ -50,7 +50,7 @@
   min-inline-size: 0;
 }
 
-.currentMarker {
+.selectedPreviewMarker {
   display: inline-flex;
   box-sizing: border-box;
   inline-size: var(--preview-swatch-width);

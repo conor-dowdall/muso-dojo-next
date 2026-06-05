@@ -14,6 +14,9 @@
   --part-module-min-height: var(--drone-content-height);
   --part-module-preferred-height: var(--drone-content-height);
   --part-module-max-height: var(--drone-content-height);
+
+  inline-size: fit-content;
+  max-inline-size: 100%;
 }
 
 .droneRows2 {

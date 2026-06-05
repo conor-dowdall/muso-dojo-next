@@ -43,6 +43,7 @@ import {
 } from "@/utils/instrument-creation/moduleCreationDefaults";
 import { normalizeBoundedRange } from "@/utils/range/numberRange";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
+import { normalizeSessionMaterialCreationDefaults } from "@/utils/session/sessionMaterialCreationDefaults";
 
 const MODULE_CREATION_KINDS = {
   drone: true,
@@ -354,17 +355,13 @@ export function normalizeModuleCreationDefaults(
   }
 
   const moduleCreationDefaults = {
-    sessionModuleKinds: normalizeModuleCreationKinds(value.sessionModuleKinds),
-    partModuleKinds: normalizeModuleCreationKinds(value.partModuleKinds),
+    moduleKinds: normalizeModuleCreationKinds(value.moduleKinds),
     fretboard: normalizeFretboardModuleCreationDefault(value.fretboard),
     keyboard: normalizeKeyboardModuleCreationDefault(value.keyboard),
   } satisfies ModuleCreationDefaults;
   const normalizedDefaults = {
-    ...(moduleCreationDefaults.sessionModuleKinds
-      ? { sessionModuleKinds: moduleCreationDefaults.sessionModuleKinds }
-      : {}),
-    ...(moduleCreationDefaults.partModuleKinds
-      ? { partModuleKinds: moduleCreationDefaults.partModuleKinds }
+    ...(moduleCreationDefaults.moduleKinds
+      ? { moduleKinds: moduleCreationDefaults.moduleKinds }
       : {}),
     ...(moduleCreationDefaults.fretboard
       ? { fretboard: moduleCreationDefaults.fretboard }
@@ -397,6 +394,10 @@ export function normalizeDojoSettings(value: unknown): DojoSettings {
   const moduleCreationDefaults = normalizeModuleCreationDefaults(
     value.moduleCreationDefaults,
   );
+  const sessionMaterialCreationDefaults =
+    normalizeSessionMaterialCreationDefaults(
+      value.sessionMaterialCreationDefaults,
+    );
   const masterAmbiencePresetId = normalizeMasterAmbienceSetting(
     value.masterAmbiencePresetId,
   );
@@ -405,6 +406,9 @@ export function normalizeDojoSettings(value: unknown): DojoSettings {
     ...(appTheme ? { appTheme } : {}),
     ...(noteColorConfig ? { noteColorConfig } : {}),
     ...(moduleCreationDefaults ? { moduleCreationDefaults } : {}),
+    ...(sessionMaterialCreationDefaults
+      ? { sessionMaterialCreationDefaults }
+      : {}),
     ...(masterAmbiencePresetId ? { masterAmbiencePresetId } : {}),
   };
 }

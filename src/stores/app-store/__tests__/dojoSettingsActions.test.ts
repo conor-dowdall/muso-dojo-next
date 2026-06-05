@@ -148,14 +148,12 @@ describe("dojo settings app store actions", () => {
     const store = createTestStore();
 
     store.getState().rememberModuleCreation({
-      context: "session",
       moduleKinds: ["keyboard", "drone", "keyboard"],
       keyboard: {
         theme: "studio",
       },
     });
     store.getState().rememberModuleCreation({
-      context: "part",
       moduleKinds: ["fretboard", "drone"],
       fretboard: {
         instrument: "guitar",
@@ -168,8 +166,7 @@ describe("dojo settings app store actions", () => {
     });
 
     expect(store.getState().dojoSettings.moduleCreationDefaults).toEqual({
-      sessionModuleKinds: ["keyboard", "drone"],
-      partModuleKinds: ["fretboard", "drone"],
+      moduleKinds: ["fretboard", "drone"],
       keyboard: {
         theme: "studio",
       },
@@ -189,7 +186,7 @@ describe("dojo settings app store actions", () => {
       ...createStoreSnapshot(),
       dojoSettings: {
         moduleCreationDefaults: {
-          sessionModuleKinds: ["keyboard"],
+          moduleKinds: ["keyboard"],
           keyboard: {
             theme: "studio",
           },
@@ -202,7 +199,6 @@ describe("dojo settings app store actions", () => {
     });
 
     store.getState().rememberModuleCreation({
-      context: "session",
       moduleKinds: ["keyboard"],
       keyboard: {
         theme: "studio",
@@ -218,14 +214,82 @@ describe("dojo settings app store actions", () => {
       ...createStoreSnapshot(),
       dojoSettings: {
         moduleCreationDefaults: {
-          sessionModuleKinds: ["keyboard"],
+          moduleKinds: ["keyboard"],
         },
       },
     });
 
     store.getState().rememberModuleCreation({
-      context: "session",
       moduleKinds: ["fretboard"],
+    });
+
+    expect(store.getState().dojoSettings).toEqual({});
+  });
+
+  it("stores remembered session material creation choices", () => {
+    const store = createTestStore();
+
+    store.getState().rememberSessionMaterialCreation({
+      chordListMode: "full-song-order",
+      materialKind: "chord-progression",
+      noteCollectionKey: "minor",
+      progressionKey: "majorTwoFiveOne",
+      rootNote: "D",
+    });
+
+    expect(
+      store.getState().dojoSettings.sessionMaterialCreationDefaults,
+    ).toEqual({
+      chordListMode: "full-song-order",
+      materialKind: "chord-progression",
+      noteCollectionKey: "minor",
+      progressionKey: "majorTwoFiveOne",
+      rootNote: "D",
+    });
+  });
+
+  it("does not notify subscribers when remembered session material creation is unchanged", () => {
+    const store = createTestStore({
+      ...createStoreSnapshot(),
+      dojoSettings: {
+        sessionMaterialCreationDefaults: {
+          rootNote: "D",
+        },
+      },
+    });
+    let notificationCount = 0;
+    const unsubscribe = store.subscribe(() => {
+      notificationCount += 1;
+    });
+
+    store.getState().rememberSessionMaterialCreation({
+      rootNote: "D",
+    });
+
+    unsubscribe();
+    expect(notificationCount).toBe(0);
+  });
+
+  it("clears remembered session material creation when restoring built-in defaults", () => {
+    const store = createTestStore({
+      ...createStoreSnapshot(),
+      dojoSettings: {
+        sessionMaterialCreationDefaults: {
+          chordListMode: "full-song-order",
+          materialKind: "chord-progression",
+          noteCollectionKey: "minor",
+          progressionKey: "majorTwoFiveOne",
+          rootNote: "D",
+        },
+      },
+    });
+
+    store.getState().rememberSessionMaterialCreation({
+      chordListMode: "each-chord-once",
+      materialKind: "part",
+      noteCollectionKey: "major",
+      progressionKey: "oneOneFiveFive",
+      rootNote: "C",
     });
 
     expect(store.getState().dojoSettings).toEqual({});

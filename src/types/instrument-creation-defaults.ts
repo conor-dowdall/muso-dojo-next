@@ -8,7 +8,6 @@ import { type KeyboardRangeName } from "@/data/keyboard/ranges";
 import { type KeyboardThemeName } from "@/data/keyboard/themes";
 
 export type FretboardCreationAppearanceSource = "auto" | "custom";
-export type ModuleCreationContext = "session" | "part";
 export type ModuleCreationKind = "fretboard" | "keyboard" | "drone";
 
 export interface FretboardCreationDefault {
@@ -48,14 +47,12 @@ export interface KeyboardModuleCreationDefault extends KeyboardCreationDefault {
 }
 
 export interface ModuleCreationDefaults {
-  sessionModuleKinds?: ModuleCreationKind[];
-  partModuleKinds?: ModuleCreationKind[];
+  moduleKinds?: ModuleCreationKind[];
   fretboard?: FretboardModuleCreationDefault;
   keyboard?: KeyboardModuleCreationDefault;
 }
 
 export interface RememberModuleCreationRequest {
-  context: ModuleCreationContext;
   moduleKinds: ModuleCreationKind[];
   fretboard?: FretboardModuleCreationDefault;
   keyboard?: KeyboardModuleCreationDefault;

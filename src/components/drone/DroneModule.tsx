@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { ArrowDown, ArrowUp, Minus, Plus } from "lucide-react";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
@@ -185,11 +185,6 @@ export function DroneModule({
   ]
     .filter(Boolean)
     .join(" ");
-  const droneFrameStyle = {
-    maxWidth: "100%",
-    width: "fit-content",
-  } satisfies CSSProperties;
-
   useEffect(() => {
     if (focusedKey === initialFocusedKey || noteByKey.has(focusedKey)) {
       return;
@@ -293,7 +288,6 @@ export function DroneModule({
         }
         headerActionsGrow
         showHeader={showHeader}
-        style={droneFrameStyle}
       >
         <div className={styles.noteStack}>
           <div className={styles.noteRows}>

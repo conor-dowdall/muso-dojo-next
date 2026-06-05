@@ -24,7 +24,6 @@ import {
   type KeyboardCreationDefault,
   type FretboardModuleCreationDefault,
   type KeyboardModuleCreationDefault,
-  type ModuleCreationContext,
   type ModuleCreationDefaults,
   type ModuleCreationKind,
 } from "@/types/instrument-creation-defaults";
@@ -192,12 +191,8 @@ export function createDefaultInstrumentSelections(
 
 export function getDefaultInstrumentType(
   moduleCreationDefaults: ModuleCreationDefaults | undefined,
-  context: ModuleCreationContext,
 ): InstrumentType {
-  const moduleKinds =
-    context === "session"
-      ? moduleCreationDefaults?.sessionModuleKinds
-      : moduleCreationDefaults?.partModuleKinds;
+  const moduleKinds = moduleCreationDefaults?.moduleKinds;
   const firstInstrumentKind = moduleKinds?.find(isInstrumentModuleCreationKind);
 
   return firstInstrumentKind ?? "fretboard";
