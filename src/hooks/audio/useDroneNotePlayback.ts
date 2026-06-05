@@ -10,8 +10,8 @@ import {
 
 const DRONE_BASE_VELOCITY = 0.78;
 const DRONE_BALANCE_REFERENCE_INTERVAL = 24;
-const DRONE_ABOVE_ROOT_INITIAL_SCALE = 0.94;
-const DRONE_ABOVE_ROOT_MIN_SCALE = 0.66;
+const DRONE_ABOVE_ROOT_INITIAL_SCALE = 0.25;
+const DRONE_ABOVE_ROOT_MIN_SCALE = 0.02;
 
 export interface DroneNotePlaybackNote {
   audioPresetId?: AudioPresetId;

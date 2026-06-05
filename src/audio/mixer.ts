@@ -78,7 +78,6 @@ export function createAudioMixer({
   context: AudioContext;
   masterAmbiencePresetId: MasterAmbiencePresetId;
 }): AudioMixer {
-  const compressor = context.createDynamicsCompressor();
   const masterInput = context.createGain();
   const useInputs = {
     preview: createUseInput({
@@ -102,20 +101,61 @@ export function createAudioMixer({
       masterInput,
     }),
   } satisfies Record<AudioUse, GainNode>;
+  let compressor: DynamicsCompressorNode | undefined;
+  let compressorOutputConnected = false;
   let currentMasterAmbiencePresetId = masterAmbiencePresetId;
   let masterEffectChain: ConnectedAudioEffectChain = emptyEffectChain;
 
-  configureMasterCompressor(compressor, context);
   masterInput.gain.setValueAtTime(MASTER_OUTPUT_GAIN, context.currentTime);
-  compressor.connect(context.destination);
+
+  function getMasterCompressor() {
+    if (!compressor) {
+      compressor = context.createDynamicsCompressor();
+      configureMasterCompressor(compressor, context);
+    }
+
+    return compressor;
+  }
+
+  function connectCompressorOutput() {
+    const masterCompressor = getMasterCompressor();
+
+    if (!compressorOutputConnected) {
+      masterCompressor.connect(context.destination);
+      compressorOutputConnected = true;
+    }
+
+    return masterCompressor;
+  }
+
+  function disconnectCompressorOutput() {
+    if (!compressor || !compressorOutputConnected) {
+      return;
+    }
+
+    compressor.disconnect();
+    compressorOutputConnected = false;
+  }
 
   function reconnectMasterAmbience() {
+    const ambiencePreset = getMasterAmbiencePreset(
+      currentMasterAmbiencePresetId,
+    );
+
     masterInput.disconnect();
     masterEffectChain.dispose();
+
+    if (ambiencePreset.effects.length === 0) {
+      disconnectCompressorOutput();
+      masterEffectChain = emptyEffectChain;
+      masterInput.connect(context.destination);
+      return;
+    }
+
     masterEffectChain = connectAudioEffectChain({
       context,
-      destination: compressor,
-      effects: getMasterAmbiencePreset(currentMasterAmbiencePresetId).effects,
+      destination: connectCompressorOutput(),
+      effects: ambiencePreset.effects,
       source: masterInput,
     });
   }
@@ -127,7 +167,7 @@ export function createAudioMixer({
       Object.values(useInputs).forEach((input) => input.disconnect());
       masterInput.disconnect();
       masterEffectChain.dispose();
-      compressor.disconnect();
+      compressor?.disconnect();
     },
     getInput: (use) => useInputs[use],
     getMasterAmbiencePresetId: () => currentMasterAmbiencePresetId,

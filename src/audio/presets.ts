@@ -142,7 +142,7 @@ const stringChorus = {
 export const defaultAudioPresetIds = {
   preview: "piano",
   tuning: "reference-tone",
-  drone: "soft-organ",
+  drone: "reference-tone",
   exercise: "piano",
 } as const satisfies Record<AudioUse, AudioPresetId>;
 
@@ -170,21 +170,15 @@ export const audioPresets = {
     label: "Reference Tone",
     recommendedUses: ["preview", "tuning", "drone", "exercise"],
     voice: {
-      gain: 0.54,
+      gain: 0.5,
       pitchGain: continuousPitchGain,
-      lowPitchAssist: subtleLowSpeakerAssist,
       envelope: {
-        attackSeconds: 0.025,
-        decaySeconds: 0.08,
-        sustainGain: 0.82,
-        releaseSeconds: 0.2,
+        attackSeconds: 0.02,
+        decaySeconds: 0.04,
+        sustainGain: 0.88,
+        releaseSeconds: 0.14,
       },
-      partials: [
-        { multiple: 1, gain: 1 },
-        { multiple: 2, gain: 0.2 },
-        { multiple: 3, gain: 0.07 },
-        { multiple: 4, gain: 0.025 },
-      ],
+      partials: [{ multiple: 1, gain: 1 }],
     },
   },
   piano: {
@@ -438,7 +432,7 @@ export const audioPresets = {
     family: "generated",
     id: "bowed-strings",
     label: "Bowed Strings",
-    recommendedUses: ["preview", "drone", "exercise"],
+    recommendedUses: ["preview", "exercise"],
     voice: {
       gain: 0.32,
       pitchGain: continuousPitchGain,
@@ -500,7 +494,7 @@ export const audioPresets = {
   "warm-pad": {
     category: "character",
     defaultDurationSeconds: 1.45,
-    description: "Wide, gentle sustain for harmony and drones.",
+    description: "Wide, gentle sustain for harmony and held notes.",
     family: "generated",
     id: "warm-pad",
     label: "Warm Pad",

@@ -68,22 +68,11 @@ export function DronePartModuleView({
           : (audioPresetId: SettingValue<AudioPresetId>) =>
               setDroneAudioPresetId(sessionId, partId, moduleId, audioPresetId)
       }
-      onOctaveOffsetChange={
-        isPerformanceMode
-          ? undefined
-          : (octaveOffset: SettingValue<number>) =>
-              setDroneOctaveOffset(sessionId, partId, moduleId, octaveOffset)
+      onOctaveOffsetChange={(octaveOffset: SettingValue<number>) =>
+        setDroneOctaveOffset(sessionId, partId, moduleId, octaveOffset)
       }
-      onOctaveRowCountChange={
-        isPerformanceMode
-          ? undefined
-          : (octaveRowCount: SettingValue<number>) =>
-              setDroneOctaveRowCount(
-                sessionId,
-                partId,
-                moduleId,
-                octaveRowCount,
-              )
+      onOctaveRowCountChange={(octaveRowCount: SettingValue<number>) =>
+        setDroneOctaveRowCount(sessionId, partId, moduleId, octaveRowCount)
       }
       onRemove={
         isPerformanceMode

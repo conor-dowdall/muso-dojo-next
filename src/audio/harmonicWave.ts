@@ -38,6 +38,14 @@ function getPartialGainScale(partials: readonly HarmonicPartialConfig[]) {
   return totalGain > 0 ? 1 / totalGain : 1;
 }
 
+export function canUseNativeSineOscillator(
+  rawPartials: readonly HarmonicPartialConfig[],
+) {
+  const partials = normalizeHarmonicPartials(rawPartials);
+
+  return partials.length === 1 && partials[0].multiple === 1;
+}
+
 export function createHarmonicWaveCache() {
   const periodicWaveCache = new WeakMap<
     AudioContext,

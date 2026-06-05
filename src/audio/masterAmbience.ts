@@ -4,7 +4,7 @@ import {
 } from "./types";
 
 export const DEFAULT_MASTER_AMBIENCE_PRESET_ID =
-  "studio-room" satisfies MasterAmbiencePresetId;
+  "dry" satisfies MasterAmbiencePresetId;
 
 export const masterAmbiencePresets = {
   dry: {

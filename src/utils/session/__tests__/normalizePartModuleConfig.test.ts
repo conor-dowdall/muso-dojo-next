@@ -35,7 +35,7 @@ describe("normalizePartModuleConfig", () => {
   it("drops invalid and default drone settings", () => {
     expect(
       normalizePartModuleConfig({
-        audioPresetId: "soft-organ",
+        audioPresetId: "reference-tone",
         id: "drone-1",
         octaveOffset: 0,
         octaveRowCount: 1,

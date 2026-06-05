@@ -1,20 +1,15 @@
-const NOTE_NAMES = [
-  "C",
-  "C#",
-  "D",
-  "D#",
-  "E",
-  "F",
-  "F#",
-  "G",
-  "G#",
-  "A",
-  "A#",
-  "B",
-] as const;
+import {
+  normalizeChromaticIndex,
+  noteLabelCollections,
+} from "@musodojo/music-theory-data";
+
+export function getMidiOctave(midi: number) {
+  return Math.floor(midi / 12) - 1;
+}
 
 export function formatMidiNote(midi: number) {
-  const noteName = NOTE_NAMES[((midi % 12) + 12) % 12];
-  const octave = Math.floor(midi / 12) - 1;
+  const noteName =
+    noteLabelCollections.noteNamesFlat.labels[normalizeChromaticIndex(midi)];
+  const octave = getMidiOctave(midi);
   return `${noteName}${octave}`;
 }

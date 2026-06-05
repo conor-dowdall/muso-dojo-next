@@ -122,10 +122,10 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
 
           <DisclosureListGroup>
             <DisclosureListItem
-              ariaLabel={`Reverb. Current: ${masterAmbiencePreset.label}`}
+              ariaLabel={`Ambience. Current: ${masterAmbiencePreset.label}`}
               icon={<Podcast />}
               isOpen={isOpen("sound")}
-              label="Reverb"
+              label="Ambience"
               panelVariant="menu"
               preview={
                 <span className={styles.soundPreview}>
@@ -138,7 +138,7 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
                 {Object.values(masterAmbiencePresets).map((preset) => (
                   <DisclosureListChoice
                     key={preset.id}
-                    aria-label={`Use ${preset.label} reverb`}
+                    aria-label={`Use ${preset.label} ambience`}
                     label={preset.label}
                     selected={preset.id === masterAmbiencePresetId}
                     onClick={() => handleMasterAmbiencePresetChange(preset.id)}

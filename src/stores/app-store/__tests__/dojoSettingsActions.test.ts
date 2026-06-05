@@ -50,25 +50,25 @@ describe("dojo settings app store actions", () => {
     expect(notificationCount).toBe(0);
   });
 
-  it("stores the selected reverb setting", () => {
+  it("stores the selected ambience setting", () => {
     const store = createTestStore();
 
-    store.getState().setMasterAmbiencePresetId("warm-hall");
+    store.getState().setMasterAmbiencePresetId("studio-room");
 
     expect(store.getState().dojoSettings.masterAmbiencePresetId).toBe(
-      "warm-hall",
+      "studio-room",
     );
   });
 
-  it("clears the stored reverb setting when using the built-in default", () => {
+  it("clears the stored ambience setting when using the built-in default", () => {
     const store = createTestStore({
       ...createStoreSnapshot(),
       dojoSettings: {
-        masterAmbiencePresetId: "dry",
+        masterAmbiencePresetId: "studio-room",
       },
     });
 
-    store.getState().setMasterAmbiencePresetId("studio-room");
+    store.getState().setMasterAmbiencePresetId("dry");
 
     expect(store.getState().dojoSettings).toEqual({});
   });

@@ -71,12 +71,12 @@ describe("audio effects", () => {
     ).toBeCloseTo(0.842);
   });
 
-  it("defines a focused default master ambience and a dry escape hatch", () => {
-    expect(DEFAULT_MASTER_AMBIENCE_PRESET_ID).toBe("studio-room");
+  it("defaults master ambience to dry for low-overhead playback", () => {
+    expect(DEFAULT_MASTER_AMBIENCE_PRESET_ID).toBe("dry");
     expect(getMasterAmbiencePreset("dry").effects).toHaveLength(0);
     expect(
       masterAmbiencePresets[DEFAULT_MASTER_AMBIENCE_PRESET_ID].effects.length,
-    ).toBeGreaterThan(0);
+    ).toBe(0);
     expect(isMasterAmbiencePresetId("warm-hall")).toBe(true);
     expect(resolveMasterAmbiencePresetId("missing")).toBe(
       DEFAULT_MASTER_AMBIENCE_PRESET_ID,

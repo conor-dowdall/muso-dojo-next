@@ -3,10 +3,12 @@ import {
   releaseAudioParam,
 } from "./envelope";
 import { connectAudioEffectChain } from "./effects";
+import { canUseNativeSineOscillator } from "./harmonicWave";
 import {
   type AudioPreset,
   type AudioVoiceHandle,
   type HarmonicPartialConfig,
+  type VoiceInsertEffectConfig,
 } from "./types";
 import { clampUnit, normalizeNonNegativeNumber } from "./numeric";
 import { resolveHarmonicVoiceConfig } from "./voiceConfig";
@@ -30,10 +32,13 @@ export function createHarmonicVoice({
   frequency,
   getPeriodicWave,
   handle,
+  insertEffects,
   midiNote,
+  onDisconnect,
   onEnded,
   preset,
   startTime,
+  tailSeconds,
   velocity,
 }: {
   context: AudioContext;
@@ -44,10 +49,13 @@ export function createHarmonicVoice({
     partials: readonly HarmonicPartialConfig[],
   ) => PeriodicWave | undefined;
   handle: AudioVoiceHandle;
+  insertEffects?: readonly VoiceInsertEffectConfig[];
   midiNote: number;
+  onDisconnect?: () => void;
   onEnded: (voice: ActiveVoice, endTime: number) => void;
   preset: AudioPreset;
   startTime: number;
+  tailSeconds?: number;
   velocity: number | undefined;
 }) {
   if (!Number.isFinite(frequency) || frequency <= 0) {
@@ -55,9 +63,14 @@ export function createHarmonicVoice({
   }
 
   const voiceConfig = resolveHarmonicVoiceConfig(preset.voice, midiNote);
-  const periodicWave = getPeriodicWave(context, voiceConfig.partials);
+  const useNativeSineOscillator = canUseNativeSineOscillator(
+    voiceConfig.partials,
+  );
+  const periodicWave = useNativeSineOscillator
+    ? undefined
+    : getPeriodicWave(context, voiceConfig.partials);
 
-  if (!periodicWave) {
+  if (!useNativeSineOscillator && !periodicWave) {
     return undefined;
   }
 
@@ -77,7 +90,10 @@ export function createHarmonicVoice({
   const oscillators = oscillatorDetuneCents.map((detuneCents) => {
     const oscillator = context.createOscillator();
 
-    oscillator.setPeriodicWave(periodicWave);
+    if (periodicWave) {
+      oscillator.setPeriodicWave(periodicWave);
+    }
+
     oscillator.frequency.setValueAtTime(frequency, startTime);
 
     if (detuneCents !== 0) {
@@ -91,7 +107,7 @@ export function createHarmonicVoice({
   const insertEffectChain = connectAudioEffectChain({
     context,
     destination: envelope,
-    effects: voiceConfig.insertEffects,
+    effects: insertEffects ?? voiceConfig.insertEffects,
     source: sourceMixer,
   });
   let disconnected = false;
@@ -135,6 +151,7 @@ export function createHarmonicVoice({
       sourceMixer.disconnect();
       insertEffectChain.dispose();
       envelope.disconnect();
+      onDisconnect?.();
     },
     stop: (stopTime = context.currentTime) => {
       if (voice.stopping) {
@@ -160,7 +177,7 @@ export function createHarmonicVoice({
       voice.scheduleStop(releaseEnd);
       onEnded(voice, releaseEnd);
     },
-    tailSeconds: 0,
+    tailSeconds: normalizeNonNegativeNumber(tailSeconds, 0),
   };
 
   oscillators.forEach((oscillator) => oscillator.start(startTime));

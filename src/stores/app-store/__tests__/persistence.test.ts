@@ -284,12 +284,24 @@ describe("app store persistence", () => {
         {
           ...persistedState,
           dojoSettings: {
-            masterAmbiencePresetId: "studio-room",
+            masterAmbiencePresetId: "dry",
           },
         },
         fallbackSnapshot,
       ).dojoSettings,
     ).toEqual({});
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          dojoSettings: {
+            masterAmbiencePresetId: "studio-room",
+          },
+        },
+        fallbackSnapshot,
+      ).dojoSettings.masterAmbiencePresetId,
+    ).toBe("studio-room");
 
     expect(
       normalizeAppStoreSnapshot(

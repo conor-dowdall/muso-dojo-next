@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   audioPresets,
   getDefaultAudioPresetId,
+  getAudioPresetsRecommendedForUse,
   resolveAudioPreset,
 } from "@/audio/presets";
 import { type AudioUse, type VoiceInsertEffectConfig } from "@/audio/types";
@@ -64,7 +65,42 @@ describe("audio presets", () => {
     ).toBe(audioPresets["steel-string"]);
     expect(
       resolveAudioPreset("missing", getDefaultAudioPresetId("drone")),
-    ).toBe(audioPresets["soft-organ"]);
+    ).toBe(audioPresets["reference-tone"]);
+    expect(
+      resolveAudioPreset("warm-pad", getDefaultAudioPresetId("drone")),
+    ).toBe(audioPresets["warm-pad"]);
+  });
+
+  it("keeps drone defaults lean while allowing richer shared-effect options", () => {
+    const dronePresets = getAudioPresetsRecommendedForUse("drone");
+    const referenceTone = audioPresets["reference-tone"];
+    const softOrgan = audioPresets["soft-organ"];
+    const richerDronePresets = [
+      audioPresets["bowed-sustain"],
+      audioPresets["warm-pad"],
+    ];
+
+    expect(dronePresets.map((preset) => preset.id)).toStrictEqual([
+      "reference-tone",
+      "soft-organ",
+      "bowed-sustain",
+      "warm-pad",
+    ]);
+    expect(getDefaultAudioPresetId("drone")).toBe("reference-tone");
+    expect(referenceTone.voice.partials).toStrictEqual([
+      { multiple: 1, gain: 1 },
+    ]);
+    expect("lowPitchAssist" in referenceTone.voice).toBe(false);
+    [referenceTone, softOrgan].forEach((preset) => {
+      expect("insertEffects" in preset.voice).toBe(false);
+      expect("unison" in preset.voice).toBe(false);
+    });
+    richerDronePresets.forEach((preset) => {
+      expect(preset.voice.insertEffects?.map((effect) => effect.type)).toEqual([
+        "chorus",
+      ]);
+      expect(preset.voice.unison?.detuneCents).toHaveLength(3);
+    });
   });
 
   it("keeps the focused catalog broad enough for the current instruments", () => {
@@ -75,5 +111,6 @@ describe("audio presets", () => {
     expect(audioPresets["picked-bass"].label).toContain("Bass");
     expect(audioPresets.mandolin.description).toContain("paired-course");
     expect(audioPresets["bowed-sustain"].recommendedUses).toContain("drone");
+    expect(audioPresets["warm-pad"].recommendedUses).toContain("drone");
   });
 });

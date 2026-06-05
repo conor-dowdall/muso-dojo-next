@@ -165,6 +165,14 @@
   gap: var(--control-header-wrap-gap) var(--control-header-cluster-gap);
 }
 
+.droneHeaderActionGroup {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--control-header-peer-gap);
+}
+
 .droneToolSurface {
   position: relative;
   box-sizing: border-box;
@@ -249,6 +257,7 @@
   isolation: isolate;
   display: flex;
   flex: 0 0 auto;
+  align-self: center;
   box-sizing: border-box;
   inline-size: fit-content;
   max-inline-size: 100%;
@@ -271,7 +280,7 @@
   min-inline-size: 0;
   align-items: center;
   justify-content: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .droneToolButton {
@@ -444,18 +453,12 @@
 
 .droneTileNoteSlot {
   --drone-tile-label-font-size: min(20cqi, 21cqb);
-  --drone-tile-label-font-size-2: min(18cqi, 21cqb);
-  --drone-tile-label-font-size-3: min(15.5cqi, 20cqb);
-  --drone-tile-label-font-size-4: min(14cqi, 19cqb);
   --drone-tile-label-opacity: 1;
   --drone-tile-label-weight: var(--font-bold);
 }
 
 .droneTileIntervalSlot {
   --drone-tile-label-font-size: min(20cqi, 21cqb);
-  --drone-tile-label-font-size-2: min(18cqi, 21cqb);
-  --drone-tile-label-font-size-3: min(15.5cqi, 20cqb);
-  --drone-tile-label-font-size-4: min(14cqi, 19cqb);
   --drone-tile-label-opacity: 0.94;
   --drone-tile-label-weight: var(--font-bold);
 }
@@ -475,18 +478,6 @@
   text-shadow: var(--note-label-shadow);
   text-box: trim-both cap alphabetic;
   white-space: nowrap;
-}
-
-.droneTileText[data-chars="2"] {
-  font-size: var(--drone-tile-label-font-size-2);
-}
-
-.droneTileText[data-chars="3"] {
-  font-size: var(--drone-tile-label-font-size-3);
-}
-
-.droneTileText[data-chars="4"] {
-  font-size: var(--drone-tile-label-font-size-4);
 }
 
 .droneTileText[data-is-placeholder="true"] {

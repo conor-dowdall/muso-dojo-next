@@ -157,7 +157,12 @@ describe("part module app store actions", () => {
       .setDroneAudioPresetId(sessionId, partId, addedModuleId, "warm-pad");
     store
       .getState()
-      .setDroneAudioPresetId(sessionId, partId, addedModuleId, "soft-organ");
+      .setDroneAudioPresetId(
+        sessionId,
+        partId,
+        addedModuleId,
+        "reference-tone",
+      );
     store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 1);
     store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 0);
     store

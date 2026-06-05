@@ -34,6 +34,7 @@ import {
   DRONE_MIN_OCTAVE_ROWS,
   resolveDroneNotes,
 } from "@/utils/drone/droneNotes";
+import { getMidiOctave } from "@/utils/music-theory/midiNote";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
 import { DroneOptionsDialog } from "./DroneOptionsDialog";
 import styles from "./DroneModule.module.css";
@@ -79,15 +80,18 @@ function getDroneRowClassName(rowCount: number) {
   }
 }
 
-function getDroneLabelCharCount(label: string) {
-  return Math.min(Array.from(label).length, 4);
+function formatDroneNoteLabel(noteName: string, midi: number) {
+  if (noteName === "") {
+    return "";
+  }
+
+  return `${noteName}${getMidiOctave(midi)}`;
 }
 
 function DroneTileLabel({ label }: { label: string }) {
   return (
     <span
       className={styles.droneTileText}
-      data-chars={getDroneLabelCharCount(label)}
       data-is-placeholder={label === "" ? true : undefined}
     >
       {label}
@@ -259,18 +263,14 @@ export function DroneModule({
     .join(" ");
   const droneFrameStyle = useMemo(
     () =>
-      !showHeader || toolControlsHeight === undefined
+      toolControlsHeight === undefined
         ? undefined
         : ({
             "--drone-toolbar-reserved-height": `${toolControlsHeight}px`,
           } as CSSProperties),
-    [showHeader, toolControlsHeight],
+    [toolControlsHeight],
   );
   useLayoutEffect(() => {
-    if (!showHeader) {
-      return;
-    }
-
     const toolControls = toolControlsRef.current;
 
     if (!toolControls) {
@@ -339,7 +339,7 @@ export function DroneModule({
       clearScheduledMeasurement();
       resizeObserver.disconnect();
     };
-  }, [showHeader]);
+  }, []);
   useEffect(() => {
     if (focusedKey === initialFocusedKey || noteByKey.has(focusedKey)) {
       return;
@@ -405,6 +405,36 @@ export function DroneModule({
         headerActions={
           showHeader ? (
             <div className={styles.droneHeaderActions}>
+              <span
+                className={styles.droneHeaderActionGroup}
+                role="group"
+                aria-label="Drone row controls"
+              >
+                <IconButton
+                  aria-label={`Remove final octave row. Current rows: ${octaveRowCount}`}
+                  disabled={!canRemoveOctaveRow}
+                  icon={<LayersMinus />}
+                  size="sm"
+                  onClick={removeOctaveRowIfAvailable}
+                  tooltip={
+                    canRemoveOctaveRow
+                      ? "Remove final octave row"
+                      : "Base octave row only"
+                  }
+                />
+                <IconButton
+                  aria-label={`Add octave row. Current rows: ${octaveRowCount}`}
+                  disabled={!canAddOctaveRow}
+                  icon={<LayersPlus />}
+                  size="sm"
+                  onClick={addOctaveRowIfPlayable}
+                  tooltip={
+                    canAddOctaveRow
+                      ? "Add octave row"
+                      : "Highest playable row reached"
+                  }
+                />
+              </span>
               <OverflowMenuButton
                 aria-label="Drone options"
                 onClick={() => setIsOptionsOpen(true)}
@@ -418,96 +448,56 @@ export function DroneModule({
       >
         <div className={styles.droneToolSurface}>
           <DroneRivets className={styles.droneBodyRivets} />
-          {showHeader ? (
-            <div
-              ref={toolControlsRef}
-              className={styles.droneToolControls}
+          <div
+            ref={toolControlsRef}
+            className={styles.droneToolControls}
+            role="group"
+            aria-label="Drone playback and octave controls"
+          >
+            <span
+              className={styles.droneToolControlGroup}
               role="group"
-              aria-label="Drone playback, octave, and row controls"
+              aria-label="Drone playback and octave controls"
             >
-              <span
-                className={styles.droneToolControlGroup}
-                role="group"
-                aria-label="Drone playback controls"
-              >
-                <IconButton
-                  aria-label="Stop all active drone notes"
-                  aria-disabled={!hasActiveDroneNotes ? true : undefined}
-                  className={styles.droneToolButton}
-                  icon={<Square />}
-                  size="md"
-                  onClick={stopAllIfActive}
-                  tooltip={
-                    hasActiveDroneNotes ? "Stop all drones" : "No active drones"
-                  }
-                />
-              </span>
-              <span
-                className={styles.droneToolControlGroup}
-                role="group"
-                aria-label="Drone octave controls"
-              >
-                <IconButton
-                  aria-label={`Shift drone down one octave. Current octave offset: ${octaveOffsetLabel}`}
-                  aria-disabled={!canShiftOctaveDown ? true : undefined}
-                  className={styles.droneToolButton}
-                  icon={<WavesArrowDown />}
-                  size="md"
-                  onClick={shiftOctaveDownIfPlayable}
-                  tooltip={
-                    canShiftOctaveDown
-                      ? "Shift octave down"
-                      : "Lowest playable octave reached"
-                  }
-                />
-                <IconButton
-                  aria-label={`Shift drone up one octave. Current octave offset: ${octaveOffsetLabel}`}
-                  aria-disabled={!canShiftOctaveUp ? true : undefined}
-                  className={styles.droneToolButton}
-                  icon={<WavesArrowUp />}
-                  size="md"
-                  onClick={shiftOctaveUpIfPlayable}
-                  tooltip={
-                    canShiftOctaveUp
-                      ? "Shift octave up"
-                      : "Highest playable octave reached"
-                  }
-                />
-              </span>
-              <span
-                className={styles.droneToolControlGroup}
-                role="group"
-                aria-label="Drone row controls"
-              >
-                <IconButton
-                  aria-label={`Remove final octave row. Current rows: ${octaveRowCount}`}
-                  aria-disabled={!canRemoveOctaveRow ? true : undefined}
-                  className={styles.droneToolButton}
-                  icon={<LayersMinus />}
-                  size="md"
-                  onClick={removeOctaveRowIfAvailable}
-                  tooltip={
-                    canRemoveOctaveRow
-                      ? "Remove final octave row"
-                      : "Base octave row only"
-                  }
-                />
-                <IconButton
-                  aria-label={`Add octave row. Current rows: ${octaveRowCount}`}
-                  aria-disabled={!canAddOctaveRow ? true : undefined}
-                  className={styles.droneToolButton}
-                  icon={<LayersPlus />}
-                  size="md"
-                  onClick={addOctaveRowIfPlayable}
-                  tooltip={
-                    canAddOctaveRow
-                      ? "Add octave row"
-                      : "Highest playable row reached"
-                  }
-                />
-              </span>
-            </div>
-          ) : null}
+              <IconButton
+                aria-label={`Shift drone down one octave. Current octave offset: ${octaveOffsetLabel}`}
+                aria-disabled={!canShiftOctaveDown ? true : undefined}
+                className={styles.droneToolButton}
+                icon={<WavesArrowDown />}
+                size="md"
+                onClick={shiftOctaveDownIfPlayable}
+                tooltip={
+                  canShiftOctaveDown
+                    ? "Shift octave down"
+                    : "Lowest playable octave reached"
+                }
+              />
+              <IconButton
+                aria-label="Stop all active drone notes"
+                aria-disabled={!hasActiveDroneNotes ? true : undefined}
+                className={styles.droneToolButton}
+                icon={<Square />}
+                size="md"
+                onClick={stopAllIfActive}
+                tooltip={
+                  hasActiveDroneNotes ? "Stop all drones" : "No active drones"
+                }
+              />
+              <IconButton
+                aria-label={`Shift drone up one octave. Current octave offset: ${octaveOffsetLabel}`}
+                aria-disabled={!canShiftOctaveUp ? true : undefined}
+                className={styles.droneToolButton}
+                icon={<WavesArrowUp />}
+                size="md"
+                onClick={shiftOctaveUpIfPlayable}
+                tooltip={
+                  canShiftOctaveUp
+                    ? "Shift octave up"
+                    : "Highest playable octave reached"
+                }
+              />
+            </span>
+          </div>
           <div className={styles.noteStack}>
             <div className={styles.noteRows}>
               {droneNotes.rows.map((row, rowIndex) => (
@@ -527,6 +517,10 @@ export function DroneModule({
                       rootNote: droneNotes.rootNote,
                     });
                     const isActive = isNoteActive(note.interval);
+                    const noteLabel = formatDroneNoteLabel(
+                      note.label,
+                      note.midi,
+                    );
 
                     return (
                       <InstrumentNoteCell
@@ -536,7 +530,7 @@ export function DroneModule({
                         noteColor={noteColor}
                         midi={note.midi}
                         ariaLabel={`${isActive ? "Stop" : "Start"} ${
-                          note.label
+                          noteLabel
                         } ${note.intervalLabel} drone note`}
                         isFocused={focusedKey === note.key}
                         isToggleButton
@@ -550,7 +544,7 @@ export function DroneModule({
                       >
                         <span className={styles.droneTileLabelStack}>
                           <span className={styles.droneTileNoteSlot}>
-                            <DroneTileLabel label={note.label} />
+                            <DroneTileLabel label={noteLabel} />
                           </span>
                           <span className={styles.droneTileIntervalSlot}>
                             <DroneTileLabel label={note.intervalLabel} />
