@@ -24,7 +24,6 @@ import {
   DisclosureListItem,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
-import { Heading } from "@/components/ui/typography/Heading";
 import { type InstrumentCreationRangeContext } from "@/components/instrument-creation/instrumentCreationConfig";
 import {
   ModuleCreationList,
@@ -222,14 +221,6 @@ export function AddToSessionDialog({
       <DialogHeader title="Add to Session" onClose={onClose} />
       <DialogContent layout="stack" menuRhythm="standard">
         <DialogContentSection ariaLabel="Material">
-          <Heading
-            as="h3"
-            className={localStyles.sectionHeading}
-            size="xs"
-            variant="muted"
-          >
-            Material
-          </Heading>
           <DisclosureList>
             {sessionAddOptions.map((option) => (
               <DisclosureListChoice
@@ -245,14 +236,6 @@ export function AddToSessionDialog({
         </DialogContentSection>
 
         <DialogContentSection ariaLabel="Music">
-          <Heading
-            as="h3"
-            className={localStyles.sectionHeading}
-            size="xs"
-            variant="muted"
-          >
-            Music
-          </Heading>
           <DisclosureList>
             {selectedMode === "custom-chord-or-scale" ? (
               <>
@@ -360,14 +343,6 @@ export function AddToSessionDialog({
         </DialogContentSection>
 
         <DialogContentSection ariaLabel="Start With">
-          <Heading
-            as="h3"
-            className={localStyles.sectionHeading}
-            size="xs"
-            variant="muted"
-          >
-            Start With
-          </Heading>
           <ModuleCreationList
             context="session"
             instrumentCreationRangeContext={instrumentCreationRangeContext}

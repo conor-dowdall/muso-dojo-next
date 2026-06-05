@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { AudioWaveform, Guitar, Piano, SlidersHorizontal } from "lucide-react";
+import { Guitar, Piano, RadioTower, SlidersHorizontal } from "lucide-react";
 import {
   getFretboardModuleCreationDefault,
   getInstrumentPartModuleCreationConfig,
@@ -17,9 +17,8 @@ import {
   formatFretboardCreationSummary,
   formatKeyboardCreationSummary,
 } from "@/components/instrument-creation/instrumentCreationCopy";
-import { DisclosureListPanel } from "@/components/ui/disclosure-list/DisclosureList";
-import { CheckOptionButton } from "@/components/ui/buttons/CheckOptionButton";
-import { IconButton } from "@/components/ui/buttons/IconButton";
+import { DisclosureList } from "@/components/ui/disclosure-list/DisclosureList";
+import { SelectableActionRow } from "@/components/ui/selectable-overflow-row";
 import { useAppStore } from "@/stores/appStore";
 import {
   type FretboardModuleCreationDefault,
@@ -31,7 +30,6 @@ import {
 import { type PartModuleCreationRequest } from "@/types/session";
 import { DEFAULT_MODULE_CREATION_KINDS } from "@/utils/instrument-creation/moduleCreationDefaults";
 import { areRangesEqual } from "@/utils/range/numberRange";
-import styles from "./ModuleCreationList.module.css";
 
 export interface ModuleCreationListDraft {
   fretboard?: FretboardModuleCreationDefault;
@@ -48,27 +46,27 @@ interface ModuleCreationListProps {
 
 const moduleOptions = [
   {
+    icon: <Guitar />,
     kind: "fretboard",
     label: "Fretboard",
-    previewIcon: <Guitar />,
     subtitle: "String instrument view",
   },
   {
+    icon: <Piano />,
     kind: "keyboard",
     label: "Keyboard",
-    previewIcon: <Piano />,
     subtitle: "Piano key view",
   },
   {
+    icon: <RadioTower />,
     kind: "drone",
     label: "Drone",
-    previewIcon: <AudioWaveform />,
     subtitle: "Sustained root tone",
   },
 ] as const satisfies readonly {
+  icon: ReactNode;
   kind: ModuleCreationKind;
   label: string;
-  previewIcon: ReactNode;
   subtitle: string;
 }[];
 
@@ -82,10 +80,6 @@ function getInitialModuleKinds(
       : moduleCreationDefaults?.partModuleKinds;
 
   return [...(rememberedKinds ?? DEFAULT_MODULE_CREATION_KINDS)];
-}
-
-function ModulePreviewIcon({ children }: { children: ReactNode }) {
-  return <span className={styles.modulePreviewIcon}>{children}</span>;
 }
 
 function includesKind(
@@ -252,7 +246,7 @@ export function ModuleCreationList({
   };
 
   return (
-    <div className={styles.moduleList}>
+    <DisclosureList>
       {moduleOptions.map((option) => {
         const selected = includesKind(moduleKinds, option.kind);
         const isInstrument =
@@ -266,42 +260,33 @@ export function ModuleCreationList({
               : option.subtitle;
 
         return (
-          <div key={option.kind} className={styles.moduleItem}>
-            <div className={styles.moduleRow}>
-              <CheckOptionButton
-                aria-label={`${selected ? "Remove" : "Add"} ${option.label} module`}
-                className={styles.moduleToggle}
-                label={option.label}
-                selected={selected}
-                subtitle={summary}
-                onClick={() => toggleModuleKind(option.kind)}
-              />
-              <ModulePreviewIcon>{option.previewIcon}</ModulePreviewIcon>
-              {isInstrument ? (
-                <IconButton
-                  aria-label={`${option.label} settings`}
-                  aria-expanded={isSettingsOpen}
-                  disabled={!selected}
-                  icon={<SlidersHorizontal />}
-                  selected={isSettingsOpen}
-                  selectionSemantics="visual"
-                  size="md"
-                  tooltip={
-                    selected
-                      ? `${option.label} settings`
-                      : `Select ${option.label} to edit settings`
-                  }
-                  variant="ghost"
-                  onClick={() => toggleSettingsKind(option.kind)}
-                />
-              ) : null}
-            </div>
+          <SelectableActionRow
+            key={option.kind}
+            actionDisabled={isInstrument ? !selected : undefined}
+            actionIcon={isInstrument ? <SlidersHorizontal /> : undefined}
+            actionLabel={isInstrument ? `${option.label} settings` : undefined}
+            actionTooltip={
+              isInstrument
+                ? selected
+                  ? `${option.label} settings`
+                  : `Add ${option.label} to edit settings`
+                : undefined
+            }
+            currentLabel="ADDED"
+            icon={option.icon}
+            isActionOpen={isSettingsOpen}
+            keepPanelMounted={isInstrument}
+            label={option.label}
+            selected={selected}
+            selectedAriaLabel={`Remove ${option.label} module`}
+            selectedSelectBehavior="enabled"
+            selectAriaLabel={`Add ${option.label} module`}
+            subtitle={summary}
+            onAction={() => toggleSettingsKind(option.kind)}
+            onSelect={() => toggleModuleKind(option.kind)}
+          >
             {isInstrument ? (
-              <DisclosureListPanel
-                isOpen={isSettingsOpen}
-                keepMounted
-                variant="menu"
-              >
+              <>
                 {option.kind === "fretboard" ? (
                   <FretboardInstrumentCreationPanel
                     closeSignal={closeSignal}
@@ -315,11 +300,11 @@ export function ModuleCreationList({
                     onChange={handleKeyboardSelectionChange}
                   />
                 )}
-              </DisclosureListPanel>
-            ) : null}
-          </div>
+              </>
+            ) : undefined}
+          </SelectableActionRow>
         );
       })}
-    </div>
+    </DisclosureList>
   );
 }

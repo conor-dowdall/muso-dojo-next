@@ -1,1 +1,4 @@
-export { SelectableOverflowRow } from "./SelectableOverflowRow";
+export {
+  SelectableActionRow,
+  SelectableOverflowRow,
+} from "./SelectableOverflowRow";

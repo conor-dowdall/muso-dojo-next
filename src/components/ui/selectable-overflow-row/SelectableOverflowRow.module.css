@@ -1,4 +1,31 @@
 .rowCluster {
+  /*
+   * SelectableActionRow embeds DisclosureListPanel directly. Mirror the
+   * DisclosureList panel defaults here so selected-row surfaces keep the same
+   * indentation and left rule even when the row is reused outside a list.
+   */
+  --disclosure-list-default-indent-offset: var(
+    --dialog-menu-indent-offset,
+    var(--space-2)
+  );
+  --disclosure-list-default-indent: var(--dialog-menu-indent, var(--space-3));
+  --disclosure-list-default-panel-block-padding: var(
+    --dialog-menu-panel-block-padding,
+    var(--space-3) var(--space-4)
+  );
+  --disclosure-list-default-panel-content-gap: var(
+    --dialog-menu-panel-content-gap,
+    var(--space-4)
+  );
+  --disclosure-list-default-menu-panel-block-padding: var(
+    --dialog-menu-submenu-panel-block-padding,
+    var(--space-3) var(--space-4)
+  );
+  --disclosure-list-default-menu-panel-content-gap: var(
+    --dialog-menu-submenu-panel-content-gap,
+    var(--dialog-menu-row-gap, var(--space-2))
+  );
+
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
@@ -53,7 +80,7 @@
   box-shadow: inset 0 var(--space-px) 0 var(--color-surface-highlight);
 }
 
-.overflowButton {
+.actionButton {
   --button-control-size: var(--selectable-overflow-row-control-size);
   --button-icon-size: var(--text-base);
 
@@ -62,8 +89,14 @@
   color: var(--color-text-muted);
 }
 
-.overflowButton[data-selected="true"],
-.overflowButton:not(:disabled):hover,
-.overflowButton:focus-visible {
+.actionButton[data-selected="true"],
+.actionButton:not(:disabled):hover,
+.actionButton:focus-visible {
   color: var(--color-text);
+}
+
+.actionPlaceholder {
+  display: block;
+  inline-size: var(--selectable-overflow-row-control-size);
+  block-size: 100%;
 }
