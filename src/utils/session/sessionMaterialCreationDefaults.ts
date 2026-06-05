@@ -51,7 +51,9 @@ function normalizeSessionMaterialCreationKind(
     : undefined;
 }
 
-function normalizeSessionMaterialRootNote(value: unknown): RootNote | undefined {
+function normalizeSessionMaterialRootNote(
+  value: unknown,
+): RootNote | undefined {
   return typeof value === "string"
     ? (normalizeRootNoteString(value) ?? undefined)
     : undefined;

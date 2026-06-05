@@ -131,12 +131,11 @@ export function AddToSessionDialog({
   const sessionMaterialCreationDefaults = useAppStore(
     (state) => state.dojoSettings.sessionMaterialCreationDefaults,
   );
-  const [selectedMode, setSelectedMode] =
-    useState<SessionMaterialCreationKind>(
-      () =>
-        sessionMaterialCreationDefaults?.materialKind ??
-        DEFAULT_SESSION_MATERIAL_CREATION_KIND,
-    );
+  const [selectedMode, setSelectedMode] = useState<SessionMaterialCreationKind>(
+    () =>
+      sessionMaterialCreationDefaults?.materialKind ??
+      DEFAULT_SESSION_MATERIAL_CREATION_KIND,
+  );
   const [rootNote, setRootNote] = useState<RootNote>(
     () => sessionMaterialCreationDefaults?.rootNote ?? DEFAULT_PART_ROOT_NOTE,
   );

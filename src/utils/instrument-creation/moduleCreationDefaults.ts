@@ -111,9 +111,7 @@ export function moduleCreationDefaultsAreEqual(
     return left === right;
   }
 
-  if (
-    !moduleCreationKindsAreEqual(left.moduleKinds, right.moduleKinds)
-  ) {
+  if (!moduleCreationKindsAreEqual(left.moduleKinds, right.moduleKinds)) {
     return false;
   }
 
