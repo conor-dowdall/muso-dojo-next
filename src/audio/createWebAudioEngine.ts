@@ -21,7 +21,11 @@ import {
   getDefaultAudioPresetId,
   resolveAudioPreset,
 } from "./presets";
-import { createHarmonicVoice, type ActiveVoice } from "./voice";
+import {
+  createHarmonicVoice,
+  getHarmonicVoiceLevelGain,
+  type ActiveVoice,
+} from "./voice";
 import { resolveHarmonicVoiceConfig } from "./voiceConfig";
 import {
   type AudioEngine,
@@ -29,6 +33,7 @@ import {
   type AudioUse,
   type AudioVoiceHandle,
   type DroneHandle,
+  type DroneNoteRequest,
   type DroneRequest,
   type MasterAmbiencePresetId,
   type PlayNoteRequest,
@@ -40,20 +45,45 @@ const DEFAULT_DRONE_USE = "drone" satisfies AudioUse;
 const MIN_NOTE_DURATION_SECONDS = 0.02;
 const CLEANUP_DELAY_SECONDS = 0.05;
 const SILENT_UNLOCK_PULSE_SECONDS = 0.01;
+const AUDIO_RENDER_QUANTUM_FRAMES = 128;
+const MIN_SCHEDULE_LOOKAHEAD_SECONDS = 0.006;
+const DRONE_MIN_ATTACK_SECONDS = 0.012;
+const DRONE_MIN_RELEASE_SECONDS = 0.04;
+const DRONE_LEVEL_RAMP_SECONDS = 0.035;
+const DRONE_PITCH_GLIDE_SECONDS = 0.075;
+const DRONE_PRESET_CROSSFADE_SECONDS = 0.09;
 const WARMUP_MIDI_NOTES = [36, 48, 60, 72] as const;
 
 interface ActiveDrone {
+  concertPitchHz: number | undefined;
+  context: AudioContext;
+  currentGraph: DroneEffectGraph | undefined;
+  destroyed: boolean;
+  graphs: Set<DroneEffectGraph>;
   handle: DroneHandle;
-  voices: ActiveVoice[];
+  output: GainNode;
+  presetId: AudioPreset["id"];
+  use: AudioUse;
+  voices: Map<string, ActiveDroneVoice>;
 }
 
-interface SharedDroneEffectBus {
+interface ActiveDroneVoice {
+  graph: DroneEffectGraph;
+  request: DroneNoteRequest;
+  voice: ActiveVoice;
+}
+
+interface DroneEffectGraph {
   cleanupTimer: number | undefined;
   disposed: boolean;
-  effectChain: ConnectedAudioEffectChain;
-  input: GainNode;
-  key: string;
+  effectChain: ConnectedAudioEffectChain | undefined;
+  input: GainNode | undefined;
+  perVoiceEffects: readonly VoiceInsertEffectConfig[];
+  presetId: AudioPreset["id"];
   refCount: number;
+  tailSeconds: number;
+  use: AudioUse;
+  voiceDestination: AudioNode;
 }
 
 function isSharedDroneEffect(effect: VoiceInsertEffectConfig) {
@@ -74,35 +104,11 @@ function getPerVoiceDroneInsertEffects(
   return getSharedDroneInsertEffects(effects).length > 0 ? [] : effects;
 }
 
-function getDroneEffectKeyPart(effect: VoiceInsertEffectConfig) {
-  switch (effect.type) {
-    case "chorus":
-      return [
-        effect.type,
-        effect.delaySeconds ?? "",
-        effect.depthSeconds,
-        effect.feedback ?? "",
-        effect.mix,
-        effect.rateHz,
-      ].join(":");
-    case "distortion":
-      return [
-        effect.type,
-        effect.amount,
-        effect.mix ?? "",
-        effect.oversample ?? "",
-      ].join(":");
-  }
-}
-
-function getSharedDroneEffectBusKey({
-  effects,
-  use,
-}: {
-  effects: readonly VoiceInsertEffectConfig[];
-  use: AudioUse;
-}) {
-  return `${use}:${effects.map(getDroneEffectKeyPart).join("|")}`;
+function getScheduleLookaheadSeconds(context: AudioContext) {
+  return Math.max(
+    MIN_SCHEDULE_LOOKAHEAD_SECONDS,
+    (AUDIO_RENDER_QUANTUM_FRAMES * 2) / context.sampleRate,
+  );
 }
 
 export function createWebAudioEngine(): AudioEngine {
@@ -116,55 +122,31 @@ export function createWebAudioEngine(): AudioEngine {
   let nextDroneId = 0;
   const activeVoices = new Map<AudioVoiceHandle, ActiveVoice>();
   const activeDrones = new Map<DroneHandle, ActiveDrone>();
-  const sharedDroneEffectBuses = new Map<string, SharedDroneEffectBus>();
+  const resetListeners = new Set<() => void>();
   const harmonicWaveCache = createHarmonicWaveCache();
-
-  function disposeSharedDroneEffectBus(bus: SharedDroneEffectBus) {
-    if (bus.disposed) {
-      if (sharedDroneEffectBuses.get(bus.key) === bus) {
-        sharedDroneEffectBuses.delete(bus.key);
-      }
-      return;
-    }
-
-    bus.disposed = true;
-
-    if (bus.cleanupTimer !== undefined) {
-      window.clearTimeout(bus.cleanupTimer);
-      bus.cleanupTimer = undefined;
-    }
-
-    bus.input.disconnect();
-    bus.effectChain.dispose();
-
-    if (sharedDroneEffectBuses.get(bus.key) === bus) {
-      sharedDroneEffectBuses.delete(bus.key);
-    }
-  }
-
-  function clearSharedDroneEffectBuses() {
-    Array.from(sharedDroneEffectBuses.values()).forEach((bus) => {
-      try {
-        disposeSharedDroneEffectBus(bus);
-      } catch {
-        // The browser may already have torn down the underlying audio graph.
-      }
-    });
-    sharedDroneEffectBuses.clear();
-  }
 
   function clearContextReferences() {
     try {
-      clearSharedDroneEffectBuses();
+      activeDrones.forEach((drone) => {
+        drone.destroyed = true;
+        drone.voices.forEach(({ voice }) => voice.disconnect());
+        [...drone.graphs].forEach((graph) =>
+          disposeDroneEffectGraph(drone, graph),
+        );
+        drone.output.disconnect();
+      });
       audioMixer?.dispose();
     } catch {
       // The browser may already have torn down the underlying audio graph.
     }
 
+    activeDrones.clear();
+    activeVoices.clear();
     audioContext = undefined;
     audioMixer = undefined;
     primedContext = undefined;
     readyContextPromise = undefined;
+    resetListeners.forEach((listener) => listener());
   }
 
   function getAudioContext() {
@@ -185,6 +167,16 @@ export function createWebAudioEngine(): AudioEngine {
     try {
       audioContext = new AudioContextConstructor({
         latencyHint: "interactive",
+      });
+      const createdContext = audioContext;
+
+      createdContext.addEventListener("statechange", () => {
+        if (
+          createdContext.state === "closed" &&
+          audioContext === createdContext
+        ) {
+          clearContextReferences();
+        }
       });
     } catch {
       return undefined;
@@ -244,79 +236,120 @@ export function createWebAudioEngine(): AudioEngine {
     return audioMixer;
   }
 
-  function getSharedDroneEffectBus({
-    context,
-    effects,
-    use,
-  }: {
-    context: AudioContext;
-    effects: readonly VoiceInsertEffectConfig[];
-    use: AudioUse;
-  }) {
-    const key = getSharedDroneEffectBusKey({ effects, use });
-    const existingBus = sharedDroneEffectBuses.get(key);
-
-    if (existingBus) {
-      if (existingBus.cleanupTimer !== undefined) {
-        window.clearTimeout(existingBus.cleanupTimer);
-        existingBus.cleanupTimer = undefined;
-      }
-
-      return existingBus;
+  function disposeDroneEffectGraph(
+    drone: ActiveDrone,
+    graph: DroneEffectGraph,
+  ) {
+    if (graph.disposed) {
+      return;
     }
 
-    const input = context.createGain();
-    const effectChain = connectAudioEffectChain({
-      context,
-      destination: getAudioMixer(context).getInput(use),
-      effects,
-      source: input,
-    });
-    const bus: SharedDroneEffectBus = {
+    graph.disposed = true;
+
+    if (graph.cleanupTimer !== undefined) {
+      window.clearTimeout(graph.cleanupTimer);
+      graph.cleanupTimer = undefined;
+    }
+
+    graph.input?.disconnect();
+    graph.effectChain?.dispose();
+    drone.graphs.delete(graph);
+
+    if (drone.currentGraph === graph) {
+      drone.currentGraph = undefined;
+    }
+  }
+
+  function retainDroneEffectGraph(graph: DroneEffectGraph) {
+    if (graph.cleanupTimer !== undefined) {
+      window.clearTimeout(graph.cleanupTimer);
+      graph.cleanupTimer = undefined;
+    }
+
+    graph.refCount += 1;
+  }
+
+  function releaseDroneEffectGraph(
+    drone: ActiveDrone,
+    graph: DroneEffectGraph,
+  ) {
+    if (graph.disposed) {
+      return;
+    }
+
+    graph.refCount = Math.max(0, graph.refCount - 1);
+
+    if (graph.refCount > 0 || graph.cleanupTimer !== undefined) {
+      return;
+    }
+
+    graph.cleanupTimer = window.setTimeout(
+      () => {
+        if (graph.refCount === 0) {
+          disposeDroneEffectGraph(drone, graph);
+        }
+      },
+      (graph.tailSeconds + CLEANUP_DELAY_SECONDS) * 1000,
+    );
+  }
+
+  function createDroneEffectGraph(
+    drone: ActiveDrone,
+    preset: AudioPreset,
+    use: AudioUse,
+  ) {
+    const effects = preset.voice.insertEffects ?? [];
+    const sharedEffects = getSharedDroneInsertEffects(effects);
+    const input =
+      sharedEffects.length > 0 ? drone.context.createGain() : undefined;
+    const effectChain = input
+      ? connectAudioEffectChain({
+          context: drone.context,
+          destination: drone.output,
+          effects: sharedEffects,
+          source: input,
+        })
+      : undefined;
+    const graph: DroneEffectGraph = {
       cleanupTimer: undefined,
       disposed: false,
       effectChain,
       input,
-      key,
+      perVoiceEffects: getPerVoiceDroneInsertEffects(effects),
+      presetId: preset.id,
       refCount: 0,
+      tailSeconds: effectChain?.tailSeconds ?? 0,
+      use,
+      voiceDestination: input ?? drone.output,
     };
 
-    sharedDroneEffectBuses.set(key, bus);
-    return bus;
+    drone.graphs.add(graph);
+    drone.currentGraph = graph;
+    return graph;
   }
 
-  function retainSharedDroneEffectBus(bus: SharedDroneEffectBus) {
-    if (bus.disposed) {
-      return;
+  function getDroneEffectGraph(
+    drone: ActiveDrone,
+    preset: AudioPreset,
+    use: AudioUse,
+  ) {
+    const currentGraph = drone.currentGraph;
+
+    if (
+      currentGraph &&
+      !currentGraph.disposed &&
+      currentGraph.presetId === preset.id &&
+      currentGraph.use === use
+    ) {
+      if (currentGraph.cleanupTimer !== undefined) {
+        window.clearTimeout(currentGraph.cleanupTimer);
+        currentGraph.cleanupTimer = undefined;
+      }
+
+      return currentGraph;
     }
 
-    if (bus.cleanupTimer !== undefined) {
-      window.clearTimeout(bus.cleanupTimer);
-      bus.cleanupTimer = undefined;
-    }
-
-    bus.refCount += 1;
-  }
-
-  function releaseSharedDroneEffectBus(bus: SharedDroneEffectBus) {
-    if (bus.disposed) {
-      return;
-    }
-
-    bus.refCount = Math.max(0, bus.refCount - 1);
-
-    if (bus.refCount > 0 || bus.cleanupTimer !== undefined) {
-      return;
-    }
-
-    bus.cleanupTimer = window.setTimeout(
-      () => {
-        if (bus.refCount === 0) {
-          disposeSharedDroneEffectBus(bus);
-        }
-      },
-      (bus.effectChain.tailSeconds + CLEANUP_DELAY_SECONDS) * 1000,
-    );
+    return createDroneEffectGraph(drone, preset, use);
   }
 
   function warmPresetWaves(context: AudioContext) {
@@ -382,6 +415,8 @@ export function createWebAudioEngine(): AudioEngine {
     frequency,
     insertEffects,
     midiNote,
+    minimumAttackSeconds,
+    minimumReleaseSeconds,
     onDisconnect,
     preset,
     startTime,
@@ -394,6 +429,8 @@ export function createWebAudioEngine(): AudioEngine {
     frequency: number;
     insertEffects?: readonly VoiceInsertEffectConfig[];
     midiNote: number;
+    minimumAttackSeconds?: number;
+    minimumReleaseSeconds?: number;
     onDisconnect?: () => void;
     preset: AudioPreset;
     startTime: number;
@@ -410,6 +447,8 @@ export function createWebAudioEngine(): AudioEngine {
       handle,
       insertEffects,
       midiNote,
+      minimumAttackSeconds,
+      minimumReleaseSeconds,
       onDisconnect,
       onEnded: scheduleVoiceCleanup,
       preset,
@@ -475,17 +514,246 @@ export function createWebAudioEngine(): AudioEngine {
 
     const stopTime = startTime + durationSeconds;
     voice.scheduleStop(stopTime);
-    scheduleVoiceCleanup(voice, stopTime);
 
     return voice.handle;
   }
 
-  function startDroneWithContext(context: AudioContext, request: DroneRequest) {
-    const midiNotes = [
-      ...new Set(request.midiNotes.filter(isPlayableMidiNote)),
-    ];
+  function normalizeDroneNotes(notes: readonly DroneNoteRequest[]) {
+    const notesById = new Map<string, DroneNoteRequest>();
 
-    if (midiNotes.length === 0) {
+    notes.forEach((note) => {
+      if (note.id !== "" && isPlayableMidiNote(note.midiNote)) {
+        notesById.set(note.id, note);
+      }
+    });
+
+    return notesById;
+  }
+
+  function createDroneVoice({
+    attackSeconds = DRONE_MIN_ATTACK_SECONDS,
+    drone,
+    graph,
+    note,
+    preset,
+    startTime,
+  }: {
+    attackSeconds?: number;
+    drone: ActiveDrone;
+    graph: DroneEffectGraph;
+    note: DroneNoteRequest;
+    preset: AudioPreset;
+    startTime: number;
+  }) {
+    const activeDroneVoiceRef: {
+      current?: ActiveDroneVoice;
+    } = {};
+    const voice = createVoice({
+      context: drone.context,
+      destination: graph.voiceDestination,
+      frequency: midiToFrequency(note.midiNote, drone.concertPitchHz),
+      insertEffects: graph.perVoiceEffects,
+      midiNote: note.midiNote,
+      minimumAttackSeconds: attackSeconds,
+      minimumReleaseSeconds: DRONE_MIN_RELEASE_SECONDS,
+      onDisconnect: () => {
+        if (
+          activeDroneVoiceRef.current &&
+          drone.voices.get(note.id) === activeDroneVoiceRef.current
+        ) {
+          drone.voices.delete(note.id);
+        }
+
+        releaseDroneEffectGraph(drone, graph);
+      },
+      preset,
+      startTime,
+      use: drone.use,
+      velocity: note.velocity,
+    });
+
+    if (!voice) {
+      return undefined;
+    }
+
+    const activeDroneVoice = { graph, request: note, voice };
+    activeDroneVoiceRef.current = activeDroneVoice;
+    retainDroneEffectGraph(graph);
+    drone.voices.set(note.id, activeDroneVoice);
+    scheduleAttackDecayEnvelope({
+      envelope: preset.voice.envelope,
+      minimumAttackSeconds: attackSeconds,
+      param: voice.envelope.gain,
+      peakGain: voice.peakGain,
+      startTime,
+    });
+
+    return activeDroneVoice;
+  }
+
+  function stopDroneVoice(
+    drone: ActiveDrone,
+    noteId: string,
+    options?: {
+      releaseSeconds?: number;
+      stopTime?: number;
+    },
+  ) {
+    const activeDroneVoice = drone.voices.get(noteId);
+
+    if (!activeDroneVoice) {
+      return;
+    }
+
+    drone.voices.delete(noteId);
+    activeDroneVoice.voice.stop(options);
+  }
+
+  function stopDroneVoices(
+    drone: ActiveDrone,
+    options?: {
+      releaseSeconds?: number;
+      stopTime?: number;
+    },
+  ) {
+    [...drone.voices.keys()].forEach((noteId) =>
+      stopDroneVoice(drone, noteId, options),
+    );
+  }
+
+  function replaceDroneVoices({
+    drone,
+    notesById,
+    preset,
+    startTime,
+    use,
+  }: {
+    drone: ActiveDrone;
+    notesById: Map<string, DroneNoteRequest>;
+    preset: AudioPreset;
+    startTime: number;
+    use: AudioUse;
+  }) {
+    const previousVoices = [...drone.voices.values()];
+
+    drone.voices.clear();
+    previousVoices.forEach(({ voice }) =>
+      voice.stop({
+        releaseSeconds: DRONE_PRESET_CROSSFADE_SECONDS,
+        stopTime: startTime,
+      }),
+    );
+    drone.currentGraph = undefined;
+    drone.presetId = preset.id;
+    drone.use = use;
+
+    if (notesById.size === 0) {
+      return;
+    }
+
+    const graph = getDroneEffectGraph(drone, preset, use);
+
+    notesById.forEach((note) => {
+      createDroneVoice({
+        attackSeconds: DRONE_PRESET_CROSSFADE_SECONDS,
+        drone,
+        graph,
+        note,
+        preset,
+        startTime,
+      });
+    });
+  }
+
+  function reconcileDrone(drone: ActiveDrone, request: DroneRequest) {
+    const notesById = normalizeDroneNotes(request.notes);
+    const use = request.use ?? DEFAULT_DRONE_USE;
+    const preset = resolveAudioPreset(
+      request.presetId,
+      getDefaultAudioPresetId(use),
+    );
+    const startTime =
+      drone.context.currentTime + getScheduleLookaheadSeconds(drone.context);
+    const presetChanged = drone.presetId !== preset.id || drone.use !== use;
+    const concertPitchChanged = drone.concertPitchHz !== request.concertPitchHz;
+
+    drone.concertPitchHz = request.concertPitchHz;
+
+    if (presetChanged) {
+      replaceDroneVoices({
+        drone,
+        notesById,
+        preset,
+        startTime,
+        use,
+      });
+      return;
+    }
+
+    drone.voices.forEach((activeVoice, noteId) => {
+      const nextNote = notesById.get(noteId);
+
+      if (!nextNote) {
+        stopDroneVoice(drone, noteId, { stopTime: startTime });
+        return;
+      }
+
+      const pitchChanged =
+        nextNote.midiNote !== activeVoice.request.midiNote ||
+        concertPitchChanged;
+
+      if (pitchChanged) {
+        activeVoice.voice.setFrequency(
+          midiToFrequency(nextNote.midiNote, request.concertPitchHz),
+          startTime,
+          DRONE_PITCH_GLIDE_SECONDS,
+        );
+      }
+
+      if (pitchChanged || nextNote.velocity !== activeVoice.request.velocity) {
+        const levelGain = getHarmonicVoiceLevelGain({
+          midiNote: nextNote.midiNote,
+          preset,
+          velocity: nextNote.velocity,
+        });
+
+        activeVoice.voice.setLevelGain(
+          levelGain,
+          startTime,
+          pitchChanged ? DRONE_PITCH_GLIDE_SECONDS : DRONE_LEVEL_RAMP_SECONDS,
+        );
+      }
+
+      activeVoice.request = nextNote;
+    });
+
+    const graph = [...notesById.keys()].some(
+      (noteId) => !drone.voices.has(noteId),
+    )
+      ? getDroneEffectGraph(drone, preset, use)
+      : undefined;
+
+    notesById.forEach((note, noteId) => {
+      if (!drone.voices.has(noteId) && graph) {
+        createDroneVoice({
+          drone,
+          graph,
+          note,
+          preset,
+          startTime,
+        });
+      }
+    });
+    drone.concertPitchHz = request.concertPitchHz;
+    drone.presetId = preset.id;
+    drone.use = use;
+  }
+
+  function createDroneWithContext(
+    context: AudioContext,
+    request: DroneRequest,
+  ) {
+    if (normalizeDroneNotes(request.notes).size === 0) {
       return undefined;
     }
 
@@ -494,72 +762,56 @@ export function createWebAudioEngine(): AudioEngine {
       request.presetId,
       getDefaultAudioPresetId(use),
     );
-    const startTime = context.currentTime;
-    const voices = midiNotes.reduce<ActiveVoice[]>((nextVoices, midiNote) => {
-      const voiceConfig = resolveHarmonicVoiceConfig(preset.voice, midiNote);
-      const sharedEffects = getSharedDroneInsertEffects(
-        voiceConfig.insertEffects,
-      );
-      const perVoiceEffects = getPerVoiceDroneInsertEffects(
-        voiceConfig.insertEffects,
-      );
-      const sharedBus =
-        sharedEffects.length > 0
-          ? getSharedDroneEffectBus({
-              context,
-              effects: sharedEffects,
-              use,
-            })
-          : undefined;
-      const voice = createVoice({
-        context,
-        destination: sharedBus?.input,
-        frequency: midiToFrequency(midiNote, request.concertPitchHz),
-        insertEffects: perVoiceEffects,
-        midiNote,
-        onDisconnect:
-          sharedBus === undefined
-            ? undefined
-            : () => releaseSharedDroneEffectBus(sharedBus),
-        preset,
-        startTime,
-        tailSeconds: sharedBus?.effectChain.tailSeconds,
-        use,
-        velocity: request.velocity,
-      });
-
-      if (!voice) {
-        if (sharedBus && sharedBus.refCount === 0) {
-          disposeSharedDroneEffectBus(sharedBus);
-        }
-
-        return nextVoices;
-      }
-
-      if (sharedBus) {
-        retainSharedDroneEffectBus(sharedBus);
-      }
-
-      nextVoices.push(voice);
-      return nextVoices;
-    }, []);
-
-    if (voices.length === 0) {
-      return undefined;
-    }
-
+    const output = context.createGain();
     const handle = `drone-${nextDroneId++}` as DroneHandle;
-    activeDrones.set(handle, { handle, voices });
-    voices.forEach((voice) =>
-      scheduleAttackDecayEnvelope({
-        envelope: preset.voice.envelope,
-        param: voice.envelope.gain,
-        peakGain: voice.peakGain,
-        startTime,
-      }),
-    );
+    const drone: ActiveDrone = {
+      concertPitchHz: request.concertPitchHz,
+      context,
+      currentGraph: undefined,
+      destroyed: false,
+      graphs: new Set(),
+      handle,
+      output,
+      presetId: preset.id,
+      use,
+      voices: new Map(),
+    };
+
+    output.gain.setValueAtTime(1, context.currentTime);
+    output.connect(getAudioMixer(context).getInput(use));
+    activeDrones.set(handle, drone);
+    reconcileDrone(drone, request);
 
     return handle;
+  }
+
+  function destroyDrone(drone: ActiveDrone) {
+    if (drone.destroyed) {
+      return;
+    }
+
+    const maxReleaseSeconds = Math.max(
+      DRONE_MIN_RELEASE_SECONDS,
+      ...[...drone.voices.values()].map(({ voice }) =>
+        Math.max(voice.releaseSeconds, DRONE_MIN_RELEASE_SECONDS),
+      ),
+    );
+    const maxTailSeconds = Math.max(
+      0,
+      ...[...drone.graphs].map((graph) => graph.tailSeconds),
+    );
+
+    stopDroneVoices(drone);
+    drone.destroyed = true;
+    activeDrones.delete(drone.handle);
+
+    const cleanupDelaySeconds =
+      maxReleaseSeconds + maxTailSeconds + CLEANUP_DELAY_SECONDS * 2;
+
+    window.setTimeout(() => {
+      drone.graphs.forEach((graph) => disposeDroneEffectGraph(drone, graph));
+      drone.output.disconnect();
+    }, cleanupDelaySeconds * 1000);
   }
 
   function runWithReadyContext<T>(operation: (context: AudioContext) => T) {
@@ -606,27 +858,48 @@ export function createWebAudioEngine(): AudioEngine {
       masterAmbiencePresetId = presetId;
       audioMixer?.setMasterAmbiencePresetId(presetId);
     },
-    startDrone: (request: DroneRequest) => {
-      if (!request.midiNotes.some(isPlayableMidiNote)) {
+    subscribeToReset: (listener: () => void) => {
+      resetListeners.add(listener);
+
+      return () => {
+        resetListeners.delete(listener);
+      };
+    },
+    createDrone: (request: DroneRequest) => {
+      if (!request.notes.some((note) => isPlayableMidiNote(note.midiNote))) {
         return Promise.resolve(undefined);
       }
 
       return runWithReadyContext((context) =>
-        startDroneWithContext(context, request),
+        createDroneWithContext(context, request),
       );
     },
-    stopDrone: (handle: DroneHandle) => {
+    destroyDrone: (handle: DroneHandle) => {
       const drone = activeDrones.get(handle);
 
       if (!drone) {
         return;
       }
 
-      drone.voices.forEach((voice) => voice.stop());
-      activeDrones.delete(handle);
+      destroyDrone(drone);
+    },
+    updateDrone: (handle: DroneHandle, request: DroneRequest) => {
+      const drone = activeDrones.get(handle);
+
+      if (!drone) {
+        return false;
+      }
+
+      if (drone.context.state === "closed") {
+        clearContextReferences();
+        return false;
+      }
+
+      reconcileDrone(drone, request);
+      return true;
     },
     stopAll: () => {
-      activeDrones.clear();
+      activeDrones.forEach((drone) => stopDroneVoices(drone));
       activeVoices.forEach((voice) => voice.stop());
     },
   };

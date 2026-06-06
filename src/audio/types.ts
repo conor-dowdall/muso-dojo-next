@@ -136,8 +136,14 @@ export interface PlayNoteRequest extends BaseAudioRequest {
   midiNote: number;
 }
 
-export interface DroneRequest extends BaseAudioRequest {
-  midiNotes: readonly number[];
+export interface DroneNoteRequest {
+  id: string;
+  midiNote: number;
+  velocity?: number;
+}
+
+export interface DroneRequest extends Omit<BaseAudioRequest, "velocity"> {
+  notes: readonly DroneNoteRequest[];
 }
 
 export type MasterAmbiencePresetId = "dry" | "studio-room" | "warm-hall";
@@ -155,7 +161,9 @@ export interface AudioEngine {
   prime: () => Promise<boolean>;
   playNote: (request: PlayNoteRequest) => Promise<AudioVoiceHandle | undefined>;
   setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => void;
-  startDrone: (request: DroneRequest) => Promise<DroneHandle | undefined>;
-  stopDrone: (handle: DroneHandle) => void;
+  subscribeToReset: (listener: () => void) => () => void;
+  createDrone: (request: DroneRequest) => Promise<DroneHandle | undefined>;
+  destroyDrone: (handle: DroneHandle) => void;
+  updateDrone: (handle: DroneHandle, request: DroneRequest) => boolean;
   stopAll: () => void;
 }

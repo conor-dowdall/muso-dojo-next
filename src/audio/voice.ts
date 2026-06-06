@@ -1,7 +1,5 @@
-import {
-  getAttackDecayEnvelopeGainAtTime,
-  releaseAudioParam,
-} from "./envelope";
+import { getAttackDecayEnvelopeGainAtTime } from "./envelope";
+import { createAudioParamAutomation } from "./audioParamAutomation";
 import { connectAudioEffectChain } from "./effects";
 import { canUseNativeSineOscillator } from "./harmonicWave";
 import {
@@ -13,17 +11,55 @@ import {
 import { clampUnit, normalizeNonNegativeNumber } from "./numeric";
 import { resolveHarmonicVoiceConfig } from "./voiceConfig";
 
+const AUDIO_RENDER_QUANTUM_FRAMES = 128;
+const VOICE_STOP_SILENCE_RENDER_QUANTA = 3;
+
+function getVoiceStopSilenceSeconds(context: AudioContext) {
+  return (
+    (AUDIO_RENDER_QUANTUM_FRAMES * VOICE_STOP_SILENCE_RENDER_QUANTA) /
+    context.sampleRate
+  );
+}
+
 export interface ActiveVoice {
   disconnect: () => void;
   envelope: GainNode;
   getGainAtTime: (sampleTime: number) => number;
   handle: AudioVoiceHandle;
+  level: GainNode;
+  levelGain: number;
   peakGain: number;
   releaseSeconds: number;
   scheduleStop: (stopTime: number) => void;
-  stop: (stopTime?: number) => void;
+  setFrequency: (
+    frequency: number,
+    startTime?: number,
+    rampSeconds?: number,
+  ) => void;
+  setLevelGain: (
+    levelGain: number,
+    startTime?: number,
+    rampSeconds?: number,
+  ) => void;
+  stop: (options?: { releaseSeconds?: number; stopTime?: number }) => void;
   stopping: boolean;
   tailSeconds: number;
+}
+
+export function getHarmonicVoiceLevelGain({
+  midiNote,
+  preset,
+  velocity,
+}: {
+  midiNote: number;
+  preset: AudioPreset;
+  velocity: number | undefined;
+}) {
+  const voiceConfig = resolveHarmonicVoiceConfig(preset.voice, midiNote);
+
+  return (
+    normalizeNonNegativeNumber(voiceConfig.gain, 0) * clampUnit(velocity, 1)
+  );
 }
 
 export function createHarmonicVoice({
@@ -34,6 +70,8 @@ export function createHarmonicVoice({
   handle,
   insertEffects,
   midiNote,
+  minimumAttackSeconds = 0,
+  minimumReleaseSeconds = 0,
   onDisconnect,
   onEnded,
   preset,
@@ -51,6 +89,8 @@ export function createHarmonicVoice({
   handle: AudioVoiceHandle;
   insertEffects?: readonly VoiceInsertEffectConfig[];
   midiNote: number;
+  minimumAttackSeconds?: number;
+  minimumReleaseSeconds?: number;
   onDisconnect?: () => void;
   onEnded: (voice: ActiveVoice, endTime: number) => void;
   preset: AudioPreset;
@@ -74,14 +114,18 @@ export function createHarmonicVoice({
     return undefined;
   }
 
-  const voiceGain =
-    normalizeNonNegativeNumber(voiceConfig.gain, 0) * clampUnit(velocity, 1);
+  const voiceGain = getHarmonicVoiceLevelGain({
+    midiNote,
+    preset,
+    velocity,
+  });
 
   if (voiceGain <= 0) {
     return undefined;
   }
 
   const envelope = context.createGain();
+  const level = context.createGain();
   const sourceMixer = context.createGain();
   const requestedDetuneCents =
     voiceConfig.unison?.detuneCents.filter(Number.isFinite) ?? [];
@@ -93,8 +137,6 @@ export function createHarmonicVoice({
     if (periodicWave) {
       oscillator.setPeriodicWave(periodicWave);
     }
-
-    oscillator.frequency.setValueAtTime(frequency, startTime);
 
     if (detuneCents !== 0) {
       oscillator.detune.setValueAtTime(detuneCents, startTime);
@@ -110,14 +152,26 @@ export function createHarmonicVoice({
     effects: insertEffects ?? voiceConfig.insertEffects,
     source: sourceMixer,
   });
+  const frequencyAutomation = createAudioParamAutomation({
+    initialValue: frequency,
+    params: oscillators.map((oscillator) => oscillator.frequency),
+    startTime,
+  });
+  const levelAutomation = createAudioParamAutomation({
+    initialValue: voiceGain,
+    params: [level.gain],
+    startTime,
+  });
   let disconnected = false;
+  let endedOscillatorCount = 0;
 
   envelope.gain.setValueAtTime(0, startTime);
   sourceMixer.gain.setValueAtTime(
     1 / Math.sqrt(Math.max(1, oscillators.length)),
     startTime,
   );
-  envelope.connect(destination);
+  envelope.connect(level);
+  level.connect(destination);
 
   const voice: ActiveVoice = {
     handle,
@@ -125,11 +179,14 @@ export function createHarmonicVoice({
     getGainAtTime: (sampleTime) =>
       getAttackDecayEnvelopeGainAtTime({
         envelope: voiceConfig.envelope,
-        peakGain: voiceGain,
+        minimumAttackSeconds,
+        peakGain: 1,
         sampleTime,
         startTime,
       }),
-    peakGain: voiceGain,
+    level,
+    levelGain: voiceGain,
+    peakGain: 1,
     releaseSeconds: Math.max(0, voiceConfig.envelope.releaseSeconds),
     scheduleStop: (stopTime: number) => {
       oscillators.forEach((oscillator) => {
@@ -139,6 +196,21 @@ export function createHarmonicVoice({
           // The voice may already have a stop scheduled.
         }
       });
+    },
+    setFrequency: (
+      nextFrequency,
+      frequencyStartTime = context.currentTime,
+      rampSeconds = 0,
+    ) => {
+      if (!Number.isFinite(nextFrequency) || nextFrequency <= 0) {
+        return;
+      }
+
+      frequencyAutomation.exponentialRampToValueAtTime(
+        nextFrequency,
+        frequencyStartTime,
+        rampSeconds,
+      );
     },
     stopping: false,
     disconnect: () => {
@@ -151,22 +223,49 @@ export function createHarmonicVoice({
       sourceMixer.disconnect();
       insertEffectChain.dispose();
       envelope.disconnect();
+      level.disconnect();
       onDisconnect?.();
     },
-    stop: (stopTime = context.currentTime) => {
+    setLevelGain: (
+      nextLevelGain,
+      startTime = context.currentTime,
+      rampSeconds = 0,
+    ) => {
+      const normalizedLevelGain = normalizeNonNegativeNumber(nextLevelGain, 0);
+
+      levelAutomation.linearRampToValueAtTime(
+        normalizedLevelGain,
+        startTime,
+        rampSeconds,
+      );
+
+      voice.levelGain = normalizedLevelGain;
+    },
+    stop: ({
+      releaseSeconds = Math.max(voice.releaseSeconds, minimumReleaseSeconds),
+      stopTime = context.currentTime,
+    } = {}) => {
       if (voice.stopping) {
         return;
       }
 
       voice.stopping = true;
+      const automationStart = context.currentTime;
       const releaseStart = Math.max(context.currentTime, stopTime);
-      const releaseEnd = releaseStart + voice.releaseSeconds;
+      const releaseEnd = releaseStart + Math.max(0, releaseSeconds);
+      const oscillatorStopTime =
+        releaseEnd + getVoiceStopSilenceSeconds(context);
+      const automationStartGain = voice.getGainAtTime(automationStart);
+      const releaseStartGain = voice.getGainAtTime(releaseStart);
 
-      releaseAudioParam({
-        fallbackGain: voice.getGainAtTime(releaseStart),
-        param: envelope.gain,
-        stopTime: releaseStart,
-      });
+      envelope.gain.cancelScheduledValues(automationStart);
+      envelope.gain.setValueAtTime(automationStartGain, automationStart);
+
+      if (releaseStart > automationStart) {
+        envelope.gain.linearRampToValueAtTime(releaseStartGain, releaseStart);
+      } else {
+        envelope.gain.setValueAtTime(releaseStartGain, releaseStart);
+      }
 
       if (releaseEnd > releaseStart) {
         envelope.gain.linearRampToValueAtTime(0, releaseEnd);
@@ -174,12 +273,25 @@ export function createHarmonicVoice({
         envelope.gain.setValueAtTime(0, releaseEnd);
       }
 
-      voice.scheduleStop(releaseEnd);
-      onEnded(voice, releaseEnd);
+      envelope.gain.setValueAtTime(0, oscillatorStopTime);
+      voice.scheduleStop(oscillatorStopTime);
     },
     tailSeconds: normalizeNonNegativeNumber(tailSeconds, 0),
   };
 
+  oscillators.forEach((oscillator) => {
+    oscillator.addEventListener(
+      "ended",
+      () => {
+        endedOscillatorCount += 1;
+
+        if (endedOscillatorCount === oscillators.length) {
+          onEnded(voice, context.currentTime);
+        }
+      },
+      { once: true },
+    );
+  });
   oscillators.forEach((oscillator) => oscillator.start(startTime));
 
   return voice;

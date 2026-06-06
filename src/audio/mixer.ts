@@ -2,6 +2,7 @@ import {
   connectAudioEffectChain,
   type ConnectedAudioEffectChain,
 } from "./effects";
+import { releaseAudioParam } from "./envelope";
 import { getMasterAmbiencePreset } from "./masterAmbience";
 import { type AudioUse, type MasterAmbiencePresetId } from "./types";
 
@@ -18,6 +19,8 @@ const MASTER_COMPRESSOR_RATIO = 4;
 const MASTER_COMPRESSOR_RELEASE_SECONDS = 0.16;
 const MASTER_COMPRESSOR_THRESHOLD_DB = -10;
 const MASTER_OUTPUT_GAIN = 0.72;
+const MASTER_RECONFIGURE_FADE_OUT_SECONDS = 0.05;
+const MASTER_RECONFIGURE_FADE_IN_SECONDS = 0.07;
 
 const emptyEffectChain: ConnectedAudioEffectChain = {
   dispose: () => undefined,
@@ -105,6 +108,8 @@ export function createAudioMixer({
   let compressorOutputConnected = false;
   let currentMasterAmbiencePresetId = masterAmbiencePresetId;
   let masterEffectChain: ConnectedAudioEffectChain = emptyEffectChain;
+  let ambienceTransitionTimer: number | undefined;
+  let ambienceTransitionRevision = 0;
 
   masterInput.gain.setValueAtTime(MASTER_OUTPUT_GAIN, context.currentTime);
 
@@ -164,6 +169,10 @@ export function createAudioMixer({
 
   return {
     dispose: () => {
+      if (ambienceTransitionTimer !== undefined) {
+        window.clearTimeout(ambienceTransitionTimer);
+      }
+
       Object.values(useInputs).forEach((input) => input.disconnect());
       masterInput.disconnect();
       masterEffectChain.dispose();
@@ -177,7 +186,37 @@ export function createAudioMixer({
       }
 
       currentMasterAmbiencePresetId = presetId;
-      reconnectMasterAmbience();
+      ambienceTransitionRevision += 1;
+      const transitionRevision = ambienceTransitionRevision;
+      const fadeStart = context.currentTime;
+      const fadeEnd = fadeStart + MASTER_RECONFIGURE_FADE_OUT_SECONDS;
+
+      if (ambienceTransitionTimer !== undefined) {
+        window.clearTimeout(ambienceTransitionTimer);
+      }
+
+      releaseAudioParam({
+        fallbackGain: MASTER_OUTPUT_GAIN,
+        param: masterInput.gain,
+        stopTime: fadeStart,
+      });
+      masterInput.gain.linearRampToValueAtTime(0, fadeEnd);
+      ambienceTransitionTimer = window.setTimeout(() => {
+        ambienceTransitionTimer = undefined;
+
+        if (transitionRevision !== ambienceTransitionRevision) {
+          return;
+        }
+
+        reconnectMasterAmbience();
+
+        const fadeInStart = context.currentTime;
+        const fadeInEnd = fadeInStart + MASTER_RECONFIGURE_FADE_IN_SECONDS;
+
+        masterInput.gain.cancelScheduledValues(fadeInStart);
+        masterInput.gain.setValueAtTime(0, fadeInStart);
+        masterInput.gain.linearRampToValueAtTime(MASTER_OUTPUT_GAIN, fadeInEnd);
+      }, MASTER_RECONFIGURE_FADE_OUT_SECONDS * 1000);
     },
   };
 }

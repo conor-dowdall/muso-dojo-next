@@ -2,18 +2,37 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createWebAudioEngine } from "@/audio/createWebAudioEngine";
 
 class MockAudioParam {
+  readonly events: Array<{
+    time: number;
+    type: "cancel" | "exponentialRamp" | "hold" | "ramp" | "set";
+    value?: number;
+  }> = [];
   value = 0;
 
-  cancelScheduledValues() {
+  cancelAndHoldAtTime(time: number) {
+    this.events.push({ time, type: "hold" });
     return this;
   }
 
-  linearRampToValueAtTime(value: number) {
+  cancelScheduledValues(time: number) {
+    this.events.push({ time, type: "cancel" });
+    return this;
+  }
+
+  linearRampToValueAtTime(value: number, time: number) {
+    this.events.push({ time, type: "ramp", value });
     this.value = value;
     return this;
   }
 
-  setValueAtTime(value: number) {
+  exponentialRampToValueAtTime(value: number, time: number) {
+    this.events.push({ time, type: "exponentialRamp", value });
+    this.value = value;
+    return this;
+  }
+
+  setValueAtTime(value: number, time: number) {
+    this.events.push({ time, type: "set", value });
     this.value = value;
     return this;
   }
@@ -39,9 +58,40 @@ class MockGainNode extends MockAudioNode {
   readonly gain = new MockAudioParam() as unknown as AudioParam;
 }
 
+class MockAudioBuffer {
+  readonly numberOfChannels: number;
+  private readonly channels: Float32Array[];
+
+  constructor(numberOfChannels: number, length: number) {
+    this.numberOfChannels = numberOfChannels;
+    this.channels = Array.from(
+      { length: numberOfChannels },
+      () => new Float32Array(length),
+    );
+  }
+
+  getChannelData(channel: number) {
+    return this.channels[channel]!;
+  }
+}
+
+class MockBiquadFilterNode extends MockAudioNode {
+  readonly Q = new MockAudioParam() as unknown as AudioParam;
+  readonly frequency = new MockAudioParam() as unknown as AudioParam;
+  type: BiquadFilterType = "lowpass";
+}
+
+class MockConvolverNode extends MockAudioNode {
+  buffer: AudioBuffer | null = null;
+}
+
 class MockOscillatorNode extends MockAudioNode {
   readonly detune = new MockAudioParam() as unknown as AudioParam;
   readonly frequency = new MockAudioParam() as unknown as AudioParam;
+
+  addEventListener() {
+    return undefined;
+  }
 
   setPeriodicWave() {
     return undefined;
@@ -51,7 +101,11 @@ class MockOscillatorNode extends MockAudioNode {
     return undefined;
   }
 
-  stop() {
+  stop(time?: number) {
+    if (time !== undefined) {
+      MockAudioContext.oscillatorStopTimes.push(time);
+    }
+
     return undefined;
   }
 }
@@ -74,11 +128,16 @@ class MockWaveShaperNode extends MockAudioNode {
 }
 
 class MockAudioContext {
+  static convolverNodeCount = 0;
   static compressorNodeCount = 0;
   static delayNodeCount = 0;
+  static gainNodes: MockGainNode[] = [];
   static oscillatorNodeCount = 0;
+  static oscillators: MockOscillatorNode[] = [];
+  static oscillatorStopTimes: number[] = [];
   static periodicWaveCount = 0;
   static waveShaperNodeCount = 0;
+  static lastInstance: MockAudioContext | undefined;
 
   readonly destination = new MockAudioNode(
     this,
@@ -87,19 +146,42 @@ class MockAudioContext {
   currentTime = 0;
   state: AudioContextState = "running";
 
-  constructor(_options?: AudioContextOptions) {}
+  constructor(_options?: AudioContextOptions) {
+    MockAudioContext.lastInstance = this;
+  }
 
   static resetCounts() {
+    MockAudioContext.convolverNodeCount = 0;
     MockAudioContext.compressorNodeCount = 0;
     MockAudioContext.delayNodeCount = 0;
+    MockAudioContext.gainNodes = [];
     MockAudioContext.oscillatorNodeCount = 0;
+    MockAudioContext.oscillators = [];
+    MockAudioContext.oscillatorStopTimes = [];
     MockAudioContext.periodicWaveCount = 0;
     MockAudioContext.waveShaperNodeCount = 0;
+    MockAudioContext.lastInstance = undefined;
   }
 
   createDelay() {
     MockAudioContext.delayNodeCount += 1;
     return new MockDelayNode(this) as unknown as DelayNode;
+  }
+
+  createBiquadFilter() {
+    return new MockBiquadFilterNode(this) as unknown as BiquadFilterNode;
+  }
+
+  createBuffer(numberOfChannels: number, length: number) {
+    return new MockAudioBuffer(
+      numberOfChannels,
+      length,
+    ) as unknown as AudioBuffer;
+  }
+
+  createConvolver() {
+    MockAudioContext.convolverNodeCount += 1;
+    return new MockConvolverNode(this) as unknown as ConvolverNode;
   }
 
   createDynamicsCompressor() {
@@ -110,12 +192,18 @@ class MockAudioContext {
   }
 
   createGain() {
-    return new MockGainNode(this) as unknown as GainNode;
+    const gainNode = new MockGainNode(this);
+
+    MockAudioContext.gainNodes.push(gainNode);
+    return gainNode as unknown as GainNode;
   }
 
   createOscillator() {
+    const oscillator = new MockOscillatorNode(this);
+
     MockAudioContext.oscillatorNodeCount += 1;
-    return new MockOscillatorNode(this) as unknown as OscillatorNode;
+    MockAudioContext.oscillators.push(oscillator);
+    return oscillator as unknown as OscillatorNode;
   }
 
   createPeriodicWave() {
@@ -126,6 +214,10 @@ class MockAudioContext {
   createWaveShaper() {
     MockAudioContext.waveShaperNodeCount += 1;
     return new MockWaveShaperNode(this) as unknown as WaveShaperNode;
+  }
+
+  addEventListener() {
+    return undefined;
   }
 
   resume() {
@@ -157,8 +249,8 @@ describe("createWebAudioEngine", () => {
     await engine.prime();
     const oscillatorCountAfterPrime = MockAudioContext.oscillatorNodeCount;
     const periodicWaveCountAfterPrime = MockAudioContext.periodicWaveCount;
-    const handle = await engine.startDrone({
-      midiNotes: [60],
+    const handle = await engine.createDrone({
+      notes: [{ id: "root", midiNote: 60 }],
       use: "drone",
     });
 
@@ -172,23 +264,32 @@ describe("createWebAudioEngine", () => {
     expect(MockAudioContext.compressorNodeCount).toBe(0);
   });
 
-  it("shares chorus insert effects across separately started drone handles", async () => {
+  it("shares chorus insert effects across notes in one persistent drone", async () => {
     installMockAudioWindow();
 
     const engine = createWebAudioEngine();
-    const firstHandle = await engine.startDrone({
-      midiNotes: [60],
-      presetId: "warm-pad",
-      use: "drone",
-    });
-    const secondHandle = await engine.startDrone({
-      midiNotes: [64],
+    const handle = await engine.createDrone({
+      notes: [
+        { id: "root", midiNote: 60 },
+        { id: "third", midiNote: 64 },
+      ],
       presetId: "warm-pad",
       use: "drone",
     });
 
-    expect(firstHandle).toBeDefined();
-    expect(secondHandle).toBeDefined();
+    expect(handle).toBeDefined();
+    expect(MockAudioContext.delayNodeCount).toBe(1);
+
+    engine.updateDrone(handle!, {
+      notes: [
+        { id: "root", midiNote: 60 },
+        { id: "third", midiNote: 64 },
+        { id: "fifth", midiNote: 67 },
+      ],
+      presetId: "warm-pad",
+      use: "drone",
+    });
+
     expect(MockAudioContext.delayNodeCount).toBe(1);
   });
 
@@ -196,13 +297,11 @@ describe("createWebAudioEngine", () => {
     installMockAudioWindow();
 
     const engine = createWebAudioEngine();
-    await engine.startDrone({
-      midiNotes: [60],
-      presetId: "distortion-guitar",
-      use: "drone",
-    });
-    await engine.startDrone({
-      midiNotes: [64],
+    await engine.createDrone({
+      notes: [
+        { id: "root", midiNote: 60 },
+        { id: "third", midiNote: 64 },
+      ],
       presetId: "distortion-guitar",
       use: "drone",
     });
@@ -210,34 +309,184 @@ describe("createWebAudioEngine", () => {
     expect(MockAudioContext.waveShaperNodeCount).toBe(2);
   });
 
-  it("releases an idle shared drone effects bus after stopped voices finish", async () => {
+  it("ramps level changes without restarting oscillators", async () => {
     installMockAudioWindow();
 
     const engine = createWebAudioEngine();
-    const firstHandle = await engine.startDrone({
-      midiNotes: [60],
-      presetId: "warm-pad",
+    const handle = await engine.createDrone({
+      notes: [{ id: "root", midiNote: 60, velocity: 0.8 }],
       use: "drone",
     });
-    const secondHandle = await engine.startDrone({
-      midiNotes: [64],
-      presetId: "warm-pad",
-      use: "drone",
-    });
+    const oscillatorCount = MockAudioContext.oscillatorNodeCount;
 
-    expect(firstHandle).toBeDefined();
-    expect(secondHandle).toBeDefined();
-    expect(MockAudioContext.delayNodeCount).toBe(1);
-
-    engine.stopDrone(firstHandle!);
-    engine.stopDrone(secondHandle!);
-    await vi.advanceTimersByTimeAsync(2_000);
-    await engine.startDrone({
-      midiNotes: [67],
-      presetId: "warm-pad",
+    engine.updateDrone(handle!, {
+      notes: [{ id: "root", midiNote: 60, velocity: 0.4 }],
       use: "drone",
     });
 
-    expect(MockAudioContext.delayNodeCount).toBe(2);
+    expect(MockAudioContext.oscillatorNodeCount).toBe(oscillatorCount);
+  });
+
+  it("keeps released oscillators silent before stopping them", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    const handle = await engine.createDrone({
+      notes: [{ id: "root", midiNote: 60 }],
+      use: "drone",
+    });
+
+    engine.updateDrone(handle!, { notes: [], use: "drone" });
+
+    const releaseEnd = Math.max(
+      ...MockAudioContext.gainNodes.flatMap((gainNode) =>
+        (gainNode.gain as unknown as MockAudioParam).events
+          .filter((event) => event.type === "ramp" && event.value === 0)
+          .map((event) => event.time),
+      ),
+    );
+    const oscillatorStopTime = Math.max(
+      ...MockAudioContext.oscillatorStopTimes,
+    );
+
+    expect(oscillatorStopTime).toBeGreaterThan(releaseEnd);
+  });
+
+  it("glides retained voices to new pitches without replacing oscillators", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    const handle = await engine.createDrone({
+      notes: [{ id: "root", midiNote: 60 }],
+      use: "drone",
+    });
+    const oscillatorCount = MockAudioContext.oscillatorNodeCount;
+    const oscillator = MockAudioContext.oscillators.at(-1)!;
+
+    engine.updateDrone(handle!, {
+      notes: [{ id: "root", midiNote: 72 }],
+      use: "drone",
+    });
+
+    expect(MockAudioContext.oscillatorNodeCount).toBe(oscillatorCount);
+    expect(
+      (oscillator.frequency as unknown as MockAudioParam).events,
+    ).toContainEqual({
+      time: 0.081,
+      type: "exponentialRamp",
+      value: expect.closeTo(523.251, 3),
+    });
+    expect(MockAudioContext.oscillatorStopTimes).toStrictEqual([0.01]);
+  });
+
+  it("holds the in-flight pitch before scheduling a rapid second glide", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    const handle = await engine.createDrone({
+      notes: [{ id: "root", midiNote: 60 }],
+      use: "drone",
+    });
+    const oscillator = MockAudioContext.oscillators.at(-1)!;
+
+    engine.updateDrone(handle!, {
+      notes: [{ id: "root", midiNote: 72 }],
+      use: "drone",
+    });
+    MockAudioContext.lastInstance!.currentTime = 0.04;
+    engine.updateDrone(handle!, {
+      notes: [{ id: "root", midiNote: 48 }],
+      use: "drone",
+    });
+
+    const heldFrequency = (
+      oscillator.frequency as unknown as MockAudioParam
+    ).events.find(
+      (event) =>
+        event.type === "set" &&
+        event.time === 0.046 &&
+        event.value !== undefined,
+    )?.value;
+
+    expect(heldFrequency).toBeGreaterThan(261);
+    expect(heldFrequency).toBeLessThan(523);
+  });
+
+  it("crossfades voices only when the playback preset changes", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    const handle = await engine.createDrone({
+      notes: [{ id: "root", midiNote: 60 }],
+      presetId: "reference-tone",
+      use: "drone",
+    });
+    const oscillatorCount = MockAudioContext.oscillatorNodeCount;
+
+    engine.updateDrone(handle!, {
+      notes: [{ id: "root", midiNote: 60 }],
+      presetId: "soft-organ",
+      use: "drone",
+    });
+
+    expect(MockAudioContext.oscillatorNodeCount).toBe(oscillatorCount + 1);
+    expect(Math.max(...MockAudioContext.oscillatorStopTimes)).toBeGreaterThan(
+      MockAudioContext.lastInstance!.currentTime,
+    );
+  });
+
+  it("keeps the group reusable after releasing all notes", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    const handle = await engine.createDrone({
+      notes: [{ id: "root", midiNote: 60 }],
+      use: "drone",
+    });
+    const oscillatorCount = MockAudioContext.oscillatorNodeCount;
+
+    engine.updateDrone(handle!, { notes: [], use: "drone" });
+    await vi.advanceTimersByTimeAsync(200);
+    engine.updateDrone(handle!, {
+      notes: [{ id: "fifth", midiNote: 67 }],
+      use: "drone",
+    });
+
+    expect(MockAudioContext.oscillatorNodeCount).toBe(oscillatorCount + 1);
+  });
+
+  it("reports a stale group after its AudioContext closes", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    const handle = await engine.createDrone({
+      notes: [{ id: "root", midiNote: 60 }],
+      use: "drone",
+    });
+
+    MockAudioContext.lastInstance!.state = "closed";
+
+    expect(
+      engine.updateDrone(handle!, {
+        notes: [{ id: "root", midiNote: 60 }],
+        use: "drone",
+      }),
+    ).toBe(false);
+  });
+
+  it("rebuilds master ambience only after fading the live mix out", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+
+    engine.setMasterAmbiencePresetId("studio-room");
+
+    expect(MockAudioContext.convolverNodeCount).toBe(0);
+
+    await vi.advanceTimersByTimeAsync(50);
+
+    expect(MockAudioContext.convolverNodeCount).toBe(1);
+    expect(MockAudioContext.compressorNodeCount).toBe(1);
   });
 });

@@ -13,83 +13,175 @@ function createDeferred<T>() {
   return { promise, resolve };
 }
 
-describe("createDroneNotePlaybackController", () => {
-  it("keeps a note sounding until the same interval is toggled off", async () => {
-    const activeIntervals: number[][] = [];
-    const stop = vi.fn();
-    const controller = createDroneNotePlaybackController({
-      onActiveIntervalsChange: (intervals) => activeIntervals.push(intervals),
-      start: vi.fn(async (note) => `handle-${note.interval}`),
-      stop,
-    });
-
-    await controller.startNote({ interval: 0, midi: 48 });
-    controller.toggleNote({ interval: 0, midi: 48 });
-
-    expect(activeIntervals).toStrictEqual([[0], []]);
-    expect(stop).toHaveBeenCalledWith("handle-0");
+function createController() {
+  const create = vi.fn(async () => "drone-handle");
+  const destroy = vi.fn();
+  const update = vi.fn();
+  const activeIntervals: number[][] = [];
+  const controller = createDroneNotePlaybackController({
+    create,
+    destroy,
+    onActiveIntervalsChange: (intervals) => activeIntervals.push(intervals),
+    update,
   });
 
-  it("stops a late handle after a note is toggled off while starting", async () => {
+  return { activeIntervals, controller, create, destroy, update };
+}
+
+describe("createDroneNotePlaybackController", () => {
+  it("creates one persistent drone and updates it for note toggles", async () => {
+    const { activeIntervals, controller, create, update } = createController();
+
+    await controller.startNote({ interval: 0, midi: 48 });
+    await controller.startNote({ interval: 7, midi: 55 });
+    controller.toggleNote({ interval: 0, midi: 48 });
+
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(create).toHaveBeenCalledWith([{ interval: 0, midi: 48 }]);
+    expect(update).toHaveBeenNthCalledWith(1, "drone-handle", [
+      { interval: 0, midi: 48 },
+      { interval: 7, midi: 55 },
+    ]);
+    expect(update).toHaveBeenNthCalledWith(2, "drone-handle", [
+      { interval: 7, midi: 55 },
+    ]);
+    expect(activeIntervals).toStrictEqual([[0], [0, 7], [7]]);
+  });
+
+  it("reconciles the latest state after a delayed first handle", async () => {
     const deferred = createDeferred<string | undefined>();
-    const stop = vi.fn();
+    const update = vi.fn();
     const controller = createDroneNotePlaybackController({
-      start: vi.fn(() => deferred.promise),
-      stop,
+      create: vi.fn(() => deferred.promise),
+      destroy: vi.fn(),
+      update,
     });
 
     const startPromise = controller.startNote({ interval: 7, midi: 55 });
     controller.stopNote(7);
-    deferred.resolve("late-handle");
+    deferred.resolve("drone-handle");
     await startPromise;
 
     expect(controller.getActiveIntervals()).toStrictEqual([]);
-    expect(stop).toHaveBeenCalledWith("late-handle");
+    expect(update).toHaveBeenCalledWith("drone-handle", []);
   });
 
-  it("stops all active drone notes at once", async () => {
-    const activeIntervals: number[][] = [];
-    const stop = vi.fn();
+  it("destroys a delayed handle when disposed before creation finishes", async () => {
+    const deferred = createDeferred<string | undefined>();
+    const destroy = vi.fn();
     const controller = createDroneNotePlaybackController({
-      onActiveIntervalsChange: (intervals) => activeIntervals.push(intervals),
-      start: vi.fn(async (note) => `handle-${note.interval}`),
-      stop,
+      create: vi.fn(() => deferred.promise),
+      destroy,
+      update: vi.fn(),
     });
+
+    const startPromise = controller.startNote({ interval: 0, midi: 48 });
+    controller.dispose();
+    deferred.resolve("drone-handle");
+    await startPromise;
+
+    expect(destroy).toHaveBeenCalledWith("drone-handle");
+  });
+
+  it("reactivates after a React Strict Mode effect replay", async () => {
+    const { controller, create, destroy } = createController();
+
+    controller.activate();
+    controller.dispose();
+    controller.activate();
+    await controller.startNote({ interval: 0, midi: 48 });
+
+    expect(create).toHaveBeenCalledOnce();
+    expect(destroy).not.toHaveBeenCalled();
+    expect(controller.getActiveIntervals()).toStrictEqual([0]);
+  });
+
+  it("rejects a delayed handle from an earlier lifecycle", async () => {
+    const firstHandle = createDeferred<string | undefined>();
+    const create = vi
+      .fn<() => Promise<string | undefined>>()
+      .mockReturnValueOnce(firstHandle.promise)
+      .mockResolvedValueOnce("current-handle");
+    const destroy = vi.fn();
+    const controller = createDroneNotePlaybackController({
+      create,
+      destroy,
+      update: vi.fn(),
+    });
+
+    const firstStart = controller.startNote({ interval: 0, midi: 48 });
+    controller.dispose();
+    controller.activate();
+    await controller.startNote({ interval: 7, midi: 55 });
+    firstHandle.resolve("stale-handle");
+    await firstStart;
+
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(destroy).toHaveBeenCalledWith("stale-handle");
+    expect(destroy).not.toHaveBeenCalledWith("current-handle");
+    expect(controller.getActiveIntervals()).toStrictEqual([7]);
+  });
+
+  it("recreates the group when an AudioContext reset invalidates its handle", async () => {
+    const create = vi
+      .fn<() => Promise<string | undefined>>()
+      .mockResolvedValueOnce("first-handle")
+      .mockResolvedValueOnce("second-handle");
+    const update = vi.fn().mockReturnValueOnce(false);
+    const controller = createDroneNotePlaybackController({
+      create,
+      destroy: vi.fn(),
+      update,
+    });
+
+    await controller.startNote({ interval: 0, midi: 48 });
+    await controller.startNote({ interval: 7, midi: 55 });
+
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(create).toHaveBeenLastCalledWith([
+      { interval: 0, midi: 48 },
+      { interval: 7, midi: 55 },
+    ]);
+  });
+
+  it("clears highlighted notes when audio creation fails", async () => {
+    const activeIntervals: number[][] = [];
+    const controller = createDroneNotePlaybackController({
+      create: vi.fn(async () => undefined),
+      destroy: vi.fn(),
+      onActiveIntervalsChange: (intervals) => activeIntervals.push(intervals),
+      update: vi.fn(),
+    });
+
+    await controller.startNote({ interval: 0, midi: 48 });
+
+    expect(controller.getActiveIntervals()).toStrictEqual([]);
+    expect(activeIntervals).toStrictEqual([[0], []]);
+  });
+
+  it("clears active state immediately when the audio engine resets", async () => {
+    const { activeIntervals, controller } = createController();
+
+    await controller.startNote({ interval: 0, midi: 48 });
+    controller.reset();
+
+    expect(controller.getActiveIntervals()).toStrictEqual([]);
+    expect(activeIntervals).toStrictEqual([[0], []]);
+  });
+
+  it("reconciles an empty note set for Stop All", async () => {
+    const { controller, update } = createController();
 
     await controller.startNote({ interval: 0, midi: 48 });
     await controller.startNote({ interval: 7, midi: 55 });
     controller.stopAll();
 
     expect(controller.getActiveIntervals()).toStrictEqual([]);
-    expect(activeIntervals).toStrictEqual([[0], [0, 7], []]);
-    expect(stop).toHaveBeenCalledWith("handle-0");
-    expect(stop).toHaveBeenCalledWith("handle-7");
+    expect(update).toHaveBeenLastCalledWith("drone-handle", []);
   });
 
-  it("restarts an active interval when its sounding midi changes", async () => {
-    let handleIndex = 0;
-    const stop = vi.fn();
-    const controller = createDroneNotePlaybackController({
-      start: vi.fn(async () => `handle-${++handleIndex}`),
-      stop,
-    });
-
-    await controller.startNote({ interval: 0, midi: 48 });
-    controller.reconcileNotes([{ interval: 0, midi: 50 }]);
-    await Promise.resolve();
-
-    expect(controller.getActiveIntervals()).toStrictEqual([0]);
-    expect(stop).toHaveBeenCalledWith("handle-1");
-  });
-
-  it("restarts an active interval when its playback sound changes", async () => {
-    let handleIndex = 0;
-    const stop = vi.fn();
-    const start = vi.fn(async () => `handle-${++handleIndex}`);
-    const controller = createDroneNotePlaybackController({
-      start,
-      stop,
-    });
+  it("leaves pitch and sound transition choices to the audio engine", async () => {
+    const { controller, update } = createController();
 
     await controller.startNote({
       audioPresetId: "soft-organ",
@@ -101,56 +193,43 @@ describe("createDroneNotePlaybackController", () => {
       {
         audioPresetId: "warm-pad",
         interval: 0,
-        midi: 48,
+        midi: 60,
         velocity: 0.78,
       },
     ]);
-    await Promise.resolve();
 
-    expect(controller.getActiveIntervals()).toStrictEqual([0]);
-    expect(stop).toHaveBeenCalledWith("handle-1");
-    expect(start).toHaveBeenLastCalledWith({
-      audioPresetId: "warm-pad",
-      interval: 0,
-      midi: 48,
-      velocity: 0.78,
-    });
+    expect(update).toHaveBeenLastCalledWith("drone-handle", [
+      {
+        audioPresetId: "warm-pad",
+        interval: 0,
+        midi: 60,
+        velocity: 0.78,
+      },
+    ]);
   });
 
-  it("restarts an active interval when its balanced velocity changes", async () => {
-    let handleIndex = 0;
-    const stop = vi.fn();
-    const start = vi.fn(async () => `handle-${++handleIndex}`);
-    const controller = createDroneNotePlaybackController({
-      start,
-      stop,
-    });
+  it("reconciles velocity changes through the persistent group", async () => {
+    const { controller, update } = createController();
 
     await controller.startNote({ interval: 0, midi: 48, velocity: 0.78 });
     controller.reconcileNotes([{ interval: 0, midi: 48, velocity: 0.62 }]);
-    await Promise.resolve();
 
-    expect(controller.getActiveIntervals()).toStrictEqual([0]);
-    expect(stop).toHaveBeenCalledWith("handle-1");
-    expect(start).toHaveBeenLastCalledWith({
-      interval: 0,
-      midi: 48,
-      velocity: 0.62,
-    });
+    expect(update).toHaveBeenLastCalledWith("drone-handle", [
+      { interval: 0, midi: 48, velocity: 0.62 },
+    ]);
   });
 
-  it("stops active notes that leave the available note row", async () => {
-    const stop = vi.fn();
-    const controller = createDroneNotePlaybackController({
-      start: vi.fn(async (note) => `handle-${note.interval}`),
-      stop,
-    });
+  it("releases notes removed by a collection change incrementally", async () => {
+    const { controller, update } = createController();
 
+    await controller.startNote({ interval: 0, midi: 48 });
     await controller.startNote({ interval: 14, midi: 62 });
     controller.reconcileNotes([{ interval: 0, midi: 48 }]);
 
-    expect(controller.getActiveIntervals()).toStrictEqual([]);
-    expect(stop).toHaveBeenCalledWith("handle-14");
+    expect(controller.getActiveIntervals()).toStrictEqual([0]);
+    expect(update).toHaveBeenLastCalledWith("drone-handle", [
+      { interval: 0, midi: 48 },
+    ]);
   });
 });
 

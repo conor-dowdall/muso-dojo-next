@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getDefaultAudioPresetId,
   musoAudioEngine,
   type AudioPresetId,
   type DroneHandle,
+  type DroneRequest,
 } from "@/audio";
 
 const DRONE_BASE_VELOCITY = 0.78;
@@ -20,18 +21,16 @@ export interface DroneNotePlaybackNote {
   velocity?: number;
 }
 
-interface ActiveDroneNote<THandle> {
-  audioPresetId?: AudioPresetId;
-  handle?: THandle;
-  midi: number;
-  token: number;
-  velocity?: number;
-}
-
 interface DroneNotePlaybackControllerOptions<THandle> {
+  create: (
+    notes: readonly DroneNotePlaybackNote[],
+  ) => Promise<THandle | undefined>;
+  destroy: (handle: THandle) => void;
   onActiveIntervalsChange?: (activeIntervals: number[]) => void;
-  start: (note: DroneNotePlaybackNote) => Promise<THandle | undefined>;
-  stop: (handle: THandle) => void;
+  update: (
+    handle: THandle,
+    notes: readonly DroneNotePlaybackNote[],
+  ) => boolean | void;
 }
 
 interface UseDroneNotePlaybackOptions {
@@ -39,20 +38,24 @@ interface UseDroneNotePlaybackOptions {
   notes: readonly DroneNotePlaybackNote[];
 }
 
-function getSortedIntervals<THandle>(
-  activeNotes: Map<number, ActiveDroneNote<THandle>>,
-) {
-  return [...activeNotes.keys()].sort((left, right) => left - right);
+function getSortedNotes(activeNotes: Map<number, DroneNotePlaybackNote>) {
+  return [...activeNotes.values()].sort(
+    (left, right) => left.interval - right.interval,
+  );
 }
 
-function activeNoteMatches<THandle>(
-  current: ActiveDroneNote<THandle> | undefined,
-  note: DroneNotePlaybackNote,
+function getSortedIntervals(activeNotes: Map<number, DroneNotePlaybackNote>) {
+  return getSortedNotes(activeNotes).map((note) => note.interval);
+}
+
+function notesMatch(
+  current: DroneNotePlaybackNote | undefined,
+  next: DroneNotePlaybackNote,
 ) {
   return (
-    current?.audioPresetId === note.audioPresetId &&
-    current?.midi === note.midi &&
-    current?.velocity === note.velocity
+    current?.audioPresetId === next.audioPresetId &&
+    current?.midi === next.midi &&
+    current?.velocity === next.velocity
   );
 }
 
@@ -88,147 +91,187 @@ function createPlaybackNote(
 }
 
 export function createDroneNotePlaybackController<THandle>({
+  create,
+  destroy,
   onActiveIntervalsChange,
-  start,
-  stop,
+  update,
 }: DroneNotePlaybackControllerOptions<THandle>) {
-  const activeNotes = new Map<number, ActiveDroneNote<THandle>>();
-  let startOperation = start;
-  let stopOperation = stop;
+  const activeNotes = new Map<number, DroneNotePlaybackNote>();
+  let createOperation = create;
+  let destroyOperation = destroy;
+  let updateOperation = update;
+  let handle: THandle | undefined;
+  let pendingHandle: Promise<THandle | undefined> | undefined;
+  let disposed = false;
+  let lifecycleRevision = 0;
+  let revision = 0;
 
   const emitActiveIntervals = () => {
     onActiveIntervalsChange?.(getSortedIntervals(activeNotes));
   };
 
-  const requestHandle = async (note: DroneNotePlaybackNote, token: number) => {
-    try {
-      const handle = await startOperation(note);
-      const current = activeNotes.get(note.interval);
+  const sync = () => {
+    revision += 1;
+    const notes = getSortedNotes(activeNotes);
 
-      if (!activeNoteMatches(current, note) || current?.token !== token) {
-        if (handle !== undefined) {
-          stopOperation(handle);
-        }
-        return;
+    if (handle !== undefined) {
+      const didUpdate = updateOperation(handle, notes);
+
+      if (didUpdate === false) {
+        handle = undefined;
+        return sync();
       }
 
-      if (handle === undefined) {
-        activeNotes.delete(note.interval);
-        emitActiveIntervals();
-        return;
-      }
-
-      activeNotes.set(note.interval, { ...current, handle });
-    } catch {
-      const current = activeNotes.get(note.interval);
-
-      if (current?.token === token) {
-        activeNotes.delete(note.interval);
-        emitActiveIntervals();
-      }
+      return Promise.resolve();
     }
+
+    if (pendingHandle || notes.length === 0) {
+      return pendingHandle ?? Promise.resolve();
+    }
+
+    const createLifecycleRevision = lifecycleRevision;
+    const createRevision = revision;
+    const createPromise = createOperation(notes);
+    pendingHandle = createPromise;
+
+    return createPromise
+      .then((nextHandle) => {
+        if (nextHandle === undefined) {
+          if (!disposed && lifecycleRevision === createLifecycleRevision) {
+            activeNotes.clear();
+            emitActiveIntervals();
+          }
+          return;
+        }
+
+        if (disposed || lifecycleRevision !== createLifecycleRevision) {
+          destroyOperation(nextHandle);
+          return;
+        }
+
+        handle = nextHandle;
+
+        if (revision !== createRevision) {
+          updateOperation(nextHandle, getSortedNotes(activeNotes));
+        }
+      })
+      .catch(() => {
+        if (!disposed && lifecycleRevision === createLifecycleRevision) {
+          activeNotes.clear();
+          emitActiveIntervals();
+        }
+      })
+      .finally(() => {
+        if (pendingHandle === createPromise) {
+          pendingHandle = undefined;
+        }
+      });
   };
 
-  const startNote = async (note: DroneNotePlaybackNote) => {
+  const startNote = (note: DroneNotePlaybackNote) => {
     const current = activeNotes.get(note.interval);
 
-    if (activeNoteMatches(current, note)) {
-      return;
+    if (notesMatch(current, note)) {
+      return Promise.resolve();
     }
 
-    if (current?.handle !== undefined) {
-      stopOperation(current.handle);
-    }
-
-    const token = (current?.token ?? 0) + 1;
-    activeNotes.set(note.interval, {
-      audioPresetId: note.audioPresetId,
-      midi: note.midi,
-      token,
-      velocity: note.velocity,
-    });
+    activeNotes.set(note.interval, note);
 
     if (!current) {
       emitActiveIntervals();
     }
 
-    await requestHandle(note, token);
+    return sync();
   };
 
   const stopNote = (interval: number) => {
-    const current = activeNotes.get(interval);
-
-    if (!current) {
+    if (!activeNotes.delete(interval)) {
       return;
     }
 
-    activeNotes.delete(interval);
-
-    if (current.handle !== undefined) {
-      stopOperation(current.handle);
-    }
-
     emitActiveIntervals();
+    void sync();
   };
 
   return {
+    activate: () => {
+      disposed = false;
+    },
     dispose: () => {
-      const intervals = getSortedIntervals(activeNotes);
+      disposed = true;
+      lifecycleRevision += 1;
+      revision += 1;
+      pendingHandle = undefined;
+      activeNotes.clear();
 
-      intervals.forEach((interval) => {
-        const current = activeNotes.get(interval);
-
-        if (current?.handle !== undefined) {
-          stopOperation(current.handle);
-        }
-
-        activeNotes.delete(interval);
-      });
+      if (handle !== undefined) {
+        destroyOperation(handle);
+        handle = undefined;
+      }
     },
     getActiveIntervals: () => getSortedIntervals(activeNotes),
     reconcileNotes: (notes: readonly DroneNotePlaybackNote[]) => {
       const notesByInterval = new Map(
         notes.map((note) => [note.interval, note]),
       );
+      let changed = false;
 
       activeNotes.forEach((activeNote, interval) => {
         const nextNote = notesByInterval.get(interval);
 
         if (!nextNote) {
-          stopNote(interval);
+          activeNotes.delete(interval);
+          changed = true;
           return;
         }
 
-        if (!activeNoteMatches(activeNote, nextNote)) {
-          void startNote(nextNote);
+        if (!notesMatch(activeNote, nextNote)) {
+          activeNotes.set(interval, nextNote);
+          changed = true;
         }
       });
-    },
-    setOperations: (operations: {
-      start: (note: DroneNotePlaybackNote) => Promise<THandle | undefined>;
-      stop: (handle: THandle) => void;
-    }) => {
-      startOperation = operations.start;
-      stopOperation = operations.stop;
-    },
-    startNote,
-    stopAll: () => {
-      const intervals = getSortedIntervals(activeNotes);
 
-      if (intervals.length === 0) {
+      if (!changed) {
         return;
       }
 
-      intervals.forEach((interval) => {
-        const current = activeNotes.get(interval);
-
-        activeNotes.delete(interval);
-
-        if (current?.handle !== undefined) {
-          stopOperation(current.handle);
-        }
-      });
       emitActiveIntervals();
+      void sync();
+    },
+    reset: () => {
+      lifecycleRevision += 1;
+      revision += 1;
+      handle = undefined;
+      pendingHandle = undefined;
+
+      if (activeNotes.size > 0) {
+        activeNotes.clear();
+        emitActiveIntervals();
+      }
+    },
+    setOperations: (operations: {
+      create: (
+        notes: readonly DroneNotePlaybackNote[],
+      ) => Promise<THandle | undefined>;
+      destroy: (handle: THandle) => void;
+      update: (
+        handle: THandle,
+        notes: readonly DroneNotePlaybackNote[],
+      ) => boolean | void;
+    }) => {
+      createOperation = operations.create;
+      destroyOperation = operations.destroy;
+      updateOperation = operations.update;
+    },
+    startNote,
+    stopAll: () => {
+      if (activeNotes.size === 0) {
+        return;
+      }
+
+      activeNotes.clear();
+      emitActiveIntervals();
+      void sync();
     },
     stopNote,
     toggleNote: (note: DroneNotePlaybackNote) => {
@@ -239,6 +282,21 @@ export function createDroneNotePlaybackController<THandle>({
 
       void startNote(note);
     },
+  };
+}
+
+function createDroneRequest(
+  notes: readonly DroneNotePlaybackNote[],
+  fallbackPresetId: AudioPresetId,
+): DroneRequest {
+  return {
+    notes: notes.map((note) => ({
+      id: String(note.interval),
+      midiNote: note.midi,
+      velocity: note.velocity,
+    })),
+    presetId: notes[0]?.audioPresetId ?? fallbackPresetId,
+    use: "drone",
   };
 }
 
@@ -255,47 +313,51 @@ export function useDroneNotePlayback({
   const [activeIntervals, setActiveIntervals] = useState<number[]>([]);
   const [controller] = useState(() =>
     createDroneNotePlaybackController<DroneHandle>({
+      create: (nextNotes) =>
+        musoAudioEngine.createDrone(
+          createDroneRequest(nextNotes, resolvedAudioPresetId),
+        ),
+      destroy: (handle) => musoAudioEngine.destroyDrone(handle),
       onActiveIntervalsChange: setActiveIntervals,
-      start: (note) =>
-        musoAudioEngine.startDrone({
-          midiNotes: [note.midi],
-          presetId: note.audioPresetId,
-          use: "drone",
-          velocity: note.velocity,
-        }),
-      stop: (handle) => musoAudioEngine.stopDrone(handle),
+      update: (handle, nextNotes) =>
+        musoAudioEngine.updateDrone(
+          handle,
+          createDroneRequest(nextNotes, resolvedAudioPresetId),
+        ),
     }),
   );
 
-  const start = useCallback(
-    (note: DroneNotePlaybackNote) =>
-      musoAudioEngine.startDrone({
-        midiNotes: [note.midi],
-        presetId: note.audioPresetId,
-        use: "drone",
-        velocity: note.velocity,
-      }),
-    [],
-  );
-  const stop = useCallback(
-    (handle: DroneHandle) => musoAudioEngine.stopDrone(handle),
-    [],
-  );
-
   useEffect(() => {
-    controller.setOperations({ start, stop });
-  }, [controller, start, stop]);
+    controller.setOperations({
+      create: (nextNotes) =>
+        musoAudioEngine.createDrone(
+          createDroneRequest(nextNotes, resolvedAudioPresetId),
+        ),
+      destroy: (handle) => musoAudioEngine.destroyDrone(handle),
+      update: (handle, nextNotes) =>
+        musoAudioEngine.updateDrone(
+          handle,
+          createDroneRequest(nextNotes, resolvedAudioPresetId),
+        ),
+    });
+  }, [controller, resolvedAudioPresetId]);
 
   useEffect(() => {
     controller.reconcileNotes(playbackNotes);
   }, [controller, playbackNotes]);
 
   useEffect(
-    () => () => {
-      controller.dispose();
-    },
+    () => musoAudioEngine.subscribeToReset(() => controller.reset()),
     [controller],
   );
+
+  useEffect(() => {
+    controller.activate();
+
+    return () => {
+      controller.dispose();
+    };
+  }, [controller]);
 
   return {
     activeIntervals,

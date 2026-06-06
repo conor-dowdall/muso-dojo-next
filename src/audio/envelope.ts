@@ -14,9 +14,15 @@ function normalizeDuration(durationSeconds: number) {
     : 0;
 }
 
-function normalizeEnvelope(envelope: EnvelopeConfig): EnvelopeShape {
+function normalizeEnvelope(
+  envelope: EnvelopeConfig,
+  minimumAttackSeconds = 0,
+): EnvelopeShape {
   return {
-    attackSeconds: Math.max(0, envelope.attackSeconds),
+    attackSeconds: Math.max(
+      Math.max(0, minimumAttackSeconds),
+      envelope.attackSeconds,
+    ),
     decaySeconds: Math.max(0, envelope.decaySeconds),
     releaseSeconds: Math.max(0, envelope.releaseSeconds),
     sustainRatio: clampUnit(envelope.sustainGain, 1),
@@ -98,16 +104,18 @@ function rampParamValue(param: AudioParam, value: number, sampleTime: number) {
 
 export function scheduleAttackDecayEnvelope({
   envelope,
+  minimumAttackSeconds = 0,
   param,
   peakGain,
   startTime,
 }: {
   envelope: EnvelopeConfig;
+  minimumAttackSeconds?: number;
   param: AudioParam;
   peakGain: number;
   startTime: number;
 }) {
-  const shape = normalizeEnvelope(envelope);
+  const shape = normalizeEnvelope(envelope, minimumAttackSeconds);
   const attackEnd = startTime + shape.attackSeconds;
   const decayEnd = attackEnd + shape.decaySeconds;
   const sustainGain = peakGain * shape.sustainRatio;
@@ -130,11 +138,13 @@ export function scheduleAttackDecayEnvelope({
 
 export function getAttackDecayEnvelopeGainAtTime({
   envelope,
+  minimumAttackSeconds = 0,
   peakGain,
   sampleTime,
   startTime,
 }: {
   envelope: EnvelopeConfig;
+  minimumAttackSeconds?: number;
   peakGain: number;
   sampleTime: number;
   startTime: number;
@@ -142,7 +152,7 @@ export function getAttackDecayEnvelopeGainAtTime({
   return getAttackDecayGainForShape({
     peakGain,
     sampleTime,
-    shape: normalizeEnvelope(envelope),
+    shape: normalizeEnvelope(envelope, minimumAttackSeconds),
     startTime,
   });
 }
