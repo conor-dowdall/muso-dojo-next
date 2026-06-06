@@ -140,11 +140,7 @@ export interface DroneRequest extends BaseAudioRequest {
   midiNotes: readonly number[];
 }
 
-export type MasterAmbiencePresetId =
-  | "dry"
-  | "studio-room"
-  | "warm-hall"
-  | "short-echo";
+export type MasterAmbiencePresetId = "dry" | "studio-room" | "warm-hall";
 
 export interface MasterAmbiencePreset {
   description?: string;

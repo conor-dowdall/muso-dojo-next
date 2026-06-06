@@ -272,18 +272,6 @@ describe("app store persistence", () => {
         {
           ...persistedState,
           dojoSettings: {
-            masterAmbiencePresetId: "short-echo",
-          },
-        },
-        fallbackSnapshot,
-      ).dojoSettings.masterAmbiencePresetId,
-    ).toBe("short-echo");
-
-    expect(
-      normalizeAppStoreSnapshot(
-        {
-          ...persistedState,
-          dojoSettings: {
             masterAmbiencePresetId: "dry",
           },
         },

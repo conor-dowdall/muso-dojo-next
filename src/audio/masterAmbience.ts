@@ -41,26 +41,6 @@ export const masterAmbiencePresets = {
     id: "warm-hall",
     label: "Warm Hall",
   },
-  "short-echo": {
-    description: "A clear short echo with a small polished tail.",
-    effects: [
-      {
-        type: "delay",
-        feedback: 0.22,
-        mix: 0.26,
-        timeSeconds: 0.12,
-      },
-      {
-        type: "reverb",
-        decaySeconds: 0.95,
-        mix: 0.12,
-        preDelaySeconds: 0.012,
-        toneHz: 7800,
-      },
-    ],
-    id: "short-echo",
-    label: "Short Echo",
-  },
 } as const satisfies Record<MasterAmbiencePresetId, MasterAmbiencePreset>;
 
 export function getMasterAmbiencePreset(presetId: MasterAmbiencePresetId) {

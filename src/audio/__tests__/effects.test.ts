@@ -83,24 +83,18 @@ describe("audio effects", () => {
     );
   });
 
-  it("curates focused, character, and large ambience presets", () => {
+  it("curates focused and large ambience presets", () => {
     const studioRoom = getMasterAmbiencePreset("studio-room");
-    const shortEcho = getMasterAmbiencePreset("short-echo");
     const warmHall = getMasterAmbiencePreset("warm-hall");
     const studioRoomTailSeconds = getAudioEffectChainTailSeconds(
       studioRoom.effects,
-    );
-    const shortEchoTailSeconds = getAudioEffectChainTailSeconds(
-      shortEcho.effects,
     );
     const warmHallTailSeconds = getAudioEffectChainTailSeconds(
       warmHall.effects,
     );
 
     expect(studioRoom.label).toBe("Studio Room");
-    expect(shortEcho.label).toBe("Short Echo");
     expect(warmHall.label).toBe("Warm Hall");
-    expect(studioRoomTailSeconds).toBeLessThan(shortEchoTailSeconds);
-    expect(shortEchoTailSeconds).toBeLessThan(warmHallTailSeconds);
+    expect(studioRoomTailSeconds).toBeLessThan(warmHallTailSeconds);
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { PaintbrushVertical, Podcast } from "lucide-react";
+import { PaintbrushVertical, Waves } from "lucide-react";
 import {
   masterAmbiencePresets,
   musoAudioEngine,
@@ -123,7 +123,7 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
           <DisclosureListGroup>
             <DisclosureListItem
               ariaLabel={`Ambience. Current: ${masterAmbiencePreset.label}`}
-              icon={<Podcast />}
+              icon={<Waves />}
               isOpen={isOpen("sound")}
               label="Ambience"
               panelVariant="menu"
