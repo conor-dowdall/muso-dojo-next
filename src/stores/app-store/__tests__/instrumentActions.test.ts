@@ -245,6 +245,28 @@ describe("instrument app store actions", () => {
     );
   });
 
+  it("stores and clears explicit fretboard appearance settings", () => {
+    const store = createTestStore();
+
+    store.getState().updateInstrumentSettings(sessionId, partId, moduleId, {
+      inlayPreset: "pawPrint",
+      theme: "maple",
+    });
+
+    expect(getTestInstrument(store)).toMatchObject({
+      inlayPreset: "pawPrint",
+      theme: "maple",
+    });
+
+    store.getState().updateInstrumentSettings(sessionId, partId, moduleId, {
+      inlayPreset: undefined,
+      theme: undefined,
+    });
+
+    expect(getTestInstrument(store)).not.toHaveProperty("inlayPreset");
+    expect(getTestInstrument(store)).not.toHaveProperty("theme");
+  });
+
   it("stores an instrument display size hint", () => {
     const store = createTestStore();
 

@@ -14,6 +14,10 @@ import {
   updateSessionById,
 } from "./sessionGraph";
 import { type AppStoreGet, type AppStoreSet, type DroneActions } from "./types";
+import {
+  DEFAULT_WOOD_SURFACE_ID,
+  normalizeWoodSurfaceId,
+} from "@/data/woodSurfaces";
 
 function isValidDroneInteger(value: number, min: number, max: number) {
   return Number.isInteger(value) && value >= min && value <= max;
@@ -132,6 +136,30 @@ export function createDroneActions(
 
       get().updateDroneSettings(sessionId, partId, moduleId, {
         octaveRowCount: nextOctaveRowCount,
+      });
+    },
+    setDroneWood: (sessionId, partId, moduleId, wood) => {
+      const partModule = findPartModuleById(
+        get().sessions[sessionId],
+        partId,
+        moduleId,
+      );
+
+      if (!isDronePartModule(partModule)) {
+        return;
+      }
+
+      const currentWood = partModule.wood ?? DEFAULT_WOOD_SURFACE_ID;
+      const nextWood = normalizeWoodSurfaceId(
+        resolveSettingValue(wood, currentWood),
+      );
+
+      if (!nextWood || nextWood === currentWood) {
+        return;
+      }
+
+      get().updateDroneSettings(sessionId, partId, moduleId, {
+        wood: nextWood,
       });
     },
   };

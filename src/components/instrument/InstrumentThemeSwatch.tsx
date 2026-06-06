@@ -9,9 +9,24 @@ import {
   type FretboardInlayPresetName,
 } from "@/data/fretboard/inlayPresets";
 import { keyboardThemes, type KeyboardThemeName } from "@/data/keyboard/themes";
+import { woodSurfaces, type WoodSurfaceId } from "@/data/woodSurfaces";
 import { fretboardIcons } from "@/components/fretboard/icons";
 import { createFretboardConfig } from "@/utils/fretboard/createFretboardConfig";
 import styles from "./InstrumentThemeSwatch.module.css";
+
+export function WoodSurfaceSwatch({ surfaceId }: { surfaceId: WoodSurfaceId }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={styles.woodSurfaceSwatch}
+      style={
+        {
+          "--wood-swatch-background": woodSurfaces[surfaceId].background,
+        } as CSSProperties
+      }
+    />
+  );
+}
 
 export function KeyboardThemeSwatch({
   themeName,

@@ -34,57 +34,6 @@
     var(--color-base) 76%,
     var(--color-border)
   );
-  --drone-rivet-metal-face: color-mix(
-    in srgb,
-    var(--color-text-muted) 72%,
-    var(--color-surface-highlight)
-  );
-  --drone-rivet-metal-edge: color-mix(
-    in srgb,
-    var(--color-border) 62%,
-    var(--color-base)
-  );
-  --drone-rivet-metal-groove: color-mix(
-    in srgb,
-    var(--color-base) 55%,
-    var(--color-text-muted)
-  );
-  --drone-rivet-metal-highlight: color-mix(
-    in srgb,
-    var(--color-interaction-ring-light) 56%,
-    var(--color-surface-highlight)
-  );
-  --drone-rivet-metal-shadow: var(--drone-shadow-strong);
-  --drone-rivet-size: var(--space-2);
-  --drone-body-rivet-offset: var(--space-1);
-  --drone-wood-background:
-    linear-gradient(
-      to bottom,
-      var(--drone-light-soft),
-      color-mix(in srgb, var(--color-interaction-ring-light) 4%, transparent)
-        24%,
-      var(--drone-shadow-medium)
-    ),
-    linear-gradient(
-      91deg,
-      rgb(113 70 47 / 0.2) 0%,
-      rgb(72 43 31 / 0.3) 12%,
-      rgb(130 80 55 / 0.14) 24%,
-      rgb(67 38 28 / 0.26) 39%,
-      rgb(148 92 64 / 0.12) 52%,
-      rgb(64 38 28 / 0.28) 68%,
-      rgb(120 75 50 / 0.14) 81%,
-      rgb(56 31 23 / 0.28) 100%
-    ),
-    linear-gradient(
-      to right,
-      rgb(111 71 48) 0%,
-      rgb(90 55 38) 18%,
-      rgb(68 41 29) 42%,
-      rgb(86 51 37) 63%,
-      rgb(63 38 27) 81%,
-      rgb(105 65 48) 100%
-    );
   --drone-note-button-width: var(--space-16);
   --drone-note-button-height: calc(var(--space-14) + var(--space-1));
   --drone-note-button-min-width: var(--control-size-md);
@@ -95,7 +44,7 @@
   --drone-tool-panel-padding-block: var(--space-2);
   --drone-tool-panel-padding-inline: var(--space-3);
   --drone-toolbar-base-height: calc(
-    var(--control-size-md) + var(--drone-tool-panel-padding-block) +
+    var(--control-size-lg) + var(--drone-tool-panel-padding-block) +
       var(--drone-tool-panel-padding-block)
   );
   --drone-toolbar-reserved-height: var(--drone-toolbar-base-height);
@@ -188,69 +137,6 @@
   padding: var(--drone-body-padding);
 }
 
-.droneBodyRivets {
-  position: absolute;
-  pointer-events: none;
-}
-
-.droneBodyRivets {
-  z-index: 0;
-  inset: 0;
-}
-
-.droneRivet {
-  position: absolute;
-  display: inline-flex;
-  inline-size: var(--drone-rivet-size);
-  block-size: var(--drone-rivet-size);
-  align-items: center;
-  justify-content: center;
-  border: var(--space-px) solid var(--drone-rivet-metal-edge);
-  border-radius: var(--radius-full);
-  background:
-    radial-gradient(
-      circle at 34% 28%,
-      var(--drone-rivet-metal-highlight),
-      transparent 34%
-    ),
-    linear-gradient(
-      145deg,
-      var(--drone-rivet-metal-face),
-      color-mix(in srgb, var(--drone-rivet-metal-face) 54%, var(--color-base))
-    );
-  box-shadow:
-    inset 0 var(--space-px) 0 var(--drone-light-medium),
-    inset 0 calc(-1 * var(--space-px)) 0 var(--drone-shadow-medium),
-    0 var(--space-px) var(--space-1) var(--drone-rivet-metal-shadow);
-}
-
-.droneRivetIcon {
-  inline-size: 82%;
-  block-size: 82%;
-  color: var(--drone-rivet-metal-groove);
-  stroke-width: 2.5;
-}
-
-.droneRivet[data-corner="top-start"] {
-  inset-block-start: var(--drone-body-rivet-offset);
-  inset-inline-start: var(--drone-body-rivet-offset);
-}
-
-.droneRivet[data-corner="top-end"] {
-  inset-block-start: var(--drone-body-rivet-offset);
-  inset-inline-end: var(--drone-body-rivet-offset);
-}
-
-.droneRivet[data-corner="bottom-start"] {
-  inset-block-end: var(--drone-body-rivet-offset);
-  inset-inline-start: var(--drone-body-rivet-offset);
-}
-
-.droneRivet[data-corner="bottom-end"] {
-  inset-block-end: var(--drone-body-rivet-offset);
-  inset-inline-end: var(--drone-body-rivet-offset);
-}
-
 .droneToolControls {
   position: relative;
   z-index: 1;
@@ -280,7 +166,7 @@
   min-inline-size: 0;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+  gap: var(--space-4);
 }
 
 .droneToolButton {
@@ -371,7 +257,6 @@
   overflow-y: hidden;
   padding-block-end: var(--drone-scrollbar-safe-area);
   scrollbar-color: var(--color-border) transparent;
-  scrollbar-gutter: stable;
   scrollbar-width: thin;
 }
 
@@ -504,7 +389,6 @@
     --drone-column-gap: var(--space-1);
     --drone-body-padding: var(--space-2);
     --drone-toolbar-gap: var(--space-2);
-    --drone-body-rivet-offset: var(--space-0_5);
     --drone-tool-panel-padding-block: var(--space-1);
     --drone-tool-panel-padding-inline: var(--space-2);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioWaveform } from "lucide-react";
+import { AudioWaveform, PanelsTopLeft } from "lucide-react";
 import { audioPresets, musoAudioEngine, type AudioPresetId } from "@/audio";
 import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
 import {
@@ -13,8 +13,11 @@ import {
   ObjectMenuDialog,
 } from "@/components/ui/object-menu";
 import { type SettingSetter } from "@/types/state";
+import { WoodSurfaceChoiceList } from "@/components/appearance/WoodSurfaceChoiceList";
+import { WoodSurfaceSwatch } from "@/components/instrument/InstrumentThemeSwatch";
+import { woodSurfaces, type WoodSurfaceId } from "@/data/woodSurfaces";
 
-type DroneMenuChoice = "sound";
+type DroneMenuChoice = "sound" | "wood";
 
 interface DroneOptionsDialogProps {
   audioPresetId: AudioPresetId;
@@ -22,6 +25,8 @@ interface DroneOptionsDialogProps {
   onAudioPresetIdChange: SettingSetter<AudioPresetId>;
   onClose: () => void;
   onRemove?: () => void;
+  onWoodChange: SettingSetter<WoodSurfaceId>;
+  wood: WoodSurfaceId;
 }
 
 function auditionAudioPreset(audioPresetId: AudioPresetId) {
@@ -39,6 +44,8 @@ export function DroneOptionsDialog({
   onAudioPresetIdChange,
   onClose,
   onRemove,
+  onWoodChange,
+  wood,
 }: DroneOptionsDialogProps) {
   const { isOpen: isChoiceOpen, toggleChoice } =
     useDisclosureList<DroneMenuChoice>(null);
@@ -74,6 +81,19 @@ export function DroneOptionsDialog({
             recommendedUse="drone"
             selectedPresetId={audioPresetId}
           />
+        </DisclosureListItem>
+
+        <DisclosureListItem
+          ariaLabel={`Wood. Current: ${woodSurfaces[wood].title}`}
+          icon={<PanelsTopLeft />}
+          isOpen={isChoiceOpen("wood")}
+          label="Wood"
+          onToggle={() => toggleChoice("wood")}
+          panelVariant="menu"
+          preview={<WoodSurfaceSwatch surfaceId={wood} />}
+          subtitle={woodSurfaces[wood].title}
+        >
+          <WoodSurfaceChoiceList value={wood} onChange={onWoodChange} />
         </DisclosureListItem>
       </DisclosureListGroup>
 

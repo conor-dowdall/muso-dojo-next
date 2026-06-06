@@ -2,7 +2,9 @@ import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { type StateCreator } from "zustand";
 import { type AudioPresetId, type MasterAmbiencePresetId } from "@/audio/types";
 import { type AppThemeChoice } from "@/data/appThemes";
+import { type WoodSurfaceId } from "@/data/woodSurfaces";
 import { type DisplayFormatId } from "@/data/displayFormats";
+import { type FretboardInlayPresetName } from "@/data/fretboard/inlayPresets";
 import { type RememberModuleCreationRequest } from "@/types/instrument-creation-defaults";
 import {
   type ActiveNotes,
@@ -28,6 +30,7 @@ import {
 } from "@/types/session";
 
 export type InstrumentSettingsPatch = Partial<InstrumentInstanceBaseConfig> & {
+  inlayPreset?: FretboardInlayPresetName;
   theme?:
     | FretboardInstrumentInstanceConfig["theme"]
     | KeyboardInstrumentInstanceConfig["theme"];
@@ -190,6 +193,12 @@ export interface DroneActions {
     partId: string,
     moduleId: string,
     octaveRowCount: SettingValue<number>,
+  ) => void;
+  setDroneWood: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    wood: SettingValue<WoodSurfaceId>,
   ) => void;
 }
 

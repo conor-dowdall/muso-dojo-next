@@ -1,9 +1,6 @@
 import { stringInstruments } from "@musodojo/music-theory-data";
 import { getDefaultFretboardWoodThemeName } from "@/data/fretboard/instrumentDefaults";
-import {
-  DEFAULT_CUSTOM_FRETBOARD_INLAY_PRESET,
-  fretboardInlayPresets,
-} from "@/data/fretboard/inlayPresets";
+import { DEFAULT_CUSTOM_FRETBOARD_INLAY_PRESET } from "@/data/fretboard/inlayPresets";
 import {
   DEFAULT_KEYBOARD_RANGE,
   keyboardRanges,
@@ -321,21 +318,18 @@ export function getKeyboardInstrumentCreationConfig(
 export function getFretboardInstrumentCreationConfig(
   selection: FretboardInstrumentSelection,
 ): InstrumentCreationConfig<"fretboard"> {
-  const inlayPresetConfig =
-    selection.appearanceSource === "custom"
-      ? fretboardInlayPresets[selection.inlayPreset].config
-      : undefined;
-
   return {
     ...(selection.appearanceSource === "custom"
-      ? { theme: selection.theme }
+      ? {
+          inlayPreset: selection.inlayPreset,
+          theme: selection.theme,
+        }
       : {}),
     config: {
       instrument: selection.instrument,
       tuningKey: selection.tuningKey,
       fretRange: [...selection.fretRange],
       leftHanded: selection.handedness === "left",
-      ...(inlayPresetConfig ?? {}),
     },
   };
 }

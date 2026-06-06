@@ -411,6 +411,9 @@ describe("app store persistence", () => {
           dojoSettings: {
             moduleCreationDefaults: {
               moduleKinds: ["keyboard", "drone", "keyboard"],
+              drone: {
+                wood: "pauFerro",
+              },
               fretboard: {
                 instrument: "guitar",
                 tuningKey: "guitarDropD",
@@ -437,6 +440,9 @@ describe("app store persistence", () => {
       ).dojoSettings.moduleCreationDefaults,
     ).toEqual({
       moduleKinds: ["keyboard", "drone"],
+      drone: {
+        wood: "pauFerro",
+      },
       fretboard: {
         instrument: "guitar",
         tuningKey: "guitarDropD",

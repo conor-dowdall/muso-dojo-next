@@ -5,7 +5,9 @@ import {
 import { getDefaultFretboardWoodThemeName } from "@/data/fretboard/instrumentDefaults";
 import { DEFAULT_CUSTOM_FRETBOARD_INLAY_PRESET } from "@/data/fretboard/inlayPresets";
 import { DEFAULT_KEYBOARD_THEME } from "@/data/keyboard/themes";
+import { DEFAULT_WOOD_SURFACE_ID } from "@/data/woodSurfaces";
 import {
+  type DroneModuleCreationDefault,
   type FretboardModuleCreationDefault,
   type KeyboardModuleCreationDefault,
   type ModuleCreationDefaults,
@@ -16,6 +18,12 @@ import { areRangesEqual } from "@/utils/range/numberRange";
 export const DEFAULT_MODULE_CREATION_KINDS = [
   "fretboard",
 ] as const satisfies readonly ModuleCreationKind[];
+
+export function createBuiltInDroneModuleCreationDefault(): DroneModuleCreationDefault {
+  return {
+    wood: DEFAULT_WOOD_SURFACE_ID,
+  };
+}
 
 export function createBuiltInFretboardModuleCreationDefault(): FretboardModuleCreationDefault {
   const instrument = "guitar" satisfies StringInstrumentKey;
@@ -103,6 +111,16 @@ export function keyboardModuleCreationDefaultsAreEqual(
   );
 }
 
+export function droneModuleCreationDefaultsAreEqual(
+  left: DroneModuleCreationDefault,
+  right: DroneModuleCreationDefault,
+) {
+  return (
+    (left.wood ?? DEFAULT_WOOD_SURFACE_ID) ===
+    (right.wood ?? DEFAULT_WOOD_SURFACE_ID)
+  );
+}
+
 export function moduleCreationDefaultsAreEqual(
   left: ModuleCreationDefaults | undefined,
   right: ModuleCreationDefaults | undefined,
@@ -112,6 +130,14 @@ export function moduleCreationDefaultsAreEqual(
   }
 
   if (!moduleCreationKindsAreEqual(left.moduleKinds, right.moduleKinds)) {
+    return false;
+  }
+
+  if (!left.drone || !right.drone) {
+    if (left.drone !== right.drone) {
+      return false;
+    }
+  } else if (!droneModuleCreationDefaultsAreEqual(left.drone, right.drone)) {
     return false;
   }
 

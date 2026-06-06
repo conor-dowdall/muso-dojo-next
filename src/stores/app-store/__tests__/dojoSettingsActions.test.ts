@@ -149,6 +149,9 @@ describe("dojo settings app store actions", () => {
 
     store.getState().rememberModuleCreation({
       moduleKinds: ["keyboard", "drone", "keyboard"],
+      drone: {
+        wood: "ebony",
+      },
       keyboard: {
         theme: "studio",
       },
@@ -169,6 +172,9 @@ describe("dojo settings app store actions", () => {
       moduleKinds: ["fretboard", "drone"],
       keyboard: {
         theme: "studio",
+      },
+      drone: {
+        wood: "ebony",
       },
       fretboard: {
         instrument: "guitar",

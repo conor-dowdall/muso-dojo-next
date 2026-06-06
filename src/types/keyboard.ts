@@ -70,6 +70,7 @@ export interface KeyboardGeometry extends ResolvedKeyboardConfig {
 export type KeyboardPresentation = InstrumentPresentation;
 
 export interface KeyboardProps extends InstrumentFrameProps {
+  onThemeChange?: (theme: KeyboardThemeName) => void;
   range?: KeyboardRangeName;
   theme?: KeyboardThemeName;
   config?: KeyboardConfig;

@@ -35,8 +35,10 @@ import { IconButton } from "@/components/ui/buttons/IconButton";
 import { DisplayFormatTriggerButton } from "@/components/music-theory/DisplayFormatTriggerButton";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import {
+  type FretboardAppearanceSettings,
   InstrumentMenuDialog,
   type InstrumentMenuChoice,
+  type KeyboardAppearanceSettings,
 } from "./InstrumentMenuDialog";
 import { createInstrumentLayoutConfig } from "@/utils/instrument/createInstrumentLayoutConfig";
 import { type InstrumentAudioPresetContext } from "@/utils/instrument/resolveInstrumentAudioPreset";
@@ -47,7 +49,9 @@ interface InstrumentHeaderActionsProps {
   audioPresetId?: AudioPresetId;
   audioPresetContext?: InstrumentAudioPresetContext;
   displayFormatId: DisplayFormatId;
+  fretboardAppearance?: FretboardAppearanceSettings;
   instrumentType: InstrumentType;
+  keyboardAppearance?: KeyboardAppearanceSettings;
   identity?: ReactNode;
   layout?: InstrumentLayoutConfig;
   noteEmphasis: InstrumentNoteEmphasis;
@@ -128,7 +132,9 @@ export const InstrumentHeaderActions = ({
   audioPresetId,
   audioPresetContext,
   displayFormatId,
+  fretboardAppearance,
   instrumentType,
+  keyboardAppearance,
   identity,
   layout,
   noteEmphasis,
@@ -315,9 +321,11 @@ export const InstrumentHeaderActions = ({
         audioPresetId={audioPresetId}
         audioPresetContext={audioPresetContext}
         displayFormatId={displayFormatId}
+        fretboardAppearance={fretboardAppearance}
         initialOpenChoice={menuChoice}
         instrumentSize={instrumentSize}
         instrumentType={instrumentType}
+        keyboardAppearance={keyboardAppearance}
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
         onClone={onClone}

@@ -81,6 +81,7 @@ export function createDefaultPartModuleConfig<T extends PartModuleType>(
       return {
         id: createEntityId("module"),
         type: request.type,
+        ...(request.settings?.wood ? { wood: request.settings.wood } : {}),
       } satisfies DronePartModuleConfig;
     }
     case "instrument": {

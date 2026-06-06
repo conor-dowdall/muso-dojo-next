@@ -13,6 +13,7 @@ import {
 } from "@/components/instrument-creation/instrumentCreationConfig";
 import { FretboardInstrumentCreationPanel } from "@/components/instrument-creation/FretboardInstrumentCreationPanel";
 import { KeyboardInstrumentCreationPanel } from "@/components/instrument-creation/KeyboardInstrumentCreationPanel";
+import { DroneCreationPanel } from "@/components/drone/DroneCreationPanel";
 import {
   formatFretboardCreationSummary,
   formatKeyboardCreationSummary,
@@ -22,21 +23,17 @@ import { SelectableActionRow } from "@/components/ui/selectable-overflow-row";
 import { MODULE_CREATION_OPTIONS } from "@/components/part-module-creation/moduleCreationOptions";
 import { useAppStore } from "@/stores/appStore";
 import {
-  type FretboardModuleCreationDefault,
-  type KeyboardModuleCreationDefault,
+  type DroneModuleCreationDefault,
   type ModuleCreationDefaults,
   type ModuleCreationKind,
 } from "@/types/instrument-creation-defaults";
+import { DEFAULT_WOOD_SURFACE_ID, woodSurfaces } from "@/data/woodSurfaces";
 import { type PartModuleCreationRequest } from "@/types/session";
 import { DEFAULT_MODULE_CREATION_KINDS } from "@/utils/instrument-creation/moduleCreationDefaults";
 import { areRangesEqual } from "@/utils/range/numberRange";
+import { type ModuleCreationListDraft } from "./moduleCreationDraft";
 
-export interface ModuleCreationListDraft {
-  fretboard?: FretboardModuleCreationDefault;
-  keyboard?: KeyboardModuleCreationDefault;
-  moduleKinds: ModuleCreationKind[];
-  moduleRequests: PartModuleCreationRequest[];
-}
+export type { ModuleCreationListDraft } from "./moduleCreationDraft";
 
 interface ModuleCreationListProps {
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
@@ -44,7 +41,7 @@ interface ModuleCreationListProps {
 }
 
 function hasCreationSettings(kind: ModuleCreationKind) {
-  return kind === "fretboard" || kind === "keyboard";
+  return kind === "drone" || kind === "fretboard" || kind === "keyboard";
 }
 
 function getInitialModuleKinds(
@@ -65,15 +62,17 @@ function includesKind(
 function getModuleCreationRequest({
   fretboardSelection,
   keyboardSelection,
+  droneSelection,
   kind,
 }: {
+  droneSelection: DroneModuleCreationDefault;
   fretboardSelection: FretboardInstrumentSelection;
   keyboardSelection: KeyboardInstrumentSelection;
   kind: ModuleCreationKind;
 }): PartModuleCreationRequest {
   switch (kind) {
     case "drone":
-      return { type: "drone" };
+      return { type: "drone", settings: droneSelection };
     case "fretboard":
       return {
         type: "instrument",
@@ -112,6 +111,10 @@ export function ModuleCreationList({
   const [moduleKinds, setModuleKinds] = useState<ModuleCreationKind[]>(() =>
     getInitialModuleKinds(moduleCreationDefaults),
   );
+  const [droneSelection, setDroneSelection] =
+    useState<DroneModuleCreationDefault>(() => ({
+      wood: moduleCreationDefaults?.drone?.wood ?? DEFAULT_WOOD_SURFACE_ID,
+    }));
   const [fretboardSelection, setFretboardSelection] =
     useState<FretboardInstrumentSelection>(
       initialSelections.fretboardSelection,
@@ -133,11 +136,13 @@ export function ModuleCreationList({
       moduleKinds,
       moduleRequests: moduleKinds.map((kind) =>
         getModuleCreationRequest({
+          droneSelection,
           fretboardSelection,
           keyboardSelection,
           kind,
         }),
       ),
+      ...(includesKind(moduleKinds, "drone") ? { drone: droneSelection } : {}),
       ...(hasFretboard
         ? {
             fretboard: getFretboardModuleCreationDefault(fretboardSelection, {
@@ -154,6 +159,7 @@ export function ModuleCreationList({
         : {}),
     };
   }, [
+    droneSelection,
     explicitRange.fretboard,
     explicitRange.keyboard,
     fretboardSelection,
@@ -224,11 +230,11 @@ export function ModuleCreationList({
         const hasSettings = hasCreationSettings(option.kind);
         const isSettingsOpen = selected && openSettingsKind === option.kind;
         const summary =
-          option.kind === "fretboard"
-            ? formatFretboardCreationSummary(fretboardSelection)
-            : option.kind === "keyboard"
-              ? formatKeyboardCreationSummary(keyboardSelection)
-              : option.subtitle;
+          option.kind === "drone"
+            ? woodSurfaces[droneSelection.wood ?? DEFAULT_WOOD_SURFACE_ID].title
+            : option.kind === "fretboard"
+              ? formatFretboardCreationSummary(fretboardSelection)
+              : formatKeyboardCreationSummary(keyboardSelection);
 
         return (
           <SelectableActionRow
@@ -260,7 +266,13 @@ export function ModuleCreationList({
           >
             {hasSettings ? (
               <>
-                {option.kind === "fretboard" ? (
+                {option.kind === "drone" ? (
+                  <DroneCreationPanel
+                    closeSignal={closeSignal}
+                    value={droneSelection}
+                    onChange={setDroneSelection}
+                  />
+                ) : option.kind === "fretboard" ? (
                   <FretboardInstrumentCreationPanel
                     closeSignal={closeSignal}
                     value={fretboardSelection}

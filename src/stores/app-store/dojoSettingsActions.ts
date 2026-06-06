@@ -58,6 +58,7 @@ export function createDojoSettingsActions(
       const moduleCreationDefaults = normalizeModuleCreationDefaults({
         ...state.dojoSettings.moduleCreationDefaults,
         moduleKinds: request.moduleKinds,
+        ...(request.drone ? { drone: request.drone } : {}),
         ...(request.fretboard ? { fretboard: request.fretboard } : {}),
         ...(request.keyboard ? { keyboard: request.keyboard } : {}),
       });

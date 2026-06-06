@@ -23,6 +23,12 @@ import {
   type FretboardThemeName,
 } from "@/data/fretboard/themes";
 import {
+  DEFAULT_FRETBOARD_INLAY_PRESET,
+  fretboardInlayPresets,
+  normalizeFretboardInlayPresetName,
+  type FretboardInlayPresetName,
+} from "@/data/fretboard/inlayPresets";
+import {
   type FretboardConfig,
   type ResolvedFretboardConfig,
   type FretboardStringTexture,
@@ -380,17 +386,22 @@ function getSetupOverrides(setup: ResolvedFretboardSetup): FretboardConfig {
 export function normalizeFretboardConfig(
   overrides: unknown,
   theme?: FretboardThemeName,
+  inlayPreset?: FretboardInlayPresetName,
 ): FretboardConfig | undefined {
   if (!isRecord(overrides)) {
     return undefined;
   }
 
   const setup = resolveFretboardSetup(overrides as FretboardConfig);
-  const baseConfig = createFretboardConfig(theme, {
-    instrument: setup.instrument,
-    ...(setup.tuningKey ? { tuningKey: setup.tuningKey } : {}),
-    ...(!setup.tuningKey ? { tuning: setup.tuning } : {}),
-  });
+  const baseConfig = createFretboardConfig(
+    theme,
+    {
+      instrument: setup.instrument,
+      ...(setup.tuningKey ? { tuningKey: setup.tuningKey } : {}),
+      ...(!setup.tuningKey ? { tuning: setup.tuning } : {}),
+    },
+    inlayPreset,
+  );
   const normalized: FretboardConfig = getSetupOverrides(setup);
   const tuningLength = setup.tuning.length;
   const fretRange = normalizeFretRange(
@@ -524,12 +535,17 @@ export function normalizeFretboardConfig(
 export function createFretboardConfig(
   theme?: FretboardThemeName,
   overrides?: FretboardConfig,
+  inlayPreset: FretboardInlayPresetName = DEFAULT_FRETBOARD_INLAY_PRESET,
 ): ResolvedFretboardConfig {
   const setup = resolveFretboardSetup(overrides);
   const normalizedThemeName = normalizeFretboardThemeName(theme);
   const defaultThemeName = getDefaultFretboardWoodThemeName(setup.instrument);
   const themeName = normalizedThemeName ?? defaultThemeName;
   const themeConfig: FretboardConfig = fretboardThemes[themeName].config;
+  const normalizedInlayPreset =
+    normalizeFretboardInlayPresetName(inlayPreset) ??
+    DEFAULT_FRETBOARD_INLAY_PRESET;
+  const inlayPresetConfig = fretboardInlayPresets[normalizedInlayPreset].config;
   const visualProfile = getDefaultFretboardVisualProfile(setup.instrument);
 
   if (process.env.NODE_ENV === "development" && theme && !normalizedThemeName) {
@@ -548,6 +564,7 @@ export function createFretboardConfig(
     ...instrumentDefaults,
     ...themeConfig,
     ...overrides,
+    ...inlayPresetConfig,
   };
   const customStringWidth =
     normalizeString(overrides?.stringWidth) ??

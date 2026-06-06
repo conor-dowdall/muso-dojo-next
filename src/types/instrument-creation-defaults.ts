@@ -6,6 +6,7 @@ import { type CustomFretboardInlayPresetName } from "@/data/fretboard/inlayPrese
 import { type FretboardThemeName } from "@/data/fretboard/themes";
 import { type KeyboardRangeName } from "@/data/keyboard/ranges";
 import { type KeyboardThemeName } from "@/data/keyboard/themes";
+import { type WoodSurfaceId } from "@/data/woodSurfaces";
 
 export type FretboardCreationAppearanceSource = "auto" | "custom";
 export type ModuleCreationKind = "fretboard" | "keyboard" | "drone";
@@ -21,6 +22,10 @@ export interface FretboardCreationDefault {
 
 export interface KeyboardCreationDefault {
   theme: KeyboardThemeName;
+}
+
+export interface DroneModuleCreationDefault {
+  wood?: WoodSurfaceId;
 }
 
 export interface FretboardCreationRangeDefault {
@@ -48,12 +53,14 @@ export interface KeyboardModuleCreationDefault extends KeyboardCreationDefault {
 
 export interface ModuleCreationDefaults {
   moduleKinds?: ModuleCreationKind[];
+  drone?: DroneModuleCreationDefault;
   fretboard?: FretboardModuleCreationDefault;
   keyboard?: KeyboardModuleCreationDefault;
 }
 
 export interface RememberModuleCreationRequest {
   moduleKinds: ModuleCreationKind[];
+  drone?: DroneModuleCreationDefault;
   fretboard?: FretboardModuleCreationDefault;
   keyboard?: KeyboardModuleCreationDefault;
 }

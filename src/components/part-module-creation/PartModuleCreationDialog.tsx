@@ -17,6 +17,7 @@ import {
   ModuleCreationList,
   type ModuleCreationListDraft,
 } from "@/components/part-module-creation/ModuleCreationList";
+import { createRememberModuleCreationRequest } from "@/components/part-module-creation/moduleCreationDraft";
 import { type ModuleCreationKind } from "@/types/instrument-creation-defaults";
 import { getModuleCreationKindLabel } from "@/components/part-module-creation/moduleCreationOptions";
 
@@ -63,11 +64,7 @@ export function PartModuleCreationDialog({
     }
 
     onAddPartModules(draft.moduleRequests);
-    rememberModuleCreation({
-      moduleKinds: draft.moduleKinds,
-      ...(draft.fretboard ? { fretboard: draft.fretboard } : {}),
-      ...(draft.keyboard ? { keyboard: draft.keyboard } : {}),
-    });
+    rememberModuleCreation(createRememberModuleCreationRequest(draft));
     onClose();
   };
 

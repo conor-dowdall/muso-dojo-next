@@ -1,6 +1,7 @@
 "use client";
 
-import { AudioWaveform, CaseSensitive, Ruler } from "lucide-react";
+import { AudioWaveform, CaseSensitive, Ruler, SwatchBook } from "lucide-react";
+import { type StringInstrumentKey } from "@musodojo/music-theory-data";
 import { audioPresets, musoAudioEngine, type AudioPresetId } from "@/audio";
 import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
 import { DisplayFormatPicker } from "@/components/music-theory/DisplayFormatPicker";
@@ -27,8 +28,45 @@ import {
   resolveInstrumentAudioPresetId,
   type InstrumentAudioPresetContext,
 } from "@/utils/instrument/resolveInstrumentAudioPreset";
+import {
+  FretboardAppearanceEditor,
+  KeyboardAppearanceEditor,
+} from "./InstrumentAppearanceEditor";
+import {
+  FretboardInlayPresetSwatch,
+  KeyboardThemeSwatch,
+} from "./InstrumentThemeSwatch";
+import {
+  DEFAULT_FRETBOARD_INLAY_PRESET,
+  fretboardInlayPresets,
+  type FretboardInlayPresetName,
+} from "@/data/fretboard/inlayPresets";
+import { getDefaultFretboardWoodThemeName } from "@/data/fretboard/instrumentDefaults";
+import {
+  fretboardThemes,
+  type FretboardThemeName,
+} from "@/data/fretboard/themes";
+import { keyboardThemes, type KeyboardThemeName } from "@/data/keyboard/themes";
+import { DEFAULT_KEYBOARD_THEME } from "@/data/keyboard/themes";
+import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 
-export type InstrumentMenuChoice = "sound" | "display" | "size";
+export type InstrumentMenuChoice = "appearance" | "sound" | "display" | "size";
+
+export interface FretboardAppearanceSettings {
+  handedness: "left" | "right";
+  inlayPreset?: FretboardInlayPresetName;
+  instrument: StringInstrumentKey;
+  onInlayPresetChange: (
+    inlayPreset: FretboardInlayPresetName | undefined,
+  ) => void;
+  onThemeChange: (theme: FretboardThemeName | undefined) => void;
+  theme?: FretboardThemeName;
+}
+
+export interface KeyboardAppearanceSettings {
+  onThemeChange: (theme: KeyboardThemeName) => void;
+  theme?: KeyboardThemeName;
+}
 
 interface InstrumentMenuDialogProps {
   audioPresetId?: AudioPresetId;
@@ -38,6 +76,8 @@ interface InstrumentMenuDialogProps {
   instrumentSize: InstrumentSize;
   instrumentType: InstrumentType;
   isOpen: boolean;
+  fretboardAppearance?: FretboardAppearanceSettings;
+  keyboardAppearance?: KeyboardAppearanceSettings;
   onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
   onClone?: () => void;
   onClose: () => void;
@@ -85,6 +125,8 @@ export function InstrumentMenuDialog({
   instrumentSize,
   instrumentType,
   isOpen,
+  fretboardAppearance,
+  keyboardAppearance,
   onAudioPresetIdChange,
   onClone,
   onClose,
@@ -100,6 +142,28 @@ export function InstrumentMenuDialog({
     audioPresetContext,
   );
   const resolvedAudioPreset = audioPresets[resolvedAudioPresetId];
+  const resolvedKeyboardTheme =
+    keyboardAppearance?.theme ?? DEFAULT_KEYBOARD_THEME;
+  const resolvedFretboardTheme = fretboardAppearance
+    ? (fretboardAppearance.theme ??
+      getDefaultFretboardWoodThemeName(fretboardAppearance.instrument))
+    : undefined;
+  const resolvedFretboardInlayPreset =
+    fretboardAppearance?.inlayPreset ?? DEFAULT_FRETBOARD_INLAY_PRESET;
+  const appearanceSummary =
+    instrumentType === "keyboard"
+      ? keyboardThemes[resolvedKeyboardTheme].title
+      : fretboardAppearance && resolvedFretboardTheme
+        ? `${
+            fretboardAppearance.theme
+              ? fretboardThemes[fretboardAppearance.theme].title
+              : "Auto Wood"
+          }${DISPLAY_VALUE_SEPARATOR}${
+            fretboardAppearance.inlayPreset
+              ? fretboardInlayPresets[fretboardAppearance.inlayPreset].title
+              : "Auto Inlay"
+          }`
+        : undefined;
 
   const handleAudioPresetChange = (nextAudioPresetId: AudioPresetId) => {
     onAudioPresetIdChange?.(nextAudioPresetId);
@@ -152,6 +216,48 @@ export function InstrumentMenuDialog({
             selectedPresetId={resolvedAudioPresetId}
           />
         </DisclosureListItem>
+
+        {instrumentType === "keyboard" && keyboardAppearance ? (
+          <DisclosureListItem
+            ariaLabel={`Appearance. Current: ${appearanceSummary}`}
+            icon={<SwatchBook />}
+            isOpen={isChoiceOpen("appearance")}
+            label="Appearance"
+            onToggle={() => toggleChoice("appearance")}
+            panelVariant="menu"
+            preview={<KeyboardThemeSwatch themeName={resolvedKeyboardTheme} />}
+            subtitle={appearanceSummary}
+          >
+            <KeyboardAppearanceEditor
+              theme={resolvedKeyboardTheme}
+              onThemeChange={keyboardAppearance.onThemeChange}
+            />
+          </DisclosureListItem>
+        ) : null}
+
+        {instrumentType === "fretboard" &&
+        fretboardAppearance &&
+        resolvedFretboardTheme ? (
+          <DisclosureListItem
+            ariaLabel={`Appearance. Current: ${appearanceSummary}`}
+            icon={<SwatchBook />}
+            isOpen={isChoiceOpen("appearance")}
+            label="Appearance"
+            onToggle={() => toggleChoice("appearance")}
+            panelVariant="menu"
+            preview={
+              <FretboardInlayPresetSwatch
+                handedness={fretboardAppearance.handedness}
+                instrument={fretboardAppearance.instrument}
+                presetName={resolvedFretboardInlayPreset}
+                themeName={resolvedFretboardTheme}
+              />
+            }
+            subtitle={appearanceSummary}
+          >
+            <FretboardAppearanceEditor {...fretboardAppearance} />
+          </DisclosureListItem>
+        ) : null}
 
         <DisclosureListItem
           ariaLabel={`Note labels. Current: ${getDisplayFormatLabel(

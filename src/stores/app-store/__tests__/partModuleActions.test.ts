@@ -49,6 +49,28 @@ describe("part module app store actions", () => {
     });
   });
 
+  it("adds a drone with its selected wood", () => {
+    const store = createTestStore();
+
+    const addedModuleId = store.getState().addPartModule(sessionId, partId, {
+      type: "drone",
+      settings: {
+        wood: "ebony",
+      },
+    });
+    const addedModule = store
+      .getState()
+      .sessions[
+        sessionId
+      ]?.parts[0]?.modules.find((candidateModule) => candidateModule.id === addedModuleId);
+
+    expect(addedModule).toMatchObject({
+      id: addedModuleId,
+      type: "drone",
+      wood: "ebony",
+    });
+  });
+
   it("adds multiple modules in order", () => {
     const store = createTestStore();
 
@@ -127,6 +149,7 @@ describe("part module app store actions", () => {
     store
       .getState()
       .setDroneOctaveRowCount(sessionId, partId, addedModuleId, 3);
+    store.getState().setDroneWood(sessionId, partId, addedModuleId, "maple");
 
     const updatedModule = store
       .getState()
@@ -140,6 +163,7 @@ describe("part module app store actions", () => {
       octaveOffset: 4,
       octaveRowCount: 3,
       type: "drone",
+      wood: "maple",
     });
   });
 
@@ -172,6 +196,8 @@ describe("part module app store actions", () => {
     store
       .getState()
       .setDroneOctaveRowCount(sessionId, partId, addedModuleId, 1);
+    store.getState().setDroneWood(sessionId, partId, addedModuleId, "maple");
+    store.getState().setDroneWood(sessionId, partId, addedModuleId, "rosewood");
 
     const updatedModule = store
       .getState()

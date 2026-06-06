@@ -3,6 +3,10 @@ import {
   normalizeFretboardConfig,
   normalizeFretboardThemeName,
 } from "@/utils/fretboard/createFretboardConfig";
+import {
+  DEFAULT_FRETBOARD_INLAY_PRESET,
+  normalizeFretboardInlayPresetName,
+} from "@/data/fretboard/inlayPresets";
 import { normalizeActiveNotes } from "@/utils/instrument/createActiveNotesConfig";
 import { normalizeInstrumentLayoutConfig } from "@/utils/instrument/createInstrumentLayoutConfig";
 import { normalizeInstrumentAudioPresetId } from "@/utils/instrument/resolveInstrumentAudioPreset";
@@ -78,7 +82,15 @@ export function normalizeInstrumentInstanceConfig(
 
   if (type === "fretboard") {
     const theme = normalizeFretboardThemeName(value.theme);
-    const config = normalizeFretboardConfig(value.config, theme);
+    const normalizedInlayPreset = normalizeFretboardInlayPresetName(
+      value.inlayPreset,
+    );
+    const inlayPreset =
+      normalizedInlayPreset &&
+      normalizedInlayPreset !== DEFAULT_FRETBOARD_INLAY_PRESET
+        ? normalizedInlayPreset
+        : undefined;
+    const config = normalizeFretboardConfig(value.config, theme, inlayPreset);
     const audioPresetId = normalizeInstrumentAudioPresetId(
       type,
       value.audioPresetId,
@@ -93,6 +105,7 @@ export function normalizeInstrumentInstanceConfig(
       ...baseInstrumentConfig,
       type,
       ...(theme ? { theme } : {}),
+      ...(inlayPreset ? { inlayPreset } : {}),
       ...(config ? { config } : {}),
     } satisfies FretboardInstrumentInstanceConfig;
   }

@@ -29,6 +29,7 @@ import {
   ModuleCreationList,
   type ModuleCreationListDraft,
 } from "@/components/part-module-creation/ModuleCreationList";
+import { createRememberModuleCreationRequest } from "@/components/part-module-creation/moduleCreationDraft";
 import { ChordProgressionPicker } from "@/components/music-theory/ChordProgressionPicker";
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
 import { AddToSessionRootNoteItem } from "@/components/session/AddToSessionRootNoteItem";
@@ -202,11 +203,7 @@ export function AddToSessionDialog({
   };
 
   const rememberSessionModuleCreation = () => {
-    rememberModuleCreation({
-      moduleKinds: moduleDraft.moduleKinds,
-      ...(moduleDraft.fretboard ? { fretboard: moduleDraft.fretboard } : {}),
-      ...(moduleDraft.keyboard ? { keyboard: moduleDraft.keyboard } : {}),
-    });
+    rememberModuleCreation(createRememberModuleCreationRequest(moduleDraft));
   };
 
   const rememberSessionMaterial = () => {

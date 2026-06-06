@@ -12,7 +12,6 @@ import {
 } from "react";
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import {
-  CircleDot,
   LayersMinus,
   LayersPlus,
   Square,
@@ -30,6 +29,11 @@ import { useInstrumentNavigation } from "@/hooks/instrument/useInstrumentNavigat
 import { useControllableState } from "@/hooks/useControllableState";
 import { type SettingSetter } from "@/types/state";
 import {
+  DEFAULT_WOOD_SURFACE_ID,
+  woodSurfaces,
+  type WoodSurfaceId,
+} from "@/data/woodSurfaces";
+import {
   DRONE_MAX_OCTAVE_OFFSET,
   DRONE_MAX_OCTAVE_ROWS,
   DRONE_MIN_OCTAVE_OFFSET,
@@ -41,13 +45,6 @@ import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColor
 import { DroneOptionsDialog } from "./DroneOptionsDialog";
 import styles from "./DroneModule.module.css";
 
-const DRONE_RIVET_CORNERS = [
-  "top-start",
-  "top-end",
-  "bottom-start",
-  "bottom-end",
-] as const;
-
 interface DroneModuleProps {
   audioPresetId?: AudioPresetId;
   noteCollectionKey?: NoteCollectionKey;
@@ -56,9 +53,11 @@ interface DroneModuleProps {
   onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
   onOctaveOffsetChange?: SettingSetter<number>;
   onOctaveRowCountChange?: SettingSetter<number>;
+  onWoodChange?: SettingSetter<WoodSurfaceId>;
   onRemove?: () => void;
   rootNote?: string;
   showHeader?: boolean;
+  wood?: WoodSurfaceId;
 }
 
 function formatOctaveOffset(octaveOffset: number) {
@@ -121,18 +120,6 @@ function DroneTileLabel({ label }: { label: string }) {
   );
 }
 
-function DroneRivets({ className }: { className: string }) {
-  return (
-    <span className={className} aria-hidden="true">
-      {DRONE_RIVET_CORNERS.map((corner) => (
-        <span key={corner} className={styles.droneRivet} data-corner={corner}>
-          <CircleDot className={styles.droneRivetIcon} />
-        </span>
-      ))}
-    </span>
-  );
-}
-
 function activateDroneToolOnPointerDown(
   event: PointerEvent<HTMLButtonElement>,
   action: () => void,
@@ -160,9 +147,11 @@ export function DroneModule({
   onAudioPresetIdChange,
   onOctaveOffsetChange,
   onOctaveRowCountChange,
+  onWoodChange,
   onRemove,
   rootNote,
   showHeader = true,
+  wood: controlledWood,
 }: DroneModuleProps) {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const toolControlsRef = useRef<HTMLDivElement | null>(null);
@@ -190,6 +179,12 @@ export function DroneModule({
     controlled:
       controlledOctaveRowCount !== undefined ||
       onOctaveRowCountChange !== undefined,
+  });
+  const [wood, setWood] = useControllableState<WoodSurfaceId>({
+    value: controlledWood,
+    defaultValue: DEFAULT_WOOD_SURFACE_ID,
+    onChange: onWoodChange,
+    controlled: controlledWood !== undefined || onWoodChange !== undefined,
   });
   const noteColors = useNoteColors();
   const droneNotes = useMemo(
@@ -306,12 +301,15 @@ export function DroneModule({
     .join(" ");
   const droneFrameStyle = useMemo(
     () =>
-      toolControlsHeight === undefined
-        ? undefined
-        : ({
-            "--drone-toolbar-reserved-height": `${toolControlsHeight}px`,
-          } as CSSProperties),
-    [toolControlsHeight],
+      ({
+        "--drone-wood-background": woodSurfaces[wood].background,
+        ...(toolControlsHeight === undefined
+          ? {}
+          : {
+              "--drone-toolbar-reserved-height": `${toolControlsHeight}px`,
+            }),
+      }) as CSSProperties,
+    [toolControlsHeight, wood],
   );
   useLayoutEffect(() => {
     const toolControls = toolControlsRef.current;
@@ -490,7 +488,6 @@ export function DroneModule({
         style={droneFrameStyle}
       >
         <div className={styles.droneToolSurface}>
-          <DroneRivets className={styles.droneBodyRivets} />
           <div
             ref={toolControlsRef}
             className={styles.droneToolControls}
@@ -508,7 +505,7 @@ export function DroneModule({
                 className={styles.droneToolButton}
                 icon={<WavesArrowDown />}
                 shouldYield={false}
-                size="md"
+                size="lg"
                 onClick={(event) =>
                   activateDroneToolWithoutPointer(
                     event,
@@ -533,7 +530,7 @@ export function DroneModule({
                 className={styles.droneToolButton}
                 icon={<Square />}
                 shouldYield={false}
-                size="md"
+                size="lg"
                 onClick={(event) =>
                   activateDroneToolWithoutPointer(event, stopAllIfActive)
                 }
@@ -550,7 +547,7 @@ export function DroneModule({
                 className={styles.droneToolButton}
                 icon={<WavesArrowUp />}
                 shouldYield={false}
-                size="md"
+                size="lg"
                 onClick={(event) =>
                   activateDroneToolWithoutPointer(
                     event,
@@ -633,8 +630,10 @@ export function DroneModule({
       {showHeader ? (
         <DroneOptionsDialog
           audioPresetId={audioPresetId}
+          wood={wood}
           isOpen={isOptionsOpen}
           onAudioPresetIdChange={setAudioPresetId}
+          onWoodChange={setWood}
           onClose={() => setIsOptionsOpen(false)}
           onRemove={onRemove}
         />

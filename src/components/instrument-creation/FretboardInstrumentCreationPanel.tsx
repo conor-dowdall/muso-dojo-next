@@ -24,7 +24,6 @@ import {
 import { getDefaultFretboardWoodThemeName } from "@/data/fretboard/instrumentDefaults";
 import {
   DEFAULT_FRETBOARD_INLAY_PRESET,
-  customFretboardInlayPresetOptions,
   type CustomFretboardInlayPresetName,
   type FretboardInlayPresetName,
 } from "@/data/fretboard/inlayPresets";
@@ -34,12 +33,12 @@ import { areRangesEqual } from "@/utils/range/numberRange";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import { BoundedRangeSliderGroup } from "@/components/ui/range-slider/BoundedRangeSliderGroup";
 import { FretboardInlayPresetSwatch } from "@/components/instrument/InstrumentThemeSwatch";
+import { FretboardAppearanceEditor } from "@/components/instrument/InstrumentAppearanceEditor";
 import { type FretboardInstrumentSelection } from "./instrumentCreationConfig";
 import { formatFretRange } from "./instrumentCreationCopy";
 import {
   formatOpenStringNotes,
   fretboardInstrumentGroups,
-  fretboardThemeOptions,
   getFretboardTuningGroups,
 } from "./options";
 import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
@@ -308,57 +307,24 @@ export function FretboardInstrumentCreationPanel({
                 subtitle={customAppearanceSummary}
                 onToggle={handleAppearanceCustomToggle}
               >
-                <div className={styles.appearanceCustomPanel}>
-                  <div className={styles.appearancePreviewFrame}>
-                    <FretboardInlayPresetSwatch
-                      handedness={value.handedness}
-                      instrument={value.instrument}
-                      presetName={value.inlayPreset}
-                      size="featured"
-                      themeName={value.theme}
-                    />
-                  </div>
-
-                  <section
-                    className={styles.appearanceControlGroup}
-                    aria-label="Wood"
-                  >
-                    <div className={styles.appearanceButtonGrid}>
-                      {fretboardThemeOptions.map((themeName) => {
-                        const theme = fretboardThemes[themeName];
-
-                        return (
-                          <Button
-                            key={themeName}
-                            density="compact"
-                            label={theme.title}
-                            selected={value.theme === themeName}
-                            size="sm"
-                            onClick={() => handleThemeSelect(themeName)}
-                          />
-                        );
-                      })}
-                    </div>
-                  </section>
-
-                  <section
-                    className={styles.appearanceControlGroup}
-                    aria-label="Inlay"
-                  >
-                    <div className={styles.appearanceButtonGrid}>
-                      {customFretboardInlayPresetOptions.map((presetName) => (
-                        <Button
-                          key={presetName}
-                          density="compact"
-                          label={formatInlayPresetLabel(presetName)}
-                          selected={value.inlayPreset === presetName}
-                          size="sm"
-                          onClick={() => handleInlayPresetSelect(presetName)}
-                        />
-                      ))}
-                    </div>
-                  </section>
-                </div>
+                <FretboardAppearanceEditor
+                  allowAuto={false}
+                  closeSignal={closeSignal}
+                  handedness={value.handedness}
+                  inlayPreset={value.inlayPreset}
+                  instrument={value.instrument}
+                  theme={value.theme}
+                  onInlayPresetChange={(inlayPreset) => {
+                    if (inlayPreset && inlayPreset !== "auto") {
+                      handleInlayPresetSelect(inlayPreset);
+                    }
+                  }}
+                  onThemeChange={(theme) => {
+                    if (theme) {
+                      handleThemeSelect(theme);
+                    }
+                  }}
+                />
               </DisclosureListChoiceItem>
             </DisclosureList>
 

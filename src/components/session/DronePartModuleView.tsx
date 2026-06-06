@@ -5,6 +5,7 @@ import { type AudioPresetId } from "@/audio/types";
 import { DroneModule } from "@/components/drone/DroneModule";
 import { useAppStore } from "@/stores/appStore";
 import { type SettingValue } from "@/types/state";
+import { type WoodSurfaceId } from "@/data/woodSurfaces";
 import {
   selectDronePartModule,
   selectPart,
@@ -35,6 +36,7 @@ export function DronePartModuleView({
             octaveOffset: drone.octaveOffset,
             octaveRowCount: drone.octaveRowCount,
             rootNote: part.rootNote,
+            wood: drone.wood,
           }
         : undefined;
     }),
@@ -48,6 +50,7 @@ export function DronePartModuleView({
   const setDroneOctaveRowCount = useAppStore(
     (state) => state.setDroneOctaveRowCount,
   );
+  const setDroneWood = useAppStore((state) => state.setDroneWood);
   const removePartModule = useAppStore((state) => state.removePartModule);
 
   if (!model) {
@@ -61,6 +64,7 @@ export function DronePartModuleView({
       octaveOffset={model.octaveOffset}
       octaveRowCount={model.octaveRowCount}
       rootNote={model.rootNote}
+      wood={model.wood}
       showHeader={!isPerformanceMode}
       onAudioPresetIdChange={
         isPerformanceMode
@@ -73,6 +77,12 @@ export function DronePartModuleView({
       }
       onOctaveRowCountChange={(octaveRowCount: SettingValue<number>) =>
         setDroneOctaveRowCount(sessionId, partId, moduleId, octaveRowCount)
+      }
+      onWoodChange={
+        isPerformanceMode
+          ? undefined
+          : (wood: SettingValue<WoodSurfaceId>) =>
+              setDroneWood(sessionId, partId, moduleId, wood)
       }
       onRemove={
         isPerformanceMode

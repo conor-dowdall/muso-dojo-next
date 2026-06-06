@@ -21,6 +21,7 @@ describe("normalizePartModuleConfig", () => {
       octaveOffset: 4,
       octaveRowCount: 3,
       type: "drone",
+      wood: "maple",
     });
 
     expect(normalizedModule).toStrictEqual({
@@ -29,6 +30,7 @@ describe("normalizePartModuleConfig", () => {
       octaveOffset: 4,
       octaveRowCount: 3,
       type: "drone",
+      wood: "maple",
     });
   });
 
@@ -40,6 +42,7 @@ describe("normalizePartModuleConfig", () => {
         octaveOffset: 0,
         octaveRowCount: 1,
         type: "drone",
+        wood: "rosewood",
       }),
     ).toStrictEqual({
       id: "drone-1",
@@ -53,6 +56,7 @@ describe("normalizePartModuleConfig", () => {
         octaveOffset: 5,
         octaveRowCount: 12,
         type: "drone",
+        wood: "not-a-wood",
       }),
     ).toStrictEqual({
       id: "drone-1",

@@ -68,3 +68,11 @@ export const customFretboardInlayPresetOptions =
 
 export const DEFAULT_CUSTOM_FRETBOARD_INLAY_PRESET =
   "dots" satisfies CustomFretboardInlayPresetName;
+
+export function normalizeFretboardInlayPresetName(
+  value: unknown,
+): FretboardInlayPresetName | undefined {
+  return typeof value === "string" && value in fretboardInlayPresets
+    ? (value as FretboardInlayPresetName)
+    : undefined;
+}

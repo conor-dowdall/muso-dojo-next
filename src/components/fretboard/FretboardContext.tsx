@@ -16,6 +16,7 @@ type FretboardProviderProps = Pick<
   FretboardProps,
   | "children"
   | "theme"
+  | "inlayPreset"
   | "config"
   | "displayFormatId"
   | "initialDisplayFormatId"
@@ -31,6 +32,7 @@ type FretboardProviderProps = Pick<
 export function FretboardProvider({
   children,
   theme,
+  inlayPreset,
   config: userConfig,
   displayFormatId,
   initialDisplayFormatId,
@@ -42,7 +44,7 @@ export function FretboardProvider({
   initialNoteInteractionMode,
   onNoteInteractionModeChange,
 }: FretboardProviderProps) {
-  const baseConfig = createFretboardConfig(theme, userConfig);
+  const baseConfig = createFretboardConfig(theme, userConfig, inlayPreset);
   const geometry = createFretboardGeometry(baseConfig);
 
   const presentation = useInstrumentPresentation({

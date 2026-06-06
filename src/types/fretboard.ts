@@ -4,6 +4,7 @@ import {
 } from "@musodojo/music-theory-data";
 import { type FretboardIcon } from "@/data/fretboard/icons";
 import { type FretboardThemeName } from "@/data/fretboard/themes";
+import { type FretboardInlayPresetName } from "@/data/fretboard/inlayPresets";
 import {
   type InstrumentFrameProps,
   type InstrumentPresentation,
@@ -109,6 +110,11 @@ export interface FretboardGeometry extends ResolvedFretboardConfig {
 export type FretboardPresentation = InstrumentPresentation;
 
 export interface FretboardProps extends InstrumentFrameProps {
+  inlayPreset?: FretboardInlayPresetName;
+  onInlayPresetChange?: (
+    inlayPreset: FretboardInlayPresetName | undefined,
+  ) => void;
+  onThemeChange?: (theme: FretboardThemeName | undefined) => void;
   theme?: FretboardThemeName;
   config?: FretboardConfig;
 }

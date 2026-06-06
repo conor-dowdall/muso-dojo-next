@@ -12,6 +12,8 @@ import styles from "./Keyboard.module.css";
 
 export function Keyboard({
   children,
+  onThemeChange,
+  theme,
   audioPresetId,
   onAudioPresetIdChange,
   showHeader,
@@ -24,8 +26,10 @@ export function Keyboard({
   ...props
 }: KeyboardProps) {
   return (
-    <KeyboardProvider {...props}>
+    <KeyboardProvider {...props} theme={theme}>
       <KeyboardInner
+        onThemeChange={onThemeChange}
+        theme={theme}
         audioPresetId={audioPresetId}
         onAudioPresetIdChange={onAudioPresetIdChange}
         showHeader={showHeader}
@@ -44,6 +48,8 @@ export function Keyboard({
 
 function KeyboardInner({
   children,
+  onThemeChange,
+  theme,
   audioPresetId,
   onAudioPresetIdChange,
   showHeader,
@@ -56,6 +62,8 @@ function KeyboardInner({
 }: Pick<
   KeyboardProps,
   | "children"
+  | "onThemeChange"
+  | "theme"
   | "audioPresetId"
   | "onAudioPresetIdChange"
   | "showHeader"
@@ -75,6 +83,9 @@ function KeyboardInner({
         <InstrumentHeaderActions
           identity={<InstrumentIdentity label="Keyboard" />}
           instrumentType="keyboard"
+          keyboardAppearance={
+            onThemeChange ? { onThemeChange, theme } : undefined
+          }
           layout={layout}
           displayFormatId={presentation.activeDisplayFormatId}
           onDisplayFormatIdChange={presentation.setActiveDisplayFormatId}

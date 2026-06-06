@@ -14,6 +14,10 @@ import styles from "./Fretboard.module.css";
 
 export function Fretboard({
   children,
+  inlayPreset,
+  onInlayPresetChange,
+  onThemeChange,
+  theme,
   audioPresetId,
   onAudioPresetIdChange,
   showHeader,
@@ -26,8 +30,12 @@ export function Fretboard({
   ...props
 }: FretboardProps) {
   return (
-    <FretboardProvider {...props}>
+    <FretboardProvider {...props} inlayPreset={inlayPreset} theme={theme}>
       <FretboardInner
+        inlayPreset={inlayPreset}
+        onInlayPresetChange={onInlayPresetChange}
+        onThemeChange={onThemeChange}
+        theme={theme}
         audioPresetId={audioPresetId}
         onAudioPresetIdChange={onAudioPresetIdChange}
         showHeader={showHeader}
@@ -46,6 +54,10 @@ export function Fretboard({
 
 function FretboardInner({
   children,
+  inlayPreset,
+  onInlayPresetChange,
+  onThemeChange,
+  theme,
   audioPresetId,
   onAudioPresetIdChange,
   showHeader,
@@ -58,6 +70,10 @@ function FretboardInner({
 }: Pick<
   FretboardProps,
   | "children"
+  | "inlayPreset"
+  | "onInlayPresetChange"
+  | "onThemeChange"
+  | "theme"
   | "audioPresetId"
   | "onAudioPresetIdChange"
   | "showHeader"
@@ -76,6 +92,18 @@ function FretboardInner({
     <InstrumentContainer
       headerActions={
         <InstrumentHeaderActions
+          fretboardAppearance={
+            onThemeChange && onInlayPresetChange
+              ? {
+                  handedness: geometry.leftHanded ? "left" : "right",
+                  inlayPreset,
+                  instrument: geometry.instrument,
+                  onInlayPresetChange,
+                  onThemeChange,
+                  theme,
+                }
+              : undefined
+          }
           identity={<InstrumentIdentity label={instrumentLabel} />}
           instrumentType="fretboard"
           layout={layout}

@@ -14,6 +14,10 @@ import { normalizeFretboardThemeName } from "@/data/fretboard/themes";
 import { normalizeAppThemePreference } from "@/data/appThemes";
 import { normalizeKeyboardRangeName } from "@/data/keyboard/ranges";
 import { normalizeKeyboardThemeName } from "@/data/keyboard/themes";
+import {
+  DEFAULT_WOOD_SURFACE_ID,
+  normalizeWoodSurfaceId,
+} from "@/data/woodSurfaces";
 import { DEFAULT_NOTE_COLOR_CONFIG } from "@/data/noteColors";
 import {
   DEFAULT_MASTER_AMBIENCE_PRESET_ID,
@@ -21,6 +25,7 @@ import {
 } from "@/audio/masterAmbience";
 import { type MasterAmbiencePresetId } from "@/audio/types";
 import {
+  type DroneModuleCreationDefault,
   type FretboardCreationAppearanceSource,
   type FretboardCreationDefault,
   type FretboardModuleCreationDefault,
@@ -33,9 +38,11 @@ import { type NoteColorConfig } from "@/types/note-colors";
 import { type DojoSettings } from "@/types/session";
 import { normalizeNoteColorConfig } from "@/utils/note-colors/createNoteColorConfig";
 import {
+  createBuiltInDroneModuleCreationDefault,
   createBuiltInFretboardModuleCreationDefault,
   createBuiltInKeyboardModuleCreationDefault,
   DEFAULT_MODULE_CREATION_KINDS,
+  droneModuleCreationDefaultsAreEqual,
   fretboardModuleCreationDefaultsAreEqual,
   keyboardModuleCreationDefaultsAreEqual,
   moduleCreationDefaultsAreEqual,
@@ -347,6 +354,24 @@ export function normalizeKeyboardModuleCreationDefault(
     : defaultValue;
 }
 
+export function normalizeDroneModuleCreationDefault(
+  value: unknown,
+): DroneModuleCreationDefault | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const wood = normalizeWoodSurfaceId(value.wood) ?? DEFAULT_WOOD_SURFACE_ID;
+  const defaultValue = { wood } satisfies DroneModuleCreationDefault;
+
+  return droneModuleCreationDefaultsAreEqual(
+    defaultValue,
+    createBuiltInDroneModuleCreationDefault(),
+  )
+    ? undefined
+    : defaultValue;
+}
+
 export function normalizeModuleCreationDefaults(
   value: unknown,
 ): ModuleCreationDefaults | undefined {
@@ -356,12 +381,16 @@ export function normalizeModuleCreationDefaults(
 
   const moduleCreationDefaults = {
     moduleKinds: normalizeModuleCreationKinds(value.moduleKinds),
+    drone: normalizeDroneModuleCreationDefault(value.drone),
     fretboard: normalizeFretboardModuleCreationDefault(value.fretboard),
     keyboard: normalizeKeyboardModuleCreationDefault(value.keyboard),
   } satisfies ModuleCreationDefaults;
   const normalizedDefaults = {
     ...(moduleCreationDefaults.moduleKinds
       ? { moduleKinds: moduleCreationDefaults.moduleKinds }
+      : {}),
+    ...(moduleCreationDefaults.drone
+      ? { drone: moduleCreationDefaults.drone }
       : {}),
     ...(moduleCreationDefaults.fretboard
       ? { fretboard: moduleCreationDefaults.fretboard }

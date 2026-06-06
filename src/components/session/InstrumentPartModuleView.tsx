@@ -48,6 +48,7 @@ function selectInstrumentRenderModel(
     case "fretboard":
       return {
         ...selectInstrumentBase(instrument),
+        inlayPreset: instrument.inlayPreset,
         type: instrument.type,
         theme: instrument.theme,
         config: instrument.config,
@@ -94,6 +95,9 @@ export function InstrumentPartModuleView({
   );
   const setInstrumentDisplaySize = useAppStore(
     (state) => state.setInstrumentDisplaySize,
+  );
+  const updateInstrumentSettings = useAppStore(
+    (state) => state.updateInstrumentSettings,
   );
   const setInstrumentActiveNotesLock = useAppStore(
     (state) => state.setInstrumentActiveNotesLock,
@@ -158,6 +162,15 @@ export function InstrumentPartModuleView({
       return (
         <Fretboard
           {...sharedProps}
+          inlayPreset={instrument.inlayPreset}
+          onInlayPresetChange={(inlayPreset) =>
+            updateInstrumentSettings(sessionId, partId, moduleId, {
+              inlayPreset,
+            })
+          }
+          onThemeChange={(theme) =>
+            updateInstrumentSettings(sessionId, partId, moduleId, { theme })
+          }
           theme={instrument.theme}
           config={instrument.config}
         >
@@ -173,6 +186,9 @@ export function InstrumentPartModuleView({
       return (
         <Keyboard
           {...sharedProps}
+          onThemeChange={(theme) =>
+            updateInstrumentSettings(sessionId, partId, moduleId, { theme })
+          }
           range={instrument.range}
           theme={instrument.theme}
           config={instrument.config}

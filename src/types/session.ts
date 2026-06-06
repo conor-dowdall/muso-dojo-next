@@ -5,6 +5,7 @@ import {
 } from "@musodojo/music-theory-data";
 import { type AudioPresetId, type MasterAmbiencePresetId } from "@/audio/types";
 import { type FretboardThemeName } from "@/data/fretboard/themes";
+import { type FretboardInlayPresetName } from "@/data/fretboard/inlayPresets";
 import { type KeyboardRangeName } from "@/data/keyboard/ranges";
 import { type KeyboardThemeName } from "@/data/keyboard/themes";
 import {
@@ -19,6 +20,7 @@ import { type FretboardConfig } from "@/types/fretboard";
 import { type KeyboardConfig } from "@/types/keyboard";
 import { type DisplayFormatId } from "@/data/displayFormats";
 import { type AppThemeName } from "@/data/appThemes";
+import { type WoodSurfaceId } from "@/data/woodSurfaces";
 
 export type ChordProgressionChordListMode =
   | "each-chord-once"
@@ -49,6 +51,7 @@ export interface InstrumentInstanceBaseConfig {
 }
 
 export interface FretboardInstrumentInstanceConfig extends InstrumentInstanceBaseConfig {
+  inlayPreset?: FretboardInlayPresetName;
   type: "fretboard";
   theme?: FretboardThemeName;
   config?: FretboardConfig;
@@ -91,6 +94,7 @@ export interface DronePartModuleConfig extends PartModuleBaseConfig<"drone"> {
   octaveOffset?: number;
   octaveRowCount?: number;
   type: "drone";
+  wood?: WoodSurfaceId;
 }
 
 export interface PartModuleConfigByType {
@@ -109,7 +113,9 @@ export interface InstrumentPartModuleCreationConfig<
 }
 
 export interface PartModuleCreationConfigByType {
-  drone: Record<string, never>;
+  drone: {
+    wood?: WoodSurfaceId;
+  };
   instrument: InstrumentPartModuleCreationConfig;
 }
 
