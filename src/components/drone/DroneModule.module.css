@@ -317,7 +317,7 @@
   --interact-y-hover: 0;
   --interact-ease: var(--ease-out);
 
-  color: var(--note-label-color);
+  color: var(--color-text);
   border-color: var(--drone-hardware-border-strong);
   box-shadow:
     inset 0 var(--space-px) 0 var(--drone-light-medium),
@@ -342,7 +342,7 @@
 
 .droneToolButton.droneToolButton:is(:disabled, [aria-disabled="true"]) {
   opacity: 1;
-  color: color-mix(in srgb, var(--note-label-color) 78%, var(--color-base));
+  color: var(--color-text-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {
