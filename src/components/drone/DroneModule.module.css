@@ -391,10 +391,10 @@
   inline-size: 100%;
   min-inline-size: min-content;
   grid-template-columns: repeat(
-    var(--drone-row-note-count),
+    var(--drone-column-count),
     minmax(var(--drone-note-button-min-width), var(--drone-note-button-width))
   );
-  justify-content: center;
+  justify-content: safe center;
   gap: var(--drone-column-gap);
 }
 

@@ -2,6 +2,8 @@ export const DEFAULT_CONCERT_PITCH_HZ = 440;
 export const MIDI_A4 = 69;
 export const MIDI_MIN = 0;
 export const MIDI_MAX = 127;
+export const MUSICAL_SURFACE_MIDI_MIN = 24;
+export const MUSICAL_SURFACE_MIDI_MAX = 107;
 
 export function midiToFrequency(
   midiNote: number,
@@ -18,5 +20,13 @@ export function midiToFrequency(
 export function isPlayableMidiNote(midiNote: number) {
   return (
     Number.isInteger(midiNote) && midiNote >= MIDI_MIN && midiNote <= MIDI_MAX
+  );
+}
+
+export function isMusicalSurfaceMidiNote(midiNote: number) {
+  return (
+    Number.isInteger(midiNote) &&
+    midiNote >= MUSICAL_SURFACE_MIDI_MIN &&
+    midiNote <= MUSICAL_SURFACE_MIDI_MAX
   );
 }

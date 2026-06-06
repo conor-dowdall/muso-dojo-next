@@ -88,6 +88,26 @@ function formatDroneNoteLabel(noteName: string, midi: number) {
   return `${noteName}${getMidiOctave(midi)}`;
 }
 
+function getClosestNoteInColumn<TNote extends { columnIndex: number }>(
+  row: readonly TNote[] | undefined,
+  targetColumnIndex: number,
+) {
+  if (!row || row.length === 0) {
+    return undefined;
+  }
+
+  return row.reduce((closestNote, candidateNote) => {
+    const closestDistance = Math.abs(
+      closestNote.columnIndex - targetColumnIndex,
+    );
+    const candidateDistance = Math.abs(
+      candidateNote.columnIndex - targetColumnIndex,
+    );
+
+    return candidateDistance < closestDistance ? candidateNote : closestNote;
+  });
+}
+
 function DroneTileLabel({ label }: { label: string }) {
   return (
     <span
@@ -236,8 +256,10 @@ export function DroneModule({
         const nextRowIndex =
           currentNote.rowIndex + (direction === "up" ? -1 : 1);
         const nextRow = droneNotes.rows[nextRowIndex];
-        const nextNote =
-          nextRow?.[Math.min(currentNote.columnIndex, nextRow.length - 1)];
+        const nextNote = getClosestNoteInColumn(
+          nextRow,
+          currentNote.columnIndex,
+        );
 
         return nextNote?.key ?? currentKey;
       }
@@ -499,17 +521,16 @@ export function DroneModule({
             </span>
           </div>
           <div className={styles.noteStack}>
-            <div className={styles.noteRows}>
+            <div
+              className={styles.noteRows}
+              style={
+                {
+                  "--drone-column-count": droneNotes.columnCount,
+                } as CSSProperties
+              }
+            >
               {droneNotes.rows.map((row, rowIndex) => (
-                <div
-                  key={rowIndex}
-                  className={styles.noteRow}
-                  style={
-                    {
-                      "--drone-row-note-count": row.length,
-                    } as CSSProperties
-                  }
-                >
+                <div key={rowIndex} className={styles.noteRow}>
                   {row.map((note) => {
                     const noteColor = resolveInstrumentNoteColor({
                       midi: note.midi,
@@ -540,6 +561,7 @@ export function DroneModule({
                         handleKeyDown={handleKeyDown}
                         onInteract={handleItemInteraction}
                         className={styles.noteButton}
+                        style={{ gridColumn: note.columnIndex + 1 }}
                         largeSize="100%"
                       >
                         <span className={styles.droneTileLabelStack}>

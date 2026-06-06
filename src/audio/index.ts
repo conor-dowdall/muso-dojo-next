@@ -4,6 +4,9 @@ export {
   MIDI_A4,
   MIDI_MAX,
   MIDI_MIN,
+  MUSICAL_SURFACE_MIDI_MAX,
+  MUSICAL_SURFACE_MIDI_MIN,
+  isMusicalSurfaceMidiNote,
   isPlayableMidiNote,
   midiToFrequency,
 } from "./pitch";

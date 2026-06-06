@@ -7,7 +7,11 @@ import {
   type NoteCollectionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
-import { isPlayableMidiNote } from "@/audio/pitch";
+import {
+  MUSICAL_SURFACE_MIDI_MAX,
+  MUSICAL_SURFACE_MIDI_MIN,
+  isMusicalSurfaceMidiNote,
+} from "@/audio/pitch";
 import {
   DEFAULT_PART_NOTE_COLLECTION_KEY,
   DEFAULT_PART_ROOT_NOTE,
@@ -20,11 +24,19 @@ const DRONE_NOTE_INTERVAL_MIN = 0;
 const DRONE_NOTE_INTERVAL_MAX = 24;
 const DRONE_SEMITONES_PER_OCTAVE = 12;
 const DRONE_INTERVAL_STEPS_PER_OCTAVE = 7;
+const DRONE_BASE_ROOT_MIDI =
+  (DRONE_BASE_PITCH_OCTAVE + 1) * DRONE_SEMITONES_PER_OCTAVE;
 
 export const DRONE_MIN_OCTAVE_ROWS = 1;
 export const DRONE_MAX_OCTAVE_ROWS = 4;
-export const DRONE_MIN_OCTAVE_OFFSET = -3;
-export const DRONE_MAX_OCTAVE_OFFSET = 3;
+export const DRONE_MIN_OCTAVE_OFFSET = Math.ceil(
+  (MUSICAL_SURFACE_MIDI_MIN - DRONE_BASE_ROOT_MIDI) /
+    DRONE_SEMITONES_PER_OCTAVE,
+);
+export const DRONE_MAX_OCTAVE_OFFSET = Math.floor(
+  (MUSICAL_SURFACE_MIDI_MAX - DRONE_BASE_ROOT_MIDI) /
+    DRONE_SEMITONES_PER_OCTAVE,
+);
 
 export interface DroneNoteButton {
   baseInterval: number;
@@ -39,6 +51,7 @@ export interface DroneNoteButton {
 }
 
 export interface ResolvedDroneNotes {
+  columnCount: number;
   hasUnplayableNotes: boolean;
   notes: DroneNoteButton[];
   octaveOffset: number;
@@ -120,7 +133,8 @@ function getDisplayMidi(
 ) {
   const rootInteger = rootNoteToIntegerMap.get(rootNote) ?? 0;
   const midi =
-    (DRONE_BASE_PITCH_OCTAVE + 1 + octaveOffset) * 12 +
+    DRONE_BASE_ROOT_MIDI +
+    octaveOffset * DRONE_SEMITONES_PER_OCTAVE +
     rootInteger +
     Math.round(interval);
 
@@ -175,7 +189,7 @@ export function resolveDroneNotes({
   const rows = Array.from({ length: resolvedRowCount }, (_, rowIndex) => {
     const rowNotes: DroneNoteButton[] = [];
 
-    baseNotes.forEach((baseNote) => {
+    baseNotes.forEach((baseNote, baseNoteIndex) => {
       const interval =
         baseNote.baseInterval + rowIndex * DRONE_SEMITONES_PER_OCTAVE;
 
@@ -191,7 +205,7 @@ export function resolveDroneNotes({
         resolvedOctaveOffset,
       );
 
-      if (!isPlayableMidiNote(midi)) {
+      if (!isMusicalSurfaceMidiNote(midi)) {
         hasUnplayableNotes = true;
         return;
       }
@@ -204,10 +218,10 @@ export function resolveDroneNotes({
 
       rowNotes.push({
         ...baseNote,
-        columnIndex: rowNotes.length,
+        columnIndex: baseNoteIndex,
         interval,
         intervalLabel,
-        key: `${rowIndex}:${rowNotes.length}:${interval}`,
+        key: `${rowIndex}:${baseNoteIndex}:${interval}`,
         label: labels[pitchClass] ?? "",
         midi,
         rowIndex,
@@ -219,6 +233,7 @@ export function resolveDroneNotes({
   const notes = rows.flat();
 
   return {
+    columnCount: baseNotes.length,
     hasUnplayableNotes,
     notes,
     octaveOffset: resolvedOctaveOffset,

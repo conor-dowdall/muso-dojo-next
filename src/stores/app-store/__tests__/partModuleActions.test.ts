@@ -122,7 +122,8 @@ describe("part module app store actions", () => {
     store
       .getState()
       .setDroneAudioPresetId(sessionId, partId, addedModuleId, "warm-pad");
-    store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 2);
+    store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 4);
+    store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 5);
     store
       .getState()
       .setDroneOctaveRowCount(sessionId, partId, addedModuleId, 3);
@@ -136,7 +137,7 @@ describe("part module app store actions", () => {
     expect(updatedModule).toMatchObject({
       audioPresetId: "warm-pad",
       id: addedModuleId,
-      octaveOffset: 2,
+      octaveOffset: 4,
       octaveRowCount: 3,
       type: "drone",
     });

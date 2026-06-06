@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { resolveDroneNotes } from "@/utils/drone/droneNotes";
+import {
+  MUSICAL_SURFACE_MIDI_MAX,
+  MUSICAL_SURFACE_MIDI_MIN,
+} from "@/audio/pitch";
+import {
+  DRONE_MAX_OCTAVE_OFFSET,
+  DRONE_MIN_OCTAVE_OFFSET,
+  resolveDroneNotes,
+} from "@/utils/drone/droneNotes";
 
 describe("droneNotes", () => {
   it("resolves exactly the notes from the part root and collection", () => {
@@ -69,6 +77,60 @@ describe("droneNotes", () => {
       { interval: 0, midi: 60 },
       { interval: 4, midi: 64 },
       { interval: 7, midi: 67 },
+    ]);
+  });
+
+  it("offers complete chromatic octaves at the musical surface bounds", () => {
+    const lowestOctave = resolveDroneNotes({
+      noteCollectionKey: "chromatic",
+      octaveOffset: DRONE_MIN_OCTAVE_OFFSET,
+      rootNote: "C",
+    });
+    const highestOctave = resolveDroneNotes({
+      noteCollectionKey: "chromatic",
+      octaveOffset: DRONE_MAX_OCTAVE_OFFSET,
+      rootNote: "C",
+    });
+
+    expect(lowestOctave.hasUnplayableNotes).toBe(false);
+    expect(lowestOctave.notes.map((note) => note.midi)).toStrictEqual(
+      Array.from(
+        { length: 12 },
+        (_, index) => MUSICAL_SURFACE_MIDI_MIN + index,
+      ),
+    );
+    expect(highestOctave.hasUnplayableNotes).toBe(false);
+    expect(highestOctave.notes.map((note) => note.midi)).toStrictEqual(
+      Array.from(
+        { length: 12 },
+        (_, index) => MUSICAL_SURFACE_MIDI_MAX - 11 + index,
+      ),
+    );
+  });
+
+  it("marks added rows outside the musical surface range as unavailable", () => {
+    const aboveRange = resolveDroneNotes({
+      noteCollectionKey: "chromatic",
+      octaveOffset: DRONE_MAX_OCTAVE_OFFSET,
+      rootNote: "C",
+      rowCount: 2,
+    });
+
+    expect(aboveRange.hasUnplayableNotes).toBe(true);
+    expect(aboveRange.rows[1]).toStrictEqual([]);
+  });
+
+  it("preserves collection columns when upper notes are unavailable", () => {
+    const partialOctave = resolveDroneNotes({
+      noteCollectionKey: "chromatic",
+      octaveOffset: DRONE_MAX_OCTAVE_OFFSET,
+      rootNote: "F",
+    });
+
+    expect(partialOctave.columnCount).toBe(12);
+    expect(partialOctave.hasUnplayableNotes).toBe(true);
+    expect(partialOctave.notes.map((note) => note.columnIndex)).toStrictEqual([
+      0, 1, 2, 3, 4, 5, 6,
     ]);
   });
 });
