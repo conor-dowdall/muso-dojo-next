@@ -11,14 +11,12 @@ export {
   midiToFrequency,
 } from "./pitch";
 export {
-  audioPresetCategoryLabels,
-  audioPresetCategoryOrder,
   audioPresets,
   defaultAudioPresetIds,
-  getAudioPresetsRecommendedForUse,
+  getAudioPresetsForSurface,
   getDefaultAudioPresetId,
   isAudioPresetId,
-  isAudioPresetRecommendedForUse,
+  isAudioPresetAvailableOn,
   resolveAudioPreset,
 } from "./presets";
 export {
@@ -32,9 +30,9 @@ export type {
   AudioEngine,
   AudioEffectConfig,
   AudioPreset,
-  AudioPresetCategory,
   AudioPresetFamily,
   AudioPresetId,
+  AudioPresetSurface,
   AudioUse,
   AudioVoiceHandle,
   ChorusEffectConfig,

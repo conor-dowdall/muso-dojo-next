@@ -1,7 +1,7 @@
 import {
   type AudioPreset,
-  type AudioPresetCategory,
   type AudioPresetId,
+  type AudioPresetSurface,
   type AudioUse,
   type ChorusEffectConfig,
   type DistortionEffectConfig,
@@ -93,30 +93,9 @@ const lightEdge = {
   oversample: "2x",
 } as const satisfies DistortionEffectConfig;
 
-const tapeEdge = {
-  type: "distortion",
-  amount: 0.13,
-  mix: 0.3,
-  oversample: "2x",
-} as const satisfies DistortionEffectConfig;
-
-const warmDrive = {
-  type: "distortion",
-  amount: 0.24,
-  mix: 0.42,
-  oversample: "4x",
-} as const satisfies DistortionEffectConfig;
-
 const electricGuitarDrive = {
   type: "distortion",
   amount: 0.36,
-  mix: 0.64,
-  oversample: "4x",
-} as const satisfies DistortionEffectConfig;
-
-const fuzzDrive = {
-  type: "distortion",
-  amount: 0.48,
   mix: 0.64,
   oversample: "4x",
 } as const satisfies DistortionEffectConfig;
@@ -146,29 +125,31 @@ export const defaultAudioPresetIds = {
   exercise: "piano",
 } as const satisfies Record<AudioUse, AudioPresetId>;
 
-export const audioPresetCategoryOrder = [
-  "core",
-  "instrument",
-  "character",
-  "weird",
-] as const satisfies readonly AudioPresetCategory[];
-
-export const audioPresetCategoryLabels = {
-  core: "Core",
-  instrument: "Instruments",
-  character: "Character",
-  weird: "Experimental",
-} as const satisfies Record<AudioPresetCategory, string>;
+const audioPresetOrderBySurface = {
+  instrument: [
+    "reference-tone",
+    "piano",
+    "plucked-string",
+    "picked-bass",
+    "mandolin",
+    "bowed-strings",
+    "soft-organ",
+    "warm-pad",
+    "distortion-guitar",
+    "glass-bell",
+    "hollow-synth",
+  ],
+  drone: ["reference-tone", "soft-organ", "bowed-strings", "warm-pad"],
+} as const satisfies Record<AudioPresetSurface, readonly AudioPresetId[]>;
 
 export const audioPresets = {
   "reference-tone": {
-    category: "core",
+    availableOn: ["instrument", "drone"],
     defaultDurationSeconds: 1.1,
     description: "Plain, steady, and useful for checking pitch.",
     family: "generated",
     id: "reference-tone",
     label: "Reference Tone",
-    recommendedUses: ["preview", "tuning", "drone", "exercise"],
     voice: {
       gain: 0.5,
       pitchGain: continuousPitchGain,
@@ -182,73 +163,70 @@ export const audioPresets = {
     },
   },
   piano: {
-    category: "core",
-    defaultDurationSeconds: 0.9,
-    description: "Clear piano-like attack with a musical synthetic body.",
+    availableOn: ["instrument"],
+    defaultDurationSeconds: 1.12,
+    description: "Rounded hammer attack with a clear, lingering body.",
     family: "generated",
     id: "piano",
     label: "Piano",
-    recommendedUses: ["preview", "tuning", "exercise"],
     voice: {
-      gain: 0.48,
+      gain: 0.5,
       pitchGain: previewPitchGain,
       lowPitchAssist: lowSpeakerAssist,
       insertEffects: [lightEdge],
       envelope: {
         attackSeconds: 0.002,
-        decaySeconds: 0.92,
-        sustainGain: 0.055,
-        releaseSeconds: 0.16,
+        decaySeconds: 1.18,
+        sustainGain: 0.075,
+        releaseSeconds: 0.24,
       },
       partials: [
         { multiple: 1, gain: 1 },
-        { multiple: 2, gain: 0.58 },
-        { multiple: 3, gain: 0.36 },
-        { multiple: 4, gain: 0.22 },
-        { multiple: 5, gain: 0.14 },
-        { multiple: 6, gain: 0.085 },
-        { multiple: 8, gain: 0.045 },
-        { multiple: 10, gain: 0.02 },
+        { multiple: 2, gain: 0.48 },
+        { multiple: 3, gain: 0.18 },
+        { multiple: 4, gain: 0.1 },
+        { multiple: 5, gain: 0.045 },
+        { multiple: 6, gain: 0.022 },
       ],
     },
   },
-  "steel-string": {
-    category: "core",
-    defaultDurationSeconds: 0.72,
-    description: "Bright picked string for guitar and general frets.",
+  "plucked-string": {
+    availableOn: ["instrument"],
+    defaultDurationSeconds: 0.58,
+    description: "Fast, bright pluck for guitar, ukulele, and general frets.",
     family: "generated",
-    id: "steel-string",
-    label: "Steel String",
-    recommendedUses: ["preview", "exercise"],
+    id: "plucked-string",
+    label: "Plucked String",
     voice: {
-      gain: 0.54,
-      pitchGain: previewPitchGain,
+      gain: 0.5,
+      pitchGain: brightPitchGain,
       lowPitchAssist: lowSpeakerAssist,
       envelope: {
-        attackSeconds: 0.003,
-        decaySeconds: 0.68,
-        sustainGain: 0.025,
-        releaseSeconds: 0.08,
+        attackSeconds: 0.0015,
+        decaySeconds: 0.46,
+        sustainGain: 0.012,
+        releaseSeconds: 0.06,
       },
       partials: [
-        { multiple: 1, gain: 0.9 },
-        { multiple: 2, gain: 0.34 },
-        { multiple: 3, gain: 0.2 },
-        { multiple: 4, gain: 0.11 },
-        { multiple: 5, gain: 0.055 },
-        { multiple: 7, gain: 0.03 },
-        { multiple: 9, gain: 0.012 },
+        { multiple: 1, gain: 0.72 },
+        { multiple: 2, gain: 0.46 },
+        { multiple: 3, gain: 0.34 },
+        { multiple: 4, gain: 0.24 },
+        { multiple: 5, gain: 0.16 },
+        { multiple: 6, gain: 0.11 },
+        { multiple: 7, gain: 0.08 },
+        { multiple: 9, gain: 0.05 },
+        { multiple: 11, gain: 0.025 },
       ],
     },
   },
   "distortion-guitar": {
-    category: "instrument",
+    availableOn: ["instrument"],
     defaultDurationSeconds: 0.68,
     description: "Direct electric guitar bite with a driven amp-like edge.",
     family: "generated",
     id: "distortion-guitar",
     label: "Distortion Guitar",
-    recommendedUses: ["preview", "exercise"],
     voice: {
       gain: 0.36,
       pitchGain: previewPitchGain,
@@ -273,13 +251,12 @@ export const audioPresets = {
     },
   },
   "soft-organ": {
-    category: "core",
+    availableOn: ["instrument", "drone"],
     defaultDurationSeconds: 1.15,
     description: "Smooth sustained tone for drones and held notes.",
     family: "generated",
     id: "soft-organ",
     label: "Soft Organ",
-    recommendedUses: ["preview", "tuning", "drone", "exercise"],
     voice: {
       gain: 0.42,
       pitchGain: continuousPitchGain,
@@ -299,71 +276,13 @@ export const audioPresets = {
       ],
     },
   },
-  "electric-keys": {
-    category: "instrument",
-    defaultDurationSeconds: 1,
-    description: "Rounded electric piano color with a soft edge.",
-    family: "generated",
-    id: "electric-keys",
-    label: "Electric Keys",
-    recommendedUses: ["preview", "exercise"],
-    voice: {
-      gain: 0.44,
-      pitchGain: previewPitchGain,
-      lowPitchAssist: subtleLowSpeakerAssist,
-      insertEffects: [tapeEdge],
-      envelope: {
-        attackSeconds: 0.004,
-        decaySeconds: 1.05,
-        sustainGain: 0.12,
-        releaseSeconds: 0.22,
-      },
-      partials: [
-        { multiple: 1, gain: 0.86 },
-        { multiple: 2, gain: 0.46 },
-        { multiple: 3, gain: 0.2 },
-        { multiple: 4, gain: 0.16 },
-        { multiple: 6, gain: 0.07 },
-        { multiple: 8, gain: 0.028 },
-      ],
-    },
-  },
-  "nylon-string": {
-    category: "instrument",
-    defaultDurationSeconds: 0.82,
-    description: "Warm plucked string for classical guitar and ukulele.",
-    family: "generated",
-    id: "nylon-string",
-    label: "Nylon String",
-    recommendedUses: ["preview", "exercise"],
-    voice: {
-      gain: 0.56,
-      pitchGain: previewPitchGain,
-      lowPitchAssist: lowSpeakerAssist,
-      envelope: {
-        attackSeconds: 0.007,
-        decaySeconds: 0.86,
-        sustainGain: 0.04,
-        releaseSeconds: 0.12,
-      },
-      partials: [
-        { multiple: 1, gain: 0.94 },
-        { multiple: 2, gain: 0.24 },
-        { multiple: 3, gain: 0.12 },
-        { multiple: 4, gain: 0.052 },
-        { multiple: 5, gain: 0.024 },
-        { multiple: 7, gain: 0.01 },
-      ],
-    },
-  },
   "picked-bass": {
-    category: "instrument",
+    availableOn: ["instrument"],
     defaultDurationSeconds: 0.72,
     description: "Full picked bass with extra low-end weight and definition.",
     family: "generated",
     id: "picked-bass",
     label: "Picked Bass",
-    recommendedUses: ["preview", "exercise"],
     voice: {
       gain: 0.68,
       pitchGain: bassPitchGain,
@@ -393,13 +312,12 @@ export const audioPresets = {
     },
   },
   mandolin: {
-    category: "instrument",
+    availableOn: ["instrument"],
     defaultDurationSeconds: 0.5,
     description: "Bright paired-course pluck with a quick treble shimmer.",
     family: "generated",
     id: "mandolin",
     label: "Mandolin",
-    recommendedUses: ["preview", "exercise"],
     voice: {
       gain: 0.42,
       pitchGain: brightPitchGain,
@@ -426,13 +344,12 @@ export const audioPresets = {
     },
   },
   "bowed-strings": {
-    category: "instrument",
-    defaultDurationSeconds: 0.92,
-    description: "Short bowed string tone for violin, viola, cello, and bass.",
+    availableOn: ["instrument", "drone"],
+    defaultDurationSeconds: 1.15,
+    description: "Expressive bowed tone for strings and sustained drones.",
     family: "generated",
     id: "bowed-strings",
     label: "Bowed Strings",
-    recommendedUses: ["preview", "exercise"],
     voice: {
       gain: 0.32,
       pitchGain: continuousPitchGain,
@@ -442,43 +359,10 @@ export const audioPresets = {
         detuneCents: [-3, 0, 3],
       },
       envelope: {
-        attackSeconds: 0.07,
-        decaySeconds: 0.18,
-        sustainGain: 0.58,
-        releaseSeconds: 0.28,
-      },
-      partials: [
-        { multiple: 1, gain: 0.82 },
-        { multiple: 2, gain: 0.38 },
-        { multiple: 3, gain: 0.28 },
-        { multiple: 4, gain: 0.16 },
-        { multiple: 5, gain: 0.09 },
-        { multiple: 6, gain: 0.045 },
-        { multiple: 8, gain: 0.02 },
-      ],
-    },
-  },
-  "bowed-sustain": {
-    category: "instrument",
-    defaultDurationSeconds: 1.45,
-    description: "Longer bowed swell for sustained string color.",
-    family: "generated",
-    id: "bowed-sustain",
-    label: "Long Bow",
-    recommendedUses: ["preview", "drone", "exercise"],
-    voice: {
-      gain: 0.31,
-      pitchGain: continuousPitchGain,
-      lowPitchAssist: harmonicLowSpeakerAssist,
-      insertEffects: [stringChorus],
-      unison: {
-        detuneCents: [-3, 0, 3],
-      },
-      envelope: {
-        attackSeconds: 0.16,
-        decaySeconds: 0.22,
-        sustainGain: 0.72,
-        releaseSeconds: 0.42,
+        attackSeconds: 0.1,
+        decaySeconds: 0.2,
+        sustainGain: 0.66,
+        releaseSeconds: 0.36,
       },
       partials: [
         { multiple: 1, gain: 0.82 },
@@ -492,13 +376,12 @@ export const audioPresets = {
     },
   },
   "warm-pad": {
-    category: "character",
+    availableOn: ["instrument", "drone"],
     defaultDurationSeconds: 1.45,
     description: "Wide, gentle sustain for harmony and held notes.",
     family: "generated",
     id: "warm-pad",
     label: "Warm Pad",
-    recommendedUses: ["preview", "drone", "exercise"],
     voice: {
       gain: 0.27,
       pitchGain: continuousPitchGain,
@@ -522,13 +405,12 @@ export const audioPresets = {
     },
   },
   "glass-bell": {
-    category: "character",
+    availableOn: ["instrument"],
     defaultDurationSeconds: 1.18,
     description: "Clean ringing highs for ear-training accents.",
     family: "generated",
     id: "glass-bell",
     label: "Glass Bell",
-    recommendedUses: ["preview", "exercise"],
     voice: {
       gain: 0.32,
       pitchGain: brightPitchGain,
@@ -551,13 +433,12 @@ export const audioPresets = {
     },
   },
   "hollow-synth": {
-    category: "weird",
+    availableOn: ["instrument"],
     defaultDurationSeconds: 0.72,
     description: "Odd harmonics with a woody, hollow center.",
     family: "generated",
     id: "hollow-synth",
     label: "Hollow Synth",
-    recommendedUses: ["preview", "exercise"],
     voice: {
       gain: 0.4,
       pitchGain: previewPitchGain,
@@ -580,65 +461,6 @@ export const audioPresets = {
       ],
     },
   },
-  "fuzz-pluck": {
-    category: "weird",
-    defaultDurationSeconds: 0.58,
-    description: "Compressed, buzzy, and deliberately rough.",
-    family: "generated",
-    id: "fuzz-pluck",
-    label: "Fuzz Pluck",
-    recommendedUses: ["preview", "exercise"],
-    voice: {
-      gain: 0.34,
-      pitchGain: previewPitchGain,
-      lowPitchAssist: lowSpeakerAssist,
-      insertEffects: [fuzzDrive],
-      envelope: {
-        attackSeconds: 0.004,
-        decaySeconds: 0.48,
-        sustainGain: 0.045,
-        releaseSeconds: 0.08,
-      },
-      partials: [
-        { multiple: 1, gain: 0.68 },
-        { multiple: 2, gain: 0.36 },
-        { multiple: 3, gain: 0.24 },
-        { multiple: 4, gain: 0.16 },
-        { multiple: 5, gain: 0.1 },
-        { multiple: 7, gain: 0.07 },
-        { multiple: 9, gain: 0.03 },
-      ],
-    },
-  },
-  "bit-glow": {
-    category: "weird",
-    defaultDurationSeconds: 0.68,
-    description: "Sharp digital color with a bright upper shimmer.",
-    family: "generated",
-    id: "bit-glow",
-    label: "Bit Glow",
-    recommendedUses: ["preview", "exercise"],
-    voice: {
-      gain: 0.32,
-      pitchGain: brightPitchGain,
-      lowPitchAssist: harmonicLowSpeakerAssist,
-      insertEffects: [warmDrive],
-      envelope: {
-        attackSeconds: 0.002,
-        decaySeconds: 0.4,
-        sustainGain: 0.14,
-        releaseSeconds: 0.12,
-      },
-      partials: [
-        { multiple: 1, gain: 0.5 },
-        { multiple: 2, gain: 0.3 },
-        { multiple: 4, gain: 0.32 },
-        { multiple: 8, gain: 0.24 },
-        { multiple: 16, gain: 0.14 },
-        { multiple: 24, gain: 0.06 },
-      ],
-    },
-  },
 } as const satisfies Record<AudioPresetId, AudioPreset>;
 
 export function getDefaultAudioPresetId(use: AudioUse) {
@@ -652,17 +474,17 @@ export function isAudioPresetId(value: unknown): value is AudioPresetId {
   );
 }
 
-export function isAudioPresetRecommendedForUse(
+export function isAudioPresetAvailableOn(
   preset: AudioPreset,
-  use: AudioUse,
+  surface: AudioPresetSurface,
 ) {
-  return preset.recommendedUses.includes(use);
+  return preset.availableOn.includes(surface);
 }
 
-export function getAudioPresetsRecommendedForUse(use: AudioUse) {
-  return Object.values(audioPresets).filter((preset) =>
-    isAudioPresetRecommendedForUse(preset, use),
-  );
+export function getAudioPresetsForSurface(surface: AudioPresetSurface) {
+  return audioPresetOrderBySurface[surface]
+    .map((presetId) => audioPresets[presetId])
+    .filter((preset) => isAudioPresetAvailableOn(preset, surface));
 }
 
 export function resolveAudioPreset(

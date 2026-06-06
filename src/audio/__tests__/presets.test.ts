@@ -2,10 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   audioPresets,
   getDefaultAudioPresetId,
-  getAudioPresetsRecommendedForUse,
+  getAudioPresetsForSurface,
+  isAudioPresetId,
   resolveAudioPreset,
 } from "@/audio/presets";
-import { type AudioUse, type VoiceInsertEffectConfig } from "@/audio/types";
+import {
+  type AudioPresetSurface,
+  type AudioUse,
+  type VoiceInsertEffectConfig,
+} from "@/audio/types";
 
 const audioUses = [
   "preview",
@@ -14,16 +19,23 @@ const audioUses = [
   "exercise",
 ] as const satisfies readonly AudioUse[];
 
+const defaultSurfaceByUse = {
+  preview: "instrument",
+  tuning: "instrument",
+  drone: "drone",
+  exercise: "instrument",
+} as const satisfies Record<AudioUse, AudioPresetSurface>;
+
 function isSupportedInsertEffectType(effect: VoiceInsertEffectConfig) {
   return ["chorus", "distortion"].includes(effect.type);
 }
 
 describe("audio presets", () => {
-  it("keeps every default use pointed at a compatible preset", () => {
+  it("keeps every playback default visible on its relevant picker", () => {
     audioUses.forEach((use) => {
       const preset = audioPresets[getDefaultAudioPresetId(use)];
 
-      expect(preset.recommendedUses).toContain(use);
+      expect(preset.availableOn).toContain(defaultSurfaceByUse[use]);
       expect(resolveAudioPreset(preset.id, getDefaultAudioPresetId(use))).toBe(
         preset,
       );
@@ -37,10 +49,7 @@ describe("audio presets", () => {
     });
     expect(
       audioPresets["bowed-strings"].defaultDurationSeconds,
-    ).toBeGreaterThan(audioPresets["steel-string"].defaultDurationSeconds);
-    expect(
-      audioPresets["bowed-sustain"].defaultDurationSeconds,
-    ).toBeGreaterThan(audioPresets["bowed-strings"].defaultDurationSeconds);
+    ).toBeGreaterThan(audioPresets["plucked-string"].defaultDurationSeconds);
     expect(audioPresets.mandolin.defaultDurationSeconds).toBeLessThan(
       audioPresets.piano.defaultDurationSeconds,
     );
@@ -59,10 +68,10 @@ describe("audio presets", () => {
     });
   });
 
-  it("treats recommended uses as metadata rather than playback gates", () => {
+  it("treats picker availability as metadata rather than a playback gate", () => {
     expect(
-      resolveAudioPreset("steel-string", getDefaultAudioPresetId("drone")),
-    ).toBe(audioPresets["steel-string"]);
+      resolveAudioPreset("plucked-string", getDefaultAudioPresetId("drone")),
+    ).toBe(audioPresets["plucked-string"]);
     expect(
       resolveAudioPreset("missing", getDefaultAudioPresetId("drone")),
     ).toBe(audioPresets["reference-tone"]);
@@ -72,18 +81,18 @@ describe("audio presets", () => {
   });
 
   it("keeps drone defaults lean while allowing richer shared-effect options", () => {
-    const dronePresets = getAudioPresetsRecommendedForUse("drone");
+    const dronePresets = getAudioPresetsForSurface("drone");
     const referenceTone = audioPresets["reference-tone"];
     const softOrgan = audioPresets["soft-organ"];
     const richerDronePresets = [
-      audioPresets["bowed-sustain"],
+      audioPresets["bowed-strings"],
       audioPresets["warm-pad"],
     ];
 
     expect(dronePresets.map((preset) => preset.id)).toStrictEqual([
       "reference-tone",
       "soft-organ",
-      "bowed-sustain",
+      "bowed-strings",
       "warm-pad",
     ]);
     expect(getDefaultAudioPresetId("drone")).toBe("reference-tone");
@@ -103,14 +112,37 @@ describe("audio presets", () => {
     });
   });
 
-  it("keeps the focused catalog broad enough for the current instruments", () => {
-    expect(Object.keys(audioPresets)).toHaveLength(16);
-    expect(audioPresets.piano.category).toBe("core");
-    expect(audioPresets["steel-string"].recommendedUses).toContain("preview");
+  it("offers one flat, deliberately ordered instrument catalog", () => {
+    expect(
+      getAudioPresetsForSurface("instrument").map((preset) => preset.id),
+    ).toStrictEqual([
+      "reference-tone",
+      "piano",
+      "plucked-string",
+      "picked-bass",
+      "mandolin",
+      "bowed-strings",
+      "soft-organ",
+      "warm-pad",
+      "distortion-guitar",
+      "glass-bell",
+      "hollow-synth",
+    ]);
+    expect(Object.keys(audioPresets)).toHaveLength(11);
+  });
+
+  it("keeps retained voices distinct and rejects retired preset ids", () => {
+    expect(audioPresets.piano.voice.envelope.decaySeconds).toBeGreaterThan(
+      audioPresets["plucked-string"].voice.envelope.decaySeconds * 2,
+    );
+    expect(
+      audioPresets["plucked-string"].voice.partials.at(-1)?.multiple ?? 0,
+    ).toBeGreaterThan(audioPresets.piano.voice.partials.at(-1)?.multiple ?? 0);
     expect(audioPresets["distortion-guitar"].label).toContain("Guitar");
     expect(audioPresets["picked-bass"].label).toContain("Bass");
     expect(audioPresets.mandolin.description).toContain("paired-course");
-    expect(audioPresets["bowed-sustain"].recommendedUses).toContain("drone");
-    expect(audioPresets["warm-pad"].recommendedUses).toContain("drone");
+    expect(isAudioPresetId("steel-string")).toBe(false);
+    expect(isAudioPresetId("nylon-string")).toBe(false);
+    expect(isAudioPresetId("bowed-sustain")).toBe(false);
   });
 });

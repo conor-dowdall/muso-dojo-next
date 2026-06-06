@@ -212,8 +212,8 @@ export function InstrumentMenuDialog({
               `Use ${preset.label} playback sound`
             }
             onChange={handleAudioPresetChange}
-            recommendedUse="preview"
             selectedPresetId={resolvedAudioPresetId}
+            surface="instrument"
           />
         </DisclosureListItem>
 

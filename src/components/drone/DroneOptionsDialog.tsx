@@ -78,8 +78,8 @@ export function DroneOptionsDialog({
               `Use ${preset.label} playback sound`
             }
             onChange={handleAudioPresetChange}
-            recommendedUse="drone"
             selectedPresetId={audioPresetId}
+            surface="drone"
           />
         </DisclosureListItem>
 

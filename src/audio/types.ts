@@ -3,23 +3,18 @@ export type AudioUse = "preview" | "tuning" | "drone" | "exercise";
 export type AudioPresetId =
   | "reference-tone"
   | "piano"
-  | "electric-keys"
-  | "steel-string"
+  | "plucked-string"
   | "distortion-guitar"
-  | "nylon-string"
   | "picked-bass"
   | "mandolin"
   | "bowed-strings"
-  | "bowed-sustain"
   | "soft-organ"
   | "warm-pad"
   | "glass-bell"
-  | "hollow-synth"
-  | "fuzz-pluck"
-  | "bit-glow";
+  | "hollow-synth";
 
 export type AudioPresetFamily = "generated" | "sample";
-export type AudioPresetCategory = "core" | "instrument" | "character" | "weird";
+export type AudioPresetSurface = "instrument" | "drone";
 
 export type AudioVoiceHandle = string & {
   readonly __audioVoiceHandle: unique symbol;
@@ -114,13 +109,12 @@ export interface HarmonicVoiceConfig {
 }
 
 export interface AudioPreset {
-  category: AudioPresetCategory;
+  availableOn: readonly AudioPresetSurface[];
   defaultDurationSeconds: number;
   description?: string;
   family: AudioPresetFamily;
   id: AudioPresetId;
   label: string;
-  recommendedUses: readonly AudioUse[];
   voice: HarmonicVoiceConfig;
 }
 

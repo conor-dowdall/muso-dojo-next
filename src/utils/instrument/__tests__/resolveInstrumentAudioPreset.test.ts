@@ -8,7 +8,9 @@ import {
 describe("resolveInstrumentAudioPreset", () => {
   it("uses broad defaults when no concrete instrument context is available", () => {
     expect(getDefaultInstrumentAudioPresetId("keyboard")).toBe("piano");
-    expect(getDefaultInstrumentAudioPresetId("fretboard")).toBe("steel-string");
+    expect(getDefaultInstrumentAudioPresetId("fretboard")).toBe(
+      "plucked-string",
+    );
   });
 
   it("uses concrete fretboard instruments to choose a better default", () => {
@@ -16,7 +18,7 @@ describe("resolveInstrumentAudioPreset", () => {
       resolveInstrumentAudioPresetId("fretboard", undefined, {
         fretboardInstrument: "guitar",
       }),
-    ).toBe("steel-string");
+    ).toBe("plucked-string");
     expect(
       resolveInstrumentAudioPresetId("fretboard", undefined, {
         fretboardInstrument: "bassGuitar",
@@ -31,7 +33,7 @@ describe("resolveInstrumentAudioPreset", () => {
       resolveInstrumentAudioPresetId("fretboard", undefined, {
         fretboardInstrument: "ukulele",
       }),
-    ).toBe("nylon-string");
+    ).toBe("plucked-string");
     expect(
       resolveInstrumentAudioPresetId("fretboard", undefined, {
         fretboardInstrument: "violin",

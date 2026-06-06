@@ -4,15 +4,15 @@ import { type AudioPresetId } from "@/audio/types";
 import { type InstrumentType } from "@/types/session";
 
 const defaultInstrumentAudioPresetIds = {
-  fretboard: "steel-string",
+  fretboard: "plucked-string",
   keyboard: "piano",
 } as const satisfies Record<InstrumentType, AudioPresetId>;
 
 const defaultFretboardInstrumentAudioPresetIds = {
-  guitar: "steel-string",
+  guitar: "plucked-string",
   bassGuitar: "picked-bass",
   mandolin: "mandolin",
-  ukulele: "nylon-string",
+  ukulele: "plucked-string",
   violin: "bowed-strings",
   viola: "bowed-strings",
   cello: "bowed-strings",

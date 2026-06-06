@@ -1,42 +1,22 @@
 "use client";
 
 import {
-  audioPresetCategoryLabels,
-  audioPresetCategoryOrder,
-  audioPresets,
-  isAudioPresetRecommendedForUse,
+  getAudioPresetsForSurface,
   type AudioPreset,
   type AudioPresetId,
-  type AudioUse,
+  type AudioPresetSurface,
 } from "@/audio";
 import {
   DisclosureList,
   DisclosureListChoice,
-  DisclosureListGroup,
 } from "@/components/ui/disclosure-list/DisclosureList";
-import { Typography } from "@/components/ui/typography/Typography";
-import styles from "./AudioPresetChoiceList.module.css";
 
 interface AudioPresetChoiceListProps {
   disabled?: boolean;
   getChoiceAriaLabel: (preset: AudioPreset) => string;
   onChange: (presetId: AudioPresetId) => void;
-  recommendedUse: AudioUse;
   selectedPresetId: AudioPresetId;
-}
-
-export function getAudioPresetGroupsForUse(recommendedUse: AudioUse) {
-  return audioPresetCategoryOrder
-    .map((category) => ({
-      category,
-      label: audioPresetCategoryLabels[category],
-      presets: Object.values(audioPresets).filter(
-        (preset) =>
-          preset.category === category &&
-          isAudioPresetRecommendedForUse(preset, recommendedUse),
-      ),
-    }))
-    .filter((group) => group.presets.length > 0);
+  surface: AudioPresetSurface;
 }
 
 function formatAudioPresetOptionSubtitle(description: string | undefined) {
@@ -47,37 +27,23 @@ export function AudioPresetChoiceList({
   disabled,
   getChoiceAriaLabel,
   onChange,
-  recommendedUse,
   selectedPresetId,
+  surface,
 }: AudioPresetChoiceListProps) {
-  const presetGroups = getAudioPresetGroupsForUse(recommendedUse);
+  const presets = getAudioPresetsForSurface(surface);
 
   return (
-    <DisclosureList grouped groupGap="related" density="compact">
-      {presetGroups.map((group) => (
-        <DisclosureListGroup key={group.category} aria-label={group.label}>
-          <Typography
-            as="div"
-            className={styles.groupLabel}
-            size="xs"
-            variant="muted"
-            weight="semibold"
-            caps
-          >
-            {group.label}
-          </Typography>
-          {group.presets.map((preset) => (
-            <DisclosureListChoice
-              key={preset.id}
-              aria-label={getChoiceAriaLabel(preset)}
-              disabled={disabled}
-              label={preset.label}
-              onClick={() => onChange(preset.id)}
-              selected={preset.id === selectedPresetId}
-              subtitle={formatAudioPresetOptionSubtitle(preset.description)}
-            />
-          ))}
-        </DisclosureListGroup>
+    <DisclosureList density="compact">
+      {presets.map((preset) => (
+        <DisclosureListChoice
+          key={preset.id}
+          aria-label={getChoiceAriaLabel(preset)}
+          disabled={disabled}
+          label={preset.label}
+          onClick={() => onChange(preset.id)}
+          selected={preset.id === selectedPresetId}
+          subtitle={formatAudioPresetOptionSubtitle(preset.description)}
+        />
       ))}
     </DisclosureList>
   );
