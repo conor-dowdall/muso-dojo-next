@@ -30,7 +30,6 @@ const emptyEffectChain: ConnectedAudioEffectChain = {
 export interface AudioMixer {
   dispose: () => void;
   getInput: (use: AudioUse) => GainNode;
-  getMasterAmbiencePresetId: () => MasterAmbiencePresetId;
   setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => void;
 }
 
@@ -179,7 +178,6 @@ export function createAudioMixer({
       compressor?.disconnect();
     },
     getInput: (use) => useInputs[use],
-    getMasterAmbiencePresetId: () => currentMasterAmbiencePresetId,
     setMasterAmbiencePresetId: (presetId) => {
       if (presetId === currentMasterAmbiencePresetId) {
         return;

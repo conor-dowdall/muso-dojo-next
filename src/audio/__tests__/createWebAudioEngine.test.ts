@@ -46,10 +46,12 @@ class MockAudioNode {
   }
 
   connect(destination: AudioNode | AudioParam) {
+    MockAudioContext.connectionCount += 1;
     return destination as AudioNode;
   }
 
   disconnect() {
+    MockAudioContext.disconnectionCount += 1;
     return undefined;
   }
 }
@@ -128,9 +130,11 @@ class MockWaveShaperNode extends MockAudioNode {
 }
 
 class MockAudioContext {
+  static connectionCount = 0;
   static convolverNodeCount = 0;
   static compressorNodeCount = 0;
   static delayNodeCount = 0;
+  static disconnectionCount = 0;
   static gainNodes: MockGainNode[] = [];
   static oscillatorNodeCount = 0;
   static oscillators: MockOscillatorNode[] = [];
@@ -151,9 +155,11 @@ class MockAudioContext {
   }
 
   static resetCounts() {
+    MockAudioContext.connectionCount = 0;
     MockAudioContext.convolverNodeCount = 0;
     MockAudioContext.compressorNodeCount = 0;
     MockAudioContext.delayNodeCount = 0;
+    MockAudioContext.disconnectionCount = 0;
     MockAudioContext.gainNodes = [];
     MockAudioContext.oscillatorNodeCount = 0;
     MockAudioContext.oscillators = [];
@@ -324,6 +330,30 @@ describe("createWebAudioEngine", () => {
       use: "drone",
     });
 
+    expect(MockAudioContext.oscillatorNodeCount).toBe(oscillatorCount);
+  });
+
+  it("reroutes a persistent drone without restarting its oscillators", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    const handle = await engine.createDrone({
+      notes: [{ id: "root", midiNote: 60 }],
+      presetId: "reference-tone",
+      use: "drone",
+    });
+    const connectionCount = MockAudioContext.connectionCount;
+    const disconnectionCount = MockAudioContext.disconnectionCount;
+    const oscillatorCount = MockAudioContext.oscillatorNodeCount;
+
+    engine.updateDrone(handle!, {
+      notes: [{ id: "root", midiNote: 60 }],
+      presetId: "reference-tone",
+      use: "exercise",
+    });
+
+    expect(MockAudioContext.connectionCount).toBe(connectionCount + 1);
+    expect(MockAudioContext.disconnectionCount).toBe(disconnectionCount + 1);
     expect(MockAudioContext.oscillatorNodeCount).toBe(oscillatorCount);
   });
 

@@ -68,7 +68,6 @@ interface ActiveDrone {
 }
 
 interface ActiveDroneVoice {
-  graph: DroneEffectGraph;
   request: DroneNoteRequest;
   voice: ActiveVoice;
 }
@@ -82,26 +81,19 @@ interface DroneEffectGraph {
   presetId: AudioPreset["id"];
   refCount: number;
   tailSeconds: number;
-  use: AudioUse;
   voiceDestination: AudioNode;
 }
 
-function isSharedDroneEffect(effect: VoiceInsertEffectConfig) {
-  return effect.type === "chorus";
-}
-
-function getSharedDroneInsertEffects(
+function partitionDroneInsertEffects(
   effects: readonly VoiceInsertEffectConfig[],
 ) {
-  return effects.length > 0 && effects.every(isSharedDroneEffect)
-    ? effects
-    : [];
-}
+  const canShareEffects =
+    effects.length > 0 && effects.every((effect) => effect.type === "chorus");
 
-function getPerVoiceDroneInsertEffects(
-  effects: readonly VoiceInsertEffectConfig[],
-) {
-  return getSharedDroneInsertEffects(effects).length > 0 ? [] : effects;
+  return {
+    perVoiceEffects: canShareEffects ? [] : effects,
+    sharedEffects: canShareEffects ? effects : [],
+  };
 }
 
 function getScheduleLookaheadSeconds(context: AudioContext) {
@@ -293,13 +285,10 @@ export function createWebAudioEngine(): AudioEngine {
     );
   }
 
-  function createDroneEffectGraph(
-    drone: ActiveDrone,
-    preset: AudioPreset,
-    use: AudioUse,
-  ) {
+  function createDroneEffectGraph(drone: ActiveDrone, preset: AudioPreset) {
     const effects = preset.voice.insertEffects ?? [];
-    const sharedEffects = getSharedDroneInsertEffects(effects);
+    const { perVoiceEffects, sharedEffects } =
+      partitionDroneInsertEffects(effects);
     const input =
       sharedEffects.length > 0 ? drone.context.createGain() : undefined;
     const effectChain = input
@@ -315,11 +304,10 @@ export function createWebAudioEngine(): AudioEngine {
       disposed: false,
       effectChain,
       input,
-      perVoiceEffects: getPerVoiceDroneInsertEffects(effects),
+      perVoiceEffects,
       presetId: preset.id,
       refCount: 0,
       tailSeconds: effectChain?.tailSeconds ?? 0,
-      use,
       voiceDestination: input ?? drone.output,
     };
 
@@ -328,18 +316,13 @@ export function createWebAudioEngine(): AudioEngine {
     return graph;
   }
 
-  function getDroneEffectGraph(
-    drone: ActiveDrone,
-    preset: AudioPreset,
-    use: AudioUse,
-  ) {
+  function getDroneEffectGraph(drone: ActiveDrone, preset: AudioPreset) {
     const currentGraph = drone.currentGraph;
 
     if (
       currentGraph &&
       !currentGraph.disposed &&
-      currentGraph.presetId === preset.id &&
-      currentGraph.use === use
+      currentGraph.presetId === preset.id
     ) {
       if (currentGraph.cleanupTimer !== undefined) {
         window.clearTimeout(currentGraph.cleanupTimer);
@@ -349,7 +332,7 @@ export function createWebAudioEngine(): AudioEngine {
       return currentGraph;
     }
 
-    return createDroneEffectGraph(drone, preset, use);
+    return createDroneEffectGraph(drone, preset);
   }
 
   function warmPresetWaves(context: AudioContext) {
@@ -576,7 +559,7 @@ export function createWebAudioEngine(): AudioEngine {
       return undefined;
     }
 
-    const activeDroneVoice = { graph, request: note, voice };
+    const activeDroneVoice = { request: note, voice };
     activeDroneVoiceRef.current = activeDroneVoice;
     retainDroneEffectGraph(graph);
     drone.voices.set(note.id, activeDroneVoice);
@@ -626,13 +609,11 @@ export function createWebAudioEngine(): AudioEngine {
     notesById,
     preset,
     startTime,
-    use,
   }: {
     drone: ActiveDrone;
     notesById: Map<string, DroneNoteRequest>;
     preset: AudioPreset;
     startTime: number;
-    use: AudioUse;
   }) {
     const previousVoices = [...drone.voices.values()];
 
@@ -645,13 +626,12 @@ export function createWebAudioEngine(): AudioEngine {
     );
     drone.currentGraph = undefined;
     drone.presetId = preset.id;
-    drone.use = use;
 
     if (notesById.size === 0) {
       return;
     }
 
-    const graph = getDroneEffectGraph(drone, preset, use);
+    const graph = getDroneEffectGraph(drone, preset);
 
     notesById.forEach((note) => {
       createDroneVoice({
@@ -674,10 +654,17 @@ export function createWebAudioEngine(): AudioEngine {
     );
     const startTime =
       drone.context.currentTime + getScheduleLookaheadSeconds(drone.context);
-    const presetChanged = drone.presetId !== preset.id || drone.use !== use;
+    const presetChanged = drone.presetId !== preset.id;
+    const useChanged = drone.use !== use;
     const concertPitchChanged = drone.concertPitchHz !== request.concertPitchHz;
 
     drone.concertPitchHz = request.concertPitchHz;
+
+    if (useChanged) {
+      drone.output.disconnect();
+      drone.output.connect(getAudioMixer(drone.context).getInput(use));
+      drone.use = use;
+    }
 
     if (presetChanged) {
       replaceDroneVoices({
@@ -685,7 +672,6 @@ export function createWebAudioEngine(): AudioEngine {
         notesById,
         preset,
         startTime,
-        use,
       });
       return;
     }
@@ -730,7 +716,7 @@ export function createWebAudioEngine(): AudioEngine {
     const graph = [...notesById.keys()].some(
       (noteId) => !drone.voices.has(noteId),
     )
-      ? getDroneEffectGraph(drone, preset, use)
+      ? getDroneEffectGraph(drone, preset)
       : undefined;
 
     notesById.forEach((note, noteId) => {
@@ -744,9 +730,7 @@ export function createWebAudioEngine(): AudioEngine {
         });
       }
     });
-    drone.concertPitchHz = request.concertPitchHz;
     drone.presetId = preset.id;
-    drone.use = use;
   }
 
   function createDroneWithContext(

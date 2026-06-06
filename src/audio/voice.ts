@@ -26,8 +26,6 @@ export interface ActiveVoice {
   envelope: GainNode;
   getGainAtTime: (sampleTime: number) => number;
   handle: AudioVoiceHandle;
-  level: GainNode;
-  levelGain: number;
   peakGain: number;
   releaseSeconds: number;
   scheduleStop: (stopTime: number) => void;
@@ -184,8 +182,6 @@ export function createHarmonicVoice({
         sampleTime,
         startTime,
       }),
-    level,
-    levelGain: voiceGain,
     peakGain: 1,
     releaseSeconds: Math.max(0, voiceConfig.envelope.releaseSeconds),
     scheduleStop: (stopTime: number) => {
@@ -238,8 +234,6 @@ export function createHarmonicVoice({
         startTime,
         rampSeconds,
       );
-
-      voice.levelGain = normalizedLevelGain;
     },
     stop: ({
       releaseSeconds = Math.max(voice.releaseSeconds, minimumReleaseSeconds),
