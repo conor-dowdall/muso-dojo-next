@@ -75,11 +75,6 @@ export interface SessionActions {
   cloneSession: (sessionId: string) => string | undefined;
   removeSession: (sessionId: string) => void;
   renameSession: (sessionId: string, name: string) => void;
-  setSessionCountInBeats: (sessionId: string, countInBeats: number) => void;
-  setSessionMetronomeEnabled: (
-    sessionId: string,
-    metronomeEnabled: boolean,
-  ) => void;
   setSessionTempoBpm: (sessionId: string, tempoBpm: number) => void;
 }
 

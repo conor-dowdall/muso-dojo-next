@@ -6,10 +6,6 @@ import { musoAudioEngine } from "@/audio";
 import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import {
-  DisclosureList,
-  DisclosureListChoice,
-} from "@/components/ui/disclosure-list/DisclosureList";
-import {
   Dialog,
   DialogContent,
   DialogContentSection,
@@ -20,24 +16,15 @@ import {
   RangeSliderGroup,
 } from "@/components/ui/range-slider/RangeSlider";
 import { useAppStore } from "@/stores/appStore";
-import { DEFAULT_SESSION_COUNT_IN_BEATS } from "@/utils/session/sessionDefaults";
 
 export function SessionPulseControl({ sessionId }: { sessionId: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const session = useAppStore((state) => state.sessions[sessionId]);
-  const setSessionCountInBeats = useAppStore(
-    (state) => state.setSessionCountInBeats,
-  );
-  const setSessionMetronomeEnabled = useAppStore(
-    (state) => state.setSessionMetronomeEnabled,
-  );
   const setSessionTempoBpm = useAppStore((state) => state.setSessionTempoBpm);
 
   if (!session) return null;
 
   const tempoBpm = session.tempoBpm ?? 80;
-  const countInBeats = session.countInBeats ?? DEFAULT_SESSION_COUNT_IN_BEATS;
-  const metronomeEnabled = session.metronomeEnabled ?? true;
 
   return (
     <>
@@ -66,10 +53,7 @@ export function SessionPulseControl({ sessionId }: { sessionId: string }) {
       />
 
       <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)} size="standard">
-        <DialogHeader
-          title="Tempo and Count-in"
-          onClose={() => setIsOpen(false)}
-        />
+        <DialogHeader title="Tempo" onClose={() => setIsOpen(false)} />
         <DialogContent layout="stack" menuRhythm="standard">
           <DialogContentSection ariaLabel="Timing">
             <RangeSliderGroup>
@@ -86,38 +70,7 @@ export function SessionPulseControl({ sessionId }: { sessionId: string }) {
                   )
                 }
               />
-              <RangeSlider
-                label="Count-in beats"
-                max={8}
-                min={0}
-                value={countInBeats}
-                valueLabel={
-                  countInBeats === 0
-                    ? "No count-in"
-                    : `${countInBeats} count-in beats`
-                }
-                onChange={(event) =>
-                  setSessionCountInBeats(
-                    sessionId,
-                    event.currentTarget.valueAsNumber,
-                  )
-                }
-              />
             </RangeSliderGroup>
-          </DialogContentSection>
-          <DialogContentSection ariaLabel="Metronome">
-            <DisclosureList>
-              <DisclosureListChoice
-                label="Metronome On"
-                selected={metronomeEnabled}
-                onClick={() => setSessionMetronomeEnabled(sessionId, true)}
-              />
-              <DisclosureListChoice
-                label="Metronome Off"
-                selected={!metronomeEnabled}
-                onClick={() => setSessionMetronomeEnabled(sessionId, false)}
-              />
-            </DisclosureList>
           </DialogContentSection>
         </DialogContent>
       </Dialog>

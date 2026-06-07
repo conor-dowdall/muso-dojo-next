@@ -28,6 +28,7 @@ import {
 import {
   createHarmonicVoice,
   getHarmonicVoiceLevelGain,
+  getVoiceStopSilenceSeconds,
   type ActiveVoice,
 } from "./voice";
 import { resolveHarmonicVoiceConfig } from "./voiceConfig";
@@ -54,6 +55,7 @@ const MIN_NOTE_DURATION_SECONDS = 0.02;
 const CLEANUP_DELAY_SECONDS = 0.05;
 const SILENT_UNLOCK_PULSE_SECONDS = 0.01;
 const AUDIO_RENDER_QUANTUM_FRAMES = 128;
+const ONE_SHOT_RAMP_RENDER_QUANTA = 1;
 const MIN_SCHEDULE_LOOKAHEAD_SECONDS = 0.006;
 const DRONE_MIN_ATTACK_SECONDS = 0.012;
 const DRONE_MIN_RELEASE_SECONDS = 0.04;
@@ -114,6 +116,13 @@ function getScheduleLookaheadSeconds(context: AudioContext) {
   return Math.max(
     MIN_SCHEDULE_LOOKAHEAD_SECONDS,
     (AUDIO_RENDER_QUANTUM_FRAMES * 2) / context.sampleRate,
+  );
+}
+
+function getOneShotMinimumRampSeconds(context: AudioContext) {
+  return (
+    (AUDIO_RENDER_QUANTUM_FRAMES * ONE_SHOT_RAMP_RENDER_QUANTA) /
+    context.sampleRate
   );
 }
 
@@ -513,9 +522,13 @@ export function createWebAudioEngine(): AudioEngine {
       return undefined;
     }
 
+    const minimumRampSeconds = getOneShotMinimumRampSeconds(context);
+
     scheduleOneShotEnvelope({
       durationSeconds,
       envelope: preset.voice.envelope,
+      minimumAttackSeconds: minimumRampSeconds,
+      minimumReleaseSeconds: minimumRampSeconds,
       param: voice.envelope.gain,
       peakGain: voice.peakGain,
       startTime,
@@ -524,13 +537,15 @@ export function createWebAudioEngine(): AudioEngine {
       getOneShotEnvelopeGainAtTime({
         durationSeconds,
         envelope: preset.voice.envelope,
+        minimumAttackSeconds: minimumRampSeconds,
+        minimumReleaseSeconds: minimumRampSeconds,
         peakGain: voice.peakGain,
         sampleTime,
         startTime,
       });
 
     const stopTime = startTime + durationSeconds;
-    voice.scheduleStop(stopTime);
+    voice.scheduleStop(stopTime + getVoiceStopSilenceSeconds(context));
 
     return voice.handle;
   }

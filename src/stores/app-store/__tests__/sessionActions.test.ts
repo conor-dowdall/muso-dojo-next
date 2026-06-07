@@ -31,28 +31,13 @@ describe("session app store actions", () => {
     expect(Object.keys(store.getState().sessions)).toEqual([sessionId]);
   });
 
-  it("updates persisted session pulse settings", () => {
+  it("updates the persisted session tempo", () => {
     const store = createTestStore();
 
     store.getState().setSessionTempoBpm(sessionId, 132);
-    store.getState().setSessionCountInBeats(sessionId, 3);
-    store.getState().setSessionMetronomeEnabled(sessionId, false);
 
     expect(store.getState().sessions[sessionId]).toMatchObject({
-      countInBeats: 3,
-      metronomeEnabled: false,
       tempoBpm: 132,
     });
-  });
-
-  it("omits the immediate-playback count-in default", () => {
-    const store = createTestStore();
-
-    store.getState().setSessionCountInBeats(sessionId, 3);
-    store.getState().setSessionCountInBeats(sessionId, 0);
-
-    expect(store.getState().sessions[sessionId]).not.toHaveProperty(
-      "countInBeats",
-    );
   });
 });

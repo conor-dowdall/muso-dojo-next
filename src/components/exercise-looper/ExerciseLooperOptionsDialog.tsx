@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  AudioWaveform,
-  Gauge,
-  ListMusic,
-  PanelsTopLeft,
-  Ruler,
-} from "lucide-react";
+import { AudioWaveform, Gauge, PanelsTopLeft, Ruler } from "lucide-react";
 import { audioPresets, musoAudioEngine, type AudioPresetId } from "@/audio";
 import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
 import { WoodSurfaceChoiceList } from "@/components/appearance/WoodSurfaceChoiceList";
@@ -26,26 +20,16 @@ import { BoundedRangeSliderGroup } from "@/components/ui/range-slider/BoundedRan
 import { woodSurfaces, type WoodSurfaceId } from "@/data/woodSurfaces";
 import { type ExerciseSubdivision } from "@/types/session";
 import {
-  exercisePatternsAreEqual,
   DEFAULT_EXERCISE_END,
   DEFAULT_EXERCISE_START,
 } from "@/utils/exercise-looper/exerciseConfig";
 import {
   getCollectionPosition,
   getCollectionRangeBoundary,
-  getExerciseIntervalRunLabel,
-  getExerciseStackLabel,
   type CollectionRangeBoundary,
-  type ExercisePattern,
 } from "@/utils/exercise-looper/exerciseSequence";
 
-type MenuChoice = "pattern" | "subdivision" | "range" | "sound" | "wood";
-
-const scalePatterns = [
-  { direction: "ascending", kind: "scale", label: "Ascending" },
-  { direction: "descending", kind: "scale", label: "Descending" },
-  { direction: "up-down", kind: "scale", label: "Up and Down" },
-] as const;
+type MenuChoice = "subdivision" | "range" | "sound" | "wood";
 
 const subdivisions = [
   { id: "quarter", label: "Quarter Notes" },
@@ -54,21 +38,6 @@ const subdivisions = [
   { id: "sixteenth", label: "Sixteenth Notes" },
   { id: "sixteenth-triplet", label: "Sixteenth-Note Triplets" },
 ] as const satisfies readonly { id: ExerciseSubdivision; label: string }[];
-
-function patternLabel(pattern: ExercisePattern) {
-  if (pattern.kind === "scale") {
-    return (
-      scalePatterns.find((choice) => choice.direction === pattern.direction)
-        ?.label ?? "Up and Down"
-    );
-  }
-
-  if (pattern.kind === "interval-run") {
-    return `In ${getExerciseIntervalRunLabel(pattern.interval)}`;
-  }
-
-  return getExerciseStackLabel(pattern.size);
-}
 
 export function ExerciseLooperOptionsDialog({
   audioPresetId,
@@ -80,15 +49,12 @@ export function ExerciseLooperOptionsDialog({
   onAudioPresetIdChange,
   onClone,
   onClose,
-  onPatternChange,
   onRangeChange,
   onRemove,
   onSubdivisionChange,
   onWoodChange,
-  pattern,
   start = DEFAULT_EXERCISE_START,
   subdivision,
-  supportsTertianExercises,
   wood,
 }: {
   audioPresetId: AudioPresetId;
@@ -100,7 +66,6 @@ export function ExerciseLooperOptionsDialog({
   onAudioPresetIdChange: (value: AudioPresetId) => void;
   onClone?: () => void;
   onClose: () => void;
-  onPatternChange: (value: ExercisePattern) => void;
   onRangeChange: (
     start: CollectionRangeBoundary,
     end: CollectionRangeBoundary,
@@ -108,10 +73,8 @@ export function ExerciseLooperOptionsDialog({
   onRemove?: () => void;
   onSubdivisionChange: (value: ExerciseSubdivision) => void;
   onWoodChange: (value: WoodSurfaceId) => void;
-  pattern: ExercisePattern;
   start?: CollectionRangeBoundary;
   subdivision: ExerciseSubdivision;
-  supportsTertianExercises: boolean;
   wood: WoodSurfaceId;
 }) {
   const { isOpen: isChoiceOpen, toggleChoice } =
@@ -133,63 +96,6 @@ export function ExerciseLooperOptionsDialog({
       onClose={onClose}
     >
       <DisclosureListGroup>
-        <DisclosureListItem
-          ariaLabel={`Pattern. Current: ${patternLabel(pattern)}`}
-          icon={<ListMusic />}
-          isOpen={isChoiceOpen("pattern")}
-          label="Pattern"
-          preview={patternLabel(pattern)}
-          panelVariant="menu"
-          onToggle={() => toggleChoice("pattern")}
-        >
-          <DisclosureList density="compact">
-            {scalePatterns.map(({ label, ...choice }) => (
-              <DisclosureListChoice
-                key={choice.direction}
-                label={label}
-                selected={exercisePatternsAreEqual(pattern, choice)}
-                onClick={() => onPatternChange(choice)}
-              />
-            ))}
-            {supportsTertianExercises
-              ? Array.from({ length: 12 }, (_, index) => index + 2).map(
-                  (interval) => {
-                    const choice = {
-                      interval,
-                      kind: "interval-run",
-                    } as const;
-                    return (
-                      <DisclosureListChoice
-                        key={`interval-${interval}`}
-                        label={`In ${getExerciseIntervalRunLabel(interval)}`}
-                        selected={exercisePatternsAreEqual(pattern, choice)}
-                        onClick={() => onPatternChange(choice)}
-                      />
-                    );
-                  },
-                )
-              : null}
-            {supportsTertianExercises
-              ? Array.from({ length: 6 }, (_, index) => index + 2).map(
-                  (size) => {
-                    const choice = {
-                      kind: "diatonic-stack",
-                      size,
-                    } as const;
-                    return (
-                      <DisclosureListChoice
-                        key={`stack-${size}`}
-                        label={getExerciseStackLabel(size)}
-                        selected={exercisePatternsAreEqual(pattern, choice)}
-                        onClick={() => onPatternChange(choice)}
-                      />
-                    );
-                  },
-                )
-              : null}
-          </DisclosureList>
-        </DisclosureListItem>
-
         <DisclosureListItem
           ariaLabel="Note division"
           icon={<Gauge />}

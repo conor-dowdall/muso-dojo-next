@@ -579,6 +579,23 @@ describe("createWebAudioEngine", () => {
     expect(MockAudioContext.bufferSourceStartTimes).toEqual([1.5]);
   });
 
+  it("keeps one-shot oscillators alive briefly after their envelope is silent", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    const group = engine.createPlaybackGroup();
+    engine.scheduleNote({
+      durationSeconds: 0.2,
+      group,
+      midiNote: 60,
+      startTime: 1.25,
+      use: "exercise",
+    });
+
+    expect(MockAudioContext.oscillatorStopTimes.at(-1)).toBeGreaterThan(1.45);
+  });
+
   it("cancels queued playback groups and emits Stop All separately from reset", async () => {
     installMockAudioWindow();
 

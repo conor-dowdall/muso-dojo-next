@@ -8,12 +8,20 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from "react";
-import { Play, Square, WavesArrowDown, WavesArrowUp } from "lucide-react";
+import {
+  Minus,
+  Play,
+  Plus,
+  Square,
+  WavesArrowDown,
+  WavesArrowUp,
+} from "lucide-react";
 import { getDefaultAudioPresetId, type AudioPresetId } from "@/audio";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
 import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeaderActions";
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
+import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import {
@@ -32,19 +40,23 @@ import {
   EXERCISE_MAX_OCTAVE_OFFSET,
   EXERCISE_MIN_OCTAVE_OFFSET,
   exercisePatternsAreEqual,
+  getExerciseDegreeOptions,
+  getNearestExerciseDegree,
 } from "@/utils/exercise-looper/exerciseConfig";
 import {
   createExerciseSequence,
   EXERCISE_MAX_OCTAVE_SPAN,
   getExerciseAnchorPositionBounds,
   getCollectionRangeBoundary,
+  getExerciseIntervalLabel,
   type ExerciseDisplayNote,
   type CollectionRangeBoundary,
   type ExercisePattern,
+  type ExercisePatternMode,
+  type ExerciseScaleDirection,
 } from "@/utils/exercise-looper/exerciseSequence";
 import { formatMidiNote } from "@/utils/music-theory/midiNote";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
-import { DEFAULT_SESSION_COUNT_IN_BEATS } from "@/utils/session/sessionDefaults";
 import { ExerciseLooperOptionsDialog } from "./ExerciseLooperOptionsDialog";
 import styles from "./ExerciseLooperModule.module.css";
 
@@ -103,11 +115,27 @@ function getLooperRowClassName(rowCount: number) {
   }
 }
 
+const directionChoices = [
+  { direction: "ascending", label: "Ascending" },
+  { direction: "descending", label: "Descending" },
+  { direction: "up-down", label: "Up and Down" },
+] as const satisfies readonly {
+  direction: ExerciseScaleDirection;
+  label: string;
+}[];
+
+const patternModeChoices = [
+  { label: "Single", mode: "single" },
+  { label: "In", mode: "interval" },
+  { label: "Up to", mode: "extension" },
+] as const satisfies readonly {
+  label: string;
+  mode: ExercisePatternMode;
+}[];
+
 export function ExerciseLooperModule({
   audioPresetId,
-  countInBeats = DEFAULT_SESSION_COUNT_IN_BEATS,
   end = DEFAULT_EXERCISE_END,
-  metronomeEnabled = true,
   moduleId,
   noteCollectionKey,
   octaveOffset = 0,
@@ -129,9 +157,7 @@ export function ExerciseLooperModule({
   wood = DEFAULT_WOOD_SURFACE_ID,
 }: {
   audioPresetId?: AudioPresetId;
-  countInBeats?: number;
   end?: CollectionRangeBoundary;
-  metronomeEnabled?: boolean;
   moduleId: string;
   noteCollectionKey: Parameters<
     typeof createExerciseSequence
@@ -168,10 +194,13 @@ export function ExerciseLooperModule({
       }),
     [end, noteCollectionKey, octaveOffset, pattern, rootNote, start],
   );
-  const effectivePattern =
-    requestedSequence.supportsTertianExercises || pattern.kind === "scale"
-      ? pattern
-      : DEFAULT_EXERCISE_PATTERN;
+  const effectivePattern = useMemo(
+    () =>
+      requestedSequence.supportsTertianExercises || pattern.mode !== "extension"
+        ? pattern
+        : { ...pattern, mode: "single" as const },
+    [pattern, requestedSequence.supportsTertianExercises],
+  );
   const sequence = useMemo(
     () =>
       exercisePatternsAreEqual(effectivePattern, pattern)
@@ -207,9 +236,7 @@ export function ExerciseLooperModule({
   );
   const playback = useExerciseLooperPlayback({
     audioPresetId,
-    countInBeats,
     id: moduleId,
-    metronomeEnabled,
     steps: sequence.steps,
     subdivision,
     tempoBpm,
@@ -294,6 +321,17 @@ export function ExerciseLooperModule({
     octaveOffset < EXERCISE_MAX_OCTAVE_OFFSET &&
     firstPosition >= higherOctaveBounds.min &&
     lastPosition <= higherOctaveBounds.max;
+  const degreeOptions = getExerciseDegreeOptions(effectivePattern.mode);
+  const degreeIndex = degreeOptions.indexOf(effectivePattern.degree);
+  const canDecreaseDegree =
+    effectivePattern.mode !== "single" && degreeIndex > 0;
+  const canIncreaseDegree =
+    effectivePattern.mode !== "single" &&
+    degreeIndex >= 0 &&
+    degreeIndex < degreeOptions.length - 1;
+  const intervalLabel = getExerciseIntervalLabel(effectivePattern.degree);
+  const degreeLabel =
+    effectivePattern.mode === "interval" ? `${intervalLabel}s` : intervalLabel;
 
   useEffect(() => {
     if (!exercisePatternsAreEqual(effectivePattern, pattern)) {
@@ -342,6 +380,21 @@ export function ExerciseLooperModule({
     onPointerDown: (event: PointerEvent<HTMLButtonElement>) =>
       activateOnPointerDown(event, action),
   });
+  const updatePattern = (patch: Partial<ExercisePattern>) => {
+    onPatternChange?.({ ...effectivePattern, ...patch });
+  };
+  const setPatternMode = (mode: ExercisePatternMode) => {
+    if (mode === "extension" && !sequence.supportsTertianExercises) return;
+
+    updatePattern({
+      degree: getNearestExerciseDegree(effectivePattern.degree, mode),
+      mode,
+    });
+  };
+  const stepDegree = (offset: -1 | 1) => {
+    const nextDegree = degreeOptions[degreeIndex + offset];
+    if (nextDegree !== undefined) updatePattern({ degree: nextDegree });
+  };
 
   return (
     <>
@@ -386,45 +439,149 @@ export function ExerciseLooperModule({
         headerActionsGrow
       >
         <div className={styles.surface}>
-          <div
-            className={styles.controls}
-            role="group"
-            aria-label="Exercise Looper playback controls"
-          >
-            <IconButton
-              {...toolActionProps(() => {
-                if (canShiftDown) onOctaveOffsetChange?.(octaveOffset - 1);
-              })}
-              aria-disabled={!canShiftDown ? true : undefined}
-              aria-label="Shift exercise down one octave"
-              className={styles.toolButton}
-              icon={<WavesArrowDown />}
-              shouldYield={false}
-              size="lg"
-            />
-            <IconButton
-              {...toolActionProps(
-                playback.isPlaying ? playback.stop : playback.start,
-              )}
-              aria-label={
-                playback.isPlaying ? "Stop exercise" : "Play exercise"
-              }
-              className={styles.toolButton}
-              icon={playback.isPlaying ? <Square /> : <Play />}
-              shouldYield={false}
-              size="lg"
-            />
-            <IconButton
-              {...toolActionProps(() => {
-                if (canShiftUp) onOctaveOffsetChange?.(octaveOffset + 1);
-              })}
-              aria-disabled={!canShiftUp ? true : undefined}
-              aria-label="Shift exercise up one octave"
-              className={styles.toolButton}
-              icon={<WavesArrowUp />}
-              shouldYield={false}
-              size="lg"
-            />
+          <div className={styles.controlDeck}>
+            <div
+              className={styles.controls}
+              role="group"
+              aria-label="Exercise Looper playback controls"
+            >
+              <IconButton
+                {...toolActionProps(() => {
+                  if (canShiftDown) onOctaveOffsetChange?.(octaveOffset - 1);
+                })}
+                aria-disabled={!canShiftDown ? true : undefined}
+                aria-label="Shift exercise down one octave"
+                className={styles.toolButton}
+                icon={<WavesArrowDown />}
+                shouldYield={false}
+                size="lg"
+              />
+              <IconButton
+                {...toolActionProps(
+                  playback.isPlaying ? playback.stop : playback.start,
+                )}
+                aria-label={
+                  playback.isPlaying ? "Stop exercise" : "Play exercise"
+                }
+                className={styles.toolButton}
+                icon={playback.isPlaying ? <Square /> : <Play />}
+                shouldYield={false}
+                size="lg"
+              />
+              <IconButton
+                {...toolActionProps(() => {
+                  if (canShiftUp) onOctaveOffsetChange?.(octaveOffset + 1);
+                })}
+                aria-disabled={!canShiftUp ? true : undefined}
+                aria-label="Shift exercise up one octave"
+                className={styles.toolButton}
+                icon={<WavesArrowUp />}
+                shouldYield={false}
+                size="lg"
+              />
+            </div>
+
+            <div
+              className={styles.patternControls}
+              role="group"
+              aria-label="Exercise pattern"
+            >
+              <div
+                className={styles.directionControls}
+                role="group"
+                aria-label="Direction"
+              >
+                {directionChoices.map((choice) => (
+                  <Button
+                    key={choice.direction}
+                    {...toolActionProps(() =>
+                      updatePattern({ direction: choice.direction }),
+                    )}
+                    aria-label={choice.label}
+                    className={styles.patternButton}
+                    density="compact"
+                    label={choice.label}
+                    selected={effectivePattern.direction === choice.direction}
+                    shouldYield={false}
+                    size="sm"
+                  />
+                ))}
+              </div>
+
+              <div className={styles.patternDetailControls}>
+                <div
+                  className={styles.modeControls}
+                  role="group"
+                  aria-label="Note pattern"
+                >
+                  {patternModeChoices.map((choice) => {
+                    const unavailable =
+                      choice.mode === "extension" &&
+                      !sequence.supportsTertianExercises;
+                    const ariaLabel =
+                      choice.mode === "single"
+                        ? "Single notes"
+                        : choice.mode === "interval"
+                          ? `In ${intervalLabel}s`
+                          : `Up to the ${intervalLabel}`;
+
+                    return (
+                      <Button
+                        key={choice.mode}
+                        {...toolActionProps(() => {
+                          if (!unavailable) setPatternMode(choice.mode);
+                        })}
+                        aria-disabled={unavailable ? true : undefined}
+                        aria-label={ariaLabel}
+                        className={styles.patternButton}
+                        density="compact"
+                        label={choice.label}
+                        selected={effectivePattern.mode === choice.mode}
+                        shouldYield={false}
+                        size="sm"
+                      />
+                    );
+                  })}
+                </div>
+
+                <div
+                  className={styles.degreeControls}
+                  role="group"
+                  aria-label="Interval or extension"
+                  data-unavailable={effectivePattern.mode === "single"}
+                >
+                  <IconButton
+                    {...toolActionProps(() => {
+                      if (canDecreaseDegree) stepDegree(-1);
+                    })}
+                    aria-disabled={!canDecreaseDegree ? true : undefined}
+                    aria-label="Decrease degree"
+                    className={`${styles.patternButton} ${styles.degreeButton}`}
+                    icon={<Minus />}
+                    shouldYield={false}
+                    size="sm"
+                  />
+                  <output
+                    className={styles.degreeDisplay}
+                    aria-label={`Selected degree: ${degreeLabel}`}
+                    aria-live="polite"
+                  >
+                    {degreeLabel}
+                  </output>
+                  <IconButton
+                    {...toolActionProps(() => {
+                      if (canIncreaseDegree) stepDegree(1);
+                    })}
+                    aria-disabled={!canIncreaseDegree ? true : undefined}
+                    aria-label="Increase degree"
+                    className={`${styles.patternButton} ${styles.degreeButton}`}
+                    icon={<Plus />}
+                    shouldYield={false}
+                    size="sm"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className={styles.noteStack}>
@@ -493,15 +650,12 @@ export function ExerciseLooperModule({
           isOpen={isOptionsOpen}
           maxAnchorPosition={maxLastPosition}
           minAnchorPosition={bounds.min}
-          pattern={effectivePattern}
           start={getCollectionRangeBoundary(firstPosition, collectionSize)}
           subdivision={subdivision}
-          supportsTertianExercises={sequence.supportsTertianExercises}
           wood={wood}
           onAudioPresetIdChange={(value) => onAudioPresetIdChange?.(value)}
           onClone={onClone}
           onClose={() => setIsOptionsOpen(false)}
-          onPatternChange={(value) => onPatternChange?.(value)}
           onRangeChange={setRange}
           onRemove={onRemove}
           onSubdivisionChange={(value) => onSubdivisionChange?.(value)}

@@ -192,11 +192,9 @@ export interface MusicPartConfig {
 }
 
 export interface SessionConfig {
-  countInBeats?: number;
   id: string;
   name: string;
   lastModified: string;
-  metronomeEnabled?: boolean;
   parts: MusicPartConfig[];
   tempoBpm?: number;
 }

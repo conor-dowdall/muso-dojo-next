@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   createExerciseSequence,
   getExerciseIntervalLabel,
-  getExerciseIntervalRunLabel,
-  getExerciseStackLabel,
 } from "@/utils/exercise-looper/exerciseSequence";
 
 describe("createExerciseSequence", () => {
@@ -74,7 +72,7 @@ describe("createExerciseSequence", () => {
     const sequence = createExerciseSequence({
       end: { octave: 0, stepOffset: 2 },
       noteCollectionKey: "ionian",
-      pattern: { interval: 3, kind: "interval-run" },
+      pattern: { degree: 3, direction: "ascending", mode: "interval" },
       rootNote: "C",
     });
 
@@ -87,7 +85,7 @@ describe("createExerciseSequence", () => {
     const sequence = createExerciseSequence({
       end: { octave: 0, stepOffset: 0 },
       noteCollectionKey: "melodicMinor",
-      pattern: { kind: "diatonic-stack", size: 7 },
+      pattern: { degree: 13, direction: "ascending", mode: "extension" },
       rootNote: "C",
     });
 
@@ -95,6 +93,28 @@ describe("createExerciseSequence", () => {
       48, 51, 55, 59, 62, 65, 69,
     ]);
     expect(sequence.supportsTertianExercises).toBe(true);
+  });
+
+  it("applies direction to interval and extension patterns", () => {
+    const intervalSequence = createExerciseSequence({
+      end: { octave: 0, stepOffset: 2 },
+      noteCollectionKey: "ionian",
+      pattern: { degree: 3, direction: "descending", mode: "interval" },
+      rootNote: "C",
+    });
+    const extensionSequence = createExerciseSequence({
+      end: { octave: 0, stepOffset: 2 },
+      noteCollectionKey: "ionian",
+      pattern: { degree: 5, direction: "up-down", mode: "extension" },
+      rootNote: "C",
+    });
+
+    expect(intervalSequence.steps.map((step) => step.note.midi)).toEqual([
+      52, 55, 50, 53, 48, 52,
+    ]);
+    expect(extensionSequence.steps.map((step) => step.note.midi)).toEqual([
+      48, 52, 55, 50, 53, 57, 52, 55, 59, 50, 53, 57,
+    ]);
   });
 
   it("does not advertise tertian exercises for chromatic collections", () => {
@@ -107,10 +127,8 @@ describe("createExerciseSequence", () => {
 });
 
 describe("exercise labels", () => {
-  it("formats interval and stack choices", () => {
+  it("formats interval choices", () => {
     expect(getExerciseIntervalLabel(3)).toBe("3rd");
     expect(getExerciseIntervalLabel(11)).toBe("11th");
-    expect(getExerciseIntervalRunLabel(3)).toBe("Thirds");
-    expect(getExerciseStackLabel(7)).toBe("Thirteenths");
   });
 });

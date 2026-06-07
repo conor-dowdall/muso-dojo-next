@@ -6,20 +6,20 @@ import {
 import {
   EXERCISE_INTERVAL_MAX,
   EXERCISE_INTERVAL_MIN,
-  EXERCISE_STACK_SIZE_MAX,
-  EXERCISE_STACK_SIZE_MIN,
   type CollectionRangeBoundary,
   type ExercisePattern,
+  type ExercisePatternMode,
 } from "./exerciseSequence";
 import { type ExerciseSubdivision } from "@/types/session";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 
 export const DEFAULT_EXERCISE_PATTERN = {
+  degree: 3,
   direction: "up-down",
-  kind: "scale",
+  mode: "single",
 } as const satisfies ExercisePattern;
 export const DEFAULT_EXERCISE_SUBDIVISION =
-  "eighth" satisfies ExerciseSubdivision;
+  "quarter" satisfies ExerciseSubdivision;
 export const DEFAULT_EXERCISE_START = {
   octave: 0,
   stepOffset: 0,
@@ -30,6 +30,11 @@ export const DEFAULT_EXERCISE_END = {
 } as const satisfies CollectionRangeBoundary;
 export const EXERCISE_MIN_OCTAVE_OFFSET = -4;
 export const EXERCISE_MAX_OCTAVE_OFFSET = 5;
+export const EXERCISE_INTERVAL_DEGREES = Array.from(
+  { length: EXERCISE_INTERVAL_MAX - EXERCISE_INTERVAL_MIN + 1 },
+  (_, index) => index + EXERCISE_INTERVAL_MIN,
+);
+export const EXERCISE_EXTENSION_DEGREES = [3, 5, 7, 9, 11, 13] as const;
 
 const subdivisions = {
   quarter: true,
@@ -81,62 +86,67 @@ export function normalizeCollectionRangeBoundary(
 export function normalizeExercisePattern(
   value: unknown,
 ): ExercisePattern | undefined {
-  if (!isRecord(value)) {
+  if (
+    !isRecord(value) ||
+    typeof value.degree !== "number" ||
+    !Number.isInteger(value.degree) ||
+    value.degree < EXERCISE_INTERVAL_MIN ||
+    value.degree > EXERCISE_INTERVAL_MAX ||
+    (value.direction !== "ascending" &&
+      value.direction !== "descending" &&
+      value.direction !== "up-down") ||
+    (value.mode !== "single" &&
+      value.mode !== "interval" &&
+      value.mode !== "extension")
+  ) {
     return undefined;
   }
 
   if (
-    value.kind === "scale" &&
-    (value.direction === "ascending" ||
-      value.direction === "descending" ||
-      value.direction === "up-down")
+    value.mode === "extension" &&
+    !EXERCISE_EXTENSION_DEGREES.includes(
+      value.degree as (typeof EXERCISE_EXTENSION_DEGREES)[number],
+    )
   ) {
-    return { direction: value.direction, kind: value.kind };
+    return undefined;
   }
 
-  if (
-    value.kind === "interval-run" &&
-    typeof value.interval === "number" &&
-    Number.isInteger(value.interval) &&
-    value.interval >= EXERCISE_INTERVAL_MIN &&
-    value.interval <= EXERCISE_INTERVAL_MAX
-  ) {
-    return { interval: value.interval, kind: value.kind };
-  }
-
-  if (
-    value.kind === "diatonic-stack" &&
-    typeof value.size === "number" &&
-    Number.isInteger(value.size) &&
-    value.size >= EXERCISE_STACK_SIZE_MIN &&
-    value.size <= EXERCISE_STACK_SIZE_MAX
-  ) {
-    return { kind: value.kind, size: value.size };
-  }
-
-  return undefined;
+  return {
+    degree: value.degree,
+    direction: value.direction,
+    mode: value.mode,
+  };
 }
 
 export function exercisePatternsAreEqual(
   left: ExercisePattern,
   right: ExercisePattern,
 ) {
-  if (left.kind !== right.kind) {
-    return false;
-  }
-
-  if (left.kind === "scale" && right.kind === "scale") {
-    return left.direction === right.direction;
-  }
-
-  if (left.kind === "interval-run" && right.kind === "interval-run") {
-    return left.interval === right.interval;
-  }
-
   return (
-    left.kind === "diatonic-stack" &&
-    right.kind === "diatonic-stack" &&
-    left.size === right.size
+    left.degree === right.degree &&
+    left.direction === right.direction &&
+    left.mode === right.mode
+  );
+}
+
+export function getExerciseDegreeOptions(
+  mode: ExercisePatternMode,
+): readonly number[] {
+  return mode === "extension"
+    ? EXERCISE_EXTENSION_DEGREES
+    : EXERCISE_INTERVAL_DEGREES;
+}
+
+export function getNearestExerciseDegree(
+  degree: number,
+  mode: ExercisePatternMode,
+) {
+  const options = getExerciseDegreeOptions(mode);
+
+  return options.reduce((nearest, candidate) =>
+    Math.abs(candidate - degree) < Math.abs(nearest - degree)
+      ? candidate
+      : nearest,
   );
 }
 

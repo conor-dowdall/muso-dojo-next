@@ -2,9 +2,14 @@ import {
   createLookaheadScheduler,
   type LookaheadScheduler,
   type LookaheadSchedulerEvent,
+  type LookaheadSchedulerOptions,
 } from "./lookaheadScheduler";
 import { musoAudioEngine } from "./createWebAudioEngine";
-import { type AudioPresetId, type PlaybackGroupHandle } from "./types";
+import {
+  type AudioEngine,
+  type AudioPresetId,
+  type PlaybackGroupHandle,
+} from "./types";
 
 const START_LOOKAHEAD_SECONDS = 0.08;
 const NOTE_GATE_RATIO = 0.9;
@@ -17,17 +22,14 @@ export interface ExercisePlaybackEvent {
 }
 
 export interface ExercisePlaybackRequest {
-  countInBeats: number;
   events: readonly ExercisePlaybackEvent[];
   id: string;
-  metronomeEnabled: boolean;
   presetId: AudioPresetId;
   tempoBpm: number;
 }
 
 export interface ExercisePlaybackSnapshot {
   activeId?: string;
-  countInEndTime?: number;
   cycleDuration?: number;
   events: readonly ExercisePlaybackEvent[];
   originTime?: number;
@@ -37,10 +39,24 @@ export interface ExercisePlaybackSnapshot {
 
 interface ActiveExercisePlayback {
   group: PlaybackGroupHandle;
-  metronomeScheduler?: LookaheadScheduler;
   noteScheduler: LookaheadScheduler;
   snapshot: ExercisePlaybackSnapshot;
 }
+
+export type ExercisePlaybackAudioEngine = Pick<
+  AudioEngine,
+  | "cancelPlaybackGroup"
+  | "createPlaybackGroup"
+  | "getCurrentTime"
+  | "prime"
+  | "scheduleNote"
+  | "subscribeToReset"
+  | "subscribeToStopAll"
+>;
+
+export type ExerciseSchedulerFactory = (
+  options: LookaheadSchedulerOptions<ExercisePlaybackEvent>,
+) => LookaheadScheduler;
 
 const idleSnapshot: ExercisePlaybackSnapshot = {
   events: [],
@@ -70,16 +86,18 @@ function toSchedulerEvents(
   }));
 }
 
-class ExercisePlaybackCoordinator {
+export class ExercisePlaybackCoordinator {
   private active: ActiveExercisePlayback | undefined;
   private listeners = new Set<() => void>();
-  private retiringGroups = new Map<PlaybackGroupHandle, number>();
   private snapshot: ExercisePlaybackSnapshot = idleSnapshot;
   private startRevision = 0;
 
-  constructor() {
-    musoAudioEngine.subscribeToReset(() => this.reset());
-    musoAudioEngine.subscribeToStopAll(() => this.reset());
+  constructor(
+    private readonly audioEngine: ExercisePlaybackAudioEngine = musoAudioEngine,
+    private readonly createScheduler: ExerciseSchedulerFactory = createLookaheadScheduler,
+  ) {
+    this.audioEngine.subscribeToReset(() => this.reset());
+    this.audioEngine.subscribeToStopAll(() => this.reset());
   }
 
   private emit() {
@@ -88,9 +106,6 @@ class ExercisePlaybackCoordinator {
 
   private reset() {
     this.active?.noteScheduler.stop();
-    this.active?.metronomeScheduler?.stop();
-    this.retiringGroups.forEach((timer) => window.clearTimeout(timer));
-    this.retiringGroups.clear();
     this.active = undefined;
     this.snapshot = idleSnapshot;
     this.startRevision += 1;
@@ -131,8 +146,8 @@ class ExercisePlaybackCoordinator {
 
   async start(request: ExercisePlaybackRequest) {
     const revision = ++this.startRevision;
-    const prepared = await musoAudioEngine.prime();
-    const currentTime = musoAudioEngine.getCurrentTime();
+    const prepared = await this.audioEngine.prime();
+    const currentTime = this.audioEngine.getCurrentTime();
 
     if (
       !prepared ||
@@ -150,56 +165,19 @@ class ExercisePlaybackCoordinator {
 
     const secondsPerBeat = 60 / normalizeTempo(request.tempoBpm);
     const previous = this.active;
-    const shouldHandoff = previous !== undefined;
-    const previousOriginTime = previous?.snapshot.originTime;
-    const previousSecondsPerBeat = previous?.snapshot.secondsPerBeat;
-    const nextBeatTime =
-      previousOriginTime !== undefined && previousSecondsPerBeat !== undefined
-        ? previousOriginTime +
-          Math.max(
-            0,
-            Math.ceil(
-              (currentTime - previousOriginTime) / previousSecondsPerBeat +
-                0.0001,
-            ),
-          ) *
-            previousSecondsPerBeat
-        : currentTime + START_LOOKAHEAD_SECONDS;
-    const countInBeats = shouldHandoff
-      ? 0
-      : Math.min(8, Math.max(0, Math.round(request.countInBeats)));
-    const countInStartTime = shouldHandoff
-      ? nextBeatTime
-      : currentTime + START_LOOKAHEAD_SECONDS;
-    const originTime = countInStartTime + countInBeats * secondsPerBeat;
-    const group = musoAudioEngine.createPlaybackGroup();
+    const originTime = currentTime + START_LOOKAHEAD_SECONDS;
 
     previous?.noteScheduler.stop();
-    previous?.metronomeScheduler?.stop();
     if (previous) {
-      const delayMilliseconds = Math.max(0, (originTime - currentTime) * 1000);
-      const timer = window.setTimeout(() => {
-        this.retiringGroups.delete(previous.group);
-        musoAudioEngine.cancelPlaybackGroup(previous.group);
-      }, delayMilliseconds);
-      this.retiringGroups.set(previous.group, timer);
+      this.audioEngine.cancelPlaybackGroup(previous.group);
     }
 
-    if (request.metronomeEnabled) {
-      for (let beat = 0; beat < countInBeats; beat += 1) {
-        musoAudioEngine.scheduleMetronomeClick({
-          accent: beat === 0,
-          group,
-          startTime: countInStartTime + beat * secondsPerBeat,
-        });
-      }
-    }
-
-    const noteScheduler = createLookaheadScheduler({
+    const group = this.audioEngine.createPlaybackGroup();
+    const noteScheduler = this.createScheduler({
       events: toSchedulerEvents(request.events, secondsPerBeat),
-      getCurrentTime: musoAudioEngine.getCurrentTime,
+      getCurrentTime: this.audioEngine.getCurrentTime,
       onSchedule: (scheduledEvent, startTime) => {
-        musoAudioEngine.scheduleNote({
+        this.audioEngine.scheduleNote({
           durationSeconds: scheduledEvent.duration * NOTE_GATE_RATIO,
           group,
           midiNote: scheduledEvent.payload.midi,
@@ -210,21 +188,8 @@ class ExercisePlaybackCoordinator {
         });
       },
     });
-    const metronomeScheduler = request.metronomeEnabled
-      ? createLookaheadScheduler({
-          events: [{ duration: secondsPerBeat, offset: 0, payload: true }],
-          getCurrentTime: musoAudioEngine.getCurrentTime,
-          onSchedule: (_event, startTime) => {
-            musoAudioEngine.scheduleMetronomeClick({
-              group,
-              startTime,
-            });
-          },
-        })
-      : undefined;
     const snapshot: ExercisePlaybackSnapshot = {
       activeId: request.id,
-      countInEndTime: originTime,
       cycleDuration,
       events: request.events,
       originTime,
@@ -234,13 +199,11 @@ class ExercisePlaybackCoordinator {
 
     this.active = {
       group,
-      metronomeScheduler,
       noteScheduler,
       snapshot,
     };
     this.snapshot = snapshot;
     noteScheduler.start(originTime);
-    metronomeScheduler?.start(originTime);
     this.emit();
     return true;
   }
@@ -252,13 +215,7 @@ class ExercisePlaybackCoordinator {
 
     const active = this.active;
     active.noteScheduler.stop();
-    active.metronomeScheduler?.stop();
-    musoAudioEngine.cancelPlaybackGroup(active.group);
-    this.retiringGroups.forEach((timer, group) => {
-      window.clearTimeout(timer);
-      musoAudioEngine.cancelPlaybackGroup(group);
-    });
-    this.retiringGroups.clear();
+    this.audioEngine.cancelPlaybackGroup(active.group);
     this.active = undefined;
     this.snapshot = idleSnapshot;
     this.startRevision += 1;

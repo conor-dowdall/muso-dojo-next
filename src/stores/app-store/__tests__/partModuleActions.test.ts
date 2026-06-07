@@ -224,8 +224,9 @@ describe("part module app store actions", () => {
       "glass-bell",
     );
     state.setExerciseLooperPattern(sessionId, partId, moduleId, {
-      interval: 3,
-      kind: "interval-run",
+      degree: 3,
+      direction: "descending",
+      mode: "interval",
     });
     state.setExerciseLooperSubdivision(
       sessionId,
@@ -248,7 +249,7 @@ describe("part module app store actions", () => {
       audioPresetId: "glass-bell",
       end: { octave: 1, stepOffset: 2 },
       id: moduleId,
-      pattern: { interval: 3, kind: "interval-run" },
+      pattern: { degree: 3, direction: "descending", mode: "interval" },
       subdivision: "sixteenth",
       type: "exercise-looper",
       wood: "ebony",

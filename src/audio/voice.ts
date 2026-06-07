@@ -14,7 +14,7 @@ import { resolveHarmonicVoiceConfig } from "./voiceConfig";
 const AUDIO_RENDER_QUANTUM_FRAMES = 128;
 const VOICE_STOP_SILENCE_RENDER_QUANTA = 3;
 
-function getVoiceStopSilenceSeconds(context: AudioContext) {
+export function getVoiceStopSilenceSeconds(context: AudioContext) {
   return (
     (AUDIO_RENDER_QUANTUM_FRAMES * VOICE_STOP_SILENCE_RENDER_QUANTA) /
     context.sampleRate

@@ -18,25 +18,16 @@ const BASE_ROOT_MIDI = 48;
 
 export const EXERCISE_INTERVAL_MIN = 2;
 export const EXERCISE_INTERVAL_MAX = 13;
-export const EXERCISE_STACK_SIZE_MIN = 2;
-export const EXERCISE_STACK_SIZE_MAX = 7;
 export const EXERCISE_MAX_OCTAVE_SPAN = 4;
 
 export type ExerciseScaleDirection = "ascending" | "descending" | "up-down";
+export type ExercisePatternMode = "single" | "interval" | "extension";
 
-export type ExercisePattern =
-  | {
-      direction: ExerciseScaleDirection;
-      kind: "scale";
-    }
-  | {
-      interval: number;
-      kind: "interval-run";
-    }
-  | {
-      kind: "diatonic-stack";
-      size: number;
-    };
+export interface ExercisePattern {
+  degree: number;
+  direction: ExerciseScaleDirection;
+  mode: ExercisePatternMode;
+}
 
 export interface CollectionRangeBoundary {
   octave: number;
@@ -182,26 +173,27 @@ function createScaleAnchors(
 }
 
 function createPatternPositions(anchor: number, pattern: ExercisePattern) {
-  switch (pattern.kind) {
-    case "scale":
+  switch (pattern.mode) {
+    case "single":
       return [anchor];
-    case "interval-run":
+    case "interval":
       return [
         anchor,
         anchor +
           clampInteger(
-            pattern.interval,
+            pattern.degree,
             EXERCISE_INTERVAL_MIN,
             EXERCISE_INTERVAL_MAX,
           ) -
           1,
       ];
-    case "diatonic-stack": {
-      const size = clampInteger(
-        pattern.size,
-        EXERCISE_STACK_SIZE_MIN,
-        EXERCISE_STACK_SIZE_MAX,
+    case "extension": {
+      const degree = clampInteger(
+        pattern.degree,
+        EXERCISE_INTERVAL_MIN,
+        EXERCISE_INTERVAL_MAX,
       );
+      const size = Math.floor((degree + 1) / 2);
       return Array.from({ length: size }, (_, index) => anchor + index * 2);
     }
   }
@@ -259,7 +251,7 @@ export function createExerciseSequence({
   end = { octave: 1, stepOffset: 0 },
   noteCollectionKey,
   octaveOffset = 0,
-  pattern = { kind: "scale", direction: "up-down" },
+  pattern = { degree: 3, direction: "up-down", mode: "single" },
   rootNote,
   start = { octave: 0, stepOffset: 0 },
 }: {
@@ -338,8 +330,11 @@ export function createExerciseSequence({
     rows[rowIndex]?.push(displayNote);
     return [displayNote];
   });
-  const direction = pattern.kind === "scale" ? pattern.direction : "ascending";
-  const anchors = createScaleAnchors(firstPosition, lastPosition, direction);
+  const anchors = createScaleAnchors(
+    firstPosition,
+    lastPosition,
+    pattern.direction,
+  );
   const steps = anchors.flatMap((anchorPosition) => {
     const positions = createPatternPositions(anchorPosition, pattern);
 
@@ -398,46 +393,4 @@ export function getExerciseIntervalLabel(interval: number) {
             : "th";
 
   return `${resolvedInterval}${suffix}`;
-}
-
-export function getExerciseIntervalRunLabel(interval: number) {
-  const labels = [
-    "Seconds",
-    "Thirds",
-    "Fourths",
-    "Fifths",
-    "Sixths",
-    "Sevenths",
-    "Octaves",
-    "Ninths",
-    "Tenths",
-    "Elevenths",
-    "Twelfths",
-    "Thirteenths",
-  ] as const;
-  const resolvedInterval = clampInteger(
-    interval,
-    EXERCISE_INTERVAL_MIN,
-    EXERCISE_INTERVAL_MAX,
-  );
-  return labels[resolvedInterval - EXERCISE_INTERVAL_MIN];
-}
-
-export function getExerciseStackLabel(size: number) {
-  switch (
-    clampInteger(size, EXERCISE_STACK_SIZE_MIN, EXERCISE_STACK_SIZE_MAX)
-  ) {
-    case 2:
-      return "Thirds";
-    case 3:
-      return "Triads";
-    case 4:
-      return "Sevenths";
-    case 5:
-      return "Ninths";
-    case 6:
-      return "Elevenths";
-    case 7:
-      return "Thirteenths";
-  }
 }

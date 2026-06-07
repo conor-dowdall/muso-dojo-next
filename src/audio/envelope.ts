@@ -32,15 +32,29 @@ function normalizeEnvelope(
 function getOneShotEnvelopeShape(
   envelope: EnvelopeConfig,
   durationSeconds: number,
+  minimumAttackSeconds = 0,
+  minimumReleaseSeconds = 0,
 ): EnvelopeShape {
-  const normalizedEnvelope = normalizeEnvelope(envelope);
+  const normalizedEnvelope = normalizeEnvelope(envelope, minimumAttackSeconds);
   const safeDurationSeconds = normalizeDuration(durationSeconds);
-  const envelopeDuration =
-    normalizedEnvelope.attackSeconds +
+  const attackSeconds = Math.min(
+    normalizedEnvelope.attackSeconds,
+    Math.max(0, safeDurationSeconds - minimumReleaseSeconds),
+  );
+  const remainingSeconds = Math.max(0, safeDurationSeconds - attackSeconds);
+  const releaseFloorSeconds = Math.min(
+    Math.max(0, minimumReleaseSeconds),
+    remainingSeconds,
+  );
+  const requestedReleaseSeconds = Math.max(
+    releaseFloorSeconds,
+    normalizedEnvelope.releaseSeconds,
+  );
+  const requestedFlexibleSeconds =
     normalizedEnvelope.decaySeconds +
-    normalizedEnvelope.releaseSeconds;
+    Math.max(0, requestedReleaseSeconds - releaseFloorSeconds);
 
-  if (safeDurationSeconds === 0 || envelopeDuration === 0) {
+  if (safeDurationSeconds === 0) {
     return {
       ...normalizedEnvelope,
       attackSeconds: 0,
@@ -49,17 +63,28 @@ function getOneShotEnvelopeShape(
     };
   }
 
-  if (envelopeDuration <= safeDurationSeconds) {
-    return normalizedEnvelope;
+  if (requestedFlexibleSeconds <= remainingSeconds - releaseFloorSeconds) {
+    return {
+      ...normalizedEnvelope,
+      attackSeconds,
+      releaseSeconds: requestedReleaseSeconds,
+    };
   }
 
-  const durationScale = safeDurationSeconds / envelopeDuration;
+  const flexibleScale =
+    requestedFlexibleSeconds > 0
+      ? Math.max(0, remainingSeconds - releaseFloorSeconds) /
+        requestedFlexibleSeconds
+      : 0;
 
   return {
     ...normalizedEnvelope,
-    attackSeconds: normalizedEnvelope.attackSeconds * durationScale,
-    decaySeconds: normalizedEnvelope.decaySeconds * durationScale,
-    releaseSeconds: normalizedEnvelope.releaseSeconds * durationScale,
+    attackSeconds,
+    decaySeconds: normalizedEnvelope.decaySeconds * flexibleScale,
+    releaseSeconds:
+      releaseFloorSeconds +
+      Math.max(0, requestedReleaseSeconds - releaseFloorSeconds) *
+        flexibleScale,
   };
 }
 
@@ -160,18 +185,27 @@ export function getAttackDecayEnvelopeGainAtTime({
 export function scheduleOneShotEnvelope({
   durationSeconds,
   envelope,
+  minimumAttackSeconds = 0,
+  minimumReleaseSeconds = 0,
   param,
   peakGain,
   startTime,
 }: {
   durationSeconds: number;
   envelope: EnvelopeConfig;
+  minimumAttackSeconds?: number;
+  minimumReleaseSeconds?: number;
   param: AudioParam;
   peakGain: number;
   startTime: number;
 }) {
   const safeDurationSeconds = normalizeDuration(durationSeconds);
-  const shape = getOneShotEnvelopeShape(envelope, safeDurationSeconds);
+  const shape = getOneShotEnvelopeShape(
+    envelope,
+    safeDurationSeconds,
+    minimumAttackSeconds,
+    minimumReleaseSeconds,
+  );
   const attackEnd = startTime + shape.attackSeconds;
   const decayEnd = attackEnd + shape.decaySeconds;
   const endTime = startTime + safeDurationSeconds;
@@ -211,18 +245,27 @@ export function scheduleOneShotEnvelope({
 export function getOneShotEnvelopeGainAtTime({
   durationSeconds,
   envelope,
+  minimumAttackSeconds = 0,
+  minimumReleaseSeconds = 0,
   peakGain,
   sampleTime,
   startTime,
 }: {
   durationSeconds: number;
   envelope: EnvelopeConfig;
+  minimumAttackSeconds?: number;
+  minimumReleaseSeconds?: number;
   peakGain: number;
   sampleTime: number;
   startTime: number;
 }) {
   const safeDurationSeconds = normalizeDuration(durationSeconds);
-  const shape = getOneShotEnvelopeShape(envelope, safeDurationSeconds);
+  const shape = getOneShotEnvelopeShape(
+    envelope,
+    safeDurationSeconds,
+    minimumAttackSeconds,
+    minimumReleaseSeconds,
+  );
   const endTime = startTime + safeDurationSeconds;
   const releaseStart = endTime - shape.releaseSeconds;
 

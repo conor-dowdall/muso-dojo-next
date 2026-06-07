@@ -3,11 +3,13 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   useSyncExternalStore,
 } from "react";
+import { flushSync } from "react-dom";
 import {
   exercisePlaybackCoordinator,
   getDefaultAudioPresetId,
@@ -61,17 +63,13 @@ function getCurrentOutputTime() {
 
 export function useExerciseLooperPlayback({
   audioPresetId,
-  countInBeats,
   id,
-  metronomeEnabled,
   steps,
   subdivision,
   tempoBpm,
 }: {
   audioPresetId?: AudioPresetId;
-  countInBeats: number;
   id: string;
-  metronomeEnabled: boolean;
   steps: readonly ExerciseSequenceStep[];
   subdivision: ExerciseSubdivision;
   tempoBpm: number;
@@ -90,17 +88,14 @@ export function useExerciseLooperPlayback({
   );
   const request = useMemo(
     () => ({
-      countInBeats,
       events,
       id,
-      metronomeEnabled,
       presetId: audioPresetId ?? getDefaultAudioPresetId("exercise"),
       tempoBpm,
     }),
-    [audioPresetId, countInBeats, events, id, metronomeEnabled, tempoBpm],
+    [audioPresetId, events, id, tempoBpm],
   );
-  const restartKey = JSON.stringify(request);
-  const previousRestartKey = useRef(restartKey);
+  const previousRequest = useRef(request);
 
   const start = useCallback(() => {
     void exercisePlaybackCoordinator.start(request);
@@ -121,12 +116,12 @@ export function useExerciseLooperPlayback({
     [request.presetId],
   );
 
-  useEffect(() => {
-    if (isPlaying && previousRestartKey.current !== restartKey) {
+  useLayoutEffect(() => {
+    if (isPlaying && previousRequest.current !== request) {
       void exercisePlaybackCoordinator.start(request);
     }
-    previousRestartKey.current = restartKey;
-  }, [isPlaying, request, restartKey]);
+    previousRequest.current = request;
+  }, [isPlaying, request]);
 
   useEffect(() => {
     if (!isPlaying || document.visibilityState === "hidden") {
@@ -145,7 +140,9 @@ export function useExerciseLooperPlayback({
 
       if (nextStepIndex !== lastStepIndex) {
         lastStepIndex = nextStepIndex;
-        setActiveStepIndex(nextStepIndex);
+        // Commit before this animation frame paints so the light does not trail
+        // the audible step by an additional browser frame.
+        flushSync(() => setActiveStepIndex(nextStepIndex));
       }
 
       frameId = window.requestAnimationFrame(update);

@@ -3,7 +3,6 @@
 import { useShallow } from "zustand/react/shallow";
 import { ExerciseLooperModule } from "@/components/exercise-looper/ExerciseLooperModule";
 import { useAppStore } from "@/stores/appStore";
-import { DEFAULT_SESSION_COUNT_IN_BEATS } from "@/utils/session/sessionDefaults";
 import { selectExerciseLooperPartModule, selectPart } from "./sessionSelectors";
 
 export function ExerciseLooperPartModuleView({
@@ -30,9 +29,6 @@ export function ExerciseLooperPartModuleView({
       return session && part && looper
         ? {
             ...looper,
-            countInBeats:
-              session.countInBeats ?? DEFAULT_SESSION_COUNT_IN_BEATS,
-            metronomeEnabled: session.metronomeEnabled ?? true,
             noteCollectionKey: part.noteCollectionKey,
             rootNote: part.rootNote,
             tempoBpm: session.tempoBpm ?? 80,
@@ -91,16 +87,8 @@ export function ExerciseLooperPartModuleView({
           value,
         )
       }
-      onPatternChange={
-        isPerformanceMode
-          ? undefined
-          : (value) =>
-              actions.setExerciseLooperPattern(
-                sessionId,
-                partId,
-                moduleId,
-                value,
-              )
+      onPatternChange={(value) =>
+        actions.setExerciseLooperPattern(sessionId, partId, moduleId, value)
       }
       onRemove={
         isPerformanceMode

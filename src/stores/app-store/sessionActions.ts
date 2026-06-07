@@ -1,5 +1,4 @@
 import { createDefaultSessionConfig } from "@/utils/session/createSessionEntities";
-import { DEFAULT_SESSION_COUNT_IN_BEATS } from "@/utils/session/sessionDefaults";
 import {
   createUniqueSessionName,
   normalizeSessionNameForComparison,
@@ -127,46 +126,6 @@ export function createSessionActions(
         updateSessionById(state, sessionId, (session) => ({
           ...session,
           name: trimmedName,
-        })),
-      );
-    },
-    setSessionCountInBeats: (sessionId, countInBeats) => {
-      if (
-        !Number.isInteger(countInBeats) ||
-        countInBeats < 0 ||
-        countInBeats > 8
-      ) {
-        return;
-      }
-      const session = get().sessions[sessionId];
-      if (
-        !session ||
-        (session.countInBeats ?? DEFAULT_SESSION_COUNT_IN_BEATS) ===
-          countInBeats
-      ) {
-        return;
-      }
-
-      set((state) =>
-        updateSessionById(state, sessionId, (session) => ({
-          ...session,
-          countInBeats:
-            countInBeats === DEFAULT_SESSION_COUNT_IN_BEATS
-              ? undefined
-              : countInBeats,
-        })),
-      );
-    },
-    setSessionMetronomeEnabled: (sessionId, metronomeEnabled) => {
-      const session = get().sessions[sessionId];
-      if (!session || (session.metronomeEnabled ?? true) === metronomeEnabled) {
-        return;
-      }
-
-      set((state) =>
-        updateSessionById(state, sessionId, (session) => ({
-          ...session,
-          metronomeEnabled,
         })),
       );
     },
