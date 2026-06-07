@@ -18,6 +18,7 @@ describe("normalizePartModuleConfig", () => {
     const normalizedModule = normalizePartModuleConfig({
       audioPresetId: "warm-pad",
       id: "drone-1",
+      noteCount: 11,
       octaveOffset: 4,
       octaveRowCount: 3,
       type: "drone",
@@ -27,8 +28,8 @@ describe("normalizePartModuleConfig", () => {
     expect(normalizedModule).toStrictEqual({
       audioPresetId: "warm-pad",
       id: "drone-1",
+      noteCount: 11,
       octaveOffset: 4,
-      octaveRowCount: 3,
       type: "drone",
       wood: "maple",
     });
@@ -53,6 +54,7 @@ describe("normalizePartModuleConfig", () => {
       normalizePartModuleConfig({
         audioPresetId: "not-a-preset",
         id: "drone-1",
+        noteCount: 0,
         octaveOffset: 5,
         octaveRowCount: 12,
         type: "drone",

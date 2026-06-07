@@ -146,9 +146,7 @@ describe("part module app store actions", () => {
       .setDroneAudioPresetId(sessionId, partId, addedModuleId, "warm-pad");
     store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 4);
     store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 5);
-    store
-      .getState()
-      .setDroneOctaveRowCount(sessionId, partId, addedModuleId, 3);
+    store.getState().setDroneNoteCount(sessionId, partId, addedModuleId, 5);
     store.getState().setDroneWood(sessionId, partId, addedModuleId, "maple");
 
     const updatedModule = store
@@ -160,8 +158,8 @@ describe("part module app store actions", () => {
     expect(updatedModule).toMatchObject({
       audioPresetId: "warm-pad",
       id: addedModuleId,
+      noteCount: 5,
       octaveOffset: 4,
-      octaveRowCount: 3,
       type: "drone",
       wood: "maple",
     });
@@ -190,12 +188,8 @@ describe("part module app store actions", () => {
       );
     store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 1);
     store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 0);
-    store
-      .getState()
-      .setDroneOctaveRowCount(sessionId, partId, addedModuleId, 2);
-    store
-      .getState()
-      .setDroneOctaveRowCount(sessionId, partId, addedModuleId, 1);
+    store.getState().setDroneNoteCount(sessionId, partId, addedModuleId, 2);
+    store.getState().setDroneNoteCount(sessionId, partId, addedModuleId, 3);
     store.getState().setDroneWood(sessionId, partId, addedModuleId, "maple");
     store.getState().setDroneWood(sessionId, partId, addedModuleId, "rosewood");
 

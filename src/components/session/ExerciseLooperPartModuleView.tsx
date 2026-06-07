@@ -3,6 +3,7 @@
 import { useShallow } from "zustand/react/shallow";
 import { ExerciseLooperModule } from "@/components/exercise-looper/ExerciseLooperModule";
 import { useAppStore } from "@/stores/appStore";
+import { DEFAULT_SESSION_COUNT_IN_BEATS } from "@/utils/session/sessionDefaults";
 import { selectExerciseLooperPartModule, selectPart } from "./sessionSelectors";
 
 export function ExerciseLooperPartModuleView({
@@ -29,7 +30,8 @@ export function ExerciseLooperPartModuleView({
       return session && part && looper
         ? {
             ...looper,
-            countInBeats: session.countInBeats ?? 4,
+            countInBeats:
+              session.countInBeats ?? DEFAULT_SESSION_COUNT_IN_BEATS,
             metronomeEnabled: session.metronomeEnabled ?? true,
             noteCollectionKey: part.noteCollectionKey,
             rootNote: part.rootNote,

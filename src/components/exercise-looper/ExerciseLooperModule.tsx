@@ -8,20 +8,11 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from "react";
-import {
-  LayersMinus,
-  LayersPlus,
-  ListMinus,
-  ListPlus,
-  Play,
-  RotateCcw,
-  Square,
-  WavesArrowDown,
-  WavesArrowUp,
-} from "lucide-react";
+import { Play, Square, WavesArrowDown, WavesArrowUp } from "lucide-react";
 import { getDefaultAudioPresetId, type AudioPresetId } from "@/audio";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
+import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeaderActions";
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
@@ -40,16 +31,20 @@ import {
   DEFAULT_EXERCISE_SUBDIVISION,
   EXERCISE_MAX_OCTAVE_OFFSET,
   EXERCISE_MIN_OCTAVE_OFFSET,
+  exercisePatternsAreEqual,
 } from "@/utils/exercise-looper/exerciseConfig";
 import {
   createExerciseSequence,
-  getCollectionPosition,
+  EXERCISE_MAX_OCTAVE_SPAN,
   getExerciseAnchorPositionBounds,
+  getCollectionRangeBoundary,
+  type ExerciseDisplayNote,
   type CollectionRangeBoundary,
   type ExercisePattern,
 } from "@/utils/exercise-looper/exerciseSequence";
 import { formatMidiNote } from "@/utils/music-theory/midiNote";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
+import { DEFAULT_SESSION_COUNT_IN_BEATS } from "@/utils/session/sessionDefaults";
 import { ExerciseLooperOptionsDialog } from "./ExerciseLooperOptionsDialog";
 import styles from "./ExerciseLooperModule.module.css";
 
@@ -77,9 +72,40 @@ function collectionPositionLabel(position: number, collectionSize: number) {
   return String(normalized + 1);
 }
 
+function getClosestNoteInColumn(
+  row: readonly ExerciseDisplayNote[] | undefined,
+  targetColumnIndex: number,
+) {
+  if (!row || row.length === 0) {
+    return undefined;
+  }
+
+  return row.reduce((closestNote, candidateNote) =>
+    Math.abs(candidateNote.columnIndex - targetColumnIndex) <
+    Math.abs(closestNote.columnIndex - targetColumnIndex)
+      ? candidateNote
+      : closestNote,
+  );
+}
+
+function getLooperRowClassName(rowCount: number) {
+  switch (rowCount) {
+    case 2:
+      return styles.rows2;
+    case 3:
+      return styles.rows3;
+    case 4:
+      return styles.rows4;
+    case 5:
+      return styles.rows5;
+    default:
+      return "";
+  }
+}
+
 export function ExerciseLooperModule({
   audioPresetId,
-  countInBeats = 4,
+  countInBeats = DEFAULT_SESSION_COUNT_IN_BEATS,
   end = DEFAULT_EXERCISE_END,
   metronomeEnabled = true,
   moduleId,
@@ -130,7 +156,7 @@ export function ExerciseLooperModule({
 }) {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const noteColors = useNoteColors();
-  const sequence = useMemo(
+  const requestedSequence = useMemo(
     () =>
       createExerciseSequence({
         end,
@@ -143,9 +169,32 @@ export function ExerciseLooperModule({
     [end, noteCollectionKey, octaveOffset, pattern, rootNote, start],
   );
   const effectivePattern =
-    sequence.supportsTertianExercises || pattern.kind === "scale"
+    requestedSequence.supportsTertianExercises || pattern.kind === "scale"
       ? pattern
       : DEFAULT_EXERCISE_PATTERN;
+  const sequence = useMemo(
+    () =>
+      exercisePatternsAreEqual(effectivePattern, pattern)
+        ? requestedSequence
+        : createExerciseSequence({
+            end,
+            noteCollectionKey,
+            octaveOffset,
+            pattern: effectivePattern,
+            rootNote,
+            start,
+          }),
+    [
+      effectivePattern,
+      end,
+      noteCollectionKey,
+      octaveOffset,
+      pattern,
+      requestedSequence,
+      rootNote,
+      start,
+    ],
+  );
   const bounds = useMemo(
     () =>
       getExerciseAnchorPositionBounds({
@@ -166,34 +215,57 @@ export function ExerciseLooperModule({
     tempoBpm,
   });
   const noteKeys = useMemo(
-    () => sequence.steps.map((_, index) => `step-${index}`),
-    [sequence.steps],
+    () => sequence.notes.map((note) => note.key),
+    [sequence.notes],
   );
-  const { focusedKey, handleItemInteraction, handleKeyDown, setItemRef } =
-    useInstrumentNavigation<HTMLElement>({
-      getMidiForKey: (key) =>
-        sequence.steps[Number(key.replace("step-", ""))]?.note.midi ?? 60,
-      initialFocusedKey: noteKeys[0] ?? "",
-      onInteract: (target) => playback.audition(target.midi),
-      onNavigate: (currentKey, direction) => {
-        const currentIndex = noteKeys.indexOf(currentKey);
-        const delta = direction === "left" || direction === "up" ? -1 : 1;
-        return (
-          noteKeys[
-            Math.max(0, Math.min(noteKeys.length - 1, currentIndex + delta))
-          ] ?? currentKey
+  const noteByKey = useMemo(
+    () => new Map(sequence.notes.map((note) => [note.key, note])),
+    [sequence.notes],
+  );
+  const {
+    focusedKey,
+    handleItemInteraction,
+    handleKeyDown,
+    setFocusedKey,
+    setItemRef,
+  } = useInstrumentNavigation<HTMLElement>({
+    getMidiForKey: (key) => noteByKey.get(key)?.midi ?? 60,
+    initialFocusedKey: noteKeys[0] ?? "",
+    onInteract: (target) => playback.audition(target.midi),
+    onNavigate: (currentKey, direction) => {
+      const currentNote = noteByKey.get(currentKey);
+
+      if (currentNote && (direction === "up" || direction === "down")) {
+        const nextRow =
+          sequence.rows[currentNote.rowIndex + (direction === "up" ? -1 : 1)];
+        const nextNote = getClosestNoteInColumn(
+          nextRow,
+          currentNote.columnIndex,
         );
-      },
-    });
+
+        return nextNote?.key ?? currentKey;
+      }
+
+      const currentIndex = noteKeys.indexOf(currentKey);
+      const delta = direction === "left" ? -1 : 1;
+      return (
+        noteKeys[
+          Math.max(0, Math.min(noteKeys.length - 1, currentIndex + delta))
+        ] ?? currentKey
+      );
+    },
+  });
   const collectionSize = sequence.collectionSize;
-  const startPosition = getCollectionPosition(start, collectionSize);
-  const endPosition = getCollectionPosition(end, collectionSize);
-  const firstPosition = Math.min(startPosition, endPosition);
-  const lastPosition = Math.max(startPosition, endPosition);
-  const canRemoveNote = lastPosition - 1 > firstPosition;
-  const canRemoveOctave = lastPosition - collectionSize > firstPosition;
-  const canAddNote = lastPosition + 1 <= bounds.max;
-  const canAddOctave = lastPosition + collectionSize <= bounds.max;
+  const firstPosition = sequence.firstPosition;
+  const lastPosition = sequence.lastPosition;
+  const maxLastPosition = Math.min(
+    bounds.max,
+    firstPosition + collectionSize * EXERCISE_MAX_OCTAVE_SPAN,
+  );
+  const canRemoveNote = lastPosition > firstPosition;
+  const canRemoveOctave = lastPosition - collectionSize >= firstPosition;
+  const canAddNote = lastPosition + 1 <= maxLastPosition;
+  const canAddOctave = lastPosition + collectionSize <= maxLastPosition;
   const lowerOctaveBounds = useMemo(
     () =>
       getExerciseAnchorPositionBounds({
@@ -224,17 +296,44 @@ export function ExerciseLooperModule({
     lastPosition <= higherOctaveBounds.max;
 
   useEffect(() => {
-    if (effectivePattern !== pattern) {
+    if (!exercisePatternsAreEqual(effectivePattern, pattern)) {
       onPatternChange?.(effectivePattern);
     }
   }, [effectivePattern, onPatternChange, pattern]);
 
+  useEffect(() => {
+    const initialFocusedKey = noteKeys[0] ?? "";
+
+    if (focusedKey !== initialFocusedKey && !noteByKey.has(focusedKey)) {
+      setFocusedKey(initialFocusedKey);
+    }
+  }, [focusedKey, noteByKey, noteKeys, setFocusedKey]);
+
   const setEndPosition = (position: number) => {
-    const octave = Math.floor(position / collectionSize);
-    onEndChange?.({
-      octave,
-      stepOffset: position - octave * collectionSize,
-    });
+    onEndChange?.(getCollectionRangeBoundary(position, collectionSize));
+  };
+
+  const setRange = (
+    nextStart: CollectionRangeBoundary,
+    nextEnd: CollectionRangeBoundary,
+  ) => {
+    const requestedStart =
+      nextStart.octave * collectionSize + nextStart.stepOffset;
+    const requestedEnd = nextEnd.octave * collectionSize + nextEnd.stepOffset;
+    const nextFirstPosition = Math.min(
+      bounds.max,
+      Math.max(bounds.min, Math.min(requestedStart, requestedEnd)),
+    );
+    const nextLastPosition = Math.min(
+      bounds.max,
+      nextFirstPosition + collectionSize * EXERCISE_MAX_OCTAVE_SPAN,
+      Math.max(nextFirstPosition, requestedStart, requestedEnd),
+    );
+
+    onStartChange?.(
+      getCollectionRangeBoundary(nextFirstPosition, collectionSize),
+    );
+    onEndChange?.(getCollectionRangeBoundary(nextLastPosition, collectionSize));
   };
 
   const toolActionProps = (action: () => void) => ({
@@ -248,7 +347,9 @@ export function ExerciseLooperModule({
     <>
       <PartModuleFrame
         bodyClassName={styles.body}
-        className={styles.frame}
+        className={[styles.frame, getLooperRowClassName(sequence.rows.length)]
+          .filter(Boolean)
+          .join(" ")}
         showHeader={showHeader}
         style={
           {
@@ -258,46 +359,23 @@ export function ExerciseLooperModule({
         headerActions={
           showHeader ? (
             <div className={styles.headerActions}>
-              <span className={styles.headerGroup}>
-                <IconButton
-                  aria-label="Remove final collection note"
-                  disabled={!canRemoveNote}
-                  icon={<ListMinus />}
-                  size="sm"
-                  onClick={() =>
-                    canRemoveNote && setEndPosition(lastPosition - 1)
-                  }
-                />
-                <IconButton
-                  aria-label="Add collection note"
-                  disabled={!canAddNote}
-                  icon={<ListPlus />}
-                  size="sm"
-                  onClick={() => canAddNote && setEndPosition(lastPosition + 1)}
-                />
-              </span>
-              <span className={styles.headerGroup}>
-                <IconButton
-                  aria-label="Remove collection octave"
-                  disabled={!canRemoveOctave}
-                  icon={<LayersMinus />}
-                  size="sm"
-                  onClick={() =>
-                    canRemoveOctave &&
-                    setEndPosition(lastPosition - collectionSize)
-                  }
-                />
-                <IconButton
-                  aria-label="Add collection octave"
-                  disabled={!canAddOctave}
-                  icon={<LayersPlus />}
-                  size="sm"
-                  onClick={() =>
-                    canAddOctave &&
-                    setEndPosition(lastPosition + collectionSize)
-                  }
-                />
-              </span>
+              <NoteRangeHeaderActions
+                canAddNote={canAddNote}
+                canAddOctave={canAddOctave}
+                canRemoveNote={canRemoveNote}
+                canRemoveOctave={canRemoveOctave}
+                onAddNote={() => canAddNote && setEndPosition(lastPosition + 1)}
+                onAddOctave={() =>
+                  canAddOctave && setEndPosition(lastPosition + collectionSize)
+                }
+                onRemoveNote={() =>
+                  canRemoveNote && setEndPosition(lastPosition - 1)
+                }
+                onRemoveOctave={() =>
+                  canRemoveOctave &&
+                  setEndPosition(lastPosition - collectionSize)
+                }
+              />
               <OverflowMenuButton
                 aria-label="Exercise Looper options"
                 onClick={() => setIsOptionsOpen(true)}
@@ -325,21 +403,14 @@ export function ExerciseLooperModule({
               size="lg"
             />
             <IconButton
-              {...toolActionProps(playback.start)}
+              {...toolActionProps(
+                playback.isPlaying ? playback.stop : playback.start,
+              )}
               aria-label={
-                playback.isPlaying ? "Restart exercise" : "Play exercise"
+                playback.isPlaying ? "Stop exercise" : "Play exercise"
               }
               className={styles.toolButton}
-              icon={playback.isPlaying ? <RotateCcw /> : <Play />}
-              shouldYield={false}
-              size="lg"
-            />
-            <IconButton
-              {...toolActionProps(playback.stop)}
-              aria-disabled={!playback.isPlaying ? true : undefined}
-              aria-label="Stop exercise"
-              className={styles.toolButton}
-              icon={<Square />}
+              icon={playback.isPlaying ? <Square /> : <Play />}
               shouldYield={false}
               size="lg"
             />
@@ -356,45 +427,60 @@ export function ExerciseLooperModule({
             />
           </div>
 
-          <div className={styles.sequence}>
-            {sequence.steps.map((step, stepIndex) => {
-              const key = `step-${stepIndex}`;
-              const noteColor = resolveInstrumentNoteColor({
-                midi: step.note.midi,
-                mode: noteColors.mode,
-                rootNote,
-              });
-              return (
-                <InstrumentNoteCell
-                  key={key}
-                  ariaLabel={`Audition ${formatMidiNote(step.note.midi)}, collection step ${step.note.collectionPosition + 1}`}
-                  className={styles.noteButton}
-                  handleKeyDown={handleKeyDown}
-                  isFocused={focusedKey === key}
-                  isHighlighted={
-                    Boolean(playback.isPlaying) &&
-                    Boolean(playback.activeStepIndex === stepIndex)
-                  }
-                  largeSize="100%"
-                  midi={step.note.midi}
-                  note={{ emphasis: "large", midi: step.note.midi }}
-                  noteColor={noteColor}
-                  noteKey={key}
-                  onInteract={handleItemInteraction}
-                  setItemRef={setItemRef}
-                >
-                  <span className={styles.label}>
-                    <span>{formatMidiNote(step.note.midi)}</span>
-                    <span>
-                      {collectionPositionLabel(
-                        step.note.collectionPosition,
-                        collectionSize,
-                      )}
-                    </span>
-                  </span>
-                </InstrumentNoteCell>
-              );
-            })}
+          <div className={styles.noteStack}>
+            <div
+              className={styles.noteRows}
+              style={
+                {
+                  "--looper-column-count": collectionSize,
+                } as CSSProperties
+              }
+            >
+              {sequence.rows.map((row, rowIndex) => (
+                <div key={rowIndex} className={styles.noteRow}>
+                  {row.map((note) => {
+                    const noteColor = resolveInstrumentNoteColor({
+                      midi: note.midi,
+                      mode: noteColors.mode,
+                      rootNote,
+                    });
+
+                    return (
+                      <InstrumentNoteCell
+                        key={note.key}
+                        ariaLabel={`Audition ${formatMidiNote(note.midi)}, collection step ${note.collectionPosition + 1}`}
+                        className={styles.noteButton}
+                        handleKeyDown={handleKeyDown}
+                        isFocused={focusedKey === note.key}
+                        isHighlighted={Boolean(
+                          playback.isPlaying &&
+                          playback.activeAnchorPosition ===
+                            note.collectionPosition,
+                        )}
+                        largeSize="100%"
+                        midi={note.midi}
+                        note={{ emphasis: "large", midi: note.midi }}
+                        noteColor={noteColor}
+                        noteKey={note.key}
+                        onInteract={handleItemInteraction}
+                        setItemRef={setItemRef}
+                        style={{ gridColumn: note.columnIndex + 1 }}
+                      >
+                        <span className={styles.label}>
+                          <span>{formatMidiNote(note.midi)}</span>
+                          <span>
+                            {collectionPositionLabel(
+                              note.collectionPosition,
+                              collectionSize,
+                            )}
+                          </span>
+                        </span>
+                      </InstrumentNoteCell>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </PartModuleFrame>
@@ -403,22 +489,21 @@ export function ExerciseLooperModule({
         <ExerciseLooperOptionsDialog
           audioPresetId={audioPresetId ?? getDefaultAudioPresetId("exercise")}
           collectionSize={collectionSize}
-          end={end}
+          end={getCollectionRangeBoundary(lastPosition, collectionSize)}
           isOpen={isOptionsOpen}
-          maxAnchorPosition={bounds.max}
+          maxAnchorPosition={maxLastPosition}
           minAnchorPosition={bounds.min}
           pattern={effectivePattern}
-          start={start}
+          start={getCollectionRangeBoundary(firstPosition, collectionSize)}
           subdivision={subdivision}
           supportsTertianExercises={sequence.supportsTertianExercises}
           wood={wood}
           onAudioPresetIdChange={(value) => onAudioPresetIdChange?.(value)}
           onClone={onClone}
           onClose={() => setIsOptionsOpen(false)}
-          onEndChange={(value) => onEndChange?.(value)}
           onPatternChange={(value) => onPatternChange?.(value)}
+          onRangeChange={setRange}
           onRemove={onRemove}
-          onStartChange={(value) => onStartChange?.(value)}
           onSubdivisionChange={(value) => onSubdivisionChange?.(value)}
           onWoodChange={(value) => onWoodChange?.(value)}
         />

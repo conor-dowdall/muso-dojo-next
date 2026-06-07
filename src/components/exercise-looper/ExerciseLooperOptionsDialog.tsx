@@ -32,6 +32,7 @@ import {
 } from "@/utils/exercise-looper/exerciseConfig";
 import {
   getCollectionPosition,
+  getCollectionRangeBoundary,
   getExerciseIntervalRunLabel,
   getExerciseStackLabel,
   type CollectionRangeBoundary,
@@ -69,17 +70,6 @@ function patternLabel(pattern: ExercisePattern) {
   return getExerciseStackLabel(pattern.size);
 }
 
-function positionToBoundary(
-  position: number,
-  collectionSize: number,
-): CollectionRangeBoundary {
-  const octave = Math.floor(position / collectionSize);
-  return {
-    octave,
-    stepOffset: position - octave * collectionSize,
-  };
-}
-
 export function ExerciseLooperOptionsDialog({
   audioPresetId,
   collectionSize,
@@ -90,10 +80,9 @@ export function ExerciseLooperOptionsDialog({
   onAudioPresetIdChange,
   onClone,
   onClose,
-  onEndChange,
   onPatternChange,
+  onRangeChange,
   onRemove,
-  onStartChange,
   onSubdivisionChange,
   onWoodChange,
   pattern,
@@ -111,10 +100,12 @@ export function ExerciseLooperOptionsDialog({
   onAudioPresetIdChange: (value: AudioPresetId) => void;
   onClone?: () => void;
   onClose: () => void;
-  onEndChange: (value: CollectionRangeBoundary) => void;
   onPatternChange: (value: ExercisePattern) => void;
+  onRangeChange: (
+    start: CollectionRangeBoundary,
+    end: CollectionRangeBoundary,
+  ) => void;
   onRemove?: () => void;
-  onStartChange: (value: CollectionRangeBoundary) => void;
   onSubdivisionChange: (value: ExerciseSubdivision) => void;
   onWoodChange: (value: WoodSurfaceId) => void;
   pattern: ExercisePattern;
@@ -235,13 +226,15 @@ export function ExerciseLooperOptionsDialog({
             endLabel="End note"
             max={maxAnchorPosition}
             min={minAnchorPosition}
-            minSpan={1}
+            minSpan={0}
             startLabel="Start note"
             value={[firstPosition, lastPosition]}
             valueFormatter={(value) => `Collection step ${value + 1}`}
             onChange={([nextStart, nextEnd]) => {
-              onStartChange(positionToBoundary(nextStart, collectionSize));
-              onEndChange(positionToBoundary(nextEnd, collectionSize));
+              onRangeChange(
+                getCollectionRangeBoundary(nextStart, collectionSize),
+                getCollectionRangeBoundary(nextEnd, collectionSize),
+              );
             }}
           />
         </DisclosureListItem>

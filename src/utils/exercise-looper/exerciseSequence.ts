@@ -20,6 +20,7 @@ export const EXERCISE_INTERVAL_MIN = 2;
 export const EXERCISE_INTERVAL_MAX = 13;
 export const EXERCISE_STACK_SIZE_MIN = 2;
 export const EXERCISE_STACK_SIZE_MAX = 7;
+export const EXERCISE_MAX_OCTAVE_SPAN = 4;
 
 export type ExerciseScaleDirection = "ascending" | "descending" | "up-down";
 
@@ -48,6 +49,14 @@ export interface ExerciseSequenceNote {
   midi: number;
 }
 
+export interface ExerciseDisplayNote {
+  collectionPosition: number;
+  columnIndex: number;
+  key: string;
+  midi: number;
+  rowIndex: number;
+}
+
 export interface ExerciseSequenceStep {
   durationUnits: number;
   note: ExerciseSequenceNote;
@@ -55,6 +64,10 @@ export interface ExerciseSequenceStep {
 
 export interface ExerciseSequence {
   collectionSize: number;
+  firstPosition: number;
+  lastPosition: number;
+  notes: ExerciseDisplayNote[];
+  rows: ExerciseDisplayNote[][];
   steps: ExerciseSequenceStep[];
   supportsTertianExercises: boolean;
 }
@@ -84,6 +97,18 @@ export function getCollectionPosition(
   collectionSize: number,
 ) {
   return boundary.octave * collectionSize + boundary.stepOffset;
+}
+
+export function getCollectionRangeBoundary(
+  position: number,
+  collectionSize: number,
+): CollectionRangeBoundary {
+  const octave = floorDivide(position, collectionSize);
+
+  return {
+    octave,
+    stepOffset: position - octave * collectionSize,
+  };
 }
 
 export function getMidiForCollectionPosition({
@@ -151,7 +176,9 @@ function createScaleAnchors(
     return ascending.toReversed();
   }
 
-  return [...ascending, ...ascending.toReversed().slice(1)];
+  // Omit both repeated endpoints. The next cycle supplies the lower endpoint,
+  // producing an even ...up, down, up... pendulum without doubled beats.
+  return [...ascending, ...ascending.toReversed().slice(1, -1)];
 }
 
 function createPatternPositions(anchor: number, pattern: ExercisePattern) {
@@ -246,16 +273,77 @@ export function createExerciseSequence({
   const resolvedCollectionKey = resolveCollectionKey(noteCollectionKey);
   const resolvedRootNote = resolveRootNote(rootNote);
   const collectionSize = noteCollections[resolvedCollectionKey].integers.length;
-  const startPosition = getCollectionPosition(start, collectionSize);
-  const endPosition = getCollectionPosition(end, collectionSize);
-  const firstPosition = Math.min(startPosition, endPosition);
-  const lastPosition = Math.max(startPosition, endPosition);
+  const bounds = getExerciseAnchorPositionBounds({
+    noteCollectionKey: resolvedCollectionKey,
+    octaveOffset,
+    pattern,
+    rootNote: resolvedRootNote,
+  });
+  const requestedStartPosition = getCollectionPosition(start, collectionSize);
+  const requestedEndPosition = getCollectionPosition(end, collectionSize);
+  const requestedFirstPosition = Math.min(
+    requestedStartPosition,
+    requestedEndPosition,
+  );
+  const requestedLastPosition = Math.max(
+    requestedStartPosition,
+    requestedEndPosition,
+  );
+  const firstPosition = clampInteger(
+    requestedFirstPosition,
+    bounds.min,
+    bounds.max,
+  );
+  const lastPosition = clampInteger(
+    requestedLastPosition,
+    firstPosition,
+    Math.min(
+      bounds.max,
+      firstPosition + collectionSize * EXERCISE_MAX_OCTAVE_SPAN,
+    ),
+  );
+  const firstOctave = floorDivide(firstPosition, collectionSize);
+  const lastOctave = floorDivide(lastPosition, collectionSize);
+  const rows = Array.from(
+    { length: lastOctave - firstOctave + 1 },
+    () => [] as ExerciseDisplayNote[],
+  );
+  const notes = Array.from(
+    { length: lastPosition - firstPosition + 1 },
+    (_, index) => firstPosition + index,
+  ).flatMap((collectionPosition) => {
+    const midi = getMidiForCollectionPosition({
+      collectionKey: resolvedCollectionKey,
+      octaveOffset,
+      position: collectionPosition,
+      rootNote: resolvedRootNote,
+    });
+
+    if (midi === undefined || !isPlayableMidiNote(midi)) {
+      return [];
+    }
+
+    const octave = floorDivide(collectionPosition, collectionSize);
+    const rowIndex = octave - firstOctave;
+    const displayNote: ExerciseDisplayNote = {
+      collectionPosition,
+      columnIndex:
+        ((collectionPosition % collectionSize) + collectionSize) %
+        collectionSize,
+      key: `position-${collectionPosition}`,
+      midi,
+      rowIndex,
+    };
+
+    rows[rowIndex]?.push(displayNote);
+    return [displayNote];
+  });
   const direction = pattern.kind === "scale" ? pattern.direction : "ascending";
   const anchors = createScaleAnchors(firstPosition, lastPosition, direction);
-  const steps = anchors.flatMap((anchorPosition, anchorIndex) => {
+  const steps = anchors.flatMap((anchorPosition) => {
     const positions = createPatternPositions(anchorPosition, pattern);
 
-    return positions.flatMap((collectionPosition, positionIndex) => {
+    return positions.flatMap((collectionPosition) => {
       const midi = getMidiForCollectionPosition({
         collectionKey: resolvedCollectionKey,
         octaveOffset,
@@ -267,15 +355,9 @@ export function createExerciseSequence({
         return [];
       }
 
-      const isHeldScaleEndpoint =
-        pattern.kind === "scale" &&
-        pattern.direction === "up-down" &&
-        positionIndex === 0 &&
-        (anchorIndex === 0 || anchorIndex === lastPosition - firstPosition);
-
       return [
         {
-          durationUnits: isHeldScaleEndpoint ? 2 : 1,
+          durationUnits: 1,
           note: {
             anchorPosition,
             collectionPosition,
@@ -288,6 +370,10 @@ export function createExerciseSequence({
 
   return {
     collectionSize,
+    firstPosition,
+    lastPosition,
+    notes,
+    rows,
     steps,
     supportsTertianExercises: supportsTertianExercises(resolvedCollectionKey),
   };

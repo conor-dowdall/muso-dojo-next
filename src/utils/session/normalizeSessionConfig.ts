@@ -7,6 +7,7 @@ import {
   normalizeString,
 } from "@/utils/session/normalizationPrimitives";
 import {
+  DEFAULT_SESSION_COUNT_IN_BEATS,
   DEFAULT_SESSION_NAME,
   FALLBACK_LAST_MODIFIED,
   FALLBACK_SESSION_ID,
@@ -25,7 +26,7 @@ export function normalizeSessionConfig(value: unknown): SessionConfig {
     Number.isInteger(input.countInBeats) &&
     input.countInBeats >= 0 &&
     input.countInBeats <= 8 &&
-    input.countInBeats !== 4
+    input.countInBeats !== DEFAULT_SESSION_COUNT_IN_BEATS
       ? { countInBeats: input.countInBeats }
       : {}),
     id: normalizeId(input.id, FALLBACK_SESSION_ID),

@@ -1,14 +1,62 @@
 .frame {
   --looper-wood-background: var(--color-surface);
+  --looper-note-button-width: var(--space-16);
+  --looper-note-button-height: var(--space-14);
+  --looper-note-button-min-width: var(--control-size-md);
+  --looper-row-gap: var(--space-1);
+  --looper-column-gap: var(--space-1);
+  --looper-body-padding: var(--space-3);
+  --looper-toolbar-gap: var(--space-3);
+  --looper-toolbar-height: calc(
+    var(--control-size-lg) + var(--space-2) + var(--space-2)
+  );
+  --looper-grid-height: var(--looper-note-button-height);
+  --looper-scrollbar-safe-area: var(--space-2);
+  --looper-content-height: calc(
+    var(--looper-toolbar-height) + var(--looper-toolbar-gap) +
+      var(--looper-grid-height) + var(--looper-scrollbar-safe-area) +
+      var(--looper-body-padding) + var(--looper-body-padding)
+  );
   --part-module-body-radius: var(--radius-control);
   --part-module-min-readable-width: 0;
-  --part-module-min-height: calc(
-    var(--control-size-lg) + var(--space-16) + var(--space-12)
-  );
-  --part-module-preferred-height: var(--part-module-min-height);
-  --part-module-max-height: var(--part-module-min-height);
+  --part-module-min-height: var(--looper-content-height);
+  --part-module-preferred-height: var(--looper-content-height);
+  --part-module-max-height: var(--looper-content-height);
 
-  inline-size: min(100%, 72rem);
+  inline-size: fit-content;
+  max-inline-size: 100%;
+}
+
+.rows2 {
+  --looper-grid-height: calc(
+    var(--looper-note-button-height) + var(--looper-note-button-height) +
+      var(--looper-row-gap)
+  );
+}
+
+.rows3 {
+  --looper-grid-height: calc(
+    var(--looper-note-button-height) + var(--looper-note-button-height) +
+      var(--looper-note-button-height) + var(--looper-row-gap) +
+      var(--looper-row-gap)
+  );
+}
+
+.rows4 {
+  --looper-grid-height: calc(
+    var(--looper-note-button-height) + var(--looper-note-button-height) +
+      var(--looper-note-button-height) + var(--looper-note-button-height) +
+      var(--looper-row-gap) + var(--looper-row-gap) + var(--looper-row-gap)
+  );
+}
+
+.rows5 {
+  --looper-grid-height: calc(
+    var(--looper-note-button-height) + var(--looper-note-button-height) +
+      var(--looper-note-button-height) + var(--looper-note-button-height) +
+      var(--looper-note-button-height) + var(--looper-row-gap) +
+      var(--looper-row-gap) + var(--looper-row-gap) + var(--looper-row-gap)
+  );
 }
 
 .body {
@@ -23,18 +71,24 @@
 }
 
 .headerActions {
-  display: flex;
+  display: grid;
   flex: 1 1 auto;
+  grid-template-columns:
+    minmax(var(--control-size-sm), 1fr)
+    auto
+    minmax(var(--control-size-sm), 1fr);
   min-inline-size: 0;
   align-items: center;
-  justify-content: flex-end;
-  gap: var(--control-header-cluster-gap);
+  gap: var(--control-header-peer-gap);
 }
 
-.headerGroup {
-  display: flex;
-  align-items: center;
-  gap: var(--control-header-peer-gap);
+.headerActions > :first-child {
+  grid-column: 2;
+}
+
+.headerActions > :last-child {
+  grid-column: 3;
+  justify-self: end;
 }
 
 .surface {
@@ -44,8 +98,8 @@
   min-block-size: 0;
   block-size: 100%;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: var(--looper-toolbar-gap);
+  padding: var(--looper-body-padding);
   overflow: hidden;
 }
 
@@ -94,24 +148,48 @@
     0 0 transparent;
 }
 
-.sequence {
+.noteStack {
+  position: relative;
   display: flex;
   flex: 1 1 auto;
+  inline-size: 100%;
+  block-size: 100%;
   min-inline-size: 0;
   min-block-size: 0;
   align-items: center;
-  gap: var(--space-1);
+  justify-content: flex-start;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: var(--space-1) var(--space-1) var(--space-3);
+  padding-block-end: var(--looper-scrollbar-safe-area);
   scrollbar-color: var(--color-border) transparent;
   scrollbar-width: thin;
 }
 
+.noteRows {
+  display: flex;
+  inline-size: 100%;
+  min-inline-size: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--looper-row-gap);
+}
+
+.noteRow {
+  display: grid;
+  inline-size: 100%;
+  min-inline-size: min-content;
+  grid-template-columns: repeat(
+    var(--looper-column-count),
+    minmax(var(--looper-note-button-min-width), var(--looper-note-button-width))
+  );
+  justify-content: safe center;
+  gap: var(--looper-column-gap);
+}
+
 .noteButton {
-  flex: 0 0 var(--space-16);
-  inline-size: var(--space-16);
-  block-size: var(--space-14);
+  inline-size: 100%;
+  block-size: var(--looper-note-button-height);
   padding: 0;
 }
 
@@ -154,19 +232,15 @@
 }
 
 @media (max-width: 34rem) {
-  .surface {
-    gap: var(--space-2);
-    padding: var(--space-2);
+  .frame {
+    --looper-note-button-width: calc(var(--space-12) + var(--space-1));
+    --looper-note-button-height: var(--space-12);
+    --looper-body-padding: var(--space-2);
+    --looper-toolbar-gap: var(--space-2);
   }
 
   .controls {
     gap: var(--space-4);
-  }
-
-  .noteButton {
-    flex-basis: calc(var(--space-12) + var(--space-1));
-    inline-size: calc(var(--space-12) + var(--space-1));
-    block-size: var(--space-12);
   }
 
   .label {

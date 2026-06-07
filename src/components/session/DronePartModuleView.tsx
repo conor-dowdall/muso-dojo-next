@@ -32,6 +32,7 @@ export function DronePartModuleView({
       return part && drone
         ? {
             audioPresetId: drone.audioPresetId,
+            noteCount: drone.noteCount,
             noteCollectionKey: part.noteCollectionKey,
             octaveOffset: drone.octaveOffset,
             octaveRowCount: drone.octaveRowCount,
@@ -47,9 +48,7 @@ export function DronePartModuleView({
   const setDroneOctaveOffset = useAppStore(
     (state) => state.setDroneOctaveOffset,
   );
-  const setDroneOctaveRowCount = useAppStore(
-    (state) => state.setDroneOctaveRowCount,
-  );
+  const setDroneNoteCount = useAppStore((state) => state.setDroneNoteCount);
   const setDroneWood = useAppStore((state) => state.setDroneWood);
   const removePartModule = useAppStore((state) => state.removePartModule);
 
@@ -60,6 +59,7 @@ export function DronePartModuleView({
   return (
     <DroneModule
       audioPresetId={model.audioPresetId}
+      noteCount={model.noteCount}
       noteCollectionKey={model.noteCollectionKey}
       octaveOffset={model.octaveOffset}
       octaveRowCount={model.octaveRowCount}
@@ -75,8 +75,8 @@ export function DronePartModuleView({
       onOctaveOffsetChange={(octaveOffset: SettingValue<number>) =>
         setDroneOctaveOffset(sessionId, partId, moduleId, octaveOffset)
       }
-      onOctaveRowCountChange={(octaveRowCount: SettingValue<number>) =>
-        setDroneOctaveRowCount(sessionId, partId, moduleId, octaveRowCount)
+      onNoteCountChange={(noteCount: SettingValue<number>) =>
+        setDroneNoteCount(sessionId, partId, moduleId, noteCount)
       }
       onWoodChange={
         isPerformanceMode

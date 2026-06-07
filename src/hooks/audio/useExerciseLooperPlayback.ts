@@ -40,6 +40,25 @@ function createPlaybackEvents(
   return events;
 }
 
+function getCurrentOutputTime() {
+  const clock = musoAudioEngine.getOutputClock();
+
+  if (!clock) {
+    return undefined;
+  }
+
+  const currentContextTime = musoAudioEngine.getCurrentTime();
+  const elapsedSeconds = Math.max(
+    0,
+    (performance.now() - clock.performanceTime) / 1000,
+  );
+  const estimatedOutputTime = clock.contextTime + elapsedSeconds;
+
+  return currentContextTime === undefined
+    ? estimatedOutputTime
+    : Math.min(estimatedOutputTime, currentContextTime);
+}
+
 export function useExerciseLooperPlayback({
   audioPresetId,
   countInBeats,
@@ -115,10 +134,10 @@ export function useExerciseLooperPlayback({
     }
 
     let frameId = 0;
-    let lastStepIndex: number | undefined;
+    let lastStepIndex: number | undefined | null = null;
 
     const update = () => {
-      const outputTime = musoAudioEngine.getOutputClock()?.contextTime;
+      const outputTime = getCurrentOutputTime();
       const nextStepIndex =
         outputTime === undefined
           ? undefined
@@ -144,7 +163,10 @@ export function useExerciseLooperPlayback({
   );
 
   return {
-    activeStepIndex: isPlaying ? activeStepIndex : undefined,
+    activeAnchorPosition:
+      isPlaying && activeStepIndex !== undefined
+        ? steps[activeStepIndex]?.note.anchorPosition
+        : undefined,
     audition,
     isPlaying,
     start,

@@ -204,11 +204,11 @@ export interface DroneActions {
     moduleId: string,
     octaveOffset: SettingValue<number>,
   ) => void;
-  setDroneOctaveRowCount: (
+  setDroneNoteCount: (
     sessionId: string,
     partId: string,
     moduleId: string,
-    octaveRowCount: SettingValue<number>,
+    noteCount: SettingValue<number>,
   ) => void;
   setDroneWood: (
     sessionId: string,

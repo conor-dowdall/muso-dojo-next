@@ -20,6 +20,7 @@ import {
   RangeSliderGroup,
 } from "@/components/ui/range-slider/RangeSlider";
 import { useAppStore } from "@/stores/appStore";
+import { DEFAULT_SESSION_COUNT_IN_BEATS } from "@/utils/session/sessionDefaults";
 
 export function SessionPulseControl({ sessionId }: { sessionId: string }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,7 +36,7 @@ export function SessionPulseControl({ sessionId }: { sessionId: string }) {
   if (!session) return null;
 
   const tempoBpm = session.tempoBpm ?? 80;
-  const countInBeats = session.countInBeats ?? 4;
+  const countInBeats = session.countInBeats ?? DEFAULT_SESSION_COUNT_IN_BEATS;
   const metronomeEnabled = session.metronomeEnabled ?? true;
 
   return (

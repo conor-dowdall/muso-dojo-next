@@ -1,4 +1,5 @@
 import { createDefaultSessionConfig } from "@/utils/session/createSessionEntities";
+import { DEFAULT_SESSION_COUNT_IN_BEATS } from "@/utils/session/sessionDefaults";
 import {
   createUniqueSessionName,
   normalizeSessionNameForComparison,
@@ -138,12 +139,21 @@ export function createSessionActions(
         return;
       }
       const session = get().sessions[sessionId];
-      if (!session || (session.countInBeats ?? 4) === countInBeats) return;
+      if (
+        !session ||
+        (session.countInBeats ?? DEFAULT_SESSION_COUNT_IN_BEATS) ===
+          countInBeats
+      ) {
+        return;
+      }
 
       set((state) =>
         updateSessionById(state, sessionId, (session) => ({
           ...session,
-          countInBeats,
+          countInBeats:
+            countInBeats === DEFAULT_SESSION_COUNT_IN_BEATS
+              ? undefined
+              : countInBeats,
         })),
       );
     },

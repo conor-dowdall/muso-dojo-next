@@ -1,13 +1,15 @@
 import { getDefaultAudioPresetId } from "@/audio/presets";
 import {
   DRONE_MAX_OCTAVE_OFFSET,
-  DRONE_MAX_OCTAVE_ROWS,
+  DRONE_MAX_NOTE_COUNT,
   DRONE_MIN_OCTAVE_OFFSET,
-  DRONE_MIN_OCTAVE_ROWS,
+  DRONE_MIN_NOTE_COUNT,
+  resolveDroneNotes,
 } from "@/utils/drone/droneNotes";
 import { isDronePartModule } from "@/utils/session/partModuleTypes";
 import { resolveSettingValue } from "./settingValue";
 import {
+  findPartById,
   findPartModuleById,
   updatePartById,
   updatePartModuleById,
@@ -105,37 +107,47 @@ export function createDroneActions(
         octaveOffset: nextOctaveOffset,
       });
     },
-    setDroneOctaveRowCount: (sessionId, partId, moduleId, octaveRowCount) => {
+    setDroneNoteCount: (sessionId, partId, moduleId, noteCount) => {
+      const part = findPartById(get().sessions[sessionId], partId);
       const partModule = findPartModuleById(
         get().sessions[sessionId],
         partId,
         moduleId,
       );
 
-      if (!isDronePartModule(partModule)) {
+      if (!part || !isDronePartModule(partModule)) {
         return;
       }
 
-      const currentOctaveRowCount =
-        partModule.octaveRowCount ?? DRONE_MIN_OCTAVE_ROWS;
-      const nextOctaveRowCount = resolveSettingValue(
-        octaveRowCount,
-        currentOctaveRowCount,
-      );
+      const currentNoteCount = resolveDroneNotes({
+        noteCollectionKey: part.noteCollectionKey,
+        noteCount: partModule.noteCount,
+        octaveOffset: partModule.octaveOffset,
+        rowCount: partModule.octaveRowCount,
+        rootNote: part.rootNote,
+      }).noteCount;
+      const defaultNoteCount = resolveDroneNotes({
+        noteCollectionKey: part.noteCollectionKey,
+        octaveOffset: partModule.octaveOffset,
+        rootNote: part.rootNote,
+      }).noteCount;
+      const nextNoteCount = resolveSettingValue(noteCount, currentNoteCount);
 
       if (
-        nextOctaveRowCount === currentOctaveRowCount ||
+        nextNoteCount === currentNoteCount ||
         !isValidDroneInteger(
-          nextOctaveRowCount,
-          DRONE_MIN_OCTAVE_ROWS,
-          DRONE_MAX_OCTAVE_ROWS,
+          nextNoteCount,
+          DRONE_MIN_NOTE_COUNT,
+          DRONE_MAX_NOTE_COUNT,
         )
       ) {
         return;
       }
 
       get().updateDroneSettings(sessionId, partId, moduleId, {
-        octaveRowCount: nextOctaveRowCount,
+        noteCount:
+          nextNoteCount === defaultNoteCount ? undefined : nextNoteCount,
+        octaveRowCount: undefined,
       });
     },
     setDroneWood: (sessionId, partId, moduleId, wood) => {

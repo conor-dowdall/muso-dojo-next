@@ -11,16 +11,11 @@ import {
   type PointerEvent,
 } from "react";
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
-import {
-  LayersMinus,
-  LayersPlus,
-  Square,
-  WavesArrowDown,
-  WavesArrowUp,
-} from "lucide-react";
+import { Square, WavesArrowDown, WavesArrowUp } from "lucide-react";
 import { getDefaultAudioPresetId, type AudioPresetId } from "@/audio";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
+import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeaderActions";
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
@@ -35,7 +30,6 @@ import {
 } from "@/data/woodSurfaces";
 import {
   DRONE_MAX_OCTAVE_OFFSET,
-  DRONE_MAX_OCTAVE_ROWS,
   DRONE_MIN_OCTAVE_OFFSET,
   DRONE_MIN_OCTAVE_ROWS,
   resolveDroneNotes,
@@ -47,12 +41,13 @@ import styles from "./DroneModule.module.css";
 
 interface DroneModuleProps {
   audioPresetId?: AudioPresetId;
+  noteCount?: number;
   noteCollectionKey?: NoteCollectionKey;
   octaveOffset?: number;
   octaveRowCount?: number;
   onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
+  onNoteCountChange?: SettingSetter<number>;
   onOctaveOffsetChange?: SettingSetter<number>;
-  onOctaveRowCountChange?: SettingSetter<number>;
   onWoodChange?: SettingSetter<WoodSurfaceId>;
   onRemove?: () => void;
   rootNote?: string;
@@ -141,12 +136,13 @@ function activateDroneToolWithoutPointer(
 
 export function DroneModule({
   audioPresetId: controlledAudioPresetId,
+  noteCount: controlledNoteCount,
   noteCollectionKey,
   octaveOffset: controlledOctaveOffset,
   octaveRowCount: controlledOctaveRowCount,
   onAudioPresetIdChange,
+  onNoteCountChange,
   onOctaveOffsetChange,
-  onOctaveRowCountChange,
   onWoodChange,
   onRemove,
   rootNote,
@@ -154,6 +150,7 @@ export function DroneModule({
   wood: controlledWood,
 }: DroneModuleProps) {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [internalNoteCount, setInternalNoteCount] = useState<number>();
   const toolControlsRef = useRef<HTMLDivElement | null>(null);
   const [toolControlsHeight, setToolControlsHeight] = useState<number>();
   const [audioPresetId, setAudioPresetId] = useControllableState({
@@ -172,14 +169,8 @@ export function DroneModule({
       controlledOctaveOffset !== undefined ||
       onOctaveOffsetChange !== undefined,
   });
-  const [octaveRowCount, setOctaveRowCount] = useControllableState({
-    value: controlledOctaveRowCount,
-    defaultValue: DRONE_MIN_OCTAVE_ROWS,
-    onChange: onOctaveRowCountChange,
-    controlled:
-      controlledOctaveRowCount !== undefined ||
-      onOctaveRowCountChange !== undefined,
-  });
+  const octaveRowCount = controlledOctaveRowCount ?? DRONE_MIN_OCTAVE_ROWS;
+  const requestedNoteCount = controlledNoteCount ?? internalNoteCount;
   const [wood, setWood] = useControllableState<WoodSurfaceId>({
     value: controlledWood,
     defaultValue: DEFAULT_WOOD_SURFACE_ID,
@@ -190,12 +181,19 @@ export function DroneModule({
   const droneNotes = useMemo(
     () =>
       resolveDroneNotes({
+        noteCount: requestedNoteCount,
         noteCollectionKey,
         octaveOffset,
         rowCount: octaveRowCount,
         rootNote,
       }),
-    [noteCollectionKey, octaveOffset, octaveRowCount, rootNote],
+    [
+      noteCollectionKey,
+      octaveOffset,
+      octaveRowCount,
+      requestedNoteCount,
+      rootNote,
+    ],
   );
   const noteKeys = useMemo(
     () => droneNotes.notes.map((note) => note.key),
@@ -212,37 +210,29 @@ export function DroneModule({
     }
 
     return !resolveDroneNotes({
+      noteCount: droneNotes.noteCount,
       noteCollectionKey,
       octaveOffset: octaveOffset - 1,
-      rowCount: octaveRowCount,
       rootNote,
     }).hasUnplayableNotes;
-  }, [noteCollectionKey, octaveOffset, octaveRowCount, rootNote]);
+  }, [droneNotes.noteCount, noteCollectionKey, octaveOffset, rootNote]);
   const canShiftOctaveUp = useMemo(() => {
     if (octaveOffset >= DRONE_MAX_OCTAVE_OFFSET) {
       return false;
     }
 
     return !resolveDroneNotes({
+      noteCount: droneNotes.noteCount,
       noteCollectionKey,
       octaveOffset: octaveOffset + 1,
-      rowCount: octaveRowCount,
       rootNote,
     }).hasUnplayableNotes;
-  }, [noteCollectionKey, octaveOffset, octaveRowCount, rootNote]);
-  const canRemoveOctaveRow = octaveRowCount > DRONE_MIN_OCTAVE_ROWS;
-  const canAddOctaveRow = useMemo(() => {
-    if (octaveRowCount >= DRONE_MAX_OCTAVE_ROWS) {
-      return false;
-    }
-
-    return !resolveDroneNotes({
-      noteCollectionKey,
-      octaveOffset,
-      rowCount: octaveRowCount + 1,
-      rootNote,
-    }).hasUnplayableNotes;
-  }, [noteCollectionKey, octaveOffset, octaveRowCount, rootNote]);
+  }, [droneNotes.noteCount, noteCollectionKey, octaveOffset, rootNote]);
+  const canRemoveNote = droneNotes.noteCount > 1;
+  const canRemoveOctave = droneNotes.noteCount - droneNotes.collectionSize >= 1;
+  const canAddNote = droneNotes.noteCount < droneNotes.maxNoteCount;
+  const canAddOctave =
+    droneNotes.noteCount + droneNotes.collectionSize <= droneNotes.maxNoteCount;
   const { activeIntervals, isNoteActive, stopAll, toggleNote } =
     useDroneNotePlayback({
       audioPresetId,
@@ -401,16 +391,12 @@ export function DroneModule({
     );
   };
 
-  const removeOctaveRow = () => {
-    setOctaveRowCount((current) =>
-      Math.max(DRONE_MIN_OCTAVE_ROWS, current - 1),
-    );
-  };
+  const setVisibleNoteCount = (nextNoteCount: number) => {
+    if (controlledNoteCount === undefined && onNoteCountChange === undefined) {
+      setInternalNoteCount(nextNoteCount);
+    }
 
-  const addOctaveRow = () => {
-    setOctaveRowCount((current) =>
-      Math.min(DRONE_MAX_OCTAVE_ROWS, current + 1),
-    );
+    onNoteCountChange?.(nextNoteCount);
   };
   const stopAllIfActive = () => {
     if (hasActiveDroneNotes) {
@@ -427,17 +413,6 @@ export function DroneModule({
       shiftOctaveUp();
     }
   };
-  const removeOctaveRowIfAvailable = () => {
-    if (canRemoveOctaveRow) {
-      removeOctaveRow();
-    }
-  };
-  const addOctaveRowIfPlayable = () => {
-    if (canAddOctaveRow) {
-      addOctaveRow();
-    }
-  };
-
   return (
     <>
       <PartModuleFrame
@@ -446,36 +421,30 @@ export function DroneModule({
         headerActions={
           showHeader ? (
             <div className={styles.droneHeaderActions}>
-              <span
-                className={styles.droneHeaderActionGroup}
-                role="group"
-                aria-label="Drone row controls"
-              >
-                <IconButton
-                  aria-label={`Remove final octave row. Current rows: ${octaveRowCount}`}
-                  disabled={!canRemoveOctaveRow}
-                  icon={<LayersMinus />}
-                  size="sm"
-                  onClick={removeOctaveRowIfAvailable}
-                  tooltip={
-                    canRemoveOctaveRow
-                      ? "Remove final octave row"
-                      : "Base octave row only"
-                  }
-                />
-                <IconButton
-                  aria-label={`Add octave row. Current rows: ${octaveRowCount}`}
-                  disabled={!canAddOctaveRow}
-                  icon={<LayersPlus />}
-                  size="sm"
-                  onClick={addOctaveRowIfPlayable}
-                  tooltip={
-                    canAddOctaveRow
-                      ? "Add octave row"
-                      : "Highest playable row reached"
-                  }
-                />
-              </span>
+              <NoteRangeHeaderActions
+                canAddNote={canAddNote}
+                canAddOctave={canAddOctave}
+                canRemoveNote={canRemoveNote}
+                canRemoveOctave={canRemoveOctave}
+                onAddNote={() =>
+                  canAddNote && setVisibleNoteCount(droneNotes.noteCount + 1)
+                }
+                onAddOctave={() =>
+                  canAddOctave &&
+                  setVisibleNoteCount(
+                    droneNotes.noteCount + droneNotes.collectionSize,
+                  )
+                }
+                onRemoveNote={() =>
+                  canRemoveNote && setVisibleNoteCount(droneNotes.noteCount - 1)
+                }
+                onRemoveOctave={() =>
+                  canRemoveOctave &&
+                  setVisibleNoteCount(
+                    droneNotes.noteCount - droneNotes.collectionSize,
+                  )
+                }
+              />
               <OverflowMenuButton
                 aria-label="Drone options"
                 onClick={() => setIsOptionsOpen(true)}

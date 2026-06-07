@@ -12,8 +12,10 @@ import { isRecord, normalizeId } from "@/utils/session/normalizationPrimitives";
 import {
   DRONE_MAX_OCTAVE_OFFSET,
   DRONE_MAX_OCTAVE_ROWS,
+  DRONE_MAX_NOTE_COUNT,
   DRONE_MIN_OCTAVE_OFFSET,
   DRONE_MIN_OCTAVE_ROWS,
+  DRONE_MIN_NOTE_COUNT,
 } from "@/utils/drone/droneNotes";
 import {
   DEFAULT_WOOD_SURFACE_ID,
@@ -89,6 +91,19 @@ function normalizeDroneOctaveRowCount(value: unknown) {
   });
 }
 
+function normalizeDroneNoteCount(value: unknown) {
+  if (
+    typeof value !== "number" ||
+    !Number.isInteger(value) ||
+    value < DRONE_MIN_NOTE_COUNT ||
+    value > DRONE_MAX_NOTE_COUNT
+  ) {
+    return undefined;
+  }
+
+  return value;
+}
+
 export function normalizePartModuleConfig(
   value: unknown,
   index = 0,
@@ -100,13 +115,18 @@ export function normalizePartModuleConfig(
   switch (value.type) {
     case "drone": {
       const audioPresetId = normalizeDroneAudioPresetId(value.audioPresetId);
+      const noteCount = normalizeDroneNoteCount(value.noteCount);
       const octaveOffset = normalizeDroneOctaveOffset(value.octaveOffset);
-      const octaveRowCount = normalizeDroneOctaveRowCount(value.octaveRowCount);
+      const octaveRowCount =
+        noteCount === undefined
+          ? normalizeDroneOctaveRowCount(value.octaveRowCount)
+          : undefined;
       const wood = normalizeDroneWood(value.wood);
 
       return {
         id: normalizeId(value.id, `module-${index + 1}`),
         ...(audioPresetId ? { audioPresetId } : {}),
+        ...(noteCount !== undefined ? { noteCount } : {}),
         ...(octaveOffset !== undefined ? { octaveOffset } : {}),
         ...(octaveRowCount !== undefined ? { octaveRowCount } : {}),
         type: value.type,

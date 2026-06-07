@@ -44,4 +44,15 @@ describe("session app store actions", () => {
       tempoBpm: 132,
     });
   });
+
+  it("omits the immediate-playback count-in default", () => {
+    const store = createTestStore();
+
+    store.getState().setSessionCountInBeats(sessionId, 3);
+    store.getState().setSessionCountInBeats(sessionId, 0);
+
+    expect(store.getState().sessions[sessionId]).not.toHaveProperty(
+      "countInBeats",
+    );
+  });
 });

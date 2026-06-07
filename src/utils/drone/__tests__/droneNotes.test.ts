@@ -61,6 +61,45 @@ describe("droneNotes", () => {
     ]);
   });
 
+  it("adds individual notes and wraps them onto the next octave row", () => {
+    const droneNotes = resolveDroneNotes({
+      noteCollectionKey: "major",
+      noteCount: 4,
+      rootNote: "C",
+    });
+
+    expect(droneNotes.noteCount).toBe(4);
+    expect(
+      droneNotes.rows.map((row) =>
+        row.map((note) => ({
+          columnIndex: note.columnIndex,
+          interval: note.interval,
+        })),
+      ),
+    ).toStrictEqual([
+      [
+        { columnIndex: 0, interval: 0 },
+        { columnIndex: 1, interval: 4 },
+        { columnIndex: 2, interval: 7 },
+      ],
+      [{ columnIndex: 0, interval: 12 }],
+    ]);
+  });
+
+  it("limits an individual-note range to four octaves", () => {
+    const droneNotes = resolveDroneNotes({
+      noteCollectionKey: "chromatic",
+      noteCount: 48,
+      octaveOffset: -1,
+      rootNote: "C",
+    });
+
+    expect(droneNotes.noteCount).toBe(48);
+    expect(droneNotes.maxNoteCount).toBe(48);
+    expect(droneNotes.rows).toHaveLength(4);
+    expect(droneNotes.rows.every((row) => row.length === 12)).toBe(true);
+  });
+
   it("shifts the displayed octave without changing intervals", () => {
     const droneNotes = resolveDroneNotes({
       noteCollectionKey: "major",
@@ -117,7 +156,9 @@ describe("droneNotes", () => {
     });
 
     expect(aboveRange.hasUnplayableNotes).toBe(true);
-    expect(aboveRange.rows[1]).toStrictEqual([]);
+    expect(aboveRange.rows).toHaveLength(1);
+    expect(aboveRange.noteCount).toBe(12);
+    expect(aboveRange.maxNoteCount).toBe(12);
   });
 
   it("preserves collection columns when upper notes are unavailable", () => {

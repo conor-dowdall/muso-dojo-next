@@ -104,22 +104,25 @@
 }
 
 .droneHeaderActions {
-  display: flex;
+  display: grid;
   flex: 1 1 auto;
-  flex-wrap: wrap;
+  grid-template-columns:
+    minmax(var(--control-size-sm), 1fr)
+    auto
+    minmax(var(--control-size-sm), 1fr);
   min-inline-size: 0;
   max-inline-size: 100%;
   align-items: center;
-  justify-content: flex-end;
-  gap: var(--control-header-wrap-gap) var(--control-header-cluster-gap);
+  gap: var(--control-header-peer-gap);
 }
 
-.droneHeaderActionGroup {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  gap: var(--control-header-peer-gap);
+.droneHeaderActions > :first-child {
+  grid-column: 2;
+}
+
+.droneHeaderActions > :last-child {
+  grid-column: 3;
+  justify-self: end;
 }
 
 .droneToolSurface {
