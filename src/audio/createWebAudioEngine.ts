@@ -13,6 +13,10 @@ import {
   createHarmonicWaveCache,
 } from "./harmonicWave";
 import { DEFAULT_MASTER_AMBIENCE_PRESET_ID } from "./masterAmbience";
+import {
+  scheduleMetronomeClick,
+  type ScheduledMetronomeClick,
+} from "./metronome";
 import { createAudioMixer, type AudioMixer } from "./mixer";
 import { normalizePositiveNumber } from "./numeric";
 import { midiToFrequency, isPlayableMidiNote } from "./pitch";
@@ -29,6 +33,7 @@ import {
 import { resolveHarmonicVoiceConfig } from "./voiceConfig";
 import {
   type AudioEngine,
+  type AudioClockSnapshot,
   type AudioPreset,
   type AudioUse,
   type AudioVoiceHandle,
@@ -37,6 +42,9 @@ import {
   type DroneRequest,
   type MasterAmbiencePresetId,
   type PlayNoteRequest,
+  type PlaybackGroupHandle,
+  type ScheduleMetronomeClickRequest,
+  type ScheduleNoteRequest,
   type VoiceInsertEffectConfig,
 } from "./types";
 
@@ -53,6 +61,12 @@ const DRONE_LEVEL_RAMP_SECONDS = 0.035;
 const DRONE_PITCH_GLIDE_SECONDS = 0.075;
 const DRONE_PRESET_CROSSFADE_SECONDS = 0.09;
 const WARMUP_MIDI_NOTES = [36, 48, 60, 72] as const;
+const DEFAULT_GROUP_RELEASE_SECONDS = 0.035;
+
+interface ActivePlaybackGroup {
+  clicks: Set<ScheduledMetronomeClick>;
+  voices: Set<AudioVoiceHandle>;
+}
 
 interface ActiveDrone {
   concertPitchHz: number | undefined;
@@ -112,9 +126,13 @@ export function createWebAudioEngine(): AudioEngine {
   let readyContextPromise: Promise<AudioContext | undefined> | undefined;
   let nextVoiceId = 0;
   let nextDroneId = 0;
+  let nextPlaybackGroupId = 0;
   const activeVoices = new Map<AudioVoiceHandle, ActiveVoice>();
+  const activeVoiceStartTimes = new Map<AudioVoiceHandle, number>();
   const activeDrones = new Map<DroneHandle, ActiveDrone>();
+  const playbackGroups = new Map<PlaybackGroupHandle, ActivePlaybackGroup>();
   const resetListeners = new Set<() => void>();
+  const stopAllListeners = new Set<() => void>();
   const harmonicWaveCache = createHarmonicWaveCache();
 
   function clearContextReferences() {
@@ -127,6 +145,12 @@ export function createWebAudioEngine(): AudioEngine {
         );
         drone.output.disconnect();
       });
+      playbackGroups.forEach((group) => {
+        group.clicks.forEach((click) => {
+          click.stop();
+          click.disconnect();
+        });
+      });
       audioMixer?.dispose();
     } catch {
       // The browser may already have torn down the underlying audio graph.
@@ -134,6 +158,8 @@ export function createWebAudioEngine(): AudioEngine {
 
     activeDrones.clear();
     activeVoices.clear();
+    activeVoiceStartTimes.clear();
+    playbackGroups.clear();
     audioContext = undefined;
     audioMixer = undefined;
     primedContext = undefined;
@@ -389,6 +415,7 @@ export function createWebAudioEngine(): AudioEngine {
     window.setTimeout(() => {
       voice.disconnect();
       activeVoices.delete(voice.handle);
+      activeVoiceStartTimes.delete(voice.handle);
     }, delaySeconds * 1000);
   }
 
@@ -432,7 +459,12 @@ export function createWebAudioEngine(): AudioEngine {
       midiNote,
       minimumAttackSeconds,
       minimumReleaseSeconds,
-      onDisconnect,
+      onDisconnect: () => {
+        activeVoices.delete(handle);
+        activeVoiceStartTimes.delete(handle);
+        playbackGroups.forEach((group) => group.voices.delete(handle));
+        onDisconnect?.();
+      },
       onEnded: scheduleVoiceCleanup,
       preset,
       startTime,
@@ -445,12 +477,14 @@ export function createWebAudioEngine(): AudioEngine {
     }
 
     activeVoices.set(handle, voice);
+    activeVoiceStartTimes.set(handle, startTime);
     return voice;
   }
 
   function playNoteWithContext(
     context: AudioContext,
     request: PlayNoteRequest,
+    requestedStartTime = context.currentTime,
   ) {
     const use = request.use ?? DEFAULT_AUDIO_USE;
     const preset = resolveAudioPreset(
@@ -464,7 +498,7 @@ export function createWebAudioEngine(): AudioEngine {
         MIN_NOTE_DURATION_SECONDS,
       ),
     );
-    const startTime = context.currentTime;
+    const startTime = Math.max(context.currentTime, requestedStartTime);
     const voice = createVoice({
       context,
       frequency: midiToFrequency(request.midiNote, request.concertPitchHz),
@@ -499,6 +533,68 @@ export function createWebAudioEngine(): AudioEngine {
     voice.scheduleStop(stopTime);
 
     return voice.handle;
+  }
+
+  function getOutputClock(context: AudioContext): AudioClockSnapshot {
+    const outputTimestamp = context.getOutputTimestamp?.();
+    const outputContextTime = outputTimestamp?.contextTime;
+    const outputPerformanceTime = outputTimestamp?.performanceTime;
+
+    if (
+      typeof outputContextTime === "number" &&
+      Number.isFinite(outputContextTime) &&
+      typeof outputPerformanceTime === "number" &&
+      Number.isFinite(outputPerformanceTime)
+    ) {
+      return {
+        contextTime: outputContextTime,
+        performanceTime: outputPerformanceTime,
+      };
+    }
+
+    return {
+      contextTime: context.currentTime,
+      performanceTime:
+        typeof performance === "undefined" ? 0 : performance.now(),
+    };
+  }
+
+  function cancelPlaybackGroup(
+    handle: PlaybackGroupHandle,
+    releaseSeconds = DEFAULT_GROUP_RELEASE_SECONDS,
+  ) {
+    const group = playbackGroups.get(handle);
+    const context = getRunningAudioContext();
+
+    if (!group) {
+      return;
+    }
+
+    playbackGroups.delete(handle);
+    group.clicks.forEach((click) => {
+      click.stop();
+      click.disconnect();
+    });
+    group.voices.forEach((voiceHandle) => {
+      const voice = activeVoices.get(voiceHandle);
+
+      if (!voice) {
+        return;
+      }
+
+      const startTime = activeVoiceStartTimes.get(voiceHandle) ?? 0;
+
+      if (!context || startTime > context.currentTime) {
+        voice.scheduleStop(Math.max(startTime, context?.currentTime ?? 0));
+        voice.disconnect();
+        return;
+      }
+
+      voice.stop({
+        releaseSeconds,
+        stopTime: context.currentTime + getScheduleLookaheadSeconds(context),
+      });
+    });
   }
 
   function normalizeDroneNotes(notes: readonly DroneNoteRequest[]) {
@@ -817,7 +913,24 @@ export function createWebAudioEngine(): AudioEngine {
   }
 
   return {
+    cancelPlaybackGroup: (handle, options) => {
+      cancelPlaybackGroup(handle, options?.releaseSeconds);
+    },
+    createPlaybackGroup: () => {
+      const handle =
+        `playback-group-${nextPlaybackGroupId++}` as PlaybackGroupHandle;
+      playbackGroups.set(handle, {
+        clicks: new Set(),
+        voices: new Set(),
+      });
+      return handle;
+    },
+    getCurrentTime: () => getRunningAudioContext()?.currentTime,
     getMasterAmbiencePresetId: () => masterAmbiencePresetId,
+    getOutputClock: () => {
+      const context = getRunningAudioContext();
+      return context ? getOutputClock(context) : undefined;
+    },
     isSupported: () => getAudioContextConstructor() !== undefined,
     prime: async () => {
       const context = await getReadyAudioContext();
@@ -838,6 +951,49 @@ export function createWebAudioEngine(): AudioEngine {
         playNoteWithContext(context, request),
       );
     },
+    scheduleMetronomeClick: (request: ScheduleMetronomeClickRequest) => {
+      const context = getRunningAudioContext();
+      const group = playbackGroups.get(request.group);
+
+      if (!context || !group || !Number.isFinite(request.startTime)) {
+        return false;
+      }
+
+      const click = scheduleMetronomeClick({
+        accent: request.accent === true,
+        context,
+        destination: getAudioMixer(context).getMetronomeInput(),
+        onEnded: () => group.clicks.delete(click),
+        startTime: Math.max(context.currentTime, request.startTime),
+      });
+      group.clicks.add(click);
+      return true;
+    },
+    scheduleNote: (request: ScheduleNoteRequest) => {
+      const context = getRunningAudioContext();
+      const group = playbackGroups.get(request.group);
+
+      if (
+        !context ||
+        !group ||
+        !isPlayableMidiNote(request.midiNote) ||
+        !Number.isFinite(request.startTime)
+      ) {
+        return undefined;
+      }
+
+      const voiceHandle = playNoteWithContext(
+        context,
+        request,
+        request.startTime,
+      );
+
+      if (voiceHandle) {
+        group.voices.add(voiceHandle);
+      }
+
+      return voiceHandle;
+    },
     setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => {
       masterAmbiencePresetId = presetId;
       audioMixer?.setMasterAmbiencePresetId(presetId);
@@ -847,6 +1003,13 @@ export function createWebAudioEngine(): AudioEngine {
 
       return () => {
         resetListeners.delete(listener);
+      };
+    },
+    subscribeToStopAll: (listener: () => void) => {
+      stopAllListeners.add(listener);
+
+      return () => {
+        stopAllListeners.delete(listener);
       };
     },
     createDrone: (request: DroneRequest) => {
@@ -883,8 +1046,12 @@ export function createWebAudioEngine(): AudioEngine {
       return true;
     },
     stopAll: () => {
+      [...playbackGroups.keys()].forEach((handle) =>
+        cancelPlaybackGroup(handle),
+      );
       activeDrones.forEach((drone) => stopDroneVoices(drone));
       activeVoices.forEach((voice) => voice.stop());
+      stopAllListeners.forEach((listener) => listener());
     },
   };
 }

@@ -30,4 +30,18 @@ describe("session app store actions", () => {
     expect(notificationCount).toBe(0);
     expect(Object.keys(store.getState().sessions)).toEqual([sessionId]);
   });
+
+  it("updates persisted session pulse settings", () => {
+    const store = createTestStore();
+
+    store.getState().setSessionTempoBpm(sessionId, 132);
+    store.getState().setSessionCountInBeats(sessionId, 3);
+    store.getState().setSessionMetronomeEnabled(sessionId, false);
+
+    expect(store.getState().sessions[sessionId]).toMatchObject({
+      countInBeats: 3,
+      metronomeEnabled: false,
+      tempoBpm: 132,
+    });
+  });
 });

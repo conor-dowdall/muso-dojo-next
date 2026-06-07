@@ -129,5 +129,50 @@ export function createSessionActions(
         })),
       );
     },
+    setSessionCountInBeats: (sessionId, countInBeats) => {
+      if (
+        !Number.isInteger(countInBeats) ||
+        countInBeats < 0 ||
+        countInBeats > 8
+      ) {
+        return;
+      }
+      const session = get().sessions[sessionId];
+      if (!session || (session.countInBeats ?? 4) === countInBeats) return;
+
+      set((state) =>
+        updateSessionById(state, sessionId, (session) => ({
+          ...session,
+          countInBeats,
+        })),
+      );
+    },
+    setSessionMetronomeEnabled: (sessionId, metronomeEnabled) => {
+      const session = get().sessions[sessionId];
+      if (!session || (session.metronomeEnabled ?? true) === metronomeEnabled) {
+        return;
+      }
+
+      set((state) =>
+        updateSessionById(state, sessionId, (session) => ({
+          ...session,
+          metronomeEnabled,
+        })),
+      );
+    },
+    setSessionTempoBpm: (sessionId, tempoBpm) => {
+      if (!Number.isInteger(tempoBpm) || tempoBpm < 30 || tempoBpm > 300) {
+        return;
+      }
+      const session = get().sessions[sessionId];
+      if (!session || (session.tempoBpm ?? 80) === tempoBpm) return;
+
+      set((state) =>
+        updateSessionById(state, sessionId, (session) => ({
+          ...session,
+          tempoBpm,
+        })),
+      );
+    },
   };
 }

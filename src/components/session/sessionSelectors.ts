@@ -1,6 +1,7 @@
 import { type AppStore } from "@/stores/appStore";
 import {
   isDronePartModule,
+  isExerciseLooperPartModule,
   isInstrumentPartModule,
 } from "@/utils/session/partModuleTypes";
 
@@ -39,4 +40,15 @@ export function selectDronePartModule(
   const partModule = selectPartModule(state, sessionId, partId, moduleId);
 
   return isDronePartModule(partModule) ? partModule : undefined;
+}
+
+export function selectExerciseLooperPartModule(
+  state: AppStore,
+  sessionId: string,
+  partId: string,
+  moduleId: string,
+) {
+  const partModule = selectPartModule(state, sessionId, partId, moduleId);
+
+  return isExerciseLooperPartModule(partModule) ? partModule : undefined;
 }

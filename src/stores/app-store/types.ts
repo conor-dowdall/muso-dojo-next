@@ -18,6 +18,8 @@ import { type SettingValue } from "@/types/state";
 import {
   type AppStoreSnapshot,
   type DronePartModuleConfig,
+  type ExerciseLooperPartModuleConfig,
+  type ExerciseSubdivision,
   type FretboardInstrumentInstanceConfig,
   type InstrumentInstanceBaseConfig,
   type KeyboardInstrumentInstanceConfig,
@@ -28,6 +30,10 @@ import {
   type RememberSessionMaterialCreationRequest,
   type SessionConfig,
 } from "@/types/session";
+import {
+  type CollectionRangeBoundary,
+  type ExercisePattern,
+} from "@/utils/exercise-looper/exerciseSequence";
 
 export type InstrumentSettingsPatch = Partial<InstrumentInstanceBaseConfig> & {
   inlayPreset?: FretboardInlayPresetName;
@@ -48,6 +54,10 @@ export type DroneSettingsPatch = Partial<
   Omit<DronePartModuleConfig, "id" | "type">
 >;
 
+export type ExerciseLooperSettingsPatch = Partial<
+  Omit<ExerciseLooperPartModuleConfig, "id" | "type">
+>;
+
 export interface DojoSettingsActions {
   setAppTheme: (theme: AppThemeChoice) => void;
   setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => void;
@@ -65,6 +75,12 @@ export interface SessionActions {
   cloneSession: (sessionId: string) => string | undefined;
   removeSession: (sessionId: string) => void;
   renameSession: (sessionId: string, name: string) => void;
+  setSessionCountInBeats: (sessionId: string, countInBeats: number) => void;
+  setSessionMetronomeEnabled: (
+    sessionId: string,
+    metronomeEnabled: boolean,
+  ) => void;
+  setSessionTempoBpm: (sessionId: string, tempoBpm: number) => void;
 }
 
 export interface PartActions {
@@ -202,6 +218,57 @@ export interface DroneActions {
   ) => void;
 }
 
+export interface ExerciseLooperActions {
+  updateExerciseLooperSettings: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    patch: ExerciseLooperSettingsPatch,
+  ) => void;
+  setExerciseLooperAudioPresetId: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    audioPresetId: SettingValue<AudioPresetId>,
+  ) => void;
+  setExerciseLooperEnd: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    end: SettingValue<CollectionRangeBoundary>,
+  ) => void;
+  setExerciseLooperOctaveOffset: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    octaveOffset: SettingValue<number>,
+  ) => void;
+  setExerciseLooperPattern: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    pattern: SettingValue<ExercisePattern>,
+  ) => void;
+  setExerciseLooperStart: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    start: SettingValue<CollectionRangeBoundary>,
+  ) => void;
+  setExerciseLooperSubdivision: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    subdivision: SettingValue<ExerciseSubdivision>,
+  ) => void;
+  setExerciseLooperWood: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    wood: SettingValue<WoodSurfaceId>,
+  ) => void;
+}
+
 // Action slices follow the product hierarchy: Dojo -> Session -> Part ->
 // Module -> Instrument.
 export type AppStoreActions = DojoSettingsActions &
@@ -209,6 +276,7 @@ export type AppStoreActions = DojoSettingsActions &
   PartActions &
   PartModuleActions &
   DroneActions &
+  ExerciseLooperActions &
   InstrumentActions;
 export type AppStore = AppStoreSnapshot & AppStoreActions;
 export type AppStoreSet = Parameters<StateCreator<AppStore>>[0];

@@ -59,6 +59,9 @@ export function createDojoSettingsActions(
         ...state.dojoSettings.moduleCreationDefaults,
         moduleKinds: request.moduleKinds,
         ...(request.drone ? { drone: request.drone } : {}),
+        ...(request.exerciseLooper
+          ? { exerciseLooper: request.exerciseLooper }
+          : {}),
         ...(request.fretboard ? { fretboard: request.fretboard } : {}),
         ...(request.keyboard ? { keyboard: request.keyboard } : {}),
       });

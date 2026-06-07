@@ -15,9 +15,11 @@ import {
   createInstrumentCreationRangeContextSignature,
 } from "@/components/instrument-creation/instrumentCreationRangeContext";
 import { musoAudioEngine, resolveMasterAmbiencePresetId } from "@/audio";
+import { exercisePlaybackCoordinator } from "@/audio";
 import { useAppStore, useHydrateAppStore } from "@/stores/appStore";
 import { createChordProgressionParts } from "@/utils/music-part/createChordProgressionParts";
 import { createDefaultMusicPartConfig } from "@/utils/session/createSessionEntities";
+import { SessionPulseControl } from "@/components/session/SessionPulseControl";
 
 interface HydratedSessionProps {
   isPerformanceMode: boolean;
@@ -129,19 +131,36 @@ function HydratedSession({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isPerformanceMode, onPerformanceModeChange]);
 
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        exercisePlaybackCoordinator.stop();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
   return (
     <>
       {isPerformanceMode ? (
-        <IconButton
-          aria-label="Exit performance mode"
-          className={styles.performanceModeExit}
-          icon={<X />}
-          size="sm"
-          tooltip={false}
-          variant="ghost"
-          shouldYield={false}
-          onClick={exitPerformanceMode}
-        />
+        <div className={styles.performanceModeHeader}>
+          {activeSessionId ? (
+            <SessionPulseControl sessionId={activeSessionId} />
+          ) : null}
+          <IconButton
+            aria-label="Exit performance mode"
+            className={styles.performanceModeExit}
+            icon={<X />}
+            size="sm"
+            tooltip={false}
+            variant="ghost"
+            shouldYield={false}
+            onClick={exitPerformanceMode}
+          />
+        </div>
       ) : (
         <SessionHeader
           onEnterPerformanceMode={enterPerformanceMode}

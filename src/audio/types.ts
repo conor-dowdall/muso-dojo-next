@@ -14,7 +14,7 @@ export type AudioPresetId =
   | "hollow-synth";
 
 export type AudioPresetFamily = "generated" | "sample";
-export type AudioPresetSurface = "instrument" | "drone";
+export type AudioPresetSurface = "instrument" | "drone" | "exercise";
 
 export type AudioVoiceHandle = string & {
   readonly __audioVoiceHandle: unique symbol;
@@ -23,6 +23,15 @@ export type AudioVoiceHandle = string & {
 export type DroneHandle = string & {
   readonly __droneHandle: unique symbol;
 };
+
+export type PlaybackGroupHandle = string & {
+  readonly __playbackGroupHandle: unique symbol;
+};
+
+export interface AudioClockSnapshot {
+  contextTime: number;
+  performanceTime: number;
+}
 
 export interface EnvelopeConfig {
   attackSeconds: number;
@@ -130,6 +139,17 @@ export interface PlayNoteRequest extends BaseAudioRequest {
   midiNote: number;
 }
 
+export interface ScheduleNoteRequest extends PlayNoteRequest {
+  group: PlaybackGroupHandle;
+  startTime: number;
+}
+
+export interface ScheduleMetronomeClickRequest {
+  accent?: boolean;
+  group: PlaybackGroupHandle;
+  startTime: number;
+}
+
 export interface DroneNoteRequest {
   id: string;
   midiNote: number;
@@ -150,12 +170,22 @@ export interface MasterAmbiencePreset {
 }
 
 export interface AudioEngine {
+  cancelPlaybackGroup: (
+    handle: PlaybackGroupHandle,
+    options?: { releaseSeconds?: number },
+  ) => void;
+  createPlaybackGroup: () => PlaybackGroupHandle;
+  getCurrentTime: () => number | undefined;
   getMasterAmbiencePresetId: () => MasterAmbiencePresetId;
+  getOutputClock: () => AudioClockSnapshot | undefined;
   isSupported: () => boolean;
   prime: () => Promise<boolean>;
   playNote: (request: PlayNoteRequest) => Promise<AudioVoiceHandle | undefined>;
+  scheduleMetronomeClick: (request: ScheduleMetronomeClickRequest) => boolean;
+  scheduleNote: (request: ScheduleNoteRequest) => AudioVoiceHandle | undefined;
   setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => void;
   subscribeToReset: (listener: () => void) => () => void;
+  subscribeToStopAll: (listener: () => void) => () => void;
   createDrone: (request: DroneRequest) => Promise<DroneHandle | undefined>;
   destroyDrone: (handle: DroneHandle) => void;
   updateDrone: (handle: DroneHandle, request: DroneRequest) => boolean;

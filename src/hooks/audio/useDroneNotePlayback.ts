@@ -350,6 +350,10 @@ export function useDroneNotePlayback({
     () => musoAudioEngine.subscribeToReset(() => controller.reset()),
     [controller],
   );
+  useEffect(
+    () => musoAudioEngine.subscribeToStopAll(() => controller.reset()),
+    [controller],
+  );
 
   useEffect(() => {
     controller.activate();

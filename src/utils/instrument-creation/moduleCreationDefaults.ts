@@ -8,6 +8,7 @@ import { DEFAULT_KEYBOARD_THEME } from "@/data/keyboard/themes";
 import { DEFAULT_WOOD_SURFACE_ID } from "@/data/woodSurfaces";
 import {
   type DroneModuleCreationDefault,
+  type ExerciseLooperModuleCreationDefault,
   type FretboardModuleCreationDefault,
   type KeyboardModuleCreationDefault,
   type ModuleCreationDefaults,
@@ -20,6 +21,12 @@ export const DEFAULT_MODULE_CREATION_KINDS = [
 ] as const satisfies readonly ModuleCreationKind[];
 
 export function createBuiltInDroneModuleCreationDefault(): DroneModuleCreationDefault {
+  return {
+    wood: DEFAULT_WOOD_SURFACE_ID,
+  };
+}
+
+export function createBuiltInExerciseLooperModuleCreationDefault(): ExerciseLooperModuleCreationDefault {
   return {
     wood: DEFAULT_WOOD_SURFACE_ID,
   };
@@ -121,6 +128,16 @@ export function droneModuleCreationDefaultsAreEqual(
   );
 }
 
+export function exerciseLooperModuleCreationDefaultsAreEqual(
+  left: ExerciseLooperModuleCreationDefault,
+  right: ExerciseLooperModuleCreationDefault,
+) {
+  return (
+    (left.wood ?? DEFAULT_WOOD_SURFACE_ID) ===
+    (right.wood ?? DEFAULT_WOOD_SURFACE_ID)
+  );
+}
+
 export function moduleCreationDefaultsAreEqual(
   left: ModuleCreationDefaults | undefined,
   right: ModuleCreationDefaults | undefined,
@@ -138,6 +155,19 @@ export function moduleCreationDefaultsAreEqual(
       return false;
     }
   } else if (!droneModuleCreationDefaultsAreEqual(left.drone, right.drone)) {
+    return false;
+  }
+
+  if (!left.exerciseLooper || !right.exerciseLooper) {
+    if (left.exerciseLooper !== right.exerciseLooper) {
+      return false;
+    }
+  } else if (
+    !exerciseLooperModuleCreationDefaultsAreEqual(
+      left.exerciseLooper,
+      right.exerciseLooper,
+    )
+  ) {
     return false;
   }
 

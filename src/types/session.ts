@@ -21,6 +21,10 @@ import { type KeyboardConfig } from "@/types/keyboard";
 import { type DisplayFormatId } from "@/data/displayFormats";
 import { type AppThemeName } from "@/data/appThemes";
 import { type WoodSurfaceId } from "@/data/woodSurfaces";
+import {
+  type CollectionRangeBoundary,
+  type ExercisePattern,
+} from "@/utils/exercise-looper/exerciseSequence";
 
 export type ChordProgressionChordListMode =
   | "each-chord-once"
@@ -97,8 +101,27 @@ export interface DronePartModuleConfig extends PartModuleBaseConfig<"drone"> {
   wood?: WoodSurfaceId;
 }
 
+export type ExerciseSubdivision =
+  | "quarter"
+  | "eighth"
+  | "eighth-triplet"
+  | "sixteenth"
+  | "sixteenth-triplet";
+
+export interface ExerciseLooperPartModuleConfig extends PartModuleBaseConfig<"exercise-looper"> {
+  audioPresetId?: AudioPresetId;
+  end?: CollectionRangeBoundary;
+  octaveOffset?: number;
+  pattern?: ExercisePattern;
+  start?: CollectionRangeBoundary;
+  subdivision?: ExerciseSubdivision;
+  type: "exercise-looper";
+  wood?: WoodSurfaceId;
+}
+
 export interface PartModuleConfigByType {
   drone: DronePartModuleConfig;
+  "exercise-looper": ExerciseLooperPartModuleConfig;
   instrument: InstrumentPartModuleConfig;
 }
 
@@ -114,6 +137,9 @@ export interface InstrumentPartModuleCreationConfig<
 
 export interface PartModuleCreationConfigByType {
   drone: {
+    wood?: WoodSurfaceId;
+  };
+  "exercise-looper": {
     wood?: WoodSurfaceId;
   };
   instrument: InstrumentPartModuleCreationConfig;
@@ -164,10 +190,13 @@ export interface MusicPartConfig {
 }
 
 export interface SessionConfig {
+  countInBeats?: number;
   id: string;
   name: string;
   lastModified: string;
+  metronomeEnabled?: boolean;
   parts: MusicPartConfig[];
+  tempoBpm?: number;
 }
 
 /**

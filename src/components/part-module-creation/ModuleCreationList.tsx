@@ -24,6 +24,7 @@ import { MODULE_CREATION_OPTIONS } from "@/components/part-module-creation/modul
 import { useAppStore } from "@/stores/appStore";
 import {
   type DroneModuleCreationDefault,
+  type ExerciseLooperModuleCreationDefault,
   type ModuleCreationDefaults,
   type ModuleCreationKind,
 } from "@/types/instrument-creation-defaults";
@@ -41,7 +42,12 @@ interface ModuleCreationListProps {
 }
 
 function hasCreationSettings(kind: ModuleCreationKind) {
-  return kind === "drone" || kind === "fretboard" || kind === "keyboard";
+  return (
+    kind === "drone" ||
+    kind === "exercise-looper" ||
+    kind === "fretboard" ||
+    kind === "keyboard"
+  );
 }
 
 function getInitialModuleKinds(
@@ -63,9 +69,11 @@ function getModuleCreationRequest({
   fretboardSelection,
   keyboardSelection,
   droneSelection,
+  exerciseLooperSelection,
   kind,
 }: {
   droneSelection: DroneModuleCreationDefault;
+  exerciseLooperSelection: ExerciseLooperModuleCreationDefault;
   fretboardSelection: FretboardInstrumentSelection;
   keyboardSelection: KeyboardInstrumentSelection;
   kind: ModuleCreationKind;
@@ -73,6 +81,8 @@ function getModuleCreationRequest({
   switch (kind) {
     case "drone":
       return { type: "drone", settings: droneSelection };
+    case "exercise-looper":
+      return { type: "exercise-looper", settings: exerciseLooperSelection };
     case "fretboard":
       return {
         type: "instrument",
@@ -115,6 +125,11 @@ export function ModuleCreationList({
     useState<DroneModuleCreationDefault>(() => ({
       wood: moduleCreationDefaults?.drone?.wood ?? DEFAULT_WOOD_SURFACE_ID,
     }));
+  const [exerciseLooperSelection, setExerciseLooperSelection] =
+    useState<ExerciseLooperModuleCreationDefault>(() => ({
+      wood:
+        moduleCreationDefaults?.exerciseLooper?.wood ?? DEFAULT_WOOD_SURFACE_ID,
+    }));
   const [fretboardSelection, setFretboardSelection] =
     useState<FretboardInstrumentSelection>(
       initialSelections.fretboardSelection,
@@ -137,12 +152,16 @@ export function ModuleCreationList({
       moduleRequests: moduleKinds.map((kind) =>
         getModuleCreationRequest({
           droneSelection,
+          exerciseLooperSelection,
           fretboardSelection,
           keyboardSelection,
           kind,
         }),
       ),
       ...(includesKind(moduleKinds, "drone") ? { drone: droneSelection } : {}),
+      ...(includesKind(moduleKinds, "exercise-looper")
+        ? { exerciseLooper: exerciseLooperSelection }
+        : {}),
       ...(hasFretboard
         ? {
             fretboard: getFretboardModuleCreationDefault(fretboardSelection, {
@@ -160,6 +179,7 @@ export function ModuleCreationList({
     };
   }, [
     droneSelection,
+    exerciseLooperSelection,
     explicitRange.fretboard,
     explicitRange.keyboard,
     fretboardSelection,
@@ -232,9 +252,13 @@ export function ModuleCreationList({
         const summary =
           option.kind === "drone"
             ? woodSurfaces[droneSelection.wood ?? DEFAULT_WOOD_SURFACE_ID].title
-            : option.kind === "fretboard"
-              ? formatFretboardCreationSummary(fretboardSelection)
-              : formatKeyboardCreationSummary(keyboardSelection);
+            : option.kind === "exercise-looper"
+              ? woodSurfaces[
+                  exerciseLooperSelection.wood ?? DEFAULT_WOOD_SURFACE_ID
+                ].title
+              : option.kind === "fretboard"
+                ? formatFretboardCreationSummary(fretboardSelection)
+                : formatKeyboardCreationSummary(keyboardSelection);
 
         return (
           <SelectableActionRow
@@ -271,6 +295,13 @@ export function ModuleCreationList({
                     closeSignal={closeSignal}
                     value={droneSelection}
                     onChange={setDroneSelection}
+                  />
+                ) : option.kind === "exercise-looper" ? (
+                  <DroneCreationPanel
+                    ariaLabel="Exercise Looper settings"
+                    closeSignal={closeSignal}
+                    value={exerciseLooperSelection}
+                    onChange={setExerciseLooperSelection}
                   />
                 ) : option.kind === "fretboard" ? (
                   <FretboardInstrumentCreationPanel

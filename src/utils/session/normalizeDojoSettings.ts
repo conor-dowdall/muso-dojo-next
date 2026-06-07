@@ -26,6 +26,7 @@ import {
 import { type MasterAmbiencePresetId } from "@/audio/types";
 import {
   type DroneModuleCreationDefault,
+  type ExerciseLooperModuleCreationDefault,
   type FretboardCreationAppearanceSource,
   type FretboardCreationDefault,
   type FretboardModuleCreationDefault,
@@ -39,10 +40,12 @@ import { type DojoSettings } from "@/types/session";
 import { normalizeNoteColorConfig } from "@/utils/note-colors/createNoteColorConfig";
 import {
   createBuiltInDroneModuleCreationDefault,
+  createBuiltInExerciseLooperModuleCreationDefault,
   createBuiltInFretboardModuleCreationDefault,
   createBuiltInKeyboardModuleCreationDefault,
   DEFAULT_MODULE_CREATION_KINDS,
   droneModuleCreationDefaultsAreEqual,
+  exerciseLooperModuleCreationDefaultsAreEqual,
   fretboardModuleCreationDefaultsAreEqual,
   keyboardModuleCreationDefaultsAreEqual,
   moduleCreationDefaultsAreEqual,
@@ -54,6 +57,7 @@ import { normalizeSessionMaterialCreationDefaults } from "@/utils/session/sessio
 
 const MODULE_CREATION_KINDS = {
   drone: true,
+  "exercise-looper": true,
   fretboard: true,
   keyboard: true,
 } as const satisfies Record<ModuleCreationKind, true>;
@@ -372,6 +376,24 @@ export function normalizeDroneModuleCreationDefault(
     : defaultValue;
 }
 
+export function normalizeExerciseLooperModuleCreationDefault(
+  value: unknown,
+): ExerciseLooperModuleCreationDefault | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const wood = normalizeWoodSurfaceId(value.wood) ?? DEFAULT_WOOD_SURFACE_ID;
+  const defaultValue = { wood } satisfies ExerciseLooperModuleCreationDefault;
+
+  return exerciseLooperModuleCreationDefaultsAreEqual(
+    defaultValue,
+    createBuiltInExerciseLooperModuleCreationDefault(),
+  )
+    ? undefined
+    : defaultValue;
+}
+
 export function normalizeModuleCreationDefaults(
   value: unknown,
 ): ModuleCreationDefaults | undefined {
@@ -382,6 +404,9 @@ export function normalizeModuleCreationDefaults(
   const moduleCreationDefaults = {
     moduleKinds: normalizeModuleCreationKinds(value.moduleKinds),
     drone: normalizeDroneModuleCreationDefault(value.drone),
+    exerciseLooper: normalizeExerciseLooperModuleCreationDefault(
+      value.exerciseLooper,
+    ),
     fretboard: normalizeFretboardModuleCreationDefault(value.fretboard),
     keyboard: normalizeKeyboardModuleCreationDefault(value.keyboard),
   } satisfies ModuleCreationDefaults;
@@ -391,6 +416,9 @@ export function normalizeModuleCreationDefaults(
       : {}),
     ...(moduleCreationDefaults.drone
       ? { drone: moduleCreationDefaults.drone }
+      : {}),
+    ...(moduleCreationDefaults.exerciseLooper
+      ? { exerciseLooper: moduleCreationDefaults.exerciseLooper }
       : {}),
     ...(moduleCreationDefaults.fretboard
       ? { fretboard: moduleCreationDefaults.fretboard }

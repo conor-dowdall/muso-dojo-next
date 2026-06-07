@@ -6,6 +6,7 @@ describe("createRememberModuleCreationRequest", () => {
     expect(
       createRememberModuleCreationRequest({
         drone: { wood: "ebony" },
+        exerciseLooper: { wood: "maple" },
         fretboard: {
           appearanceSource: "custom",
           handedness: "right",
@@ -15,11 +16,12 @@ describe("createRememberModuleCreationRequest", () => {
           tuningKey: "guitarStandardE",
         },
         keyboard: { theme: "studio" },
-        moduleKinds: ["drone", "fretboard", "keyboard"],
+        moduleKinds: ["drone", "exercise-looper", "fretboard", "keyboard"],
         moduleRequests: [],
       }),
     ).toStrictEqual({
       drone: { wood: "ebony" },
+      exerciseLooper: { wood: "maple" },
       fretboard: {
         appearanceSource: "custom",
         handedness: "right",
@@ -29,7 +31,7 @@ describe("createRememberModuleCreationRequest", () => {
         tuningKey: "guitarStandardE",
       },
       keyboard: { theme: "studio" },
-      moduleKinds: ["drone", "fretboard", "keyboard"],
+      moduleKinds: ["drone", "exercise-looper", "fretboard", "keyboard"],
     });
   });
 });

@@ -19,6 +19,7 @@ const MASTER_COMPRESSOR_RATIO = 4;
 const MASTER_COMPRESSOR_RELEASE_SECONDS = 0.16;
 const MASTER_COMPRESSOR_THRESHOLD_DB = -10;
 const MASTER_OUTPUT_GAIN = 0.72;
+const METRONOME_OUTPUT_GAIN = 0.72;
 const MASTER_RECONFIGURE_FADE_OUT_SECONDS = 0.05;
 const MASTER_RECONFIGURE_FADE_IN_SECONDS = 0.07;
 
@@ -30,6 +31,7 @@ const emptyEffectChain: ConnectedAudioEffectChain = {
 export interface AudioMixer {
   dispose: () => void;
   getInput: (use: AudioUse) => GainNode;
+  getMetronomeInput: () => GainNode;
   setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => void;
 }
 
@@ -81,6 +83,7 @@ export function createAudioMixer({
   masterAmbiencePresetId: MasterAmbiencePresetId;
 }): AudioMixer {
   const masterInput = context.createGain();
+  const metronomeInput = context.createGain();
   const useInputs = {
     preview: createUseInput({
       context,
@@ -111,6 +114,11 @@ export function createAudioMixer({
   let ambienceTransitionRevision = 0;
 
   masterInput.gain.setValueAtTime(MASTER_OUTPUT_GAIN, context.currentTime);
+  metronomeInput.gain.setValueAtTime(
+    METRONOME_OUTPUT_GAIN,
+    context.currentTime,
+  );
+  metronomeInput.connect(context.destination);
 
   function getMasterCompressor() {
     if (!compressor) {
@@ -173,11 +181,13 @@ export function createAudioMixer({
       }
 
       Object.values(useInputs).forEach((input) => input.disconnect());
+      metronomeInput.disconnect();
       masterInput.disconnect();
       masterEffectChain.dispose();
       compressor?.disconnect();
     },
     getInput: (use) => useInputs[use],
+    getMetronomeInput: () => metronomeInput,
     setMasterAmbiencePresetId: (presetId) => {
       if (presetId === currentMasterAmbiencePresetId) {
         return;

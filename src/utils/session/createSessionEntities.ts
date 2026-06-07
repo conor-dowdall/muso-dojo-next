@@ -2,6 +2,7 @@ import { DEFAULT_KEYBOARD_THEME } from "@/data/keyboard/themes";
 import { assertNever } from "@/utils/assertNever";
 import {
   type DronePartModuleConfig,
+  type ExerciseLooperPartModuleConfig,
   type InstrumentCreationConfig,
   type InstrumentInstanceConfig,
   type InstrumentPartModuleCreationConfig,
@@ -83,6 +84,13 @@ export function createDefaultPartModuleConfig<T extends PartModuleType>(
         type: request.type,
         ...(request.settings?.wood ? { wood: request.settings.wood } : {}),
       } satisfies DronePartModuleConfig;
+    }
+    case "exercise-looper": {
+      return {
+        id: createEntityId("module"),
+        type: request.type,
+        ...(request.settings?.wood ? { wood: request.settings.wood } : {}),
+      } satisfies ExerciseLooperPartModuleConfig;
     }
     case "instrument": {
       const { instrumentType, instrumentSettings } =

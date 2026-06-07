@@ -4,6 +4,7 @@ import { useAppStore } from "@/stores/appStore";
 import { assertNever } from "@/utils/assertNever";
 import { DronePartModuleView } from "./DronePartModuleView";
 import { InstrumentPartModuleView } from "./InstrumentPartModuleView";
+import { ExerciseLooperPartModuleView } from "./ExerciseLooperPartModuleView";
 import { selectPartModule } from "./sessionSelectors";
 
 interface PartModuleViewProps {
@@ -38,6 +39,15 @@ export function PartModuleView({
     case "instrument":
       return (
         <InstrumentPartModuleView
+          sessionId={sessionId}
+          partId={partId}
+          moduleId={moduleId}
+          isPerformanceMode={isPerformanceMode}
+        />
+      );
+    case "exercise-looper":
+      return (
+        <ExerciseLooperPartModuleView
           sessionId={sessionId}
           partId={partId}
           moduleId={moduleId}

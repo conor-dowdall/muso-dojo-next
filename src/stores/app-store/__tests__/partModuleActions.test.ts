@@ -210,4 +210,54 @@ describe("part module app store actions", () => {
       type: "drone",
     });
   });
+
+  it("adds and updates an exercise looper", () => {
+    const store = createTestStore();
+    const moduleId = store.getState().addPartModule(sessionId, partId, {
+      type: "exercise-looper",
+      settings: { wood: "ebony" },
+    });
+
+    if (!moduleId) {
+      throw new Error("Expected an exercise looper module id");
+    }
+
+    const state = store.getState();
+    state.setExerciseLooperAudioPresetId(
+      sessionId,
+      partId,
+      moduleId,
+      "glass-bell",
+    );
+    state.setExerciseLooperPattern(sessionId, partId, moduleId, {
+      interval: 3,
+      kind: "interval-run",
+    });
+    state.setExerciseLooperSubdivision(
+      sessionId,
+      partId,
+      moduleId,
+      "sixteenth",
+    );
+    state.setExerciseLooperEnd(sessionId, partId, moduleId, {
+      octave: 1,
+      stepOffset: 2,
+    });
+
+    const partModule = store
+      .getState()
+      .sessions[
+        sessionId
+      ]?.parts[0]?.modules.find((candidate) => candidate.id === moduleId);
+
+    expect(partModule).toMatchObject({
+      audioPresetId: "glass-bell",
+      end: { octave: 1, stepOffset: 2 },
+      id: moduleId,
+      pattern: { interval: 3, kind: "interval-run" },
+      subdivision: "sixteenth",
+      type: "exercise-looper",
+      wood: "ebony",
+    });
+  });
 });

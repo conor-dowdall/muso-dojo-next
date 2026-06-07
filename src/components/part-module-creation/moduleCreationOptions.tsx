@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { AudioLines, Guitar, Piano } from "lucide-react";
+import { AudioLines, Guitar, Piano, Repeat2 } from "lucide-react";
 import { type ModuleCreationKind } from "@/types/instrument-creation-defaults";
 
 export interface ModuleCreationOption {
@@ -13,6 +13,7 @@ export const MODULE_CREATION_KIND_LABELS = {
   drone: "Drone",
   fretboard: "Fretboard",
   keyboard: "Keyboard",
+  "exercise-looper": "Exercise Looper",
 } as const satisfies Record<ModuleCreationKind, string>;
 
 /**
@@ -37,6 +38,12 @@ export const MODULE_CREATION_OPTIONS = [
     kind: "drone",
     label: MODULE_CREATION_KIND_LABELS.drone,
     subtitle: "Sustained notes",
+  },
+  {
+    icon: <Repeat2 />,
+    kind: "exercise-looper",
+    label: MODULE_CREATION_KIND_LABELS["exercise-looper"],
+    subtitle: "Timed note exercises",
   },
 ] as const satisfies readonly ModuleCreationOption[];
 

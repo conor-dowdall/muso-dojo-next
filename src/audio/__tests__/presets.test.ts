@@ -23,7 +23,7 @@ const defaultSurfaceByUse = {
   preview: "instrument",
   tuning: "instrument",
   drone: "drone",
-  exercise: "instrument",
+  exercise: "exercise",
 } as const satisfies Record<AudioUse, AudioPresetSurface>;
 
 function isSupportedInsertEffectType(effect: VoiceInsertEffectConfig) {
@@ -129,6 +129,19 @@ describe("audio presets", () => {
       "hollow-synth",
     ]);
     expect(Object.keys(audioPresets)).toHaveLength(11);
+  });
+
+  it("offers a focused exercise catalog", () => {
+    expect(
+      getAudioPresetsForSurface("exercise").map((preset) => preset.id),
+    ).toStrictEqual([
+      "piano",
+      "plucked-string",
+      "mandolin",
+      "reference-tone",
+      "glass-bell",
+      "hollow-synth",
+    ]);
   });
 
   it("keeps retained voices distinct and rejects retired preset ids", () => {

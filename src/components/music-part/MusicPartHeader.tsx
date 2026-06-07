@@ -23,11 +23,13 @@ import { MusicPartMenuDialog } from "./MusicPartMenuDialog";
 
 interface MusicPartHeaderProps {
   className?: string;
+  isPerformanceMode?: boolean;
   onOpenAddDialog?: () => void;
 }
 
 export function MusicPartHeader({
   className = "",
+  isPerformanceMode = false,
   onOpenAddDialog,
 }: MusicPartHeaderProps) {
   const musicPart = useMusicPart();
@@ -37,7 +39,8 @@ export function MusicPartHeader({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const { rootNote, noteCollectionKey } = musicPart;
-  const hasPartMenu = Boolean(musicPart.clonePart || musicPart.removePart);
+  const hasPartMenu =
+    !isPerformanceMode && Boolean(musicPart.clonePart || musicPart.removePart);
   const rootNoteLabel = normalizeRootNoteString(rootNote) || rootNote;
   const noteCollectionName = getNoteCollectionDisplayName(noteCollectionKey);
 
@@ -67,7 +70,9 @@ export function MusicPartHeader({
         }
         actions={
           <>
-            {musicPart.addPartModules && onOpenAddDialog ? (
+            {!isPerformanceMode &&
+            musicPart.addPartModules &&
+            onOpenAddDialog ? (
               <IconButton
                 aria-label="Add to part"
                 icon={<Plus />}

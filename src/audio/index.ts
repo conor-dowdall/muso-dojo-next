@@ -1,5 +1,17 @@
 export { createWebAudioEngine, musoAudioEngine } from "./createWebAudioEngine";
 export {
+  createLookaheadScheduler,
+  type LookaheadScheduler,
+  type LookaheadSchedulerEvent,
+  type LookaheadSchedulerOptions,
+} from "./lookaheadScheduler";
+export {
+  exercisePlaybackCoordinator,
+  type ExercisePlaybackEvent,
+  type ExercisePlaybackRequest,
+  type ExercisePlaybackSnapshot,
+} from "./exercisePlaybackCoordinator";
+export {
   DEFAULT_CONCERT_PITCH_HZ,
   MIDI_A4,
   MIDI_MAX,
@@ -35,6 +47,7 @@ export type {
   AudioPresetSurface,
   AudioUse,
   AudioVoiceHandle,
+  AudioClockSnapshot,
   ChorusEffectConfig,
   DelayEffectConfig,
   DroneHandle,
@@ -50,8 +63,11 @@ export type {
   MasterAmbiencePreset,
   MasterAmbiencePresetId,
   PlayNoteRequest,
+  PlaybackGroupHandle,
   PitchGainConfig,
   ReverbEffectConfig,
+  ScheduleMetronomeClickRequest,
+  ScheduleNoteRequest,
   UnisonConfig,
   VoiceInsertEffectConfig,
 } from "./types";

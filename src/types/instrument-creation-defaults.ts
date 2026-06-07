@@ -9,7 +9,11 @@ import { type KeyboardThemeName } from "@/data/keyboard/themes";
 import { type WoodSurfaceId } from "@/data/woodSurfaces";
 
 export type FretboardCreationAppearanceSource = "auto" | "custom";
-export type ModuleCreationKind = "fretboard" | "keyboard" | "drone";
+export type ModuleCreationKind =
+  | "fretboard"
+  | "keyboard"
+  | "drone"
+  | "exercise-looper";
 
 export interface FretboardCreationDefault {
   instrument: StringInstrumentKey;
@@ -25,6 +29,10 @@ export interface KeyboardCreationDefault {
 }
 
 export interface DroneModuleCreationDefault {
+  wood?: WoodSurfaceId;
+}
+
+export interface ExerciseLooperModuleCreationDefault {
   wood?: WoodSurfaceId;
 }
 
@@ -54,6 +62,7 @@ export interface KeyboardModuleCreationDefault extends KeyboardCreationDefault {
 export interface ModuleCreationDefaults {
   moduleKinds?: ModuleCreationKind[];
   drone?: DroneModuleCreationDefault;
+  exerciseLooper?: ExerciseLooperModuleCreationDefault;
   fretboard?: FretboardModuleCreationDefault;
   keyboard?: KeyboardModuleCreationDefault;
 }
@@ -61,6 +70,7 @@ export interface ModuleCreationDefaults {
 export interface RememberModuleCreationRequest {
   moduleKinds: ModuleCreationKind[];
   drone?: DroneModuleCreationDefault;
+  exerciseLooper?: ExerciseLooperModuleCreationDefault;
   fretboard?: FretboardModuleCreationDefault;
   keyboard?: KeyboardModuleCreationDefault;
 }

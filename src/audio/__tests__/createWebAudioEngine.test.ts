@@ -99,7 +99,10 @@ class MockOscillatorNode extends MockAudioNode {
     return undefined;
   }
 
-  start() {
+  start(time?: number) {
+    if (time !== undefined) {
+      MockAudioContext.oscillatorStartTimes.push(time);
+    }
     return undefined;
   }
 
@@ -109,6 +112,26 @@ class MockOscillatorNode extends MockAudioNode {
     }
 
     return undefined;
+  }
+}
+
+class MockAudioBufferSourceNode extends MockAudioNode {
+  buffer: AudioBuffer | null = null;
+
+  addEventListener() {
+    return undefined;
+  }
+
+  start(time?: number) {
+    if (time !== undefined) {
+      MockAudioContext.bufferSourceStartTimes.push(time);
+    }
+  }
+
+  stop(time?: number) {
+    if (time !== undefined) {
+      MockAudioContext.bufferSourceStopTimes.push(time);
+    }
   }
 }
 
@@ -133,12 +156,15 @@ class MockAudioContext {
   static connectionCount = 0;
   static convolverNodeCount = 0;
   static compressorNodeCount = 0;
+  static bufferSourceStartTimes: number[] = [];
+  static bufferSourceStopTimes: number[] = [];
   static delayNodeCount = 0;
   static disconnectionCount = 0;
   static gainNodes: MockGainNode[] = [];
   static oscillatorNodeCount = 0;
   static oscillators: MockOscillatorNode[] = [];
   static oscillatorStopTimes: number[] = [];
+  static oscillatorStartTimes: number[] = [];
   static periodicWaveCount = 0;
   static waveShaperNodeCount = 0;
   static lastInstance: MockAudioContext | undefined;
@@ -158,12 +184,15 @@ class MockAudioContext {
     MockAudioContext.connectionCount = 0;
     MockAudioContext.convolverNodeCount = 0;
     MockAudioContext.compressorNodeCount = 0;
+    MockAudioContext.bufferSourceStartTimes = [];
+    MockAudioContext.bufferSourceStopTimes = [];
     MockAudioContext.delayNodeCount = 0;
     MockAudioContext.disconnectionCount = 0;
     MockAudioContext.gainNodes = [];
     MockAudioContext.oscillatorNodeCount = 0;
     MockAudioContext.oscillators = [];
     MockAudioContext.oscillatorStopTimes = [];
+    MockAudioContext.oscillatorStartTimes = [];
     MockAudioContext.periodicWaveCount = 0;
     MockAudioContext.waveShaperNodeCount = 0;
     MockAudioContext.lastInstance = undefined;
@@ -188,6 +217,12 @@ class MockAudioContext {
   createConvolver() {
     MockAudioContext.convolverNodeCount += 1;
     return new MockConvolverNode(this) as unknown as ConvolverNode;
+  }
+
+  createBufferSource() {
+    return new MockAudioBufferSourceNode(
+      this,
+    ) as unknown as AudioBufferSourceNode;
   }
 
   createDynamicsCompressor() {
@@ -518,5 +553,57 @@ describe("createWebAudioEngine", () => {
 
     expect(MockAudioContext.convolverNodeCount).toBe(1);
     expect(MockAudioContext.compressorNodeCount).toBe(1);
+  });
+
+  it("schedules grouped exercise notes and metronome clicks in the future", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    const group = engine.createPlaybackGroup();
+    const voiceHandle = engine.scheduleNote({
+      durationSeconds: 0.2,
+      group,
+      midiNote: 60,
+      startTime: 1.25,
+      use: "exercise",
+    });
+    const clickScheduled = engine.scheduleMetronomeClick({
+      group,
+      startTime: 1.5,
+    });
+
+    expect(voiceHandle).toBeDefined();
+    expect(clickScheduled).toBe(true);
+    expect(MockAudioContext.oscillatorStartTimes).toContain(1.25);
+    expect(MockAudioContext.bufferSourceStartTimes).toEqual([1.5]);
+  });
+
+  it("cancels queued playback groups and emits Stop All separately from reset", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    const stopAllListener = vi.fn();
+    const resetListener = vi.fn();
+    engine.subscribeToStopAll(stopAllListener);
+    engine.subscribeToReset(resetListener);
+    const group = engine.createPlaybackGroup();
+    engine.scheduleNote({
+      group,
+      midiNote: 60,
+      startTime: 2,
+      use: "exercise",
+    });
+    engine.scheduleMetronomeClick({
+      group,
+      startTime: 2,
+    });
+
+    engine.stopAll();
+
+    expect(stopAllListener).toHaveBeenCalledOnce();
+    expect(resetListener).not.toHaveBeenCalled();
+    expect(MockAudioContext.bufferSourceStopTimes.at(-1)).toBe(2);
   });
 });

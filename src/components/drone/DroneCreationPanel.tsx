@@ -17,12 +17,14 @@ import { type DroneModuleCreationDefault } from "@/types/instrument-creation-def
 import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
 
 interface DroneCreationPanelProps {
+  ariaLabel?: string;
   closeSignal?: number;
   onChange: (value: DroneModuleCreationDefault) => void;
   value: DroneModuleCreationDefault;
 }
 
 export function DroneCreationPanel({
+  ariaLabel = "Drone settings",
   closeSignal,
   onChange,
   value,
@@ -39,7 +41,7 @@ export function DroneCreationPanel({
   };
 
   return (
-    <section className={styles.section} aria-label="Drone settings">
+    <section className={styles.section} aria-label={ariaLabel}>
       <DisclosureList>
         <DisclosureListItem
           ariaLabel={`Choose wood, ${woodSurfaces[wood].title} selected`}

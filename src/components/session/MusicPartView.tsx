@@ -69,6 +69,7 @@ export function MusicPartView({
     <MusicPart
       partId={partId}
       instrumentCreationRangeContext={instrumentCreationRangeContext}
+      isPerformanceMode={isPerformanceMode}
       rootNote={partSettings.rootNote}
       onRootNoteChange={(rootNote) =>
         setPartRootNote(sessionId, partId, rootNote)
@@ -77,7 +78,7 @@ export function MusicPartView({
       onNoteCollectionKeyChange={(noteCollectionKey) =>
         setPartNoteCollectionKey(sessionId, partId, noteCollectionKey)
       }
-      showHeader={!isPerformanceMode && partSettings.showHeader}
+      showHeader={isPerformanceMode ? true : partSettings.showHeader}
       onAddPartModules={
         isPerformanceMode
           ? undefined

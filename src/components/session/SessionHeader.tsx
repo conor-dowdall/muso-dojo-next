@@ -11,6 +11,7 @@ import { useAppStore } from "@/stores/appStore";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { SessionManagementDialog } from "./SessionManagementDialog";
 import { SessionMenu } from "./SessionMenu";
+import { SessionPulseControl } from "./SessionPulseControl";
 import styles from "./SessionHeader.module.css";
 
 interface SessionHeaderProps {
@@ -79,6 +80,9 @@ export function SessionHeader({
                 tooltip="Performance mode"
                 onClick={onEnterPerformanceMode}
               />
+              {activeSessionId ? (
+                <SessionPulseControl sessionId={activeSessionId} />
+              ) : null}
               <OverflowMenuButton
                 aria-label={sessionOverflowLabel}
                 onClick={() => openDialog({ kind: "sessions" })}

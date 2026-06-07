@@ -140,11 +140,19 @@ const audioPresetOrderBySurface = {
     "hollow-synth",
   ],
   drone: ["reference-tone", "soft-organ", "bowed-strings", "warm-pad"],
+  exercise: [
+    "piano",
+    "plucked-string",
+    "mandolin",
+    "reference-tone",
+    "glass-bell",
+    "hollow-synth",
+  ],
 } as const satisfies Record<AudioPresetSurface, readonly AudioPresetId[]>;
 
 export const audioPresets = {
   "reference-tone": {
-    availableOn: ["instrument", "drone"],
+    availableOn: ["instrument", "drone", "exercise"],
     defaultDurationSeconds: 1.1,
     description: "Plain, steady, and useful for checking pitch.",
     family: "generated",
@@ -163,7 +171,7 @@ export const audioPresets = {
     },
   },
   piano: {
-    availableOn: ["instrument"],
+    availableOn: ["instrument", "exercise"],
     defaultDurationSeconds: 1.12,
     description: "Rounded hammer attack with a clear, lingering body.",
     family: "generated",
@@ -191,7 +199,7 @@ export const audioPresets = {
     },
   },
   "plucked-string": {
-    availableOn: ["instrument"],
+    availableOn: ["instrument", "exercise"],
     defaultDurationSeconds: 0.58,
     description: "Fast, bright pluck for guitar, ukulele, and general frets.",
     family: "generated",
@@ -312,7 +320,7 @@ export const audioPresets = {
     },
   },
   mandolin: {
-    availableOn: ["instrument"],
+    availableOn: ["instrument", "exercise"],
     defaultDurationSeconds: 0.5,
     description: "Bright paired-course pluck with a quick treble shimmer.",
     family: "generated",
@@ -405,7 +413,7 @@ export const audioPresets = {
     },
   },
   "glass-bell": {
-    availableOn: ["instrument"],
+    availableOn: ["instrument", "exercise"],
     defaultDurationSeconds: 1.18,
     description: "Clean ringing highs for ear-training accents.",
     family: "generated",
@@ -433,7 +441,7 @@ export const audioPresets = {
     },
   },
   "hollow-synth": {
-    availableOn: ["instrument"],
+    availableOn: ["instrument", "exercise"],
     defaultDurationSeconds: 0.72,
     description: "Odd harmonics with a woody, hollow center.",
     family: "generated",

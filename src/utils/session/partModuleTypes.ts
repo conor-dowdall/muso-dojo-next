@@ -1,5 +1,6 @@
 import {
   type DronePartModuleConfig,
+  type ExerciseLooperPartModuleConfig,
   type InstrumentPartModuleConfig,
   type InstrumentType,
   type PartModuleConfig,
@@ -8,6 +9,7 @@ import {
 
 const partModuleTypes = {
   drone: true,
+  "exercise-looper": true,
   instrument: true,
 } satisfies Record<PartModuleType, true>;
 
@@ -34,4 +36,10 @@ export function isDronePartModule(
   module: PartModuleConfig | undefined,
 ): module is DronePartModuleConfig {
   return module?.type === "drone";
+}
+
+export function isExerciseLooperPartModule(
+  module: PartModuleConfig | undefined,
+): module is ExerciseLooperPartModuleConfig {
+  return module?.type === "exercise-looper";
 }

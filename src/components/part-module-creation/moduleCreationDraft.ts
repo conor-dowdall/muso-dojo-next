@@ -1,5 +1,6 @@
 import {
   type DroneModuleCreationDefault,
+  type ExerciseLooperModuleCreationDefault,
   type FretboardModuleCreationDefault,
   type KeyboardModuleCreationDefault,
   type ModuleCreationKind,
@@ -9,6 +10,7 @@ import { type PartModuleCreationRequest } from "@/types/session";
 
 export interface ModuleCreationListDraft {
   drone?: DroneModuleCreationDefault;
+  exerciseLooper?: ExerciseLooperModuleCreationDefault;
   fretboard?: FretboardModuleCreationDefault;
   keyboard?: KeyboardModuleCreationDefault;
   moduleKinds: ModuleCreationKind[];
@@ -21,6 +23,7 @@ export function createRememberModuleCreationRequest(
   return {
     moduleKinds: draft.moduleKinds,
     ...(draft.drone ? { drone: draft.drone } : {}),
+    ...(draft.exerciseLooper ? { exerciseLooper: draft.exerciseLooper } : {}),
     ...(draft.fretboard ? { fretboard: draft.fretboard } : {}),
     ...(draft.keyboard ? { keyboard: draft.keyboard } : {}),
   };

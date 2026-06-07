@@ -1,5 +1,6 @@
 import {
   type DronePartModuleConfig,
+  type ExerciseLooperPartModuleConfig,
   type InstrumentPartModuleConfig,
   type PartModuleConfig,
 } from "@/types/session";
@@ -18,6 +19,21 @@ import {
   DEFAULT_WOOD_SURFACE_ID,
   normalizeWoodSurfaceId,
 } from "@/data/woodSurfaces";
+import {
+  boundariesAreEqual,
+  DEFAULT_EXERCISE_END,
+  DEFAULT_EXERCISE_PATTERN,
+  DEFAULT_EXERCISE_START,
+  DEFAULT_EXERCISE_SUBDIVISION,
+  EXERCISE_MAX_OCTAVE_OFFSET,
+  EXERCISE_MIN_OCTAVE_OFFSET,
+  exercisePatternsAreEqual,
+  normalizeCollectionRangeBoundary,
+  normalizeExerciseAudioPresetId,
+  normalizeExercisePattern,
+  normalizeExerciseSubdivision,
+  normalizeExerciseWood,
+} from "@/utils/exercise-looper/exerciseConfig";
 
 function normalizeDroneAudioPresetId(value: unknown) {
   return isAudioPresetId(value) && value !== getDefaultAudioPresetId("drone")
@@ -96,6 +112,41 @@ export function normalizePartModuleConfig(
         type: value.type,
         ...(wood ? { wood } : {}),
       } satisfies DronePartModuleConfig;
+    }
+    case "exercise-looper": {
+      const audioPresetId = normalizeExerciseAudioPresetId(value.audioPresetId);
+      const start = normalizeCollectionRangeBoundary(value.start);
+      const end = normalizeCollectionRangeBoundary(value.end);
+      const pattern = normalizeExercisePattern(value.pattern);
+      const subdivision = normalizeExerciseSubdivision(value.subdivision);
+      const octaveOffset = normalizeOptionalDroneInteger({
+        defaultValue: 0,
+        max: EXERCISE_MAX_OCTAVE_OFFSET,
+        min: EXERCISE_MIN_OCTAVE_OFFSET,
+        value: value.octaveOffset,
+      });
+      const wood = normalizeExerciseWood(value.wood);
+
+      return {
+        id: normalizeId(value.id, `module-${index + 1}`),
+        ...(audioPresetId ? { audioPresetId } : {}),
+        ...(end && !boundariesAreEqual(end, DEFAULT_EXERCISE_END)
+          ? { end }
+          : {}),
+        ...(octaveOffset !== undefined ? { octaveOffset } : {}),
+        ...(pattern &&
+        !exercisePatternsAreEqual(pattern, DEFAULT_EXERCISE_PATTERN)
+          ? { pattern }
+          : {}),
+        ...(start && !boundariesAreEqual(start, DEFAULT_EXERCISE_START)
+          ? { start }
+          : {}),
+        ...(subdivision && subdivision !== DEFAULT_EXERCISE_SUBDIVISION
+          ? { subdivision }
+          : {}),
+        type: value.type,
+        ...(wood ? { wood } : {}),
+      } satisfies ExerciseLooperPartModuleConfig;
     }
     case "instrument": {
       const instrument = normalizeInstrumentInstanceConfig(value.instrument);

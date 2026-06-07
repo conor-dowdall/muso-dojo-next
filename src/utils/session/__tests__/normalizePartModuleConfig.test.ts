@@ -74,4 +74,49 @@ describe("normalizePartModuleConfig", () => {
       type: "drone",
     });
   });
+
+  it("normalizes persisted exercise looper settings", () => {
+    expect(
+      normalizePartModuleConfig({
+        audioPresetId: "glass-bell",
+        end: { octave: 1, stepOffset: 2 },
+        id: "looper-1",
+        octaveOffset: 2,
+        pattern: { interval: 3, kind: "interval-run" },
+        start: { octave: 0, stepOffset: 1 },
+        subdivision: "sixteenth",
+        type: "exercise-looper",
+        wood: "maple",
+      }),
+    ).toStrictEqual({
+      audioPresetId: "glass-bell",
+      end: { octave: 1, stepOffset: 2 },
+      id: "looper-1",
+      octaveOffset: 2,
+      pattern: { interval: 3, kind: "interval-run" },
+      start: { octave: 0, stepOffset: 1 },
+      subdivision: "sixteenth",
+      type: "exercise-looper",
+      wood: "maple",
+    });
+  });
+
+  it("drops invalid and default exercise looper settings", () => {
+    expect(
+      normalizePartModuleConfig({
+        audioPresetId: "piano",
+        end: { octave: 1, stepOffset: 0 },
+        id: "looper-1",
+        octaveOffset: 99,
+        pattern: { direction: "up-down", kind: "scale" },
+        start: { octave: 0, stepOffset: 0 },
+        subdivision: "eighth",
+        type: "exercise-looper",
+        wood: "rosewood",
+      }),
+    ).toStrictEqual({
+      id: "looper-1",
+      type: "exercise-looper",
+    });
+  });
 });

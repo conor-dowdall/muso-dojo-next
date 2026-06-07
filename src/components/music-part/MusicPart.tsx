@@ -30,6 +30,7 @@ interface MusicPartProps {
   headerClassName?: string;
   accentColor?: string;
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
+  isPerformanceMode?: boolean;
   showHeader?: boolean;
   onAddPartModules?: AddPartModulesHandler;
   onClonePart?: () => void;
@@ -42,10 +43,12 @@ function MusicPartContent({
   children,
   showHeader,
   headerClassName,
+  isPerformanceMode,
 }: {
   children: ReactNode;
   showHeader: boolean;
   headerClassName?: string;
+  isPerformanceMode?: boolean;
 }) {
   const musicPart = useMusicPart();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -63,6 +66,7 @@ function MusicPartContent({
       {showHeader ? (
         <MusicPartHeader
           className={headerClassName}
+          isPerformanceMode={isPerformanceMode}
           onOpenAddDialog={canAddPartModules ? openAddDialog : undefined}
         />
       ) : null}
@@ -105,6 +109,7 @@ export function MusicPart({
   headerClassName,
   accentColor,
   instrumentCreationRangeContext,
+  isPerformanceMode = false,
   rootNote: controlledRootNote,
   initialRootNote = "C",
   onRootNoteChange,
@@ -157,6 +162,7 @@ export function MusicPart({
         >
           <MusicPartContent
             headerClassName={headerClassName}
+            isPerformanceMode={isPerformanceMode}
             showHeader={showHeader}
           >
             {children}
