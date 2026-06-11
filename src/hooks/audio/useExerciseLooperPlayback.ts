@@ -30,11 +30,13 @@ function createPlaybackEvents(
 
   steps.forEach((step, stepIndex) => {
     const durationBeats = step.durationUnits * subdivisionBeats;
-    events.push({
-      durationBeats,
-      midi: step.note.midi,
-      offsetBeats,
-      stepIndex,
+    step.notes.forEach((note) => {
+      events.push({
+        durationBeats,
+        midi: note.midi,
+        offsetBeats,
+        stepIndex,
+      });
     });
     offsetBeats += durationBeats;
   });
@@ -162,7 +164,7 @@ export function useExerciseLooperPlayback({
   return {
     activeAnchorPosition:
       isPlaying && activeStepIndex !== undefined
-        ? steps[activeStepIndex]?.note.anchorPosition
+        ? steps[activeStepIndex]?.notes[0]?.anchorPosition
         : undefined,
     audition,
     isPlaying,

@@ -22,10 +22,14 @@ export const EXERCISE_MAX_OCTAVE_SPAN = 4;
 
 export type ExerciseScaleDirection = "ascending" | "descending" | "up-down";
 export type ExercisePatternMode = "single" | "interval" | "extension";
+export type ExerciseIntervalPlayback = "separate" | "together";
 
 export interface ExercisePattern {
-  degree: number;
   direction: ExerciseScaleDirection;
+  extensionDegree: number;
+  extensionDirection: ExerciseScaleDirection;
+  intervalDegree: number;
+  intervalPlayback: ExerciseIntervalPlayback;
   mode: ExercisePatternMode;
 }
 
@@ -50,7 +54,7 @@ export interface ExerciseDisplayNote {
 
 export interface ExerciseSequenceStep {
   durationUnits: number;
-  note: ExerciseSequenceNote;
+  notes: ExerciseSequenceNote[];
 }
 
 export interface ExerciseSequence {
@@ -172,29 +176,56 @@ function createScaleAnchors(
   return [...ascending, ...ascending.toReversed().slice(1, -1)];
 }
 
-function createPatternPositions(anchor: number, pattern: ExercisePattern) {
+function createInnerContour(
+  positions: readonly number[],
+  direction: ExerciseScaleDirection,
+) {
+  if (direction === "ascending") {
+    return positions;
+  }
+
+  if (direction === "descending") {
+    return positions.toReversed();
+  }
+
+  return [...positions, ...positions.toReversed().slice(1)];
+}
+
+function createPatternPositionGroups(anchor: number, pattern: ExercisePattern) {
   switch (pattern.mode) {
     case "single":
-      return [anchor];
-    case "interval":
-      return [
+      return [[anchor]];
+    case "interval": {
+      const positions = [
         anchor,
         anchor +
           clampInteger(
-            pattern.degree,
+            pattern.intervalDegree,
             EXERCISE_INTERVAL_MIN,
             EXERCISE_INTERVAL_MAX,
           ) -
           1,
       ];
+
+      return pattern.intervalPlayback === "together"
+        ? [positions]
+        : positions.map((position) => [position]);
+    }
     case "extension": {
       const degree = clampInteger(
-        pattern.degree,
+        pattern.extensionDegree,
         EXERCISE_INTERVAL_MIN,
         EXERCISE_INTERVAL_MAX,
       );
       const size = Math.floor((degree + 1) / 2);
-      return Array.from({ length: size }, (_, index) => anchor + index * 2);
+      const positions = Array.from(
+        { length: size },
+        (_, index) => anchor + index * 2,
+      );
+
+      return createInnerContour(positions, pattern.extensionDirection).map(
+        (position) => [position],
+      );
     }
   }
 }
@@ -225,7 +256,10 @@ export function getExerciseAnchorPositionBounds({
   const playablePositions: number[] = [];
 
   for (let position = searchMin; position <= searchMax; position += 1) {
-    const patternPositions = createPatternPositions(position, pattern);
+    const patternPositions = createPatternPositionGroups(
+      position,
+      pattern,
+    ).flat();
     const isPlayable = patternPositions.every((patternPosition) => {
       const midi = getMidiForCollectionPosition({
         collectionKey: resolvedCollectionKey,
@@ -251,7 +285,14 @@ export function createExerciseSequence({
   end = { octave: 1, stepOffset: 0 },
   noteCollectionKey,
   octaveOffset = 0,
-  pattern = { degree: 3, direction: "up-down", mode: "single" },
+  pattern = {
+    direction: "up-down",
+    extensionDegree: 3,
+    extensionDirection: "up-down",
+    intervalDegree: 3,
+    intervalPlayback: "separate",
+    mode: "single",
+  },
   rootNote,
   start = { octave: 0, stepOffset: 0 },
 }: {
@@ -336,30 +377,31 @@ export function createExerciseSequence({
     pattern.direction,
   );
   const steps = anchors.flatMap((anchorPosition) => {
-    const positions = createPatternPositions(anchorPosition, pattern);
+    const positionGroups = createPatternPositionGroups(anchorPosition, pattern);
 
-    return positions.flatMap((collectionPosition) => {
-      const midi = getMidiForCollectionPosition({
-        collectionKey: resolvedCollectionKey,
-        octaveOffset,
-        position: collectionPosition,
-        rootNote: resolvedRootNote,
+    return positionGroups.flatMap((positions) => {
+      const notes = positions.flatMap((collectionPosition) => {
+        const midi = getMidiForCollectionPosition({
+          collectionKey: resolvedCollectionKey,
+          octaveOffset,
+          position: collectionPosition,
+          rootNote: resolvedRootNote,
+        });
+
+        return midi === undefined || !isPlayableMidiNote(midi)
+          ? []
+          : [
+              {
+                anchorPosition,
+                collectionPosition,
+                midi,
+              },
+            ];
       });
 
-      if (midi === undefined || !isPlayableMidiNote(midi)) {
-        return [];
-      }
-
-      return [
-        {
-          durationUnits: 1,
-          note: {
-            anchorPosition,
-            collectionPosition,
-            midi,
-          },
-        },
-      ];
+      return notes.length === positions.length
+        ? [{ durationUnits: 1, notes }]
+        : [];
     });
   });
 

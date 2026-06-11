@@ -7,11 +7,26 @@
   --looper-column-gap: var(--space-1);
   --looper-body-padding: var(--space-3);
   --looper-toolbar-gap: var(--space-3);
+  --looper-primary-control-gap: var(--space-5);
+  --looper-pattern-bank-padding-block: var(--space-1);
+  --looper-extension-controls-height: calc(
+    var(--control-size-md) + var(--control-size-md) + var(--space-1)
+  );
+  --looper-pattern-areas-height: calc(
+    var(--control-size-lg) + var(--control-size-lg) +
+      var(--looper-extension-controls-height) +
+      var(--looper-pattern-bank-padding-block) +
+      var(--looper-pattern-bank-padding-block) +
+      var(--looper-pattern-bank-padding-block) +
+      var(--looper-pattern-bank-padding-block) +
+      var(--looper-pattern-bank-padding-block) +
+      var(--looper-pattern-bank-padding-block)
+  );
   --looper-playback-controls-height: calc(
     var(--control-size-lg) + var(--space-2) + var(--space-2)
   );
   --looper-pattern-controls-height: calc(
-    var(--control-size-sm) + var(--control-size-sm) + var(--space-2)
+    var(--control-size-lg) + var(--space-2) + var(--looper-pattern-areas-height)
   );
   --looper-control-deck-gap: var(--space-2);
   --looper-toolbar-height: calc(
@@ -123,7 +138,7 @@
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  gap: var(--space-5);
+  gap: var(--looper-primary-control-gap);
   padding-block: var(--space-2);
 }
 
@@ -135,92 +150,83 @@
   gap: var(--space-2);
 }
 
-.directionControls,
-.modeControls {
-  display: grid;
+.directionControls {
+  display: flex;
   min-inline-size: 0;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-1);
+  align-items: center;
+  justify-content: center;
+  gap: var(--looper-primary-control-gap);
 }
 
-.patternDetailControls {
+.patternAreas {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+}
+
+.patternArea {
   display: grid;
   min-inline-size: 0;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: var(--control-size-lg) minmax(0, 1fr);
   align-items: center;
+  column-gap: var(--space-2);
+  padding: var(--looper-pattern-bank-padding-block) var(--space-1);
+}
+
+.patternArea + .patternArea {
+  box-shadow:
+    inset 0 var(--space-px) 0
+      color-mix(in srgb, var(--color-interaction-ring-dark) 30%, transparent),
+    inset 0 calc(var(--space-px) + var(--space-px)) 0
+      color-mix(in srgb, var(--color-interaction-ring-light) 12%, transparent);
+}
+
+.patternAreaControls {
+  display: flex;
+  min-inline-size: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.intervalAreaControls {
   gap: var(--space-2);
+}
+
+.extensionAreaControls {
+  min-block-size: var(--looper-extension-controls-height);
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .degreeControls {
   display: grid;
   grid-template-columns:
-    var(--control-size-sm)
     var(--control-size-md)
-    var(--control-size-sm);
+    var(--control-size-md)
+    var(--control-size-md);
   align-items: center;
   gap: var(--space-0_5);
 }
 
-.toolButton,
 .patternButton {
-  --button-outline-background: color-mix(
-    in srgb,
-    var(--note-color-neutral) 78%,
-    var(--color-surface)
-  );
-  --button-background-hover: color-mix(
-    in srgb,
-    var(--note-color-neutral) 72%,
-    var(--color-surface-hover)
-  );
-  --button-active-background: color-mix(
-    in srgb,
-    var(--note-color-neutral) 82%,
-    var(--color-base)
-  );
-  --interact-y-hover: 0;
-
-  color: var(--color-text);
-  box-shadow:
-    inset 0 var(--space-px) 0
-      color-mix(in srgb, var(--color-interaction-ring-light) 24%, transparent),
-    inset 0 calc(-1 * var(--space-px)) 0
-      color-mix(in srgb, var(--color-interaction-ring-dark) 42%, transparent),
-    0 var(--space-px) var(--space-1)
-      color-mix(in srgb, var(--color-interaction-ring-dark) 28%, transparent);
+  flex: 0 0 auto;
 }
 
-.patternButton {
-  --button-padding-inline: var(--space-1);
-
-  overflow: hidden;
-  font-size: var(--text-xs);
+.modeButton,
+.directionButton {
+  flex: 0 0 auto;
 }
 
 .degreeButton {
-  inline-size: var(--control-size-sm);
+  inline-size: var(--control-size-md);
   padding: 0;
-}
-
-.toolButton:active,
-.patternButton:active,
-.patternButton[data-selected="true"] {
-  translate: 0 var(--space-px);
-  box-shadow:
-    inset 0 var(--space-px) var(--space-1)
-      color-mix(in srgb, var(--color-interaction-ring-dark) 30%, transparent),
-    0 0 transparent;
-}
-
-.patternButton:is([aria-disabled="true"]) {
-  color: var(--color-text-muted);
 }
 
 .degreeDisplay {
   box-sizing: border-box;
   display: grid;
   inline-size: var(--control-size-md);
-  min-block-size: var(--control-size-sm);
+  min-block-size: var(--control-size-md);
   place-items: center;
   border: var(--border-width-base) solid
     color-mix(in srgb, var(--note-color-neutral) 55%, var(--color-border));
@@ -241,8 +247,11 @@
   line-height: var(--leading-none);
 }
 
-.degreeControls[data-unavailable="true"] .degreeDisplay {
-  color: var(--color-text-muted);
+.contextualControls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
 }
 
 .noteStack {
@@ -291,17 +300,7 @@
 }
 
 .noteButton [data-emphasis] {
-  border-color: color-mix(in srgb, var(--color-base) 76%, var(--color-border));
   border-radius: calc(var(--radius-control) + var(--space-0_5));
-  box-shadow:
-    inset 0 var(--space-px) 0
-      color-mix(in srgb, var(--color-interaction-ring-light) 22%, transparent),
-    inset 0 calc(-1 * var(--space-px)) 0
-      color-mix(in srgb, var(--color-interaction-ring-dark) 44%, transparent);
-  filter: drop-shadow(
-    0 var(--space-1) var(--space-1)
-      color-mix(in srgb, var(--color-interaction-ring-dark) 58%, transparent)
-  );
 }
 
 .noteButton[data-note-highlighted="true"] [data-emphasis] {
@@ -348,20 +347,20 @@
     inline-size: 100%;
   }
 
+  .patternArea {
+    column-gap: var(--space-1);
+    padding-inline: 0;
+  }
+
+  .intervalAreaControls {
+    gap: var(--space-1);
+  }
+
+  .contextualControls {
+    gap: var(--space-1);
+  }
+
   .label {
     font-size: var(--text-xs);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .toolButton,
-  .patternButton {
-    transition: none;
-  }
-
-  .toolButton:active,
-  .patternButton:active,
-  .patternButton[data-selected="true"] {
-    translate: none;
   }
 }

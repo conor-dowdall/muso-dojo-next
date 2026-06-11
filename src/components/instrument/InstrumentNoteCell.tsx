@@ -4,7 +4,7 @@ import {
   type CSSProperties,
   type KeyboardEvent,
 } from "react";
-import { InstrumentNote } from "./InstrumentNote";
+import { InstrumentNote, type InstrumentNoteSurface } from "./InstrumentNote";
 import { type ActiveNote } from "@/types/instrument-active-note";
 import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import { type InstrumentNoteColor } from "@/types/note-colors";
@@ -33,6 +33,7 @@ interface InstrumentNoteCellProps {
   width?: string;
   height?: string;
   largeSize?: string;
+  surface?: InstrumentNoteSurface;
 }
 
 /**
@@ -60,6 +61,7 @@ function InstrumentNoteCellBase({
   width,
   height,
   largeSize,
+  surface,
 }: InstrumentNoteCellProps) {
   const handlePointerDown = () => {
     onPointerDown?.();
@@ -97,6 +99,7 @@ function InstrumentNoteCellBase({
         width={width}
         height={height}
         largeSize={largeSize}
+        surface={surface}
       >
         {children}
       </InstrumentNote>
@@ -149,7 +152,8 @@ function instrumentNoteCellPropsAreEqual(
     previous.children === next.children &&
     previous.width === next.width &&
     previous.height === next.height &&
-    previous.largeSize === next.largeSize
+    previous.largeSize === next.largeSize &&
+    previous.surface === next.surface
   );
 }
 

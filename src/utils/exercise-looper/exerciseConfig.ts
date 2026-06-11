@@ -14,8 +14,11 @@ import { type ExerciseSubdivision } from "@/types/session";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 
 export const DEFAULT_EXERCISE_PATTERN = {
-  degree: 3,
   direction: "up-down",
+  extensionDegree: 3,
+  extensionDirection: "up-down",
+  intervalDegree: 3,
+  intervalPlayback: "separate",
   mode: "single",
 } as const satisfies ExercisePattern;
 export const DEFAULT_EXERCISE_SUBDIVISION =
@@ -88,13 +91,25 @@ export function normalizeExercisePattern(
 ): ExercisePattern | undefined {
   if (
     !isRecord(value) ||
-    typeof value.degree !== "number" ||
-    !Number.isInteger(value.degree) ||
-    value.degree < EXERCISE_INTERVAL_MIN ||
-    value.degree > EXERCISE_INTERVAL_MAX ||
     (value.direction !== "ascending" &&
       value.direction !== "descending" &&
       value.direction !== "up-down") ||
+    typeof value.extensionDegree !== "number" ||
+    !Number.isInteger(value.extensionDegree) ||
+    !EXERCISE_EXTENSION_DEGREES.includes(
+      value.extensionDegree as (typeof EXERCISE_EXTENSION_DEGREES)[number],
+    ) ||
+    (value.extensionDirection !== undefined &&
+      value.extensionDirection !== "ascending" &&
+      value.extensionDirection !== "descending" &&
+      value.extensionDirection !== "up-down") ||
+    typeof value.intervalDegree !== "number" ||
+    !Number.isInteger(value.intervalDegree) ||
+    value.intervalDegree < EXERCISE_INTERVAL_MIN ||
+    value.intervalDegree > EXERCISE_INTERVAL_MAX ||
+    (value.intervalPlayback !== undefined &&
+      value.intervalPlayback !== "separate" &&
+      value.intervalPlayback !== "together") ||
     (value.mode !== "single" &&
       value.mode !== "interval" &&
       value.mode !== "extension")
@@ -102,18 +117,14 @@ export function normalizeExercisePattern(
     return undefined;
   }
 
-  if (
-    value.mode === "extension" &&
-    !EXERCISE_EXTENSION_DEGREES.includes(
-      value.degree as (typeof EXERCISE_EXTENSION_DEGREES)[number],
-    )
-  ) {
-    return undefined;
-  }
-
   return {
-    degree: value.degree,
     direction: value.direction,
+    extensionDegree: value.extensionDegree,
+    extensionDirection:
+      value.extensionDirection ?? DEFAULT_EXERCISE_PATTERN.extensionDirection,
+    intervalDegree: value.intervalDegree,
+    intervalPlayback:
+      value.intervalPlayback ?? DEFAULT_EXERCISE_PATTERN.intervalPlayback,
     mode: value.mode,
   };
 }
@@ -123,31 +134,21 @@ export function exercisePatternsAreEqual(
   right: ExercisePattern,
 ) {
   return (
-    left.degree === right.degree &&
     left.direction === right.direction &&
+    left.extensionDegree === right.extensionDegree &&
+    left.extensionDirection === right.extensionDirection &&
+    left.intervalDegree === right.intervalDegree &&
+    left.intervalPlayback === right.intervalPlayback &&
     left.mode === right.mode
   );
 }
 
 export function getExerciseDegreeOptions(
-  mode: ExercisePatternMode,
+  mode: Exclude<ExercisePatternMode, "single">,
 ): readonly number[] {
   return mode === "extension"
     ? EXERCISE_EXTENSION_DEGREES
     : EXERCISE_INTERVAL_DEGREES;
-}
-
-export function getNearestExerciseDegree(
-  degree: number,
-  mode: ExercisePatternMode,
-) {
-  const options = getExerciseDegreeOptions(mode);
-
-  return options.reduce((nearest, candidate) =>
-    Math.abs(candidate - degree) < Math.abs(nearest - degree)
-      ? candidate
-      : nearest,
-  );
 }
 
 export function boundariesAreEqual(

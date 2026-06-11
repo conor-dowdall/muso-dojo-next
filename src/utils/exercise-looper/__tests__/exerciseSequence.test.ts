@@ -11,9 +11,9 @@ describe("createExerciseSequence", () => {
       rootNote: "C",
     });
 
-    expect(sequence.steps.map((step) => step.note.midi)).toEqual([
-      48, 50, 52, 53, 55, 57, 59, 60, 59, 57, 55, 53, 52, 50,
-    ]);
+    expect(
+      sequence.steps.flatMap((step) => step.notes.map((note) => note.midi)),
+    ).toEqual([48, 50, 52, 53, 55, 57, 59, 60, 59, 57, 55, 53, 52, 50]);
     expect(sequence.steps.every((step) => step.durationUnits === 1)).toBe(true);
   });
 
@@ -53,7 +53,9 @@ describe("createExerciseSequence", () => {
     });
 
     expect(sequence.notes.map((note) => note.midi)).toEqual([48]);
-    expect(sequence.steps.map((step) => step.note.midi)).toEqual([48]);
+    expect(
+      sequence.steps.flatMap((step) => step.notes.map((note) => note.midi)),
+    ).toEqual([48]);
   });
 
   it("limits an exercise range to four octaves while retaining the top root", () => {
@@ -72,12 +74,43 @@ describe("createExerciseSequence", () => {
     const sequence = createExerciseSequence({
       end: { octave: 0, stepOffset: 2 },
       noteCollectionKey: "ionian",
-      pattern: { degree: 3, direction: "ascending", mode: "interval" },
+      pattern: {
+        direction: "ascending",
+        extensionDegree: 5,
+        extensionDirection: "up-down",
+        intervalDegree: 3,
+        intervalPlayback: "separate",
+        mode: "interval",
+      },
       rootNote: "C",
     });
 
-    expect(sequence.steps.map((step) => step.note.midi)).toEqual([
-      48, 52, 50, 53, 52, 55,
+    expect(
+      sequence.steps.flatMap((step) => step.notes.map((note) => note.midi)),
+    ).toEqual([48, 52, 50, 53, 52, 55]);
+  });
+
+  it("plays interval notes together on one beat", () => {
+    const sequence = createExerciseSequence({
+      end: { octave: 0, stepOffset: 2 },
+      noteCollectionKey: "ionian",
+      pattern: {
+        direction: "ascending",
+        extensionDegree: 5,
+        extensionDirection: "up-down",
+        intervalDegree: 3,
+        intervalPlayback: "together",
+        mode: "interval",
+      },
+      rootNote: "C",
+    });
+
+    expect(
+      sequence.steps.map((step) => step.notes.map((note) => note.midi)),
+    ).toEqual([
+      [48, 52],
+      [50, 53],
+      [52, 55],
     ]);
   });
 
@@ -85,13 +118,20 @@ describe("createExerciseSequence", () => {
     const sequence = createExerciseSequence({
       end: { octave: 0, stepOffset: 0 },
       noteCollectionKey: "melodicMinor",
-      pattern: { degree: 13, direction: "ascending", mode: "extension" },
+      pattern: {
+        direction: "ascending",
+        extensionDegree: 13,
+        extensionDirection: "ascending",
+        intervalDegree: 3,
+        intervalPlayback: "separate",
+        mode: "extension",
+      },
       rootNote: "C",
     });
 
-    expect(sequence.steps.map((step) => step.note.midi)).toEqual([
-      48, 51, 55, 59, 62, 65, 69,
-    ]);
+    expect(
+      sequence.steps.flatMap((step) => step.notes.map((note) => note.midi)),
+    ).toEqual([48, 51, 55, 59, 62, 65, 69]);
     expect(sequence.supportsTertianExercises).toBe(true);
   });
 
@@ -99,22 +139,63 @@ describe("createExerciseSequence", () => {
     const intervalSequence = createExerciseSequence({
       end: { octave: 0, stepOffset: 2 },
       noteCollectionKey: "ionian",
-      pattern: { degree: 3, direction: "descending", mode: "interval" },
+      pattern: {
+        direction: "descending",
+        extensionDegree: 5,
+        extensionDirection: "up-down",
+        intervalDegree: 3,
+        intervalPlayback: "separate",
+        mode: "interval",
+      },
       rootNote: "C",
     });
     const extensionSequence = createExerciseSequence({
       end: { octave: 0, stepOffset: 2 },
       noteCollectionKey: "ionian",
-      pattern: { degree: 5, direction: "up-down", mode: "extension" },
+      pattern: {
+        direction: "up-down",
+        extensionDegree: 5,
+        extensionDirection: "up-down",
+        intervalDegree: 3,
+        intervalPlayback: "separate",
+        mode: "extension",
+      },
       rootNote: "C",
     });
 
-    expect(intervalSequence.steps.map((step) => step.note.midi)).toEqual([
-      52, 55, 50, 53, 48, 52,
+    expect(
+      intervalSequence.steps.flatMap((step) =>
+        step.notes.map((note) => note.midi),
+      ),
+    ).toEqual([52, 55, 50, 53, 48, 52]);
+    expect(
+      extensionSequence.steps.flatMap((step) =>
+        step.notes.map((note) => note.midi),
+      ),
+    ).toEqual([
+      48, 52, 55, 52, 48, 50, 53, 57, 53, 50, 52, 55, 59, 55, 52, 50, 53, 57,
+      53, 50,
     ]);
-    expect(extensionSequence.steps.map((step) => step.note.midi)).toEqual([
-      48, 52, 55, 50, 53, 57, 52, 55, 59, 50, 53, 57,
-    ]);
+  });
+
+  it("applies descending direction within each extension", () => {
+    const sequence = createExerciseSequence({
+      end: { octave: 0, stepOffset: 1 },
+      noteCollectionKey: "ionian",
+      pattern: {
+        direction: "ascending",
+        extensionDegree: 5,
+        extensionDirection: "descending",
+        intervalDegree: 3,
+        intervalPlayback: "separate",
+        mode: "extension",
+      },
+      rootNote: "C",
+    });
+
+    expect(
+      sequence.steps.flatMap((step) => step.notes.map((note) => note.midi)),
+    ).toEqual([55, 52, 48, 57, 53, 50]);
   });
 
   it("does not advertise tertian exercises for chromatic collections", () => {

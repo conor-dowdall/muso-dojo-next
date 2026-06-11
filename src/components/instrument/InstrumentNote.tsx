@@ -1,8 +1,11 @@
 import { type ActiveNote } from "@/types/instrument-active-note";
 import { type InstrumentNoteColor } from "@/types/note-colors";
 import { getDefaultNoteColorValue } from "@/data/noteColors";
+import interactiveSurfaceStyles from "@/components/ui/interactive-surface/InteractiveSurface.module.css";
 import styles from "./InstrumentNote.module.css";
 import { type CSSProperties, type ReactNode } from "react";
+
+export type InstrumentNoteSurface = "embedded" | "raised";
 
 interface InstrumentNoteProps {
   note: ActiveNote;
@@ -14,6 +17,7 @@ interface InstrumentNoteProps {
   height?: string;
   largeSize?: string;
   noteColor?: InstrumentNoteColor;
+  surface?: InstrumentNoteSurface;
 }
 
 /**
@@ -35,6 +39,7 @@ export function InstrumentNote({
   height,
   largeSize = "85%",
   noteColor,
+  surface = "embedded",
 }: InstrumentNoteProps) {
   const emphasis = note.emphasis;
   const isHidden = emphasis === "hidden";
@@ -48,6 +53,14 @@ export function InstrumentNote({
 
   // Derived character count for CSS sizing
   const charCount = label ? Math.min(label.length, 5) : undefined;
+  const classNames = [
+    interactiveSurfaceStyles.surface,
+    surface === "raised" ? interactiveSurfaceStyles.raised : "",
+    styles.note,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div
@@ -55,13 +68,15 @@ export function InstrumentNote({
       data-note-color-index={noteColorIndex}
       data-is-placeholder={label === ""}
       data-chars={charCount}
-      className={className ? `${styles.note} ${className}` : styles.note}
+      data-surface={surface}
+      className={classNames}
       style={
         {
           ...style,
           "--note-width": effectiveWidth,
           "--note-height": effectiveHeight,
           "--note-color": noteColorValue,
+          "--interactive-surface-color": noteColorValue,
           visibility: isHidden ? "hidden" : undefined,
         } as CSSProperties
       }

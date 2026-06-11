@@ -7,8 +7,6 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type MouseEvent,
-  type PointerEvent,
 } from "react";
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { Square, WavesArrowDown, WavesArrowUp } from "lucide-react";
@@ -17,7 +15,7 @@ import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
 import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeaderActions";
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
-import { IconButton } from "@/components/ui/buttons/IconButton";
+import { TactileIconButton } from "@/components/ui/buttons/TactileButton";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { useDroneNotePlayback } from "@/hooks/audio/useDroneNotePlayback";
 import { useInstrumentNavigation } from "@/hooks/instrument/useInstrumentNavigation";
@@ -113,25 +111,6 @@ function DroneTileLabel({ label }: { label: string }) {
       {label}
     </span>
   );
-}
-
-function activateDroneToolOnPointerDown(
-  event: PointerEvent<HTMLButtonElement>,
-  action: () => void,
-) {
-  if (event.isPrimary && event.button === 0) {
-    action();
-  }
-}
-
-function activateDroneToolWithoutPointer(
-  event: MouseEvent<HTMLButtonElement>,
-  action: () => void,
-) {
-  // Keyboard and assistive-technology clicks have no pointer click count.
-  if (event.detail === 0) {
-    action();
-  }
 }
 
 export function DroneModule({
@@ -398,21 +377,6 @@ export function DroneModule({
 
     onNoteCountChange?.(nextNoteCount);
   };
-  const stopAllIfActive = () => {
-    if (hasActiveDroneNotes) {
-      stopAll();
-    }
-  };
-  const shiftOctaveDownIfPlayable = () => {
-    if (canShiftOctaveDown) {
-      shiftOctaveDown();
-    }
-  };
-  const shiftOctaveUpIfPlayable = () => {
-    if (canShiftOctaveUp) {
-      shiftOctaveUp();
-    }
-  };
   return (
     <>
       <PartModuleFrame
@@ -468,69 +432,39 @@ export function DroneModule({
               role="group"
               aria-label="Drone playback and octave controls"
             >
-              <IconButton
+              <TactileIconButton
                 aria-label={`Shift drone down one octave. Current octave offset: ${octaveOffsetLabel}`}
-                aria-disabled={!canShiftOctaveDown ? true : undefined}
-                className={styles.droneToolButton}
                 icon={<WavesArrowDown />}
-                shouldYield={false}
+                onPress={shiftOctaveDown}
                 size="lg"
-                onClick={(event) =>
-                  activateDroneToolWithoutPointer(
-                    event,
-                    shiftOctaveDownIfPlayable,
-                  )
-                }
-                onPointerDown={(event) =>
-                  activateDroneToolOnPointerDown(
-                    event,
-                    shiftOctaveDownIfPlayable,
-                  )
-                }
                 tooltip={
                   canShiftOctaveDown
                     ? "Shift octave down"
                     : "Lowest playable octave reached"
                 }
+                unavailable={!canShiftOctaveDown}
               />
-              <IconButton
+              <TactileIconButton
                 aria-label="Stop all active drone notes"
-                aria-disabled={!hasActiveDroneNotes ? true : undefined}
-                className={styles.droneToolButton}
                 icon={<Square />}
-                shouldYield={false}
+                onPress={stopAll}
                 size="lg"
-                onClick={(event) =>
-                  activateDroneToolWithoutPointer(event, stopAllIfActive)
-                }
-                onPointerDown={(event) =>
-                  activateDroneToolOnPointerDown(event, stopAllIfActive)
-                }
                 tooltip={
                   hasActiveDroneNotes ? "Stop all drones" : "No active drones"
                 }
+                unavailable={!hasActiveDroneNotes}
               />
-              <IconButton
+              <TactileIconButton
                 aria-label={`Shift drone up one octave. Current octave offset: ${octaveOffsetLabel}`}
-                aria-disabled={!canShiftOctaveUp ? true : undefined}
-                className={styles.droneToolButton}
                 icon={<WavesArrowUp />}
-                shouldYield={false}
+                onPress={shiftOctaveUp}
                 size="lg"
-                onClick={(event) =>
-                  activateDroneToolWithoutPointer(
-                    event,
-                    shiftOctaveUpIfPlayable,
-                  )
-                }
-                onPointerDown={(event) =>
-                  activateDroneToolOnPointerDown(event, shiftOctaveUpIfPlayable)
-                }
                 tooltip={
                   canShiftOctaveUp
                     ? "Shift octave up"
                     : "Highest playable octave reached"
                 }
+                unavailable={!canShiftOctaveUp}
               />
             </span>
           </div>
@@ -577,6 +511,7 @@ export function DroneModule({
                         className={styles.noteButton}
                         style={{ gridColumn: note.columnIndex + 1 }}
                         largeSize="100%"
+                        surface="raised"
                       >
                         <span className={styles.droneTileLabelStack}>
                           <span className={styles.droneTileNoteSlot}>

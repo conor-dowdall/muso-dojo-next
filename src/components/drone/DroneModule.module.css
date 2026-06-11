@@ -1,17 +1,7 @@
 .droneFrame {
-  --drone-light-soft: color-mix(
-    in srgb,
-    var(--color-interaction-ring-light) 12%,
-    transparent
-  );
   --drone-light-medium: color-mix(
     in srgb,
     var(--color-interaction-ring-light) 22%,
-    transparent
-  );
-  --drone-light-strong: color-mix(
-    in srgb,
-    var(--color-interaction-ring-light) 42%,
     transparent
   );
   --drone-shadow-soft: color-mix(
@@ -23,16 +13,6 @@
     in srgb,
     var(--color-interaction-ring-dark) 44%,
     transparent
-  );
-  --drone-shadow-strong: color-mix(
-    in srgb,
-    var(--color-interaction-ring-dark) 68%,
-    transparent
-  );
-  --drone-hardware-border-strong: color-mix(
-    in srgb,
-    var(--color-base) 76%,
-    var(--color-border)
   );
   --drone-note-button-width: var(--space-16);
   --drone-note-button-height: calc(var(--space-14) + var(--space-1));
@@ -172,78 +152,6 @@
   gap: var(--space-4);
 }
 
-.droneToolButton {
-  --drone-tool-button-background: color-mix(
-    in srgb,
-    var(--note-color-neutral) 78%,
-    var(--color-surface)
-  );
-  --button-outline-background: color-mix(
-    in srgb,
-    var(--drone-tool-button-background) 88%,
-    transparent
-  );
-  --button-background-hover: color-mix(
-    in srgb,
-    var(--note-color-neutral) 72%,
-    var(--color-surface-hover)
-  );
-  --button-active-background: color-mix(
-    in srgb,
-    var(--note-color-neutral) 82%,
-    var(--color-base)
-  );
-  --button-border-color: color-mix(
-    in srgb,
-    var(--note-color-neutral) 55%,
-    var(--color-border)
-  );
-  --button-border-color-hover: color-mix(
-    in srgb,
-    var(--color-accent) 48%,
-    var(--note-color-neutral)
-  );
-  --interact-y-hover: 0;
-  --interact-ease: var(--ease-out);
-
-  color: var(--color-text);
-  border-color: var(--drone-hardware-border-strong);
-  box-shadow:
-    inset 0 var(--space-px) 0 var(--drone-light-medium),
-    inset 0 calc(-1 * var(--space-px)) 0 var(--drone-shadow-medium),
-    0 var(--space-px) var(--space-1) var(--drone-shadow-soft);
-  transition:
-    background-color var(--transition-fast) var(--interact-ease),
-    border-color var(--transition-fast) var(--interact-ease),
-    box-shadow var(--transition-fast) var(--interact-ease),
-    color var(--transition-fast) var(--interact-ease),
-    translate var(--transition-fast) var(--interact-ease);
-}
-
-.droneToolButton.droneToolButton:not(:disabled):active {
-  box-shadow:
-    inset 0 var(--space-px) var(--space-1) var(--drone-shadow-soft),
-    inset 0 calc(-1 * var(--space-px)) 0 var(--drone-light-soft),
-    0 0 var(--space-0) transparent;
-  translate: 0 var(--space-px);
-  transition-duration: var(--transition-snap);
-}
-
-.droneToolButton.droneToolButton:is(:disabled, [aria-disabled="true"]) {
-  opacity: 1;
-  color: var(--color-text-muted);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .droneToolButton {
-    transition: none;
-  }
-
-  .droneToolButton.droneToolButton:not(:disabled):active {
-    translate: none;
-  }
-}
-
 .noteStack {
   position: relative;
   z-index: 1;
@@ -296,14 +204,7 @@
 
 .noteButton [data-emphasis] {
   position: relative;
-  border-color: var(--drone-hardware-border-strong);
   border-radius: calc(var(--radius-control) + var(--space-0_5));
-  box-shadow:
-    inset 0 var(--space-px) 0 var(--drone-light-medium),
-    inset 0 calc(-1 * var(--space-px)) 0 var(--drone-shadow-medium);
-  filter: drop-shadow(
-    0 var(--space-1) var(--space-1) var(--drone-shadow-strong)
-  );
 }
 
 .droneTileLabelStack {

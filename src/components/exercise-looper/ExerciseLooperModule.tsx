@@ -5,14 +5,21 @@ import {
   useMemo,
   useState,
   type CSSProperties,
-  type MouseEvent,
-  type PointerEvent,
+  type ReactNode,
 } from "react";
 import {
+  ArrowDown,
+  ArrowUpDown,
+  ArrowUp,
+  Combine,
+  ListMusic,
+  ListTree,
   Minus,
+  Music2,
   Play,
   Plus,
   Square,
+  StretchHorizontal,
   WavesArrowDown,
   WavesArrowUp,
 } from "lucide-react";
@@ -21,8 +28,7 @@ import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
 import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeaderActions";
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
-import { Button } from "@/components/ui/buttons/Button";
-import { IconButton } from "@/components/ui/buttons/IconButton";
+import { TactileIconButton } from "@/components/ui/buttons/TactileButton";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import {
   DEFAULT_WOOD_SURFACE_ID,
@@ -41,7 +47,6 @@ import {
   EXERCISE_MIN_OCTAVE_OFFSET,
   exercisePatternsAreEqual,
   getExerciseDegreeOptions,
-  getNearestExerciseDegree,
 } from "@/utils/exercise-looper/exerciseConfig";
 import {
   createExerciseSequence,
@@ -52,6 +57,7 @@ import {
   type ExerciseDisplayNote,
   type CollectionRangeBoundary,
   type ExercisePattern,
+  type ExerciseIntervalPlayback,
   type ExercisePatternMode,
   type ExerciseScaleDirection,
 } from "@/utils/exercise-looper/exerciseSequence";
@@ -59,20 +65,6 @@ import { formatMidiNote } from "@/utils/music-theory/midiNote";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
 import { ExerciseLooperOptionsDialog } from "./ExerciseLooperOptionsDialog";
 import styles from "./ExerciseLooperModule.module.css";
-
-function activateOnPointerDown(
-  event: PointerEvent<HTMLButtonElement>,
-  action: () => void,
-) {
-  if (event.isPrimary && event.button === 0) action();
-}
-
-function activateWithoutPointer(
-  event: MouseEvent<HTMLButtonElement>,
-  action: () => void,
-) {
-  if (event.detail === 0) action();
-}
 
 function collectionPositionLabel(position: number, collectionSize: number) {
   if (position >= 0) {
@@ -116,21 +108,33 @@ function getLooperRowClassName(rowCount: number) {
 }
 
 const directionChoices = [
-  { direction: "ascending", label: "Ascending" },
-  { direction: "descending", label: "Descending" },
-  { direction: "up-down", label: "Up and Down" },
+  { direction: "up-down", icon: <ArrowUpDown />, label: "Up and down" },
+  { direction: "ascending", icon: <ArrowUp />, label: "Ascending" },
+  { direction: "descending", icon: <ArrowDown />, label: "Descending" },
 ] as const satisfies readonly {
   direction: ExerciseScaleDirection;
+  icon: ReactNode;
   label: string;
 }[];
 
-const patternModeChoices = [
-  { label: "Single", mode: "single" },
-  { label: "In", mode: "interval" },
-  { label: "Up to", mode: "extension" },
+const intervalPlaybackChoices = [
+  {
+    icon: <ListMusic />,
+    label: "Play interval notes separately",
+    playback: "separate",
+    tooltip: "Separate notes",
+  },
+  {
+    icon: <Combine />,
+    label: "Play interval notes together",
+    playback: "together",
+    tooltip: "Together",
+  },
 ] as const satisfies readonly {
+  icon: ReactNode;
   label: string;
-  mode: ExercisePatternMode;
+  playback: ExerciseIntervalPlayback;
+  tooltip: string;
 }[];
 
 export function ExerciseLooperModule({
@@ -321,17 +325,28 @@ export function ExerciseLooperModule({
     octaveOffset < EXERCISE_MAX_OCTAVE_OFFSET &&
     firstPosition >= higherOctaveBounds.min &&
     lastPosition <= higherOctaveBounds.max;
-  const degreeOptions = getExerciseDegreeOptions(effectivePattern.mode);
-  const degreeIndex = degreeOptions.indexOf(effectivePattern.degree);
-  const canDecreaseDegree =
-    effectivePattern.mode !== "single" && degreeIndex > 0;
-  const canIncreaseDegree =
-    effectivePattern.mode !== "single" &&
-    degreeIndex >= 0 &&
-    degreeIndex < degreeOptions.length - 1;
-  const intervalLabel = getExerciseIntervalLabel(effectivePattern.degree);
-  const degreeLabel =
-    effectivePattern.mode === "interval" ? `${intervalLabel}s` : intervalLabel;
+  const intervalDegreeOptions = getExerciseDegreeOptions("interval");
+  const extensionDegreeOptions = getExerciseDegreeOptions("extension");
+  const intervalDegreeIndex = intervalDegreeOptions.indexOf(
+    effectivePattern.intervalDegree,
+  );
+  const extensionDegreeIndex = extensionDegreeOptions.indexOf(
+    effectivePattern.extensionDegree,
+  );
+  const canDecreaseIntervalDegree = intervalDegreeIndex > 0;
+  const canIncreaseIntervalDegree =
+    intervalDegreeIndex >= 0 &&
+    intervalDegreeIndex < intervalDegreeOptions.length - 1;
+  const canDecreaseExtensionDegree = extensionDegreeIndex > 0;
+  const canIncreaseExtensionDegree =
+    extensionDegreeIndex >= 0 &&
+    extensionDegreeIndex < extensionDegreeOptions.length - 1;
+  const intervalDegreeLabel = getExerciseIntervalLabel(
+    effectivePattern.intervalDegree,
+  );
+  const extensionDegreeLabel = getExerciseIntervalLabel(
+    effectivePattern.extensionDegree,
+  );
 
   useEffect(() => {
     if (!exercisePatternsAreEqual(effectivePattern, pattern)) {
@@ -374,26 +389,27 @@ export function ExerciseLooperModule({
     onEndChange?.(getCollectionRangeBoundary(nextLastPosition, collectionSize));
   };
 
-  const toolActionProps = (action: () => void) => ({
-    onClick: (event: MouseEvent<HTMLButtonElement>) =>
-      activateWithoutPointer(event, action),
-    onPointerDown: (event: PointerEvent<HTMLButtonElement>) =>
-      activateOnPointerDown(event, action),
-  });
   const updatePattern = (patch: Partial<ExercisePattern>) => {
     onPatternChange?.({ ...effectivePattern, ...patch });
   };
   const setPatternMode = (mode: ExercisePatternMode) => {
     if (mode === "extension" && !sequence.supportsTertianExercises) return;
 
-    updatePattern({
-      degree: getNearestExerciseDegree(effectivePattern.degree, mode),
-      mode,
-    });
+    updatePattern({ mode });
   };
-  const stepDegree = (offset: -1 | 1) => {
-    const nextDegree = degreeOptions[degreeIndex + offset];
-    if (nextDegree !== undefined) updatePattern({ degree: nextDegree });
+  const stepIntervalDegree = (offset: -1 | 1) => {
+    const nextDegree = intervalDegreeOptions[intervalDegreeIndex + offset];
+    if (nextDegree !== undefined) {
+      updatePattern({ intervalDegree: nextDegree, mode: "interval" });
+    }
+  };
+  const stepExtensionDegree = (offset: -1 | 1) => {
+    if (!sequence.supportsTertianExercises) return;
+
+    const nextDegree = extensionDegreeOptions[extensionDegreeIndex + offset];
+    if (nextDegree !== undefined) {
+      updatePattern({ extensionDegree: nextDegree, mode: "extension" });
+    }
   };
 
   return (
@@ -445,39 +461,27 @@ export function ExerciseLooperModule({
               role="group"
               aria-label="Exercise Looper playback controls"
             >
-              <IconButton
-                {...toolActionProps(() => {
-                  if (canShiftDown) onOctaveOffsetChange?.(octaveOffset - 1);
-                })}
-                aria-disabled={!canShiftDown ? true : undefined}
+              <TactileIconButton
+                onPress={() => onOctaveOffsetChange?.(octaveOffset - 1)}
                 aria-label="Shift exercise down one octave"
-                className={styles.toolButton}
                 icon={<WavesArrowDown />}
-                shouldYield={false}
                 size="lg"
+                unavailable={!canShiftDown}
               />
-              <IconButton
-                {...toolActionProps(
-                  playback.isPlaying ? playback.stop : playback.start,
-                )}
+              <TactileIconButton
                 aria-label={
                   playback.isPlaying ? "Stop exercise" : "Play exercise"
                 }
-                className={styles.toolButton}
                 icon={playback.isPlaying ? <Square /> : <Play />}
-                shouldYield={false}
+                onPress={playback.isPlaying ? playback.stop : playback.start}
                 size="lg"
               />
-              <IconButton
-                {...toolActionProps(() => {
-                  if (canShiftUp) onOctaveOffsetChange?.(octaveOffset + 1);
-                })}
-                aria-disabled={!canShiftUp ? true : undefined}
+              <TactileIconButton
+                onPress={() => onOctaveOffsetChange?.(octaveOffset + 1)}
                 aria-label="Shift exercise up one octave"
-                className={styles.toolButton}
                 icon={<WavesArrowUp />}
-                shouldYield={false}
                 size="lg"
+                unavailable={!canShiftUp}
               />
             </div>
 
@@ -492,93 +496,197 @@ export function ExerciseLooperModule({
                 aria-label="Direction"
               >
                 {directionChoices.map((choice) => (
-                  <Button
+                  <TactileIconButton
                     key={choice.direction}
-                    {...toolActionProps(() =>
-                      updatePattern({ direction: choice.direction }),
-                    )}
+                    onPress={() =>
+                      updatePattern({ direction: choice.direction })
+                    }
                     aria-label={choice.label}
-                    className={styles.patternButton}
-                    density="compact"
-                    label={choice.label}
+                    className={styles.directionButton}
+                    icon={choice.icon}
                     selected={effectivePattern.direction === choice.direction}
-                    shouldYield={false}
-                    size="sm"
+                    size="lg"
                   />
                 ))}
               </div>
 
-              <div className={styles.patternDetailControls}>
+              <div className={styles.patternAreas}>
                 <div
-                  className={styles.modeControls}
+                  className={styles.patternArea}
                   role="group"
-                  aria-label="Note pattern"
+                  aria-label="Single-note pattern"
                 >
-                  {patternModeChoices.map((choice) => {
-                    const unavailable =
-                      choice.mode === "extension" &&
-                      !sequence.supportsTertianExercises;
-                    const ariaLabel =
-                      choice.mode === "single"
-                        ? "Single notes"
-                        : choice.mode === "interval"
-                          ? `In ${intervalLabel}s`
-                          : `Up to the ${intervalLabel}`;
-
-                    return (
-                      <Button
-                        key={choice.mode}
-                        {...toolActionProps(() => {
-                          if (!unavailable) setPatternMode(choice.mode);
-                        })}
-                        aria-disabled={unavailable ? true : undefined}
-                        aria-label={ariaLabel}
-                        className={styles.patternButton}
-                        density="compact"
-                        label={choice.label}
-                        selected={effectivePattern.mode === choice.mode}
-                        shouldYield={false}
-                        size="sm"
-                      />
-                    );
-                  })}
+                  <TactileIconButton
+                    onPress={() => setPatternMode("single")}
+                    aria-label="Play single notes"
+                    className={styles.modeButton}
+                    icon={<Music2 />}
+                    selected={effectivePattern.mode === "single"}
+                    size="lg"
+                    tooltip="Single notes"
+                  />
                 </div>
 
                 <div
-                  className={styles.degreeControls}
+                  className={styles.patternArea}
                   role="group"
-                  aria-label="Interval or extension"
-                  data-unavailable={effectivePattern.mode === "single"}
+                  aria-label="Interval pattern"
                 >
-                  <IconButton
-                    {...toolActionProps(() => {
-                      if (canDecreaseDegree) stepDegree(-1);
-                    })}
-                    aria-disabled={!canDecreaseDegree ? true : undefined}
-                    aria-label="Decrease degree"
-                    className={`${styles.patternButton} ${styles.degreeButton}`}
-                    icon={<Minus />}
-                    shouldYield={false}
-                    size="sm"
+                  <TactileIconButton
+                    onPress={() => setPatternMode("interval")}
+                    aria-label="Play an interval from each note"
+                    className={styles.modeButton}
+                    icon={<StretchHorizontal />}
+                    selected={effectivePattern.mode === "interval"}
+                    size="lg"
+                    tooltip="Intervals"
                   />
-                  <output
-                    className={styles.degreeDisplay}
-                    aria-label={`Selected degree: ${degreeLabel}`}
-                    aria-live="polite"
+
+                  <div
+                    className={`${styles.patternAreaControls} ${styles.intervalAreaControls}`}
                   >
-                    {degreeLabel}
-                  </output>
-                  <IconButton
-                    {...toolActionProps(() => {
-                      if (canIncreaseDegree) stepDegree(1);
-                    })}
-                    aria-disabled={!canIncreaseDegree ? true : undefined}
-                    aria-label="Increase degree"
-                    className={`${styles.patternButton} ${styles.degreeButton}`}
-                    icon={<Plus />}
-                    shouldYield={false}
-                    size="sm"
+                    <div
+                      className={styles.degreeControls}
+                      role="group"
+                      aria-label="Interval"
+                    >
+                      <TactileIconButton
+                        onPress={() => stepIntervalDegree(-1)}
+                        aria-label="Decrease interval"
+                        className={`${styles.patternButton} ${styles.degreeButton}`}
+                        icon={<Minus />}
+                        size="md"
+                        unavailable={!canDecreaseIntervalDegree}
+                      />
+                      <output
+                        className={styles.degreeDisplay}
+                        aria-label={`Selected interval: ${intervalDegreeLabel}`}
+                        aria-live="polite"
+                      >
+                        {intervalDegreeLabel}
+                      </output>
+                      <TactileIconButton
+                        onPress={() => stepIntervalDegree(1)}
+                        aria-label="Increase interval"
+                        className={`${styles.patternButton} ${styles.degreeButton}`}
+                        icon={<Plus />}
+                        size="md"
+                        unavailable={!canIncreaseIntervalDegree}
+                      />
+                    </div>
+
+                    <div
+                      className={styles.contextualControls}
+                      role="group"
+                      aria-label="Interval playback"
+                    >
+                      {intervalPlaybackChoices.map((choice) => (
+                        <TactileIconButton
+                          key={choice.playback}
+                          onPress={() =>
+                            updatePattern({
+                              intervalPlayback: choice.playback,
+                              mode: "interval",
+                            })
+                          }
+                          aria-label={choice.label}
+                          className={styles.patternButton}
+                          icon={choice.icon}
+                          selected={
+                            effectivePattern.intervalPlayback ===
+                            choice.playback
+                          }
+                          size="md"
+                          tooltip={choice.tooltip}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className={styles.patternArea}
+                  role="group"
+                  aria-label="Extension pattern"
+                >
+                  <TactileIconButton
+                    onPress={() => setPatternMode("extension")}
+                    aria-label="Play a tertian extension from each note"
+                    className={styles.modeButton}
+                    icon={<ListTree />}
+                    selected={effectivePattern.mode === "extension"}
+                    size="lg"
+                    tooltip="Extensions"
+                    unavailable={!sequence.supportsTertianExercises}
                   />
+
+                  <div
+                    className={`${styles.patternAreaControls} ${styles.extensionAreaControls}`}
+                  >
+                    <div
+                      className={styles.degreeControls}
+                      role="group"
+                      aria-label="Extension"
+                    >
+                      <TactileIconButton
+                        onPress={() => stepExtensionDegree(-1)}
+                        aria-label="Decrease extension"
+                        className={`${styles.patternButton} ${styles.degreeButton}`}
+                        icon={<Minus />}
+                        size="md"
+                        unavailable={
+                          !sequence.supportsTertianExercises ||
+                          !canDecreaseExtensionDegree
+                        }
+                      />
+                      <output
+                        className={styles.degreeDisplay}
+                        aria-label={`Selected extension: ${extensionDegreeLabel}`}
+                        aria-live="polite"
+                      >
+                        {extensionDegreeLabel}
+                      </output>
+                      <TactileIconButton
+                        onPress={() => stepExtensionDegree(1)}
+                        aria-label="Increase extension"
+                        className={`${styles.patternButton} ${styles.degreeButton}`}
+                        icon={<Plus />}
+                        size="md"
+                        unavailable={
+                          !sequence.supportsTertianExercises ||
+                          !canIncreaseExtensionDegree
+                        }
+                      />
+                    </div>
+
+                    <div
+                      className={styles.contextualControls}
+                      role="group"
+                      aria-label="Extension direction"
+                    >
+                      {directionChoices.map((choice) => (
+                        <TactileIconButton
+                          key={choice.direction}
+                          onPress={() =>
+                            updatePattern({
+                              extensionDirection: choice.direction,
+                              mode: "extension",
+                            })
+                          }
+                          aria-label={`Extension ${choice.label.toLowerCase()}`}
+                          className={styles.patternButton}
+                          icon={choice.icon}
+                          selected={
+                            effectivePattern.extensionDirection ===
+                            choice.direction
+                          }
+                          size="md"
+                          tooltip={choice.label}
+                          unavailable={!sequence.supportsTertianExercises}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -622,6 +730,7 @@ export function ExerciseLooperModule({
                         onInteract={handleItemInteraction}
                         setItemRef={setItemRef}
                         style={{ gridColumn: note.columnIndex + 1 }}
+                        surface="raised"
                       >
                         <span className={styles.label}>
                           <span>{formatMidiNote(note.midi)}</span>

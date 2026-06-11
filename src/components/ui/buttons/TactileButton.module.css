@@ -1,0 +1,19 @@
+.tactileButton {
+  --button-outline-background: color-mix(
+    in srgb,
+    var(--note-color-neutral) 78%,
+    var(--color-surface)
+  );
+  --button-background-hover: var(--button-outline-background);
+  --button-active-background: var(--button-outline-background);
+  --button-border-color: var(--interactive-surface-rest-border-color);
+  --button-border-color-hover: color-mix(
+    in srgb,
+    var(--color-accent) 48%,
+    var(--note-color-neutral)
+  );
+  --interact-y-hover: 0;
+  --interact-ease: var(--ease-out);
+
+  color: var(--color-text);
+}
