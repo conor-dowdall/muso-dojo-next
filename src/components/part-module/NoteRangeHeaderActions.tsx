@@ -11,6 +11,7 @@ interface NoteRangeHeaderActionsProps {
   onAddOctave: () => void;
   onRemoveNote: () => void;
   onRemoveOctave: () => void;
+  showTooltips?: boolean;
 }
 
 export function NoteRangeHeaderActions({
@@ -22,6 +23,7 @@ export function NoteRangeHeaderActions({
   onAddOctave,
   onRemoveNote,
   onRemoveOctave,
+  showTooltips = true,
 }: NoteRangeHeaderActionsProps) {
   return (
     <span
@@ -37,7 +39,11 @@ export function NoteRangeHeaderActions({
           size="sm"
           onClick={onRemoveOctave}
           tooltip={
-            canRemoveOctave ? "Remove highest octave" : "Keep at least one note"
+            showTooltips
+              ? canRemoveOctave
+                ? "Remove highest octave"
+                : "Keep at least one note"
+              : false
           }
         />
         <IconButton
@@ -47,7 +53,11 @@ export function NoteRangeHeaderActions({
           size="sm"
           onClick={onRemoveNote}
           tooltip={
-            canRemoveNote ? "Remove last note" : "Keep at least one note"
+            showTooltips
+              ? canRemoveNote
+                ? "Remove last note"
+                : "Keep at least one note"
+              : false
           }
         />
       </span>
@@ -59,7 +69,11 @@ export function NoteRangeHeaderActions({
           size="sm"
           onClick={onAddNote}
           tooltip={
-            canAddNote ? "Add next note" : "Highest playable note reached"
+            showTooltips
+              ? canAddNote
+                ? "Add next note"
+                : "Highest playable note reached"
+              : false
           }
         />
         <IconButton
@@ -68,7 +82,13 @@ export function NoteRangeHeaderActions({
           icon={<LayersPlus />}
           size="sm"
           onClick={onAddOctave}
-          tooltip={canAddOctave ? "Add octave" : "No room for another octave"}
+          tooltip={
+            showTooltips
+              ? canAddOctave
+                ? "Add octave"
+                : "No room for another octave"
+              : false
+          }
         />
       </span>
     </span>

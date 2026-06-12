@@ -11,11 +11,11 @@ import {
   ArrowDown,
   ArrowUpDown,
   ArrowUp,
-  ListMusic,
+  GitBranch,
+  GitCommitHorizontal,
+  GitFork,
   Merge,
   Minus,
-  Music,
-  Music2,
   Play,
   Plus,
   Split,
@@ -30,6 +30,7 @@ import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeader
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
 import { TactileIconButton } from "@/components/ui/buttons/TactileButton";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
+import { TactileControlGroup } from "@/components/ui/tactile-control-group/TactileControlGroup";
 import {
   DEFAULT_WOOD_SURFACE_ID,
   woodSurfaces,
@@ -107,6 +108,17 @@ function getLooperRowClassName(rowCount: number) {
   }
 }
 
+function getCompactDirectionLabel(direction: ExerciseScaleDirection) {
+  switch (direction) {
+    case "ascending":
+      return "Up";
+    case "descending":
+      return "Down";
+    case "up-down":
+      return "Up-down";
+  }
+}
+
 const directionChoices = [
   { direction: "up-down", icon: <ArrowUpDown />, label: "Up and down" },
   { direction: "ascending", icon: <ArrowUp />, label: "Ascending" },
@@ -119,28 +131,28 @@ const directionChoices = [
 
 const patternModeChoices = [
   {
-    icon: <Music2 />,
+    icon: <GitCommitHorizontal />,
     label: "Single notes",
     mode: "single",
-    tooltip: "Single notes",
+    readout: "Single notes",
   },
   {
-    icon: <Music />,
+    icon: <GitBranch />,
     label: "Play an interval from each note",
     mode: "interval",
-    tooltip: "Intervals",
+    readout: "Intervals",
   },
   {
-    icon: <ListMusic />,
+    icon: <GitFork />,
     label: "Play a chord from each note",
     mode: "extension",
-    tooltip: "Chords",
+    readout: "Chords",
   },
 ] as const satisfies readonly {
   icon: ReactNode;
   label: string;
   mode: ExercisePatternMode;
-  tooltip: string;
+  readout: string;
 }[];
 
 const notePlaybackChoices = [
@@ -148,19 +160,16 @@ const notePlaybackChoices = [
     icon: <Split />,
     label: "Play notes separately",
     playback: "separate",
-    tooltip: "Separate notes",
   },
   {
     icon: <Merge />,
     label: "Play notes together",
     playback: "together",
-    tooltip: "Together",
   },
 ] as const satisfies readonly {
   icon: ReactNode;
   label: string;
   playback: ExerciseNotePlayback;
-  tooltip: string;
 }[];
 
 export function ExerciseLooperModule({
@@ -373,36 +382,32 @@ export function ExerciseLooperModule({
   const extensionDegreeLabel = getExerciseIntervalLabel(
     effectivePattern.extensionDegree,
   );
-  const scaleDirectionLabel =
-    directionChoices.find(
-      (choice) => choice.direction === effectivePattern.direction,
-    )?.label ?? "Up and down";
+  const activeNoteDirection =
+    effectivePattern.mode === "interval"
+      ? effectivePattern.intervalDirection
+      : effectivePattern.mode === "extension"
+        ? effectivePattern.extensionDirection
+        : undefined;
+  const activeDegreeLabel =
+    effectivePattern.mode === "interval"
+      ? intervalDegreeLabel
+      : effectivePattern.mode === "extension"
+        ? extensionDegreeLabel
+        : "";
+  const notePlaybackLabel =
+    effectivePattern.mode === "single"
+      ? ""
+      : effectivePattern.notePlayback === "separate"
+        ? "Separate"
+        : "Together";
+  const innerDirectionLabel =
+    activeNoteDirection === undefined
+      ? ""
+      : getCompactDirectionLabel(activeNoteDirection);
+  const fineTuneUnavailable = effectivePattern.mode === "single";
   const patternModeLabel =
-    effectivePattern.mode === "single"
-      ? "Single notes"
-      : effectivePattern.mode === "interval"
-        ? "Intervals"
-        : "Chords";
-  const patternDetail =
-    effectivePattern.mode === "single"
-      ? "One note at a time"
-      : effectivePattern.mode === "interval"
-        ? effectivePattern.notePlayback === "together"
-          ? `${intervalDegreeLabel}s together`
-          : `${intervalDegreeLabel}s separately, ${
-              directionChoices.find(
-                (choice) =>
-                  choice.direction === effectivePattern.intervalDirection,
-              )?.label ?? "Up and down"
-            }`
-        : effectivePattern.notePlayback === "together"
-          ? `To ${extensionDegreeLabel}, together`
-          : `To ${extensionDegreeLabel}, ${
-              directionChoices.find(
-                (choice) =>
-                  choice.direction === effectivePattern.extensionDirection,
-              )?.label ?? "Up and down"
-            }`;
+    patternModeChoices.find((choice) => choice.mode === effectivePattern.mode)
+      ?.readout ?? "Single notes";
 
   useEffect(() => {
     if (!exercisePatternsAreEqual(effectivePattern, pattern)) {
@@ -482,10 +487,6 @@ export function ExerciseLooperModule({
       stepExtensionDegree(offset);
     }
   };
-  const activeNoteDirection =
-    effectivePattern.mode === "interval"
-      ? effectivePattern.intervalDirection
-      : effectivePattern.extensionDirection;
   const setActiveNoteDirection = (direction: ExerciseScaleDirection) => {
     if (effectivePattern.mode === "interval") {
       updatePattern({ intervalDirection: direction });
@@ -531,10 +532,12 @@ export function ExerciseLooperModule({
                   canRemoveOctave &&
                   setEndPosition(lastPosition - collectionSize)
                 }
+                showTooltips={false}
               />
               <OverflowMenuButton
                 aria-label="Exercise Looper options"
                 onClick={() => setIsOptionsOpen(true)}
+                tooltip={false}
               />
             </div>
           ) : undefined
@@ -543,16 +546,17 @@ export function ExerciseLooperModule({
       >
         <div className={styles.surface}>
           <div className={styles.controlDeck}>
-            <div
-              className={styles.controls}
-              role="group"
+            <TactileControlGroup
               aria-label="Exercise Looper playback controls"
+              className={styles.playbackControlGroup}
+              controlsClassName={styles.controls}
             >
               <TactileIconButton
                 onPress={() => onOctaveOffsetChange?.(octaveOffset - 1)}
                 aria-label="Shift exercise down one octave"
                 icon={<WavesArrowDown />}
                 size="lg"
+                tooltip={false}
                 unavailable={!canShiftDown}
               />
               <TactileIconButton
@@ -562,25 +566,26 @@ export function ExerciseLooperModule({
                 icon={playback.isPlaying ? <Square /> : <Play />}
                 onPress={playback.isPlaying ? playback.stop : playback.start}
                 size="lg"
+                tooltip={false}
               />
               <TactileIconButton
                 onPress={() => onOctaveOffsetChange?.(octaveOffset + 1)}
                 aria-label="Shift exercise up one octave"
                 icon={<WavesArrowUp />}
                 size="lg"
+                tooltip={false}
                 unavailable={!canShiftUp}
               />
-            </div>
+            </TactileControlGroup>
 
             <div
               className={styles.patternControls}
               role="group"
               aria-label="Exercise pattern"
             >
-              <div
-                className={styles.directionControls}
-                role="group"
+              <TactileControlGroup
                 aria-label="Direction"
+                controlsClassName={styles.directionControls}
               >
                 {directionChoices.map((choice) => (
                   <TactileIconButton
@@ -593,132 +598,123 @@ export function ExerciseLooperModule({
                     icon={choice.icon}
                     selected={effectivePattern.direction === choice.direction}
                     size="lg"
+                    tooltip={false}
                   />
                 ))}
-              </div>
+              </TactileControlGroup>
 
-              <div
-                className={styles.modeControls}
-                role="group"
-                aria-label="Play mode"
-              >
-                {patternModeChoices.map((choice) => (
-                  <TactileIconButton
-                    key={choice.mode}
-                    onPress={() => setPatternMode(choice.mode)}
-                    aria-label={choice.label}
-                    className={styles.modeButton}
-                    icon={choice.icon}
-                    selected={effectivePattern.mode === choice.mode}
-                    size="lg"
-                    tooltip={choice.tooltip}
-                    unavailable={
-                      choice.mode === "extension" &&
-                      !sequence.supportsTertianExercises
-                    }
-                  />
-                ))}
-              </div>
-
-              <div className={styles.fineTuneControls}>
-                <div
-                  className={styles.degreeAndPlaybackControls}
-                  role="group"
-                  aria-label="Pattern detail"
+              <div className={styles.modeConfiguration}>
+                <TactileControlGroup
+                  aria-label="Play mode"
+                  controlsClassName={styles.modeControls}
+                  readout={patternModeLabel}
                 >
+                  {patternModeChoices.map((choice) => (
+                    <TactileIconButton
+                      key={choice.mode}
+                      onPress={() => setPatternMode(choice.mode)}
+                      aria-label={choice.label}
+                      className={styles.modeButton}
+                      icon={choice.icon}
+                      selected={effectivePattern.mode === choice.mode}
+                      size="lg"
+                      tooltip={false}
+                      unavailable={
+                        choice.mode === "extension" &&
+                        !sequence.supportsTertianExercises
+                      }
+                    />
+                  ))}
+                </TactileControlGroup>
+
+                <div className={styles.fineTuneControls}>
                   <div
-                    className={styles.degreeControls}
+                    className={styles.degreeAndPlaybackControls}
                     role="group"
-                    aria-label="Interval or chord size"
+                    aria-label="Pattern detail"
                   >
-                    <TactileIconButton
-                      onPress={() => stepActiveDegree(-1)}
-                      aria-label="Decrease interval or chord size"
-                      className={`${styles.patternButton} ${styles.degreeButton}`}
-                      icon={<Minus />}
-                      size="md"
-                      unavailable={!canDecreaseActiveDegree}
-                    />
-                    <TactileIconButton
-                      onPress={() => stepActiveDegree(1)}
-                      aria-label="Increase interval or chord size"
-                      className={`${styles.patternButton} ${styles.degreeButton}`}
-                      icon={<Plus />}
-                      size="md"
-                      unavailable={!canIncreaseActiveDegree}
-                    />
+                    <TactileControlGroup
+                      aria-label="Interval or chord size"
+                      controlsClassName={styles.degreeControls}
+                      readout={activeDegreeLabel}
+                      unavailable={fineTuneUnavailable}
+                    >
+                      <TactileIconButton
+                        onPress={() => stepActiveDegree(-1)}
+                        aria-label="Decrease interval or chord size"
+                        className={`${styles.patternButton} ${styles.degreeButton}`}
+                        icon={<Minus />}
+                        size="md"
+                        tooltip={false}
+                        unavailable={!canDecreaseActiveDegree}
+                      />
+                      <TactileIconButton
+                        onPress={() => stepActiveDegree(1)}
+                        aria-label="Increase interval or chord size"
+                        className={`${styles.patternButton} ${styles.degreeButton}`}
+                        icon={<Plus />}
+                        size="md"
+                        tooltip={false}
+                        unavailable={!canIncreaseActiveDegree}
+                      />
+                    </TactileControlGroup>
+
+                    <TactileControlGroup
+                      aria-label="Note playback"
+                      controlsClassName={styles.contextualControls}
+                      readout={notePlaybackLabel}
+                      unavailable={fineTuneUnavailable}
+                    >
+                      {notePlaybackChoices.map((choice) => (
+                        <TactileIconButton
+                          key={choice.playback}
+                          onPress={() =>
+                            updatePattern({ notePlayback: choice.playback })
+                          }
+                          aria-label={choice.label}
+                          className={styles.patternButton}
+                          icon={choice.icon}
+                          selected={
+                            effectivePattern.mode !== "single" &&
+                            effectivePattern.notePlayback === choice.playback
+                          }
+                          size="md"
+                          tooltip={false}
+                          unavailable={effectivePattern.mode === "single"}
+                        />
+                      ))}
+                    </TactileControlGroup>
                   </div>
 
-                  <div
-                    className={styles.contextualControls}
-                    role="group"
-                    aria-label="Note playback"
+                  <TactileControlGroup
+                    aria-label="Inner note direction"
+                    className={styles.noteDirectionControlGroup}
+                    controlsClassName={styles.noteDirectionControls}
+                    readout={innerDirectionLabel}
+                    unavailable={noteDirectionUnavailable}
                   >
-                    {notePlaybackChoices.map((choice) => (
+                    {directionChoices.map((choice) => (
                       <TactileIconButton
-                        key={choice.playback}
-                        onPress={() =>
-                          updatePattern({ notePlayback: choice.playback })
-                        }
-                        aria-label={choice.label}
+                        key={choice.direction}
+                        onPress={() => setActiveNoteDirection(choice.direction)}
+                        aria-label={`Notes ${choice.label.toLowerCase()}`}
                         className={styles.patternButton}
                         icon={choice.icon}
                         selected={
-                          effectivePattern.mode !== "single" &&
-                          effectivePattern.notePlayback === choice.playback
+                          !noteDirectionUnavailable &&
+                          effectivePattern.notePlayback === "separate" &&
+                          activeNoteDirection === choice.direction
                         }
                         size="md"
-                        tooltip={choice.tooltip}
-                        unavailable={effectivePattern.mode === "single"}
+                        tooltip={false}
+                        unavailable={noteDirectionUnavailable}
                       />
                     ))}
-                  </div>
-                </div>
-
-                <div
-                  className={styles.noteDirectionControls}
-                  role="group"
-                  aria-label="Inner note direction"
-                >
-                  {directionChoices.map((choice) => (
-                    <TactileIconButton
-                      key={choice.direction}
-                      onPress={() => setActiveNoteDirection(choice.direction)}
-                      aria-label={`Notes ${choice.label.toLowerCase()}`}
-                      className={styles.patternButton}
-                      icon={choice.icon}
-                      selected={
-                        !noteDirectionUnavailable &&
-                        effectivePattern.notePlayback === "separate" &&
-                        activeNoteDirection === choice.direction
-                      }
-                      size="md"
-                      tooltip={choice.label}
-                      unavailable={noteDirectionUnavailable}
-                    />
-                  ))}
+                  </TactileControlGroup>
                 </div>
               </div>
             </div>
           </div>
-
-          <output
-            className={styles.patternSummary}
-            aria-atomic="true"
-            aria-live="polite"
-          >
-            <span className={styles.patternSummaryPrimary}>
-              <span>{scaleDirectionLabel}</span>
-              <span
-                className={styles.patternSummarySeparator}
-                aria-hidden="true"
-              >
-                /
-              </span>
-              <span>{patternModeLabel}</span>
-            </span>
-            <span className={styles.patternSummaryDetail}>{patternDetail}</span>
-          </output>
 
           <div className={styles.noteStack}>
             <div

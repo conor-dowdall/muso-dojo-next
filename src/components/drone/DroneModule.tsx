@@ -17,6 +17,7 @@ import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeader
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
 import { TactileIconButton } from "@/components/ui/buttons/TactileButton";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
+import { TactileControlGroup } from "@/components/ui/tactile-control-group/TactileControlGroup";
 import { useDroneNotePlayback } from "@/hooks/audio/useDroneNotePlayback";
 import { useInstrumentNavigation } from "@/hooks/instrument/useInstrumentNavigation";
 import { useControllableState } from "@/hooks/useControllableState";
@@ -408,10 +409,12 @@ export function DroneModule({
                     droneNotes.noteCount - droneNotes.collectionSize,
                   )
                 }
+                showTooltips={false}
               />
               <OverflowMenuButton
                 aria-label="Drone options"
                 onClick={() => setIsOptionsOpen(true)}
+                tooltip={false}
               />
             </div>
           ) : undefined
@@ -421,27 +424,18 @@ export function DroneModule({
         style={droneFrameStyle}
       >
         <div className={styles.droneToolSurface}>
-          <div
-            ref={toolControlsRef}
-            className={styles.droneToolControls}
-            role="group"
-            aria-label="Drone playback and octave controls"
-          >
-            <span
-              className={styles.droneToolControlGroup}
-              role="group"
+          <div ref={toolControlsRef} className={styles.droneToolControls}>
+            <TactileControlGroup
               aria-label="Drone playback and octave controls"
+              className={styles.droneToolControlGroup}
+              controlsClassName={styles.droneToolControlButtons}
             >
               <TactileIconButton
                 aria-label={`Shift drone down one octave. Current octave offset: ${octaveOffsetLabel}`}
                 icon={<WavesArrowDown />}
                 onPress={shiftOctaveDown}
                 size="lg"
-                tooltip={
-                  canShiftOctaveDown
-                    ? "Shift octave down"
-                    : "Lowest playable octave reached"
-                }
+                tooltip={false}
                 unavailable={!canShiftOctaveDown}
               />
               <TactileIconButton
@@ -449,9 +443,7 @@ export function DroneModule({
                 icon={<Square />}
                 onPress={stopAll}
                 size="lg"
-                tooltip={
-                  hasActiveDroneNotes ? "Stop all drones" : "No active drones"
-                }
+                tooltip={false}
                 unavailable={!hasActiveDroneNotes}
               />
               <TactileIconButton
@@ -459,14 +451,10 @@ export function DroneModule({
                 icon={<WavesArrowUp />}
                 onPress={shiftOctaveUp}
                 size="lg"
-                tooltip={
-                  canShiftOctaveUp
-                    ? "Shift octave up"
-                    : "Highest playable octave reached"
-                }
+                tooltip={false}
                 unavailable={!canShiftOctaveUp}
               />
-            </span>
+            </TactileControlGroup>
           </div>
           <div className={styles.noteStack}>
             <div

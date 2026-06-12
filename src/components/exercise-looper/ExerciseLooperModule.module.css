@@ -8,27 +8,37 @@
   --looper-body-padding: var(--space-3);
   --looper-toolbar-gap: var(--space-3);
   --looper-primary-control-gap: var(--space-5);
+  --looper-control-deck-gap: var(--space-3);
+  --looper-pattern-section-gap: var(--space-4);
+  --looper-mode-detail-gap: var(--space-2);
+  --looper-fine-tune-gap: var(--space-2);
+  --tactile-control-readout-height: var(--space-4);
+  --looper-labeled-control-group-height: calc(
+    var(--control-size-lg) + var(--space-1) +
+      var(--tactile-control-readout-height)
+  );
   --looper-fine-tune-controls-height: calc(
-    var(--control-size-md) + var(--control-size-md) + var(--space-1)
+    var(--control-size-md) + var(--space-1) +
+      var(--tactile-control-readout-height) + var(--control-size-md) +
+      var(--space-1) + var(--tactile-control-readout-height) +
+      var(--looper-fine-tune-gap)
   );
   --looper-playback-controls-height: calc(
-    var(--control-size-lg) + var(--space-2) + var(--space-2)
+    var(--control-size-lg) + var(--space-1) + var(--space-1)
   );
   --looper-pattern-controls-height: calc(
-    var(--control-size-lg) + var(--space-2) + var(--control-size-lg) +
-      var(--space-2) + var(--looper-fine-tune-controls-height)
+    var(--control-size-lg) + var(--looper-pattern-section-gap) +
+      var(--looper-labeled-control-group-height) +
+      var(--looper-mode-detail-gap) + var(--looper-fine-tune-controls-height)
   );
-  --looper-control-deck-gap: var(--space-2);
   --looper-toolbar-height: calc(
     var(--looper-playback-controls-height) +
       var(--looper-pattern-controls-height) + var(--looper-control-deck-gap)
   );
-  --looper-pattern-summary-height: var(--control-size-lg);
   --looper-grid-height: var(--looper-note-button-height);
   --looper-scrollbar-safe-area: var(--space-2);
   --looper-content-height: calc(
     var(--looper-toolbar-height) + var(--looper-toolbar-gap) +
-      var(--looper-pattern-summary-height) + var(--looper-toolbar-gap) +
       var(--looper-grid-height) + var(--looper-scrollbar-safe-area) +
       var(--looper-body-padding) + var(--looper-body-padding)
   );
@@ -122,7 +132,12 @@
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
+  align-items: center;
   gap: var(--looper-control-deck-gap);
+}
+
+.playbackControlGroup {
+  align-self: center;
 }
 
 .controls {
@@ -131,7 +146,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--looper-primary-control-gap);
-  padding-block: var(--space-2);
+  padding-block: var(--space-1);
 }
 
 .patternControls {
@@ -139,7 +154,8 @@
   inline-size: min(100%, var(--space-80));
   align-self: center;
   flex-direction: column;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--looper-pattern-section-gap);
 }
 
 .directionControls,
@@ -155,7 +171,15 @@
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--looper-fine-tune-gap);
+}
+
+.modeConfiguration {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--looper-mode-detail-gap);
 }
 
 .degreeAndPlaybackControls {
@@ -163,7 +187,7 @@
   min-inline-size: 0;
   align-items: center;
   justify-content: center;
-  gap: var(--space-5);
+  gap: var(--space-4);
 }
 
 .degreeControls {
@@ -174,6 +198,24 @@
 
 .patternButton {
   flex: 0 0 auto;
+}
+
+.patternButton[data-control-state="unavailable"] {
+  --tactile-unavailable-background: color-mix(
+    in srgb,
+    var(--note-color-neutral) 68%,
+    var(--color-base)
+  );
+}
+
+.patternButton[data-control-state="unavailable"] svg {
+  opacity: 0.34;
+}
+
+.patternButton.patternButton[data-control-state="unavailable"]:active {
+  border-color: var(--interactive-surface-unavailable-border-color);
+  box-shadow: var(--interactive-surface-unavailable-shadow);
+  translate: none;
 }
 
 .modeButton,
@@ -201,63 +243,8 @@
   gap: var(--space-2);
 }
 
-.patternSummary {
-  display: flex;
-  box-sizing: border-box;
-  inline-size: min(100%, var(--space-80));
-  min-block-size: var(--looper-pattern-summary-height);
+.noteDirectionControlGroup {
   align-self: center;
-  flex: 0 0 var(--looper-pattern-summary-height);
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-1);
-  padding-inline: var(--space-3);
-  overflow: hidden;
-  border: var(--border-width-base) solid
-    color-mix(in srgb, var(--color-border) 72%, var(--color-base));
-  border-radius: var(--radius-control);
-  background: color-mix(
-    in srgb,
-    var(--color-base) 84%,
-    var(--note-color-neutral)
-  );
-  box-shadow:
-    inset 0 var(--space-1) var(--space-2)
-      color-mix(in srgb, var(--color-interaction-ring-dark) 42%, transparent),
-    inset 0 calc(-1 * var(--space-px)) 0
-      color-mix(in srgb, var(--color-interaction-ring-light) 12%, transparent),
-    0 var(--space-px) 0
-      color-mix(in srgb, var(--color-interaction-ring-light) 10%, transparent);
-  color: var(--color-text);
-  font-family: var(--font-sans);
-  font-size: var(--text-xs);
-  font-weight: var(--font-semibold);
-  line-height: var(--leading-none);
-  text-align: center;
-}
-
-.patternSummaryPrimary {
-  display: flex;
-  min-inline-size: 0;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  white-space: nowrap;
-}
-
-.patternSummarySeparator,
-.patternSummaryDetail {
-  color: var(--color-text-muted);
-}
-
-.patternSummaryDetail {
-  inline-size: 100%;
-  overflow: hidden;
-  font-size: var(--text-2xs);
-  font-weight: var(--font-medium);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .noteStack {

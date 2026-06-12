@@ -144,8 +144,12 @@
 .droneToolControlGroup {
   position: relative;
   z-index: 1;
-  display: flex;
   flex: 0 0 auto;
+  min-inline-size: 0;
+}
+
+.droneToolControlButtons {
+  display: flex;
   min-inline-size: 0;
   align-items: center;
   justify-content: center;
@@ -299,7 +303,7 @@
     --part-module-min-readable-width: 0;
   }
 
-  .droneToolControls {
-    column-gap: var(--space-3);
+  .droneToolControlButtons {
+    gap: var(--space-3);
   }
 }
