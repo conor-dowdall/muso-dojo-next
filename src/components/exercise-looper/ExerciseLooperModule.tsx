@@ -64,6 +64,7 @@ import {
 } from "@/utils/exercise-looper/exerciseSequence";
 import { formatMidiNote } from "@/utils/music-theory/midiNote";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
+import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import { ExerciseLooperOptionsDialog } from "./ExerciseLooperOptionsDialog";
 import styles from "./ExerciseLooperModule.module.css";
 
@@ -115,7 +116,7 @@ function getCompactDirectionLabel(direction: ExerciseScaleDirection) {
     case "descending":
       return "Down";
     case "up-down":
-      return "Up-down";
+      return `Up${DISPLAY_VALUE_SEPARATOR}Down`;
   }
 }
 
@@ -134,7 +135,7 @@ const patternModeChoices = [
     icon: <GitCommitHorizontal />,
     label: "Single notes",
     mode: "single",
-    readout: "Single notes",
+    readout: "Single Notes",
   },
   {
     icon: <GitBranch />,
@@ -297,7 +298,7 @@ export function ExerciseLooperModule({
   } = useInstrumentNavigation<HTMLElement>({
     getMidiForKey: (key) => noteByKey.get(key)?.midi ?? 60,
     initialFocusedKey: noteKeys[0] ?? "",
-    onInteract: (target) => playback.audition(target.midi),
+    onInteract: playback.audition,
     onNavigate: (currentKey, direction) => {
       const currentNote = noteByKey.get(currentKey);
 
@@ -407,7 +408,7 @@ export function ExerciseLooperModule({
   const fineTuneUnavailable = effectivePattern.mode === "single";
   const patternModeLabel =
     patternModeChoices.find((choice) => choice.mode === effectivePattern.mode)
-      ?.readout ?? "Single notes";
+      ?.readout ?? "Single Notes";
 
   useEffect(() => {
     if (!exercisePatternsAreEqual(effectivePattern, pattern)) {
@@ -742,9 +743,10 @@ export function ExerciseLooperModule({
                         handleKeyDown={handleKeyDown}
                         isFocused={focusedKey === note.key}
                         isHighlighted={Boolean(
-                          playback.isPlaying &&
-                          playback.activeAnchorPosition ===
-                            note.collectionPosition,
+                          playback.auditionActiveKeys.has(note.key) ||
+                          (playback.isPlaying &&
+                            playback.activeAnchorPosition ===
+                              note.collectionPosition),
                         )}
                         largeSize="100%"
                         midi={note.midi}

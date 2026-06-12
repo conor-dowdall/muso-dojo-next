@@ -19,7 +19,10 @@ import {
 } from "@/audio";
 import { exerciseSubdivisionBeats } from "@/utils/exercise-looper/exerciseConfig";
 import { type ExerciseSequenceStep } from "@/utils/exercise-looper/exerciseSequence";
+import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import { type ExerciseSubdivision } from "@/types/session";
+
+const EXERCISE_AUDITION_DURATION_SECONDS = 0.55;
 
 function createPlaybackEvents(
   steps: readonly ExerciseSequenceStep[],
@@ -82,6 +85,13 @@ export function useExerciseLooperPlayback({
     exercisePlaybackCoordinator.getSnapshot,
   );
   const [activeStepIndex, setActiveStepIndex] = useState<number>();
+  const [auditionActiveKeys, setAuditionActiveKeys] = useState<
+    ReadonlySet<string>
+  >(() => new Set());
+  const auditionTokensRef = useRef(new Map<string, number>());
+  const auditionTimeoutsRef = useRef(
+    new Map<string, ReturnType<typeof setTimeout>>(),
+  );
   const isPlaying = snapshot.playing && snapshot.activeId === id;
   const subdivisionBeats = exerciseSubdivisionBeats[subdivision];
   const events = useMemo(
@@ -105,17 +115,73 @@ export function useExerciseLooperPlayback({
   const stop = useCallback(() => {
     exercisePlaybackCoordinator.stop(id);
   }, [id]);
+  const clearAuditionActiveKey = useCallback((key: string, token?: number) => {
+    if (token !== undefined && auditionTokensRef.current.get(key) !== token) {
+      return;
+    }
+
+    const timeout = auditionTimeoutsRef.current.get(key);
+
+    if (timeout !== undefined) {
+      clearTimeout(timeout);
+      auditionTimeoutsRef.current.delete(key);
+    }
+
+    auditionTokensRef.current.delete(key);
+    setAuditionActiveKeys((currentKeys) => {
+      if (!currentKeys.has(key)) {
+        return currentKeys;
+      }
+
+      const nextKeys = new Set(currentKeys);
+      nextKeys.delete(key);
+      return nextKeys;
+    });
+  }, []);
   const audition = useCallback(
-    (midi: number) => {
-      void musoAudioEngine.playNote({
-        durationSeconds: 0.55,
-        midiNote: midi,
-        presetId: request.presetId,
-        use: "exercise",
-        velocity: 0.72,
+    (target: InstrumentNoteInteractionTarget) => {
+      const token = (auditionTokensRef.current.get(target.key) ?? 0) + 1;
+      const currentTimeout = auditionTimeoutsRef.current.get(target.key);
+
+      if (currentTimeout !== undefined) {
+        clearTimeout(currentTimeout);
+      }
+
+      auditionTokensRef.current.set(target.key, token);
+      setAuditionActiveKeys((currentKeys) => {
+        if (currentKeys.has(target.key)) {
+          return currentKeys;
+        }
+
+        const nextKeys = new Set(currentKeys);
+        nextKeys.add(target.key);
+        return nextKeys;
       });
+
+      auditionTimeoutsRef.current.set(
+        target.key,
+        setTimeout(
+          () => clearAuditionActiveKey(target.key, token),
+          EXERCISE_AUDITION_DURATION_SECONDS * 1000,
+        ),
+      );
+
+      void musoAudioEngine
+        .playNote({
+          durationSeconds: EXERCISE_AUDITION_DURATION_SECONDS,
+          midiNote: target.midi,
+          presetId: request.presetId,
+          use: "exercise",
+          velocity: 0.72,
+        })
+        .then((handle) => {
+          if (handle === undefined) {
+            clearAuditionActiveKey(target.key, token);
+          }
+        })
+        .catch(() => clearAuditionActiveKey(target.key, token));
     },
-    [request.presetId],
+    [clearAuditionActiveKey, request.presetId],
   );
 
   useLayoutEffect(() => {
@@ -157,6 +223,9 @@ export function useExerciseLooperPlayback({
   useEffect(
     () => () => {
       exercisePlaybackCoordinator.stop(id);
+      auditionTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
+      auditionTimeoutsRef.current.clear();
+      auditionTokensRef.current.clear();
     },
     [id],
   );
@@ -167,6 +236,7 @@ export function useExerciseLooperPlayback({
         ? steps[activeStepIndex]?.notes[0]?.anchorPosition
         : undefined,
     audition,
+    auditionActiveKeys,
     isPlaying,
     start,
     stop,

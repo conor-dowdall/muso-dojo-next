@@ -213,8 +213,8 @@
 }
 
 .patternButton.patternButton[data-control-state="unavailable"]:active {
-  border-color: var(--interactive-surface-unavailable-border-color);
-  box-shadow: var(--interactive-surface-unavailable-shadow);
+  border-color: var(--interactive-surface-rest-border-color);
+  box-shadow: var(--interactive-surface-rest-shadow);
   translate: none;
 }
 

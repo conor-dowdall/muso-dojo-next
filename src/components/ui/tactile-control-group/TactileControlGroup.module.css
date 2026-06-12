@@ -37,15 +37,9 @@
   line-height: var(--leading-none);
   text-align: center;
   text-overflow: ellipsis;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
 .group[data-unavailable="true"] .readout {
-  color: rgb(247 248 251 / 0.58);
-  opacity: 0.72;
-}
-
-.readout:empty {
-  background: transparent;
+  color: transparent;
 }

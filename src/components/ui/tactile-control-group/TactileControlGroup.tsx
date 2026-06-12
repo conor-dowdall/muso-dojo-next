@@ -34,7 +34,9 @@ export function TactileControlGroup({
         {children}
       </div>
       {readout !== undefined ? (
-        <output className={styles.readout}>{readout}</output>
+        <output className={styles.readout}>
+          {unavailable ? null : readout}
+        </output>
       ) : null}
     </div>
   );

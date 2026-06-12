@@ -145,10 +145,9 @@
 }
 
 @media (hover: hover) {
-  .noteCell:hover:not(:focus):not([aria-pressed="true"]):not(
-      [data-note-highlighted="true"]
-    )
+  .noteCell:hover:not([aria-pressed="true"]):not([data-note-highlighted="true"])
     .note {
+    background-color: var(--interactive-surface-hover-background);
     border-color: var(--interactive-surface-hover-border-color);
     box-shadow: var(--interactive-surface-hover-shadow);
   }

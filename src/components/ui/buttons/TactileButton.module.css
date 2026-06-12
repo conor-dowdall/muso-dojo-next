@@ -4,21 +4,9 @@
     var(--note-color-neutral) 92%,
     var(--color-base)
   );
-  --tactile-hover-background: color-mix(
-    in srgb,
-    var(--note-color-neutral) 88%,
-    var(--color-interaction-ring-light)
-  );
-  --tactile-selected-background: color-mix(
-    in srgb,
-    var(--note-color-neutral) 70%,
-    var(--color-interaction-ring-light)
-  );
-  --tactile-unavailable-background: color-mix(
-    in srgb,
-    var(--note-color-neutral) 46%,
-    var(--color-control-outline-background)
-  );
+  --tactile-hover-background: var(--interactive-surface-hover-background);
+  --tactile-selected-background: var(--interactive-surface-selected-background);
+  --tactile-unavailable-background: var(--tactile-rest-background);
   --button-outline-background: var(--tactile-rest-background);
   --button-background-hover: var(--tactile-hover-background);
   --button-active-background: var(--tactile-selected-background);

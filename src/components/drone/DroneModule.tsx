@@ -213,12 +213,10 @@ export function DroneModule({
   const canAddNote = droneNotes.noteCount < droneNotes.maxNoteCount;
   const canAddOctave =
     droneNotes.noteCount + droneNotes.collectionSize <= droneNotes.maxNoteCount;
-  const { activeIntervals, isNoteActive, stopAll, toggleNote } =
-    useDroneNotePlayback({
-      audioPresetId,
-      notes: droneNotes.notes,
-    });
-  const hasActiveDroneNotes = activeIntervals.length > 0;
+  const { isNoteActive, stopAll, toggleNote } = useDroneNotePlayback({
+    audioPresetId,
+    notes: droneNotes.notes,
+  });
   const {
     focusedKey,
     setFocusedKey,
@@ -444,7 +442,6 @@ export function DroneModule({
                 onPress={stopAll}
                 size="lg"
                 tooltip={false}
-                unavailable={!hasActiveDroneNotes}
               />
               <TactileIconButton
                 aria-label={`Shift drone up one octave. Current octave offset: ${octaveOffsetLabel}`}

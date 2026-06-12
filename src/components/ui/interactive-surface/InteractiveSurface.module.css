@@ -16,6 +16,16 @@
     var(--interactive-surface-color) 18%,
     transparent
   );
+  --interactive-surface-hover-background: color-mix(
+    in srgb,
+    var(--interactive-surface-color) 88%,
+    var(--color-interaction-ring-light)
+  );
+  --interactive-surface-selected-background: color-mix(
+    in srgb,
+    var(--interactive-surface-color) 70%,
+    var(--color-interaction-ring-light)
+  );
   --interactive-surface-selected-border-color: color-mix(
     in srgb,
     var(--interactive-surface-color) 58%,
@@ -60,22 +70,6 @@
     inset 0 0 0 var(--border-width-wide) var(--interactive-surface-ring-color),
     inset 0 0 var(--space-4) var(--interactive-surface-ring-color),
     var(--interactive-surface-elevation-shadow);
-  --interactive-surface-unavailable-border-color: color-mix(
-    in srgb,
-    var(--color-border) 54%,
-    var(--color-base)
-  );
-  --interactive-surface-unavailable-shadow:
-    inset 0 var(--space-px) 0
-      color-mix(in srgb, var(--color-interaction-ring-light) 10%, transparent),
-    inset 0 calc(-1 * var(--space-px)) 0
-      color-mix(in srgb, var(--color-interaction-ring-dark) 30%, transparent),
-    var(--interactive-surface-elevation-shadow);
-  --interactive-surface-unavailable-pressed-shadow:
-    inset 0 var(--space-px) var(--space-1)
-      color-mix(in srgb, var(--color-interaction-ring-dark) 34%, transparent),
-    inset 0 0 0 var(--border-width-base)
-      var(--interactive-surface-unavailable-border-color);
   --interactive-surface-pressed-shadow:
     inset 0 var(--space-px) var(--space-1)
       var(--interactive-surface-shadow-soft),
@@ -151,15 +145,16 @@
 }
 
 .selfInteractive.selfInteractive[aria-disabled="true"] {
-  border-color: var(--interactive-surface-unavailable-border-color);
-  box-shadow: var(--interactive-surface-unavailable-shadow);
+  border-color: var(--interactive-surface-rest-border-color);
+  box-shadow: var(--interactive-surface-rest-shadow);
   color: var(--color-text-muted);
   cursor: default;
 }
 
 .selfInteractive.selfInteractive.selfInteractive[aria-disabled="true"]:active {
-  border-color: var(--interactive-surface-unavailable-border-color);
-  box-shadow: var(--interactive-surface-unavailable-pressed-shadow);
+  border-color: var(--interactive-surface-rest-border-color);
+  box-shadow: var(--interactive-surface-rest-shadow);
+  translate: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
