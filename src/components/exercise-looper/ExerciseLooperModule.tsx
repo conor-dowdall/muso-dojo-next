@@ -131,10 +131,11 @@ export function ExerciseLooperModule({
   );
   const effectivePattern = useMemo(
     () =>
-      requestedSequence.supportsTertianExercises || pattern.mode !== "extension"
+      requestedSequence.supportsScaleDegreeExercises ||
+      pattern.mode === "single"
         ? pattern
         : { ...pattern, mode: "single" as const },
-    [pattern, requestedSequence.supportsTertianExercises],
+    [pattern, requestedSequence.supportsScaleDegreeExercises],
   );
   const sequence = useMemo(
     () =>
@@ -176,6 +177,13 @@ export function ExerciseLooperModule({
     subdivision,
     tempoBpm,
   });
+  const activeChordFormula =
+    effectivePattern.mode === "extension" &&
+    playback.activeAnchorPosition !== undefined
+      ? sequence.chordIntervalsByAnchorPosition
+          .get(playback.activeAnchorPosition)
+          ?.join(" ")
+      : undefined;
   const noteKeys = useMemo(
     () => sequence.notes.map((note) => note.key),
     [sequence.notes],
@@ -380,8 +388,12 @@ export function ExerciseLooperModule({
             </TactileControlGroup>
 
             <ExercisePatternControls
+              activeChordFormula={activeChordFormula}
               onChange={onPatternChange}
               pattern={effectivePattern}
+              supportsScaleDegreeExercises={
+                sequence.supportsScaleDegreeExercises
+              }
               supportsTertianExercises={sequence.supportsTertianExercises}
             />
           </div>

@@ -10,9 +10,13 @@ interface TactileInteractionProps {
    */
   onPress: () => void;
   /**
-   * Keeps the control physically pressable but prevents its action.
+   * Keeps the control physically pressable but prevents its primary action.
    */
   unavailable?: boolean;
+  /**
+   * Optional feedback action for an unavailable control.
+   */
+  onUnavailablePress?: () => void;
 }
 
 type TactileControlState = "idle" | "selected" | "unavailable";
@@ -25,19 +29,22 @@ export type TactileIconButtonProps = Omit<
 
 function getTactileInteractionProps({
   onPress,
+  onUnavailablePress,
   unavailable = false,
 }: TactileInteractionProps) {
+  const press = unavailable ? onUnavailablePress : onPress;
+
   return {
     "aria-disabled": unavailable ? true : undefined,
     onClick: (event: MouseEvent<HTMLButtonElement>) => {
       // Keyboard and assistive-technology clicks have no pointer click count.
-      if (!unavailable && event.detail === 0) {
-        onPress();
+      if (event.detail === 0) {
+        press?.();
       }
     },
     onPointerDown: (event: PointerEvent<HTMLButtonElement>) => {
-      if (!unavailable && event.isPrimary && event.button === 0) {
-        onPress();
+      if (event.isPrimary && event.button === 0) {
+        press?.();
       }
     },
     shouldYield: false,
@@ -69,6 +76,7 @@ export function TactileIconButton({
   className,
   icon,
   onPress,
+  onUnavailablePress,
   selected,
   tooltip = false,
   unavailable,
@@ -77,7 +85,11 @@ export function TactileIconButton({
   return (
     <IconButton
       {...props}
-      {...getTactileInteractionProps({ onPress, unavailable })}
+      {...getTactileInteractionProps({
+        onPress,
+        onUnavailablePress,
+        unavailable,
+      })}
       className={getClassName(className)}
       data-control-state={getControlState(selected, unavailable)}
       icon={icon}

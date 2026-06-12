@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -23,6 +23,8 @@ import {
 } from "@/utils/exercise-looper/exerciseSequence";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import styles from "./ExerciseLooperModule.module.css";
+
+const MODE_FEEDBACK_DURATION_MS = 2000;
 
 function getCompactDirectionLabel(direction: ExerciseScaleDirection) {
   switch (direction) {
@@ -89,14 +91,19 @@ const notePlaybackChoices = [
 }[];
 
 export function ExercisePatternControls({
+  activeChordFormula,
   onChange,
   pattern,
+  supportsScaleDegreeExercises,
   supportsTertianExercises,
 }: {
+  activeChordFormula?: string;
   onChange?: (pattern: ExercisePattern) => void;
   pattern: ExercisePattern;
+  supportsScaleDegreeExercises: boolean;
   supportsTertianExercises: boolean;
 }) {
+  const [modeFeedbackVersion, setModeFeedbackVersion] = useState(0);
   const intervalDegreeOptions = getExerciseDegreeOptions("interval");
   const extensionDegreeOptions = getExerciseDegreeOptions("extension");
   const intervalDegreeIndex = intervalDegreeOptions.indexOf(
@@ -135,10 +142,17 @@ export function ExercisePatternControls({
     activeNoteDirection === undefined
       ? ""
       : getCompactDirectionLabel(activeNoteDirection);
-  const fineTuneUnavailable = pattern.mode === "single";
-  const patternModeLabel =
+  const fineTuneUnavailable =
+    pattern.mode === "single" || !supportsScaleDegreeExercises;
+  const selectedPatternModeLabel =
     patternModeChoices.find((choice) => choice.mode === pattern.mode)
       ?.readout ?? "Single Notes";
+  const patternModeLabel =
+    modeFeedbackVersion > 0
+      ? "Scale Modes Only"
+      : pattern.mode === "extension" && activeChordFormula
+        ? activeChordFormula
+        : selectedPatternModeLabel;
   const canDecreaseActiveDegree =
     pattern.mode === "interval"
       ? canDecreaseIntervalDegree
@@ -150,14 +164,42 @@ export function ExercisePatternControls({
   const noteDirectionUnavailable =
     pattern.mode === "single" ||
     pattern.notePlayback === "together" ||
+    !supportsScaleDegreeExercises ||
     (pattern.mode === "extension" && !supportsTertianExercises);
 
+  useEffect(() => {
+    if (modeFeedbackVersion === 0) {
+      return;
+    }
+
+    const timeout = window.setTimeout(
+      () => setModeFeedbackVersion(0),
+      MODE_FEEDBACK_DURATION_MS,
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [modeFeedbackVersion]);
+
+  const clearModeFeedback = () => {
+    setModeFeedbackVersion(0);
+  };
+
+  const showUnavailableModeFeedback = () => {
+    setModeFeedbackVersion((version) => version + 1);
+  };
+
+  const isPatternModeUnavailable = (mode: ExercisePatternMode) =>
+    (mode === "interval" && !supportsScaleDegreeExercises) ||
+    (mode === "extension" && !supportsTertianExercises);
+
   const updatePattern = (patch: Partial<ExercisePattern>) => {
+    clearModeFeedback();
     onChange?.({ ...pattern, ...patch });
   };
 
   const setPatternMode = (mode: ExercisePatternMode) => {
-    if (mode === "extension" && !supportsTertianExercises) {
+    if (isPatternModeUnavailable(mode)) {
+      showUnavailableModeFeedback();
       return;
     }
 
@@ -165,7 +207,7 @@ export function ExercisePatternControls({
   };
 
   const stepActiveDegree = (offset: -1 | 1) => {
-    if (pattern.mode === "interval") {
+    if (pattern.mode === "interval" && supportsScaleDegreeExercises) {
       const nextDegree = intervalDegreeOptions[intervalDegreeIndex + offset];
       if (nextDegree !== undefined) {
         updatePattern({ intervalDegree: nextDegree });
@@ -182,9 +224,9 @@ export function ExercisePatternControls({
   };
 
   const setActiveNoteDirection = (direction: ExerciseScaleDirection) => {
-    if (pattern.mode === "interval") {
+    if (pattern.mode === "interval" && supportsScaleDegreeExercises) {
       updatePattern({ intervalDirection: direction });
-    } else if (pattern.mode === "extension") {
+    } else if (pattern.mode === "extension" && supportsTertianExercises) {
       updatePattern({ extensionDirection: direction });
     }
   };
@@ -217,6 +259,7 @@ export function ExercisePatternControls({
           aria-label="Play mode"
           controlsClassName={styles.modeControls}
           readout={patternModeLabel}
+          readoutLive={activeChordFormula ? "off" : undefined}
         >
           {patternModeChoices.map((choice) => (
             <TactileIconButton
@@ -225,11 +268,17 @@ export function ExercisePatternControls({
               aria-label={choice.label}
               className={styles.modeButton}
               icon={choice.icon}
+              onFocus={() => {
+                if (isPatternModeUnavailable(choice.mode)) {
+                  showUnavailableModeFeedback();
+                } else {
+                  clearModeFeedback();
+                }
+              }}
+              onUnavailablePress={showUnavailableModeFeedback}
               selected={pattern.mode === choice.mode}
               size="lg"
-              unavailable={
-                choice.mode === "extension" && !supportsTertianExercises
-              }
+              unavailable={isPatternModeUnavailable(choice.mode)}
             />
           ))}
         </TactileControlGroup>
@@ -252,7 +301,7 @@ export function ExercisePatternControls({
                 className={`${styles.patternButton} ${styles.degreeButton}`}
                 icon={<Minus />}
                 size="md"
-                unavailable={!canDecreaseActiveDegree}
+                unavailable={fineTuneUnavailable || !canDecreaseActiveDegree}
               />
               <TactileIconButton
                 onPress={() => stepActiveDegree(1)}
@@ -260,7 +309,7 @@ export function ExercisePatternControls({
                 className={`${styles.patternButton} ${styles.degreeButton}`}
                 icon={<Plus />}
                 size="md"
-                unavailable={!canIncreaseActiveDegree}
+                unavailable={fineTuneUnavailable || !canIncreaseActiveDegree}
               />
             </TactileControlGroup>
 
@@ -280,11 +329,11 @@ export function ExercisePatternControls({
                   className={styles.patternButton}
                   icon={choice.icon}
                   selected={
-                    pattern.mode !== "single" &&
+                    !fineTuneUnavailable &&
                     pattern.notePlayback === choice.playback
                   }
                   size="md"
-                  unavailable={pattern.mode === "single"}
+                  unavailable={fineTuneUnavailable}
                 />
               ))}
             </TactileControlGroup>

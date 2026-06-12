@@ -166,6 +166,122 @@ describe("createExerciseSequence", () => {
     expect(sequence.supportsTertianExercises).toBe(true);
   });
 
+  it("describes each Ionian chord from its relative modal root", () => {
+    const sequence = createExerciseSequence({
+      end: { octave: 0, stepOffset: 3 },
+      noteCollectionKey: "ionian",
+      pattern: {
+        direction: "ascending",
+        extensionDegree: 13,
+        extensionDirection: "ascending",
+        intervalDegree: 3,
+        intervalDirection: "up-down",
+        mode: "extension",
+        notePlayback: "together",
+      },
+      rootNote: "C",
+    });
+
+    expect(sequence.chordIntervalsByAnchorPosition.get(0)).toEqual([
+      "1",
+      "3",
+      "5",
+      "7",
+      "9",
+      "11",
+      "13",
+    ]);
+    expect(sequence.chordIntervalsByAnchorPosition.get(1)).toEqual([
+      "1",
+      "♭3",
+      "5",
+      "♭7",
+      "9",
+      "11",
+      "13",
+    ]);
+    expect(sequence.chordIntervalsByAnchorPosition.get(2)).toEqual([
+      "1",
+      "♭3",
+      "5",
+      "♭7",
+      "♭9",
+      "11",
+      "♭13",
+    ]);
+    expect(sequence.chordIntervalsByAnchorPosition.get(3)).toEqual([
+      "1",
+      "3",
+      "5",
+      "7",
+      "9",
+      "♯11",
+      "13",
+    ]);
+  });
+
+  it("continues through the parent mode family from a Dorian base", () => {
+    const sequence = createExerciseSequence({
+      end: { octave: 0, stepOffset: 1 },
+      noteCollectionKey: "dorian",
+      pattern: {
+        direction: "ascending",
+        extensionDegree: 13,
+        extensionDirection: "ascending",
+        intervalDegree: 3,
+        intervalDirection: "up-down",
+        mode: "extension",
+        notePlayback: "together",
+      },
+      rootNote: "D",
+    });
+
+    expect(sequence.chordIntervalsByAnchorPosition.get(0)).toEqual([
+      "1",
+      "♭3",
+      "5",
+      "♭7",
+      "9",
+      "11",
+      "13",
+    ]);
+    expect(sequence.chordIntervalsByAnchorPosition.get(1)).toEqual([
+      "1",
+      "♭3",
+      "5",
+      "♭7",
+      "♭9",
+      "11",
+      "♭13",
+    ]);
+  });
+
+  it("uses the relative harmonic-minor mode and selected chord size", () => {
+    const sequence = createExerciseSequence({
+      end: { octave: 0, stepOffset: 1 },
+      noteCollectionKey: "phrygianDominant",
+      pattern: {
+        direction: "ascending",
+        extensionDegree: 11,
+        extensionDirection: "ascending",
+        intervalDegree: 3,
+        intervalDirection: "up-down",
+        mode: "extension",
+        notePlayback: "together",
+      },
+      rootNote: "C",
+    });
+
+    expect(sequence.chordIntervalsByAnchorPosition.get(1)).toEqual([
+      "1",
+      "3",
+      "5",
+      "7",
+      "♯9",
+      "♯11",
+    ]);
+  });
+
   it("plays chord notes together on one beat", () => {
     const sequence = createExerciseSequence({
       end: { octave: 0, stepOffset: 0 },
@@ -260,6 +376,28 @@ describe("createExerciseSequence", () => {
       }).supportsTertianExercises,
     ).toBe(false);
   });
+
+  it.each(["ionian", "phrygianDominant", "altered"] as const)(
+    "supports scale-degree exercises for %s",
+    (noteCollectionKey) => {
+      expect(
+        createExerciseSequence({
+          noteCollectionKey,
+        }).supportsScaleDegreeExercises,
+      ).toBe(true);
+    },
+  );
+
+  it.each(["bluesPentatonic", "chromatic", "dominant13"] as const)(
+    "does not support scale-degree exercises for %s",
+    (noteCollectionKey) => {
+      expect(
+        createExerciseSequence({
+          noteCollectionKey,
+        }).supportsScaleDegreeExercises,
+      ).toBe(false);
+    },
+  );
 });
 
 describe("exercise labels", () => {

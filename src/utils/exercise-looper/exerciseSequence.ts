@@ -1,9 +1,18 @@
 import {
+  diatonicModes,
+  getExtensionsForRootAndNoteCollectionKey,
+  getNoteNamesForRootAndNoteCollectionKey,
   getTriadsForNoteCollectionKey,
+  harmonicMinorModes,
   isValidNoteCollectionKey,
+  melodicMinorModes,
+  noteNameToIntegerMap,
   normalizeRootNoteString,
   noteCollections,
+  rootNotes,
   rootNoteToIntegerMap,
+  type Interval,
+  type NoteName,
   type NoteCollectionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
@@ -59,12 +68,14 @@ export interface ExerciseSequenceStep {
 }
 
 export interface ExerciseSequence {
+  chordIntervalsByAnchorPosition: ReadonlyMap<number, readonly Interval[]>;
   collectionSize: number;
   firstPosition: number;
   lastPosition: number;
   notes: ExerciseDisplayNote[];
   rows: ExerciseDisplayNote[][];
   steps: ExerciseSequenceStep[];
+  supportsScaleDegreeExercises: boolean;
   supportsTertianExercises: boolean;
 }
 
@@ -86,6 +97,118 @@ function clampInteger(value: number, min: number, max: number) {
 
 function floorDivide(value: number, divisor: number) {
   return Math.floor(value / divisor);
+}
+
+function modulo(value: number, divisor: number) {
+  return ((value % divisor) + divisor) % divisor;
+}
+
+const scaleDegreeModeFamilies = [
+  diatonicModes,
+  harmonicMinorModes,
+  melodicMinorModes,
+] as const;
+const scaleDegreeModeKeysByCollection = new Map<
+  NoteCollectionKey,
+  readonly NoteCollectionKey[]
+>(
+  scaleDegreeModeFamilies.flatMap((family) => {
+    const modesByRotation = Object.entries(family)
+      .toSorted(([, left], [, right]) => left.rotation - right.rotation)
+      .map(([key]) => key as NoteCollectionKey);
+
+    return modesByRotation.map((key) => [key, modesByRotation] as const);
+  }),
+);
+
+function getRelativeModeCollectionKey(
+  noteCollectionKey: NoteCollectionKey,
+  degreeOffset: number,
+) {
+  const modesByRotation =
+    scaleDegreeModeKeysByCollection.get(noteCollectionKey);
+
+  if (!modesByRotation) {
+    return undefined;
+  }
+
+  const baseRotation = modesByRotation.indexOf(noteCollectionKey);
+
+  return baseRotation < 0
+    ? undefined
+    : modesByRotation[
+        modulo(baseRotation + degreeOffset, modesByRotation.length)
+      ];
+}
+
+function resolveChordRootNote(noteName: NoteName) {
+  const normalizedRoot = normalizeRootNoteString(noteName);
+
+  if (normalizedRoot) {
+    return normalizedRoot;
+  }
+
+  const noteInteger = noteNameToIntegerMap.get(noteName);
+
+  return rootNotes.find(
+    (candidate) => rootNoteToIntegerMap.get(candidate) === noteInteger,
+  );
+}
+
+function createChordIntervalsByAnchorPosition({
+  anchors,
+  collectionKey,
+  extensionDegree,
+  rootNote,
+}: {
+  anchors: readonly number[];
+  collectionKey: NoteCollectionKey;
+  extensionDegree: number;
+  rootNote: RootNote;
+}) {
+  const result = new Map<number, readonly Interval[]>();
+  const collectionSize = noteCollections[collectionKey].integers.length;
+  const rootNames = getNoteNamesForRootAndNoteCollectionKey(
+    rootNote,
+    collectionKey,
+    { filterOutOctave: true },
+  );
+  const chordSize = Math.floor(
+    (clampInteger(
+      extensionDegree,
+      EXERCISE_INTERVAL_MIN,
+      EXERCISE_INTERVAL_MAX,
+    ) +
+      1) /
+      2,
+  );
+
+  new Set(anchors).forEach((anchorPosition) => {
+    const degreeIndex = modulo(anchorPosition, collectionSize);
+    const relativeCollectionKey = getRelativeModeCollectionKey(
+      collectionKey,
+      degreeIndex,
+    );
+    const chordRootName = rootNames[degreeIndex];
+    const chordRoot =
+      chordRootName === undefined
+        ? undefined
+        : resolveChordRootNote(chordRootName);
+
+    if (relativeCollectionKey === undefined || chordRoot === undefined) {
+      return;
+    }
+
+    result.set(
+      anchorPosition,
+      getExtensionsForRootAndNoteCollectionKey(
+        chordRoot,
+        relativeCollectionKey,
+      ).slice(0, chordSize),
+    );
+  });
+
+  return result;
 }
 
 export function getCollectionPosition(
@@ -147,11 +270,18 @@ export function supportsTertianExercises(noteCollectionKey: NoteCollectionKey) {
   const collection = noteCollections[noteCollectionKey];
 
   return (
+    supportsScaleDegreeExercises(noteCollectionKey) &&
     collection.integers.length === 7 &&
     getTriadsForNoteCollectionKey(noteCollectionKey).every(
       (quality) => quality !== undefined,
     )
   );
+}
+
+export function supportsScaleDegreeExercises(
+  noteCollectionKey: NoteCollectionKey,
+) {
+  return scaleDegreeModeKeysByCollection.has(noteCollectionKey);
 }
 
 function createScaleAnchors(
@@ -382,6 +512,15 @@ export function createExerciseSequence({
     lastPosition,
     pattern.direction,
   );
+  const chordIntervalsByAnchorPosition =
+    pattern.mode === "extension"
+      ? createChordIntervalsByAnchorPosition({
+          anchors,
+          collectionKey: resolvedCollectionKey,
+          extensionDegree: pattern.extensionDegree,
+          rootNote: resolvedRootNote,
+        })
+      : new Map<number, readonly Interval[]>();
   const steps = anchors.flatMap((anchorPosition) => {
     const positionGroups = createPatternPositionGroups(anchorPosition, pattern);
 
@@ -412,12 +551,16 @@ export function createExerciseSequence({
   });
 
   return {
+    chordIntervalsByAnchorPosition,
     collectionSize,
     firstPosition,
     lastPosition,
     notes,
     rows,
     steps,
+    supportsScaleDegreeExercises: supportsScaleDegreeExercises(
+      resolvedCollectionKey,
+    ),
     supportsTertianExercises: supportsTertianExercises(resolvedCollectionKey),
   };
 }
