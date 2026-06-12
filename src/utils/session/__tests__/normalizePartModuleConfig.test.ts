@@ -128,7 +128,7 @@ describe("normalizePartModuleConfig", () => {
         octaveOffset: 99,
         pattern: {
           direction: "up-down",
-          extensionDegree: 3,
+          extensionDegree: 5,
           extensionDirection: "up-down",
           intervalDegree: 3,
           intervalDirection: "up-down",

@@ -11,17 +11,18 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import {
+  ExerciseAuditionController,
   exercisePlaybackCoordinator,
   getDefaultAudioPresetId,
   musoAudioEngine,
   type AudioPresetId,
+  type ExerciseAuditionNote,
   type ExercisePlaybackEvent,
 } from "@/audio";
 import { exerciseSubdivisionBeats } from "@/utils/exercise-looper/exerciseConfig";
 import { type ExerciseSequenceStep } from "@/utils/exercise-looper/exerciseSequence";
 import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import { type ExerciseSubdivision } from "@/types/session";
-import { usePlaybackActiveKeys } from "./usePlaybackActiveKeys";
 
 const EXERCISE_AUDITION_DURATION_SECONDS = 0.55;
 
@@ -86,12 +87,14 @@ export function useExerciseLooperPlayback({
     exercisePlaybackCoordinator.getSnapshot,
   );
   const [activeStepIndex, setActiveStepIndex] = useState<number>();
-  const {
-    activeKeys: auditionActiveKeys,
-    attach: attachAudition,
-    begin: beginAudition,
-    cancel: cancelAudition,
-  } = usePlaybackActiveKeys();
+  const [auditionController] = useState(
+    () => new ExerciseAuditionController(musoAudioEngine),
+  );
+  const auditionActiveKeys = useSyncExternalStore(
+    auditionController.subscribe,
+    auditionController.getSnapshot,
+    auditionController.getSnapshot,
+  );
   const isPlaying = snapshot.playing && snapshot.activeId === id;
   const subdivisionBeats = exerciseSubdivisionBeats[subdivision];
   const events = useMemo(
@@ -110,39 +113,34 @@ export function useExerciseLooperPlayback({
   const previousRequest = useRef(request);
 
   const start = useCallback(() => {
+    auditionController.cancel();
     void exercisePlaybackCoordinator.start(request);
-  }, [request]);
+  }, [auditionController, request]);
   const stop = useCallback(() => {
     exercisePlaybackCoordinator.stop(id);
   }, [id]);
   const audition = useCallback(
     (target: InstrumentNoteInteractionTarget) => {
-      const token = beginAudition(target.key);
-
-      void musoAudioEngine
-        .playNote({
-          durationSeconds: EXERCISE_AUDITION_DURATION_SECONDS,
-          midiNote: target.midi,
-          presetId: request.presetId,
-          use: "exercise",
-          velocity: 0.72,
-        })
-        .then((handle) => {
-          if (handle === undefined) {
-            cancelAudition(target.key, token);
-            return;
-          }
-
-          attachAudition(
-            target.key,
-            token,
-            handle,
-            EXERCISE_AUDITION_DURATION_SECONDS,
-          );
-        })
-        .catch(() => cancelAudition(target.key, token));
+      void auditionController.audition({
+        durationSeconds: EXERCISE_AUDITION_DURATION_SECONDS,
+        notes: [target],
+        presetId: request.presetId,
+        velocity: 0.72,
+      });
     },
-    [attachAudition, beginAudition, cancelAudition, request.presetId],
+    [auditionController, request.presetId],
+  );
+  const auditionChord = useCallback(
+    (notes: readonly ExerciseAuditionNote[]) => {
+      exercisePlaybackCoordinator.stop();
+      void auditionController.audition({
+        durationSeconds: EXERCISE_AUDITION_DURATION_SECONDS,
+        notes,
+        presetId: request.presetId,
+        velocity: 0.72,
+      });
+    },
+    [auditionController, request.presetId],
   );
 
   useLayoutEffect(() => {
@@ -183,18 +181,28 @@ export function useExerciseLooperPlayback({
 
   useEffect(
     () => () => {
+      auditionController.dispose();
       exercisePlaybackCoordinator.stop(id);
     },
-    [id],
+    [auditionController, id],
+  );
+
+  const activeStep =
+    isPlaying && activeStepIndex !== undefined
+      ? steps[activeStepIndex]
+      : undefined;
+  const activeCollectionPositions = useMemo(
+    () =>
+      new Set(activeStep?.notes.map((note) => note.collectionPosition) ?? []),
+    [activeStep],
   );
 
   return {
-    activeAnchorPosition:
-      isPlaying && activeStepIndex !== undefined
-        ? steps[activeStepIndex]?.notes[0]?.anchorPosition
-        : undefined,
+    activeAnchorPosition: activeStep?.notes[0]?.anchorPosition,
+    activeCollectionPositions,
     audition,
     auditionActiveKeys,
+    auditionChord,
     isPlaying,
     start,
     stop,

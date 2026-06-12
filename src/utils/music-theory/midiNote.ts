@@ -13,3 +13,7 @@ export function formatMidiNote(midi: number) {
   const octave = getMidiOctave(midi);
   return `${noteName}${octave}`;
 }
+
+export function formatSpelledMidiNote(noteName: string, midi: number) {
+  return noteName === "" ? "" : `${noteName}${getMidiOctave(midi)}`;
+}

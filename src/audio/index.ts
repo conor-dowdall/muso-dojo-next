@@ -12,6 +12,12 @@ export {
   type ExercisePlaybackSnapshot,
 } from "./exercisePlaybackCoordinator";
 export {
+  ExerciseAuditionController,
+  type ExerciseAuditionAudioEngine,
+  type ExerciseAuditionNote,
+  type ExerciseAuditionRequest,
+} from "./exerciseAuditionController";
+export {
   DEFAULT_CONCERT_PITCH_HZ,
   MIDI_A4,
   MIDI_MAX,

@@ -16,6 +16,7 @@ import { TactileControlGroup } from "@/components/ui/tactile-control-group/Tacti
 import { getExerciseDegreeOptions } from "@/utils/exercise-looper/exerciseConfig";
 import {
   getExerciseIntervalLabel,
+  type ExerciseChordDescriptor,
   type ExerciseNotePlayback,
   type ExercisePattern,
   type ExercisePatternMode,
@@ -91,13 +92,13 @@ const notePlaybackChoices = [
 }[];
 
 export function ExercisePatternControls({
-  activeChordFormula,
+  chordDescriptor,
   onChange,
   pattern,
   supportsScaleDegreeExercises,
   supportsTertianExercises,
 }: {
-  activeChordFormula?: string;
+  chordDescriptor?: ExerciseChordDescriptor;
   onChange?: (pattern: ExercisePattern) => void;
   pattern: ExercisePattern;
   supportsScaleDegreeExercises: boolean;
@@ -147,12 +148,19 @@ export function ExercisePatternControls({
   const selectedPatternModeLabel =
     patternModeChoices.find((choice) => choice.mode === pattern.mode)
       ?.readout ?? "Single Notes";
-  const patternModeLabel =
+  const patternModeReadout =
     modeFeedbackVersion > 0
-      ? "Scale Modes Only"
-      : pattern.mode === "extension" && activeChordFormula
-        ? activeChordFormula
-        : selectedPatternModeLabel;
+      ? {
+          primary: "Scale Modes Only",
+        }
+      : pattern.mode === "extension" && chordDescriptor
+        ? {
+            primary: chordDescriptor.chordName,
+            secondary: chordDescriptor.intervals.join(" "),
+          }
+        : {
+            primary: selectedPatternModeLabel,
+          };
   const canDecreaseActiveDegree =
     pattern.mode === "interval"
       ? canDecreaseIntervalDegree
@@ -257,9 +265,33 @@ export function ExercisePatternControls({
       <div className={styles.modeConfiguration}>
         <TactileControlGroup
           aria-label="Play mode"
+          className={styles.modeStudyGroup}
           controlsClassName={styles.modeControls}
-          readout={patternModeLabel}
-          readoutLive={activeChordFormula ? "off" : undefined}
+          readout={
+            <>
+              <span
+                className={
+                  patternModeReadout.secondary
+                    ? styles.studyChordName
+                    : styles.studySingleLine
+                }
+              >
+                {patternModeReadout.primary}
+              </span>
+              {patternModeReadout.secondary ? (
+                <span className={styles.studyChordFormula}>
+                  {patternModeReadout.secondary}
+                </span>
+              ) : null}
+            </>
+          }
+          readoutAriaLabel={
+            patternModeReadout.secondary
+              ? `${patternModeReadout.primary}, intervals ${patternModeReadout.secondary}`
+              : patternModeReadout.primary
+          }
+          readoutClassName={styles.studyReadout}
+          readoutLive={pattern.mode === "extension" ? "off" : undefined}
         >
           {patternModeChoices.map((choice) => (
             <TactileIconButton

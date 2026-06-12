@@ -10,7 +10,7 @@ import {
 } from "@/utils/drone/droneNotes";
 
 describe("droneNotes", () => {
-  it("resolves exactly the notes from the part root and collection", () => {
+  it("starts finite compound voicings at the declared formula", () => {
     const droneNotes = resolveDroneNotes({
       noteCollectionKey: "major9",
       rootNote: "C",
@@ -30,6 +30,62 @@ describe("droneNotes", () => {
       { interval: 11, intervalLabel: "7", label: "B" },
       { interval: 14, intervalLabel: "9", label: "D" },
     ]);
+    expect(droneNotes.columnCount).toBe(5);
+    expect(
+      droneNotes.rows.map((row) => row.map((note) => note.intervalLabel)),
+    ).toStrictEqual([["1", "3", "5", "7"], ["9"]]);
+    expect(
+      droneNotes.rows.map((row) => row.map((note) => note.columnIndex)),
+    ).toStrictEqual([[0, 2, 3, 4], [1]]);
+    expect(droneNotes.maxNoteCount).toBeGreaterThan(5);
+    expect(droneNotes.supportsOctaveRangeEditing).toBe(true);
+  });
+
+  it("adds and removes the next register root without removing the ninth", () => {
+    const expanded = resolveDroneNotes({
+      noteCollectionKey: "major9",
+      noteCount: 6,
+      rootNote: "C",
+    });
+    const restoredFormula = resolveDroneNotes({
+      noteCollectionKey: "major9",
+      noteCount: 5,
+      rootNote: "C",
+    });
+
+    expect(
+      expanded.rows.map((row) => row.map((note) => note.intervalLabel)),
+    ).toEqual([
+      ["1", "3", "5", "7"],
+      ["8", "9"],
+    ]);
+    expect(
+      restoredFormula.rows.map((row) => row.map((note) => note.intervalLabel)),
+    ).toEqual([["1", "3", "5", "7"], ["9"]]);
+  });
+
+  it("adds one complete formula register in package order", () => {
+    const expanded = resolveDroneNotes({
+      noteCollectionKey: "major9",
+      noteCount: 10,
+      rootNote: "C",
+    });
+
+    expect(
+      expanded.rows.map((row) => row.map((note) => note.intervalLabel)),
+    ).toEqual([["1", "3", "5", "7"], ["8", "9", "10", "12", "14"], ["16"]]);
+  });
+
+  it("clamps oversized finite ranges to the available physical rows", () => {
+    const expanded = resolveDroneNotes({
+      noteCollectionKey: "major9",
+      noteCount: 48,
+      rootNote: "C",
+    });
+
+    expect(expanded.noteCount).toBe(expanded.maxNoteCount);
+    expect(expanded.rows).toHaveLength(4);
+    expect(expanded.notes.at(-1)?.intervalLabel).toBe("28");
   });
 
   it("adds octave rows with shifted interval labels", () => {
@@ -173,5 +229,23 @@ describe("droneNotes", () => {
     expect(partialOctave.notes.map((note) => note.columnIndex)).toStrictEqual([
       0, 1, 2, 3, 4, 5, 6,
     ]);
+  });
+
+  it("keeps octave range editing for ordinary collections", () => {
+    const simpleChord = resolveDroneNotes({
+      noteCollectionKey: "major",
+      rowCount: 2,
+      rootNote: "C",
+    });
+
+    expect(simpleChord.notes.map((note) => note.intervalLabel)).toEqual([
+      "1",
+      "3",
+      "5",
+      "8",
+      "10",
+      "12",
+    ]);
+    expect(simpleChord.supportsOctaveRangeEditing).toBe(true);
   });
 });

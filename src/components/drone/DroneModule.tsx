@@ -5,6 +5,7 @@ import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { Square, WavesArrowDown, WavesArrowUp } from "lucide-react";
 import { getDefaultAudioPresetId, type AudioPresetId } from "@/audio";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
+import { InstrumentNoteTileLabel } from "@/components/instrument/InstrumentNoteTileLabel";
 import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
 import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeaderActions";
 import { PartModuleHeaderActions } from "@/components/part-module/PartModuleHeaderActions";
@@ -27,7 +28,7 @@ import {
   DRONE_MIN_OCTAVE_ROWS,
   resolveDroneNotes,
 } from "@/utils/drone/droneNotes";
-import { getMidiOctave } from "@/utils/music-theory/midiNote";
+import { formatSpelledMidiNote } from "@/utils/music-theory/midiNote";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
 import { getClosestNoteInColumn } from "@/utils/instrument/getClosestNoteInColumn";
 import { DroneOptionsDialog } from "./DroneOptionsDialog";
@@ -68,25 +69,6 @@ function getDroneRowClassName(rowCount: number) {
     default:
       return "";
   }
-}
-
-function formatDroneNoteLabel(noteName: string, midi: number) {
-  if (noteName === "") {
-    return "";
-  }
-
-  return `${noteName}${getMidiOctave(midi)}`;
-}
-
-function DroneTileLabel({ label }: { label: string }) {
-  return (
-    <span
-      className={styles.droneTileText}
-      data-is-placeholder={label === "" ? true : undefined}
-    >
-      {label}
-    </span>
-  );
 }
 
 export function DroneModule({
@@ -303,6 +285,7 @@ export function DroneModule({
                       droneNotes.noteCount - droneNotes.collectionSize,
                     )
                   }
+                  showOctaveActions={droneNotes.supportsOctaveRangeEditing}
                   showTooltips={false}
                 />
               }
@@ -367,7 +350,7 @@ export function DroneModule({
                       rootNote: droneNotes.rootNote,
                     });
                     const isActive = isNoteActive(note.interval);
-                    const noteLabel = formatDroneNoteLabel(
+                    const noteLabel = formatSpelledMidiNote(
                       note.label,
                       note.midi,
                     );
@@ -394,14 +377,10 @@ export function DroneModule({
                         largeSize="100%"
                         surface="raised"
                       >
-                        <span className={styles.droneTileLabelStack}>
-                          <span className={styles.droneTileNoteSlot}>
-                            <DroneTileLabel label={noteLabel} />
-                          </span>
-                          <span className={styles.droneTileIntervalSlot}>
-                            <DroneTileLabel label={note.intervalLabel} />
-                          </span>
-                        </span>
+                        <InstrumentNoteTileLabel
+                          primary={noteLabel}
+                          secondary={note.intervalLabel}
+                        />
                       </InstrumentNoteCell>
                     );
                   })}

@@ -1,7 +1,9 @@
 import {
   diatonicModes,
+  getExtensionsForNoteCollectionKey,
   getExtensionsForRootAndNoteCollectionKey,
   getNoteNamesForRootAndNoteCollectionKey,
+  getSeventhChordsForNoteCollectionKey,
   getTriadsForNoteCollectionKey,
   harmonicMinorModes,
   isValidNoteCollectionKey,
@@ -17,6 +19,10 @@ import {
   type RootNote,
 } from "@musodojo/music-theory-data";
 import { MIDI_MAX, MIDI_MIN, isPlayableMidiNote } from "@/audio/pitch";
+import {
+  getCollectionToneAtPosition,
+  getCollectionToneSequenceMetadata,
+} from "@/utils/music-theory/collectionToneSequence";
 import {
   DEFAULT_PART_NOTE_COLLECTION_KEY,
   DEFAULT_PART_ROOT_NOTE,
@@ -57,7 +63,10 @@ export interface ExerciseSequenceNote {
 export interface ExerciseDisplayNote {
   collectionPosition: number;
   columnIndex: number;
+  intervalLabel: string;
+  isAnchor: boolean;
   key: string;
+  label: string;
   midi: number;
   rowIndex: number;
 }
@@ -67,14 +76,31 @@ export interface ExerciseSequenceStep {
   notes: ExerciseSequenceNote[];
 }
 
+export interface ExerciseChordDescriptor {
+  chordName: string;
+  collectionPositions: readonly number[];
+  intervals: readonly Interval[];
+  midiNotes: readonly number[];
+  relativeCollectionKey: NoteCollectionKey;
+  rootName: NoteName;
+}
+
 export interface ExerciseSequence {
-  chordIntervalsByAnchorPosition: ReadonlyMap<number, readonly Interval[]>;
+  chordDescriptorsByAnchorPosition: ReadonlyMap<
+    number,
+    ExerciseChordDescriptor
+  >;
   collectionSize: number;
+  columnCount: number;
+  displayNotes: ExerciseDisplayNote[];
+  displayRows: ExerciseDisplayNote[][];
   firstPosition: number;
+  isFiniteVoicing: boolean;
   lastPosition: number;
   notes: ExerciseDisplayNote[];
   rows: ExerciseDisplayNote[][];
   steps: ExerciseSequenceStep[];
+  supportsOctaveRangeEditing: boolean;
   supportsScaleDegreeExercises: boolean;
   supportsTertianExercises: boolean;
 }
@@ -120,6 +146,20 @@ const scaleDegreeModeKeysByCollection = new Map<
     return modesByRotation.map((key) => [key, modesByRotation] as const);
   }),
 );
+const chordSuffixByIntervalSignature = new Map(
+  Object.entries(noteCollections).flatMap(([key, collection]) =>
+    collection.category === "chord"
+      ? [
+          [
+            getExtensionsForNoteCollectionKey(key as NoteCollectionKey).join(
+              " ",
+            ),
+            collection.primaryName,
+          ] as const,
+        ]
+      : [],
+  ),
+);
 
 function getRelativeModeCollectionKey(
   noteCollectionKey: NoteCollectionKey,
@@ -155,33 +195,76 @@ function resolveChordRootNote(noteName: NoteName) {
   );
 }
 
-function createChordIntervalsByAnchorPosition({
+function createExtensionPositions(anchor: number, extensionDegree: number) {
+  const degree = clampInteger(
+    extensionDegree,
+    EXERCISE_INTERVAL_MIN,
+    EXERCISE_INTERVAL_MAX,
+  );
+  const size = Math.floor((degree + 1) / 2);
+
+  return Array.from({ length: size }, (_, index) => anchor + index * 2);
+}
+
+function getChordName({
+  extensionDegree,
+  intervals,
+  relativeCollectionKey,
+  rootName,
+}: {
+  extensionDegree: number;
+  intervals: readonly Interval[];
+  relativeCollectionKey: NoteCollectionKey;
+  rootName: NoteName;
+}) {
+  if (extensionDegree === 5) {
+    const triad = getTriadsForNoteCollectionKey(relativeCollectionKey)[0];
+    return triad === undefined ? rootName : `${rootName}${triad}`;
+  }
+
+  const seventh = getSeventhChordsForNoteCollectionKey(
+    relativeCollectionKey,
+  )[0];
+
+  if (extensionDegree === 7) {
+    return seventh === undefined ? rootName : `${rootName}${seventh}`;
+  }
+
+  const exactSuffix = chordSuffixByIntervalSignature.get(intervals.join(" "));
+
+  if (exactSuffix !== undefined) {
+    return `${rootName}${exactSuffix}`;
+  }
+
+  const baseName = seventh === undefined ? rootName : `${rootName}${seventh}`;
+  const extensions = intervals.slice(4);
+
+  return extensions.length === 0
+    ? baseName
+    : `${baseName} (${extensions.join(", ")})`;
+}
+
+function createChordDescriptorsByAnchorPosition({
   anchors,
   collectionKey,
   extensionDegree,
+  octaveOffset,
   rootNote,
 }: {
   anchors: readonly number[];
   collectionKey: NoteCollectionKey;
   extensionDegree: number;
+  octaveOffset: number;
   rootNote: RootNote;
 }) {
-  const result = new Map<number, readonly Interval[]>();
+  const result = new Map<number, ExerciseChordDescriptor>();
   const collectionSize = noteCollections[collectionKey].integers.length;
   const rootNames = getNoteNamesForRootAndNoteCollectionKey(
     rootNote,
     collectionKey,
     { filterOutOctave: true },
   );
-  const chordSize = Math.floor(
-    (clampInteger(
-      extensionDegree,
-      EXERCISE_INTERVAL_MIN,
-      EXERCISE_INTERVAL_MAX,
-    ) +
-      1) /
-      2,
-  );
+  const chordSize = createExtensionPositions(0, extensionDegree).length;
 
   new Set(anchors).forEach((anchorPosition) => {
     const degreeIndex = modulo(anchorPosition, collectionSize);
@@ -195,17 +278,53 @@ function createChordIntervalsByAnchorPosition({
         ? undefined
         : resolveChordRootNote(chordRootName);
 
-    if (relativeCollectionKey === undefined || chordRoot === undefined) {
+    if (
+      relativeCollectionKey === undefined ||
+      chordRoot === undefined ||
+      chordRootName === undefined
+    ) {
       return;
     }
 
-    result.set(
+    const intervals = getExtensionsForRootAndNoteCollectionKey(
+      chordRoot,
+      relativeCollectionKey,
+    ).slice(0, chordSize);
+    const collectionPositions = createExtensionPositions(
       anchorPosition,
-      getExtensionsForRootAndNoteCollectionKey(
-        chordRoot,
-        relativeCollectionKey,
-      ).slice(0, chordSize),
+      extensionDegree,
     );
+    const midiNotes = collectionPositions.flatMap((position) => {
+      const midi = getMidiForCollectionPosition({
+        collectionKey,
+        octaveOffset,
+        position,
+        rootNote,
+      });
+
+      return midi === undefined || !isPlayableMidiNote(midi) ? [] : [midi];
+    });
+
+    if (
+      intervals.length !== chordSize ||
+      midiNotes.length !== collectionPositions.length
+    ) {
+      return;
+    }
+
+    result.set(anchorPosition, {
+      chordName: getChordName({
+        extensionDegree,
+        intervals,
+        relativeCollectionKey,
+        rootName: chordRootName,
+      }),
+      collectionPositions,
+      intervals,
+      midiNotes,
+      relativeCollectionKey,
+      rootName: chordRootName,
+    });
   });
 
   return result;
@@ -214,14 +333,29 @@ function createChordIntervalsByAnchorPosition({
 export function getCollectionPosition(
   boundary: CollectionRangeBoundary,
   collectionSize: number,
+  isFiniteVoicing = false,
 ) {
+  if (isFiniteVoicing && boundary.octave > 0) {
+    return boundary.octave * collectionSize + boundary.stepOffset - 1;
+  }
+
   return boundary.octave * collectionSize + boundary.stepOffset;
 }
 
 export function getCollectionRangeBoundary(
   position: number,
   collectionSize: number,
+  isFiniteVoicing = false,
 ): CollectionRangeBoundary {
+  if (isFiniteVoicing && position >= collectionSize - 1) {
+    const octave = floorDivide(position + 1, collectionSize);
+
+    return {
+      octave,
+      stepOffset: position + 1 - octave * collectionSize,
+    };
+  }
+
   const octave = floorDivide(position, collectionSize);
 
   return {
@@ -241,28 +375,23 @@ export function getMidiForCollectionPosition({
   position: number;
   rootNote: RootNote;
 }) {
-  const collection = noteCollections[collectionKey];
-  const collectionSize = collection.integers.length;
+  const tone = getCollectionToneAtPosition(collectionKey, position);
 
-  if (collectionSize === 0) {
+  if (!tone) {
     return undefined;
   }
 
-  const octave = floorDivide(position, collectionSize);
-  const collectionIndex =
-    ((position % collectionSize) + collectionSize) % collectionSize;
-  const interval = collection.integers[collectionIndex];
   const rootInteger = rootNoteToIntegerMap.get(rootNote);
 
-  if (interval === undefined || rootInteger === undefined) {
+  if (rootInteger === undefined) {
     return undefined;
   }
 
   return (
     BASE_ROOT_MIDI +
     rootInteger +
-    (octave + octaveOffset) * SEMITONES_PER_OCTAVE +
-    interval
+    octaveOffset * SEMITONES_PER_OCTAVE +
+    tone.semitones
   );
 }
 
@@ -345,15 +474,9 @@ function createPatternPositionGroups(anchor: number, pattern: ExercisePattern) {
           );
     }
     case "extension": {
-      const degree = clampInteger(
+      const positions = createExtensionPositions(
+        anchor,
         pattern.extensionDegree,
-        EXERCISE_INTERVAL_MIN,
-        EXERCISE_INTERVAL_MAX,
-      );
-      const size = Math.floor((degree + 1) / 2);
-      const positions = Array.from(
-        { length: size },
-        (_, index) => anchor + index * 2,
       );
 
       return pattern.notePlayback === "together"
@@ -417,12 +540,12 @@ export function getExerciseAnchorPositionBounds({
 }
 
 export function createExerciseSequence({
-  end = { octave: 1, stepOffset: 0 },
+  end,
   noteCollectionKey,
   octaveOffset = 0,
   pattern = {
     direction: "up-down",
-    extensionDegree: 3,
+    extensionDegree: 5,
     extensionDirection: "up-down",
     intervalDegree: 3,
     intervalDirection: "up-down",
@@ -441,15 +564,30 @@ export function createExerciseSequence({
 }): ExerciseSequence {
   const resolvedCollectionKey = resolveCollectionKey(noteCollectionKey);
   const resolvedRootNote = resolveRootNote(rootNote);
-  const collectionSize = noteCollections[resolvedCollectionKey].integers.length;
+  const toneSequence = getCollectionToneSequenceMetadata(resolvedCollectionKey);
+  const collectionSize = toneSequence.tones.length;
+  const resolvedEnd = end ?? { octave: 1, stepOffset: 0 };
+  const noteNames = getNoteNamesForRootAndNoteCollectionKey(
+    resolvedRootNote,
+    resolvedCollectionKey,
+    { filterOutOctave: true },
+  );
   const bounds = getExerciseAnchorPositionBounds({
     noteCollectionKey: resolvedCollectionKey,
     octaveOffset,
     pattern,
     rootNote: resolvedRootNote,
   });
-  const requestedStartPosition = getCollectionPosition(start, collectionSize);
-  const requestedEndPosition = getCollectionPosition(end, collectionSize);
+  const requestedStartPosition = getCollectionPosition(
+    start,
+    collectionSize,
+    toneSequence.isFiniteVoicing,
+  );
+  const requestedEndPosition = getCollectionPosition(
+    resolvedEnd,
+    collectionSize,
+    toneSequence.isFiniteVoicing,
+  );
   const requestedFirstPosition = Math.min(
     requestedStartPosition,
     requestedEndPosition,
@@ -471,56 +609,21 @@ export function createExerciseSequence({
       firstPosition + collectionSize * EXERCISE_MAX_OCTAVE_SPAN,
     ),
   );
-  const firstOctave = floorDivide(firstPosition, collectionSize);
-  const lastOctave = floorDivide(lastPosition, collectionSize);
-  const rows = Array.from(
-    { length: lastOctave - firstOctave + 1 },
-    () => [] as ExerciseDisplayNote[],
-  );
-  const notes = Array.from(
-    { length: lastPosition - firstPosition + 1 },
-    (_, index) => firstPosition + index,
-  ).flatMap((collectionPosition) => {
-    const midi = getMidiForCollectionPosition({
-      collectionKey: resolvedCollectionKey,
-      octaveOffset,
-      position: collectionPosition,
-      rootNote: resolvedRootNote,
-    });
-
-    if (midi === undefined || !isPlayableMidiNote(midi)) {
-      return [];
-    }
-
-    const octave = floorDivide(collectionPosition, collectionSize);
-    const rowIndex = octave - firstOctave;
-    const displayNote: ExerciseDisplayNote = {
-      collectionPosition,
-      columnIndex:
-        ((collectionPosition % collectionSize) + collectionSize) %
-        collectionSize,
-      key: `position-${collectionPosition}`,
-      midi,
-      rowIndex,
-    };
-
-    rows[rowIndex]?.push(displayNote);
-    return [displayNote];
-  });
   const anchors = createScaleAnchors(
     firstPosition,
     lastPosition,
     pattern.direction,
   );
-  const chordIntervalsByAnchorPosition =
+  const chordDescriptorsByAnchorPosition =
     pattern.mode === "extension"
-      ? createChordIntervalsByAnchorPosition({
+      ? createChordDescriptorsByAnchorPosition({
           anchors,
           collectionKey: resolvedCollectionKey,
           extensionDegree: pattern.extensionDegree,
+          octaveOffset,
           rootNote: resolvedRootNote,
         })
-      : new Map<number, readonly Interval[]>();
+      : new Map<number, ExerciseChordDescriptor>();
   const steps = anchors.flatMap((anchorPosition) => {
     const positionGroups = createPatternPositionGroups(anchorPosition, pattern);
 
@@ -549,15 +652,94 @@ export function createExerciseSequence({
         : [];
     });
   });
+  const anchorPositions = Array.from(
+    { length: lastPosition - firstPosition + 1 },
+    (_, index) => firstPosition + index,
+  );
+  const displayPositions = [
+    ...new Set([
+      ...anchorPositions,
+      ...steps.flatMap((step) =>
+        step.notes.map((note) => note.collectionPosition),
+      ),
+    ]),
+  ].toSorted((left, right) => left - right);
+  const firstOctave =
+    getCollectionToneAtPosition(resolvedCollectionKey, firstPosition)?.octave ??
+    0;
+  const lastDisplayPosition = displayPositions.at(-1) ?? lastPosition;
+  const lastDisplayOctave =
+    getCollectionToneAtPosition(resolvedCollectionKey, lastDisplayPosition)
+      ?.octave ?? firstOctave;
+  const mutableDisplayRows = Array.from(
+    { length: lastDisplayOctave - firstOctave + 1 },
+    () => [] as ExerciseDisplayNote[],
+  );
+  displayPositions.forEach((collectionPosition) => {
+    const midi = getMidiForCollectionPosition({
+      collectionKey: resolvedCollectionKey,
+      octaveOffset,
+      position: collectionPosition,
+      rootNote: resolvedRootNote,
+    });
+
+    if (midi === undefined || !isPlayableMidiNote(midi)) {
+      return;
+    }
+
+    const tone = getCollectionToneAtPosition(
+      resolvedCollectionKey,
+      collectionPosition,
+    );
+
+    if (!tone) {
+      return;
+    }
+
+    const rowIndex = tone.octave - firstOctave;
+    const displayNote: ExerciseDisplayNote = {
+      collectionPosition,
+      columnIndex: tone.columnIndex,
+      intervalLabel: tone.intervalLabel,
+      isAnchor:
+        collectionPosition >= firstPosition &&
+        collectionPosition <= lastPosition,
+      key: `position-${collectionPosition}`,
+      label: noteNames[tone.collectionIndex] ?? "",
+      midi,
+      rowIndex,
+    };
+
+    mutableDisplayRows[rowIndex]?.push(displayNote);
+  });
+  const displayRows = mutableDisplayRows.map((row) =>
+    row.toSorted((left, right) => left.midi - right.midi),
+  );
+  const displayNotes = displayRows.flat();
+  const notes = displayNotes.filter((note) => note.isAnchor);
+  const lastAnchorOctave =
+    getCollectionToneAtPosition(resolvedCollectionKey, lastPosition)?.octave ??
+    firstOctave;
+  const rows = Array.from(
+    { length: lastAnchorOctave - firstOctave + 1 },
+    () => [] as ExerciseDisplayNote[],
+  );
+
+  notes.forEach((note) => rows[note.rowIndex]?.push(note));
 
   return {
-    chordIntervalsByAnchorPosition,
+    chordDescriptorsByAnchorPosition,
     collectionSize,
+    columnCount: toneSequence.columnCount,
+    displayNotes,
+    displayRows,
     firstPosition,
+    isFiniteVoicing: toneSequence.isFiniteVoicing,
     lastPosition,
     notes,
     rows,
     steps,
+    supportsOctaveRangeEditing: toneSequence.supportsOctaveRangeEditing,
     supportsScaleDegreeExercises: supportsScaleDegreeExercises(
       resolvedCollectionKey,
     ),

@@ -16,6 +16,10 @@ import {
   DEFAULT_PART_NOTE_COLLECTION_KEY,
   DEFAULT_PART_ROOT_NOTE,
 } from "@/utils/session/sessionDefaults";
+import {
+  getCollectionToneAtPosition,
+  getCollectionToneSequenceMetadata,
+} from "@/utils/music-theory/collectionToneSequence";
 
 // Middle-register anchor for generated drone pitches; octave controls offset
 // from here before the notes are handed to the audio engine.
@@ -23,7 +27,6 @@ const DRONE_BASE_PITCH_OCTAVE = 3;
 const DRONE_NOTE_INTERVAL_MIN = 0;
 const DRONE_NOTE_INTERVAL_MAX = 24;
 const DRONE_SEMITONES_PER_OCTAVE = 12;
-const DRONE_INTERVAL_STEPS_PER_OCTAVE = 7;
 const DRONE_BASE_ROOT_MIDI =
   (DRONE_BASE_PITCH_OCTAVE + 1) * DRONE_SEMITONES_PER_OCTAVE;
 
@@ -64,6 +67,7 @@ export interface ResolvedDroneNotes {
   rowCount: number;
   rows: DroneNoteButton[][];
   rootNote: RootNote;
+  supportsOctaveRangeEditing: boolean;
 }
 
 function resolveNoteCollectionKey(value: unknown): NoteCollectionKey {
@@ -118,29 +122,6 @@ function resolveOctaveOffset(value: unknown) {
   );
 }
 
-function getDroneRowIntervalLabel(intervalLabel: string, rowIndex: number) {
-  if (rowIndex === 0) {
-    return intervalLabel;
-  }
-
-  // Drone rows repeat the same collection in higher octaves, so the display
-  // label raises the generic interval number by one diatonic octave per row.
-  const match = intervalLabel.match(/^([^\d]*)(\d+)$/);
-
-  if (!match) {
-    return intervalLabel;
-  }
-
-  const [, accidental = "", degree] = match;
-  const intervalNumber = Number(degree);
-
-  if (!Number.isFinite(intervalNumber)) {
-    return intervalLabel;
-  }
-
-  return `${accidental}${intervalNumber + rowIndex * DRONE_INTERVAL_STEPS_PER_OCTAVE}`;
-}
-
 function getDisplayMidi(
   rootNote: RootNote,
   interval: number,
@@ -174,7 +155,9 @@ export function resolveDroneNotes({
   const resolvedOctaveOffset = resolveOctaveOffset(octaveOffset);
   const resolvedRowCount = resolveRowCount(rowCount);
   const collection = noteCollections[resolvedNoteCollectionKey];
-  const collectionIntervals: readonly number[] = collection.integers;
+  const toneSequence = getCollectionToneSequenceMetadata(
+    resolvedNoteCollectionKey,
+  );
   const rootInteger = rootNoteToIntegerMap.get(resolvedRootNote) ?? 0;
   const labels = conversions.rootAndNoteCollection.noteNames.get(
     resolvedRootNote,
@@ -184,10 +167,13 @@ export function resolveDroneNotes({
       rotateToRootInteger0: true,
     },
   );
-  const baseNotes = collectionIntervals
-    .map((interval, index) => ({
-      baseInterval: Math.round(interval),
-      baseIntervalLabel: String(collection.intervals[index] ?? interval),
+  const baseNotes = toneSequence.tones
+    .map((tone) => ({
+      baseInterval: Math.round(tone.semitones),
+      baseIntervalLabel: String(
+        collection.intervals[tone.collectionIndex] ?? tone.semitones,
+      ),
+      collectionIndex: tone.collectionIndex,
     }))
     .filter(
       ({ baseInterval }) =>
@@ -201,59 +187,55 @@ export function resolveDroneNotes({
         ) === index
       );
     });
-  const seenIntervals = new Set<number>();
-  const candidateRows = Array.from(
-    { length: DRONE_MAX_OCTAVE_ROWS },
-    (_, rowIndex) => {
-      const rowNotes: DroneNoteButton[] = [];
-
-      baseNotes.forEach((baseNote, baseNoteIndex) => {
-        const interval =
-          baseNote.baseInterval + rowIndex * DRONE_SEMITONES_PER_OCTAVE;
-
-        if (seenIntervals.has(interval)) {
-          return;
-        }
-
-        seenIntervals.add(interval);
-
-        const midi = getDisplayMidi(
-          resolvedRootNote,
-          interval,
-          resolvedOctaveOffset,
-        );
-
-        const pitchClass =
-          (rootInteger + interval) % DRONE_SEMITONES_PER_OCTAVE;
-        const intervalLabel = getDroneRowIntervalLabel(
-          baseNote.baseIntervalLabel,
-          rowIndex,
-        );
-
-        rowNotes.push({
-          ...baseNote,
-          columnIndex: baseNoteIndex,
-          interval,
-          intervalLabel,
-          key: `${rowIndex}:${baseNoteIndex}:${interval}`,
-          label: labels[pitchClass] ?? "",
-          midi,
-          rowIndex,
-        });
-      });
-
-      return rowNotes;
-    },
+  const baseNoteByCollectionIndex = new Map(
+    baseNotes.map((note) => [note.collectionIndex, note]),
   );
-  const candidates = candidateRows.flat();
+  const candidateCount = toneSequence.tones.length * DRONE_MAX_OCTAVE_ROWS;
+  const candidates: DroneNoteButton[] = [];
+
+  for (let position = 0; position < candidateCount; position += 1) {
+    const tone = getCollectionToneAtPosition(
+      resolvedNoteCollectionKey,
+      position,
+    );
+
+    if (!tone) {
+      break;
+    }
+
+    const baseNote = baseNoteByCollectionIndex.get(tone.collectionIndex);
+
+    if (!baseNote || tone.octave < 0 || tone.octave >= DRONE_MAX_OCTAVE_ROWS) {
+      continue;
+    }
+
+    const interval = tone.semitones;
+    const midi = getDisplayMidi(
+      resolvedRootNote,
+      interval,
+      resolvedOctaveOffset,
+    );
+    const pitchClass = (rootInteger + interval) % DRONE_SEMITONES_PER_OCTAVE;
+
+    candidates.push({
+      ...baseNote,
+      columnIndex: tone.columnIndex,
+      interval,
+      intervalLabel: tone.intervalLabel,
+      key: `${tone.octave}:${tone.collectionIndex}:${interval}`,
+      label: labels[pitchClass] ?? "",
+      midi,
+      rowIndex: tone.octave,
+    });
+  }
   const maxPlayableNoteCount = candidates.findIndex(
     (candidate) => !isMusicalSurfaceMidiNote(candidate.midi),
   );
   const maxNoteCount =
     maxPlayableNoteCount < 0 ? candidates.length : maxPlayableNoteCount;
-  const legacyDefaultNoteCount = candidateRows
-    .slice(0, resolvedRowCount)
-    .flat().length;
+  const legacyDefaultNoteCount = toneSequence.isFiniteVoicing
+    ? Math.min(candidates.length, toneSequence.tones.length)
+    : Math.min(candidates.length, toneSequence.tones.length * resolvedRowCount);
   const requestedNoteCount = resolveNoteCount(
     noteCount,
     legacyDefaultNoteCount,
@@ -266,14 +248,16 @@ export function resolveDroneNotes({
       ? DRONE_MIN_OCTAVE_ROWS
       : visibleNotes.at(-1)!.rowIndex + 1;
   const rows = Array.from({ length: visibleRowCount }, (_, rowIndex) =>
-    visibleNotes.filter((note) => note.rowIndex === rowIndex),
+    visibleNotes
+      .filter((note) => note.rowIndex === rowIndex)
+      .toSorted((left, right) => left.interval - right.interval),
   );
 
   const notes = rows.flat();
 
   return {
     collectionSize: baseNotes.length,
-    columnCount: baseNotes.length,
+    columnCount: toneSequence.columnCount,
     hasUnplayableNotes: requestedNoteCount > maxNoteCount,
     maxNoteCount,
     noteCount: resolvedNoteCount,
@@ -282,5 +266,6 @@ export function resolveDroneNotes({
     rowCount: visibleRowCount,
     rows,
     rootNote: resolvedRootNote,
+    supportsOctaveRangeEditing: toneSequence.supportsOctaveRangeEditing,
   };
 }

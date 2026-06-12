@@ -7,6 +7,8 @@ interface TactileControlGroupProps {
   className?: string;
   controlsClassName?: string;
   readout?: ReactNode;
+  readoutAriaLabel?: string;
+  readoutClassName?: string;
   readoutLive?: "off" | "polite";
   unavailable?: boolean;
 }
@@ -17,6 +19,8 @@ export function TactileControlGroup({
   className,
   controlsClassName,
   readout,
+  readoutAriaLabel,
+  readoutClassName,
   readoutLive,
   unavailable = false,
 }: TactileControlGroupProps) {
@@ -35,7 +39,13 @@ export function TactileControlGroup({
         {children}
       </div>
       {readout !== undefined ? (
-        <output className={styles.readout} aria-live={readoutLive}>
+        <output
+          className={[styles.readout, readoutClassName]
+            .filter(Boolean)
+            .join(" ")}
+          aria-label={readoutAriaLabel}
+          aria-live={readoutLive}
+        >
           {unavailable ? null : readout}
         </output>
       ) : null}

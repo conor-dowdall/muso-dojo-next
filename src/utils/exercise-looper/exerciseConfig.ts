@@ -15,7 +15,7 @@ import { isRecord } from "@/utils/session/normalizationPrimitives";
 
 export const DEFAULT_EXERCISE_PATTERN = {
   direction: "up-down",
-  extensionDegree: 3,
+  extensionDegree: 5,
   extensionDirection: "up-down",
   intervalDegree: 3,
   intervalDirection: "up-down",
@@ -38,7 +38,7 @@ export const EXERCISE_INTERVAL_DEGREES = Array.from(
   { length: EXERCISE_INTERVAL_MAX - EXERCISE_INTERVAL_MIN + 1 },
   (_, index) => index + EXERCISE_INTERVAL_MIN,
 );
-export const EXERCISE_EXTENSION_DEGREES = [3, 5, 7, 9, 11, 13] as const;
+export const EXERCISE_EXTENSION_DEGREES = [5, 7, 9, 11, 13] as const;
 
 const subdivisions = {
   quarter: true,

@@ -11,6 +11,7 @@ interface NoteRangeHeaderActionsProps {
   onAddOctave: () => void;
   onRemoveNote: () => void;
   onRemoveOctave: () => void;
+  showOctaveActions?: boolean;
   showTooltips?: boolean;
 }
 
@@ -23,6 +24,7 @@ export function NoteRangeHeaderActions({
   onAddOctave,
   onRemoveNote,
   onRemoveOctave,
+  showOctaveActions = true,
   showTooltips = true,
 }: NoteRangeHeaderActionsProps) {
   return (
@@ -32,20 +34,22 @@ export function NoteRangeHeaderActions({
       aria-label="Visible note range"
     >
       <span className={styles.directionGroup}>
-        <IconButton
-          aria-label="Remove highest octave"
-          disabled={!canRemoveOctave}
-          icon={<LayersMinus />}
-          size="sm"
-          onClick={onRemoveOctave}
-          tooltip={
-            showTooltips
-              ? canRemoveOctave
-                ? "Remove highest octave"
-                : "Keep at least one note"
-              : false
-          }
-        />
+        {showOctaveActions ? (
+          <IconButton
+            aria-label="Remove highest octave"
+            disabled={!canRemoveOctave}
+            icon={<LayersMinus />}
+            size="sm"
+            onClick={onRemoveOctave}
+            tooltip={
+              showTooltips
+                ? canRemoveOctave
+                  ? "Remove highest octave"
+                  : "Keep at least one note"
+                : false
+            }
+          />
+        ) : null}
         <IconButton
           aria-label="Remove last note"
           disabled={!canRemoveNote}
@@ -76,20 +80,22 @@ export function NoteRangeHeaderActions({
               : false
           }
         />
-        <IconButton
-          aria-label="Add octave"
-          disabled={!canAddOctave}
-          icon={<LayersPlus />}
-          size="sm"
-          onClick={onAddOctave}
-          tooltip={
-            showTooltips
-              ? canAddOctave
-                ? "Add octave"
-                : "No room for another octave"
-              : false
-          }
-        />
+        {showOctaveActions ? (
+          <IconButton
+            aria-label="Add octave"
+            disabled={!canAddOctave}
+            icon={<LayersPlus />}
+            size="sm"
+            onClick={onAddOctave}
+            tooltip={
+              showTooltips
+                ? canAddOctave
+                  ? "Add octave"
+                  : "No room for another octave"
+                : false
+            }
+          />
+        ) : null}
       </span>
     </span>
   );

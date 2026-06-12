@@ -43,6 +43,7 @@ export function ExerciseLooperOptionsDialog({
   audioPresetId,
   collectionSize,
   end = DEFAULT_EXERCISE_END,
+  isFiniteVoicing = false,
   isOpen,
   maxAnchorPosition,
   minAnchorPosition,
@@ -60,6 +61,7 @@ export function ExerciseLooperOptionsDialog({
   audioPresetId: AudioPresetId;
   collectionSize: number;
   end?: CollectionRangeBoundary;
+  isFiniteVoicing?: boolean;
   isOpen: boolean;
   maxAnchorPosition: number;
   minAnchorPosition: number;
@@ -81,12 +83,12 @@ export function ExerciseLooperOptionsDialog({
     useDisclosureList<MenuChoice>(null);
   const preset = audioPresets[audioPresetId];
   const firstPosition = Math.min(
-    getCollectionPosition(start, collectionSize),
-    getCollectionPosition(end, collectionSize),
+    getCollectionPosition(start, collectionSize, isFiniteVoicing),
+    getCollectionPosition(end, collectionSize, isFiniteVoicing),
   );
   const lastPosition = Math.max(
-    getCollectionPosition(start, collectionSize),
-    getCollectionPosition(end, collectionSize),
+    getCollectionPosition(start, collectionSize, isFiniteVoicing),
+    getCollectionPosition(end, collectionSize, isFiniteVoicing),
   );
 
   return (
@@ -138,8 +140,16 @@ export function ExerciseLooperOptionsDialog({
             valueFormatter={(value) => `Collection step ${value + 1}`}
             onChange={([nextStart, nextEnd]) => {
               onRangeChange(
-                getCollectionRangeBoundary(nextStart, collectionSize),
-                getCollectionRangeBoundary(nextEnd, collectionSize),
+                getCollectionRangeBoundary(
+                  nextStart,
+                  collectionSize,
+                  isFiniteVoicing,
+                ),
+                getCollectionRangeBoundary(
+                  nextEnd,
+                  collectionSize,
+                  isFiniteVoicing,
+                ),
               );
             }}
           />

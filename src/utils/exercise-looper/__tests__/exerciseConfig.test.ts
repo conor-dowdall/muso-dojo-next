@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_EXERCISE_PATTERN,
   getExerciseDegreeOptions,
   normalizeExercisePattern,
 } from "@/utils/exercise-looper/exerciseConfig";
@@ -61,6 +62,18 @@ describe("exercise pattern configuration", () => {
     expect(getExerciseDegreeOptions("interval")).toEqual([
       2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
     ]);
-    expect(getExerciseDegreeOptions("extension")).toEqual([3, 5, 7, 9, 11, 13]);
+    expect(getExerciseDegreeOptions("extension")).toEqual([5, 7, 9, 11, 13]);
+    expect(DEFAULT_EXERCISE_PATTERN.extensionDegree).toBe(5);
+  });
+
+  it("rejects the removed third-only chord size", () => {
+    expect(
+      normalizeExercisePattern({
+        direction: "ascending",
+        extensionDegree: 3,
+        intervalDegree: 3,
+        mode: "extension",
+      }),
+    ).toBeUndefined();
   });
 });

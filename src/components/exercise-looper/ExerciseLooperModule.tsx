@@ -1,9 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from "react";
 import { Play, Square, WavesArrowDown, WavesArrowUp } from "lucide-react";
 import { getDefaultAudioPresetId, type AudioPresetId } from "@/audio";
+import { InstrumentNote } from "@/components/instrument/InstrumentNote";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
+import { InstrumentNoteTileLabel } from "@/components/instrument/InstrumentNoteTileLabel";
 import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
 import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeaderActions";
 import { PartModuleHeaderActions } from "@/components/part-module/PartModuleHeaderActions";
@@ -19,8 +27,8 @@ import {
 import { useExerciseLooperPlayback } from "@/hooks/audio/useExerciseLooperPlayback";
 import { useInstrumentNavigation } from "@/hooks/instrument/useInstrumentNavigation";
 import { type ExerciseSubdivision } from "@/types/session";
+import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import {
-  DEFAULT_EXERCISE_END,
   DEFAULT_EXERCISE_PATTERN,
   DEFAULT_EXERCISE_START,
   DEFAULT_EXERCISE_SUBDIVISION,
@@ -31,27 +39,19 @@ import {
 import {
   createExerciseSequence,
   EXERCISE_MAX_OCTAVE_SPAN,
-  getExerciseAnchorPositionBounds,
+  getCollectionPosition,
   getCollectionRangeBoundary,
+  getExerciseAnchorPositionBounds,
   type CollectionRangeBoundary,
   type ExercisePattern,
 } from "@/utils/exercise-looper/exerciseSequence";
-import { formatMidiNote } from "@/utils/music-theory/midiNote";
+import { resolveExerciseStudyChordDescriptor } from "@/utils/exercise-looper/exerciseStudyDisplay";
+import { formatSpelledMidiNote } from "@/utils/music-theory/midiNote";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
 import { getClosestNoteInColumn } from "@/utils/instrument/getClosestNoteInColumn";
 import { ExerciseLooperOptionsDialog } from "./ExerciseLooperOptionsDialog";
 import { ExercisePatternControls } from "./ExercisePatternControls";
 import styles from "./ExerciseLooperModule.module.css";
-
-function collectionPositionLabel(position: number, collectionSize: number) {
-  if (position >= 0) {
-    return String(position + 1);
-  }
-
-  const normalized =
-    ((position % collectionSize) + collectionSize) % collectionSize;
-  return String(normalized + 1);
-}
 
 function getLooperRowClassName(rowCount: number) {
   switch (rowCount) {
@@ -63,6 +63,10 @@ function getLooperRowClassName(rowCount: number) {
       return styles.rows4;
     case 5:
       return styles.rows5;
+    case 6:
+      return styles.rows6;
+    case 7:
+      return styles.rows7;
     default:
       return "";
   }
@@ -70,7 +74,7 @@ function getLooperRowClassName(rowCount: number) {
 
 export function ExerciseLooperModule({
   audioPresetId,
-  end = DEFAULT_EXERCISE_END,
+  end,
   moduleId,
   noteCollectionKey,
   octaveOffset = 0,
@@ -177,13 +181,6 @@ export function ExerciseLooperModule({
     subdivision,
     tempoBpm,
   });
-  const activeChordFormula =
-    effectivePattern.mode === "extension" &&
-    playback.activeAnchorPosition !== undefined
-      ? sequence.chordIntervalsByAnchorPosition
-          .get(playback.activeAnchorPosition)
-          ?.join(" ")
-      : undefined;
   const noteKeys = useMemo(
     () => sequence.notes.map((note) => note.key),
     [sequence.notes],
@@ -191,6 +188,53 @@ export function ExerciseLooperModule({
   const noteByKey = useMemo(
     () => new Map(sequence.notes.map((note) => [note.key, note])),
     [sequence.notes],
+  );
+  const noteByCollectionPosition = useMemo(
+    () =>
+      new Map(
+        sequence.displayNotes.map(
+          (note) => [note.collectionPosition, note] as const,
+        ),
+      ),
+    [sequence.displayNotes],
+  );
+  const handleNoteAudition = useCallback(
+    (target: InstrumentNoteInteractionTarget) => {
+      const root = noteByKey.get(target.key);
+      const descriptor =
+        root === undefined
+          ? undefined
+          : sequence.chordDescriptorsByAnchorPosition.get(
+              root.collectionPosition,
+            );
+
+      if (effectivePattern.mode === "extension" && descriptor) {
+        playback.auditionChord(
+          descriptor.midiNotes.map((midi, index) => {
+            const collectionPosition = descriptor.collectionPositions[index];
+            const visibleNote =
+              collectionPosition === undefined
+                ? undefined
+                : noteByCollectionPosition.get(collectionPosition);
+
+            return {
+              ...(visibleNote ? { key: visibleNote.key } : {}),
+              midi,
+            };
+          }),
+        );
+        return;
+      }
+
+      playback.audition(target);
+    },
+    [
+      effectivePattern.mode,
+      noteByCollectionPosition,
+      noteByKey,
+      playback,
+      sequence.chordDescriptorsByAnchorPosition,
+    ],
   );
   const {
     focusedKey,
@@ -201,7 +245,7 @@ export function ExerciseLooperModule({
   } = useInstrumentNavigation<HTMLElement>({
     getMidiForKey: (key) => noteByKey.get(key)?.midi ?? 60,
     initialFocusedKey: noteKeys[0] ?? "",
-    onInteract: playback.audition,
+    onInteract: handleNoteAudition,
     onNavigate: (currentKey, direction) => {
       const currentNote = noteByKey.get(currentKey);
 
@@ -224,6 +268,25 @@ export function ExerciseLooperModule({
         ] ?? currentKey
       );
     },
+  });
+  const activeChordDescriptor =
+    effectivePattern.mode === "extension" &&
+    playback.activeAnchorPosition !== undefined
+      ? sequence.chordDescriptorsByAnchorPosition.get(
+          playback.activeAnchorPosition,
+        )
+      : undefined;
+  const focusedNote = noteByKey.get(focusedKey);
+  const focusedChordDescriptor =
+    effectivePattern.mode === "extension" && focusedNote
+      ? sequence.chordDescriptorsByAnchorPosition.get(
+          focusedNote.collectionPosition,
+        )
+      : undefined;
+  const studyChordDescriptor = resolveExerciseStudyChordDescriptor({
+    activeChordDescriptor,
+    focusedChordDescriptor,
+    mode: effectivePattern.mode,
   });
   const collectionSize = sequence.collectionSize;
   const firstPosition = sequence.firstPosition;
@@ -279,16 +342,29 @@ export function ExerciseLooperModule({
   }, [focusedKey, noteByKey, noteKeys, setFocusedKey]);
 
   const setEndPosition = (position: number) => {
-    onEndChange?.(getCollectionRangeBoundary(position, collectionSize));
+    onEndChange?.(
+      getCollectionRangeBoundary(
+        position,
+        collectionSize,
+        sequence.isFiniteVoicing,
+      ),
+    );
   };
 
   const setRange = (
     nextStart: CollectionRangeBoundary,
     nextEnd: CollectionRangeBoundary,
   ) => {
-    const requestedStart =
-      nextStart.octave * collectionSize + nextStart.stepOffset;
-    const requestedEnd = nextEnd.octave * collectionSize + nextEnd.stepOffset;
+    const requestedStart = getCollectionPosition(
+      nextStart,
+      collectionSize,
+      sequence.isFiniteVoicing,
+    );
+    const requestedEnd = getCollectionPosition(
+      nextEnd,
+      collectionSize,
+      sequence.isFiniteVoicing,
+    );
     const nextFirstPosition = Math.min(
       bounds.max,
       Math.max(bounds.min, Math.min(requestedStart, requestedEnd)),
@@ -300,16 +376,29 @@ export function ExerciseLooperModule({
     );
 
     onStartChange?.(
-      getCollectionRangeBoundary(nextFirstPosition, collectionSize),
+      getCollectionRangeBoundary(
+        nextFirstPosition,
+        collectionSize,
+        sequence.isFiniteVoicing,
+      ),
     );
-    onEndChange?.(getCollectionRangeBoundary(nextLastPosition, collectionSize));
+    onEndChange?.(
+      getCollectionRangeBoundary(
+        nextLastPosition,
+        collectionSize,
+        sequence.isFiniteVoicing,
+      ),
+    );
   };
 
   return (
     <>
       <PartModuleFrame
         bodyClassName={styles.body}
-        className={[styles.frame, getLooperRowClassName(sequence.rows.length)]
+        className={[
+          styles.frame,
+          getLooperRowClassName(sequence.displayRows.length),
+        ]
           .filter(Boolean)
           .join(" ")}
         showHeader={showHeader}
@@ -341,6 +430,7 @@ export function ExerciseLooperModule({
                     canRemoveOctave &&
                     setEndPosition(lastPosition - collectionSize)
                   }
+                  showOctaveActions={sequence.supportsOctaveRangeEditing}
                   showTooltips={false}
                 />
               }
@@ -388,7 +478,7 @@ export function ExerciseLooperModule({
             </TactileControlGroup>
 
             <ExercisePatternControls
-              activeChordFormula={activeChordFormula}
+              chordDescriptor={studyChordDescriptor}
               onChange={onPatternChange}
               pattern={effectivePattern}
               supportsScaleDegreeExercises={
@@ -403,11 +493,11 @@ export function ExerciseLooperModule({
               className={styles.noteRows}
               style={
                 {
-                  "--looper-column-count": collectionSize,
+                  "--looper-column-count": sequence.columnCount,
                 } as CSSProperties
               }
             >
-              {sequence.rows.map((row, rowIndex) => (
+              {sequence.displayRows.map((row, rowIndex) => (
                 <div key={rowIndex} className={styles.noteRow}>
                   {row.map((note) => {
                     const noteColor = resolveInstrumentNoteColor({
@@ -415,20 +505,64 @@ export function ExerciseLooperModule({
                       mode: noteColors.mode,
                       rootNote,
                     });
+                    const chordDescriptor =
+                      effectivePattern.mode === "extension"
+                        ? sequence.chordDescriptorsByAnchorPosition.get(
+                            note.collectionPosition,
+                          )
+                        : undefined;
+                    const noteLabel = formatSpelledMidiNote(
+                      note.label,
+                      note.midi,
+                    );
+                    const ariaLabel = chordDescriptor
+                      ? `Audition ${chordDescriptor.chordName}, intervals ${chordDescriptor.intervals.join(", ")}, from ${noteLabel}, interval ${note.intervalLabel}`
+                      : `Audition ${noteLabel}, interval ${note.intervalLabel}`;
+                    const isHighlighted = Boolean(
+                      playback.auditionActiveKeys.has(note.key) ||
+                      playback.activeCollectionPositions.has(
+                        note.collectionPosition,
+                      ),
+                    );
+                    const label = (
+                      <InstrumentNoteTileLabel
+                        primary={noteLabel}
+                        secondary={note.intervalLabel}
+                      />
+                    );
+
+                    if (!note.isAnchor) {
+                      return (
+                        <div
+                          key={note.key}
+                          aria-hidden="true"
+                          className={`${styles.noteButton} ${styles.generatedNoteIndicator}`}
+                          data-note-highlighted={
+                            isHighlighted ? true : undefined
+                          }
+                          style={{ gridColumn: note.columnIndex + 1 }}
+                        >
+                          <InstrumentNote
+                            className={styles.generatedNote}
+                            largeSize="100%"
+                            note={{ emphasis: "large", midi: note.midi }}
+                            noteColor={noteColor}
+                            surface="embedded"
+                          >
+                            {label}
+                          </InstrumentNote>
+                        </div>
+                      );
+                    }
 
                     return (
                       <InstrumentNoteCell
                         key={note.key}
-                        ariaLabel={`Audition ${formatMidiNote(note.midi)}, collection step ${note.collectionPosition + 1}`}
+                        ariaLabel={ariaLabel}
                         className={styles.noteButton}
                         handleKeyDown={handleKeyDown}
                         isFocused={focusedKey === note.key}
-                        isHighlighted={Boolean(
-                          playback.auditionActiveKeys.has(note.key) ||
-                          (playback.isPlaying &&
-                            playback.activeAnchorPosition ===
-                              note.collectionPosition),
-                        )}
+                        isHighlighted={isHighlighted}
                         largeSize="100%"
                         midi={note.midi}
                         note={{ emphasis: "large", midi: note.midi }}
@@ -439,15 +573,7 @@ export function ExerciseLooperModule({
                         style={{ gridColumn: note.columnIndex + 1 }}
                         surface="raised"
                       >
-                        <span className={styles.label}>
-                          <span>{formatMidiNote(note.midi)}</span>
-                          <span>
-                            {collectionPositionLabel(
-                              note.collectionPosition,
-                              collectionSize,
-                            )}
-                          </span>
-                        </span>
+                        {label}
                       </InstrumentNoteCell>
                     );
                   })}
@@ -462,11 +588,20 @@ export function ExerciseLooperModule({
         <ExerciseLooperOptionsDialog
           audioPresetId={audioPresetId ?? getDefaultAudioPresetId("exercise")}
           collectionSize={collectionSize}
-          end={getCollectionRangeBoundary(lastPosition, collectionSize)}
+          end={getCollectionRangeBoundary(
+            lastPosition,
+            collectionSize,
+            sequence.isFiniteVoicing,
+          )}
+          isFiniteVoicing={sequence.isFiniteVoicing}
           isOpen={isOptionsOpen}
           maxAnchorPosition={maxLastPosition}
           minAnchorPosition={bounds.min}
-          start={getCollectionRangeBoundary(firstPosition, collectionSize)}
+          start={getCollectionRangeBoundary(
+            firstPosition,
+            collectionSize,
+            sequence.isFiniteVoicing,
+          )}
           subdivision={subdivision}
           wood={wood}
           onAudioPresetIdChange={(value) => onAudioPresetIdChange?.(value)}
