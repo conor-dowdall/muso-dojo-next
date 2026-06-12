@@ -79,6 +79,7 @@ describe("createExerciseSequence", () => {
         extensionDegree: 5,
         extensionDirection: "up-down",
         intervalDegree: 3,
+        intervalDirection: "ascending",
         mode: "interval",
         notePlayback: "separate",
       },
@@ -90,6 +91,34 @@ describe("createExerciseSequence", () => {
     ).toEqual([48, 52, 50, 53, 52, 55]);
   });
 
+  it.each([
+    ["ascending", [48, 52]],
+    ["descending", [52, 48]],
+    ["up-down", [48, 52, 48]],
+  ] as const)(
+    "plays separate interval notes with an %s inner contour",
+    (intervalDirection, expectedMidi) => {
+      const sequence = createExerciseSequence({
+        end: { octave: 0, stepOffset: 0 },
+        noteCollectionKey: "ionian",
+        pattern: {
+          direction: "ascending",
+          extensionDegree: 5,
+          extensionDirection: "up-down",
+          intervalDegree: 3,
+          intervalDirection,
+          mode: "interval",
+          notePlayback: "separate",
+        },
+        rootNote: "C",
+      });
+
+      expect(
+        sequence.steps.flatMap((step) => step.notes.map((note) => note.midi)),
+      ).toEqual(expectedMidi);
+    },
+  );
+
   it("plays interval notes together on one beat", () => {
     const sequence = createExerciseSequence({
       end: { octave: 0, stepOffset: 2 },
@@ -99,6 +128,7 @@ describe("createExerciseSequence", () => {
         extensionDegree: 5,
         extensionDirection: "up-down",
         intervalDegree: 3,
+        intervalDirection: "up-down",
         mode: "interval",
         notePlayback: "together",
       },
@@ -123,6 +153,7 @@ describe("createExerciseSequence", () => {
         extensionDegree: 13,
         extensionDirection: "ascending",
         intervalDegree: 3,
+        intervalDirection: "up-down",
         mode: "extension",
         notePlayback: "separate",
       },
@@ -144,6 +175,7 @@ describe("createExerciseSequence", () => {
         extensionDegree: 5,
         extensionDirection: "descending",
         intervalDegree: 3,
+        intervalDirection: "up-down",
         mode: "extension",
         notePlayback: "together",
       },
@@ -164,6 +196,7 @@ describe("createExerciseSequence", () => {
         extensionDegree: 5,
         extensionDirection: "up-down",
         intervalDegree: 3,
+        intervalDirection: "ascending",
         mode: "interval",
         notePlayback: "separate",
       },
@@ -177,6 +210,7 @@ describe("createExerciseSequence", () => {
         extensionDegree: 5,
         extensionDirection: "up-down",
         intervalDegree: 3,
+        intervalDirection: "up-down",
         mode: "extension",
         notePlayback: "separate",
       },
@@ -207,6 +241,7 @@ describe("createExerciseSequence", () => {
         extensionDegree: 5,
         extensionDirection: "descending",
         intervalDegree: 3,
+        intervalDirection: "up-down",
         mode: "extension",
         notePlayback: "separate",
       },

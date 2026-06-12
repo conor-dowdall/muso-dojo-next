@@ -193,7 +193,7 @@
   gap: var(--space-0_5);
 }
 
-.chordDirectionControls {
+.noteDirectionControls {
   display: flex;
   min-inline-size: 0;
   align-items: center;

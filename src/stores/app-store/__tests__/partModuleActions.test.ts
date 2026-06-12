@@ -228,6 +228,7 @@ describe("part module app store actions", () => {
       extensionDegree: 7,
       extensionDirection: "ascending",
       intervalDegree: 4,
+      intervalDirection: "descending",
       mode: "interval",
       notePlayback: "together",
     });
@@ -257,6 +258,7 @@ describe("part module app store actions", () => {
         extensionDegree: 7,
         extensionDirection: "ascending",
         intervalDegree: 4,
+        intervalDirection: "descending",
         mode: "interval",
         notePlayback: "together",
       },

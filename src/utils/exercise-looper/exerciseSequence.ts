@@ -29,6 +29,7 @@ export interface ExercisePattern {
   extensionDegree: number;
   extensionDirection: ExerciseScaleDirection;
   intervalDegree: number;
+  intervalDirection: ExerciseScaleDirection;
   mode: ExercisePatternMode;
   notePlayback: ExerciseNotePlayback;
 }
@@ -209,7 +210,9 @@ function createPatternPositionGroups(anchor: number, pattern: ExercisePattern) {
 
       return pattern.notePlayback === "together"
         ? [positions]
-        : positions.map((position) => [position]);
+        : createInnerContour(positions, pattern.intervalDirection).map(
+            (position) => [position],
+          );
     }
     case "extension": {
       const degree = clampInteger(
@@ -292,6 +295,7 @@ export function createExerciseSequence({
     extensionDegree: 3,
     extensionDirection: "up-down",
     intervalDegree: 3,
+    intervalDirection: "up-down",
     mode: "single",
     notePlayback: "separate",
   },

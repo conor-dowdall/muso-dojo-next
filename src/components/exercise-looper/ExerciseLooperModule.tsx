@@ -387,7 +387,14 @@ export function ExerciseLooperModule({
     effectivePattern.mode === "single"
       ? "One note at a time"
       : effectivePattern.mode === "interval"
-        ? `${intervalDegreeLabel}s ${effectivePattern.notePlayback === "together" ? "together" : "separately"}`
+        ? effectivePattern.notePlayback === "together"
+          ? `${intervalDegreeLabel}s together`
+          : `${intervalDegreeLabel}s separately, ${
+              directionChoices.find(
+                (choice) =>
+                  choice.direction === effectivePattern.intervalDirection,
+              )?.label ?? "Up and down"
+            }`
         : effectivePattern.notePlayback === "together"
           ? `To ${extensionDegreeLabel}, together`
           : `To ${extensionDegreeLabel}, ${
@@ -475,6 +482,22 @@ export function ExerciseLooperModule({
       stepExtensionDegree(offset);
     }
   };
+  const activeNoteDirection =
+    effectivePattern.mode === "interval"
+      ? effectivePattern.intervalDirection
+      : effectivePattern.extensionDirection;
+  const setActiveNoteDirection = (direction: ExerciseScaleDirection) => {
+    if (effectivePattern.mode === "interval") {
+      updatePattern({ intervalDirection: direction });
+    } else if (effectivePattern.mode === "extension") {
+      updatePattern({ extensionDirection: direction });
+    }
+  };
+  const noteDirectionUnavailable =
+    effectivePattern.mode === "single" ||
+    effectivePattern.notePlayback === "together" ||
+    (effectivePattern.mode === "extension" &&
+      !sequence.supportsTertianExercises);
 
   return (
     <>
@@ -653,33 +676,25 @@ export function ExerciseLooperModule({
                 </div>
 
                 <div
-                  className={styles.chordDirectionControls}
+                  className={styles.noteDirectionControls}
                   role="group"
-                  aria-label="Chord note direction"
+                  aria-label="Inner note direction"
                 >
                   {directionChoices.map((choice) => (
                     <TactileIconButton
                       key={choice.direction}
-                      onPress={() =>
-                        updatePattern({
-                          extensionDirection: choice.direction,
-                        })
-                      }
-                      aria-label={`Chord notes ${choice.label.toLowerCase()}`}
+                      onPress={() => setActiveNoteDirection(choice.direction)}
+                      aria-label={`Notes ${choice.label.toLowerCase()}`}
                       className={styles.patternButton}
                       icon={choice.icon}
                       selected={
-                        effectivePattern.mode === "extension" &&
+                        !noteDirectionUnavailable &&
                         effectivePattern.notePlayback === "separate" &&
-                        effectivePattern.extensionDirection === choice.direction
+                        activeNoteDirection === choice.direction
                       }
                       size="md"
                       tooltip={choice.label}
-                      unavailable={
-                        effectivePattern.mode !== "extension" ||
-                        effectivePattern.notePlayback === "together" ||
-                        !sequence.supportsTertianExercises
-                      }
+                      unavailable={noteDirectionUnavailable}
                     />
                   ))}
                 </div>

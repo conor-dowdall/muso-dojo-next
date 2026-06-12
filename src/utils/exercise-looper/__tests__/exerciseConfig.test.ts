@@ -12,6 +12,7 @@ describe("exercise pattern configuration", () => {
         extensionDegree: 7,
         extensionDirection: "ascending",
         intervalDegree: 6,
+        intervalDirection: "descending",
         mode: "extension",
         notePlayback: "together",
       }),
@@ -20,6 +21,7 @@ describe("exercise pattern configuration", () => {
       extensionDegree: 7,
       extensionDirection: "ascending",
       intervalDegree: 6,
+      intervalDirection: "descending",
       mode: "extension",
       notePlayback: "together",
     });
@@ -29,6 +31,7 @@ describe("exercise pattern configuration", () => {
         extensionDegree: 4,
         extensionDirection: "up-down",
         intervalDegree: 3,
+        intervalDirection: "up-down",
         mode: "extension",
         notePlayback: "separate",
       }),
@@ -48,6 +51,7 @@ describe("exercise pattern configuration", () => {
       extensionDegree: 5,
       extensionDirection: "up-down",
       intervalDegree: 4,
+      intervalDirection: "up-down",
       mode: "interval",
       notePlayback: "separate",
     });

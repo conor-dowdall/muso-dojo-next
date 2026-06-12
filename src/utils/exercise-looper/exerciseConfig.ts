@@ -18,6 +18,7 @@ export const DEFAULT_EXERCISE_PATTERN = {
   extensionDegree: 3,
   extensionDirection: "up-down",
   intervalDegree: 3,
+  intervalDirection: "up-down",
   mode: "single",
   notePlayback: "separate",
 } as const satisfies ExercisePattern;
@@ -107,6 +108,10 @@ export function normalizeExercisePattern(
     !Number.isInteger(value.intervalDegree) ||
     value.intervalDegree < EXERCISE_INTERVAL_MIN ||
     value.intervalDegree > EXERCISE_INTERVAL_MAX ||
+    (value.intervalDirection !== undefined &&
+      value.intervalDirection !== "ascending" &&
+      value.intervalDirection !== "descending" &&
+      value.intervalDirection !== "up-down") ||
     (value.mode !== "single" &&
       value.mode !== "interval" &&
       value.mode !== "extension") ||
@@ -123,6 +128,8 @@ export function normalizeExercisePattern(
     extensionDirection:
       value.extensionDirection ?? DEFAULT_EXERCISE_PATTERN.extensionDirection,
     intervalDegree: value.intervalDegree,
+    intervalDirection:
+      value.intervalDirection ?? DEFAULT_EXERCISE_PATTERN.intervalDirection,
     mode: value.mode,
     notePlayback: value.notePlayback ?? DEFAULT_EXERCISE_PATTERN.notePlayback,
   };
@@ -137,6 +144,7 @@ export function exercisePatternsAreEqual(
     left.extensionDegree === right.extensionDegree &&
     left.extensionDirection === right.extensionDirection &&
     left.intervalDegree === right.intervalDegree &&
+    left.intervalDirection === right.intervalDirection &&
     left.mode === right.mode &&
     left.notePlayback === right.notePlayback
   );
