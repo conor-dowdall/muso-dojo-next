@@ -76,6 +76,28 @@ describe("droneNotes", () => {
     ).toEqual([["1", "3", "5", "7"], ["8", "9", "10", "12", "14"], ["16"]]);
   });
 
+  it("preserves legacy row counts for finite compound voicings", () => {
+    const expanded = resolveDroneNotes({
+      noteCollectionKey: "major9",
+      rowCount: 2,
+      rootNote: "C",
+    });
+
+    expect(expanded.noteCount).toBe(10);
+    expect(expanded.notes.map((note) => note.intervalLabel)).toEqual([
+      "1",
+      "3",
+      "5",
+      "7",
+      "8",
+      "9",
+      "10",
+      "12",
+      "14",
+      "16",
+    ]);
+  });
+
   it("clamps oversized finite ranges to the available physical rows", () => {
     const expanded = resolveDroneNotes({
       noteCollectionKey: "major9",

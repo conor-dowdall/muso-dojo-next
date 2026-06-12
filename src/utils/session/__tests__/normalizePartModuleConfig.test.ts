@@ -145,4 +145,32 @@ describe("normalizePartModuleConfig", () => {
       type: "exercise-looper",
     });
   });
+
+  it("preserves legacy exercise settings while migrating chord size", () => {
+    expect(
+      normalizePartModuleConfig({
+        id: "looper-1",
+        pattern: {
+          direction: "descending",
+          extensionDegree: 3,
+          extensionDirection: "ascending",
+          intervalDegree: 4,
+          intervalDirection: "descending",
+          mode: "interval",
+          notePlayback: "together",
+        },
+        type: "exercise-looper",
+      }),
+    ).toMatchObject({
+      pattern: {
+        direction: "descending",
+        extensionDegree: 5,
+        extensionDirection: "ascending",
+        intervalDegree: 4,
+        intervalDirection: "descending",
+        mode: "interval",
+        notePlayback: "together",
+      },
+    });
+  });
 });

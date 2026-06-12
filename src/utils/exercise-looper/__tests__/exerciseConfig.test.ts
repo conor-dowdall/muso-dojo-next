@@ -66,14 +66,25 @@ describe("exercise pattern configuration", () => {
     expect(DEFAULT_EXERCISE_PATTERN.extensionDegree).toBe(5);
   });
 
-  it("rejects the removed third-only chord size", () => {
+  it("migrates the removed third-only chord size to a triad", () => {
     expect(
       normalizeExercisePattern({
         direction: "ascending",
         extensionDegree: 3,
-        intervalDegree: 3,
+        extensionDirection: "descending",
+        intervalDegree: 4,
+        intervalDirection: "ascending",
         mode: "extension",
+        notePlayback: "together",
       }),
-    ).toBeUndefined();
+    ).toEqual({
+      direction: "ascending",
+      extensionDegree: 5,
+      extensionDirection: "descending",
+      intervalDegree: 4,
+      intervalDirection: "ascending",
+      mode: "extension",
+      notePlayback: "together",
+    });
   });
 });

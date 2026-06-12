@@ -233,9 +233,10 @@ export function resolveDroneNotes({
   );
   const maxNoteCount =
     maxPlayableNoteCount < 0 ? candidates.length : maxPlayableNoteCount;
-  const legacyDefaultNoteCount = toneSequence.isFiniteVoicing
-    ? Math.min(candidates.length, toneSequence.tones.length)
-    : Math.min(candidates.length, toneSequence.tones.length * resolvedRowCount);
+  const legacyDefaultNoteCount = Math.min(
+    candidates.length,
+    toneSequence.tones.length * resolvedRowCount,
+  );
   const requestedNoteCount = resolveNoteCount(
     noteCount,
     legacyDefaultNoteCount,

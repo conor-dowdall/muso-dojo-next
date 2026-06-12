@@ -90,15 +90,21 @@ export function normalizeCollectionRangeBoundary(
 export function normalizeExercisePattern(
   value: unknown,
 ): ExercisePattern | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const extensionDegree =
+    value.extensionDegree === 3 ? 5 : value.extensionDegree;
+
   if (
-    !isRecord(value) ||
     (value.direction !== "ascending" &&
       value.direction !== "descending" &&
       value.direction !== "up-down") ||
-    typeof value.extensionDegree !== "number" ||
-    !Number.isInteger(value.extensionDegree) ||
+    typeof extensionDegree !== "number" ||
+    !Number.isInteger(extensionDegree) ||
     !EXERCISE_EXTENSION_DEGREES.includes(
-      value.extensionDegree as (typeof EXERCISE_EXTENSION_DEGREES)[number],
+      extensionDegree as (typeof EXERCISE_EXTENSION_DEGREES)[number],
     ) ||
     (value.extensionDirection !== undefined &&
       value.extensionDirection !== "ascending" &&
@@ -124,7 +130,7 @@ export function normalizeExercisePattern(
 
   return {
     direction: value.direction,
-    extensionDegree: value.extensionDegree,
+    extensionDegree,
     extensionDirection:
       value.extensionDirection ?? DEFAULT_EXERCISE_PATTERN.extensionDirection,
     intervalDegree: value.intervalDegree,
