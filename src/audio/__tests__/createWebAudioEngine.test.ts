@@ -90,9 +90,18 @@ class MockConvolverNode extends MockAudioNode {
 class MockOscillatorNode extends MockAudioNode {
   readonly detune = new MockAudioParam() as unknown as AudioParam;
   readonly frequency = new MockAudioParam() as unknown as AudioParam;
+  private readonly endedListeners = new Set<() => void>();
 
-  addEventListener() {
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject) {
+    if (type === "ended" && typeof listener === "function") {
+      this.endedListeners.add(listener as () => void);
+    }
     return undefined;
+  }
+
+  emitEnded() {
+    this.endedListeners.forEach((listener) => listener());
+    this.endedListeners.clear();
   }
 
   setPeriodicWave() {
@@ -594,6 +603,23 @@ describe("createWebAudioEngine", () => {
     });
 
     expect(MockAudioContext.oscillatorStopTimes.at(-1)).toBeGreaterThan(1.45);
+  });
+
+  it("notifies listeners when a one-shot voice ends", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    const handle = await engine.playNote({
+      durationSeconds: 0.2,
+      midiNote: 60,
+      use: "preview",
+    });
+    const listener = vi.fn();
+
+    engine.subscribeToVoiceEnd(handle!, listener);
+    MockAudioContext.oscillators.at(-1)?.emitEnded();
+
+    expect(listener).toHaveBeenCalledOnce();
   });
 
   it("cancels queued playback groups and emits Stop All separately from reset", async () => {

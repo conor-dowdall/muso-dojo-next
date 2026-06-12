@@ -28,8 +28,8 @@
   justify-content: center;
   padding-inline: var(--space-2);
   border-radius: var(--radius-subtle);
-  background: rgb(7 9 12 / 0.86);
-  color: #f7f8fb;
+  background: var(--color-hardware-display-background);
+  color: var(--color-hardware-display-text);
   font-family: var(--font-sans);
   font-size: var(--text-2xs);
   font-weight: var(--font-semibold);
@@ -38,8 +38,4 @@
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.group[data-unavailable="true"] .readout {
-  color: transparent;
 }

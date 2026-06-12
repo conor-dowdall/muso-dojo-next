@@ -22,7 +22,6 @@ export function TactileControlGroup({
     <div
       className={[styles.group, className].filter(Boolean).join(" ")}
       data-has-readout={readout !== undefined || undefined}
-      data-unavailable={unavailable || undefined}
     >
       <div
         className={[styles.controls, controlsClassName]

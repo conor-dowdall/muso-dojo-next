@@ -1,5 +1,4 @@
 import { type MouseEvent, type PointerEvent } from "react";
-import { Button, type ButtonProps } from "./Button";
 import { IconButton, type IconButtonProps } from "./IconButton";
 import interactiveSurfaceStyles from "@/components/ui/interactive-surface/InteractiveSurface.module.css";
 import styles from "./TactileButton.module.css";
@@ -17,12 +16,6 @@ interface TactileInteractionProps {
 }
 
 type TactileControlState = "idle" | "selected" | "unavailable";
-
-export type TactileButtonProps = Omit<
-  ButtonProps,
-  "aria-disabled" | "disabled" | "onClick" | "onPointerDown" | "shouldYield"
-> &
-  TactileInteractionProps;
 
 export type TactileIconButtonProps = Omit<
   IconButtonProps,
@@ -72,29 +65,12 @@ function getControlState(
   return selected ? "selected" : "idle";
 }
 
-export function TactileButton({
-  className,
-  onPress,
-  selected,
-  unavailable,
-  ...props
-}: TactileButtonProps) {
-  return (
-    <Button
-      {...props}
-      {...getTactileInteractionProps({ onPress, unavailable })}
-      className={getClassName(className)}
-      data-control-state={getControlState(selected, unavailable)}
-      selected={selected}
-    />
-  );
-}
-
 export function TactileIconButton({
   className,
   icon,
   onPress,
   selected,
+  tooltip = false,
   unavailable,
   ...props
 }: TactileIconButtonProps) {
@@ -106,6 +82,7 @@ export function TactileIconButton({
       data-control-state={getControlState(selected, unavailable)}
       icon={icon}
       selected={selected}
+      tooltip={tooltip}
     />
   );
 }

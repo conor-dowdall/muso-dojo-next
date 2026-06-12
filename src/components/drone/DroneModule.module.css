@@ -27,10 +27,9 @@
     var(--control-size-lg) + var(--drone-tool-panel-padding-block) +
       var(--drone-tool-panel-padding-block)
   );
-  --drone-toolbar-reserved-height: var(--drone-toolbar-base-height);
   --drone-scrollbar-safe-area: var(--space-2);
   --drone-content-height: calc(
-    var(--drone-toolbar-reserved-height) + var(--drone-toolbar-gap) +
+    var(--drone-toolbar-base-height) + var(--drone-toolbar-gap) +
       var(--drone-note-button-height) + var(--drone-scrollbar-safe-area) +
       var(--drone-body-padding) + var(--drone-body-padding)
   );
@@ -47,7 +46,7 @@
 
 .droneRows2 {
   --drone-content-height: calc(
-    var(--drone-toolbar-reserved-height) + var(--drone-toolbar-gap) +
+    var(--drone-toolbar-base-height) + var(--drone-toolbar-gap) +
       var(--drone-note-button-height) + var(--drone-note-button-height) +
       var(--drone-row-gap) + var(--drone-scrollbar-safe-area) +
       var(--drone-body-padding) + var(--drone-body-padding)
@@ -56,7 +55,7 @@
 
 .droneRows3 {
   --drone-content-height: calc(
-    var(--drone-toolbar-reserved-height) + var(--drone-toolbar-gap) +
+    var(--drone-toolbar-base-height) + var(--drone-toolbar-gap) +
       var(--drone-note-button-height) + var(--drone-note-button-height) +
       var(--drone-note-button-height) + var(--drone-row-gap) +
       var(--drone-row-gap) + var(--drone-scrollbar-safe-area) +
@@ -66,7 +65,7 @@
 
 .droneRows4 {
   --drone-content-height: calc(
-    var(--drone-toolbar-reserved-height) + var(--drone-toolbar-gap) +
+    var(--drone-toolbar-base-height) + var(--drone-toolbar-gap) +
       var(--drone-note-button-height) + var(--drone-note-button-height) +
       var(--drone-note-button-height) + var(--drone-note-button-height) +
       var(--drone-row-gap) + var(--drone-row-gap) + var(--drone-row-gap) +
@@ -81,28 +80,6 @@
     inset 0 var(--space-px) 0 var(--drone-light-medium),
     inset 0 calc(-1 * var(--space-px)) 0 var(--drone-shadow-medium),
     inset 0 0 var(--space-4) var(--drone-shadow-soft);
-}
-
-.droneHeaderActions {
-  display: grid;
-  flex: 1 1 auto;
-  grid-template-columns:
-    minmax(var(--control-size-sm), 1fr)
-    auto
-    minmax(var(--control-size-sm), 1fr);
-  min-inline-size: 0;
-  max-inline-size: 100%;
-  align-items: center;
-  gap: var(--control-header-peer-gap);
-}
-
-.droneHeaderActions > :first-child {
-  grid-column: 2;
-}
-
-.droneHeaderActions > :last-child {
-  grid-column: 3;
-  justify-self: end;
 }
 
 .droneToolSurface {

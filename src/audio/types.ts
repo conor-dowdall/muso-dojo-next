@@ -186,6 +186,10 @@ export interface AudioEngine {
   setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => void;
   subscribeToReset: (listener: () => void) => () => void;
   subscribeToStopAll: (listener: () => void) => () => void;
+  subscribeToVoiceEnd: (
+    handle: AudioVoiceHandle,
+    listener: () => void,
+  ) => () => void;
   createDrone: (request: DroneRequest) => Promise<DroneHandle | undefined>;
   destroyDrone: (handle: DroneHandle) => void;
   updateDrone: (handle: DroneHandle, request: DroneRequest) => boolean;

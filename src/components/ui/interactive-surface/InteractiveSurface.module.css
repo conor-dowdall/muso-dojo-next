@@ -99,7 +99,7 @@
 }
 
 .neutral {
-  --interactive-surface-color: var(--note-color-neutral);
+  --interactive-surface-color: var(--color-interactive-neutral);
 }
 
 .raised {

@@ -44,6 +44,9 @@
   --color-interaction-ring-dark: rgb(0 0 0 / 0.62);
   --color-focus-ring: var(--color-accent);
   --color-focus-ring-contrast: rgb(0 0 0 / 0.82);
+  --color-interactive-neutral: #454c56;
+  --color-hardware-display-background: rgb(7 9 12 / 0.86);
+  --color-hardware-display-text: #f7f8fb;
 
   /* Spacing */
   --space-0: 0;
@@ -152,7 +155,7 @@
   --icon-size-base: 1em;
 
   /* Neutral note markers stay stable across app themes. */
-  --note-color-neutral: #454c56;
+  --note-color-neutral: var(--color-interactive-neutral);
   --note-color-theme: var(--note-color-neutral);
   --note-label-color: #ffffff;
   --note-label-stroke-width: 0.11em;

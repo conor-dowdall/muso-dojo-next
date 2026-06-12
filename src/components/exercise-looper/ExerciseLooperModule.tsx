@@ -1,32 +1,12 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from "react";
-import {
-  ArrowDown,
-  ArrowUpDown,
-  ArrowUp,
-  GitBranch,
-  GitCommitHorizontal,
-  GitFork,
-  Merge,
-  Minus,
-  Play,
-  Plus,
-  Split,
-  Square,
-  WavesArrowDown,
-  WavesArrowUp,
-} from "lucide-react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { Play, Square, WavesArrowDown, WavesArrowUp } from "lucide-react";
 import { getDefaultAudioPresetId, type AudioPresetId } from "@/audio";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
 import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeaderActions";
+import { PartModuleHeaderActions } from "@/components/part-module/PartModuleHeaderActions";
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
 import { TactileIconButton } from "@/components/ui/buttons/TactileButton";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
@@ -47,25 +27,20 @@ import {
   EXERCISE_MAX_OCTAVE_OFFSET,
   EXERCISE_MIN_OCTAVE_OFFSET,
   exercisePatternsAreEqual,
-  getExerciseDegreeOptions,
 } from "@/utils/exercise-looper/exerciseConfig";
 import {
   createExerciseSequence,
   EXERCISE_MAX_OCTAVE_SPAN,
   getExerciseAnchorPositionBounds,
   getCollectionRangeBoundary,
-  getExerciseIntervalLabel,
-  type ExerciseDisplayNote,
   type CollectionRangeBoundary,
   type ExercisePattern,
-  type ExerciseNotePlayback,
-  type ExercisePatternMode,
-  type ExerciseScaleDirection,
 } from "@/utils/exercise-looper/exerciseSequence";
 import { formatMidiNote } from "@/utils/music-theory/midiNote";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
-import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
+import { getClosestNoteInColumn } from "@/utils/instrument/getClosestNoteInColumn";
 import { ExerciseLooperOptionsDialog } from "./ExerciseLooperOptionsDialog";
+import { ExercisePatternControls } from "./ExercisePatternControls";
 import styles from "./ExerciseLooperModule.module.css";
 
 function collectionPositionLabel(position: number, collectionSize: number) {
@@ -76,22 +51,6 @@ function collectionPositionLabel(position: number, collectionSize: number) {
   const normalized =
     ((position % collectionSize) + collectionSize) % collectionSize;
   return String(normalized + 1);
-}
-
-function getClosestNoteInColumn(
-  row: readonly ExerciseDisplayNote[] | undefined,
-  targetColumnIndex: number,
-) {
-  if (!row || row.length === 0) {
-    return undefined;
-  }
-
-  return row.reduce((closestNote, candidateNote) =>
-    Math.abs(candidateNote.columnIndex - targetColumnIndex) <
-    Math.abs(closestNote.columnIndex - targetColumnIndex)
-      ? candidateNote
-      : closestNote,
-  );
 }
 
 function getLooperRowClassName(rowCount: number) {
@@ -108,70 +67,6 @@ function getLooperRowClassName(rowCount: number) {
       return "";
   }
 }
-
-function getCompactDirectionLabel(direction: ExerciseScaleDirection) {
-  switch (direction) {
-    case "ascending":
-      return "Up";
-    case "descending":
-      return "Down";
-    case "up-down":
-      return `Up${DISPLAY_VALUE_SEPARATOR}Down`;
-  }
-}
-
-const directionChoices = [
-  { direction: "up-down", icon: <ArrowUpDown />, label: "Up and down" },
-  { direction: "ascending", icon: <ArrowUp />, label: "Ascending" },
-  { direction: "descending", icon: <ArrowDown />, label: "Descending" },
-] as const satisfies readonly {
-  direction: ExerciseScaleDirection;
-  icon: ReactNode;
-  label: string;
-}[];
-
-const patternModeChoices = [
-  {
-    icon: <GitCommitHorizontal />,
-    label: "Single notes",
-    mode: "single",
-    readout: "Single Notes",
-  },
-  {
-    icon: <GitBranch />,
-    label: "Play an interval from each note",
-    mode: "interval",
-    readout: "Intervals",
-  },
-  {
-    icon: <GitFork />,
-    label: "Play a chord from each note",
-    mode: "extension",
-    readout: "Chords",
-  },
-] as const satisfies readonly {
-  icon: ReactNode;
-  label: string;
-  mode: ExercisePatternMode;
-  readout: string;
-}[];
-
-const notePlaybackChoices = [
-  {
-    icon: <Split />,
-    label: "Play notes separately",
-    playback: "separate",
-  },
-  {
-    icon: <Merge />,
-    label: "Play notes together",
-    playback: "together",
-  },
-] as const satisfies readonly {
-  icon: ReactNode;
-  label: string;
-  playback: ExerciseNotePlayback;
-}[];
 
 export function ExerciseLooperModule({
   audioPresetId,
@@ -361,55 +256,6 @@ export function ExerciseLooperModule({
     octaveOffset < EXERCISE_MAX_OCTAVE_OFFSET &&
     firstPosition >= higherOctaveBounds.min &&
     lastPosition <= higherOctaveBounds.max;
-  const intervalDegreeOptions = getExerciseDegreeOptions("interval");
-  const extensionDegreeOptions = getExerciseDegreeOptions("extension");
-  const intervalDegreeIndex = intervalDegreeOptions.indexOf(
-    effectivePattern.intervalDegree,
-  );
-  const extensionDegreeIndex = extensionDegreeOptions.indexOf(
-    effectivePattern.extensionDegree,
-  );
-  const canDecreaseIntervalDegree = intervalDegreeIndex > 0;
-  const canIncreaseIntervalDegree =
-    intervalDegreeIndex >= 0 &&
-    intervalDegreeIndex < intervalDegreeOptions.length - 1;
-  const canDecreaseExtensionDegree = extensionDegreeIndex > 0;
-  const canIncreaseExtensionDegree =
-    extensionDegreeIndex >= 0 &&
-    extensionDegreeIndex < extensionDegreeOptions.length - 1;
-  const intervalDegreeLabel = getExerciseIntervalLabel(
-    effectivePattern.intervalDegree,
-  );
-  const extensionDegreeLabel = getExerciseIntervalLabel(
-    effectivePattern.extensionDegree,
-  );
-  const activeNoteDirection =
-    effectivePattern.mode === "interval"
-      ? effectivePattern.intervalDirection
-      : effectivePattern.mode === "extension"
-        ? effectivePattern.extensionDirection
-        : undefined;
-  const activeDegreeLabel =
-    effectivePattern.mode === "interval"
-      ? intervalDegreeLabel
-      : effectivePattern.mode === "extension"
-        ? extensionDegreeLabel
-        : "";
-  const notePlaybackLabel =
-    effectivePattern.mode === "single"
-      ? ""
-      : effectivePattern.notePlayback === "separate"
-        ? "Separate"
-        : "Together";
-  const innerDirectionLabel =
-    activeNoteDirection === undefined
-      ? ""
-      : getCompactDirectionLabel(activeNoteDirection);
-  const fineTuneUnavailable = effectivePattern.mode === "single";
-  const patternModeLabel =
-    patternModeChoices.find((choice) => choice.mode === effectivePattern.mode)
-      ?.readout ?? "Single Notes";
-
   useEffect(() => {
     if (!exercisePatternsAreEqual(effectivePattern, pattern)) {
       onPatternChange?.(effectivePattern);
@@ -451,56 +297,6 @@ export function ExerciseLooperModule({
     onEndChange?.(getCollectionRangeBoundary(nextLastPosition, collectionSize));
   };
 
-  const updatePattern = (patch: Partial<ExercisePattern>) => {
-    onPatternChange?.({ ...effectivePattern, ...patch });
-  };
-  const setPatternMode = (mode: ExercisePatternMode) => {
-    if (mode === "extension" && !sequence.supportsTertianExercises) return;
-
-    updatePattern({ mode });
-  };
-  const stepIntervalDegree = (offset: -1 | 1) => {
-    const nextDegree = intervalDegreeOptions[intervalDegreeIndex + offset];
-    if (nextDegree !== undefined) {
-      updatePattern({ intervalDegree: nextDegree, mode: "interval" });
-    }
-  };
-  const stepExtensionDegree = (offset: -1 | 1) => {
-    if (!sequence.supportsTertianExercises) return;
-
-    const nextDegree = extensionDegreeOptions[extensionDegreeIndex + offset];
-    if (nextDegree !== undefined) {
-      updatePattern({ extensionDegree: nextDegree, mode: "extension" });
-    }
-  };
-  const canDecreaseActiveDegree =
-    effectivePattern.mode === "interval"
-      ? canDecreaseIntervalDegree
-      : effectivePattern.mode === "extension" && canDecreaseExtensionDegree;
-  const canIncreaseActiveDegree =
-    effectivePattern.mode === "interval"
-      ? canIncreaseIntervalDegree
-      : effectivePattern.mode === "extension" && canIncreaseExtensionDegree;
-  const stepActiveDegree = (offset: -1 | 1) => {
-    if (effectivePattern.mode === "interval") {
-      stepIntervalDegree(offset);
-    } else if (effectivePattern.mode === "extension") {
-      stepExtensionDegree(offset);
-    }
-  };
-  const setActiveNoteDirection = (direction: ExerciseScaleDirection) => {
-    if (effectivePattern.mode === "interval") {
-      updatePattern({ intervalDirection: direction });
-    } else if (effectivePattern.mode === "extension") {
-      updatePattern({ extensionDirection: direction });
-    }
-  };
-  const noteDirectionUnavailable =
-    effectivePattern.mode === "single" ||
-    effectivePattern.notePlayback === "together" ||
-    (effectivePattern.mode === "extension" &&
-      !sequence.supportsTertianExercises);
-
   return (
     <>
       <PartModuleFrame
@@ -516,31 +312,38 @@ export function ExerciseLooperModule({
         }
         headerActions={
           showHeader ? (
-            <div className={styles.headerActions}>
-              <NoteRangeHeaderActions
-                canAddNote={canAddNote}
-                canAddOctave={canAddOctave}
-                canRemoveNote={canRemoveNote}
-                canRemoveOctave={canRemoveOctave}
-                onAddNote={() => canAddNote && setEndPosition(lastPosition + 1)}
-                onAddOctave={() =>
-                  canAddOctave && setEndPosition(lastPosition + collectionSize)
-                }
-                onRemoveNote={() =>
-                  canRemoveNote && setEndPosition(lastPosition - 1)
-                }
-                onRemoveOctave={() =>
-                  canRemoveOctave &&
-                  setEndPosition(lastPosition - collectionSize)
-                }
-                showTooltips={false}
-              />
-              <OverflowMenuButton
-                aria-label="Exercise Looper options"
-                onClick={() => setIsOptionsOpen(true)}
-                tooltip={false}
-              />
-            </div>
+            <PartModuleHeaderActions
+              center={
+                <NoteRangeHeaderActions
+                  canAddNote={canAddNote}
+                  canAddOctave={canAddOctave}
+                  canRemoveNote={canRemoveNote}
+                  canRemoveOctave={canRemoveOctave}
+                  onAddNote={() =>
+                    canAddNote && setEndPosition(lastPosition + 1)
+                  }
+                  onAddOctave={() =>
+                    canAddOctave &&
+                    setEndPosition(lastPosition + collectionSize)
+                  }
+                  onRemoveNote={() =>
+                    canRemoveNote && setEndPosition(lastPosition - 1)
+                  }
+                  onRemoveOctave={() =>
+                    canRemoveOctave &&
+                    setEndPosition(lastPosition - collectionSize)
+                  }
+                  showTooltips={false}
+                />
+              }
+              end={
+                <OverflowMenuButton
+                  aria-label="Exercise Looper options"
+                  onClick={() => setIsOptionsOpen(true)}
+                  tooltip={false}
+                />
+              }
+            />
           ) : undefined
         }
         headerActionsGrow
@@ -557,7 +360,6 @@ export function ExerciseLooperModule({
                 aria-label="Shift exercise down one octave"
                 icon={<WavesArrowDown />}
                 size="lg"
-                tooltip={false}
                 unavailable={!canShiftDown}
               />
               <TactileIconButton
@@ -567,154 +369,21 @@ export function ExerciseLooperModule({
                 icon={playback.isPlaying ? <Square /> : <Play />}
                 onPress={playback.isPlaying ? playback.stop : playback.start}
                 size="lg"
-                tooltip={false}
               />
               <TactileIconButton
                 onPress={() => onOctaveOffsetChange?.(octaveOffset + 1)}
                 aria-label="Shift exercise up one octave"
                 icon={<WavesArrowUp />}
                 size="lg"
-                tooltip={false}
                 unavailable={!canShiftUp}
               />
             </TactileControlGroup>
 
-            <div
-              className={styles.patternControls}
-              role="group"
-              aria-label="Exercise pattern"
-            >
-              <TactileControlGroup
-                aria-label="Direction"
-                controlsClassName={styles.directionControls}
-              >
-                {directionChoices.map((choice) => (
-                  <TactileIconButton
-                    key={choice.direction}
-                    onPress={() =>
-                      updatePattern({ direction: choice.direction })
-                    }
-                    aria-label={choice.label}
-                    className={styles.directionButton}
-                    icon={choice.icon}
-                    selected={effectivePattern.direction === choice.direction}
-                    size="lg"
-                    tooltip={false}
-                  />
-                ))}
-              </TactileControlGroup>
-
-              <div className={styles.modeConfiguration}>
-                <TactileControlGroup
-                  aria-label="Play mode"
-                  controlsClassName={styles.modeControls}
-                  readout={patternModeLabel}
-                >
-                  {patternModeChoices.map((choice) => (
-                    <TactileIconButton
-                      key={choice.mode}
-                      onPress={() => setPatternMode(choice.mode)}
-                      aria-label={choice.label}
-                      className={styles.modeButton}
-                      icon={choice.icon}
-                      selected={effectivePattern.mode === choice.mode}
-                      size="lg"
-                      tooltip={false}
-                      unavailable={
-                        choice.mode === "extension" &&
-                        !sequence.supportsTertianExercises
-                      }
-                    />
-                  ))}
-                </TactileControlGroup>
-
-                <div className={styles.fineTuneControls}>
-                  <div
-                    className={styles.degreeAndPlaybackControls}
-                    role="group"
-                    aria-label="Pattern detail"
-                  >
-                    <TactileControlGroup
-                      aria-label="Interval or chord size"
-                      controlsClassName={styles.degreeControls}
-                      readout={activeDegreeLabel}
-                      unavailable={fineTuneUnavailable}
-                    >
-                      <TactileIconButton
-                        onPress={() => stepActiveDegree(-1)}
-                        aria-label="Decrease interval or chord size"
-                        className={`${styles.patternButton} ${styles.degreeButton}`}
-                        icon={<Minus />}
-                        size="md"
-                        tooltip={false}
-                        unavailable={!canDecreaseActiveDegree}
-                      />
-                      <TactileIconButton
-                        onPress={() => stepActiveDegree(1)}
-                        aria-label="Increase interval or chord size"
-                        className={`${styles.patternButton} ${styles.degreeButton}`}
-                        icon={<Plus />}
-                        size="md"
-                        tooltip={false}
-                        unavailable={!canIncreaseActiveDegree}
-                      />
-                    </TactileControlGroup>
-
-                    <TactileControlGroup
-                      aria-label="Note playback"
-                      controlsClassName={styles.contextualControls}
-                      readout={notePlaybackLabel}
-                      unavailable={fineTuneUnavailable}
-                    >
-                      {notePlaybackChoices.map((choice) => (
-                        <TactileIconButton
-                          key={choice.playback}
-                          onPress={() =>
-                            updatePattern({ notePlayback: choice.playback })
-                          }
-                          aria-label={choice.label}
-                          className={styles.patternButton}
-                          icon={choice.icon}
-                          selected={
-                            effectivePattern.mode !== "single" &&
-                            effectivePattern.notePlayback === choice.playback
-                          }
-                          size="md"
-                          tooltip={false}
-                          unavailable={effectivePattern.mode === "single"}
-                        />
-                      ))}
-                    </TactileControlGroup>
-                  </div>
-
-                  <TactileControlGroup
-                    aria-label="Inner note direction"
-                    className={styles.noteDirectionControlGroup}
-                    controlsClassName={styles.noteDirectionControls}
-                    readout={innerDirectionLabel}
-                    unavailable={noteDirectionUnavailable}
-                  >
-                    {directionChoices.map((choice) => (
-                      <TactileIconButton
-                        key={choice.direction}
-                        onPress={() => setActiveNoteDirection(choice.direction)}
-                        aria-label={`Notes ${choice.label.toLowerCase()}`}
-                        className={styles.patternButton}
-                        icon={choice.icon}
-                        selected={
-                          !noteDirectionUnavailable &&
-                          effectivePattern.notePlayback === "separate" &&
-                          activeNoteDirection === choice.direction
-                        }
-                        size="md"
-                        tooltip={false}
-                        unavailable={noteDirectionUnavailable}
-                      />
-                    ))}
-                  </TactileControlGroup>
-                </div>
-              </div>
-            </div>
+            <ExercisePatternControls
+              onChange={onPatternChange}
+              pattern={effectivePattern}
+              supportsTertianExercises={sequence.supportsTertianExercises}
+            />
           </div>
 
           <div className={styles.noteStack}>

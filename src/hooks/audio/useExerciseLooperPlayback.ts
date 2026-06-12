@@ -21,6 +21,7 @@ import { exerciseSubdivisionBeats } from "@/utils/exercise-looper/exerciseConfig
 import { type ExerciseSequenceStep } from "@/utils/exercise-looper/exerciseSequence";
 import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import { type ExerciseSubdivision } from "@/types/session";
+import { usePlaybackActiveKeys } from "./usePlaybackActiveKeys";
 
 const EXERCISE_AUDITION_DURATION_SECONDS = 0.55;
 
@@ -85,13 +86,12 @@ export function useExerciseLooperPlayback({
     exercisePlaybackCoordinator.getSnapshot,
   );
   const [activeStepIndex, setActiveStepIndex] = useState<number>();
-  const [auditionActiveKeys, setAuditionActiveKeys] = useState<
-    ReadonlySet<string>
-  >(() => new Set());
-  const auditionTokensRef = useRef(new Map<string, number>());
-  const auditionTimeoutsRef = useRef(
-    new Map<string, ReturnType<typeof setTimeout>>(),
-  );
+  const {
+    activeKeys: auditionActiveKeys,
+    attach: attachAudition,
+    begin: beginAudition,
+    cancel: cancelAudition,
+  } = usePlaybackActiveKeys();
   const isPlaying = snapshot.playing && snapshot.activeId === id;
   const subdivisionBeats = exerciseSubdivisionBeats[subdivision];
   const events = useMemo(
@@ -115,56 +115,9 @@ export function useExerciseLooperPlayback({
   const stop = useCallback(() => {
     exercisePlaybackCoordinator.stop(id);
   }, [id]);
-  const clearAuditionActiveKey = useCallback((key: string, token?: number) => {
-    if (token !== undefined && auditionTokensRef.current.get(key) !== token) {
-      return;
-    }
-
-    const timeout = auditionTimeoutsRef.current.get(key);
-
-    if (timeout !== undefined) {
-      clearTimeout(timeout);
-      auditionTimeoutsRef.current.delete(key);
-    }
-
-    auditionTokensRef.current.delete(key);
-    setAuditionActiveKeys((currentKeys) => {
-      if (!currentKeys.has(key)) {
-        return currentKeys;
-      }
-
-      const nextKeys = new Set(currentKeys);
-      nextKeys.delete(key);
-      return nextKeys;
-    });
-  }, []);
   const audition = useCallback(
     (target: InstrumentNoteInteractionTarget) => {
-      const token = (auditionTokensRef.current.get(target.key) ?? 0) + 1;
-      const currentTimeout = auditionTimeoutsRef.current.get(target.key);
-
-      if (currentTimeout !== undefined) {
-        clearTimeout(currentTimeout);
-      }
-
-      auditionTokensRef.current.set(target.key, token);
-      setAuditionActiveKeys((currentKeys) => {
-        if (currentKeys.has(target.key)) {
-          return currentKeys;
-        }
-
-        const nextKeys = new Set(currentKeys);
-        nextKeys.add(target.key);
-        return nextKeys;
-      });
-
-      auditionTimeoutsRef.current.set(
-        target.key,
-        setTimeout(
-          () => clearAuditionActiveKey(target.key, token),
-          EXERCISE_AUDITION_DURATION_SECONDS * 1000,
-        ),
-      );
+      const token = beginAudition(target.key);
 
       void musoAudioEngine
         .playNote({
@@ -176,12 +129,20 @@ export function useExerciseLooperPlayback({
         })
         .then((handle) => {
           if (handle === undefined) {
-            clearAuditionActiveKey(target.key, token);
+            cancelAudition(target.key, token);
+            return;
           }
+
+          attachAudition(
+            target.key,
+            token,
+            handle,
+            EXERCISE_AUDITION_DURATION_SECONDS,
+          );
         })
-        .catch(() => clearAuditionActiveKey(target.key, token));
+        .catch(() => cancelAudition(target.key, token));
     },
-    [clearAuditionActiveKey, request.presetId],
+    [attachAudition, beginAudition, cancelAudition, request.presetId],
   );
 
   useLayoutEffect(() => {
@@ -223,9 +184,6 @@ export function useExerciseLooperPlayback({
   useEffect(
     () => () => {
       exercisePlaybackCoordinator.stop(id);
-      auditionTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
-      auditionTimeoutsRef.current.clear();
-      auditionTokensRef.current.clear();
     },
     [id],
   );

@@ -142,7 +142,19 @@ export function createWebAudioEngine(): AudioEngine {
   const playbackGroups = new Map<PlaybackGroupHandle, ActivePlaybackGroup>();
   const resetListeners = new Set<() => void>();
   const stopAllListeners = new Set<() => void>();
+  const voiceEndListeners = new Map<AudioVoiceHandle, Set<() => void>>();
   const harmonicWaveCache = createHarmonicWaveCache();
+
+  function emitVoiceEnd(handle: AudioVoiceHandle) {
+    const listeners = voiceEndListeners.get(handle);
+
+    if (!listeners) {
+      return;
+    }
+
+    voiceEndListeners.delete(handle);
+    listeners.forEach((listener) => listener());
+  }
 
   function clearContextReferences() {
     try {
@@ -166,6 +178,7 @@ export function createWebAudioEngine(): AudioEngine {
     }
 
     activeDrones.clear();
+    activeVoices.forEach((voice) => emitVoiceEnd(voice.handle));
     activeVoices.clear();
     activeVoiceStartTimes.clear();
     playbackGroups.clear();
@@ -469,12 +482,16 @@ export function createWebAudioEngine(): AudioEngine {
       minimumAttackSeconds,
       minimumReleaseSeconds,
       onDisconnect: () => {
+        emitVoiceEnd(handle);
         activeVoices.delete(handle);
         activeVoiceStartTimes.delete(handle);
         playbackGroups.forEach((group) => group.voices.delete(handle));
         onDisconnect?.();
       },
-      onEnded: scheduleVoiceCleanup,
+      onEnded: (endedVoice, endTime) => {
+        emitVoiceEnd(endedVoice.handle);
+        scheduleVoiceCleanup(endedVoice, endTime);
+      },
       preset,
       startTime,
       tailSeconds,
@@ -1025,6 +1042,30 @@ export function createWebAudioEngine(): AudioEngine {
 
       return () => {
         stopAllListeners.delete(listener);
+      };
+    },
+    subscribeToVoiceEnd: (handle, listener) => {
+      if (!activeVoices.has(handle)) {
+        let subscribed = true;
+        queueMicrotask(() => {
+          if (subscribed) {
+            listener();
+          }
+        });
+        return () => {
+          subscribed = false;
+        };
+      }
+
+      const listeners = voiceEndListeners.get(handle) ?? new Set<() => void>();
+      listeners.add(listener);
+      voiceEndListeners.set(handle, listeners);
+
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size === 0) {
+          voiceEndListeners.delete(handle);
+        }
       };
     },
     createDrone: (request: DroneRequest) => {

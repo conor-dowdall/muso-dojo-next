@@ -1,7 +1,7 @@
 .tactileButton {
   --tactile-rest-background: color-mix(
     in srgb,
-    var(--note-color-neutral) 92%,
+    var(--color-interactive-neutral) 92%,
     var(--color-base)
   );
   --tactile-hover-background: var(--interactive-surface-hover-background);
