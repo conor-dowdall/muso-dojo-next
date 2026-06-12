@@ -12,16 +12,16 @@ describe("exercise pattern configuration", () => {
         extensionDegree: 7,
         extensionDirection: "ascending",
         intervalDegree: 6,
-        intervalPlayback: "together",
         mode: "extension",
+        notePlayback: "together",
       }),
     ).toEqual({
       direction: "descending",
       extensionDegree: 7,
       extensionDirection: "ascending",
       intervalDegree: 6,
-      intervalPlayback: "together",
       mode: "extension",
+      notePlayback: "together",
     });
     expect(
       normalizeExercisePattern({
@@ -29,8 +29,8 @@ describe("exercise pattern configuration", () => {
         extensionDegree: 4,
         extensionDirection: "up-down",
         intervalDegree: 3,
-        intervalPlayback: "separate",
         mode: "extension",
+        notePlayback: "separate",
       }),
     ).toBeUndefined();
   });
@@ -48,8 +48,8 @@ describe("exercise pattern configuration", () => {
       extensionDegree: 5,
       extensionDirection: "up-down",
       intervalDegree: 4,
-      intervalPlayback: "separate",
       mode: "interval",
+      notePlayback: "separate",
     });
   });
 

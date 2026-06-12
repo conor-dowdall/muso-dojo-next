@@ -228,8 +228,8 @@ describe("part module app store actions", () => {
       extensionDegree: 7,
       extensionDirection: "ascending",
       intervalDegree: 4,
-      intervalPlayback: "together",
       mode: "interval",
+      notePlayback: "together",
     });
     state.setExerciseLooperSubdivision(
       sessionId,
@@ -257,8 +257,8 @@ describe("part module app store actions", () => {
         extensionDegree: 7,
         extensionDirection: "ascending",
         intervalDegree: 4,
-        intervalPlayback: "together",
         mode: "interval",
+        notePlayback: "together",
       },
       subdivision: "sixteenth",
       type: "exercise-looper",

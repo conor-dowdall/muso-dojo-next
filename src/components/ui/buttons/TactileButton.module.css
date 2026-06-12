@@ -1,19 +1,65 @@
 .tactileButton {
-  --button-outline-background: color-mix(
+  --tactile-rest-background: color-mix(
     in srgb,
-    var(--note-color-neutral) 78%,
-    var(--color-surface)
+    var(--note-color-neutral) 92%,
+    var(--color-base)
   );
-  --button-background-hover: var(--button-outline-background);
-  --button-active-background: var(--button-outline-background);
-  --button-border-color: var(--interactive-surface-rest-border-color);
-  --button-border-color-hover: color-mix(
+  --tactile-hover-background: color-mix(
     in srgb,
-    var(--color-accent) 48%,
-    var(--note-color-neutral)
+    var(--note-color-neutral) 88%,
+    var(--color-interaction-ring-light)
+  );
+  --tactile-selected-background: color-mix(
+    in srgb,
+    var(--note-color-neutral) 70%,
+    var(--color-interaction-ring-light)
+  );
+  --tactile-unavailable-background: color-mix(
+    in srgb,
+    var(--note-color-neutral) 46%,
+    var(--color-control-outline-background)
+  );
+  --button-outline-background: var(--tactile-rest-background);
+  --button-background-hover: var(--tactile-hover-background);
+  --button-active-background: var(--tactile-selected-background);
+  --button-border-color: var(--interactive-surface-rest-border-color);
+  --button-border-color-hover: var(--interactive-surface-hover-border-color);
+  --button-active-border-color: var(
+    --interactive-surface-selected-border-color
   );
   --interact-y-hover: 0;
   --interact-ease: var(--ease-out);
 
+  background-color: var(--tactile-rest-background);
   color: var(--color-text);
+}
+
+.tactileButton[data-control-state="selected"] {
+  background-color: var(--tactile-selected-background);
+  color: var(--note-label-color);
+}
+
+.tactileButton[data-control-state="unavailable"] {
+  background-color: var(--tactile-unavailable-background);
+  color: var(--color-text-muted);
+}
+
+@media (hover: hover) {
+  .tactileButton[data-control-state="idle"]:hover {
+    background-color: var(--tactile-hover-background);
+  }
+
+  .tactileButton[data-control-state="selected"]:hover {
+    background-color: var(--tactile-selected-background);
+  }
+
+  .tactileButton[data-control-state="unavailable"]:hover {
+    background-color: var(--tactile-unavailable-background);
+    color: var(--color-text-muted);
+  }
+}
+
+.tactileButton[data-control-state="unavailable"]:active {
+  background-color: var(--tactile-unavailable-background);
+  color: var(--color-text-muted);
 }

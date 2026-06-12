@@ -145,14 +145,17 @@
 }
 
 @media (hover: hover) {
-  .noteCell:hover:not(:focus) .note {
-    border-color: var(--interactive-surface-ring-color);
+  .noteCell:hover:not(:focus):not([aria-pressed="true"]):not(
+      [data-note-highlighted="true"]
+    )
+    .note {
+    border-color: var(--interactive-surface-hover-border-color);
     box-shadow: var(--interactive-surface-hover-shadow);
   }
 }
 
 .noteCell[aria-pressed="true"] .note {
-  border-color: var(--interactive-surface-ring-color);
+  border-color: var(--interactive-surface-selected-border-color);
   box-shadow: var(--interactive-surface-selected-shadow);
 }
 

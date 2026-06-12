@@ -16,6 +16,8 @@ interface TactileInteractionProps {
   unavailable?: boolean;
 }
 
+type TactileControlState = "idle" | "selected" | "unavailable";
+
 export type TactileButtonProps = Omit<
   ButtonProps,
   "aria-disabled" | "disabled" | "onClick" | "onPointerDown" | "shouldYield"
@@ -62,9 +64,18 @@ function getClassName(className: string | undefined) {
     .join(" ");
 }
 
+function getControlState(
+  selected: boolean | undefined,
+  unavailable: boolean | undefined,
+): TactileControlState {
+  if (unavailable) return "unavailable";
+  return selected ? "selected" : "idle";
+}
+
 export function TactileButton({
   className,
   onPress,
+  selected,
   unavailable,
   ...props
 }: TactileButtonProps) {
@@ -73,6 +84,8 @@ export function TactileButton({
       {...props}
       {...getTactileInteractionProps({ onPress, unavailable })}
       className={getClassName(className)}
+      data-control-state={getControlState(selected, unavailable)}
+      selected={selected}
     />
   );
 }
@@ -81,6 +94,7 @@ export function TactileIconButton({
   className,
   icon,
   onPress,
+  selected,
   unavailable,
   ...props
 }: TactileIconButtonProps) {
@@ -89,7 +103,9 @@ export function TactileIconButton({
       {...props}
       {...getTactileInteractionProps({ onPress, unavailable })}
       className={getClassName(className)}
+      data-control-state={getControlState(selected, unavailable)}
       icon={icon}
+      selected={selected}
     />
   );
 }

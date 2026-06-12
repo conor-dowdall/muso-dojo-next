@@ -18,8 +18,8 @@ export const DEFAULT_EXERCISE_PATTERN = {
   extensionDegree: 3,
   extensionDirection: "up-down",
   intervalDegree: 3,
-  intervalPlayback: "separate",
   mode: "single",
+  notePlayback: "separate",
 } as const satisfies ExercisePattern;
 export const DEFAULT_EXERCISE_SUBDIVISION =
   "quarter" satisfies ExerciseSubdivision;
@@ -107,12 +107,12 @@ export function normalizeExercisePattern(
     !Number.isInteger(value.intervalDegree) ||
     value.intervalDegree < EXERCISE_INTERVAL_MIN ||
     value.intervalDegree > EXERCISE_INTERVAL_MAX ||
-    (value.intervalPlayback !== undefined &&
-      value.intervalPlayback !== "separate" &&
-      value.intervalPlayback !== "together") ||
     (value.mode !== "single" &&
       value.mode !== "interval" &&
-      value.mode !== "extension")
+      value.mode !== "extension") ||
+    (value.notePlayback !== undefined &&
+      value.notePlayback !== "separate" &&
+      value.notePlayback !== "together")
   ) {
     return undefined;
   }
@@ -123,9 +123,8 @@ export function normalizeExercisePattern(
     extensionDirection:
       value.extensionDirection ?? DEFAULT_EXERCISE_PATTERN.extensionDirection,
     intervalDegree: value.intervalDegree,
-    intervalPlayback:
-      value.intervalPlayback ?? DEFAULT_EXERCISE_PATTERN.intervalPlayback,
     mode: value.mode,
+    notePlayback: value.notePlayback ?? DEFAULT_EXERCISE_PATTERN.notePlayback,
   };
 }
 
@@ -138,8 +137,8 @@ export function exercisePatternsAreEqual(
     left.extensionDegree === right.extensionDegree &&
     left.extensionDirection === right.extensionDirection &&
     left.intervalDegree === right.intervalDegree &&
-    left.intervalPlayback === right.intervalPlayback &&
-    left.mode === right.mode
+    left.mode === right.mode &&
+    left.notePlayback === right.notePlayback
   );
 }
 

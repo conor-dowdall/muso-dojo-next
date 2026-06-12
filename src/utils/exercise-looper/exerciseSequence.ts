@@ -22,15 +22,15 @@ export const EXERCISE_MAX_OCTAVE_SPAN = 4;
 
 export type ExerciseScaleDirection = "ascending" | "descending" | "up-down";
 export type ExercisePatternMode = "single" | "interval" | "extension";
-export type ExerciseIntervalPlayback = "separate" | "together";
+export type ExerciseNotePlayback = "separate" | "together";
 
 export interface ExercisePattern {
   direction: ExerciseScaleDirection;
   extensionDegree: number;
   extensionDirection: ExerciseScaleDirection;
   intervalDegree: number;
-  intervalPlayback: ExerciseIntervalPlayback;
   mode: ExercisePatternMode;
+  notePlayback: ExerciseNotePlayback;
 }
 
 export interface CollectionRangeBoundary {
@@ -207,7 +207,7 @@ function createPatternPositionGroups(anchor: number, pattern: ExercisePattern) {
           1,
       ];
 
-      return pattern.intervalPlayback === "together"
+      return pattern.notePlayback === "together"
         ? [positions]
         : positions.map((position) => [position]);
     }
@@ -223,9 +223,11 @@ function createPatternPositionGroups(anchor: number, pattern: ExercisePattern) {
         (_, index) => anchor + index * 2,
       );
 
-      return createInnerContour(positions, pattern.extensionDirection).map(
-        (position) => [position],
-      );
+      return pattern.notePlayback === "together"
+        ? [positions]
+        : createInnerContour(positions, pattern.extensionDirection).map(
+            (position) => [position],
+          );
     }
   }
 }
@@ -290,8 +292,8 @@ export function createExerciseSequence({
     extensionDegree: 3,
     extensionDirection: "up-down",
     intervalDegree: 3,
-    intervalPlayback: "separate",
     mode: "single",
+    notePlayback: "separate",
   },
   rootNote,
   start = { octave: 0, stepOffset: 0 },
