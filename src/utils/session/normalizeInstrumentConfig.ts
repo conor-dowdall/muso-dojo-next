@@ -1,8 +1,6 @@
 import { isDisplayFormatId, type DisplayFormatId } from "@/data/displayFormats";
-import {
-  normalizeFretboardConfig,
-  normalizeFretboardThemeName,
-} from "@/utils/fretboard/createFretboardConfig";
+import { normalizeFretboardThemeName } from "@/utils/fretboard/createFretboardConfig";
+import { normalizeFretboardConfig } from "@/utils/fretboard/normalizeFretboardConfig";
 import {
   DEFAULT_FRETBOARD_INLAY_PRESET,
   normalizeFretboardInlayPresetName,

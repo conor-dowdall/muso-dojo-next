@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createDroneNotePlaybackController,
   getDronePlaybackVelocity,
-} from "@/hooks/audio/useDroneNotePlayback";
+} from "@/hooks/audio/droneNotePlaybackController";
 
 function createDeferred<T>() {
   let resolve: (value: T) => void = () => undefined;

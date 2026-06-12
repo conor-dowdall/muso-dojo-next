@@ -9,9 +9,6 @@ import {
 } from "react";
 import { Play, Square, WavesArrowDown, WavesArrowUp } from "lucide-react";
 import { getDefaultAudioPresetId, type AudioPresetId } from "@/audio";
-import { InstrumentNote } from "@/components/instrument/InstrumentNote";
-import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
-import { InstrumentNoteTileLabel } from "@/components/instrument/InstrumentNoteTileLabel";
 import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
 import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeaderActions";
 import { PartModuleHeaderActions } from "@/components/part-module/PartModuleHeaderActions";
@@ -46,9 +43,8 @@ import {
   type ExercisePattern,
 } from "@/utils/exercise-looper/exerciseSequence";
 import { resolveExerciseStudyChordDescriptor } from "@/utils/exercise-looper/exerciseStudyDisplay";
-import { formatSpelledMidiNote } from "@/utils/music-theory/midiNote";
-import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
 import { getClosestNoteInColumn } from "@/utils/instrument/getClosestNoteInColumn";
+import { ExerciseLooperNoteGrid } from "./ExerciseLooperNoteGrid";
 import { ExerciseLooperOptionsDialog } from "./ExerciseLooperOptionsDialog";
 import { ExercisePatternControls } from "./ExercisePatternControls";
 import styles from "./ExerciseLooperModule.module.css";
@@ -488,99 +484,18 @@ export function ExerciseLooperModule({
             />
           </div>
 
-          <div className={styles.noteStack}>
-            <div
-              className={styles.noteRows}
-              style={
-                {
-                  "--looper-column-count": sequence.columnCount,
-                } as CSSProperties
-              }
-            >
-              {sequence.displayRows.map((row, rowIndex) => (
-                <div key={rowIndex} className={styles.noteRow}>
-                  {row.map((note) => {
-                    const noteColor = resolveInstrumentNoteColor({
-                      midi: note.midi,
-                      mode: noteColors.mode,
-                      rootNote,
-                    });
-                    const chordDescriptor =
-                      effectivePattern.mode === "extension"
-                        ? sequence.chordDescriptorsByAnchorPosition.get(
-                            note.collectionPosition,
-                          )
-                        : undefined;
-                    const noteLabel = formatSpelledMidiNote(
-                      note.label,
-                      note.midi,
-                    );
-                    const ariaLabel = chordDescriptor
-                      ? `Audition ${chordDescriptor.chordName}, intervals ${chordDescriptor.intervals.join(", ")}, from ${noteLabel}, interval ${note.intervalLabel}`
-                      : `Audition ${noteLabel}, interval ${note.intervalLabel}`;
-                    const isHighlighted = Boolean(
-                      playback.auditionActiveKeys.has(note.key) ||
-                      playback.activeCollectionPositions.has(
-                        note.collectionPosition,
-                      ),
-                    );
-                    const label = (
-                      <InstrumentNoteTileLabel
-                        primary={noteLabel}
-                        secondary={note.intervalLabel}
-                      />
-                    );
-
-                    if (!note.isAnchor) {
-                      return (
-                        <div
-                          key={note.key}
-                          aria-hidden="true"
-                          className={`${styles.noteButton} ${styles.generatedNoteIndicator}`}
-                          data-note-highlighted={
-                            isHighlighted ? true : undefined
-                          }
-                          style={{ gridColumn: note.columnIndex + 1 }}
-                        >
-                          <InstrumentNote
-                            className={styles.generatedNote}
-                            largeSize="100%"
-                            note={{ emphasis: "large", midi: note.midi }}
-                            noteColor={noteColor}
-                            surface="embedded"
-                          >
-                            {label}
-                          </InstrumentNote>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <InstrumentNoteCell
-                        key={note.key}
-                        ariaLabel={ariaLabel}
-                        className={styles.noteButton}
-                        handleKeyDown={handleKeyDown}
-                        isFocused={focusedKey === note.key}
-                        isHighlighted={isHighlighted}
-                        largeSize="100%"
-                        midi={note.midi}
-                        note={{ emphasis: "large", midi: note.midi }}
-                        noteColor={noteColor}
-                        noteKey={note.key}
-                        onInteract={handleItemInteraction}
-                        setItemRef={setItemRef}
-                        style={{ gridColumn: note.columnIndex + 1 }}
-                        surface="raised"
-                      >
-                        {label}
-                      </InstrumentNoteCell>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
+          <ExerciseLooperNoteGrid
+            activeCollectionPositions={playback.activeCollectionPositions}
+            auditionActiveKeys={playback.auditionActiveKeys}
+            focusedKey={focusedKey}
+            handleItemInteraction={handleItemInteraction}
+            handleKeyDown={handleKeyDown}
+            mode={effectivePattern.mode}
+            noteColorMode={noteColors.mode}
+            rootNote={rootNote}
+            sequence={sequence}
+            setItemRef={setItemRef}
+          />
         </div>
       </PartModuleFrame>
 
