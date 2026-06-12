@@ -12,6 +12,7 @@ import {
 import { flushSync } from "react-dom";
 import {
   ExerciseAuditionController,
+  exercisePlaybackRequestsAreEqual,
   exercisePlaybackCoordinator,
   getDefaultAudioPresetId,
   musoAudioEngine,
@@ -110,29 +111,18 @@ export function useExerciseLooperPlayback({
     }),
     [audioPresetId, events, id, tempoBpm],
   );
-  const previousRequest = useRef(request);
+  const submittedRequest = useRef(request);
 
   const start = useCallback(() => {
     auditionController.cancel();
+    submittedRequest.current = request;
     void exercisePlaybackCoordinator.start(request);
   }, [auditionController, request]);
   const stop = useCallback(() => {
     exercisePlaybackCoordinator.stop(id);
   }, [id]);
-  const audition = useCallback(
-    (target: InstrumentNoteInteractionTarget) => {
-      void auditionController.audition({
-        durationSeconds: EXERCISE_AUDITION_DURATION_SECONDS,
-        notes: [target],
-        presetId: request.presetId,
-        velocity: 0.72,
-      });
-    },
-    [auditionController, request.presetId],
-  );
-  const auditionChord = useCallback(
+  const auditionNotes = useCallback(
     (notes: readonly ExerciseAuditionNote[]) => {
-      exercisePlaybackCoordinator.stop();
       void auditionController.audition({
         durationSeconds: EXERCISE_AUDITION_DURATION_SECONDS,
         notes,
@@ -142,12 +132,19 @@ export function useExerciseLooperPlayback({
     },
     [auditionController, request.presetId],
   );
+  const audition = useCallback(
+    (target: InstrumentNoteInteractionTarget) => auditionNotes([target]),
+    [auditionNotes],
+  );
 
   useLayoutEffect(() => {
-    if (isPlaying && previousRequest.current !== request) {
+    if (
+      isPlaying &&
+      !exercisePlaybackRequestsAreEqual(submittedRequest.current, request)
+    ) {
+      submittedRequest.current = request;
       void exercisePlaybackCoordinator.start(request);
     }
-    previousRequest.current = request;
   }, [isPlaying, request]);
 
   useEffect(() => {
@@ -202,7 +199,7 @@ export function useExerciseLooperPlayback({
     activeCollectionPositions,
     audition,
     auditionActiveKeys,
-    auditionChord,
+    auditionChord: auditionNotes,
     isPlaying,
     start,
     stop,

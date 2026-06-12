@@ -46,7 +46,27 @@
   --color-focus-ring-contrast: rgb(0 0 0 / 0.82);
   --color-interactive-neutral: #454c56;
   --color-hardware-display-background: rgb(7 9 12 / 0.86);
+  --color-hardware-display-background-soft: color-mix(
+    in srgb,
+    var(--color-hardware-display-background) 60%,
+    var(--color-surface-hover)
+  );
+  --color-hardware-display-background-unavailable: color-mix(
+    in srgb,
+    var(--color-hardware-display-background) 58%,
+    var(--color-surface)
+  );
   --color-hardware-display-text: #f7f8fb;
+  --color-hardware-display-text-soft: color-mix(
+    in srgb,
+    var(--color-hardware-display-text) 90%,
+    var(--color-text-muted)
+  );
+  --color-hardware-display-text-unavailable: color-mix(
+    in srgb,
+    var(--color-hardware-display-text) 48%,
+    transparent
+  );
 
   /* Spacing */
   --space-0: 0;

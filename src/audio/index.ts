@@ -6,6 +6,7 @@ export {
   type LookaheadSchedulerOptions,
 } from "./lookaheadScheduler";
 export {
+  exercisePlaybackRequestsAreEqual,
   exercisePlaybackCoordinator,
   type ExercisePlaybackEvent,
   type ExercisePlaybackRequest,

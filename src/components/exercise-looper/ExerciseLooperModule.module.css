@@ -13,9 +13,11 @@
   --looper-mode-detail-gap: var(--space-2);
   --looper-fine-tune-gap: var(--space-2);
   --looper-study-readout-height: calc(var(--space-12) + var(--space-1));
+  --looper-study-readout-gap: var(--space-3);
   --tactile-control-readout-height: var(--space-4);
   --looper-labeled-control-group-height: calc(
-    var(--control-size-lg) + var(--space-1) + var(--looper-study-readout-height)
+    var(--control-size-lg) + var(--looper-study-readout-gap) +
+      var(--looper-study-readout-height)
   );
   --looper-fine-tune-controls-height: calc(
     var(--control-size-md) + var(--space-1) +
@@ -184,17 +186,19 @@
 }
 
 .modeStudyGroup {
+  --tactile-control-readout-gap: var(--looper-study-readout-gap);
   --tactile-control-readout-height: var(--looper-study-readout-height);
+  --tactile-control-readout-radius: var(--radius-control);
 
-  inline-size: 100%;
+  inline-size: min(100%, calc(var(--space-80) - var(--space-8)));
 }
 
 .studyReadout {
   display: grid;
   min-inline-size: 0;
   grid-template-rows: 1fr 1fr;
-  padding-block: var(--space-2) var(--space-1);
-  line-height: var(--leading-none);
+  padding-block: var(--space-1);
+  line-height: var(--leading-tight);
   white-space: normal;
 }
 
@@ -244,7 +248,8 @@
   flex: 0 0 auto;
 }
 
-.patternButton[data-control-state="unavailable"] {
+.patternButton[data-control-state="unavailable"],
+.modeButton[data-control-state="unavailable"] {
   --tactile-unavailable-background: color-mix(
     in srgb,
     var(--color-interactive-neutral) 68%,
@@ -252,7 +257,8 @@
   );
 }
 
-.patternButton[data-control-state="unavailable"] svg {
+.patternButton[data-control-state="unavailable"] svg,
+.modeButton[data-control-state="unavailable"] svg {
   opacity: 0.34;
 }
 

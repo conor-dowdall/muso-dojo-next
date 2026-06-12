@@ -43,10 +43,13 @@ export function TactileControlGroup({
           className={[styles.readout, readoutClassName]
             .filter(Boolean)
             .join(" ")}
-          aria-label={readoutAriaLabel}
+          aria-label={
+            unavailable ? `${ariaLabel} unavailable` : readoutAriaLabel
+          }
           aria-live={readoutLive}
+          data-unavailable={unavailable || undefined}
         >
-          {unavailable ? null : readout}
+          {unavailable ? <span aria-hidden="true">–</span> : readout}
         </output>
       ) : null}
     </div>

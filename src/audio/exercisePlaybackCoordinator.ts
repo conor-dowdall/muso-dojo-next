@@ -63,6 +63,29 @@ const idleSnapshot: ExercisePlaybackSnapshot = {
   playing: false,
 };
 
+export function exercisePlaybackRequestsAreEqual(
+  left: ExercisePlaybackRequest,
+  right: ExercisePlaybackRequest,
+) {
+  return (
+    left.id === right.id &&
+    left.presetId === right.presetId &&
+    normalizeTempo(left.tempoBpm) === normalizeTempo(right.tempoBpm) &&
+    left.events.length === right.events.length &&
+    left.events.every((event, index) => {
+      const other = right.events[index];
+
+      return (
+        other !== undefined &&
+        event.durationBeats === other.durationBeats &&
+        event.midi === other.midi &&
+        event.offsetBeats === other.offsetBeats &&
+        event.stepIndex === other.stepIndex
+      );
+    })
+  );
+}
+
 function normalizeTempo(tempoBpm: number) {
   return Math.min(300, Math.max(30, Math.round(tempoBpm)));
 }
@@ -89,6 +112,7 @@ function toSchedulerEvents(
 export class ExercisePlaybackCoordinator {
   private active: ActiveExercisePlayback | undefined;
   private listeners = new Set<() => void>();
+  private pendingStartId: string | undefined;
   private snapshot: ExercisePlaybackSnapshot = idleSnapshot;
   private startRevision = 0;
 
@@ -107,6 +131,7 @@ export class ExercisePlaybackCoordinator {
   private reset() {
     this.active?.noteScheduler.stop();
     this.active = undefined;
+    this.pendingStartId = undefined;
     this.snapshot = idleSnapshot;
     this.startRevision += 1;
     this.emit();
@@ -146,6 +171,7 @@ export class ExercisePlaybackCoordinator {
 
   async start(request: ExercisePlaybackRequest) {
     const revision = ++this.startRevision;
+    this.pendingStartId = request.id;
     const prepared = await this.audioEngine.prime();
     const currentTime = this.audioEngine.getCurrentTime();
 
@@ -154,12 +180,16 @@ export class ExercisePlaybackCoordinator {
       currentTime === undefined ||
       revision !== this.startRevision
     ) {
+      if (revision === this.startRevision) {
+        this.pendingStartId = undefined;
+      }
       return false;
     }
 
     const cycleDuration = getCycleDuration(request.events);
 
     if (request.events.length === 0 || cycleDuration <= 0) {
+      this.pendingStartId = undefined;
       return false;
     }
 
@@ -202,6 +232,7 @@ export class ExercisePlaybackCoordinator {
       noteScheduler,
       snapshot,
     };
+    this.pendingStartId = undefined;
     this.snapshot = snapshot;
     noteScheduler.start(originTime);
     this.emit();
@@ -209,17 +240,30 @@ export class ExercisePlaybackCoordinator {
   }
 
   stop(id?: string) {
-    if (!this.active || (id !== undefined && id !== this.snapshot.activeId)) {
+    const stopsActive =
+      this.active !== undefined &&
+      (id === undefined || id === this.snapshot.activeId);
+    const stopsPending =
+      this.pendingStartId !== undefined &&
+      (id === undefined || id === this.pendingStartId);
+
+    if (!stopsActive && !stopsPending) {
       return;
     }
 
-    const active = this.active;
-    active.noteScheduler.stop();
-    this.audioEngine.cancelPlaybackGroup(active.group);
-    this.active = undefined;
-    this.snapshot = idleSnapshot;
-    this.startRevision += 1;
-    this.emit();
+    if (stopsPending) {
+      this.pendingStartId = undefined;
+      this.startRevision += 1;
+    }
+
+    if (stopsActive && this.active) {
+      const active = this.active;
+      active.noteScheduler.stop();
+      this.audioEngine.cancelPlaybackGroup(active.group);
+      this.active = undefined;
+      this.snapshot = idleSnapshot;
+      this.emit();
+    }
   }
 }
 
