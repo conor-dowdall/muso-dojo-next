@@ -56,6 +56,22 @@ describe("createLookaheadScheduler", () => {
     });
 
     scheduler.start(1);
-    expect(scheduled).toEqual([2]);
+    expect(scheduled).toEqual([]);
+  });
+
+  it("resumes on the next safely-ahead event after a delayed tick", () => {
+    const scheduled: number[] = [];
+    const scheduler = createLookaheadScheduler({
+      events: [{ duration: 0.25, offset: 0, payload: true }],
+      getCurrentTime: () => 2,
+      horizonSeconds: 0.3,
+      onSchedule: (_event, startTime) => scheduled.push(startTime),
+      setTimer: () => 1,
+      clearTimer: vi.fn(),
+    });
+
+    scheduler.start(1);
+
+    expect(scheduled).toEqual([2.25]);
   });
 });

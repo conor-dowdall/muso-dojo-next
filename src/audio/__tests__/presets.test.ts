@@ -158,4 +158,9 @@ describe("audio presets", () => {
     expect(isAudioPresetId("nylon-string")).toBe(false);
     expect(isAudioPresetId("bowed-sustain")).toBe(false);
   });
+
+  it("keeps the piano clean and nearly silent before its release", () => {
+    expect("insertEffects" in audioPresets.piano.voice).toBe(false);
+    expect(audioPresets.piano.voice.envelope.sustainGain).toBeLessThan(0.03);
+  });
 });

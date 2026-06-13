@@ -1,3 +1,9 @@
+import {
+  AUDIO_SCHEDULER_HORIZON_SECONDS,
+  AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS,
+  AUDIO_SCHEDULER_TICK_MILLISECONDS,
+} from "./audioTimingConfig";
+
 export interface LookaheadSchedulerEvent<TPayload> {
   duration: number;
   offset: number;
@@ -8,6 +14,7 @@ export interface LookaheadSchedulerOptions<TPayload> {
   events: readonly LookaheadSchedulerEvent<TPayload>[];
   getCurrentTime: () => number | undefined;
   horizonSeconds?: number;
+  minimumLeadSeconds?: number;
   onSchedule: (
     event: LookaheadSchedulerEvent<TPayload>,
     startTime: number,
@@ -25,10 +32,6 @@ export interface LookaheadScheduler {
   stop: () => void;
 }
 
-const DEFAULT_HORIZON_SECONDS = 0.3;
-const DEFAULT_TICK_MILLISECONDS = 25;
-const MISSED_EVENT_TOLERANCE_SECONDS = 0.03;
-
 function getCycleDuration<TPayload>(
   events: readonly LookaheadSchedulerEvent<TPayload>[],
 ) {
@@ -41,11 +44,12 @@ function getCycleDuration<TPayload>(
 export function createLookaheadScheduler<TPayload>({
   events,
   getCurrentTime,
-  horizonSeconds = DEFAULT_HORIZON_SECONDS,
+  horizonSeconds = AUDIO_SCHEDULER_HORIZON_SECONDS,
+  minimumLeadSeconds = AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS,
   onSchedule,
   setTimer = (callback, delay) => window.setTimeout(callback, delay),
   clearTimer = (timer) => window.clearTimeout(timer as number),
-  tickMilliseconds = DEFAULT_TICK_MILLISECONDS,
+  tickMilliseconds = AUDIO_SCHEDULER_TICK_MILLISECONDS,
 }: LookaheadSchedulerOptions<TPayload>): LookaheadScheduler {
   const cycleDuration = getCycleDuration(events);
   let nextCycle = 0;
@@ -87,6 +91,7 @@ export function createLookaheadScheduler<TPayload>({
     }
 
     const horizon = currentTime + Math.max(0, horizonSeconds);
+    const earliestSafeStartTime = currentTime + Math.max(0, minimumLeadSeconds);
     const currentCycle = Math.max(
       0,
       Math.floor((currentTime - originTime) / cycleDuration),
@@ -112,7 +117,7 @@ export function createLookaheadScheduler<TPayload>({
         break;
       }
 
-      if (eventStartTime >= currentTime - MISSED_EVENT_TOLERANCE_SECONDS) {
+      if (eventStartTime >= earliestSafeStartTime) {
         onSchedule(event, eventStartTime, nextCycle, nextEventIndex);
       }
 

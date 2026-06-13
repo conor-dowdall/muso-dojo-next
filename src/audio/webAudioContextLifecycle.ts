@@ -1,4 +1,9 @@
 import { getAudioContextConstructor } from "./audioContext";
+import {
+  AUDIO_CONTEXT_LATENCY_HINT_SECONDS,
+  AUDIO_ONE_SHOT_RAMP_RENDER_QUANTA,
+  AUDIO_SCHEDULE_LOOKAHEAD_SECONDS,
+} from "./audioTimingConfig";
 import { canUseNativeSineOscillator } from "./harmonicWave";
 import { DEFAULT_MASTER_AMBIENCE_PRESET_ID } from "./masterAmbience";
 import { createAudioMixer, type AudioMixer } from "./mixer";
@@ -15,8 +20,6 @@ const DEFAULT_AUDIO_USE = "preview" satisfies AudioUse;
 const CLEANUP_DELAY_SECONDS = 0.05;
 const SILENT_UNLOCK_PULSE_SECONDS = 0.01;
 const AUDIO_RENDER_QUANTUM_FRAMES = 128;
-const ONE_SHOT_RAMP_RENDER_QUANTA = 2;
-const MIN_SCHEDULE_LOOKAHEAD_SECONDS = 0.006;
 const WARMUP_MIDI_NOTES = [36, 48, 60, 72] as const;
 
 type GetPeriodicWave = (
@@ -26,14 +29,14 @@ type GetPeriodicWave = (
 
 export function getScheduleLookaheadSeconds(context: AudioContext) {
   return Math.max(
-    MIN_SCHEDULE_LOOKAHEAD_SECONDS,
+    AUDIO_SCHEDULE_LOOKAHEAD_SECONDS,
     (AUDIO_RENDER_QUANTUM_FRAMES * 2) / context.sampleRate,
   );
 }
 
 export function getOneShotMinimumRampSeconds(context: AudioContext) {
   return (
-    (AUDIO_RENDER_QUANTUM_FRAMES * ONE_SHOT_RAMP_RENDER_QUANTA) /
+    (AUDIO_RENDER_QUANTUM_FRAMES * AUDIO_ONE_SHOT_RAMP_RENDER_QUANTA) /
     context.sampleRate
   );
 }
@@ -86,7 +89,7 @@ export function createWebAudioContextLifecycle({
 
     try {
       audioContext = new AudioContextConstructor({
-        latencyHint: "interactive",
+        latencyHint: AUDIO_CONTEXT_LATENCY_HINT_SECONDS,
       });
       const createdContext = audioContext;
 

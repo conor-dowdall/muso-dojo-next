@@ -86,13 +86,6 @@ const harmonicLowSpeakerAssist = {
   ],
 } as const satisfies LowPitchAssistConfig;
 
-const lightEdge = {
-  type: "distortion",
-  amount: 0.08,
-  mix: 0.16,
-  oversample: "2x",
-} as const satisfies DistortionEffectConfig;
-
 const electricGuitarDrive = {
   type: "distortion",
   amount: 0.36,
@@ -181,12 +174,11 @@ export const audioPresets = {
       gain: 0.5,
       pitchGain: previewPitchGain,
       lowPitchAssist: lowSpeakerAssist,
-      insertEffects: [lightEdge],
       envelope: {
         attackSeconds: 0.002,
-        decaySeconds: 1.18,
-        sustainGain: 0.075,
-        releaseSeconds: 0.24,
+        decaySeconds: 0.96,
+        sustainGain: 0.018,
+        releaseSeconds: 0.16,
       },
       partials: [
         { multiple: 1, gain: 1 },

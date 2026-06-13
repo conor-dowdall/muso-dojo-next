@@ -156,21 +156,34 @@ export function createWebAudioVoiceManager({
   function playNoteWithContext(
     context: AudioContext,
     request: PlayNoteRequest,
-    requestedStartTime = context.currentTime,
+    requestedStartTime?: number,
   ) {
     const use = request.use ?? DEFAULT_AUDIO_USE;
     const preset = resolveAudioPreset(
       request.presetId,
       getDefaultAudioPresetId(use),
     );
-    const durationSeconds = Math.max(
+    const requestedDurationSeconds = Math.max(
       MIN_NOTE_DURATION_SECONDS,
       normalizePositiveNumber(
         request.durationSeconds ?? preset.defaultDurationSeconds,
         MIN_NOTE_DURATION_SECONDS,
       ),
     );
-    const startTime = Math.max(context.currentTime, requestedStartTime);
+    const currentTime = context.currentTime;
+    const scheduledStartTime = requestedStartTime ?? currentTime;
+    const minimumStartTime =
+      requestedStartTime === undefined
+        ? currentTime
+        : currentTime + getScheduleLookaheadSeconds(context);
+    const startTime = Math.max(minimumStartTime, scheduledStartTime);
+    const durationSeconds =
+      requestedDurationSeconds - Math.max(0, startTime - scheduledStartTime);
+
+    if (durationSeconds < MIN_NOTE_DURATION_SECONDS) {
+      return undefined;
+    }
+
     const voice = createVoice({
       context,
       frequency: midiToFrequency(request.midiNote, request.concertPitchHz),

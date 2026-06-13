@@ -177,6 +177,7 @@ class MockAudioContext {
   static periodicWaveCount = 0;
   static waveShaperNodeCount = 0;
   static lastInstance: MockAudioContext | undefined;
+  static lastOptions: AudioContextOptions | undefined;
 
   readonly destination = new MockAudioNode(
     this,
@@ -185,8 +186,9 @@ class MockAudioContext {
   currentTime = 0;
   state: AudioContextState = "running";
 
-  constructor(_options?: AudioContextOptions) {
+  constructor(options?: AudioContextOptions) {
     MockAudioContext.lastInstance = this;
+    MockAudioContext.lastOptions = options;
   }
 
   static resetCounts() {
@@ -205,6 +207,7 @@ class MockAudioContext {
     MockAudioContext.periodicWaveCount = 0;
     MockAudioContext.waveShaperNodeCount = 0;
     MockAudioContext.lastInstance = undefined;
+    MockAudioContext.lastOptions = undefined;
   }
 
   createDelay() {
@@ -290,6 +293,17 @@ describe("createWebAudioEngine", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.useRealTimers();
+  });
+
+  it("requests the configured very-low output latency", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+
+    expect(MockAudioContext.lastOptions).toMatchObject({
+      latencyHint: 0.003,
+    });
   });
 
   it("uses the native sine oscillator path for the default drone preset", async () => {
@@ -594,6 +608,54 @@ describe("createWebAudioEngine", () => {
     expect(clickScheduled).toBe(true);
     expect(MockAudioContext.oscillatorStartTimes).toContain(1.25);
     expect(MockAudioContext.bufferSourceStartTimes).toEqual([1.5]);
+  });
+
+  it("preserves the intended end time when an exercise note is scheduled late", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    const context = MockAudioContext.lastInstance!;
+    const group = engine.createPlaybackGroup();
+
+    context.currentTime = 1.1;
+    const voiceHandle = engine.scheduleNote({
+      durationSeconds: 0.2,
+      group,
+      midiNote: 60,
+      presetId: "piano",
+      startTime: 1,
+      use: "exercise",
+    });
+
+    expect(voiceHandle).toBeDefined();
+    expect(MockAudioContext.oscillatorStartTimes.at(-1)).toBe(1.106);
+    expect(MockAudioContext.oscillatorStopTimes.at(-1)).toBeCloseTo(
+      1.2 + (128 * 3) / 48_000,
+    );
+  });
+
+  it("drops exercise notes that arrive too late for a click-safe envelope", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    const context = MockAudioContext.lastInstance!;
+    const group = engine.createPlaybackGroup();
+    const oscillatorCount = MockAudioContext.oscillatorNodeCount;
+
+    context.currentTime = 1.19;
+    const voiceHandle = engine.scheduleNote({
+      durationSeconds: 0.2,
+      group,
+      midiNote: 60,
+      presetId: "piano",
+      startTime: 1,
+      use: "exercise",
+    });
+
+    expect(voiceHandle).toBeUndefined();
+    expect(MockAudioContext.oscillatorNodeCount).toBe(oscillatorCount);
   });
 
   it("keeps one-shot oscillators alive briefly after their envelope is silent", async () => {
