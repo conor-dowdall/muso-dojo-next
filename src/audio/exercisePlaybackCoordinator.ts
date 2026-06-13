@@ -33,6 +33,7 @@ export interface ExercisePlaybackSnapshot {
   cycleDuration?: number;
   events: readonly ExercisePlaybackEvent[];
   originTime?: number;
+  pendingId?: string;
   playing: boolean;
   secondsPerBeat?: number;
 }
@@ -62,6 +63,23 @@ const idleSnapshot: ExercisePlaybackSnapshot = {
   events: [],
   playing: false,
 };
+
+function withoutPendingStart(
+  snapshot: ExercisePlaybackSnapshot,
+): ExercisePlaybackSnapshot {
+  const nextSnapshot = { ...snapshot };
+  delete nextSnapshot.pendingId;
+  return nextSnapshot;
+}
+
+export function isExercisePlaybackActive(
+  snapshot: ExercisePlaybackSnapshot,
+  id: string,
+) {
+  return (
+    snapshot.pendingId === id || (snapshot.playing && snapshot.activeId === id)
+  );
+}
 
 export function exercisePlaybackRequestsAreEqual(
   left: ExercisePlaybackRequest,
@@ -172,6 +190,11 @@ export class ExercisePlaybackCoordinator {
   async start(request: ExercisePlaybackRequest) {
     const revision = ++this.startRevision;
     this.pendingStartId = request.id;
+    this.snapshot = {
+      ...this.snapshot,
+      pendingId: request.id,
+    };
+    this.emit();
     const prepared = await this.audioEngine.prime();
     const currentTime = this.audioEngine.getCurrentTime();
 
@@ -182,6 +205,8 @@ export class ExercisePlaybackCoordinator {
     ) {
       if (revision === this.startRevision) {
         this.pendingStartId = undefined;
+        this.snapshot = withoutPendingStart(this.snapshot);
+        this.emit();
       }
       return false;
     }
@@ -190,6 +215,8 @@ export class ExercisePlaybackCoordinator {
 
     if (request.events.length === 0 || cycleDuration <= 0) {
       this.pendingStartId = undefined;
+      this.snapshot = withoutPendingStart(this.snapshot);
+      this.emit();
       return false;
     }
 
@@ -261,9 +288,14 @@ export class ExercisePlaybackCoordinator {
       active.noteScheduler.stop();
       this.audioEngine.cancelPlaybackGroup(active.group);
       this.active = undefined;
-      this.snapshot = idleSnapshot;
-      this.emit();
+      this.snapshot = this.pendingStartId
+        ? { ...idleSnapshot, pendingId: this.pendingStartId }
+        : idleSnapshot;
+    } else if (stopsPending) {
+      this.snapshot = withoutPendingStart(this.snapshot);
     }
+
+    this.emit();
   }
 }
 

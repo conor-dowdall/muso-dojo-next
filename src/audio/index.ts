@@ -8,6 +8,7 @@ export {
 export {
   exercisePlaybackRequestsAreEqual,
   exercisePlaybackCoordinator,
+  isExercisePlaybackActive,
   type ExercisePlaybackEvent,
   type ExercisePlaybackRequest,
   type ExercisePlaybackSnapshot,

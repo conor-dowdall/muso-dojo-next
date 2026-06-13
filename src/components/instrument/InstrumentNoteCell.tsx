@@ -3,12 +3,14 @@ import {
   type ReactNode,
   type CSSProperties,
   type KeyboardEvent,
+  type PointerEvent,
 } from "react";
 import { InstrumentNote, type InstrumentNoteSurface } from "./InstrumentNote";
 import { type ActiveNote } from "@/types/instrument-active-note";
 import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import { type InstrumentNoteColor } from "@/types/note-colors";
 import { createInstrumentNoteInteractionTarget } from "@/utils/instrument/createInstrumentNoteInteractionTarget";
+import { isPrimaryPointerActivation } from "@/utils/interaction/isPrimaryPointerActivation";
 import styles from "./InstrumentNote.module.css";
 
 interface InstrumentNoteCellProps {
@@ -25,7 +27,7 @@ interface InstrumentNoteCellProps {
   isHighlighted?: boolean;
   isPressed?: boolean;
   notePlacement?: "center" | "bottom";
-  onPointerDown?: () => void;
+  onPointerDown?: (event: PointerEvent<HTMLButtonElement>) => void;
   onInteract?: (target: InstrumentNoteInteractionTarget) => void;
   className?: string;
   style?: CSSProperties;
@@ -63,8 +65,12 @@ function InstrumentNoteCellBase({
   largeSize,
   surface,
 }: InstrumentNoteCellProps) {
-  const handlePointerDown = () => {
-    onPointerDown?.();
+  const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    if (!isPrimaryPointerActivation(event)) {
+      return;
+    }
+
+    onPointerDown?.(event);
     onInteract?.(createInstrumentNoteInteractionTarget(noteKey, midi));
   };
 

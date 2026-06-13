@@ -29,6 +29,10 @@ import {
 } from "@/data/fretboard/inlayPresets";
 import { type FretboardIcon } from "@/data/fretboard/icons";
 import { createFretboardConfig } from "@/utils/fretboard/createFretboardConfig";
+import {
+  FRETBOARD_MAX_FRET,
+  FRETBOARD_MIN_FRET,
+} from "@/utils/fretboard/fretboardConfigPrimitives";
 import { areRangesEqual } from "@/utils/range/numberRange";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import { BoundedRangeSliderGroup } from "@/components/ui/range-slider/BoundedRangeSliderGroup";
@@ -43,8 +47,6 @@ import {
 } from "./options";
 import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
 
-const FRET_RANGE_MAX = 24;
-const FRET_RANGE_MIN = 0;
 const MIN_FRET_RANGE_SPAN = 2;
 
 type FretboardChoice =
@@ -253,8 +255,8 @@ export function FretboardInstrumentCreationPanel({
 
           <BoundedRangeSliderGroup
             endLabel="Last fret"
-            max={FRET_RANGE_MAX}
-            min={FRET_RANGE_MIN}
+            max={FRETBOARD_MAX_FRET}
+            min={FRETBOARD_MIN_FRET}
             minSpan={MIN_FRET_RANGE_SPAN}
             startLabel="First fret"
             value={value.fretRange}

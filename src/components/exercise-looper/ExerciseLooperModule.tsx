@@ -458,10 +458,10 @@ export function ExerciseLooperModule({
               />
               <TactileIconButton
                 aria-label={
-                  playback.isPlaying ? "Stop exercise" : "Play exercise"
+                  playback.isActive ? "Stop exercise" : "Play exercise"
                 }
-                icon={playback.isPlaying ? <Square /> : <Play />}
-                onPress={playback.isPlaying ? playback.stop : playback.start}
+                icon={playback.isActive ? <Square /> : <Play />}
+                onPress={playback.isActive ? playback.stop : playback.start}
                 size="lg"
               />
               <TactileIconButton

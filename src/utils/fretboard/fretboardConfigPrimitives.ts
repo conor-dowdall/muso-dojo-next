@@ -26,6 +26,8 @@ export type ResolvedFretboardSetup = Pick<
 >;
 
 export const DEFAULT_FRETBOARD_INSTRUMENT: StringInstrumentKey = "guitar";
+export const FRETBOARD_MIN_FRET = 0;
+export const FRETBOARD_MAX_FRET = 24;
 const PROPORTIONAL_INLAY_MIN_SIZE_PX = 7;
 const PROPORTIONAL_INLAY_MAX_WIDTH = "62cqi";
 
@@ -174,8 +176,14 @@ export function normalizeFretRange(
     return FRETBOARD_DEFAULTS.fretRange;
   }
 
-  startFret = Math.max(0, Math.floor(startFret));
-  endFret = Math.max(0, Math.floor(endFret));
+  startFret = Math.min(
+    FRETBOARD_MAX_FRET,
+    Math.max(FRETBOARD_MIN_FRET, Math.floor(startFret)),
+  );
+  endFret = Math.min(
+    FRETBOARD_MAX_FRET,
+    Math.max(FRETBOARD_MIN_FRET, Math.floor(endFret)),
+  );
 
   return startFret <= endFret ? [startFret, endFret] : [endFret, startFret];
 }

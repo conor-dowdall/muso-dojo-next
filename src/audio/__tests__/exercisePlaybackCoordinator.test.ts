@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   ExercisePlaybackCoordinator,
   exercisePlaybackRequestsAreEqual,
+  isExercisePlaybackActive,
   type ExercisePlaybackAudioEngine,
   type ExercisePlaybackRequest,
   type ExerciseSchedulerFactory,
@@ -83,6 +84,17 @@ describe("exercisePlaybackRequestsAreEqual", () => {
 });
 
 describe("ExercisePlaybackCoordinator", () => {
+  it("treats pending playback as active only for the matching looper", () => {
+    const snapshot = {
+      events: [],
+      pendingId: "pending-looper",
+      playing: false,
+    };
+
+    expect(isExercisePlaybackActive(snapshot, "pending-looper")).toBe(true);
+    expect(isExercisePlaybackActive(snapshot, "other-looper")).toBe(false);
+  });
+
   it("restarts changed playback from a fresh origin instead of the old beat grid", async () => {
     let currentTime = 10;
     let nextGroupId = 0;
@@ -149,7 +161,16 @@ describe("ExercisePlaybackCoordinator", () => {
     );
     const start = coordinator.start(createRequest("looper", 60));
 
+    expect(coordinator.getSnapshot()).toMatchObject({
+      pendingId: "looper",
+      playing: false,
+    });
+
     coordinator.stop("looper");
+    expect(coordinator.getSnapshot()).toEqual({
+      events: [],
+      playing: false,
+    });
     primeResult.resolve(true);
 
     await expect(start).resolves.toBe(false);
@@ -194,6 +215,11 @@ describe("ExercisePlaybackCoordinator", () => {
     const nextStart = coordinator.start(createRequest("second-looper", 62));
 
     coordinator.stop("first-looper");
+    expect(coordinator.getSnapshot()).toEqual({
+      events: [],
+      pendingId: "second-looper",
+      playing: false,
+    });
     nextPrimeResult.resolve(true);
 
     await expect(nextStart).resolves.toBe(true);

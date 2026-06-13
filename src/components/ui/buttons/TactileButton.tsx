@@ -1,6 +1,7 @@
 import { type MouseEvent, type PointerEvent } from "react";
 import { IconButton, type IconButtonProps } from "./IconButton";
 import interactiveSurfaceStyles from "@/components/ui/interactive-surface/InteractiveSurface.module.css";
+import { isPrimaryPointerActivation } from "@/utils/interaction/isPrimaryPointerActivation";
 import styles from "./TactileButton.module.css";
 
 interface TactileInteractionProps {
@@ -43,7 +44,7 @@ function getTactileInteractionProps({
       }
     },
     onPointerDown: (event: PointerEvent<HTMLButtonElement>) => {
-      if (event.isPrimary && event.button === 0) {
+      if (isPrimaryPointerActivation(event)) {
         press?.();
       }
     },

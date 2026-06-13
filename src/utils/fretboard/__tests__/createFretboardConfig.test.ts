@@ -30,4 +30,17 @@ describe("createFretboardConfig", () => {
       showFretInlays: true,
     });
   });
+
+  it("bounds malformed fret ranges to the supported rendering range", () => {
+    expect(
+      createFretboardConfig("maple", {
+        fretRange: [-100, 1_000_000],
+      }).fretRange,
+    ).toEqual([0, 24]);
+    expect(
+      createFretboardConfig("maple", {
+        fretRange: [30.9, 12.8],
+      }).fretRange,
+    ).toEqual([12, 24]);
+  });
 });

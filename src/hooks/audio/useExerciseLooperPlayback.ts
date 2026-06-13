@@ -15,6 +15,7 @@ import {
   exercisePlaybackRequestsAreEqual,
   exercisePlaybackCoordinator,
   getDefaultAudioPresetId,
+  isExercisePlaybackActive,
   musoAudioEngine,
   type AudioPresetId,
   type ExerciseAuditionNote,
@@ -96,7 +97,9 @@ export function useExerciseLooperPlayback({
     auditionController.getSnapshot,
     auditionController.getSnapshot,
   );
+  const isPending = snapshot.pendingId === id;
   const isPlaying = snapshot.playing && snapshot.activeId === id;
+  const isActive = isExercisePlaybackActive(snapshot, id);
   const subdivisionBeats = exerciseSubdivisionBeats[subdivision];
   const events = useMemo(
     () => createPlaybackEvents(steps, subdivisionBeats),
@@ -139,13 +142,13 @@ export function useExerciseLooperPlayback({
 
   useLayoutEffect(() => {
     if (
-      isPlaying &&
+      isActive &&
       !exercisePlaybackRequestsAreEqual(submittedRequest.current, request)
     ) {
       submittedRequest.current = request;
       void exercisePlaybackCoordinator.start(request);
     }
-  }, [isPlaying, request]);
+  }, [isActive, request]);
 
   useEffect(() => {
     if (!isPlaying || document.visibilityState === "hidden") {
@@ -200,6 +203,8 @@ export function useExerciseLooperPlayback({
     audition,
     auditionActiveKeys,
     auditionChord: auditionNotes,
+    isActive,
+    isPending,
     isPlaying,
     start,
     stop,
