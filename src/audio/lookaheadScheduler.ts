@@ -25,7 +25,7 @@ export interface LookaheadScheduler {
   stop: () => void;
 }
 
-const DEFAULT_HORIZON_SECONDS = 0.15;
+const DEFAULT_HORIZON_SECONDS = 0.3;
 const DEFAULT_TICK_MILLISECONDS = 25;
 const MISSED_EVENT_TOLERANCE_SECONDS = 0.03;
 

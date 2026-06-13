@@ -311,7 +311,15 @@ describe("createWebAudioEngine", () => {
     expect(MockAudioContext.periodicWaveCount).toBe(
       periodicWaveCountAfterPrime,
     );
-    expect(MockAudioContext.compressorNodeCount).toBe(0);
+  });
+
+  it("keeps dry output behind the master compressor", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+
+    expect(MockAudioContext.compressorNodeCount).toBe(1);
   });
 
   it("shares chorus insert effects across notes in one persistent drone", async () => {

@@ -29,6 +29,21 @@ describe("createLookaheadScheduler", () => {
     expect(scheduled).toEqual([10.1, 10.6]);
   });
 
+  it("keeps a wider default runway for delayed main-thread ticks", () => {
+    const scheduled: number[] = [];
+    const scheduler = createLookaheadScheduler({
+      events: [{ duration: 0.25, offset: 0, payload: true }],
+      getCurrentTime: () => 10,
+      onSchedule: (_event, startTime) => scheduled.push(startTime),
+      setTimer: () => 1,
+      clearTimer: vi.fn(),
+    });
+
+    scheduler.start(10.25);
+
+    expect(scheduled).toEqual([10.25]);
+  });
+
   it("skips missed events instead of scheduling a catch-up burst", () => {
     const scheduled: number[] = [];
     const scheduler = createLookaheadScheduler({

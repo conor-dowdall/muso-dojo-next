@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { scheduleOneShotEnvelope } from "@/audio/envelope";
+import { getOneShotMinimumRampSeconds } from "@/audio/webAudioContextLifecycle";
 
 class MockAudioParam {
   readonly events: Array<{
@@ -25,6 +26,14 @@ class MockAudioParam {
 }
 
 describe("scheduleOneShotEnvelope", () => {
+  it("uses two render quanta as the one-shot click-suppression floor", () => {
+    expect(
+      getOneShotMinimumRampSeconds({
+        sampleRate: 48_000,
+      } as AudioContext),
+    ).toBe(256 / 48_000);
+  });
+
   it("preserves click-safe ramps when a long preset envelope is shortened", () => {
     const param = new MockAudioParam();
     const startTime = 2;

@@ -140,33 +140,24 @@ export function createAudioMixer({
     return masterCompressor;
   }
 
-  function disconnectCompressorOutput() {
-    if (!compressor || !compressorOutputConnected) {
-      return;
-    }
-
-    compressor.disconnect();
-    compressorOutputConnected = false;
-  }
-
   function reconnectMasterAmbience() {
     const ambiencePreset = getMasterAmbiencePreset(
       currentMasterAmbiencePresetId,
     );
+    const destination = connectCompressorOutput();
 
     masterInput.disconnect();
     masterEffectChain.dispose();
 
     if (ambiencePreset.effects.length === 0) {
-      disconnectCompressorOutput();
       masterEffectChain = emptyEffectChain;
-      masterInput.connect(context.destination);
+      masterInput.connect(destination);
       return;
     }
 
     masterEffectChain = connectAudioEffectChain({
       context,
-      destination: connectCompressorOutput(),
+      destination,
       effects: ambiencePreset.effects,
       source: masterInput,
     });
