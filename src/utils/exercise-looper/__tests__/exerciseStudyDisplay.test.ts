@@ -22,6 +22,24 @@ describe("resolveExerciseStudyDisplay", () => {
     });
   });
 
+  it("does not add an octave to a chord collection in single-note mode", () => {
+    const sequence = createExerciseSequence({
+      noteCollectionKey: "major7",
+      rootNote: "C",
+    });
+
+    expect(
+      resolveExerciseStudyDisplay({
+        mode: "single",
+        sequence,
+      }),
+    ).toEqual({
+      intervals: ["1", "3", "5", "7"],
+      kind: "notes",
+      notes: ["C", "E", "G", "B"],
+    });
+  });
+
   it("shows the focused interval while idle", () => {
     const sequence = createExerciseSequence({
       end: { octave: 0, stepOffset: 1 },

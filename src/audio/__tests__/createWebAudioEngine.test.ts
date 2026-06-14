@@ -608,6 +608,14 @@ describe("createWebAudioEngine", () => {
     expect(clickScheduled).toBe(true);
     expect(MockAudioContext.oscillatorStartTimes).toContain(1.25);
     expect(MockAudioContext.bufferSourceStartTimes).toEqual([1.5]);
+    expect(
+      (MockAudioContext.gainNodes.at(-1)!.gain as unknown as MockAudioParam)
+        .events,
+    ).toEqual([
+      { time: 1.5, type: "set", value: 0.42 },
+      { time: 1.542, type: "set", value: 0.42 },
+      { time: 1.55, type: "ramp", value: 0 },
+    ]);
   });
 
   it("preserves the intended end time when an exercise note is scheduled late", async () => {

@@ -1,5 +1,6 @@
 import {
   getNoteNamesForRootAndNoteCollectionKey,
+  noteCollections,
   type NoteCollectionKey,
 } from "@musodojo/music-theory-data";
 import { isPlayableMidiNote } from "@/audio/pitch";
@@ -192,11 +193,9 @@ function createDisplayRows({
 
 function createStudyReference({
   collectionKey,
-  isFiniteVoicing,
   noteNames,
 }: {
   collectionKey: NoteCollectionKey;
-  isFiniteVoicing: boolean;
   noteNames: readonly string[];
 }) {
   const metadata = getCollectionToneSequenceMetadata(collectionKey);
@@ -208,7 +207,10 @@ function createStudyReference({
       : [{ intervalLabel: tone.intervalLabel, label }];
   });
 
-  if (isFiniteVoicing || studyReference.length === 0) {
+  if (
+    noteCollections[collectionKey].category !== "scale" ||
+    studyReference.length === 0
+  ) {
     return studyReference;
   }
 
@@ -345,7 +347,6 @@ export function createExerciseSequence({
   const notes = displayNotes.filter((note) => note.isAnchor);
   const studyReference = createStudyReference({
     collectionKey: resolvedCollectionKey,
-    isFiniteVoicing: toneSequence.isFiniteVoicing,
     noteNames,
   });
   const firstAnchorOctave =
