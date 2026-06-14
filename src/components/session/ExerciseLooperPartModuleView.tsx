@@ -43,6 +43,8 @@ export function ExerciseLooperPartModuleView({
       setExerciseLooperAudioPresetId: state.setExerciseLooperAudioPresetId,
       setExerciseLooperCountInBeats: state.setExerciseLooperCountInBeats,
       setExerciseLooperEnd: state.setExerciseLooperEnd,
+      setExerciseLooperMetronomeEnabled:
+        state.setExerciseLooperMetronomeEnabled,
       setExerciseLooperOctaveOffset: state.setExerciseLooperOctaveOffset,
       setExerciseLooperPattern: state.setExerciseLooperPattern,
       setExerciseLooperStart: state.setExerciseLooperStart,
@@ -87,6 +89,14 @@ export function ExerciseLooperPartModuleView({
           ? undefined
           : (value) =>
               actions.setExerciseLooperEnd(sessionId, partId, moduleId, value)
+      }
+      onMetronomeEnabledChange={(value) =>
+        actions.setExerciseLooperMetronomeEnabled(
+          sessionId,
+          partId,
+          moduleId,
+          value,
+        )
       }
       onOctaveOffsetChange={(value) =>
         actions.setExerciseLooperOctaveOffset(

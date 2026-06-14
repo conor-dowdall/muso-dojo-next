@@ -4,6 +4,7 @@ import {
   exercisePlaybackRequestsAreEqual,
   isExercisePlaybackActive,
   type ExercisePlaybackAudioEngine,
+  type ExerciseMetronomeSchedulerFactory,
   type ExercisePlaybackRequest,
   type ExerciseSchedulerFactory,
 } from "@/audio/exercisePlaybackCoordinator";
@@ -21,6 +22,7 @@ function createRequest(id: string, midi: number): ExercisePlaybackRequest {
       },
     ],
     id,
+    metronomeEnabled: false,
     presetId: "reference-tone",
     tempoBpm: 60,
   };
@@ -56,6 +58,7 @@ describe("exercisePlaybackRequestsAreEqual", () => {
     const changedRequests: ExercisePlaybackRequest[] = [
       { ...request, id: "other-looper" },
       { ...request, countInBeats: 4 },
+      { ...request, metronomeEnabled: true },
       { ...request, presetId: "warm-pad" },
       { ...request, tempoBpm: 90 },
       { ...request, events: [] },
@@ -274,5 +277,59 @@ describe("ExercisePlaybackCoordinator", () => {
       originTime: 14.08,
       playing: true,
     });
+  });
+
+  it("schedules unaccented quarter-note clicks from the exercise origin", async () => {
+    const scheduleMetronomeClick = vi.fn();
+    const metronomeStart = vi.fn();
+    const metronomeStop = vi.fn();
+    const createMetronomeScheduler = vi.fn<ExerciseMetronomeSchedulerFactory>(
+      () => ({
+        isRunning: () => true,
+        start: metronomeStart,
+        stop: metronomeStop,
+      }),
+    );
+    const coordinator = new ExercisePlaybackCoordinator(
+      {
+        cancelPlaybackGroup: vi.fn(),
+        createPlaybackGroup: () => "group-0" as PlaybackGroupHandle,
+        getCurrentTime: () => 10,
+        prime: async () => true,
+        scheduleMetronomeClick,
+        scheduleNote: vi.fn(),
+        subscribeToReset: () => () => undefined,
+        subscribeToStopAll: () => () => undefined,
+      },
+      () => ({
+        isRunning: () => true,
+        start: vi.fn(),
+        stop: vi.fn(),
+      }),
+      createMetronomeScheduler,
+    );
+
+    await coordinator.start({
+      ...createRequest("looper", 60),
+      countInBeats: 2,
+      metronomeEnabled: true,
+      tempoBpm: 120,
+    });
+
+    expect(createMetronomeScheduler).toHaveBeenCalledOnce();
+    const options = createMetronomeScheduler.mock.calls[0]?.[0];
+    expect(options?.events).toEqual([
+      { duration: 0.5, offset: 0, payload: true },
+    ]);
+    options?.onSchedule(options.events[0]!, 11.08, 0, 0);
+    expect(scheduleMetronomeClick).toHaveBeenLastCalledWith({
+      accent: false,
+      group: "group-0",
+      startTime: 11.08,
+    });
+    expect(metronomeStart).toHaveBeenCalledWith(11.08);
+
+    coordinator.stop("looper");
+    expect(metronomeStop).toHaveBeenCalledOnce();
   });
 });

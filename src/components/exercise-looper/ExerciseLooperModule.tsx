@@ -7,7 +7,13 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { Play, Square, WavesArrowDown, WavesArrowUp } from "lucide-react";
+import {
+  Metronome,
+  Play,
+  Square,
+  WavesArrowDown,
+  WavesArrowUp,
+} from "lucide-react";
 import { getDefaultAudioPresetId, type AudioPresetId } from "@/audio";
 import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
 import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeaderActions";
@@ -30,6 +36,7 @@ import {
 import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import {
   DEFAULT_EXERCISE_COUNT_IN_BEATS,
+  DEFAULT_EXERCISE_METRONOME_ENABLED,
   DEFAULT_EXERCISE_PATTERN,
   DEFAULT_EXERCISE_START,
   DEFAULT_EXERCISE_SUBDIVISION,
@@ -86,12 +93,14 @@ export function ExerciseLooperModule({
   countInBeats = DEFAULT_EXERCISE_COUNT_IN_BEATS,
   end,
   moduleId,
+  metronomeEnabled = DEFAULT_EXERCISE_METRONOME_ENABLED,
   noteCollectionKey,
   octaveOffset = 0,
   onAudioPresetIdChange,
   onClone,
   onCountInBeatsChange,
   onEndChange,
+  onMetronomeEnabledChange,
   onOctaveOffsetChange,
   onPatternChange,
   onRemove,
@@ -110,6 +119,7 @@ export function ExerciseLooperModule({
   countInBeats?: ExerciseCountInBeats;
   end?: CollectionRangeBoundary;
   moduleId: string;
+  metronomeEnabled?: boolean;
   noteCollectionKey: Parameters<
     typeof createExerciseSequence
   >[0]["noteCollectionKey"];
@@ -118,6 +128,7 @@ export function ExerciseLooperModule({
   onClone?: () => void;
   onCountInBeatsChange?: (value: ExerciseCountInBeats) => void;
   onEndChange?: (value: CollectionRangeBoundary) => void;
+  onMetronomeEnabledChange?: (value: boolean) => void;
   onOctaveOffsetChange?: (value: number) => void;
   onPatternChange?: (value: ExercisePattern) => void;
   onRemove?: () => void;
@@ -191,6 +202,7 @@ export function ExerciseLooperModule({
     audioPresetId,
     countInBeats,
     id: moduleId,
+    metronomeEnabled,
     steps: sequence.steps,
     subdivision,
     tempoBpm,
@@ -388,7 +400,7 @@ export function ExerciseLooperModule({
         headerActions={
           showHeader ? (
             <PartModuleHeaderActions
-              center={
+              start={
                 <NoteRangeHeaderActions
                   canAddNote={canAddNote}
                   canAddOctave={canAddOctave}
@@ -466,22 +478,6 @@ export function ExerciseLooperModule({
               </TactileControlGroup>
 
               <TactileControlGroup
-                aria-label="Playback"
-                className={styles.playbackControlGroup}
-              >
-                <TactileIconButton
-                  aria-label={
-                    playback.isActive ? "Stop exercise" : "Play exercise"
-                  }
-                  className={styles.playbackButton}
-                  icon={playback.isActive ? <Square /> : <Play />}
-                  onPress={playback.isActive ? playback.stop : playback.start}
-                  selected={playback.isActive}
-                  size="lg"
-                />
-              </TactileControlGroup>
-
-              <TactileControlGroup
                 aria-label="Exercise octave"
                 className={styles.octaveControlGroup}
                 controlsClassName={styles.secondaryControlButtons}
@@ -505,6 +501,49 @@ export function ExerciseLooperModule({
                   unavailable={!canShiftUp}
                 />
               </TactileControlGroup>
+
+              <div
+                aria-label="Pulse and playback controls"
+                className={styles.playbackActionControls}
+                role="group"
+              >
+                <TactileControlGroup
+                  aria-label="Metronome"
+                  readout={metronomeEnabled ? "On" : "Off"}
+                  readoutAriaLabel={`Metronome: ${
+                    metronomeEnabled ? "On" : "Off"
+                  }`}
+                >
+                  <TactileIconButton
+                    aria-label={
+                      metronomeEnabled
+                        ? "Turn off metronome during exercise"
+                        : "Turn on metronome during exercise"
+                    }
+                    className={styles.metronomeButton}
+                    icon={<Metronome />}
+                    onPress={() =>
+                      onMetronomeEnabledChange?.(!metronomeEnabled)
+                    }
+                    selected={metronomeEnabled}
+                    size="md"
+                    unavailable={!onMetronomeEnabledChange}
+                  />
+                </TactileControlGroup>
+
+                <TactileControlGroup aria-label="Playback">
+                  <TactileIconButton
+                    aria-label={
+                      playback.isActive ? "Stop exercise" : "Play exercise"
+                    }
+                    className={styles.playbackButton}
+                    icon={playback.isActive ? <Square /> : <Play />}
+                    onPress={playback.isActive ? playback.stop : playback.start}
+                    selected={playback.isActive}
+                    size="lg"
+                  />
+                </TactileControlGroup>
+              </div>
             </div>
 
             <ExercisePatternControls

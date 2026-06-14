@@ -239,6 +239,12 @@ export interface ExerciseLooperActions {
     moduleId: string,
     end: SettingValue<CollectionRangeBoundary>,
   ) => void;
+  setExerciseLooperMetronomeEnabled: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    metronomeEnabled: SettingValue<boolean>,
+  ) => void;
   setExerciseLooperOctaveOffset: (
     sessionId: string,
     partId: string,

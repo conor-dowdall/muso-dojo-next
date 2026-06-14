@@ -613,8 +613,8 @@ describe("createWebAudioEngine", () => {
         .events,
     ).toEqual([
       { time: 1.5, type: "set", value: 0.42 },
-      { time: 1.542, type: "set", value: 0.42 },
-      { time: 1.55, type: "ramp", value: 0 },
+      { time: 1.568, type: "set", value: 0.42 },
+      { time: 1.58, type: "ramp", value: 0 },
     ]);
   });
 

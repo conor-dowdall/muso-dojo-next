@@ -25,6 +25,7 @@ import {
   boundariesAreEqual,
   DEFAULT_EXERCISE_COUNT_IN_BEATS,
   DEFAULT_EXERCISE_END,
+  DEFAULT_EXERCISE_METRONOME_ENABLED,
   DEFAULT_EXERCISE_PATTERN,
   DEFAULT_EXERCISE_START,
   DEFAULT_EXERCISE_SUBDIVISION,
@@ -34,6 +35,7 @@ import {
   normalizeCollectionRangeBoundary,
   normalizeExerciseAudioPresetId,
   normalizeExerciseCountInBeats,
+  normalizeExerciseMetronomeEnabled,
   normalizeExercisePattern,
   normalizeExerciseSubdivision,
   normalizeExerciseWood,
@@ -138,6 +140,9 @@ export function normalizePartModuleConfig(
     case "exercise-looper": {
       const audioPresetId = normalizeExerciseAudioPresetId(value.audioPresetId);
       const countInBeats = normalizeExerciseCountInBeats(value.countInBeats);
+      const metronomeEnabled = normalizeExerciseMetronomeEnabled(
+        value.metronomeEnabled,
+      );
       const start = normalizeCollectionRangeBoundary(value.start);
       const end = normalizeCollectionRangeBoundary(value.end);
       const pattern = normalizeExercisePattern(value.pattern);
@@ -159,6 +164,10 @@ export function normalizePartModuleConfig(
           : {}),
         ...(end && !boundariesAreEqual(end, DEFAULT_EXERCISE_END)
           ? { end }
+          : {}),
+        ...(metronomeEnabled !== undefined &&
+        metronomeEnabled !== DEFAULT_EXERCISE_METRONOME_ENABLED
+          ? { metronomeEnabled }
           : {}),
         ...(octaveOffset !== undefined ? { octaveOffset } : {}),
         ...(pattern &&

@@ -84,6 +84,7 @@ describe("normalizePartModuleConfig", () => {
         countInBeats: 3,
         end: { octave: 1, stepOffset: 2 },
         id: "looper-1",
+        metronomeEnabled: true,
         octaveOffset: 2,
         pattern: {
           direction: "descending",
@@ -104,6 +105,7 @@ describe("normalizePartModuleConfig", () => {
       countInBeats: 3,
       end: { octave: 1, stepOffset: 2 },
       id: "looper-1",
+      metronomeEnabled: true,
       octaveOffset: 2,
       pattern: {
         direction: "descending",
@@ -128,6 +130,7 @@ describe("normalizePartModuleConfig", () => {
         countInBeats: 0,
         end: { octave: 1, stepOffset: 0 },
         id: "looper-1",
+        metronomeEnabled: false,
         octaveOffset: 99,
         pattern: {
           direction: "up-down",
@@ -152,6 +155,7 @@ describe("normalizePartModuleConfig", () => {
       normalizePartModuleConfig({
         countInBeats: 5,
         id: "looper-1",
+        metronomeEnabled: "yes",
         type: "exercise-looper",
       }),
     ).toStrictEqual({

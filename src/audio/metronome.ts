@@ -1,9 +1,10 @@
-const CLICK_DURATION_SECONDS = 0.05;
+const CLICK_DURATION_SECONDS = 0.08;
 const CLICK_SAMPLE_RATE_FALLBACK = 48_000;
-const CLICK_FADE_OUT_SECONDS = 0.008;
-const CLICK_PEAK_SAMPLE = 0.92;
-const REGULAR_CLICK_FREQUENCY_HZ = 1_520;
-const ACCENT_CLICK_FREQUENCY_HZ = 2_080;
+const CLICK_FADE_OUT_SECONDS = 0.012;
+const CLICK_PEAK_SAMPLE = 0.9;
+const IMPACT_FILTER_FREQUENCY_HZ = 2_400;
+const REGULAR_CLICK_FREQUENCY_HZ = 680;
+const ACCENT_CLICK_FREQUENCY_HZ = 880;
 const REGULAR_CLICK_GAIN = 0.42;
 const ACCENT_CLICK_GAIN = 0.58;
 
@@ -23,22 +24,33 @@ function createClickBuffer({
   const length = Math.max(1, Math.ceil(sampleRate * CLICK_DURATION_SECONDS));
   const buffer = context.createBuffer(1, length, sampleRate);
   const channel = buffer.getChannelData(0);
+  const impactFilterCoefficient =
+    1 - Math.exp((-2 * Math.PI * IMPACT_FILTER_FREQUENCY_HZ) / sampleRate);
+  let filteredNoise = 0;
   let peak = 0;
   let noiseState = noiseSeed;
 
   for (let index = 0; index < channel.length; index += 1) {
     const time = index / sampleRate;
-    const attack = Math.min(1, time / 0.0004);
-    const bodyEnvelope = attack * Math.exp(-time * 58);
-    const transientEnvelope = attack * Math.exp(-time * 180);
+    const attack = Math.min(1, time / 0.0007);
 
     noiseState = (Math.imul(noiseState, 1_664_525) + 1_013_904_223) >>> 0;
     const noise = noiseState / 0x80000000 - 1;
+    filteredNoise += impactFilterCoefficient * (noise - filteredNoise);
+
+    // Unevenly spaced resonances give the hit the body of a small wooden block.
     const body =
-      Math.sin(2 * Math.PI * frequencyHz * time) +
-      0.38 * Math.sin(2 * Math.PI * frequencyHz * 1.47 * time + Math.PI / 3);
-    const sample =
-      body * bodyEnvelope * 0.72 + noise * transientEnvelope * 0.28;
+      Math.sin(2 * Math.PI * frequencyHz * time) * Math.exp(-time * 30) +
+      0.46 *
+        Math.sin(2 * Math.PI * frequencyHz * 1.51 * time + Math.PI / 5) *
+        Math.exp(-time * 43) +
+      0.2 *
+        Math.sin(2 * Math.PI * frequencyHz * 2.13 * time + Math.PI / 3) *
+        Math.exp(-time * 66);
+    const impact =
+      filteredNoise * Math.exp(-time * 105) +
+      noise * Math.exp(-time * 420) * 0.12;
+    const sample = attack * (body * 0.82 + impact * 0.18);
 
     channel[index] = sample;
     peak = Math.max(peak, Math.abs(sample));

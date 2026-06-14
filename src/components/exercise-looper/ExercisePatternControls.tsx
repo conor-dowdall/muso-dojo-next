@@ -3,13 +3,15 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  Dice3,
-  GitBranch,
-  GitCommitHorizontal,
-  GitFork,
+  CirclePile,
+  CircleSmall,
   Merge,
   Minus,
+  Music,
+  Music3,
+  Music4,
   Plus,
+  Spline,
   Split,
 } from "lucide-react";
 import { TactileIconButton } from "@/components/ui/buttons/TactileButton";
@@ -86,6 +88,7 @@ function ExerciseStudyReadout({ display }: { display: ExerciseStudyDisplay }) {
             ? true
             : undefined
         }
+        data-dense={display.notes.length > 8 ? true : undefined}
         data-kind={display.kind}
       >
         {display.kind === "chord" ? (
@@ -112,19 +115,19 @@ const directionChoices = [
 
 const patternModeChoices = [
   {
-    icon: <GitCommitHorizontal />,
+    icon: <CircleSmall />,
     label: "Single notes",
     mode: "single",
     readout: "Single Notes",
   },
   {
-    icon: <GitBranch />,
+    icon: <Spline />,
     label: "Play an interval from each note",
     mode: "interval",
     readout: "Intervals",
   },
   {
-    icon: <GitFork />,
+    icon: <CirclePile />,
     label: "Play a chord from each note",
     mode: "extension",
     readout: "Chords",
@@ -154,13 +157,25 @@ const notePlaybackChoices = [
 }[];
 
 const noteValueChoices = [
-  { label: "Quarter notes", noteValue: "quarter", symbol: "¼" },
-  { label: "Eighth notes", noteValue: "eighth", symbol: "⅛" },
-  { label: "Sixteenth notes", noteValue: "sixteenth", symbol: "¹⁄₁₆" },
+  {
+    icon: <Music3 />,
+    label: "Quarter notes",
+    noteValue: "quarter",
+  },
+  {
+    icon: <Music />,
+    label: "Eighth notes",
+    noteValue: "eighth",
+  },
+  {
+    icon: <Music4 />,
+    label: "Sixteenth notes",
+    noteValue: "sixteenth",
+  },
 ] as const satisfies readonly {
+  icon: ReactNode;
   label: string;
   noteValue: ExerciseNoteValue;
-  symbol: string;
 }[];
 
 export function ExercisePatternControls({
@@ -349,32 +364,35 @@ export function ExercisePatternControls({
           controlsClassName={styles.rhythmControls}
           readout={rhythmLabel}
         >
-          {noteValueChoices.map((choice) => (
-            <TactileIconButton
-              key={choice.noteValue}
-              aria-label={choice.label}
-              className={styles.patternButton}
-              icon={
-                <span
-                  aria-hidden="true"
-                  className={styles.noteValueButtonLabel}
-                >
-                  {choice.symbol}
-                </span>
-              }
-              onPress={() => setNoteValue(choice.noteValue)}
-              selected={rhythm.noteValue === choice.noteValue}
-              size="md"
-            />
-          ))}
+          <span
+            aria-label="Note value"
+            className={styles.noteValueControls}
+            role="group"
+          >
+            {noteValueChoices.map((choice) => (
+              <TactileIconButton
+                key={choice.noteValue}
+                aria-label={choice.label}
+                className={styles.patternButton}
+                icon={choice.icon}
+                onPress={() => setNoteValue(choice.noteValue)}
+                selected={rhythm.noteValue === choice.noteValue}
+                size="md"
+              />
+            ))}
+          </span>
           <TactileIconButton
             aria-label={
               rhythm.feel === "triplet"
                 ? "Use straight notes"
                 : "Use triplet notes"
             }
-            className={styles.patternButton}
-            icon={<Dice3 />}
+            className={`${styles.patternButton} ${styles.tripletButton}`}
+            icon={
+              <span aria-hidden="true" className={styles.tripletButtonLabel}>
+                3
+              </span>
+            }
             onPress={toggleTriplets}
             selected={rhythm.feel === "triplet"}
             size="md"

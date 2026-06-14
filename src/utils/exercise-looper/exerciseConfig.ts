@@ -17,6 +17,7 @@ import {
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 
 export const DEFAULT_EXERCISE_COUNT_IN_BEATS = 0 satisfies ExerciseCountInBeats;
+export const DEFAULT_EXERCISE_METRONOME_ENABLED = false;
 export const DEFAULT_EXERCISE_PATTERN = {
   direction: "up-down",
   extensionDegree: 5,
@@ -66,6 +67,12 @@ export function normalizeExerciseCountInBeats(
   return value === 0 || value === 2 || value === 3 || value === 4
     ? value
     : undefined;
+}
+
+export function normalizeExerciseMetronomeEnabled(
+  value: unknown,
+): boolean | undefined {
+  return typeof value === "boolean" ? value : undefined;
 }
 
 export function normalizeExerciseSubdivision(

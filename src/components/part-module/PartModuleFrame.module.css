@@ -3,10 +3,6 @@
     --instrument-frame-background,
     var(--color-surface)
   );
-  --part-module-frame-border: var(
-    --instrument-frame-border,
-    var(--color-border)
-  );
   --part-module-body-radius: var(--instrument-body-radius, 0);
 
   position: relative;
@@ -28,7 +24,7 @@
   align-self: center;
   gap: var(--space-2);
   padding: var(--space-2);
-  border: var(--border-width-base) solid var(--part-module-frame-border);
+  border: 0;
   border-radius: calc(var(--radius-control) + var(--space-1));
   background: var(--part-module-frame-background);
   box-shadow: var(--shadow-highlight-inset), var(--shadow-surface-raised);

@@ -56,42 +56,50 @@ export function SessionHeader({
           </>
         }
         actions={
-          <>
-            <span
-              className={styles.sessionActionGroup}
-              role="group"
-              aria-label="Session controls"
-            >
-              <IconButton
-                aria-label="Add to session"
-                disabled={!hasActiveSession}
-                icon={<Plus />}
-                size="sm"
-                tooltip="Add to session"
-                variant="filled"
-                onClick={onOpenAddDialog}
-              />
-              <IconButton
-                aria-label="Enter performance mode"
-                disabled={!hasActiveSession || !onEnterPerformanceMode}
-                icon={<Maximize2 />}
-                size="sm"
-                shouldYield={false}
-                tooltip="Performance mode"
-                onClick={onEnterPerformanceMode}
-              />
-              {activeSessionId ? (
+          <div className={styles.sessionHeaderActions}>
+            {activeSessionId ? (
+              <span
+                aria-label="Session playback controls"
+                className={styles.sessionPulseGroup}
+                role="group"
+              >
                 <SessionPulseControl sessionId={activeSessionId} />
-              ) : null}
-              <OverflowMenuButton
-                aria-label={sessionOverflowLabel}
-                onClick={() => openDialog({ kind: "sessions" })}
+              </span>
+            ) : null}
+            <span
+              className={styles.sessionUtilityGroup}
+              role="group"
+              aria-label="Session actions"
+            >
+              <span className={styles.sessionActionGroup}>
+                <IconButton
+                  aria-label="Add to session"
+                  disabled={!hasActiveSession}
+                  icon={<Plus />}
+                  size="sm"
+                  tooltip="Add to session"
+                  variant="filled"
+                  onClick={onOpenAddDialog}
+                />
+                <IconButton
+                  aria-label="Enter performance mode"
+                  disabled={!hasActiveSession || !onEnterPerformanceMode}
+                  icon={<Maximize2 />}
+                  size="sm"
+                  shouldYield={false}
+                  tooltip="Performance mode"
+                  onClick={onEnterPerformanceMode}
+                />
+                <OverflowMenuButton
+                  aria-label={sessionOverflowLabel}
+                  onClick={() => openDialog({ kind: "sessions" })}
+                />
+              </span>
+              <SessionMenu
+                onOpenDojoSettings={() => openDialog({ kind: "settings" })}
               />
             </span>
-            <SessionMenu
-              onOpenDojoSettings={() => openDialog({ kind: "settings" })}
-            />
-          </>
+          </div>
         }
       />
 

@@ -5,17 +5,8 @@ import { Square } from "lucide-react";
 import { musoAudioEngine } from "@/audio";
 import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
-import {
-  Dialog,
-  DialogContent,
-  DialogContentSection,
-  DialogHeader,
-} from "@/components/ui/dialog/Dialog";
-import {
-  RangeSlider,
-  RangeSliderGroup,
-} from "@/components/ui/range-slider/RangeSlider";
 import { useAppStore } from "@/stores/appStore";
+import { SessionTempoDialog } from "./SessionTempoDialog";
 
 export function SessionPulseControl({ sessionId }: { sessionId: string }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,7 +20,7 @@ export function SessionPulseControl({ sessionId }: { sessionId: string }) {
   return (
     <>
       <Button
-        aria-label={`Tempo settings. Current: ${tempoBpm} BPM`}
+        aria-label={`Session tempo settings. Current: ${tempoBpm} BPM`}
         label={`${tempoBpm} BPM`}
         size="sm"
         onClick={() => setIsOpen(true)}
@@ -52,28 +43,12 @@ export function SessionPulseControl({ sessionId }: { sessionId: string }) {
         }}
       />
 
-      <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)} size="standard">
-        <DialogHeader title="Tempo" onClose={() => setIsOpen(false)} />
-        <DialogContent layout="stack" menuRhythm="standard">
-          <DialogContentSection ariaLabel="Timing">
-            <RangeSliderGroup>
-              <RangeSlider
-                label="Tempo"
-                max={300}
-                min={30}
-                value={tempoBpm}
-                valueLabel={`${tempoBpm} BPM`}
-                onChange={(event) =>
-                  setSessionTempoBpm(
-                    sessionId,
-                    event.currentTarget.valueAsNumber,
-                  )
-                }
-              />
-            </RangeSliderGroup>
-          </DialogContentSection>
-        </DialogContent>
-      </Dialog>
+      <SessionTempoDialog
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        onTempoBpmChange={(value) => setSessionTempoBpm(sessionId, value)}
+        tempoBpm={tempoBpm}
+      />
     </>
   );
 }

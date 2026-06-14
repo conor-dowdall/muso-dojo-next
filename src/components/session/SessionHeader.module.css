@@ -14,12 +14,24 @@
   color: var(--color-text);
 }
 
+.sessionHeaderActions,
+.sessionPulseGroup,
+.sessionUtilityGroup,
 .sessionActionGroup {
-  display: inline-flex;
+  display: flex;
   flex: 0 1 auto;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--control-header-wrap-gap) var(--control-header-peer-gap);
   min-inline-size: 0;
   max-inline-size: 100%;
+}
+
+.sessionHeaderActions {
+  gap: var(--control-header-wrap-gap) var(--control-header-cluster-gap);
+}
+
+.sessionPulseGroup,
+.sessionUtilityGroup,
+.sessionActionGroup {
+  gap: var(--control-header-wrap-gap) var(--control-header-peer-gap);
 }

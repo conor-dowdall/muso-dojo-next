@@ -116,6 +116,7 @@ export interface ExerciseLooperPartModuleConfig extends PartModuleBaseConfig<"ex
   audioPresetId?: AudioPresetId;
   countInBeats?: ExerciseCountInBeats;
   end?: CollectionRangeBoundary;
+  metronomeEnabled?: boolean;
   octaveOffset?: number;
   pattern?: ExercisePattern;
   start?: CollectionRangeBoundary;

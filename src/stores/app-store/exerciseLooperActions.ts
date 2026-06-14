@@ -7,6 +7,7 @@ import {
   boundariesAreEqual,
   DEFAULT_EXERCISE_COUNT_IN_BEATS,
   DEFAULT_EXERCISE_END,
+  DEFAULT_EXERCISE_METRONOME_ENABLED,
   DEFAULT_EXERCISE_PATTERN,
   DEFAULT_EXERCISE_START,
   DEFAULT_EXERCISE_SUBDIVISION,
@@ -90,6 +91,18 @@ export function createExerciseLooperActions(
       if (!boundariesAreEqual(next, current)) {
         get().updateExerciseLooperSettings(sessionId, partId, moduleId, {
           end: next,
+        });
+      }
+    },
+    setExerciseLooperMetronomeEnabled: (sessionId, partId, moduleId, value) => {
+      const partModule = getLooper(sessionId, partId, moduleId);
+      if (!partModule) return;
+      const current =
+        partModule.metronomeEnabled ?? DEFAULT_EXERCISE_METRONOME_ENABLED;
+      const next = resolveSettingValue(value, current);
+      if (next !== current) {
+        get().updateExerciseLooperSettings(sessionId, partId, moduleId, {
+          metronomeEnabled: next,
         });
       }
     },

@@ -75,6 +75,7 @@ export function useExerciseLooperPlayback({
   audioPresetId,
   countInBeats,
   id,
+  metronomeEnabled,
   steps,
   subdivision,
   tempoBpm,
@@ -82,6 +83,7 @@ export function useExerciseLooperPlayback({
   audioPresetId?: AudioPresetId;
   countInBeats: ExerciseCountInBeats;
   id: string;
+  metronomeEnabled: boolean;
   steps: readonly ExerciseSequenceStep[];
   subdivision: ExerciseSubdivision;
   tempoBpm: number;
@@ -113,10 +115,11 @@ export function useExerciseLooperPlayback({
       countInBeats,
       events,
       id,
+      metronomeEnabled,
       presetId: audioPresetId ?? getDefaultAudioPresetId("exercise"),
       tempoBpm,
     }),
-    [audioPresetId, countInBeats, events, id, tempoBpm],
+    [audioPresetId, countInBeats, events, id, metronomeEnabled, tempoBpm],
   );
   const submittedRequest = useRef(request);
 
