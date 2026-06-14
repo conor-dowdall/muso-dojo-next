@@ -23,9 +23,13 @@ import {
 } from "@/data/woodSurfaces";
 import { useExerciseLooperPlayback } from "@/hooks/audio/useExerciseLooperPlayback";
 import { useInstrumentNavigation } from "@/hooks/instrument/useInstrumentNavigation";
-import { type ExerciseSubdivision } from "@/types/session";
+import {
+  type ExerciseCountInBeats,
+  type ExerciseSubdivision,
+} from "@/types/session";
 import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import {
+  DEFAULT_EXERCISE_COUNT_IN_BEATS,
   DEFAULT_EXERCISE_PATTERN,
   DEFAULT_EXERCISE_START,
   DEFAULT_EXERCISE_SUBDIVISION,
@@ -39,10 +43,14 @@ import {
   getCollectionPosition,
   getCollectionRangeBoundary,
   getExerciseAnchorPositionBounds,
+  getExerciseBaseOctave,
   type CollectionRangeBoundary,
   type ExercisePattern,
 } from "@/utils/exercise-looper/exerciseSequence";
-import { resolveExerciseStudyChordDescriptor } from "@/utils/exercise-looper/exerciseStudyDisplay";
+import {
+  getExerciseAnchorDisplayNotes,
+  resolveExerciseStudyDisplay,
+} from "@/utils/exercise-looper/exerciseStudyDisplay";
 import { getClosestNoteInColumn } from "@/utils/instrument/getClosestNoteInColumn";
 import { ExerciseLooperNoteGrid } from "./ExerciseLooperNoteGrid";
 import { ExerciseLooperOptionsDialog } from "./ExerciseLooperOptionsDialog";
@@ -68,14 +76,21 @@ function getLooperRowClassName(rowCount: number) {
   }
 }
 
+const countInChoices = [2, 3, 4] as const satisfies readonly Exclude<
+  ExerciseCountInBeats,
+  0
+>[];
+
 export function ExerciseLooperModule({
   audioPresetId,
+  countInBeats = DEFAULT_EXERCISE_COUNT_IN_BEATS,
   end,
   moduleId,
   noteCollectionKey,
   octaveOffset = 0,
   onAudioPresetIdChange,
   onClone,
+  onCountInBeatsChange,
   onEndChange,
   onOctaveOffsetChange,
   onPatternChange,
@@ -92,6 +107,7 @@ export function ExerciseLooperModule({
   wood = DEFAULT_WOOD_SURFACE_ID,
 }: {
   audioPresetId?: AudioPresetId;
+  countInBeats?: ExerciseCountInBeats;
   end?: CollectionRangeBoundary;
   moduleId: string;
   noteCollectionKey: Parameters<
@@ -100,6 +116,7 @@ export function ExerciseLooperModule({
   octaveOffset?: number;
   onAudioPresetIdChange?: (value: AudioPresetId) => void;
   onClone?: () => void;
+  onCountInBeatsChange?: (value: ExerciseCountInBeats) => void;
   onEndChange?: (value: CollectionRangeBoundary) => void;
   onOctaveOffsetChange?: (value: number) => void;
   onPatternChange?: (value: ExercisePattern) => void;
@@ -172,6 +189,7 @@ export function ExerciseLooperModule({
   );
   const playback = useExerciseLooperPlayback({
     audioPresetId,
+    countInBeats,
     id: moduleId,
     steps: sequence.steps,
     subdivision,
@@ -185,52 +203,25 @@ export function ExerciseLooperModule({
     () => new Map(sequence.notes.map((note) => [note.key, note])),
     [sequence.notes],
   );
-  const noteByCollectionPosition = useMemo(
-    () =>
-      new Map(
-        sequence.displayNotes.map(
-          (note) => [note.collectionPosition, note] as const,
-        ),
-      ),
-    [sequence.displayNotes],
-  );
   const handleNoteAudition = useCallback(
     (target: InstrumentNoteInteractionTarget) => {
       const root = noteByKey.get(target.key);
-      const descriptor =
-        root === undefined
-          ? undefined
-          : sequence.chordDescriptorsByAnchorPosition.get(
-              root.collectionPosition,
-            );
 
-      if (effectivePattern.mode === "extension" && descriptor) {
+      if (effectivePattern.mode !== "single" && root !== undefined) {
+        const exerciseNotes = getExerciseAnchorDisplayNotes(
+          sequence,
+          root.collectionPosition,
+        );
+
         playback.auditionChord(
-          descriptor.midiNotes.map((midi, index) => {
-            const collectionPosition = descriptor.collectionPositions[index];
-            const visibleNote =
-              collectionPosition === undefined
-                ? undefined
-                : noteByCollectionPosition.get(collectionPosition);
-
-            return {
-              ...(visibleNote ? { key: visibleNote.key } : {}),
-              midi,
-            };
-          }),
+          exerciseNotes.map((note) => ({ key: note.key, midi: note.midi })),
         );
         return;
       }
 
       playback.audition(target);
     },
-    [
-      effectivePattern.mode,
-      noteByCollectionPosition,
-      noteByKey,
-      playback,
-      sequence.chordDescriptorsByAnchorPosition,
-    ],
+    [effectivePattern.mode, noteByKey, playback, sequence],
   );
   const {
     focusedKey,
@@ -265,24 +256,12 @@ export function ExerciseLooperModule({
       );
     },
   });
-  const activeChordDescriptor =
-    effectivePattern.mode === "extension" &&
-    playback.activeAnchorPosition !== undefined
-      ? sequence.chordDescriptorsByAnchorPosition.get(
-          playback.activeAnchorPosition,
-        )
-      : undefined;
   const focusedNote = noteByKey.get(focusedKey);
-  const focusedChordDescriptor =
-    effectivePattern.mode === "extension" && focusedNote
-      ? sequence.chordDescriptorsByAnchorPosition.get(
-          focusedNote.collectionPosition,
-        )
-      : undefined;
-  const studyChordDescriptor = resolveExerciseStudyChordDescriptor({
-    activeChordDescriptor,
-    focusedChordDescriptor,
+  const studyDisplay = resolveExerciseStudyDisplay({
+    activeAnchorPosition: playback.activeAnchorPosition,
+    focusedAnchorPosition: focusedNote?.collectionPosition,
     mode: effectivePattern.mode,
+    sequence,
   });
   const collectionSize = sequence.collectionSize;
   const firstPosition = sequence.firstPosition;
@@ -323,6 +302,9 @@ export function ExerciseLooperModule({
     octaveOffset < EXERCISE_MAX_OCTAVE_OFFSET &&
     firstPosition >= higherOctaveBounds.min &&
     lastPosition <= higherOctaveBounds.max;
+  const countInReadout =
+    countInBeats === 0 ? "No Count In" : `${countInBeats} Beat Count In`;
+  const octaveReadout = `Octave ${getExerciseBaseOctave(octaveOffset)}`;
   useEffect(() => {
     if (!exercisePatternsAreEqual(effectivePattern, pattern)) {
       onPatternChange?.(effectivePattern);
@@ -444,39 +426,93 @@ export function ExerciseLooperModule({
       >
         <div className={styles.surface}>
           <div className={styles.controlDeck}>
-            <TactileControlGroup
-              aria-label="Exercise Looper playback controls"
-              className={styles.playbackControlGroup}
-              controlsClassName={styles.controls}
+            <div
+              aria-label="Exercise Looper performance controls"
+              className={styles.performanceControls}
+              role="group"
             >
-              <TactileIconButton
-                onPress={() => onOctaveOffsetChange?.(octaveOffset - 1)}
-                aria-label="Shift exercise down one octave"
-                icon={<WavesArrowDown />}
-                size="lg"
-                unavailable={!canShiftDown}
-              />
-              <TactileIconButton
-                aria-label={
-                  playback.isActive ? "Stop exercise" : "Play exercise"
-                }
-                icon={playback.isActive ? <Square /> : <Play />}
-                onPress={playback.isActive ? playback.stop : playback.start}
-                size="lg"
-              />
-              <TactileIconButton
-                onPress={() => onOctaveOffsetChange?.(octaveOffset + 1)}
-                aria-label="Shift exercise up one octave"
-                icon={<WavesArrowUp />}
-                size="lg"
-                unavailable={!canShiftUp}
-              />
-            </TactileControlGroup>
+              <TactileControlGroup
+                aria-label="Count-in"
+                className={styles.countInControlGroup}
+                controlsClassName={styles.secondaryControlButtons}
+                readout={countInReadout}
+                readoutAriaLabel={countInReadout}
+              >
+                {countInChoices.map((beatCount) => {
+                  const isSelected = countInBeats === beatCount;
+
+                  return (
+                    <TactileIconButton
+                      key={beatCount}
+                      aria-label={
+                        isSelected
+                          ? `Turn off the ${beatCount}-beat count-in`
+                          : `Use a ${beatCount}-beat count-in`
+                      }
+                      className={styles.countInButton}
+                      icon={
+                        <span aria-hidden="true" className={styles.beatCount}>
+                          {beatCount}
+                        </span>
+                      }
+                      onPress={() =>
+                        onCountInBeatsChange?.(isSelected ? 0 : beatCount)
+                      }
+                      selected={isSelected}
+                      size="md"
+                    />
+                  );
+                })}
+              </TactileControlGroup>
+
+              <TactileControlGroup
+                aria-label="Playback"
+                className={styles.playbackControlGroup}
+              >
+                <TactileIconButton
+                  aria-label={
+                    playback.isActive ? "Stop exercise" : "Play exercise"
+                  }
+                  className={styles.playbackButton}
+                  icon={playback.isActive ? <Square /> : <Play />}
+                  onPress={playback.isActive ? playback.stop : playback.start}
+                  selected={playback.isActive}
+                  size="lg"
+                />
+              </TactileControlGroup>
+
+              <TactileControlGroup
+                aria-label="Exercise octave"
+                className={styles.octaveControlGroup}
+                controlsClassName={styles.secondaryControlButtons}
+                readout={octaveReadout}
+                readoutAriaLabel={`Exercise pitch: ${octaveReadout}`}
+              >
+                <TactileIconButton
+                  onPress={() => onOctaveOffsetChange?.(octaveOffset - 1)}
+                  aria-label={`Shift exercise down one octave. Current pitch: ${octaveReadout}`}
+                  className={styles.octaveButton}
+                  icon={<WavesArrowDown />}
+                  size="md"
+                  unavailable={!canShiftDown}
+                />
+                <TactileIconButton
+                  onPress={() => onOctaveOffsetChange?.(octaveOffset + 1)}
+                  aria-label={`Shift exercise up one octave. Current pitch: ${octaveReadout}`}
+                  className={styles.octaveButton}
+                  icon={<WavesArrowUp />}
+                  size="md"
+                  unavailable={!canShiftUp}
+                />
+              </TactileControlGroup>
+            </div>
 
             <ExercisePatternControls
-              chordDescriptor={studyChordDescriptor}
               onChange={onPatternChange}
+              onSubdivisionChange={onSubdivisionChange}
               pattern={effectivePattern}
+              studyDisplay={studyDisplay}
+              subdivision={subdivision}
               supportsScaleDegreeExercises={
                 sequence.supportsScaleDegreeExercises
               }
@@ -517,14 +553,12 @@ export function ExerciseLooperModule({
             collectionSize,
             sequence.isFiniteVoicing,
           )}
-          subdivision={subdivision}
           wood={wood}
           onAudioPresetIdChange={(value) => onAudioPresetIdChange?.(value)}
           onClone={onClone}
           onClose={() => setIsOptionsOpen(false)}
           onRangeChange={setRange}
           onRemove={onRemove}
-          onSubdivisionChange={(value) => onSubdivisionChange?.(value)}
           onWoodChange={(value) => onWoodChange?.(value)}
         />
       ) : null}

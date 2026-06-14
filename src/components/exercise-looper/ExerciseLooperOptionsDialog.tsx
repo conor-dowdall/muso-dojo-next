@@ -1,13 +1,11 @@
 "use client";
 
-import { AudioWaveform, Gauge, PanelsTopLeft, Ruler } from "lucide-react";
+import { AudioWaveform, PanelsTopLeft, Ruler } from "lucide-react";
 import { audioPresets, musoAudioEngine, type AudioPresetId } from "@/audio";
 import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
 import { WoodSurfaceChoiceList } from "@/components/appearance/WoodSurfaceChoiceList";
 import { WoodSurfaceSwatch } from "@/components/instrument/InstrumentThemeSwatch";
 import {
-  DisclosureList,
-  DisclosureListChoice,
   DisclosureListGroup,
   DisclosureListItem,
   useDisclosureList,
@@ -18,7 +16,6 @@ import {
 } from "@/components/ui/object-menu";
 import { BoundedRangeSliderGroup } from "@/components/ui/range-slider/BoundedRangeSliderGroup";
 import { woodSurfaces, type WoodSurfaceId } from "@/data/woodSurfaces";
-import { type ExerciseSubdivision } from "@/types/session";
 import {
   DEFAULT_EXERCISE_END,
   DEFAULT_EXERCISE_START,
@@ -29,15 +26,7 @@ import {
   type CollectionRangeBoundary,
 } from "@/utils/exercise-looper/exerciseSequence";
 
-type MenuChoice = "subdivision" | "range" | "sound" | "wood";
-
-const subdivisions = [
-  { id: "quarter", label: "Quarter Notes" },
-  { id: "eighth", label: "Eighth Notes" },
-  { id: "eighth-triplet", label: "Eighth-Note Triplets" },
-  { id: "sixteenth", label: "Sixteenth Notes" },
-  { id: "sixteenth-triplet", label: "Sixteenth-Note Triplets" },
-] as const satisfies readonly { id: ExerciseSubdivision; label: string }[];
+type MenuChoice = "range" | "sound" | "wood";
 
 export function ExerciseLooperOptionsDialog({
   audioPresetId,
@@ -52,10 +41,8 @@ export function ExerciseLooperOptionsDialog({
   onClose,
   onRangeChange,
   onRemove,
-  onSubdivisionChange,
   onWoodChange,
   start = DEFAULT_EXERCISE_START,
-  subdivision,
   wood,
 }: {
   audioPresetId: AudioPresetId;
@@ -73,10 +60,8 @@ export function ExerciseLooperOptionsDialog({
     end: CollectionRangeBoundary,
   ) => void;
   onRemove?: () => void;
-  onSubdivisionChange: (value: ExerciseSubdivision) => void;
   onWoodChange: (value: WoodSurfaceId) => void;
   start?: CollectionRangeBoundary;
-  subdivision: ExerciseSubdivision;
   wood: WoodSurfaceId;
 }) {
   const { isOpen: isChoiceOpen, toggleChoice } =
@@ -98,29 +83,6 @@ export function ExerciseLooperOptionsDialog({
       onClose={onClose}
     >
       <DisclosureListGroup>
-        <DisclosureListItem
-          ariaLabel="Note division"
-          icon={<Gauge />}
-          isOpen={isChoiceOpen("subdivision")}
-          label="Note Division"
-          preview={
-            subdivisions.find((choice) => choice.id === subdivision)?.label
-          }
-          panelVariant="menu"
-          onToggle={() => toggleChoice("subdivision")}
-        >
-          <DisclosureList density="compact">
-            {subdivisions.map((choice) => (
-              <DisclosureListChoice
-                key={choice.id}
-                label={choice.label}
-                selected={choice.id === subdivision}
-                onClick={() => onSubdivisionChange(choice.id)}
-              />
-            ))}
-          </DisclosureList>
-        </DisclosureListItem>
-
         <DisclosureListItem
           ariaLabel="Pitch range"
           icon={<Ruler />}

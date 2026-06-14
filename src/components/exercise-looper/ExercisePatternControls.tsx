@@ -3,6 +3,7 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  Dice3,
   GitBranch,
   GitCommitHorizontal,
   GitFork,
@@ -13,16 +14,22 @@ import {
 } from "lucide-react";
 import { TactileIconButton } from "@/components/ui/buttons/TactileButton";
 import { TactileControlGroup } from "@/components/ui/tactile-control-group/TactileControlGroup";
+import { type ExerciseSubdivision } from "@/types/session";
 import { getExerciseDegreeOptions } from "@/utils/exercise-looper/exerciseConfig";
 import {
+  getExerciseRhythmSelection,
+  getExerciseSubdivisionForRhythm,
+  getExerciseSubdivisionLabel,
+  type ExerciseNoteValue,
+} from "@/utils/exercise-looper/exerciseRhythm";
+import {
   getExerciseIntervalLabel,
-  type ExerciseChordDescriptor,
   type ExerciseNotePlayback,
   type ExercisePattern,
   type ExercisePatternMode,
   type ExerciseScaleDirection,
 } from "@/utils/exercise-looper/exerciseSequence";
-import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
+import { type ExerciseStudyDisplay } from "@/utils/exercise-looper/exerciseStudyDisplay";
 import styles from "./ExerciseLooperModule.module.css";
 
 const MODE_FEEDBACK_DURATION_MS = 2000;
@@ -34,8 +41,63 @@ function getCompactDirectionLabel(direction: ExerciseScaleDirection) {
     case "descending":
       return "Down";
     case "up-down":
-      return `Up${DISPLAY_VALUE_SEPARATOR}Down`;
+      return "Up-Down";
   }
+}
+
+function getStudyDisplayAriaLabel(display: ExerciseStudyDisplay) {
+  if (display.kind === "chord") {
+    return `${display.chordName}. Notes ${display.notes.join(", ")}. Intervals ${display.intervals.join(", ")}`;
+  }
+
+  return `Notes ${display.notes.join(", ")}. Intervals ${display.intervals.join(", ")}`;
+}
+
+function ExerciseStudyNotePairs({
+  intervals,
+  notes,
+}: {
+  intervals: readonly string[];
+  notes: readonly string[];
+}) {
+  return (
+    <span className={styles.studyNotePairs}>
+      {notes.map((note, index) => (
+        <span key={`${note}-${index}`} className={styles.studyNotePair}>
+          <span className={styles.studyNoteName}>{note}</span>
+          <span className={styles.studyInterval}>{intervals[index]}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function ExerciseStudyReadout({ display }: { display: ExerciseStudyDisplay }) {
+  return (
+    <output
+      aria-label={getStudyDisplayAriaLabel(display)}
+      aria-live="off"
+      className={styles.studyReadout}
+    >
+      <span
+        className={styles.studyDisplayContent}
+        data-extended-chord={
+          display.kind === "chord" && display.intervals.length > 5
+            ? true
+            : undefined
+        }
+        data-kind={display.kind}
+      >
+        {display.kind === "chord" ? (
+          <span className={styles.studyChordName}>{display.chordName}</span>
+        ) : null}
+        <ExerciseStudyNotePairs
+          intervals={display.intervals}
+          notes={display.notes}
+        />
+      </span>
+    </output>
+  );
 }
 
 const directionChoices = [
@@ -91,16 +153,30 @@ const notePlaybackChoices = [
   playback: ExerciseNotePlayback;
 }[];
 
+const noteValueChoices = [
+  { label: "Quarter notes", noteValue: "quarter", symbol: "¼" },
+  { label: "Eighth notes", noteValue: "eighth", symbol: "⅛" },
+  { label: "Sixteenth notes", noteValue: "sixteenth", symbol: "¹⁄₁₆" },
+] as const satisfies readonly {
+  label: string;
+  noteValue: ExerciseNoteValue;
+  symbol: string;
+}[];
+
 export function ExercisePatternControls({
-  chordDescriptor,
   onChange,
+  onSubdivisionChange,
   pattern,
+  studyDisplay,
+  subdivision,
   supportsScaleDegreeExercises,
   supportsTertianExercises,
 }: {
-  chordDescriptor?: ExerciseChordDescriptor;
   onChange?: (pattern: ExercisePattern) => void;
+  onSubdivisionChange?: (subdivision: ExerciseSubdivision) => void;
   pattern: ExercisePattern;
+  studyDisplay: ExerciseStudyDisplay;
+  subdivision: ExerciseSubdivision;
   supportsScaleDegreeExercises: boolean;
   supportsTertianExercises: boolean;
 }) {
@@ -124,56 +200,36 @@ export function ExercisePatternControls({
   const activeNoteDirection =
     pattern.mode === "interval"
       ? pattern.intervalDirection
-      : pattern.mode === "extension"
-        ? pattern.extensionDirection
-        : undefined;
+      : pattern.extensionDirection;
   const activeDegreeLabel =
     pattern.mode === "interval"
       ? getExerciseIntervalLabel(pattern.intervalDegree)
-      : pattern.mode === "extension"
-        ? getExerciseIntervalLabel(pattern.extensionDegree)
-        : "";
+      : getExerciseIntervalLabel(pattern.extensionDegree);
   const notePlaybackLabel =
-    pattern.mode === "single"
-      ? ""
-      : pattern.notePlayback === "separate"
-        ? "Separate"
-        : "Together";
-  const innerDirectionLabel =
-    activeNoteDirection === undefined
-      ? ""
-      : getCompactDirectionLabel(activeNoteDirection);
-  const fineTuneUnavailable =
-    pattern.mode === "single" || !supportsScaleDegreeExercises;
+    pattern.notePlayback === "separate" ? "Separate" : "Together";
+  const innerDirectionLabel = getCompactDirectionLabel(activeNoteDirection);
   const selectedPatternModeLabel =
     patternModeChoices.find((choice) => choice.mode === pattern.mode)
       ?.readout ?? "Single Notes";
-  const patternModeReadout =
-    modeFeedbackVersion > 0
-      ? {
-          primary: "Scale Modes Only",
-        }
-      : pattern.mode === "extension" && chordDescriptor
-        ? {
-            primary: chordDescriptor.chordName,
-            secondary: chordDescriptor.intervals.join(" "),
-          }
-        : {
-            primary: selectedPatternModeLabel,
-          };
+  const modeReadout =
+    modeFeedbackVersion > 0 ? "Scale Modes Only" : selectedPatternModeLabel;
   const canDecreaseActiveDegree =
     pattern.mode === "interval"
       ? canDecreaseIntervalDegree
-      : pattern.mode === "extension" && canDecreaseExtensionDegree;
+      : canDecreaseExtensionDegree;
   const canIncreaseActiveDegree =
     pattern.mode === "interval"
       ? canIncreaseIntervalDegree
-      : pattern.mode === "extension" && canIncreaseExtensionDegree;
-  const noteDirectionUnavailable =
+      : canIncreaseExtensionDegree;
+  const fineTuneUnavailable =
     pattern.mode === "single" ||
-    pattern.notePlayback === "together" ||
     !supportsScaleDegreeExercises ||
     (pattern.mode === "extension" && !supportsTertianExercises);
+  const noteDirectionUnavailable =
+    pattern.notePlayback === "together" || fineTuneUnavailable;
+  const rhythm = getExerciseRhythmSelection(subdivision);
+  const rhythmLabel = getExerciseSubdivisionLabel(subdivision);
+  const tripletUnavailable = rhythm.noteValue === "quarter";
 
   useEffect(() => {
     if (modeFeedbackVersion === 0) {
@@ -239,59 +295,104 @@ export function ExercisePatternControls({
     }
   };
 
+  const setNoteValue = (noteValue: ExerciseNoteValue) => {
+    onSubdivisionChange?.(
+      getExerciseSubdivisionForRhythm({
+        feel: rhythm.feel,
+        noteValue,
+      }),
+    );
+  };
+
+  const toggleTriplets = () => {
+    if (tripletUnavailable) {
+      return;
+    }
+
+    onSubdivisionChange?.(
+      getExerciseSubdivisionForRhythm({
+        feel: rhythm.feel === "triplet" ? "straight" : "triplet",
+        noteValue: rhythm.noteValue,
+      }),
+    );
+  };
+
   return (
     <div
       className={styles.patternControls}
       role="group"
       aria-label="Exercise pattern"
     >
-      <TactileControlGroup
-        aria-label="Direction"
-        controlsClassName={styles.directionControls}
-      >
-        {directionChoices.map((choice) => (
-          <TactileIconButton
-            key={choice.direction}
-            onPress={() => updatePattern({ direction: choice.direction })}
-            aria-label={choice.label}
-            className={styles.directionButton}
-            icon={choice.icon}
-            selected={pattern.direction === choice.direction}
-            size="lg"
-          />
-        ))}
-      </TactileControlGroup>
+      <div className={styles.patternSetupControls}>
+        <TactileControlGroup
+          aria-label="Direction"
+          className={styles.setupControlGroup}
+          controlsClassName={styles.directionControls}
+          readout={getCompactDirectionLabel(pattern.direction)}
+        >
+          {directionChoices.map((choice) => (
+            <TactileIconButton
+              key={choice.direction}
+              onPress={() => updatePattern({ direction: choice.direction })}
+              aria-label={choice.label}
+              className={styles.patternButton}
+              icon={choice.icon}
+              selected={pattern.direction === choice.direction}
+              size="md"
+            />
+          ))}
+        </TactileControlGroup>
 
-      <div className={styles.modeConfiguration}>
+        <TactileControlGroup
+          aria-label="Rhythm"
+          className={styles.setupControlGroup}
+          controlsClassName={styles.rhythmControls}
+          readout={rhythmLabel}
+        >
+          {noteValueChoices.map((choice) => (
+            <TactileIconButton
+              key={choice.noteValue}
+              aria-label={choice.label}
+              className={styles.patternButton}
+              icon={
+                <span
+                  aria-hidden="true"
+                  className={styles.noteValueButtonLabel}
+                >
+                  {choice.symbol}
+                </span>
+              }
+              onPress={() => setNoteValue(choice.noteValue)}
+              selected={rhythm.noteValue === choice.noteValue}
+              size="md"
+            />
+          ))}
+          <TactileIconButton
+            aria-label={
+              rhythm.feel === "triplet"
+                ? "Use straight notes"
+                : "Use triplet notes"
+            }
+            className={styles.patternButton}
+            icon={<Dice3 />}
+            onPress={toggleTriplets}
+            selected={rhythm.feel === "triplet"}
+            size="md"
+            unavailable={tripletUnavailable}
+          />
+        </TactileControlGroup>
+      </div>
+
+      <div
+        aria-label="Exercise mode"
+        className={styles.modeConfiguration}
+        role="group"
+      >
         <TactileControlGroup
           aria-label="Play mode"
-          className={styles.modeStudyGroup}
+          className={styles.modeControlGroup}
           controlsClassName={styles.modeControls}
-          readout={
-            <>
-              <span
-                className={
-                  patternModeReadout.secondary
-                    ? styles.studyChordName
-                    : styles.studySingleLine
-                }
-              >
-                {patternModeReadout.primary}
-              </span>
-              {patternModeReadout.secondary ? (
-                <span className={styles.studyChordFormula}>
-                  {patternModeReadout.secondary}
-                </span>
-              ) : null}
-            </>
-          }
-          readoutAriaLabel={
-            patternModeReadout.secondary
-              ? `${patternModeReadout.primary}, intervals ${patternModeReadout.secondary}`
-              : patternModeReadout.primary
-          }
-          readoutClassName={styles.studyReadout}
-          readoutLive={pattern.mode === "extension" ? "off" : undefined}
+          readout={modeReadout}
         >
           {patternModeChoices.map((choice) => (
             <TactileIconButton
@@ -309,27 +410,39 @@ export function ExercisePatternControls({
               }}
               onUnavailablePress={showUnavailableModeFeedback}
               selected={pattern.mode === choice.mode}
-              size="lg"
+              size="md"
               unavailable={isPatternModeUnavailable(choice.mode)}
             />
           ))}
         </TactileControlGroup>
 
-        <div className={styles.fineTuneControls}>
-          <div
-            className={styles.degreeAndPlaybackControls}
-            role="group"
-            aria-label="Pattern detail"
-          >
+        <ExerciseStudyReadout display={studyDisplay} />
+
+        <div
+          aria-label={
+            pattern.mode === "single"
+              ? "Interval and chord controls"
+              : `${selectedPatternModeLabel} controls`
+          }
+          className={styles.modeDetailControls}
+          role="group"
+        >
+          <div className={styles.degreeAndPlaybackControls}>
             <TactileControlGroup
-              aria-label="Interval or chord size"
+              aria-label={
+                pattern.mode === "extension" ? "Chord size" : "Interval size"
+              }
               controlsClassName={styles.degreeControls}
               readout={activeDegreeLabel}
               unavailable={fineTuneUnavailable}
             >
               <TactileIconButton
                 onPress={() => stepActiveDegree(-1)}
-                aria-label="Decrease interval or chord size"
+                aria-label={
+                  pattern.mode === "extension"
+                    ? "Decrease chord size"
+                    : "Decrease interval size"
+                }
                 className={`${styles.patternButton} ${styles.degreeButton}`}
                 icon={<Minus />}
                 size="md"
@@ -337,7 +450,11 @@ export function ExercisePatternControls({
               />
               <TactileIconButton
                 onPress={() => stepActiveDegree(1)}
-                aria-label="Increase interval or chord size"
+                aria-label={
+                  pattern.mode === "extension"
+                    ? "Increase chord size"
+                    : "Increase interval size"
+                }
                 className={`${styles.patternButton} ${styles.degreeButton}`}
                 icon={<Plus />}
                 size="md"
@@ -387,7 +504,6 @@ export function ExercisePatternControls({
                 icon={choice.icon}
                 selected={
                   !noteDirectionUnavailable &&
-                  pattern.notePlayback === "separate" &&
                   activeNoteDirection === choice.direction
                 }
                 size="md"

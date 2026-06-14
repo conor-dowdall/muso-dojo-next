@@ -11,6 +11,7 @@ import { type PlaybackGroupHandle } from "@/audio/types";
 
 function createRequest(id: string, midi: number): ExercisePlaybackRequest {
   return {
+    countInBeats: 0,
     events: [
       {
         durationBeats: 1,
@@ -54,6 +55,7 @@ describe("exercisePlaybackRequestsAreEqual", () => {
     const event = request.events[0]!;
     const changedRequests: ExercisePlaybackRequest[] = [
       { ...request, id: "other-looper" },
+      { ...request, countInBeats: 4 },
       { ...request, presetId: "warm-pad" },
       { ...request, tempoBpm: 90 },
       { ...request, events: [] },
@@ -105,6 +107,7 @@ describe("ExercisePlaybackCoordinator", () => {
         `group-${nextGroupId++}` as PlaybackGroupHandle,
       getCurrentTime: () => currentTime,
       prime: async () => true,
+      scheduleMetronomeClick: vi.fn(),
       scheduleNote: vi.fn(),
       subscribeToReset: () => () => undefined,
       subscribeToStopAll: () => () => undefined,
@@ -153,6 +156,7 @@ describe("ExercisePlaybackCoordinator", () => {
         createPlaybackGroup: vi.fn(),
         getCurrentTime: () => 10,
         prime: () => primeResult.promise,
+        scheduleMetronomeClick: vi.fn(),
         scheduleNote: vi.fn(),
         subscribeToReset: () => () => undefined,
         subscribeToStopAll: () => () => undefined,
@@ -196,6 +200,7 @@ describe("ExercisePlaybackCoordinator", () => {
           `group-${nextGroupId++}` as PlaybackGroupHandle,
         getCurrentTime: () => 10,
         prime,
+        scheduleMetronomeClick: vi.fn(),
         scheduleNote: vi.fn(),
         subscribeToReset: () => () => undefined,
         subscribeToStopAll: () => () => undefined,
@@ -227,6 +232,46 @@ describe("ExercisePlaybackCoordinator", () => {
     expect(schedulers[1]?.start).toHaveBeenCalledWith(10.08);
     expect(coordinator.getSnapshot()).toMatchObject({
       activeId: "second-looper",
+      playing: true,
+    });
+  });
+
+  it("schedules an accented count-in before the exercise origin", async () => {
+    const scheduleMetronomeClick = vi.fn();
+    const schedulerStart = vi.fn();
+    const coordinator = new ExercisePlaybackCoordinator(
+      {
+        cancelPlaybackGroup: vi.fn(),
+        createPlaybackGroup: () => "group-0" as PlaybackGroupHandle,
+        getCurrentTime: () => 10,
+        prime: async () => true,
+        scheduleMetronomeClick,
+        scheduleNote: vi.fn(),
+        subscribeToReset: () => () => undefined,
+        subscribeToStopAll: () => () => undefined,
+      },
+      () => ({
+        isRunning: () => true,
+        start: schedulerStart,
+        stop: vi.fn(),
+      }),
+    );
+
+    await coordinator.start({
+      ...createRequest("looper", 60),
+      countInBeats: 4,
+      tempoBpm: 60,
+    });
+
+    expect(scheduleMetronomeClick.mock.calls).toEqual([
+      [{ accent: true, group: "group-0", startTime: 10.08 }],
+      [{ accent: false, group: "group-0", startTime: 11.08 }],
+      [{ accent: false, group: "group-0", startTime: 12.08 }],
+      [{ accent: false, group: "group-0", startTime: 13.08 }],
+    ]);
+    expect(schedulerStart).toHaveBeenCalledWith(14.08);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      originTime: 14.08,
       playing: true,
     });
   });

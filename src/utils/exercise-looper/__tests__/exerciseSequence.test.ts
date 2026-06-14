@@ -3,10 +3,17 @@ import {
   createExerciseSequence,
   getCollectionPosition,
   getCollectionRangeBoundary,
+  getExerciseBaseOctave,
   getExerciseIntervalLabel,
 } from "@/utils/exercise-looper/exerciseSequence";
 
 describe("createExerciseSequence", () => {
+  it("maps octave shifts to scientific pitch octave numbers", () => {
+    expect(getExerciseBaseOctave(-1)).toBe(2);
+    expect(getExerciseBaseOctave(0)).toBe(3);
+    expect(getExerciseBaseOctave(1)).toBe(4);
+  });
+
   it("creates a beat-even, loop-safe one-octave pendulum", () => {
     const sequence = createExerciseSequence({
       noteCollectionKey: "ionian",
@@ -343,6 +350,116 @@ describe("createExerciseSequence", () => {
       sequence.steps.flatMap((step) => step.notes.map((note) => note.midi)),
     ).toEqual([48, 52, 50, 53, 52, 55]);
   });
+
+  it("describes intervals with the same package-backed relative modes as chords", () => {
+    const third = createExerciseSequence({
+      end: { octave: 0, stepOffset: 3 },
+      noteCollectionKey: "ionian",
+      pattern: {
+        direction: "ascending",
+        extensionDegree: 7,
+        extensionDirection: "ascending",
+        intervalDegree: 3,
+        intervalDirection: "ascending",
+        mode: "interval",
+        notePlayback: "together",
+      },
+      rootNote: "C",
+    });
+    const tenth = createExerciseSequence({
+      end: { octave: 0, stepOffset: 1 },
+      noteCollectionKey: "ionian",
+      pattern: {
+        direction: "ascending",
+        extensionDegree: 7,
+        extensionDirection: "ascending",
+        intervalDegree: 10,
+        intervalDirection: "ascending",
+        mode: "interval",
+        notePlayback: "together",
+      },
+      rootNote: "C",
+    });
+    const sharpNinth = createExerciseSequence({
+      end: { octave: 0, stepOffset: 1 },
+      noteCollectionKey: "phrygianDominant",
+      pattern: {
+        direction: "ascending",
+        extensionDegree: 7,
+        extensionDirection: "ascending",
+        intervalDegree: 9,
+        intervalDirection: "ascending",
+        mode: "interval",
+        notePlayback: "together",
+      },
+      rootNote: "C",
+    });
+
+    expect(third.intervalDescriptorsByAnchorPosition.get(0)).toMatchObject({
+      intervals: ["1", "3"],
+      relativeCollectionKey: "ionian",
+      rootName: "C",
+    });
+    expect(third.intervalDescriptorsByAnchorPosition.get(1)).toMatchObject({
+      intervals: ["1", "♭3"],
+      relativeCollectionKey: "dorian",
+      rootName: "D",
+    });
+    expect(third.intervalDescriptorsByAnchorPosition.get(3)).toMatchObject({
+      intervals: ["1", "3"],
+      relativeCollectionKey: "lydian",
+      rootName: "F",
+    });
+    expect(tenth.intervalDescriptorsByAnchorPosition.get(1)).toMatchObject({
+      intervals: ["1", "♭10"],
+      relativeCollectionKey: "dorian",
+      rootName: "D",
+    });
+    expect(sharpNinth.intervalDescriptorsByAnchorPosition.get(1)).toMatchObject(
+      {
+        intervals: ["1", "♯9"],
+        relativeCollectionKey: "lydianSharp2",
+        rootName: "D♭",
+      },
+    );
+  });
+
+  it.each([
+    [2, "2"],
+    [3, "♭3"],
+    [4, "4"],
+    [5, "5"],
+    [6, "6"],
+    [7, "♭7"],
+    [8, "8"],
+    [9, "9"],
+    [10, "♭10"],
+    [11, "11"],
+    [12, "12"],
+    [13, "13"],
+  ] as const)(
+    "uses the package Dorian formula for a %s-degree interval",
+    (intervalDegree, expectedInterval) => {
+      const sequence = createExerciseSequence({
+        end: { octave: 0, stepOffset: 1 },
+        noteCollectionKey: "ionian",
+        pattern: {
+          direction: "ascending",
+          extensionDegree: 7,
+          extensionDirection: "ascending",
+          intervalDegree,
+          intervalDirection: "ascending",
+          mode: "interval",
+          notePlayback: "together",
+        },
+        rootNote: "C",
+      });
+
+      expect(
+        sequence.intervalDescriptorsByAnchorPosition.get(1)?.intervals,
+      ).toEqual(["1", expectedInterval]);
+    },
+  );
 
   it.each([
     ["ascending", [48, 52]],

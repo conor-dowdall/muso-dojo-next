@@ -59,16 +59,19 @@ export function ExerciseLooperNoteGrid({
                       note.collectionPosition,
                     )
                   : undefined;
-              const noteLabel = formatSpelledMidiNote(note.label, note.midi);
+              const spokenNoteLabel = formatSpelledMidiNote(
+                note.label,
+                note.midi,
+              );
               const ariaLabel = chordDescriptor
-                ? `Audition ${chordDescriptor.chordName}, intervals ${chordDescriptor.intervals.join(", ")}, from ${noteLabel}, interval ${note.intervalLabel}`
-                : `Audition ${noteLabel}, interval ${note.intervalLabel}`;
+                ? `Audition ${chordDescriptor.chordName}, intervals ${chordDescriptor.intervals.join(", ")}, from ${spokenNoteLabel}, interval ${note.intervalLabel}`
+                : `Audition ${spokenNoteLabel}, interval ${note.intervalLabel}`;
               const isHighlighted =
                 auditionActiveKeys.has(note.key) ||
                 activeCollectionPositions.has(note.collectionPosition);
               const label = (
                 <InstrumentNoteTileLabel
-                  primary={noteLabel}
+                  primary={note.label}
                   secondary={note.intervalLabel}
                 />
               );

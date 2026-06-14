@@ -18,6 +18,7 @@ import { type SettingValue } from "@/types/state";
 import {
   type AppStoreSnapshot,
   type DronePartModuleConfig,
+  type ExerciseCountInBeats,
   type ExerciseLooperPartModuleConfig,
   type ExerciseSubdivision,
   type FretboardInstrumentInstanceConfig,
@@ -225,6 +226,12 @@ export interface ExerciseLooperActions {
     partId: string,
     moduleId: string,
     audioPresetId: SettingValue<AudioPresetId>,
+  ) => void;
+  setExerciseLooperCountInBeats: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    countInBeats: SettingValue<ExerciseCountInBeats>,
   ) => void;
   setExerciseLooperEnd: (
     sessionId: string,

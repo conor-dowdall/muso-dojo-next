@@ -41,6 +41,7 @@ export function ExerciseLooperPartModuleView({
       clonePartModule: state.clonePartModule,
       removePartModule: state.removePartModule,
       setExerciseLooperAudioPresetId: state.setExerciseLooperAudioPresetId,
+      setExerciseLooperCountInBeats: state.setExerciseLooperCountInBeats,
       setExerciseLooperEnd: state.setExerciseLooperEnd,
       setExerciseLooperOctaveOffset: state.setExerciseLooperOctaveOffset,
       setExerciseLooperPattern: state.setExerciseLooperPattern,
@@ -67,6 +68,14 @@ export function ExerciseLooperPartModuleView({
                 moduleId,
                 value,
               )
+      }
+      onCountInBeatsChange={(value) =>
+        actions.setExerciseLooperCountInBeats(
+          sessionId,
+          partId,
+          moduleId,
+          value,
+        )
       }
       onClone={
         isPerformanceMode
@@ -101,16 +110,8 @@ export function ExerciseLooperPartModuleView({
           : (value) =>
               actions.setExerciseLooperStart(sessionId, partId, moduleId, value)
       }
-      onSubdivisionChange={
-        isPerformanceMode
-          ? undefined
-          : (value) =>
-              actions.setExerciseLooperSubdivision(
-                sessionId,
-                partId,
-                moduleId,
-                value,
-              )
+      onSubdivisionChange={(value) =>
+        actions.setExerciseLooperSubdivision(sessionId, partId, moduleId, value)
       }
       onWoodChange={
         isPerformanceMode

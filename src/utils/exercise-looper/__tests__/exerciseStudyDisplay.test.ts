@@ -1,55 +1,142 @@
 import { describe, expect, it } from "vitest";
 import { createExerciseSequence } from "@/utils/exercise-looper/exerciseSequence";
-import { resolveExerciseStudyChordDescriptor } from "@/utils/exercise-looper/exerciseStudyDisplay";
+import { resolveExerciseStudyDisplay } from "@/utils/exercise-looper/exerciseStudyDisplay";
 
-describe("resolveExerciseStudyChordDescriptor", () => {
-  const descriptors = createExerciseSequence({
-    end: { octave: 0, stepOffset: 1 },
-    noteCollectionKey: "ionian",
-    pattern: {
-      direction: "ascending",
-      extensionDegree: 7,
-      extensionDirection: "ascending",
-      intervalDegree: 3,
-      intervalDirection: "up-down",
-      mode: "extension",
-      notePlayback: "together",
-    },
-    rootNote: "C",
-  }).chordDescriptorsByAnchorPosition;
-  const focusedChordDescriptor = descriptors.get(0);
-  const activeChordDescriptor = descriptors.get(1);
+describe("resolveExerciseStudyDisplay", () => {
+  it("shows one complete scale octave in single-note mode", () => {
+    const sequence = createExerciseSequence({
+      end: { octave: 0, stepOffset: 0 },
+      noteCollectionKey: "ionian",
+      rootNote: "C",
+    });
 
-  it("uses the package seventh-chord name", () => {
-    expect(focusedChordDescriptor?.chordName).toBe("CM7");
-  });
-
-  it("prefers the active loop chord over the focused chord", () => {
     expect(
-      resolveExerciseStudyChordDescriptor({
-        activeChordDescriptor,
-        focusedChordDescriptor,
-        mode: "extension",
+      resolveExerciseStudyDisplay({
+        mode: "single",
+        sequence,
       }),
-    ).toBe(activeChordDescriptor);
+    ).toEqual({
+      intervals: ["1", "2", "3", "4", "5", "6", "7", "8"],
+      kind: "notes",
+      notes: ["C", "D", "E", "F", "G", "A", "B", "C"],
+    });
   });
 
-  it("uses the focused chord while chord playback is idle", () => {
-    expect(
-      resolveExerciseStudyChordDescriptor({
-        focusedChordDescriptor,
-        mode: "extension",
-      }),
-    ).toBe(focusedChordDescriptor);
-  });
-
-  it("does not expose chord study data in other modes", () => {
-    expect(
-      resolveExerciseStudyChordDescriptor({
-        activeChordDescriptor,
-        focusedChordDescriptor,
+  it("shows the focused interval while idle", () => {
+    const sequence = createExerciseSequence({
+      end: { octave: 0, stepOffset: 1 },
+      noteCollectionKey: "ionian",
+      pattern: {
+        direction: "ascending",
+        extensionDegree: 7,
+        extensionDirection: "ascending",
+        intervalDegree: 3,
+        intervalDirection: "up-down",
         mode: "interval",
+        notePlayback: "together",
+      },
+      rootNote: "C",
+    });
+
+    expect(
+      resolveExerciseStudyDisplay({
+        focusedAnchorPosition: 0,
+        mode: "interval",
+        sequence,
       }),
-    ).toBeUndefined();
+    ).toEqual({
+      intervals: ["1", "3"],
+      kind: "notes",
+      notes: ["C", "E"],
+    });
+  });
+
+  it("prefers the sounding interval over the focused interval", () => {
+    const sequence = createExerciseSequence({
+      end: { octave: 0, stepOffset: 1 },
+      noteCollectionKey: "ionian",
+      pattern: {
+        direction: "ascending",
+        extensionDegree: 7,
+        extensionDirection: "ascending",
+        intervalDegree: 3,
+        intervalDirection: "descending",
+        mode: "interval",
+        notePlayback: "separate",
+      },
+      rootNote: "C",
+    });
+
+    expect(
+      resolveExerciseStudyDisplay({
+        activeAnchorPosition: 1,
+        focusedAnchorPosition: 0,
+        mode: "interval",
+        sequence,
+      }),
+    ).toEqual({
+      intervals: ["1", "♭3"],
+      kind: "notes",
+      notes: ["D", "F"],
+    });
+  });
+
+  it("retains compound interval numbers relative to the anchor", () => {
+    const sequence = createExerciseSequence({
+      end: { octave: 0, stepOffset: 1 },
+      noteCollectionKey: "ionian",
+      pattern: {
+        direction: "ascending",
+        extensionDegree: 7,
+        extensionDirection: "ascending",
+        intervalDegree: 10,
+        intervalDirection: "ascending",
+        mode: "interval",
+        notePlayback: "together",
+      },
+      rootNote: "C",
+    });
+
+    expect(
+      resolveExerciseStudyDisplay({
+        focusedAnchorPosition: 1,
+        mode: "interval",
+        sequence,
+      }),
+    ).toEqual({
+      intervals: ["1", "♭10"],
+      kind: "notes",
+      notes: ["D", "F"],
+    });
+  });
+
+  it("keeps the package chord name and chord-relative intervals", () => {
+    const sequence = createExerciseSequence({
+      end: { octave: 0, stepOffset: 1 },
+      noteCollectionKey: "ionian",
+      pattern: {
+        direction: "ascending",
+        extensionDegree: 7,
+        extensionDirection: "ascending",
+        intervalDegree: 3,
+        intervalDirection: "up-down",
+        mode: "extension",
+        notePlayback: "together",
+      },
+      rootNote: "C",
+    });
+
+    expect(
+      resolveExerciseStudyDisplay({
+        focusedAnchorPosition: 0,
+        mode: "extension",
+        sequence,
+      }),
+    ).toEqual({
+      chordName: "CM7",
+      intervals: ["1", "3", "5", "7"],
+      kind: "chord",
+      notes: ["C", "E", "G", "B"],
+    });
   });
 });

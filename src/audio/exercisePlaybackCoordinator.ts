@@ -10,6 +10,7 @@ import {
   type AudioPresetId,
   type PlaybackGroupHandle,
 } from "./types";
+import { type ExerciseCountInBeats } from "@/types/session";
 
 const START_LOOKAHEAD_SECONDS = 0.08;
 const NOTE_GATE_RATIO = 0.9;
@@ -22,6 +23,7 @@ export interface ExercisePlaybackEvent {
 }
 
 export interface ExercisePlaybackRequest {
+  countInBeats: ExerciseCountInBeats;
   events: readonly ExercisePlaybackEvent[];
   id: string;
   presetId: AudioPresetId;
@@ -50,6 +52,7 @@ export type ExercisePlaybackAudioEngine = Pick<
   | "createPlaybackGroup"
   | "getCurrentTime"
   | "prime"
+  | "scheduleMetronomeClick"
   | "scheduleNote"
   | "subscribeToReset"
   | "subscribeToStopAll"
@@ -86,6 +89,7 @@ export function exercisePlaybackRequestsAreEqual(
   right: ExercisePlaybackRequest,
 ) {
   return (
+    left.countInBeats === right.countInBeats &&
     left.id === right.id &&
     left.presetId === right.presetId &&
     normalizeTempo(left.tempoBpm) === normalizeTempo(right.tempoBpm) &&
@@ -222,7 +226,8 @@ export class ExercisePlaybackCoordinator {
 
     const secondsPerBeat = 60 / normalizeTempo(request.tempoBpm);
     const previous = this.active;
-    const originTime = currentTime + START_LOOKAHEAD_SECONDS;
+    const countInStartTime = currentTime + START_LOOKAHEAD_SECONDS;
+    const originTime = countInStartTime + request.countInBeats * secondsPerBeat;
 
     previous?.noteScheduler.stop();
     if (previous) {
@@ -230,6 +235,13 @@ export class ExercisePlaybackCoordinator {
     }
 
     const group = this.audioEngine.createPlaybackGroup();
+    for (let beatIndex = 0; beatIndex < request.countInBeats; beatIndex += 1) {
+      this.audioEngine.scheduleMetronomeClick({
+        accent: beatIndex === 0,
+        group,
+        startTime: countInStartTime + beatIndex * secondsPerBeat,
+      });
+    }
     const noteScheduler = this.createScheduler({
       events: toSchedulerEvents(request.events, secondsPerBeat),
       getCurrentTime: this.audioEngine.getCurrentTime,

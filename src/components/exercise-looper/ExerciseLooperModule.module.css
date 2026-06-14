@@ -3,35 +3,43 @@
   --looper-note-button-width: var(--space-16);
   --looper-note-button-height: var(--space-14);
   --looper-note-button-min-width: var(--control-size-md);
-  --looper-row-gap: var(--space-1);
-  --looper-column-gap: var(--space-1);
+  --looper-button-gap: var(--space-1);
+  --looper-control-group-gap: var(--space-3);
+  --looper-row-gap: var(--looper-button-gap);
+  --looper-column-gap: var(--looper-button-gap);
   --looper-body-padding: var(--space-3);
-  --looper-toolbar-gap: var(--space-3);
-  --looper-primary-control-gap: var(--space-5);
-  --looper-control-deck-gap: var(--space-3);
-  --looper-pattern-section-gap: var(--space-4);
-  --looper-mode-detail-gap: var(--space-2);
-  --looper-fine-tune-gap: var(--space-2);
+  --looper-toolbar-gap: var(--looper-control-group-gap);
+  --looper-control-deck-gap: var(--looper-control-group-gap);
+  --looper-pattern-section-gap: var(--looper-control-group-gap);
+  --looper-setup-control-gap: var(--looper-control-group-gap);
+  --looper-setup-row-gap: var(--looper-control-group-gap);
+  --looper-mode-section-gap: var(--looper-control-group-gap);
+  --looper-mode-detail-gap: var(--looper-control-group-gap);
   --looper-study-readout-height: calc(var(--space-12) + var(--space-1));
-  --looper-study-readout-gap: var(--space-3);
+  --looper-touch-control-size: var(--space-11);
   --tactile-control-readout-height: var(--space-4);
-  --looper-labeled-control-group-height: calc(
-    var(--control-size-lg) + var(--looper-study-readout-gap) +
-      var(--looper-study-readout-height)
+  --looper-labeled-control-height: calc(
+    var(--looper-touch-control-size) + var(--space-1) +
+      var(--tactile-control-readout-height)
   );
-  --looper-fine-tune-controls-height: calc(
-    var(--control-size-md) + var(--space-1) +
-      var(--tactile-control-readout-height) + var(--control-size-md) +
-      var(--space-1) + var(--tactile-control-readout-height) +
-      var(--looper-fine-tune-gap)
+  --looper-setup-controls-height: var(--looper-labeled-control-height);
+  --looper-mode-detail-height: calc(
+    var(--looper-labeled-control-height) +
+      var(--looper-labeled-control-height) + var(--looper-mode-detail-gap)
+  );
+  --looper-mode-detail-section-gap: var(--looper-mode-section-gap);
+  --looper-mode-configuration-height: calc(
+    var(--looper-labeled-control-height) + var(--looper-mode-section-gap) +
+      var(--looper-study-readout-height) +
+      var(--looper-mode-detail-section-gap) + var(--looper-mode-detail-height)
   );
   --looper-playback-controls-height: calc(
-    var(--control-size-lg) + var(--space-1) + var(--space-1)
+    var(--looper-touch-control-size) + var(--space-1) +
+      var(--tactile-control-readout-height) + var(--space-1) + var(--space-1)
   );
   --looper-pattern-controls-height: calc(
-    var(--control-size-lg) + var(--looper-pattern-section-gap) +
-      var(--looper-labeled-control-group-height) +
-      var(--looper-mode-detail-gap) + var(--looper-fine-tune-controls-height)
+    var(--looper-setup-controls-height) + var(--looper-pattern-section-gap) +
+      var(--looper-mode-configuration-height)
   );
   --looper-toolbar-height: calc(
     var(--looper-playback-controls-height) +
@@ -138,26 +146,75 @@
   gap: var(--looper-control-deck-gap);
 }
 
-.playbackControlGroup {
-  align-self: center;
+.performanceControls {
+  display: grid;
+  inline-size: min(100%, var(--space-80));
+  flex: 0 0 auto;
+  grid-template-areas: "count-in playback octave";
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--looper-control-group-gap);
+  padding-block: var(--space-1);
 }
 
-.controls {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  gap: var(--looper-primary-control-gap);
-  padding-block: var(--space-1);
+.countInControlGroup {
+  grid-area: count-in;
+  justify-self: end;
+}
+
+.playbackControlGroup {
+  grid-area: playback;
+  align-self: center;
+  justify-self: center;
+}
+
+.octaveControlGroup {
+  grid-area: octave;
+  justify-self: start;
+}
+
+.secondaryControlButtons {
+  gap: var(--looper-button-gap);
+}
+
+.countInButton,
+.octaveButton,
+.patternButton,
+.modeButton {
+  --icon-button-size: var(--looper-touch-control-size);
+}
+
+.playbackButton {
+  --icon-button-size: var(--looper-labeled-control-height);
+  --button-icon-size: var(--space-6);
+  --button-radius: calc(var(--radius-control) + var(--space-1));
+}
+
+.beatCount {
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-bold);
 }
 
 .patternControls {
   display: flex;
-  inline-size: min(100%, var(--space-80));
+  inline-size: min(100%, calc(var(--space-80) + var(--space-8)));
   align-self: center;
   flex-direction: column;
   align-items: center;
   gap: var(--looper-pattern-section-gap);
+}
+
+.patternSetupControls {
+  display: flex;
+  min-inline-size: 0;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--looper-setup-control-gap);
+}
+
+.setupControlGroup {
+  flex: 0 0 auto;
 }
 
 .directionControls,
@@ -166,14 +223,22 @@
   min-inline-size: 0;
   align-items: center;
   justify-content: center;
-  gap: var(--looper-primary-control-gap);
+  gap: var(--looper-button-gap);
 }
 
-.fineTuneControls {
+.rhythmControls {
   display: flex;
   min-inline-size: 0;
-  flex-direction: column;
-  gap: var(--looper-fine-tune-gap);
+  align-items: center;
+  justify-content: center;
+  gap: var(--looper-button-gap);
+}
+
+.noteValueButtonLabel {
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-bold);
+  letter-spacing: -0.05em;
 }
 
 .modeConfiguration {
@@ -182,52 +247,131 @@
   min-inline-size: 0;
   flex-direction: column;
   align-items: center;
-  gap: var(--looper-mode-detail-gap);
+  gap: var(--looper-mode-section-gap);
 }
 
-.modeStudyGroup {
-  --tactile-control-readout-gap: var(--looper-study-readout-gap);
-  --tactile-control-readout-height: var(--looper-study-readout-height);
-  --tactile-control-readout-radius: var(--radius-control);
-
-  inline-size: min(100%, calc(var(--space-80) - var(--space-8)));
+.modeControlGroup {
+  flex: 0 0 auto;
 }
 
 .studyReadout {
+  box-sizing: border-box;
   display: grid;
+  inline-size: min(100%, calc(var(--space-80) + var(--space-8)));
+  block-size: var(--looper-study-readout-height);
   min-inline-size: 0;
   grid-template-rows: 1fr 1fr;
-  padding-block: var(--space-1);
-  line-height: var(--leading-tight);
-  white-space: normal;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--color-hardware-display-background-soft);
+  container-type: inline-size;
+  color: var(--color-hardware-display-text-soft);
+  font-family: var(--font-sans);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tightest);
+  text-align: center;
 }
 
-.studySingleLine,
-.studyChordName,
-.studyChordFormula {
+.studyDisplayContent {
+  display: flex;
+  grid-row: 1 / -1;
+  inline-size: 100%;
+  min-inline-size: 0;
+  align-self: stretch;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--looper-button-gap);
+  overflow: hidden;
+}
+
+.studyNotePairs {
+  display: flex;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  flex: 1 1 auto;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--looper-button-gap);
+  overflow: hidden;
+}
+
+.studyNotePair {
+  position: relative;
+  display: grid;
+  min-inline-size: var(--space-5);
+  flex: 1 1 0;
+  grid-template-rows: 1fr 1fr;
+  align-items: center;
+  overflow: hidden;
+}
+
+.studyDisplayContent[data-kind="chord"] .studyNotePair {
+  min-inline-size: 0;
+}
+
+.studyNotePair::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline: 12%;
+  block-size: var(--space-px);
+  background: color-mix(
+    in srgb,
+    var(--color-hardware-display-text-soft) 28%,
+    transparent
+  );
+  transform: translateY(-50%);
+}
+
+.studyNoteName,
+.studyInterval {
   min-inline-size: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.studySingleLine {
-  grid-row: 1 / -1;
-  align-self: center;
+.studyNoteName {
+  align-self: end;
+  padding-block-end: var(--space-0_5);
   font-size: var(--text-sm);
-}
-
-.studyChordName {
-  align-self: center;
-  font-size: var(--text-base);
   font-weight: var(--font-bold);
   letter-spacing: 0;
 }
 
-.studyChordFormula {
+.studyInterval {
+  align-self: start;
+  padding-block-start: var(--space-0_5);
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  letter-spacing: 0;
+}
+
+.studyChordName {
+  display: block;
   align-self: center;
+  flex: 0 0 auto;
+  padding-inline: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.studyDisplayContent[data-extended-chord="true"] .studyChordName {
+  padding-inline: var(--space-1);
   font-size: var(--text-xs);
-  letter-spacing: var(--tracking-wide);
+}
+
+.modeDetailControls {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--looper-mode-detail-gap);
 }
 
 .degreeAndPlaybackControls {
@@ -235,17 +379,13 @@
   min-inline-size: 0;
   align-items: center;
   justify-content: center;
-  gap: var(--space-4);
+  gap: var(--looper-control-group-gap);
 }
 
 .degreeControls {
   display: flex;
   align-items: center;
-  gap: var(--space-0_5);
-}
-
-.patternButton {
-  flex: 0 0 auto;
+  gap: var(--looper-button-gap);
 }
 
 .patternButton[data-control-state="unavailable"],
@@ -262,13 +402,13 @@
   opacity: 0.34;
 }
 
-.modeButton,
-.directionButton {
+.patternButton,
+.modeButton {
   flex: 0 0 auto;
 }
 
 .degreeButton {
-  inline-size: var(--control-size-md);
+  inline-size: var(--looper-touch-control-size);
   padding: 0;
 }
 
@@ -276,7 +416,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-0_5);
+  gap: var(--looper-button-gap);
 }
 
 .noteDirectionControls {
@@ -284,7 +424,7 @@
   min-inline-size: 0;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+  gap: var(--looper-button-gap);
 }
 
 .noteDirectionControlGroup {
@@ -370,23 +510,60 @@
   transition-duration: 0s;
 }
 
+@container (max-width: 20rem) {
+  .studyDisplayContent,
+  .studyNotePairs {
+    gap: var(--space-0_5);
+  }
+
+  .studyDisplayContent[data-kind="chord"] .studyChordName {
+    padding-inline: var(--space-1);
+    font-size: var(--text-xs);
+  }
+
+  .studyDisplayContent[data-kind="chord"] .studyNoteName,
+  .studyDisplayContent[data-kind="chord"] .studyInterval {
+    font-size: var(--text-xs);
+  }
+}
+
 @media (max-width: 34rem) {
   .frame {
     --looper-note-button-width: calc(var(--space-12) + var(--space-1));
     --looper-note-button-height: var(--space-12);
     --looper-body-padding: var(--space-2);
-    --looper-toolbar-gap: var(--space-2);
+    --looper-playback-controls-height: calc(
+      var(--looper-labeled-control-height) + var(--looper-control-group-gap) +
+        var(--looper-labeled-control-height) + var(--space-1) + var(--space-1)
+    );
   }
 
-  .controls {
-    gap: var(--space-4);
+  .performanceControls {
+    grid-template-areas:
+      "playback playback"
+      "count-in octave";
+    grid-template-columns: auto auto;
+    justify-content: center;
+    column-gap: var(--looper-control-group-gap);
+    row-gap: var(--looper-control-group-gap);
   }
 
   .patternControls {
     inline-size: 100%;
   }
+}
 
-  .degreeAndPlaybackControls {
-    gap: var(--space-4);
+@media (max-width: 28rem) {
+  .frame {
+    --looper-setup-controls-height: calc(
+      var(--looper-labeled-control-height) +
+        var(--looper-labeled-control-height) + var(--looper-setup-row-gap)
+    );
+  }
+
+  .patternSetupControls {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--looper-setup-row-gap);
   }
 }

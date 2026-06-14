@@ -23,6 +23,7 @@ import {
 } from "@/data/woodSurfaces";
 import {
   boundariesAreEqual,
+  DEFAULT_EXERCISE_COUNT_IN_BEATS,
   DEFAULT_EXERCISE_END,
   DEFAULT_EXERCISE_PATTERN,
   DEFAULT_EXERCISE_START,
@@ -32,6 +33,7 @@ import {
   exercisePatternsAreEqual,
   normalizeCollectionRangeBoundary,
   normalizeExerciseAudioPresetId,
+  normalizeExerciseCountInBeats,
   normalizeExercisePattern,
   normalizeExerciseSubdivision,
   normalizeExerciseWood,
@@ -135,6 +137,7 @@ export function normalizePartModuleConfig(
     }
     case "exercise-looper": {
       const audioPresetId = normalizeExerciseAudioPresetId(value.audioPresetId);
+      const countInBeats = normalizeExerciseCountInBeats(value.countInBeats);
       const start = normalizeCollectionRangeBoundary(value.start);
       const end = normalizeCollectionRangeBoundary(value.end);
       const pattern = normalizeExercisePattern(value.pattern);
@@ -150,6 +153,10 @@ export function normalizePartModuleConfig(
       return {
         id: normalizeId(value.id, `module-${index + 1}`),
         ...(audioPresetId ? { audioPresetId } : {}),
+        ...(countInBeats !== undefined &&
+        countInBeats !== DEFAULT_EXERCISE_COUNT_IN_BEATS
+          ? { countInBeats }
+          : {}),
         ...(end && !boundariesAreEqual(end, DEFAULT_EXERCISE_END)
           ? { end }
           : {}),

@@ -49,13 +49,21 @@ export interface ExerciseSequenceStep {
   notes: ExerciseSequenceNote[];
 }
 
-export interface ExerciseChordDescriptor {
-  chordName: string;
+export interface ExerciseStudyNote {
+  intervalLabel: string;
+  label: string;
+}
+
+export interface ExerciseScaleDegreeDescriptor {
   collectionPositions: readonly number[];
   intervals: readonly Interval[];
   midiNotes: readonly number[];
   relativeCollectionKey: NoteCollectionKey;
   rootName: NoteName;
+}
+
+export interface ExerciseChordDescriptor extends ExerciseScaleDegreeDescriptor {
+  chordName: string;
 }
 
 export interface ExerciseSequence {
@@ -69,10 +77,15 @@ export interface ExerciseSequence {
   displayRows: ExerciseDisplayNote[][];
   firstPosition: number;
   isFiniteVoicing: boolean;
+  intervalDescriptorsByAnchorPosition: ReadonlyMap<
+    number,
+    ExerciseScaleDegreeDescriptor
+  >;
   lastPosition: number;
   notes: ExerciseDisplayNote[];
   rows: ExerciseDisplayNote[][];
   steps: ExerciseSequenceStep[];
+  studyReference: ExerciseStudyNote[];
   supportsOctaveRangeEditing: boolean;
   supportsScaleDegreeExercises: boolean;
   supportsTertianExercises: boolean;

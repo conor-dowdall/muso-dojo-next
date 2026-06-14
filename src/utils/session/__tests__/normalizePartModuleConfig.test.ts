@@ -81,6 +81,7 @@ describe("normalizePartModuleConfig", () => {
     expect(
       normalizePartModuleConfig({
         audioPresetId: "glass-bell",
+        countInBeats: 3,
         end: { octave: 1, stepOffset: 2 },
         id: "looper-1",
         octaveOffset: 2,
@@ -100,6 +101,7 @@ describe("normalizePartModuleConfig", () => {
       }),
     ).toStrictEqual({
       audioPresetId: "glass-bell",
+      countInBeats: 3,
       end: { octave: 1, stepOffset: 2 },
       id: "looper-1",
       octaveOffset: 2,
@@ -123,6 +125,7 @@ describe("normalizePartModuleConfig", () => {
     expect(
       normalizePartModuleConfig({
         audioPresetId: "piano",
+        countInBeats: 0,
         end: { octave: 1, stepOffset: 0 },
         id: "looper-1",
         octaveOffset: 99,
@@ -139,6 +142,17 @@ describe("normalizePartModuleConfig", () => {
         subdivision: "quarter",
         type: "exercise-looper",
         wood: "rosewood",
+      }),
+    ).toStrictEqual({
+      id: "looper-1",
+      type: "exercise-looper",
+    });
+
+    expect(
+      normalizePartModuleConfig({
+        countInBeats: 5,
+        id: "looper-1",
+        type: "exercise-looper",
       }),
     ).toStrictEqual({
       id: "looper-1",

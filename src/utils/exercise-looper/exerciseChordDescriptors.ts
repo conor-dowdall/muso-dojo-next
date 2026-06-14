@@ -1,7 +1,9 @@
 import {
   diatonicModes,
+  getCompoundIntervalsForRootAndNoteCollectionKey,
   getExtensionsForNoteCollectionKey,
   getExtensionsForRootAndNoteCollectionKey,
+  getIntervalsForRootAndNoteCollectionKey,
   getNoteNamesForRootAndNoteCollectionKey,
   getSeventhChordsForNoteCollectionKey,
   getTriadsForNoteCollectionKey,
@@ -18,9 +20,17 @@ import {
   type RootNote,
 } from "@musodojo/music-theory-data";
 import { isPlayableMidiNote } from "@/audio/pitch";
-import { createExtensionPositions } from "./exercisePatternPositions";
+import {
+  clampExerciseInteger,
+  createExtensionPositions,
+} from "./exercisePatternPositions";
 import { getMidiForCollectionPosition } from "./exerciseSequenceRange";
-import { type ExerciseChordDescriptor } from "./exerciseSequenceTypes";
+import {
+  EXERCISE_INTERVAL_MAX,
+  EXERCISE_INTERVAL_MIN,
+  type ExerciseChordDescriptor,
+  type ExerciseScaleDegreeDescriptor,
+} from "./exerciseSequenceTypes";
 
 const scaleDegreeModeFamilies = [
   diatonicModes,
@@ -92,6 +102,94 @@ function resolveChordRootNote(noteName: NoteName) {
   );
 }
 
+function createScaleDegreeContexts({
+  anchors,
+  collectionKey,
+  rootNote,
+}: {
+  anchors: readonly number[];
+  collectionKey: NoteCollectionKey;
+  rootNote: RootNote;
+}) {
+  const collectionSize = noteCollections[collectionKey].integers.length;
+  const rootNames = getNoteNamesForRootAndNoteCollectionKey(
+    rootNote,
+    collectionKey,
+    { filterOutOctave: true },
+  );
+
+  return [...new Set(anchors)].flatMap((anchorPosition) => {
+    const degreeIndex = modulo(anchorPosition, collectionSize);
+    const relativeCollectionKey = getRelativeModeCollectionKey(
+      collectionKey,
+      degreeIndex,
+    );
+    const rootName = rootNames[degreeIndex];
+    const resolvedRoot =
+      rootName === undefined ? undefined : resolveChordRootNote(rootName);
+
+    return relativeCollectionKey === undefined ||
+      resolvedRoot === undefined ||
+      rootName === undefined
+      ? []
+      : [
+          {
+            anchorPosition,
+            relativeCollectionKey,
+            resolvedRoot,
+            rootName,
+          },
+        ];
+  });
+}
+
+function getMidiNotesForCollectionPositions({
+  collectionKey,
+  collectionPositions,
+  octaveOffset,
+  rootNote,
+}: {
+  collectionKey: NoteCollectionKey;
+  collectionPositions: readonly number[];
+  octaveOffset: number;
+  rootNote: RootNote;
+}) {
+  return collectionPositions.flatMap((position) => {
+    const midi = getMidiForCollectionPosition({
+      collectionKey,
+      octaveOffset,
+      position,
+      rootNote,
+    });
+
+    return midi === undefined || !isPlayableMidiNote(midi) ? [] : [midi];
+  });
+}
+
+function getPackageIntervalForDegree({
+  degree,
+  relativeCollectionKey,
+  rootNote,
+}: {
+  degree: number;
+  relativeCollectionKey: NoteCollectionKey;
+  rootNote: RootNote;
+}) {
+  if (degree <= 8) {
+    return getIntervalsForRootAndNoteCollectionKey(
+      rootNote,
+      relativeCollectionKey,
+      { filterOutOctave: false },
+    )[degree - 1];
+  }
+
+  return getCompoundIntervalsForRootAndNoteCollectionKey(
+    rootNote,
+    relativeCollectionKey,
+    { filterOutOctave: false },
+  )[degree - 7];
+}
+
 function getChordName({
   extensionDegree,
   intervals,
@@ -144,74 +242,112 @@ export function createChordDescriptorsByAnchorPosition({
   rootNote: RootNote;
 }) {
   const result = new Map<number, ExerciseChordDescriptor>();
-  const collectionSize = noteCollections[collectionKey].integers.length;
-  const rootNames = getNoteNamesForRootAndNoteCollectionKey(
-    rootNote,
+  const contexts = createScaleDegreeContexts({
+    anchors,
     collectionKey,
-    { filterOutOctave: true },
-  );
+    rootNote,
+  });
   const chordSize = createExtensionPositions(0, extensionDegree).length;
 
-  new Set(anchors).forEach((anchorPosition) => {
-    const degreeIndex = modulo(anchorPosition, collectionSize);
-    const relativeCollectionKey = getRelativeModeCollectionKey(
-      collectionKey,
-      degreeIndex,
-    );
-    const chordRootName = rootNames[degreeIndex];
-    const chordRoot =
-      chordRootName === undefined
-        ? undefined
-        : resolveChordRootNote(chordRootName);
-
-    if (
-      relativeCollectionKey === undefined ||
-      chordRoot === undefined ||
-      chordRootName === undefined
-    ) {
-      return;
-    }
-
-    const intervals = getExtensionsForRootAndNoteCollectionKey(
-      chordRoot,
-      relativeCollectionKey,
-    ).slice(0, chordSize);
-    const collectionPositions = createExtensionPositions(
-      anchorPosition,
-      extensionDegree,
-    );
-    const midiNotes = collectionPositions.flatMap((position) => {
-      const midi = getMidiForCollectionPosition({
+  contexts.forEach(
+    ({ anchorPosition, relativeCollectionKey, resolvedRoot, rootName }) => {
+      const intervals = getExtensionsForRootAndNoteCollectionKey(
+        resolvedRoot,
+        relativeCollectionKey,
+      ).slice(0, chordSize);
+      const collectionPositions = createExtensionPositions(
+        anchorPosition,
+        extensionDegree,
+      );
+      const midiNotes = getMidiNotesForCollectionPositions({
         collectionKey,
+        collectionPositions,
         octaveOffset,
-        position,
         rootNote,
       });
 
-      return midi === undefined || !isPlayableMidiNote(midi) ? [] : [midi];
-    });
+      if (
+        intervals.length !== chordSize ||
+        midiNotes.length !== collectionPositions.length
+      ) {
+        return;
+      }
 
-    if (
-      intervals.length !== chordSize ||
-      midiNotes.length !== collectionPositions.length
-    ) {
-      return;
-    }
-
-    result.set(anchorPosition, {
-      chordName: getChordName({
-        extensionDegree,
+      result.set(anchorPosition, {
+        chordName: getChordName({
+          extensionDegree,
+          intervals,
+          relativeCollectionKey,
+          rootName,
+        }),
+        collectionPositions,
         intervals,
+        midiNotes,
         relativeCollectionKey,
-        rootName: chordRootName,
-      }),
-      collectionPositions,
-      intervals,
-      midiNotes,
-      relativeCollectionKey,
-      rootName: chordRootName,
-    });
+        rootName,
+      });
+    },
+  );
+
+  return result;
+}
+
+export function createIntervalDescriptorsByAnchorPosition({
+  anchors,
+  collectionKey,
+  intervalDegree,
+  octaveOffset,
+  rootNote,
+}: {
+  anchors: readonly number[];
+  collectionKey: NoteCollectionKey;
+  intervalDegree: number;
+  octaveOffset: number;
+  rootNote: RootNote;
+}) {
+  const result = new Map<number, ExerciseScaleDegreeDescriptor>();
+  const degree = clampExerciseInteger(
+    intervalDegree,
+    EXERCISE_INTERVAL_MIN,
+    EXERCISE_INTERVAL_MAX,
+  );
+  const contexts = createScaleDegreeContexts({
+    anchors,
+    collectionKey,
+    rootNote,
   });
+
+  contexts.forEach(
+    ({ anchorPosition, relativeCollectionKey, resolvedRoot, rootName }) => {
+      const selectedInterval = getPackageIntervalForDegree({
+        degree,
+        relativeCollectionKey,
+        rootNote: resolvedRoot,
+      });
+      const collectionPositions = [anchorPosition, anchorPosition + degree - 1];
+      const midiNotes = getMidiNotesForCollectionPositions({
+        collectionKey,
+        collectionPositions,
+        octaveOffset,
+        rootNote,
+      });
+
+      if (
+        selectedInterval === undefined ||
+        midiNotes.length !== collectionPositions.length
+      ) {
+        return;
+      }
+
+      result.set(anchorPosition, {
+        collectionPositions,
+        intervals: ["1", selectedInterval],
+        midiNotes,
+        relativeCollectionKey,
+        rootName,
+      });
+    },
+  );
 
   return result;
 }

@@ -223,6 +223,7 @@ describe("part module app store actions", () => {
       moduleId,
       "glass-bell",
     );
+    state.setExerciseLooperCountInBeats(sessionId, partId, moduleId, 4);
     state.setExerciseLooperPattern(sessionId, partId, moduleId, {
       direction: "descending",
       extensionDegree: 7,
@@ -251,6 +252,7 @@ describe("part module app store actions", () => {
 
     expect(partModule).toMatchObject({
       audioPresetId: "glass-bell",
+      countInBeats: 4,
       end: { octave: 1, stepOffset: 2 },
       id: moduleId,
       pattern: {

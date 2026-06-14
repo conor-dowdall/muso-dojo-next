@@ -9,6 +9,7 @@ import {
 } from "@/utils/music-theory/collectionToneSequence";
 import {
   createChordDescriptorsByAnchorPosition,
+  createIntervalDescriptorsByAnchorPosition,
   supportsScaleDegreeExercises,
   supportsTertianExercises,
 } from "./exerciseChordDescriptors";
@@ -32,7 +33,9 @@ import {
   type ExerciseChordDescriptor,
   type ExerciseDisplayNote,
   type ExercisePattern,
+  type ExerciseScaleDegreeDescriptor,
   type ExerciseSequence,
+  type ExerciseStudyNote,
 } from "./exerciseSequenceTypes";
 
 export {
@@ -43,6 +46,7 @@ export {
   getCollectionPosition,
   getCollectionRangeBoundary,
   getExerciseAnchorPositionBounds,
+  getExerciseBaseOctave,
   getMidiForCollectionPosition,
 } from "./exerciseSequenceRange";
 export {
@@ -61,6 +65,8 @@ export type {
   ExerciseSequence,
   ExerciseSequenceNote,
   ExerciseSequenceStep,
+  ExerciseScaleDegreeDescriptor,
+  ExerciseStudyNote,
 } from "./exerciseSequenceTypes";
 
 const DEFAULT_EXERCISE_PATTERN: ExercisePattern = {
@@ -184,6 +190,42 @@ function createDisplayRows({
   );
 }
 
+function createStudyReference({
+  collectionKey,
+  isFiniteVoicing,
+  noteNames,
+}: {
+  collectionKey: NoteCollectionKey;
+  isFiniteVoicing: boolean;
+  noteNames: readonly string[];
+}) {
+  const metadata = getCollectionToneSequenceMetadata(collectionKey);
+  const studyReference = metadata.tones.flatMap((tone): ExerciseStudyNote[] => {
+    const label = noteNames[tone.collectionIndex];
+
+    return label === undefined
+      ? []
+      : [{ intervalLabel: tone.intervalLabel, label }];
+  });
+
+  if (isFiniteVoicing || studyReference.length === 0) {
+    return studyReference;
+  }
+
+  const octave = getCollectionToneAtPosition(
+    collectionKey,
+    metadata.tones.length,
+  );
+  const rootName = noteNames[0];
+
+  return octave === undefined || rootName === undefined
+    ? studyReference
+    : [
+        ...studyReference,
+        { intervalLabel: octave.intervalLabel, label: rootName },
+      ];
+}
+
 export function createExerciseSequence({
   end,
   noteCollectionKey,
@@ -261,6 +303,16 @@ export function createExerciseSequence({
           rootNote: resolvedRootNote,
         })
       : new Map<number, ExerciseChordDescriptor>();
+  const intervalDescriptorsByAnchorPosition =
+    pattern.mode === "interval"
+      ? createIntervalDescriptorsByAnchorPosition({
+          anchors,
+          collectionKey: resolvedCollectionKey,
+          intervalDegree: pattern.intervalDegree,
+          octaveOffset,
+          rootNote: resolvedRootNote,
+        })
+      : new Map<number, ExerciseScaleDegreeDescriptor>();
   const steps = createSequenceSteps({
     anchors,
     collectionKey: resolvedCollectionKey,
@@ -291,6 +343,11 @@ export function createExerciseSequence({
   });
   const displayNotes = displayRows.flat();
   const notes = displayNotes.filter((note) => note.isAnchor);
+  const studyReference = createStudyReference({
+    collectionKey: resolvedCollectionKey,
+    isFiniteVoicing: toneSequence.isFiniteVoicing,
+    noteNames,
+  });
   const firstAnchorOctave =
     getCollectionToneAtPosition(resolvedCollectionKey, firstPosition)?.octave ??
     0;
@@ -312,10 +369,12 @@ export function createExerciseSequence({
     displayRows,
     firstPosition,
     isFiniteVoicing: toneSequence.isFiniteVoicing,
+    intervalDescriptorsByAnchorPosition,
     lastPosition,
     notes,
     rows,
     steps,
+    studyReference,
     supportsOctaveRangeEditing: toneSequence.supportsOctaveRangeEditing,
     supportsScaleDegreeExercises: supportsScaleDegreeExercises(
       resolvedCollectionKey,

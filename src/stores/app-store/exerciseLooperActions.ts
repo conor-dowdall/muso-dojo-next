@@ -5,6 +5,7 @@ import {
 } from "@/data/woodSurfaces";
 import {
   boundariesAreEqual,
+  DEFAULT_EXERCISE_COUNT_IN_BEATS,
   DEFAULT_EXERCISE_END,
   DEFAULT_EXERCISE_PATTERN,
   DEFAULT_EXERCISE_START,
@@ -12,6 +13,7 @@ import {
   EXERCISE_MAX_OCTAVE_OFFSET,
   EXERCISE_MIN_OCTAVE_OFFSET,
   exercisePatternsAreEqual,
+  normalizeExerciseCountInBeats,
 } from "@/utils/exercise-looper/exerciseConfig";
 import { isExerciseLooperPartModule } from "@/utils/session/partModuleTypes";
 import { resolveSettingValue } from "./settingValue";
@@ -63,6 +65,20 @@ export function createExerciseLooperActions(
       if (next !== current) {
         get().updateExerciseLooperSettings(sessionId, partId, moduleId, {
           audioPresetId: next,
+        });
+      }
+    },
+    setExerciseLooperCountInBeats: (sessionId, partId, moduleId, value) => {
+      const partModule = getLooper(sessionId, partId, moduleId);
+      if (!partModule) return;
+      const current =
+        partModule.countInBeats ?? DEFAULT_EXERCISE_COUNT_IN_BEATS;
+      const next = normalizeExerciseCountInBeats(
+        resolveSettingValue(value, current),
+      );
+      if (next !== undefined && next !== current) {
+        get().updateExerciseLooperSettings(sessionId, partId, moduleId, {
+          countInBeats: next,
         });
       }
     },

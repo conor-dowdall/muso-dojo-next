@@ -110,8 +110,11 @@ export type ExerciseSubdivision =
   | "sixteenth"
   | "sixteenth-triplet";
 
+export type ExerciseCountInBeats = 0 | 2 | 3 | 4;
+
 export interface ExerciseLooperPartModuleConfig extends PartModuleBaseConfig<"exercise-looper"> {
   audioPresetId?: AudioPresetId;
+  countInBeats?: ExerciseCountInBeats;
   end?: CollectionRangeBoundary;
   octaveOffset?: number;
   pattern?: ExercisePattern;

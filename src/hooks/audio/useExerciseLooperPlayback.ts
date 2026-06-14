@@ -25,6 +25,7 @@ import { exerciseSubdivisionBeats } from "@/utils/exercise-looper/exerciseConfig
 import { type ExerciseSequenceStep } from "@/utils/exercise-looper/exerciseSequence";
 import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import { type ExerciseSubdivision } from "@/types/session";
+import { type ExerciseCountInBeats } from "@/types/session";
 
 const EXERCISE_AUDITION_DURATION_SECONDS = 0.55;
 
@@ -72,12 +73,14 @@ function getCurrentOutputTime() {
 
 export function useExerciseLooperPlayback({
   audioPresetId,
+  countInBeats,
   id,
   steps,
   subdivision,
   tempoBpm,
 }: {
   audioPresetId?: AudioPresetId;
+  countInBeats: ExerciseCountInBeats;
   id: string;
   steps: readonly ExerciseSequenceStep[];
   subdivision: ExerciseSubdivision;
@@ -107,12 +110,13 @@ export function useExerciseLooperPlayback({
   );
   const request = useMemo(
     () => ({
+      countInBeats,
       events,
       id,
       presetId: audioPresetId ?? getDefaultAudioPresetId("exercise"),
       tempoBpm,
     }),
-    [audioPresetId, events, id, tempoBpm],
+    [audioPresetId, countInBeats, events, id, tempoBpm],
   );
   const submittedRequest = useRef(request);
 

@@ -10,9 +10,13 @@ import {
   type ExercisePattern,
   type ExercisePatternMode,
 } from "./exerciseSequence";
-import { type ExerciseSubdivision } from "@/types/session";
+import {
+  type ExerciseCountInBeats,
+  type ExerciseSubdivision,
+} from "@/types/session";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 
+export const DEFAULT_EXERCISE_COUNT_IN_BEATS = 0 satisfies ExerciseCountInBeats;
 export const DEFAULT_EXERCISE_PATTERN = {
   direction: "up-down",
   extensionDegree: 5,
@@ -55,6 +59,14 @@ export const exerciseSubdivisionBeats = {
   sixteenth: 1 / 4,
   "sixteenth-triplet": 1 / 6,
 } as const satisfies Record<ExerciseSubdivision, number>;
+
+export function normalizeExerciseCountInBeats(
+  value: unknown,
+): ExerciseCountInBeats | undefined {
+  return value === 0 || value === 2 || value === 3 || value === 4
+    ? value
+    : undefined;
+}
 
 export function normalizeExerciseSubdivision(
   value: unknown,
