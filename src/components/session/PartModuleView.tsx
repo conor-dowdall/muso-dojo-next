@@ -12,6 +12,7 @@ interface PartModuleViewProps {
   partId: string;
   moduleId: string;
   isPerformanceMode?: boolean;
+  onOpenSessionTempo?: (sessionId: string) => void;
 }
 
 export function PartModuleView({
@@ -19,6 +20,7 @@ export function PartModuleView({
   partId,
   moduleId,
   isPerformanceMode = false,
+  onOpenSessionTempo,
 }: PartModuleViewProps) {
   const moduleType = useAppStore(
     (state) => selectPartModule(state, sessionId, partId, moduleId)?.type,
@@ -52,6 +54,7 @@ export function PartModuleView({
           partId={partId}
           moduleId={moduleId}
           isPerformanceMode={isPerformanceMode}
+          onOpenSessionTempo={onOpenSessionTempo}
         />
       );
     default:

@@ -14,7 +14,8 @@ import {
   Spline,
   Split,
 } from "lucide-react";
-import { TactileIconButton } from "@/components/ui/buttons/TactileButton";
+import { PartModuleControlButton } from "@/components/part-module/PartModuleControlButton";
+import controlStyles from "@/components/part-module/PartModuleControls.module.css";
 import { TactileControlGroup } from "@/components/ui/tactile-control-group/TactileControlGroup";
 import { type ExerciseSubdivision } from "@/types/session";
 import { getExerciseDegreeOptions } from "@/utils/exercise-looper/exerciseConfig";
@@ -342,18 +343,17 @@ export function ExercisePatternControls({
         <TactileControlGroup
           aria-label="Direction"
           className={styles.setupControlGroup}
-          controlsClassName={styles.directionControls}
+          controlsClassName={controlStyles.buttonGroup}
           readout={getCompactDirectionLabel(pattern.direction)}
         >
           {directionChoices.map((choice) => (
-            <TactileIconButton
+            <PartModuleControlButton
               key={choice.direction}
               onPress={() => updatePattern({ direction: choice.direction })}
               aria-label={choice.label}
-              className={styles.patternButton}
               icon={choice.icon}
               selected={pattern.direction === choice.direction}
-              size="md"
+              unavailable={!onChange}
             />
           ))}
         </TactileControlGroup>
@@ -361,33 +361,31 @@ export function ExercisePatternControls({
         <TactileControlGroup
           aria-label="Rhythm"
           className={styles.setupControlGroup}
-          controlsClassName={styles.rhythmControls}
+          controlsClassName={controlStyles.modifierButtonGroup}
           readout={rhythmLabel}
         >
           <span
             aria-label="Note value"
-            className={styles.noteValueControls}
+            className={controlStyles.buttonGroup}
             role="group"
           >
             {noteValueChoices.map((choice) => (
-              <TactileIconButton
+              <PartModuleControlButton
                 key={choice.noteValue}
                 aria-label={choice.label}
-                className={styles.patternButton}
                 icon={choice.icon}
                 onPress={() => setNoteValue(choice.noteValue)}
                 selected={rhythm.noteValue === choice.noteValue}
-                size="md"
+                unavailable={!onSubdivisionChange}
               />
             ))}
           </span>
-          <TactileIconButton
+          <PartModuleControlButton
             aria-label={
               rhythm.feel === "triplet"
                 ? "Use straight notes"
                 : "Use triplet notes"
             }
-            className={`${styles.patternButton} ${styles.tripletButton}`}
             icon={
               <span aria-hidden="true" className={styles.tripletButtonLabel}>
                 3
@@ -395,8 +393,7 @@ export function ExercisePatternControls({
             }
             onPress={toggleTriplets}
             selected={rhythm.feel === "triplet"}
-            size="md"
-            unavailable={tripletUnavailable}
+            unavailable={!onSubdivisionChange || tripletUnavailable}
           />
         </TactileControlGroup>
       </div>
@@ -409,15 +406,14 @@ export function ExercisePatternControls({
         <TactileControlGroup
           aria-label="Play mode"
           className={styles.modeControlGroup}
-          controlsClassName={styles.modeControls}
+          controlsClassName={controlStyles.buttonGroup}
           readout={modeReadout}
         >
           {patternModeChoices.map((choice) => (
-            <TactileIconButton
+            <PartModuleControlButton
               key={choice.mode}
               onPress={() => setPatternMode(choice.mode)}
               aria-label={choice.label}
-              className={styles.modeButton}
               icon={choice.icon}
               onFocus={() => {
                 if (isPatternModeUnavailable(choice.mode)) {
@@ -428,8 +424,7 @@ export function ExercisePatternControls({
               }}
               onUnavailablePress={showUnavailableModeFeedback}
               selected={pattern.mode === choice.mode}
-              size="md"
-              unavailable={isPatternModeUnavailable(choice.mode)}
+              unavailable={!onChange || isPatternModeUnavailable(choice.mode)}
             />
           ))}
         </TactileControlGroup>
@@ -450,57 +445,55 @@ export function ExercisePatternControls({
               aria-label={
                 pattern.mode === "extension" ? "Chord size" : "Interval size"
               }
-              controlsClassName={styles.degreeControls}
+              controlsClassName={controlStyles.buttonGroup}
               readout={activeDegreeLabel}
               unavailable={fineTuneUnavailable}
             >
-              <TactileIconButton
+              <PartModuleControlButton
                 onPress={() => stepActiveDegree(-1)}
                 aria-label={
                   pattern.mode === "extension"
                     ? "Decrease chord size"
                     : "Decrease interval size"
                 }
-                className={`${styles.patternButton} ${styles.degreeButton}`}
                 icon={<Minus />}
-                size="md"
-                unavailable={fineTuneUnavailable || !canDecreaseActiveDegree}
+                unavailable={
+                  !onChange || fineTuneUnavailable || !canDecreaseActiveDegree
+                }
               />
-              <TactileIconButton
+              <PartModuleControlButton
                 onPress={() => stepActiveDegree(1)}
                 aria-label={
                   pattern.mode === "extension"
                     ? "Increase chord size"
                     : "Increase interval size"
                 }
-                className={`${styles.patternButton} ${styles.degreeButton}`}
                 icon={<Plus />}
-                size="md"
-                unavailable={fineTuneUnavailable || !canIncreaseActiveDegree}
+                unavailable={
+                  !onChange || fineTuneUnavailable || !canIncreaseActiveDegree
+                }
               />
             </TactileControlGroup>
 
             <TactileControlGroup
               aria-label="Note playback"
-              controlsClassName={styles.contextualControls}
+              controlsClassName={controlStyles.buttonGroup}
               readout={notePlaybackLabel}
               unavailable={fineTuneUnavailable}
             >
               {notePlaybackChoices.map((choice) => (
-                <TactileIconButton
+                <PartModuleControlButton
                   key={choice.playback}
                   onPress={() =>
                     updatePattern({ notePlayback: choice.playback })
                   }
                   aria-label={choice.label}
-                  className={styles.patternButton}
                   icon={choice.icon}
                   selected={
                     !fineTuneUnavailable &&
                     pattern.notePlayback === choice.playback
                   }
-                  size="md"
-                  unavailable={fineTuneUnavailable}
+                  unavailable={!onChange || fineTuneUnavailable}
                 />
               ))}
             </TactileControlGroup>
@@ -509,23 +502,21 @@ export function ExercisePatternControls({
           <TactileControlGroup
             aria-label="Inner note direction"
             className={styles.noteDirectionControlGroup}
-            controlsClassName={styles.noteDirectionControls}
+            controlsClassName={controlStyles.buttonGroup}
             readout={innerDirectionLabel}
             unavailable={noteDirectionUnavailable}
           >
             {directionChoices.map((choice) => (
-              <TactileIconButton
+              <PartModuleControlButton
                 key={choice.direction}
                 onPress={() => setActiveNoteDirection(choice.direction)}
                 aria-label={`Notes ${choice.label.toLowerCase()}`}
-                className={styles.patternButton}
                 icon={choice.icon}
                 selected={
                   !noteDirectionUnavailable &&
                   activeNoteDirection === choice.direction
                 }
-                size="md"
-                unavailable={noteDirectionUnavailable}
+                unavailable={!onChange || noteDirectionUnavailable}
               />
             ))}
           </TactileControlGroup>

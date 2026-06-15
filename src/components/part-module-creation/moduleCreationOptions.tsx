@@ -13,7 +13,7 @@ export const MODULE_CREATION_KIND_LABELS = {
   drone: "Drone",
   fretboard: "Fretboard",
   keyboard: "Keyboard",
-  "exercise-looper": "Exercise Looper",
+  "exercise-looper": "Looper",
 } as const satisfies Record<ModuleCreationKind, string>;
 
 /**

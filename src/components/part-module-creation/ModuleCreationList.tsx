@@ -298,7 +298,7 @@ export function ModuleCreationList({
                   />
                 ) : option.kind === "exercise-looper" ? (
                   <DroneCreationPanel
-                    ariaLabel="Exercise Looper settings"
+                    ariaLabel="Looper settings"
                     closeSignal={closeSignal}
                     value={exerciseLooperSelection}
                     onChange={setExerciseLooperSelection}

@@ -11,15 +11,18 @@ import {
   Metronome,
   Play,
   Square,
+  Volume2,
   WavesArrowDown,
   WavesArrowUp,
 } from "lucide-react";
 import { getDefaultAudioPresetId, type AudioPresetId } from "@/audio";
+import { InstrumentIdentity } from "@/components/instrument/InstrumentIdentity";
 import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
 import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeaderActions";
+import { PartModuleControlButton } from "@/components/part-module/PartModuleControlButton";
 import { PartModuleHeaderActions } from "@/components/part-module/PartModuleHeaderActions";
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
-import { TactileIconButton } from "@/components/ui/buttons/TactileButton";
+import controlStyles from "@/components/part-module/PartModuleControls.module.css";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { TactileControlGroup } from "@/components/ui/tactile-control-group/TactileControlGroup";
 import {
@@ -64,25 +67,6 @@ import { ExerciseLooperOptionsDialog } from "./ExerciseLooperOptionsDialog";
 import { ExercisePatternControls } from "./ExercisePatternControls";
 import styles from "./ExerciseLooperModule.module.css";
 
-function getLooperRowClassName(rowCount: number) {
-  switch (rowCount) {
-    case 2:
-      return styles.rows2;
-    case 3:
-      return styles.rows3;
-    case 4:
-      return styles.rows4;
-    case 5:
-      return styles.rows5;
-    case 6:
-      return styles.rows6;
-    case 7:
-      return styles.rows7;
-    default:
-      return "";
-  }
-}
-
 const countInChoices = [2, 3, 4] as const satisfies readonly Exclude<
   ExerciseCountInBeats,
   0
@@ -104,6 +88,7 @@ export function ExerciseLooperModule({
   onOctaveOffsetChange,
   onPatternChange,
   onRemove,
+  onOpenSessionTempo,
   onStartChange,
   onSubdivisionChange,
   onWoodChange,
@@ -132,6 +117,7 @@ export function ExerciseLooperModule({
   onOctaveOffsetChange?: (value: number) => void;
   onPatternChange?: (value: ExercisePattern) => void;
   onRemove?: () => void;
+  onOpenSessionTempo?: () => void;
   onStartChange?: (value: CollectionRangeBoundary) => void;
   onSubdivisionChange?: (value: ExerciseSubdivision) => void;
   onWoodChange?: (value: WoodSurfaceId) => void;
@@ -385,12 +371,8 @@ export function ExerciseLooperModule({
     <>
       <PartModuleFrame
         bodyClassName={styles.body}
-        className={[
-          styles.frame,
-          getLooperRowClassName(sequence.displayRows.length),
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        className={`${styles.frame} ${controlStyles.surface}`}
+        headerPrimary={<InstrumentIdentity label="Looper" />}
         showHeader={showHeader}
         style={
           {
@@ -400,7 +382,7 @@ export function ExerciseLooperModule({
         headerActions={
           showHeader ? (
             <PartModuleHeaderActions
-              start={
+              controls={
                 <NoteRangeHeaderActions
                   canAddNote={canAddNote}
                   canAddOctave={canAddOctave}
@@ -421,32 +403,92 @@ export function ExerciseLooperModule({
                     setEndPosition(lastPosition - collectionSize)
                   }
                   showOctaveActions={sequence.supportsOctaveRangeEditing}
-                  showTooltips={false}
                 />
               }
-              end={
+              utility={
                 <OverflowMenuButton
-                  aria-label="Exercise Looper options"
+                  aria-label="Looper options"
                   onClick={() => setIsOptionsOpen(true)}
-                  tooltip={false}
                 />
               }
             />
           ) : undefined
         }
-        headerActionsGrow
       >
         <div className={styles.surface}>
           <div className={styles.controlDeck}>
             <div
-              aria-label="Exercise Looper performance controls"
+              aria-label="Looper performance controls"
               className={styles.performanceControls}
               role="group"
             >
+              <div
+                aria-label="Playback, tempo, and pulse controls"
+                className={`${styles.playbackActionControls} ${controlStyles.groupCluster}`}
+                role="group"
+              >
+                <TactileControlGroup aria-label="Playback">
+                  <PartModuleControlButton
+                    aria-label={
+                      playback.isActive ? "Stop exercise" : "Play exercise"
+                    }
+                    icon={playback.isActive ? <Square /> : <Play />}
+                    onPress={playback.isActive ? playback.stop : playback.start}
+                    prominence="primary"
+                    selected={playback.isActive}
+                  />
+                </TactileControlGroup>
+
+                <div
+                  aria-label="Tempo and metronome controls"
+                  className={controlStyles.buttonGroup}
+                  role="group"
+                >
+                  <TactileControlGroup
+                    aria-label="Session tempo"
+                    className={styles.pulseControlGroup}
+                    readout={tempoBpm}
+                    readoutAriaLabel={`Session tempo: ${tempoBpm} bpm`}
+                    readoutClassName={styles.pulseReadout}
+                  >
+                    <PartModuleControlButton
+                      aria-label={`Set session tempo. Current tempo: ${tempoBpm} bpm`}
+                      icon={<Metronome />}
+                      onPress={() => onOpenSessionTempo?.()}
+                      unavailable={!onOpenSessionTempo}
+                    />
+                  </TactileControlGroup>
+
+                  <TactileControlGroup
+                    aria-label="Metronome"
+                    className={styles.pulseControlGroup}
+                    readout={metronomeEnabled ? "On" : "Off"}
+                    readoutAriaLabel={`Metronome: ${
+                      metronomeEnabled ? "On" : "Off"
+                    }`}
+                    readoutClassName={styles.pulseReadout}
+                  >
+                    <PartModuleControlButton
+                      aria-label={
+                        metronomeEnabled
+                          ? "Turn off metronome during exercise"
+                          : "Turn on metronome during exercise"
+                      }
+                      icon={<Volume2 />}
+                      onPress={() =>
+                        onMetronomeEnabledChange?.(!metronomeEnabled)
+                      }
+                      selected={metronomeEnabled}
+                      unavailable={!onMetronomeEnabledChange}
+                    />
+                  </TactileControlGroup>
+                </div>
+              </div>
+
               <TactileControlGroup
                 aria-label="Count-in"
                 className={styles.countInControlGroup}
-                controlsClassName={styles.secondaryControlButtons}
+                controlsClassName={controlStyles.buttonGroup}
                 readout={countInReadout}
                 readoutAriaLabel={countInReadout}
               >
@@ -454,14 +496,13 @@ export function ExerciseLooperModule({
                   const isSelected = countInBeats === beatCount;
 
                   return (
-                    <TactileIconButton
+                    <PartModuleControlButton
                       key={beatCount}
                       aria-label={
                         isSelected
                           ? `Turn off the ${beatCount}-beat count-in`
                           : `Use a ${beatCount}-beat count-in`
                       }
-                      className={styles.countInButton}
                       icon={
                         <span aria-hidden="true" className={styles.beatCount}>
                           {beatCount}
@@ -471,7 +512,7 @@ export function ExerciseLooperModule({
                         onCountInBeatsChange?.(isSelected ? 0 : beatCount)
                       }
                       selected={isSelected}
-                      size="md"
+                      unavailable={!onCountInBeatsChange}
                     />
                   );
                 })}
@@ -480,70 +521,23 @@ export function ExerciseLooperModule({
               <TactileControlGroup
                 aria-label="Exercise octave"
                 className={styles.octaveControlGroup}
-                controlsClassName={styles.secondaryControlButtons}
+                controlsClassName={controlStyles.buttonGroup}
                 readout={octaveReadout}
                 readoutAriaLabel={`Exercise pitch: ${octaveReadout}`}
               >
-                <TactileIconButton
+                <PartModuleControlButton
                   onPress={() => onOctaveOffsetChange?.(octaveOffset - 1)}
                   aria-label={`Shift exercise down one octave. Current pitch: ${octaveReadout}`}
-                  className={styles.octaveButton}
                   icon={<WavesArrowDown />}
-                  size="md"
-                  unavailable={!canShiftDown}
+                  unavailable={!onOctaveOffsetChange || !canShiftDown}
                 />
-                <TactileIconButton
+                <PartModuleControlButton
                   onPress={() => onOctaveOffsetChange?.(octaveOffset + 1)}
                   aria-label={`Shift exercise up one octave. Current pitch: ${octaveReadout}`}
-                  className={styles.octaveButton}
                   icon={<WavesArrowUp />}
-                  size="md"
-                  unavailable={!canShiftUp}
+                  unavailable={!onOctaveOffsetChange || !canShiftUp}
                 />
               </TactileControlGroup>
-
-              <div
-                aria-label="Pulse and playback controls"
-                className={styles.playbackActionControls}
-                role="group"
-              >
-                <TactileControlGroup
-                  aria-label="Metronome"
-                  readout={metronomeEnabled ? "On" : "Off"}
-                  readoutAriaLabel={`Metronome: ${
-                    metronomeEnabled ? "On" : "Off"
-                  }`}
-                >
-                  <TactileIconButton
-                    aria-label={
-                      metronomeEnabled
-                        ? "Turn off metronome during exercise"
-                        : "Turn on metronome during exercise"
-                    }
-                    className={styles.metronomeButton}
-                    icon={<Metronome />}
-                    onPress={() =>
-                      onMetronomeEnabledChange?.(!metronomeEnabled)
-                    }
-                    selected={metronomeEnabled}
-                    size="md"
-                    unavailable={!onMetronomeEnabledChange}
-                  />
-                </TactileControlGroup>
-
-                <TactileControlGroup aria-label="Playback">
-                  <TactileIconButton
-                    aria-label={
-                      playback.isActive ? "Stop exercise" : "Play exercise"
-                    }
-                    className={styles.playbackButton}
-                    icon={playback.isActive ? <Square /> : <Play />}
-                    onPress={playback.isActive ? playback.stop : playback.start}
-                    selected={playback.isActive}
-                    size="lg"
-                  />
-                </TactileControlGroup>
-              </div>
             </div>
 
             <ExercisePatternControls

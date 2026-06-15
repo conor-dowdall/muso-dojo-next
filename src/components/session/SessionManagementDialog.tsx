@@ -23,6 +23,7 @@ import {
 import styles from "./SessionManagementDialog.module.css";
 
 interface SessionManagementDialogProps {
+  initialOpenTempoSessionId?: string;
   onClose: () => void;
 }
 
@@ -51,6 +52,7 @@ function createSessionManagementSnapshotSelector() {
         id: session.id,
         name: session.name,
         parts: session.parts.map(createSessionPartSummary),
+        tempoBpm: session.tempoBpm ?? 80,
       };
     });
 
@@ -71,11 +73,17 @@ const selectSessionManagementSnapshot =
   createSessionManagementSnapshotSelector();
 
 export function SessionManagementDialog({
+  initialOpenTempoSessionId,
   onClose,
 }: SessionManagementDialogProps) {
-  const [openSessionId, setOpenSessionId] = useState<string | null>(null);
+  const [openSessionId, setOpenSessionId] = useState<string | null>(
+    initialOpenTempoSessionId ?? null,
+  );
   const [openRenameSessionId, setOpenRenameSessionId] = useState<string | null>(
     null,
+  );
+  const [openTempoSessionId, setOpenTempoSessionId] = useState<string | null>(
+    initialOpenTempoSessionId ?? null,
   );
   const [deleteConfirmationSessionId, setDeleteConfirmationSessionId] =
     useState<string | null>(null);
@@ -87,6 +95,7 @@ export function SessionManagementDialog({
   const cloneSession = useAppStore((state) => state.cloneSession);
   const removeSession = useAppStore((state) => state.removeSession);
   const renameSession = useAppStore((state) => state.renameSession);
+  const setSessionTempoBpm = useAppStore((state) => state.setSessionTempoBpm);
 
   const activeSession =
     (activeSessionId
@@ -97,6 +106,7 @@ export function SessionManagementDialog({
     addSession();
     setOpenSessionId(null);
     setOpenRenameSessionId(null);
+    setOpenTempoSessionId(null);
     setDeleteConfirmationSessionId(null);
   };
 
@@ -105,6 +115,7 @@ export function SessionManagementDialog({
       currentSessionId === sessionId ? null : sessionId,
     );
     setOpenRenameSessionId(null);
+    setOpenTempoSessionId(null);
     setDeleteConfirmationSessionId(null);
   };
 
@@ -116,6 +127,7 @@ export function SessionManagementDialog({
     setActiveSessionId(sessionId);
     setOpenSessionId(null);
     setOpenRenameSessionId(null);
+    setOpenTempoSessionId(null);
     setDeleteConfirmationSessionId(null);
   };
 
@@ -123,6 +135,7 @@ export function SessionManagementDialog({
     cloneSession(sessionId);
     setOpenSessionId(null);
     setOpenRenameSessionId(null);
+    setOpenTempoSessionId(null);
     setDeleteConfirmationSessionId(null);
   };
 
@@ -130,6 +143,7 @@ export function SessionManagementDialog({
     removeSession(sessionId);
     setOpenSessionId(null);
     setOpenRenameSessionId(null);
+    setOpenTempoSessionId(null);
     setDeleteConfirmationSessionId(null);
   };
 
@@ -137,6 +151,15 @@ export function SessionManagementDialog({
     setOpenRenameSessionId((currentSessionId) =>
       currentSessionId === sessionId ? null : sessionId,
     );
+    setOpenTempoSessionId(null);
+    setDeleteConfirmationSessionId(null);
+  };
+
+  const handleTempoToggle = (sessionId: string) => {
+    setOpenTempoSessionId((currentSessionId) =>
+      currentSessionId === sessionId ? null : sessionId,
+    );
+    setOpenRenameSessionId(null);
     setDeleteConfirmationSessionId(null);
   };
 
@@ -172,6 +195,10 @@ export function SessionManagementDialog({
                     }
                     isOpen={session.id === openSessionId}
                     isRenameOpen={session.id === openRenameSessionId}
+                    isTempoOpen={session.id === openTempoSessionId}
+                    shouldFocusTempoInput={
+                      session.id === initialOpenTempoSessionId
+                    }
                     session={session}
                     sessions={sessionList}
                     onCancelDeleteSession={() =>
@@ -187,9 +214,11 @@ export function SessionManagementDialog({
                     onDeleteSession={handleDeleteSession}
                     onDuplicateSession={handleCloneSession}
                     onRenameSession={renameSession}
+                    onSetTempoBpm={setSessionTempoBpm}
                     onRequestDeleteSession={setDeleteConfirmationSessionId}
                     onToggleActions={handleSessionActionsToggle}
                     onToggleRename={handleRenameToggle}
+                    onToggleTempo={handleTempoToggle}
                     onUseSession={handleSelectSession}
                   />
                 ))

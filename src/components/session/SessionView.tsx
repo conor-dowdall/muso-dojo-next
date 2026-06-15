@@ -11,12 +11,14 @@ import styles from "./SessionView.module.css";
 interface SessionViewProps {
   sessionId: string;
   onOpenAddDialog?: () => void;
+  onOpenSessionTempo?: (sessionId: string) => void;
   isPerformanceMode?: boolean;
 }
 
 export function SessionView({
   sessionId,
   onOpenAddDialog,
+  onOpenSessionTempo,
   isPerformanceMode = false,
 }: SessionViewProps) {
   const noteColorConfig = useAppStore(
@@ -47,6 +49,7 @@ export function SessionView({
             sessionId={sessionId}
             partId={partId}
             isPerformanceMode={isPerformanceMode}
+            onOpenSessionTempo={onOpenSessionTempo}
           />
         ))
       )}

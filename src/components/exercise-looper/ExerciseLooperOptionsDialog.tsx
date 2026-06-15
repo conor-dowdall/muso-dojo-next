@@ -77,11 +77,7 @@ export function ExerciseLooperOptionsDialog({
   );
 
   return (
-    <ObjectMenuDialog
-      isOpen={isOpen}
-      title="Exercise Looper Options"
-      onClose={onClose}
-    >
+    <ObjectMenuDialog isOpen={isOpen} title="Looper Options" onClose={onClose}>
       <DisclosureListGroup>
         <DisclosureListItem
           ariaLabel="Pitch range"

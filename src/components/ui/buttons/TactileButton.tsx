@@ -94,7 +94,7 @@ export function TactileIconButton({
       className={getClassName(className)}
       data-control-state={getControlState(selected, unavailable)}
       icon={icon}
-      selected={selected}
+      selected={unavailable ? false : selected}
       tooltip={tooltip}
     />
   );

@@ -1,20 +1,17 @@
 import { type ReactNode } from "react";
-import styles from "./PartModuleHeaderActions.module.css";
+import { ControlHeaderCluster } from "@/components/ui/control-header/ControlHeader";
 
 export function PartModuleHeaderActions({
-  center,
-  end,
-  start,
+  controls,
+  utility,
 }: {
-  center?: ReactNode;
-  end?: ReactNode;
-  start?: ReactNode;
+  controls?: ReactNode;
+  utility?: ReactNode;
 }) {
   return (
-    <div className={styles.actions}>
-      {start ? <div className={styles.start}>{start}</div> : null}
-      {center ? <div className={styles.center}>{center}</div> : null}
-      {end ? <div className={styles.end}>{end}</div> : null}
-    </div>
+    <ControlHeaderCluster gap="cluster">
+      {controls}
+      {utility}
+    </ControlHeaderCluster>
   );
 }

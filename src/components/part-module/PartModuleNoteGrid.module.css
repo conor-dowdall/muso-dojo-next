@@ -1,0 +1,68 @@
+.stack {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  container-type: inline-size;
+}
+
+.rows {
+  display: flex;
+  inline-size: 100%;
+  min-inline-size: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--part-module-note-row-gap, var(--space-1));
+}
+
+.row {
+  display: grid;
+  inline-size: 100%;
+  min-inline-size: 0;
+  grid-template-columns: repeat(
+    var(--part-module-note-column-count),
+    minmax(0, var(--part-module-note-button-width, var(--space-16)))
+  );
+  justify-content: center;
+  gap: var(--part-module-note-column-gap, var(--space-1));
+}
+
+.button {
+  inline-size: 100%;
+  block-size: var(--part-module-note-button-height, var(--space-14));
+  padding: 0;
+}
+
+.button [data-emphasis] {
+  --instrument-note-tile-label-font-size: clamp(
+    var(--text-xs),
+    min(32cqi, 34cqb),
+    var(--text-lg)
+  );
+  --instrument-note-tile-label-padding: var(--space-0_5);
+
+  border-radius: calc(var(--radius-control) + var(--space-0_5));
+}
+
+.button[data-note-highlighted="true"] [data-emphasis] {
+  transition-duration: 0s;
+}
+
+@container (max-width: 24rem) {
+  .row {
+    column-gap: var(--space-0_5);
+  }
+}
+
+@container (max-width: 20rem) {
+  .row {
+    column-gap: var(--space-px);
+  }
+}

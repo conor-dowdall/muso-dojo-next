@@ -14,64 +14,23 @@
     var(--color-interaction-ring-dark) 44%,
     transparent
   );
-  --drone-note-button-width: var(--space-16);
-  --drone-note-button-height: calc(var(--space-14) + var(--space-1));
-  --drone-note-button-min-width: var(--control-size-md);
-  --drone-row-gap: var(--space-1);
-  --drone-column-gap: var(--space-1);
   --drone-body-padding: var(--space-3);
-  --drone-toolbar-gap: var(--space-3);
-  --drone-tool-panel-padding-block: var(--space-2);
-  --drone-tool-panel-padding-inline: var(--space-3);
-  --drone-toolbar-base-height: calc(
-    var(--control-size-lg) + var(--drone-tool-panel-padding-block) +
-      var(--drone-tool-panel-padding-block)
-  );
-  --drone-scrollbar-safe-area: var(--space-2);
-  --drone-content-height: calc(
-    var(--drone-toolbar-base-height) + var(--drone-toolbar-gap) +
-      var(--drone-note-button-height) + var(--drone-scrollbar-safe-area) +
-      var(--drone-body-padding) + var(--drone-body-padding)
-  );
-
+  --drone-toolbar-gap: var(--part-module-control-group-gap);
+  --part-module-note-button-width: var(--space-16);
+  --part-module-note-button-height: var(--space-14);
+  --part-module-note-row-gap: var(--space-1);
+  --part-module-note-column-gap: var(--space-1);
   --part-module-body-radius: var(--radius-control);
   --part-module-min-readable-width: 0;
-  --part-module-min-height: var(--drone-content-height);
-  --part-module-preferred-height: var(--drone-content-height);
-  --part-module-max-height: var(--drone-content-height);
+  --part-module-preferred-width: calc(var(--space-80) + var(--space-24));
 
-  inline-size: fit-content;
-  max-inline-size: 100%;
+  container: drone / inline-size;
 }
 
-.droneRows2 {
-  --drone-content-height: calc(
-    var(--drone-toolbar-base-height) + var(--drone-toolbar-gap) +
-      var(--drone-note-button-height) + var(--drone-note-button-height) +
-      var(--drone-row-gap) + var(--drone-scrollbar-safe-area) +
-      var(--drone-body-padding) + var(--drone-body-padding)
-  );
-}
-
-.droneRows3 {
-  --drone-content-height: calc(
-    var(--drone-toolbar-base-height) + var(--drone-toolbar-gap) +
-      var(--drone-note-button-height) + var(--drone-note-button-height) +
-      var(--drone-note-button-height) + var(--drone-row-gap) +
-      var(--drone-row-gap) + var(--drone-scrollbar-safe-area) +
-      var(--drone-body-padding) + var(--drone-body-padding)
-  );
-}
-
-.droneRows4 {
-  --drone-content-height: calc(
-    var(--drone-toolbar-base-height) + var(--drone-toolbar-gap) +
-      var(--drone-note-button-height) + var(--drone-note-button-height) +
-      var(--drone-note-button-height) + var(--drone-note-button-height) +
-      var(--drone-row-gap) + var(--drone-row-gap) + var(--drone-row-gap) +
-      var(--drone-scrollbar-safe-area) + var(--drone-body-padding) +
-      var(--drone-body-padding)
-  );
+.droneFrame .droneBody {
+  height: auto;
+  min-height: 0;
+  max-height: none;
 }
 
 .droneBody {
@@ -83,126 +42,38 @@
 }
 
 .droneToolSurface {
-  position: relative;
   box-sizing: border-box;
   display: flex;
-  flex-direction: column;
   inline-size: 100%;
-  block-size: 100%;
   min-inline-size: 0;
+  min-block-size: 0;
+  flex-direction: column;
   align-items: stretch;
-  justify-content: center;
   gap: var(--drone-toolbar-gap);
-  overflow: hidden;
   padding: var(--drone-body-padding);
+  overflow: hidden;
 }
 
 .droneToolControls {
-  position: relative;
-  z-index: 1;
-  isolation: isolate;
   display: flex;
-  flex: 0 0 auto;
-  align-self: center;
-  box-sizing: border-box;
-  inline-size: fit-content;
-  max-inline-size: 100%;
+  inline-size: 100%;
   min-inline-size: 0;
-  min-block-size: var(--drone-toolbar-base-height);
+  flex: 0 0 auto;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  row-gap: var(--space-1);
-  column-gap: var(--space-4);
-  padding-block: var(--drone-tool-panel-padding-block);
-  padding-inline: var(--drone-tool-panel-padding-inline);
+  padding-block: var(--space-1);
 }
 
 .droneToolControlGroup {
-  position: relative;
-  z-index: 1;
   flex: 0 0 auto;
   min-inline-size: 0;
 }
 
-.droneToolControlButtons {
-  display: flex;
-  min-inline-size: 0;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4);
-}
-
-.noteStack {
-  position: relative;
-  z-index: 1;
-  box-sizing: border-box;
-  display: flex;
-  flex: 1 1 auto;
-  inline-size: 100%;
-  block-size: 100%;
-  min-inline-size: 0;
-  min-block-size: 0;
-  align-items: center;
-  justify-content: flex-start;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-block-end: var(--drone-scrollbar-safe-area);
-  scrollbar-color: var(--color-border) transparent;
-  scrollbar-width: thin;
-}
-
-.noteRows {
-  display: flex;
-  inline-size: 100%;
-  min-inline-size: 0;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: center;
-  gap: var(--drone-row-gap);
-  margin: 0;
-}
-
-.noteRow {
-  display: grid;
-  inline-size: 100%;
-  min-inline-size: min-content;
-  grid-template-columns: repeat(
-    var(--drone-column-count),
-    minmax(var(--drone-note-button-min-width), var(--drone-note-button-width))
-  );
-  justify-content: safe center;
-  gap: var(--drone-column-gap);
-}
-
-.noteButton {
-  inline-size: 100%;
-  max-block-size: var(--drone-note-button-height);
-  flex: 0 0 auto;
-  aspect-ratio: 1.07;
-  padding: var(--space-0);
-}
-
-.noteButton [data-emphasis] {
-  position: relative;
-  border-radius: calc(var(--radius-control) + var(--space-0_5));
-}
-
-@media (max-width: 34rem) {
-  .droneFrame {
-    --drone-note-button-width: calc(var(--space-12) + var(--space-1));
-    --drone-note-button-height: var(--space-12);
-    --drone-row-gap: var(--space-1);
-    --drone-column-gap: var(--space-1);
+@container drone (max-width: 34rem) {
+  .droneToolSurface {
     --drone-body-padding: var(--space-2);
-    --drone-toolbar-gap: var(--space-2);
-    --drone-tool-panel-padding-block: var(--space-1);
-    --drone-tool-panel-padding-inline: var(--space-2);
-
-    --part-module-min-readable-width: 0;
-  }
-
-  .droneToolControlButtons {
-    gap: var(--space-3);
+    --part-module-note-button-width: calc(var(--space-12) + var(--space-1));
+    --part-module-note-button-height: var(--space-12);
   }
 }

@@ -14,9 +14,6 @@
   --control-header-wrap-gap: var(--space-2);
   --control-header-cluster-gap: var(--space-3);
   --control-header-region-gap: var(--space-4);
-  --control-header-cluster-gap-offset: calc(
-    var(--control-header-cluster-gap) - var(--control-header-peer-gap)
-  );
 
   display: flex;
   flex-wrap: wrap;
@@ -49,4 +46,45 @@
 
 .actions[data-grow="true"] {
   flex: 1 1 auto;
+}
+
+.layout {
+  display: flex;
+  inline-size: 100%;
+  min-inline-size: 0;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--control-header-wrap-gap) var(--control-header-region-gap);
+}
+
+.leading,
+.trailing,
+.cluster {
+  display: flex;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.leading {
+  flex: 1 1 auto;
+  margin-inline-end: auto;
+}
+
+.trailing {
+  flex: 0 1 auto;
+  justify-content: flex-end;
+  gap: var(--control-header-wrap-gap) var(--control-header-cluster-gap);
+  margin-inline-start: auto;
+}
+
+.cluster {
+  flex: 0 1 auto;
+  gap: var(--control-header-wrap-gap) var(--control-header-peer-gap);
+}
+
+.cluster[data-gap="cluster"] {
+  gap: var(--control-header-wrap-gap) var(--control-header-cluster-gap);
 }

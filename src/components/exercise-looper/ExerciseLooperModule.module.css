@@ -1,114 +1,28 @@
 .frame {
   --looper-wood-background: var(--color-surface);
-  --looper-note-button-width: var(--space-16);
-  --looper-note-button-height: var(--space-14);
-  --looper-button-gap: var(--space-1);
-  --looper-control-group-gap: var(--space-3);
-  --looper-row-gap: var(--looper-button-gap);
-  --looper-column-gap: var(--looper-button-gap);
+  --part-module-note-button-width: var(--space-16);
+  --part-module-note-button-height: var(--space-14);
+  --part-module-note-row-gap: var(--space-1);
+  --part-module-note-column-gap: var(--space-1);
   --looper-body-padding: var(--space-3);
-  --looper-toolbar-gap: var(--looper-control-group-gap);
-  --looper-control-deck-gap: var(--looper-control-group-gap);
-  --looper-pattern-section-gap: var(--looper-control-group-gap);
-  --looper-setup-control-gap: var(--looper-control-group-gap);
-  --looper-setup-row-gap: var(--looper-control-group-gap);
-  --looper-mode-section-gap: var(--looper-control-group-gap);
-  --looper-mode-detail-gap: var(--looper-control-group-gap);
+  --looper-toolbar-gap: var(--part-module-control-group-gap);
+  --looper-control-deck-gap: var(--part-module-control-group-gap);
+  --looper-pattern-section-gap: var(--part-module-control-group-gap);
+  --looper-setup-control-gap: var(--part-module-control-group-gap);
+  --looper-mode-section-gap: var(--part-module-control-group-gap);
+  --looper-mode-detail-gap: var(--part-module-control-group-gap);
   --looper-study-readout-height: calc(var(--space-12) + var(--space-1));
-  --looper-touch-control-size: var(--space-11);
-  --tactile-control-readout-height: var(--space-4);
-  --looper-labeled-control-height: calc(
-    var(--looper-touch-control-size) + var(--space-1) +
-      var(--tactile-control-readout-height)
-  );
-  --looper-setup-controls-height: var(--looper-labeled-control-height);
-  --looper-mode-detail-height: calc(
-    var(--looper-labeled-control-height) +
-      var(--looper-labeled-control-height) + var(--looper-mode-detail-gap)
-  );
-  --looper-mode-detail-section-gap: var(--looper-mode-section-gap);
-  --looper-mode-configuration-height: calc(
-    var(--looper-labeled-control-height) + var(--looper-mode-section-gap) +
-      var(--looper-study-readout-height) +
-      var(--looper-mode-detail-section-gap) + var(--looper-mode-detail-height)
-  );
-  --looper-playback-controls-height: calc(
-    var(--looper-touch-control-size) + var(--space-1) +
-      var(--tactile-control-readout-height) + var(--space-1) + var(--space-1)
-  );
-  --looper-pattern-controls-height: calc(
-    var(--looper-setup-controls-height) + var(--looper-pattern-section-gap) +
-      var(--looper-mode-configuration-height)
-  );
-  --looper-toolbar-height: calc(
-    var(--looper-playback-controls-height) +
-      var(--looper-pattern-controls-height) + var(--looper-control-deck-gap)
-  );
-  --looper-grid-height: var(--looper-note-button-height);
-  --looper-content-height: calc(
-    var(--looper-toolbar-height) + var(--looper-toolbar-gap) +
-      var(--looper-grid-height) + var(--looper-body-padding) +
-      var(--looper-body-padding)
-  );
   --part-module-body-radius: var(--radius-control);
   --part-module-min-readable-width: 0;
   --part-module-preferred-width: calc(var(--space-80) + var(--space-24));
-  --part-module-min-height: var(--looper-content-height);
-  --part-module-preferred-height: var(--looper-content-height);
-  --part-module-max-height: var(--looper-content-height);
+
+  container: exercise-looper / inline-size;
 }
 
-.rows2 {
-  --looper-grid-height: calc(
-    var(--looper-note-button-height) + var(--looper-note-button-height) +
-      var(--looper-row-gap)
-  );
-}
-
-.rows3 {
-  --looper-grid-height: calc(
-    var(--looper-note-button-height) + var(--looper-note-button-height) +
-      var(--looper-note-button-height) + var(--looper-row-gap) +
-      var(--looper-row-gap)
-  );
-}
-
-.rows4 {
-  --looper-grid-height: calc(
-    var(--looper-note-button-height) + var(--looper-note-button-height) +
-      var(--looper-note-button-height) + var(--looper-note-button-height) +
-      var(--looper-row-gap) + var(--looper-row-gap) + var(--looper-row-gap)
-  );
-}
-
-.rows5 {
-  --looper-grid-height: calc(
-    var(--looper-note-button-height) + var(--looper-note-button-height) +
-      var(--looper-note-button-height) + var(--looper-note-button-height) +
-      var(--looper-note-button-height) + var(--looper-row-gap) +
-      var(--looper-row-gap) + var(--looper-row-gap) + var(--looper-row-gap)
-  );
-}
-
-.rows6 {
-  --looper-grid-height: calc(
-    var(--looper-note-button-height) + var(--looper-note-button-height) +
-      var(--looper-note-button-height) + var(--looper-note-button-height) +
-      var(--looper-note-button-height) + var(--looper-note-button-height) +
-      var(--looper-row-gap) + var(--looper-row-gap) + var(--looper-row-gap) +
-      var(--looper-row-gap) + var(--looper-row-gap)
-  );
-}
-
-.rows7 {
-  --looper-grid-height: calc(
-    var(--looper-note-button-height) + var(--looper-note-button-height) +
-      var(--looper-note-button-height) + var(--looper-note-button-height) +
-      var(--looper-note-button-height) + var(--looper-note-button-height) +
-      var(--looper-note-button-height) + var(--looper-row-gap) +
-      var(--looper-row-gap) + var(--looper-row-gap) + var(--looper-row-gap) +
-      var(--looper-row-gap) + var(--looper-row-gap)
-  );
+.frame .body {
+  height: auto;
+  min-height: 0;
+  max-height: none;
 }
 
 .body {
@@ -127,7 +41,6 @@
   box-sizing: border-box;
   min-inline-size: 0;
   min-block-size: 0;
-  block-size: 100%;
   flex-direction: column;
   gap: var(--looper-toolbar-gap);
   padding: var(--looper-body-padding);
@@ -143,49 +56,31 @@
 }
 
 .performanceControls {
-  display: grid;
+  display: flex;
   inline-size: min(100%, calc(var(--space-80) + var(--space-16)));
   flex: 0 0 auto;
-  grid-template-areas: "count-in octave actions";
-  grid-template-columns: auto auto auto;
+  flex-wrap: wrap;
   align-items: start;
   justify-content: center;
-  gap: var(--looper-control-group-gap);
+  gap: var(--part-module-control-group-gap);
   padding-block: var(--space-1);
 }
 
-.countInControlGroup {
-  grid-area: count-in;
-}
-
-.octaveControlGroup {
-  grid-area: octave;
-}
-
+.countInControlGroup,
+.octaveControlGroup,
 .playbackActionControls {
-  display: flex;
-  grid-area: actions;
-  align-items: flex-start;
-  justify-content: center;
-  gap: var(--looper-control-group-gap);
+  flex: 0 0 auto;
 }
 
-.secondaryControlButtons {
-  gap: var(--looper-button-gap);
+.playbackActionControls .pulseControlGroup {
+  inline-size: var(--part-module-control-size);
+  min-inline-size: var(--part-module-control-size);
+  max-inline-size: var(--part-module-control-size);
 }
 
-.countInButton,
-.metronomeButton,
-.octaveButton,
-.patternButton,
-.modeButton {
-  --icon-button-size: var(--looper-touch-control-size);
-}
-
-.playbackButton {
-  --icon-button-size: var(--looper-labeled-control-height);
-  --button-icon-size: var(--space-6);
-  --button-radius: calc(var(--radius-control) + var(--space-1));
+.pulseReadout {
+  padding-inline: var(--space-1);
+  letter-spacing: 0;
 }
 
 .beatCount {
@@ -206,7 +101,9 @@
 
 .patternSetupControls {
   display: flex;
+  inline-size: 100%;
   min-inline-size: 0;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: center;
   gap: var(--looper-setup-control-gap);
@@ -216,44 +113,12 @@
   flex: 0 0 auto;
 }
 
-.directionControls,
-.modeControls {
-  display: flex;
-  min-inline-size: 0;
-  align-items: center;
-  justify-content: center;
-  gap: var(--looper-button-gap);
-}
-
-.rhythmControls {
-  display: flex;
-  min-inline-size: 0;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-}
-
-.noteValueControls {
-  display: flex;
-  min-inline-size: 0;
-  align-items: center;
-  gap: var(--looper-button-gap);
-}
-
 .tripletButtonLabel {
   font-size: var(--text-sm);
   font-style: italic;
   font-variant-numeric: tabular-nums;
   font-weight: var(--font-light);
   letter-spacing: 0;
-}
-
-.tripletButton {
-  --button-icon-size: var(--space-6);
-}
-
-.modeButton {
-  --button-icon-size: var(--space-6);
 }
 
 .modeConfiguration {
@@ -298,7 +163,7 @@
   align-self: stretch;
   align-items: stretch;
   justify-content: center;
-  gap: var(--looper-button-gap);
+  gap: var(--part-module-control-gap);
   overflow: hidden;
 }
 
@@ -310,7 +175,7 @@
   flex: 1 1 auto;
   align-items: stretch;
   justify-content: center;
-  gap: var(--looper-button-gap);
+  gap: var(--part-module-control-gap);
   overflow: hidden;
 }
 
@@ -319,7 +184,7 @@
   display: grid;
   min-inline-size: var(--space-5);
   flex: 1 1 0;
-  grid-template-rows: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
   overflow: hidden;
 }
@@ -347,6 +212,8 @@
   min-inline-size: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: var(--leading-none);
+  text-box: trim-both cap alphabetic;
   white-space: nowrap;
 }
 
@@ -384,6 +251,7 @@
 
 .modeDetailControls {
   display: flex;
+  inline-size: 100%;
   min-inline-size: 0;
   flex-direction: column;
   align-items: center;
@@ -392,109 +260,16 @@
 
 .degreeAndPlaybackControls {
   display: flex;
+  inline-size: 100%;
   min-inline-size: 0;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: var(--looper-control-group-gap);
-}
-
-.degreeControls {
-  display: flex;
-  align-items: center;
-  gap: var(--looper-button-gap);
-}
-
-.patternButton[data-control-state="unavailable"],
-.modeButton[data-control-state="unavailable"] {
-  --tactile-unavailable-background: color-mix(
-    in srgb,
-    var(--color-interactive-neutral) 68%,
-    var(--color-base)
-  );
-}
-
-.patternButton[data-control-state="unavailable"] svg,
-.modeButton[data-control-state="unavailable"] svg {
-  opacity: 0.34;
-}
-
-.patternButton,
-.modeButton {
-  flex: 0 0 auto;
-}
-
-.degreeButton {
-  inline-size: var(--looper-touch-control-size);
-  padding: 0;
-}
-
-.contextualControls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--looper-button-gap);
-}
-
-.noteDirectionControls {
-  display: flex;
-  min-inline-size: 0;
-  align-items: center;
-  justify-content: center;
-  gap: var(--looper-button-gap);
+  gap: var(--part-module-control-group-gap);
 }
 
 .noteDirectionControlGroup {
   align-self: center;
-}
-
-.noteStack {
-  position: relative;
-  display: flex;
-  flex: 1 1 auto;
-  inline-size: 100%;
-  block-size: 100%;
-  min-inline-size: 0;
-  min-block-size: 0;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  container-type: inline-size;
-}
-
-.noteRows {
-  display: flex;
-  inline-size: 100%;
-  min-inline-size: 0;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: center;
-  gap: var(--looper-row-gap);
-}
-
-.noteRow {
-  display: grid;
-  inline-size: 100%;
-  min-inline-size: 0;
-  grid-template-columns: repeat(
-    var(--looper-column-count),
-    minmax(0, var(--looper-note-button-width))
-  );
-  justify-content: center;
-  gap: var(--looper-column-gap);
-}
-
-.noteButton {
-  inline-size: 100%;
-  block-size: var(--looper-note-button-height);
-  padding: 0;
-}
-
-.noteButton [data-emphasis] {
-  border-radius: calc(var(--radius-control) + var(--space-0_5));
-}
-
-.noteButton[data-note-highlighted="true"] [data-emphasis] {
-  transition-duration: 0s;
 }
 
 .generatedNoteIndicator {
@@ -524,10 +299,6 @@
 }
 
 @container (max-width: 24rem) {
-  .noteRow {
-    column-gap: var(--space-0_5);
-  }
-
   .studyDisplayContent[data-dense="true"] .studyNotePair {
     min-inline-size: 0;
   }
@@ -539,10 +310,6 @@
 }
 
 @container (max-width: 20rem) {
-  .noteRow {
-    column-gap: var(--space-px);
-  }
-
   .studyDisplayContent,
   .studyNotePairs {
     gap: var(--space-0_5);
@@ -559,82 +326,14 @@
   }
 }
 
-@media (max-width: 34rem) {
-  .frame {
-    --looper-note-button-width: calc(var(--space-12) + var(--space-1));
-    --looper-note-button-height: var(--space-12);
+@container exercise-looper (max-width: 34rem) {
+  .surface {
+    --part-module-note-button-width: calc(var(--space-12) + var(--space-1));
+    --part-module-note-button-height: var(--space-12);
     --looper-body-padding: var(--space-2);
   }
 
   .patternControls {
     inline-size: 100%;
-  }
-}
-
-@media (max-width: 31rem) {
-  .frame {
-    --looper-playback-controls-height: calc(
-      var(--looper-labeled-control-height) + var(--looper-control-group-gap) +
-        var(--looper-labeled-control-height) + var(--space-1) + var(--space-1)
-    );
-  }
-
-  .performanceControls {
-    grid-template-areas:
-      "count-in octave"
-      "actions actions";
-    grid-template-columns: auto auto;
-    column-gap: var(--looper-control-group-gap);
-    row-gap: var(--looper-control-group-gap);
-  }
-
-  .countInControlGroup {
-    justify-self: end;
-  }
-
-  .octaveControlGroup {
-    justify-self: start;
-  }
-}
-
-@media (max-width: 28rem) {
-  .frame {
-    --looper-playback-controls-height: calc(
-      var(--looper-labeled-control-height) +
-        var(--looper-labeled-control-height) +
-        var(--looper-labeled-control-height) + var(--looper-control-group-gap) +
-        var(--looper-control-group-gap) + var(--space-1) + var(--space-1)
-    );
-  }
-
-  .performanceControls {
-    grid-template-areas:
-      "count-in count-in"
-      "octave octave"
-      "actions actions";
-    grid-template-columns: auto auto;
-    justify-content: center;
-    column-gap: var(--looper-control-group-gap);
-    row-gap: var(--looper-control-group-gap);
-  }
-
-  .countInControlGroup,
-  .octaveControlGroup {
-    justify-self: center;
-  }
-}
-
-@media (max-width: 25rem) {
-  .frame {
-    --looper-setup-controls-height: calc(
-      var(--looper-labeled-control-height) +
-        var(--looper-labeled-control-height) + var(--looper-setup-row-gap)
-    );
-  }
-
-  .patternSetupControls {
-    flex-direction: column;
-    align-items: center;
-    gap: var(--looper-setup-row-gap);
   }
 }

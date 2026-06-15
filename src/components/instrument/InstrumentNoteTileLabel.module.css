@@ -7,7 +7,7 @@
   min-inline-size: 0;
   min-block-size: 0;
   grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
-  padding: var(--space-1);
+  padding: var(--instrument-note-tile-label-padding, var(--space-1));
   pointer-events: none;
 }
 
@@ -15,11 +15,9 @@
   content: "";
   position: absolute;
   inset-block-start: 50%;
-  inset-inline: 24%;
+  inset-inline: 12%;
   block-size: var(--space-px);
   background: color-mix(in srgb, var(--note-label-color) 28%, transparent);
-  box-shadow: 0 var(--space-px) 0
-    color-mix(in srgb, var(--color-interaction-ring-dark) 22%, transparent);
   transform: translateY(-50%);
 }
 
@@ -27,14 +25,26 @@
   display: flex;
   min-inline-size: 0;
   min-block-size: 0;
-  align-items: center;
   justify-content: center;
+}
+
+.slot:first-child {
+  align-items: flex-end;
+  padding-block-end: var(--space-0_5);
+}
+
+.slot:last-child {
+  align-items: flex-start;
+  padding-block-start: var(--space-0_5);
 }
 
 .text {
   max-inline-size: 100%;
   color: var(--note-label-color);
-  font-size: min(22cqi, var(--text-sm));
+  font-size: var(
+    --instrument-note-tile-label-font-size,
+    min(22cqi, var(--text-sm))
+  );
   font-weight: var(--font-bold);
   letter-spacing: 0;
   line-height: var(--leading-none);

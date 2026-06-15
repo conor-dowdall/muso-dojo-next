@@ -14,6 +14,7 @@ export interface SessionManagementSessionSummary {
   id: string;
   name: string;
   parts: SessionManagementPartSummary[];
+  tempoBpm: number;
 }
 
 export interface SessionManagementSnapshot {
@@ -105,6 +106,7 @@ export function sessionSummaryMatchesSession(
   return (
     summary.id === session.id &&
     summary.name === session.name &&
+    summary.tempoBpm === (session.tempoBpm ?? 80) &&
     summary.parts.length === session.parts.length &&
     summary.parts.every((partSummary, index) =>
       partSummaryMatchesMusicPart(partSummary, session.parts[index]),

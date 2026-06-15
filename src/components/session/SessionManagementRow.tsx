@@ -11,6 +11,7 @@ import {
   type SessionManagementSessionSummary,
 } from "./sessionManagementFormatting";
 import { SessionRenameActionItem } from "./SessionRenameActionItem";
+import { SessionTempoActionItem } from "./SessionTempoActionItem";
 
 interface SessionManagementRowProps {
   session: SessionManagementSessionSummary;
@@ -19,14 +20,18 @@ interface SessionManagementRowProps {
   isDeleteConfirming: boolean;
   isOpen: boolean;
   isRenameOpen: boolean;
+  isTempoOpen: boolean;
+  shouldFocusTempoInput?: boolean;
   onCancelDeleteSession: () => void;
   onCloseRename: () => void;
   onDeleteSession: (sessionId: string) => void;
   onDuplicateSession: (sessionId: string) => void;
   onRenameSession: (sessionId: string, name: string) => void;
+  onSetTempoBpm: (sessionId: string, tempoBpm: number) => void;
   onRequestDeleteSession: (sessionId: string) => void;
   onToggleActions: (sessionId: string) => void;
   onToggleRename: (sessionId: string) => void;
+  onToggleTempo: (sessionId: string) => void;
   onUseSession: (sessionId: string) => void;
 }
 
@@ -37,14 +42,18 @@ export function SessionManagementRow({
   isDeleteConfirming,
   isOpen,
   isRenameOpen,
+  isTempoOpen,
+  shouldFocusTempoInput = false,
   onCancelDeleteSession,
   onCloseRename,
   onDeleteSession,
   onDuplicateSession,
   onRenameSession,
+  onSetTempoBpm,
   onRequestDeleteSession,
   onToggleActions,
   onToggleRename,
+  onToggleTempo,
   onUseSession,
 }: SessionManagementRowProps) {
   const actionsLabel = `${isOpen ? "Close" : "Open"} actions for ${
@@ -65,6 +74,13 @@ export function SessionManagementRow({
     >
       <DisclosureList grouped groupGap="section">
         <DisclosureListGroup>
+          <SessionTempoActionItem
+            isOpen={isTempoOpen}
+            session={session}
+            shouldFocusInput={shouldFocusTempoInput}
+            onTempoBpmChange={onSetTempoBpm}
+            onToggle={() => onToggleTempo(session.id)}
+          />
           <SessionRenameActionItem
             isOpen={isRenameOpen}
             session={session}

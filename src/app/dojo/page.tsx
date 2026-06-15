@@ -9,6 +9,7 @@ import { Dialog } from "@/components/ui/dialog/Dialog";
 import { AddToSessionDialog } from "@/components/session/AddToSessionDialog";
 import { SessionHeader } from "@/components/session/SessionHeader";
 import { SessionLoader } from "@/components/session/SessionLoader";
+import { SessionManagementDialog } from "@/components/session/SessionManagementDialog";
 import { SessionView } from "@/components/session/SessionView";
 import {
   createInstrumentCreationRangeContextFromSignature,
@@ -19,7 +20,6 @@ import { exercisePlaybackCoordinator } from "@/audio";
 import { useAppStore, useHydrateAppStore } from "@/stores/appStore";
 import { createChordProgressionParts } from "@/utils/music-part/createChordProgressionParts";
 import { createDefaultMusicPartConfig } from "@/utils/session/createSessionEntities";
-import { SessionPulseControl } from "@/components/session/SessionPulseControl";
 
 interface HydratedSessionProps {
   isPerformanceMode: boolean;
@@ -32,6 +32,11 @@ function HydratedSession({
 }: HydratedSessionProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addDialogKey, setAddDialogKey] = useState(0);
+  const [isSessionDialogOpen, setIsSessionDialogOpen] = useState(false);
+  const [sessionDialogKey, setSessionDialogKey] = useState(0);
+  const [sessionDialogTempoId, setSessionDialogTempoId] = useState<
+    string | null
+  >(null);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
   const masterAmbiencePresetId = useAppStore((state) =>
     resolveMasterAmbiencePresetId(state.dojoSettings.masterAmbiencePresetId),
@@ -59,8 +64,15 @@ function HydratedSession({
       instrumentCreationRangeContextSignature,
     );
   const openAddDialog = () => {
+    setIsSessionDialogOpen(false);
     setAddDialogKey((currentKey) => currentKey + 1);
     setIsAddDialogOpen(true);
+  };
+  const openSessionDialog = (tempoSessionId?: string) => {
+    setIsAddDialogOpen(false);
+    setSessionDialogKey((currentKey) => currentKey + 1);
+    setSessionDialogTempoId(tempoSessionId ?? null);
+    setIsSessionDialogOpen(true);
   };
   const enterPerformanceMode = () => {
     setIsAddDialogOpen(false);
@@ -147,9 +159,6 @@ function HydratedSession({
     <>
       {isPerformanceMode ? (
         <div className={styles.performanceModeHeader}>
-          {activeSessionId ? (
-            <SessionPulseControl sessionId={activeSessionId} />
-          ) : null}
           <IconButton
             aria-label="Exit performance mode"
             className={styles.performanceModeExit}
@@ -165,6 +174,7 @@ function HydratedSession({
         <SessionHeader
           onEnterPerformanceMode={enterPerformanceMode}
           onOpenAddDialog={openAddDialog}
+          onOpenSessionsDialog={() => openSessionDialog()}
         />
       )}
       {activeSessionId ? (
@@ -172,8 +182,20 @@ function HydratedSession({
           isPerformanceMode={isPerformanceMode}
           sessionId={activeSessionId}
           onOpenAddDialog={isPerformanceMode ? undefined : openAddDialog}
+          onOpenSessionTempo={openSessionDialog}
         />
       ) : null}
+      <Dialog
+        isOpen={isSessionDialogOpen}
+        onClose={() => setIsSessionDialogOpen(false)}
+        size="standard"
+      >
+        <SessionManagementDialog
+          key={sessionDialogKey}
+          initialOpenTempoSessionId={sessionDialogTempoId ?? undefined}
+          onClose={() => setIsSessionDialogOpen(false)}
+        />
+      </Dialog>
       <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="wide">
         <AddToSessionDialog
           key={addDialogKey}

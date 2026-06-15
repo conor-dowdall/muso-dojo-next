@@ -32,6 +32,10 @@ import {
   Volume2,
 } from "lucide-react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
+import {
+  ControlHeaderCluster,
+  ControlHeaderLayout,
+} from "@/components/ui/control-header/ControlHeader";
 import { DisplayFormatTriggerButton } from "@/components/music-theory/DisplayFormatTriggerButton";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import {
@@ -216,106 +220,95 @@ export const InstrumentHeaderActions = ({
   };
 
   return (
-    <div className={styles.instrumentHeaderActions}>
-      <span
-        className={styles.presentationControlsGroup}
-        role="group"
-        aria-label="Display controls"
-      >
-        <DisplayFormatTriggerButton
-          className={styles.displayFormatButton}
-          value={displayFormatId}
-          onClick={() => openMenu("display")}
-        />
-        <IconButton
-          aria-label={`Change note size. Current: ${noteEmphasisLabel}`}
-          disabled={activeNotesLocked}
-          icon={getNoteEmphasisIcon(noteEmphasis)}
-          size="sm"
-          onClick={cycleNoteSize}
-          tooltip={
-            activeNotesLocked
-              ? "Unlock to change note size"
-              : `Note size: ${noteEmphasisLabel}`
-          }
-        />
-        {identity ? (
-          <span className={styles.identitySlot}>{identity}</span>
-        ) : null}
-      </span>
-
-      <span
-        className={styles.rightControlsGroup}
-        role="group"
-        aria-label="Instrument action controls"
-      >
-        <span
-          className={styles.noteInteractionModeGroup}
-          role="group"
-          aria-label="Note interaction mode"
-        >
-          {noteInteractionModes.map((mode) => {
-            const modeDisabled =
-              activeNotesLocked === true && mode.id !== "play";
-
-            return (
+    <>
+      <ControlHeaderLayout
+        leading={identity}
+        trailing={
+          <>
+            <ControlHeaderCluster aria-label="Display controls" role="group">
+              <DisplayFormatTriggerButton
+                className={styles.displayFormatButton}
+                value={displayFormatId}
+                onClick={() => openMenu("display")}
+              />
               <IconButton
-                key={mode.id}
-                aria-label={mode.ariaLabel}
-                disabled={modeDisabled}
-                icon={mode.icon}
+                aria-label={`Change note size. Current: ${noteEmphasisLabel}`}
+                disabled={activeNotesLocked}
+                icon={getNoteEmphasisIcon(noteEmphasis)}
                 size="sm"
-                onClick={() => setNoteInteractionMode(mode.id)}
-                selected={effectiveNoteInteractionMode === mode.id}
-                tooltip={modeDisabled ? "Unlock to edit notes" : mode.tooltip}
-                variant={
-                  effectiveNoteInteractionMode === mode.id
-                    ? "filled"
-                    : "outline"
+                onClick={cycleNoteSize}
+                tooltip={
+                  activeNotesLocked
+                    ? "Unlock to change note size"
+                    : `Note size: ${noteEmphasisLabel}`
                 }
               />
-            );
-          })}
-        </span>
+            </ControlHeaderCluster>
 
-        <span
-          className={styles.noteEditActionsGroup}
-          role="group"
-          aria-label="Note edit actions"
-        >
-          <IconButton
-            aria-label={activeNotesLockLabel}
-            disabled={!onActiveNotesLockChange}
-            icon={<Lock />}
-            size="sm"
-            onClick={toggleActiveNotesLock}
-            selected={activeNotesLocked}
-            tooltip={activeNotesLockLabel}
-            variant={activeNotesLocked ? "filled" : "outline"}
-          />
-          <IconButton
-            aria-label={resetNotesLabel}
-            icon={<Eraser />}
-            size="sm"
-            onClick={onResetNotes}
-            disabled={!canResetNotes}
-            tooltip={resetNotesLabel}
-            variant={canResetNotes ? "filled" : "ghost"}
-          />
-        </span>
+            <ControlHeaderCluster
+              aria-label="Note interaction mode"
+              role="group"
+            >
+              {noteInteractionModes.map((mode) => {
+                const modeDisabled =
+                  activeNotesLocked === true && mode.id !== "play";
 
-        <span
-          className={styles.utilityControlsGroup}
-          role="group"
-          aria-label="Instrument utilities"
-        >
-          <OverflowMenuButton
-            aria-label="Instrument options"
-            onClick={() => openMenu(null)}
-          />
-        </span>
-      </span>
+                return (
+                  <IconButton
+                    key={mode.id}
+                    aria-label={mode.ariaLabel}
+                    disabled={modeDisabled}
+                    icon={mode.icon}
+                    size="sm"
+                    onClick={() => setNoteInteractionMode(mode.id)}
+                    selected={effectiveNoteInteractionMode === mode.id}
+                    tooltip={
+                      modeDisabled ? "Unlock to edit notes" : mode.tooltip
+                    }
+                    variant={
+                      effectiveNoteInteractionMode === mode.id
+                        ? "filled"
+                        : "outline"
+                    }
+                  />
+                );
+              })}
+            </ControlHeaderCluster>
 
+            <ControlHeaderCluster aria-label="Note edit actions" role="group">
+              <IconButton
+                aria-label={activeNotesLockLabel}
+                disabled={!onActiveNotesLockChange}
+                icon={<Lock />}
+                size="sm"
+                onClick={toggleActiveNotesLock}
+                selected={activeNotesLocked}
+                tooltip={activeNotesLockLabel}
+                variant={activeNotesLocked ? "filled" : "outline"}
+              />
+              <IconButton
+                aria-label={resetNotesLabel}
+                icon={<Eraser />}
+                size="sm"
+                onClick={onResetNotes}
+                disabled={!canResetNotes}
+                tooltip={resetNotesLabel}
+                variant={canResetNotes ? "filled" : "ghost"}
+              />
+            </ControlHeaderCluster>
+
+            <ControlHeaderCluster
+              aria-label="Instrument utilities"
+              role="group"
+            >
+              <OverflowMenuButton
+                aria-label="Instrument options"
+                onClick={() => openMenu(null)}
+              />
+            </ControlHeaderCluster>
+          </>
+        }
+      />
       <InstrumentMenuDialog
         key={menuDialogKey}
         audioPresetId={audioPresetId}
@@ -334,6 +327,6 @@ export const InstrumentHeaderActions = ({
         onDisplayFormatIdChange={onDisplayFormatIdChange}
         onInstrumentDisplaySizeChange={onInstrumentDisplaySizeChange}
       />
-    </div>
+    </>
   );
 };

@@ -4,28 +4,29 @@ import { useState } from "react";
 import { Maximize2, Plus } from "lucide-react";
 import { Heading } from "@/components/ui/typography/Heading";
 import { IconButton } from "@/components/ui/buttons/IconButton";
-import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
+import {
+  ControlHeader,
+  ControlHeaderCluster,
+} from "@/components/ui/control-header/ControlHeader";
 import { Dialog } from "@/components/ui/dialog/Dialog";
 import { DojoSettingsDialog } from "@/components/dojo-settings/DojoSettingsDialog";
 import { useAppStore } from "@/stores/appStore";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
-import { SessionManagementDialog } from "./SessionManagementDialog";
 import { SessionMenu } from "./SessionMenu";
-import { SessionPulseControl } from "./SessionPulseControl";
 import styles from "./SessionHeader.module.css";
 
 interface SessionHeaderProps {
   onOpenAddDialog: () => void;
+  onOpenSessionsDialog: () => void;
   onEnterPerformanceMode?: () => void;
 }
 
 export function SessionHeader({
   onEnterPerformanceMode,
   onOpenAddDialog,
+  onOpenSessionsDialog,
 }: SessionHeaderProps) {
-  const [dialogIntent, setDialogIntent] = useState<
-    { kind: "sessions" } | { kind: "settings" } | null
-  >(null);
+  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
   const [dialogKey, setDialogKey] = useState(0);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
   const sessionName = useAppStore(
@@ -34,15 +35,14 @@ export function SessionHeader({
       "No Sessions Yet",
   );
   const hasActiveSession = activeSessionId !== null;
-  const isDialogOpen = dialogIntent !== null;
   const sessionOverflowLabel = "Sessions";
 
-  const openDialog = (intent: { kind: "sessions" } | { kind: "settings" }) => {
+  const openSettingsDialog = () => {
     setDialogKey((currentKey) => currentKey + 1);
-    setDialogIntent(intent);
+    setIsSettingsDialogOpen(true);
   };
 
-  const closeDialog = () => setDialogIntent(null);
+  const closeSettingsDialog = () => setIsSettingsDialogOpen(false);
 
   return (
     <>
@@ -56,59 +56,42 @@ export function SessionHeader({
           </>
         }
         actions={
-          <div className={styles.sessionHeaderActions}>
-            {activeSessionId ? (
-              <span
-                aria-label="Session playback controls"
-                className={styles.sessionPulseGroup}
-                role="group"
-              >
-                <SessionPulseControl sessionId={activeSessionId} />
-              </span>
-            ) : null}
-            <span
-              className={styles.sessionUtilityGroup}
-              role="group"
-              aria-label="Session actions"
-            >
-              <span className={styles.sessionActionGroup}>
-                <IconButton
-                  aria-label="Add to session"
-                  disabled={!hasActiveSession}
-                  icon={<Plus />}
-                  size="sm"
-                  tooltip="Add to session"
-                  variant="filled"
-                  onClick={onOpenAddDialog}
-                />
-                <IconButton
-                  aria-label="Enter performance mode"
-                  disabled={!hasActiveSession || !onEnterPerformanceMode}
-                  icon={<Maximize2 />}
-                  size="sm"
-                  shouldYield={false}
-                  tooltip="Performance mode"
-                  onClick={onEnterPerformanceMode}
-                />
-                <OverflowMenuButton
-                  aria-label={sessionOverflowLabel}
-                  onClick={() => openDialog({ kind: "sessions" })}
-                />
-              </span>
-              <SessionMenu
-                onOpenDojoSettings={() => openDialog({ kind: "settings" })}
+          <ControlHeaderCluster gap="cluster">
+            <ControlHeaderCluster aria-label="Session actions" role="group">
+              <IconButton
+                aria-label="Add to session"
+                disabled={!hasActiveSession}
+                icon={<Plus />}
+                size="sm"
+                tooltip="Add to session"
+                variant="filled"
+                onClick={onOpenAddDialog}
               />
-            </span>
-          </div>
+              <IconButton
+                aria-label="Enter performance mode"
+                disabled={!hasActiveSession || !onEnterPerformanceMode}
+                icon={<Maximize2 />}
+                size="sm"
+                shouldYield={false}
+                tooltip="Performance mode"
+                onClick={onEnterPerformanceMode}
+              />
+              <OverflowMenuButton
+                aria-label={sessionOverflowLabel}
+                onClick={onOpenSessionsDialog}
+              />
+            </ControlHeaderCluster>
+            <SessionMenu onOpenDojoSettings={openSettingsDialog} />
+          </ControlHeaderCluster>
         }
       />
 
-      <Dialog isOpen={isDialogOpen} onClose={closeDialog} size="standard">
-        {dialogIntent?.kind === "settings" ? (
-          <DojoSettingsDialog key={dialogKey} onClose={closeDialog} />
-        ) : dialogIntent?.kind === "sessions" ? (
-          <SessionManagementDialog key={dialogKey} onClose={closeDialog} />
-        ) : null}
+      <Dialog
+        isOpen={isSettingsDialogOpen}
+        onClose={closeSettingsDialog}
+        size="standard"
+      >
+        <DojoSettingsDialog key={dialogKey} onClose={closeSettingsDialog} />
       </Dialog>
     </>
   );

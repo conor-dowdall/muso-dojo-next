@@ -8,11 +8,13 @@ import { selectExerciseLooperPartModule, selectPart } from "./sessionSelectors";
 export function ExerciseLooperPartModuleView({
   isPerformanceMode = false,
   moduleId,
+  onOpenSessionTempo,
   partId,
   sessionId,
 }: {
   isPerformanceMode?: boolean;
   moduleId: string;
+  onOpenSessionTempo?: (sessionId: string) => void;
   partId: string;
   sessionId: string;
 }) {
@@ -122,6 +124,9 @@ export function ExerciseLooperPartModuleView({
       }
       onSubdivisionChange={(value) =>
         actions.setExerciseLooperSubdivision(sessionId, partId, moduleId, value)
+      }
+      onOpenSessionTempo={
+        onOpenSessionTempo ? () => onOpenSessionTempo(sessionId) : undefined
       }
       onWoodChange={
         isPerformanceMode

@@ -2,6 +2,7 @@ import { type CSSProperties, type KeyboardEvent } from "react";
 import { InstrumentNote } from "@/components/instrument/InstrumentNote";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { InstrumentNoteTileLabel } from "@/components/instrument/InstrumentNoteTileLabel";
+import noteGridStyles from "@/components/part-module/PartModuleNoteGrid.module.css";
 import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import { type NoteColorMode } from "@/types/note-colors";
 import {
@@ -36,17 +37,17 @@ export function ExerciseLooperNoteGrid({
   setItemRef: (key: string, element: HTMLElement | null) => void;
 }) {
   return (
-    <div className={styles.noteStack}>
+    <div className={noteGridStyles.stack}>
       <div
-        className={styles.noteRows}
+        className={noteGridStyles.rows}
         style={
           {
-            "--looper-column-count": sequence.columnCount,
+            "--part-module-note-column-count": sequence.columnCount,
           } as CSSProperties
         }
       >
         {sequence.displayRows.map((row, rowIndex) => (
-          <div key={rowIndex} className={styles.noteRow}>
+          <div key={rowIndex} className={noteGridStyles.row}>
             {row.map((note) => {
               const noteColor = resolveInstrumentNoteColor({
                 midi: note.midi,
@@ -81,7 +82,7 @@ export function ExerciseLooperNoteGrid({
                   <div
                     key={note.key}
                     aria-hidden="true"
-                    className={`${styles.noteButton} ${styles.generatedNoteIndicator}`}
+                    className={`${noteGridStyles.button} ${styles.generatedNoteIndicator}`}
                     data-note-highlighted={isHighlighted ? true : undefined}
                     style={{ gridColumn: note.columnIndex + 1 }}
                   >
@@ -102,7 +103,7 @@ export function ExerciseLooperNoteGrid({
                 <InstrumentNoteCell
                   key={note.key}
                   ariaLabel={ariaLabel}
-                  className={styles.noteButton}
+                  className={noteGridStyles.button}
                   handleKeyDown={handleKeyDown}
                   isFocused={focusedKey === note.key}
                   isHighlighted={isHighlighted}

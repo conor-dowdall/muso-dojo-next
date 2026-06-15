@@ -14,12 +14,14 @@ interface MusicPartViewProps {
   sessionId: string;
   partId: string;
   isPerformanceMode?: boolean;
+  onOpenSessionTempo?: (sessionId: string) => void;
 }
 
 export function MusicPartView({
   sessionId,
   partId,
   isPerformanceMode = false,
+  onOpenSessionTempo,
 }: MusicPartViewProps) {
   const partSettings = useAppStore(
     useShallow((state) => {
@@ -98,6 +100,7 @@ export function MusicPartView({
           partId={partId}
           moduleId={moduleId}
           isPerformanceMode={isPerformanceMode}
+          onOpenSessionTempo={onOpenSessionTempo}
         />
       ))}
     </MusicPart>

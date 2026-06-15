@@ -6,11 +6,14 @@ import { Square, WavesArrowDown, WavesArrowUp } from "lucide-react";
 import { getDefaultAudioPresetId, type AudioPresetId } from "@/audio";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { InstrumentNoteTileLabel } from "@/components/instrument/InstrumentNoteTileLabel";
+import { InstrumentIdentity } from "@/components/instrument/InstrumentIdentity";
 import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
 import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeaderActions";
+import { PartModuleControlButton } from "@/components/part-module/PartModuleControlButton";
 import { PartModuleHeaderActions } from "@/components/part-module/PartModuleHeaderActions";
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
-import { TactileIconButton } from "@/components/ui/buttons/TactileButton";
+import controlStyles from "@/components/part-module/PartModuleControls.module.css";
+import noteGridStyles from "@/components/part-module/PartModuleNoteGrid.module.css";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { TactileControlGroup } from "@/components/ui/tactile-control-group/TactileControlGroup";
 import { useDroneNotePlayback } from "@/hooks/audio/useDroneNotePlayback";
@@ -56,19 +59,6 @@ function formatOctaveOffset(octaveOffset: number) {
   }
 
   return octaveOffset > 0 ? `+${octaveOffset}` : String(octaveOffset);
-}
-
-function getDroneRowClassName(rowCount: number) {
-  switch (rowCount) {
-    case 2:
-      return styles.droneRows2;
-    case 3:
-      return styles.droneRows3;
-    case 4:
-      return styles.droneRows4;
-    default:
-      return "";
-  }
 }
 
 export function DroneModule({
@@ -168,10 +158,12 @@ export function DroneModule({
   const canAddNote = droneNotes.noteCount < droneNotes.maxNoteCount;
   const canAddOctave =
     droneNotes.noteCount + droneNotes.collectionSize <= droneNotes.maxNoteCount;
-  const { isNoteActive, stopAll, toggleNote } = useDroneNotePlayback({
-    audioPresetId,
-    notes: droneNotes.notes,
-  });
+  const { activeIntervals, isNoteActive, stopAll, toggleNote } =
+    useDroneNotePlayback({
+      audioPresetId,
+      notes: droneNotes.notes,
+    });
+  const hasActiveNotes = activeIntervals.length > 0;
   const {
     focusedKey,
     setFocusedKey,
@@ -216,12 +208,6 @@ export function DroneModule({
     },
   });
   const octaveOffsetLabel = formatOctaveOffset(octaveOffset);
-  const droneFrameClassName = [
-    styles.droneFrame,
-    getDroneRowClassName(droneNotes.rowCount),
-  ]
-    .filter(Boolean)
-    .join(" ");
   const droneFrameStyle = {
     "--drone-wood-background": woodSurfaces[wood].background,
   } as CSSProperties;
@@ -256,11 +242,12 @@ export function DroneModule({
     <>
       <PartModuleFrame
         bodyClassName={styles.droneBody}
-        className={droneFrameClassName}
+        className={`${styles.droneFrame} ${controlStyles.surface}`}
+        headerPrimary={<InstrumentIdentity label="Drone" />}
         headerActions={
           showHeader ? (
             <PartModuleHeaderActions
-              center={
+              controls={
                 <NoteRangeHeaderActions
                   canAddNote={canAddNote}
                   canAddOctave={canAddOctave}
@@ -286,20 +273,17 @@ export function DroneModule({
                     )
                   }
                   showOctaveActions={droneNotes.supportsOctaveRangeEditing}
-                  showTooltips={false}
                 />
               }
-              end={
+              utility={
                 <OverflowMenuButton
                   aria-label="Drone options"
                   onClick={() => setIsOptionsOpen(true)}
-                  tooltip={false}
                 />
               }
             />
           ) : undefined
         }
-        headerActionsGrow
         showHeader={showHeader}
         style={droneFrameStyle}
       >
@@ -308,41 +292,39 @@ export function DroneModule({
             <TactileControlGroup
               aria-label="Drone playback and octave controls"
               className={styles.droneToolControlGroup}
-              controlsClassName={styles.droneToolControlButtons}
+              controlsClassName={controlStyles.buttonGroup}
             >
-              <TactileIconButton
+              <PartModuleControlButton
                 aria-label={`Shift drone down one octave. Current octave offset: ${octaveOffsetLabel}`}
                 icon={<WavesArrowDown />}
                 onPress={shiftOctaveDown}
-                size="lg"
                 unavailable={!canShiftOctaveDown}
               />
-              <TactileIconButton
+              <PartModuleControlButton
                 aria-label="Stop all active drone notes"
                 icon={<Square />}
                 onPress={stopAll}
-                size="lg"
+                unavailable={!hasActiveNotes}
               />
-              <TactileIconButton
+              <PartModuleControlButton
                 aria-label={`Shift drone up one octave. Current octave offset: ${octaveOffsetLabel}`}
                 icon={<WavesArrowUp />}
                 onPress={shiftOctaveUp}
-                size="lg"
                 unavailable={!canShiftOctaveUp}
               />
             </TactileControlGroup>
           </div>
-          <div className={styles.noteStack}>
+          <div className={noteGridStyles.stack}>
             <div
-              className={styles.noteRows}
+              className={noteGridStyles.rows}
               style={
                 {
-                  "--drone-column-count": droneNotes.columnCount,
+                  "--part-module-note-column-count": droneNotes.columnCount,
                 } as CSSProperties
               }
             >
               {droneNotes.rows.map((row, rowIndex) => (
-                <div key={rowIndex} className={styles.noteRow}>
+                <div key={rowIndex} className={noteGridStyles.row}>
                   {row.map((note) => {
                     const noteColor = resolveInstrumentNoteColor({
                       midi: note.midi,
@@ -372,7 +354,7 @@ export function DroneModule({
                         setItemRef={setItemRef}
                         handleKeyDown={handleKeyDown}
                         onInteract={handleItemInteraction}
-                        className={styles.noteButton}
+                        className={noteGridStyles.button}
                         style={{ gridColumn: note.columnIndex + 1 }}
                         largeSize="100%"
                         surface="raised"
