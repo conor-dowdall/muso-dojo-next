@@ -2,15 +2,6 @@
   --looper-wood-background: var(--color-surface);
   --part-module-note-button-width: var(--space-16);
   --part-module-note-button-height: var(--space-14);
-  --part-module-note-row-gap: var(--space-1);
-  --part-module-note-column-gap: var(--space-1);
-  --looper-body-padding: var(--space-3);
-  --looper-toolbar-gap: var(--part-module-control-group-gap);
-  --looper-control-deck-gap: var(--part-module-control-group-gap);
-  --looper-pattern-section-gap: var(--part-module-control-group-gap);
-  --looper-setup-control-gap: var(--part-module-control-group-gap);
-  --looper-mode-section-gap: var(--part-module-control-group-gap);
-  --looper-mode-detail-gap: var(--part-module-control-group-gap);
   --looper-study-readout-height: calc(var(--space-12) + var(--space-1));
   --part-module-body-radius: var(--radius-control);
   --part-module-min-readable-width: 0;
@@ -42,8 +33,8 @@
   min-inline-size: 0;
   min-block-size: 0;
   flex-direction: column;
-  gap: var(--looper-toolbar-gap);
-  padding: var(--looper-body-padding);
+  gap: var(--part-module-section-gap);
+  padding: var(--part-module-surface-padding);
   overflow: hidden;
 }
 
@@ -52,7 +43,7 @@
   flex: 0 0 auto;
   flex-direction: column;
   align-items: center;
-  gap: var(--looper-control-deck-gap);
+  gap: var(--part-module-section-gap);
 }
 
 .performanceControls {
@@ -63,7 +54,6 @@
   align-items: start;
   justify-content: center;
   gap: var(--part-module-control-group-gap);
-  padding-block: var(--space-1);
 }
 
 .countInControlGroup,
@@ -96,7 +86,7 @@
   flex: 0 0 auto;
   flex-direction: column;
   align-items: center;
-  gap: var(--looper-pattern-section-gap);
+  gap: var(--part-module-section-gap);
 }
 
 .patternSetupControls {
@@ -106,7 +96,7 @@
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: center;
-  gap: var(--looper-setup-control-gap);
+  gap: var(--part-module-section-gap);
 }
 
 .setupControlGroup {
@@ -127,7 +117,7 @@
   min-inline-size: 0;
   flex-direction: column;
   align-items: center;
-  gap: var(--looper-mode-section-gap);
+  gap: var(--part-module-section-gap);
 }
 
 .modeControlGroup {
@@ -143,7 +133,7 @@
   flex: 0 0 auto;
   grid-template-rows: 1fr 1fr;
   align-items: center;
-  padding: var(--space-1) var(--space-3);
+  padding-inline: var(--space-3);
   overflow: hidden;
   border-radius: var(--radius-control);
   background: var(--color-hardware-display-background-soft);
@@ -219,7 +209,7 @@
 
 .studyNoteName {
   align-self: end;
-  padding-block-end: var(--space-0_5);
+  padding-block-end: var(--part-module-split-label-gap);
   font-size: var(--text-sm);
   font-weight: var(--font-bold);
   letter-spacing: 0;
@@ -227,7 +217,7 @@
 
 .studyInterval {
   align-self: start;
-  padding-block-start: var(--space-0_5);
+  padding-block-start: var(--part-module-split-label-gap);
   font-size: var(--text-sm);
   font-weight: var(--font-bold);
   letter-spacing: 0;
@@ -255,7 +245,7 @@
   min-inline-size: 0;
   flex-direction: column;
   align-items: center;
-  gap: var(--looper-mode-detail-gap);
+  gap: var(--part-module-section-gap);
 }
 
 .degreeAndPlaybackControls {
@@ -330,7 +320,7 @@
   .surface {
     --part-module-note-button-width: calc(var(--space-12) + var(--space-1));
     --part-module-note-button-height: var(--space-12);
-    --looper-body-padding: var(--space-2);
+    --part-module-surface-padding: var(--space-2);
   }
 
   .patternControls {

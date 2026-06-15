@@ -8,10 +8,10 @@ import {
   type CSSProperties,
 } from "react";
 import {
+  Gauge,
   Metronome,
   Play,
   Square,
-  Volume2,
   WavesArrowDown,
   WavesArrowUp,
 } from "lucide-react";
@@ -453,7 +453,7 @@ export function ExerciseLooperModule({
                   >
                     <PartModuleControlButton
                       aria-label={`Set session tempo. Current tempo: ${tempoBpm} bpm`}
-                      icon={<Metronome />}
+                      icon={<Gauge />}
                       onPress={() => onOpenSessionTempo?.()}
                       unavailable={!onOpenSessionTempo}
                     />
@@ -474,7 +474,7 @@ export function ExerciseLooperModule({
                           ? "Turn off metronome during exercise"
                           : "Turn on metronome during exercise"
                       }
-                      icon={<Volume2 />}
+                      icon={<Metronome />}
                       onPress={() =>
                         onMetronomeEnabledChange?.(!metronomeEnabled)
                       }

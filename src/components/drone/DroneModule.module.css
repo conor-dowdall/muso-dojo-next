@@ -14,12 +14,8 @@
     var(--color-interaction-ring-dark) 44%,
     transparent
   );
-  --drone-body-padding: var(--space-3);
-  --drone-toolbar-gap: var(--part-module-control-group-gap);
   --part-module-note-button-width: var(--space-16);
   --part-module-note-button-height: var(--space-14);
-  --part-module-note-row-gap: var(--space-1);
-  --part-module-note-column-gap: var(--space-1);
   --part-module-body-radius: var(--radius-control);
   --part-module-min-readable-width: 0;
   --part-module-preferred-width: calc(var(--space-80) + var(--space-24));
@@ -49,8 +45,8 @@
   min-block-size: 0;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--drone-toolbar-gap);
-  padding: var(--drone-body-padding);
+  gap: var(--part-module-section-gap);
+  padding: var(--part-module-surface-padding);
   overflow: hidden;
 }
 
@@ -62,7 +58,6 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  padding-block: var(--space-1);
 }
 
 .droneToolControlGroup {
@@ -72,7 +67,7 @@
 
 @container drone (max-width: 34rem) {
   .droneToolSurface {
-    --drone-body-padding: var(--space-2);
+    --part-module-surface-padding: var(--space-2);
     --part-module-note-button-width: calc(var(--space-12) + var(--space-1));
     --part-module-note-button-height: var(--space-12);
   }

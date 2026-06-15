@@ -46,23 +46,11 @@
     min(32cqi, 34cqb),
     var(--text-lg)
   );
-  --instrument-note-tile-label-padding: var(--space-0_5);
+  --instrument-note-tile-label-inline-padding: var(--space-0_5);
 
   border-radius: calc(var(--radius-control) + var(--space-0_5));
 }
 
 .button[data-note-highlighted="true"] [data-emphasis] {
   transition-duration: 0s;
-}
-
-@container (max-width: 24rem) {
-  .row {
-    column-gap: var(--space-0_5);
-  }
-}
-
-@container (max-width: 20rem) {
-  .row {
-    column-gap: var(--space-px);
-  }
 }

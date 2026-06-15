@@ -7,7 +7,10 @@
   min-inline-size: 0;
   min-block-size: 0;
   grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
-  padding: var(--instrument-note-tile-label-padding, var(--space-1));
+  padding-inline: var(
+    --instrument-note-tile-label-inline-padding,
+    var(--space-1)
+  );
   pointer-events: none;
 }
 
@@ -30,12 +33,12 @@
 
 .slot:first-child {
   align-items: flex-end;
-  padding-block-end: var(--space-0_5);
+  padding-block-end: var(--part-module-split-label-gap, var(--space-1));
 }
 
 .slot:last-child {
   align-items: flex-start;
-  padding-block-start: var(--space-0_5);
+  padding-block-start: var(--part-module-split-label-gap, var(--space-1));
 }
 
 .text {
