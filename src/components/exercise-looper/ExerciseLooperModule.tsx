@@ -370,13 +370,13 @@ export function ExerciseLooperModule({
   return (
     <>
       <PartModuleFrame
-        bodyClassName={styles.body}
+        bodyClassName={controlStyles.body}
         className={`${styles.frame} ${controlStyles.surface}`}
         headerPrimary={<InstrumentIdentity label="Looper" />}
         showHeader={showHeader}
         style={
           {
-            "--looper-wood-background": woodSurfaces[wood].background,
+            "--part-module-body-background": woodSurfaces[wood].background,
           } as CSSProperties
         }
         headerActions={
@@ -415,7 +415,7 @@ export function ExerciseLooperModule({
           ) : undefined
         }
       >
-        <div className={styles.surface}>
+        <div className={`${styles.moduleContent} ${controlStyles.content}`}>
           <div className={styles.controlDeck}>
             <div
               aria-label="Looper performance controls"
@@ -423,11 +423,14 @@ export function ExerciseLooperModule({
               role="group"
             >
               <div
-                aria-label="Playback, tempo, and pulse controls"
-                className={`${styles.playbackActionControls} ${controlStyles.groupCluster}`}
+                aria-label="Playback and count-in controls"
+                className={controlStyles.groupRow}
                 role="group"
               >
-                <TactileControlGroup aria-label="Playback">
+                <TactileControlGroup
+                  aria-label="Playback"
+                  className={controlStyles.controlGroup}
+                >
                   <PartModuleControlButton
                     aria-label={
                       playback.isActive ? "Stop exercise" : "Play exercise"
@@ -439,9 +442,48 @@ export function ExerciseLooperModule({
                   />
                 </TactileControlGroup>
 
+                <TactileControlGroup
+                  aria-label="Count-in"
+                  className={controlStyles.controlGroup}
+                  controlsClassName={controlStyles.buttonGroup}
+                  readout={countInReadout}
+                  readoutAriaLabel={countInReadout}
+                >
+                  {countInChoices.map((beatCount) => {
+                    const isSelected = countInBeats === beatCount;
+
+                    return (
+                      <PartModuleControlButton
+                        key={beatCount}
+                        aria-label={
+                          isSelected
+                            ? `Turn off the ${beatCount}-beat count-in`
+                            : `Use a ${beatCount}-beat count-in`
+                        }
+                        icon={
+                          <span aria-hidden="true" className={styles.beatCount}>
+                            {beatCount}
+                          </span>
+                        }
+                        onPress={() =>
+                          onCountInBeatsChange?.(isSelected ? 0 : beatCount)
+                        }
+                        selected={isSelected}
+                        unavailable={!onCountInBeatsChange}
+                      />
+                    );
+                  })}
+                </TactileControlGroup>
+              </div>
+
+              <div
+                aria-label="Tempo, metronome, and octave controls"
+                className={controlStyles.groupRow}
+                role="group"
+              >
                 <div
                   aria-label="Tempo and metronome controls"
-                  className={controlStyles.buttonGroup}
+                  className={`${styles.pulseControls} ${controlStyles.buttonGroup} ${controlStyles.controlGroup}`}
                   role="group"
                 >
                   <TactileControlGroup
@@ -483,61 +525,28 @@ export function ExerciseLooperModule({
                     />
                   </TactileControlGroup>
                 </div>
+
+                <TactileControlGroup
+                  aria-label="Exercise octave"
+                  className={controlStyles.controlGroup}
+                  controlsClassName={controlStyles.buttonGroup}
+                  readout={octaveReadout}
+                  readoutAriaLabel={`Exercise pitch: ${octaveReadout}`}
+                >
+                  <PartModuleControlButton
+                    onPress={() => onOctaveOffsetChange?.(octaveOffset - 1)}
+                    aria-label={`Shift exercise down one octave. Current pitch: ${octaveReadout}`}
+                    icon={<WavesArrowDown />}
+                    unavailable={!onOctaveOffsetChange || !canShiftDown}
+                  />
+                  <PartModuleControlButton
+                    onPress={() => onOctaveOffsetChange?.(octaveOffset + 1)}
+                    aria-label={`Shift exercise up one octave. Current pitch: ${octaveReadout}`}
+                    icon={<WavesArrowUp />}
+                    unavailable={!onOctaveOffsetChange || !canShiftUp}
+                  />
+                </TactileControlGroup>
               </div>
-
-              <TactileControlGroup
-                aria-label="Count-in"
-                className={styles.countInControlGroup}
-                controlsClassName={controlStyles.buttonGroup}
-                readout={countInReadout}
-                readoutAriaLabel={countInReadout}
-              >
-                {countInChoices.map((beatCount) => {
-                  const isSelected = countInBeats === beatCount;
-
-                  return (
-                    <PartModuleControlButton
-                      key={beatCount}
-                      aria-label={
-                        isSelected
-                          ? `Turn off the ${beatCount}-beat count-in`
-                          : `Use a ${beatCount}-beat count-in`
-                      }
-                      icon={
-                        <span aria-hidden="true" className={styles.beatCount}>
-                          {beatCount}
-                        </span>
-                      }
-                      onPress={() =>
-                        onCountInBeatsChange?.(isSelected ? 0 : beatCount)
-                      }
-                      selected={isSelected}
-                      unavailable={!onCountInBeatsChange}
-                    />
-                  );
-                })}
-              </TactileControlGroup>
-
-              <TactileControlGroup
-                aria-label="Exercise octave"
-                className={styles.octaveControlGroup}
-                controlsClassName={controlStyles.buttonGroup}
-                readout={octaveReadout}
-                readoutAriaLabel={`Exercise pitch: ${octaveReadout}`}
-              >
-                <PartModuleControlButton
-                  onPress={() => onOctaveOffsetChange?.(octaveOffset - 1)}
-                  aria-label={`Shift exercise down one octave. Current pitch: ${octaveReadout}`}
-                  icon={<WavesArrowDown />}
-                  unavailable={!onOctaveOffsetChange || !canShiftDown}
-                />
-                <PartModuleControlButton
-                  onPress={() => onOctaveOffsetChange?.(octaveOffset + 1)}
-                  aria-label={`Shift exercise up one octave. Current pitch: ${octaveReadout}`}
-                  icon={<WavesArrowUp />}
-                  unavailable={!onOctaveOffsetChange || !canShiftUp}
-                />
-              </TactileControlGroup>
             </div>
 
             <ExercisePatternControls

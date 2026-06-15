@@ -6,11 +6,7 @@
   );
   --tactile-hover-background: var(--interactive-surface-hover-background);
   --tactile-selected-background: var(--interactive-surface-selected-background);
-  --tactile-unavailable-background: color-mix(
-    in srgb,
-    var(--color-interactive-neutral) 68%,
-    var(--color-base)
-  );
+  --tactile-unavailable-background: var(--color-control-unavailable-background);
   --button-outline-background: var(--tactile-rest-background);
   --button-background-hover: var(--tactile-hover-background);
   --button-active-background: var(--tactile-selected-background);
@@ -37,7 +33,7 @@
 }
 
 .tactileButton[data-control-state="unavailable"] [data-sizing] {
-  opacity: 0.34;
+  opacity: var(--control-unavailable-content-opacity);
 }
 
 @media (hover: hover) {

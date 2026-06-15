@@ -11,7 +11,10 @@
     --instrument-note-tile-label-inline-padding,
     var(--space-1)
   );
+  opacity: var(--instrument-note-tile-label-opacity, 1);
   pointer-events: none;
+  transition: opacity var(--instrument-note-tile-label-transition-duration, 0s)
+    var(--ease-out);
 }
 
 .stack::before {
@@ -20,7 +23,11 @@
   inset-block-start: 50%;
   inset-inline: 12%;
   block-size: var(--space-px);
-  background: color-mix(in srgb, var(--note-label-color) 28%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--instrument-note-tile-label-color, var(--note-label-color)) 28%,
+    transparent
+  );
   transform: translateY(-50%);
 }
 
@@ -43,7 +50,7 @@
 
 .text {
   max-inline-size: 100%;
-  color: var(--note-label-color);
+  color: var(--instrument-note-tile-label-color, var(--note-label-color));
   font-size: var(
     --instrument-note-tile-label-font-size,
     min(22cqi, var(--text-sm))

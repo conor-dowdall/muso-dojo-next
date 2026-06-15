@@ -339,10 +339,14 @@ export function ExercisePatternControls({
       role="group"
       aria-label="Exercise pattern"
     >
-      <div className={styles.patternSetupControls}>
+      <div
+        aria-label="Exercise direction and rhythm"
+        className={controlStyles.groupRow}
+        role="group"
+      >
         <TactileControlGroup
           aria-label="Direction"
-          className={styles.setupControlGroup}
+          className={controlStyles.controlGroup}
           controlsClassName={controlStyles.buttonGroup}
           readout={getCompactDirectionLabel(pattern.direction)}
         >
@@ -360,7 +364,7 @@ export function ExercisePatternControls({
 
         <TactileControlGroup
           aria-label="Rhythm"
-          className={styles.setupControlGroup}
+          className={controlStyles.controlGroup}
           controlsClassName={controlStyles.modifierButtonGroup}
           readout={rhythmLabel}
         >
@@ -405,7 +409,7 @@ export function ExercisePatternControls({
       >
         <TactileControlGroup
           aria-label="Play mode"
-          className={styles.modeControlGroup}
+          className={controlStyles.controlGroup}
           controlsClassName={controlStyles.buttonGroup}
           readout={modeReadout}
         >
@@ -437,71 +441,69 @@ export function ExercisePatternControls({
               ? "Interval and chord controls"
               : `${selectedPatternModeLabel} controls`
           }
-          className={styles.modeDetailControls}
+          className={controlStyles.groupRow}
           role="group"
         >
-          <div className={styles.degreeAndPlaybackControls}>
-            <TactileControlGroup
+          <TactileControlGroup
+            aria-label={
+              pattern.mode === "extension" ? "Chord size" : "Interval size"
+            }
+            className={controlStyles.controlGroup}
+            controlsClassName={controlStyles.buttonGroup}
+            readout={activeDegreeLabel}
+            unavailable={fineTuneUnavailable}
+          >
+            <PartModuleControlButton
+              onPress={() => stepActiveDegree(-1)}
               aria-label={
-                pattern.mode === "extension" ? "Chord size" : "Interval size"
+                pattern.mode === "extension"
+                  ? "Decrease chord size"
+                  : "Decrease interval size"
               }
-              controlsClassName={controlStyles.buttonGroup}
-              readout={activeDegreeLabel}
-              unavailable={fineTuneUnavailable}
-            >
-              <PartModuleControlButton
-                onPress={() => stepActiveDegree(-1)}
-                aria-label={
-                  pattern.mode === "extension"
-                    ? "Decrease chord size"
-                    : "Decrease interval size"
-                }
-                icon={<Minus />}
-                unavailable={
-                  !onChange || fineTuneUnavailable || !canDecreaseActiveDegree
-                }
-              />
-              <PartModuleControlButton
-                onPress={() => stepActiveDegree(1)}
-                aria-label={
-                  pattern.mode === "extension"
-                    ? "Increase chord size"
-                    : "Increase interval size"
-                }
-                icon={<Plus />}
-                unavailable={
-                  !onChange || fineTuneUnavailable || !canIncreaseActiveDegree
-                }
-              />
-            </TactileControlGroup>
+              icon={<Minus />}
+              unavailable={
+                !onChange || fineTuneUnavailable || !canDecreaseActiveDegree
+              }
+            />
+            <PartModuleControlButton
+              onPress={() => stepActiveDegree(1)}
+              aria-label={
+                pattern.mode === "extension"
+                  ? "Increase chord size"
+                  : "Increase interval size"
+              }
+              icon={<Plus />}
+              unavailable={
+                !onChange || fineTuneUnavailable || !canIncreaseActiveDegree
+              }
+            />
+          </TactileControlGroup>
 
-            <TactileControlGroup
-              aria-label="Note playback"
-              controlsClassName={controlStyles.buttonGroup}
-              readout={notePlaybackLabel}
-              unavailable={fineTuneUnavailable}
-            >
-              {notePlaybackChoices.map((choice) => (
-                <PartModuleControlButton
-                  key={choice.playback}
-                  onPress={() =>
-                    updatePattern({ notePlayback: choice.playback })
-                  }
-                  aria-label={choice.label}
-                  icon={choice.icon}
-                  selected={
-                    !fineTuneUnavailable &&
-                    pattern.notePlayback === choice.playback
-                  }
-                  unavailable={!onChange || fineTuneUnavailable}
-                />
-              ))}
-            </TactileControlGroup>
-          </div>
+          <TactileControlGroup
+            aria-label="Note playback"
+            className={controlStyles.controlGroup}
+            controlsClassName={controlStyles.buttonGroup}
+            readout={notePlaybackLabel}
+            unavailable={fineTuneUnavailable}
+          >
+            {notePlaybackChoices.map((choice) => (
+              <PartModuleControlButton
+                key={choice.playback}
+                onPress={() => updatePattern({ notePlayback: choice.playback })}
+                aria-label={choice.label}
+                icon={choice.icon}
+                selected={
+                  !fineTuneUnavailable &&
+                  pattern.notePlayback === choice.playback
+                }
+                unavailable={!onChange || fineTuneUnavailable}
+              />
+            ))}
+          </TactileControlGroup>
 
           <TactileControlGroup
             aria-label="Inner note direction"
-            className={styles.noteDirectionControlGroup}
+            className={controlStyles.controlGroup}
             controlsClassName={controlStyles.buttonGroup}
             readout={innerDirectionLabel}
             unavailable={noteDirectionUnavailable}

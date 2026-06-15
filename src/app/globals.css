@@ -45,6 +45,12 @@
   --color-focus-ring: var(--color-accent);
   --color-focus-ring-contrast: rgb(0 0 0 / 0.82);
   --color-interactive-neutral: #454c56;
+  --color-control-unavailable-background: color-mix(
+    in srgb,
+    var(--color-interactive-neutral) 68%,
+    var(--color-base)
+  );
+  --control-unavailable-content-opacity: 0.34;
   --color-hardware-display-background: rgb(7 9 12 / 0.86);
   --color-hardware-display-background-soft: color-mix(
     in srgb,

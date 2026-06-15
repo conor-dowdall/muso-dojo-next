@@ -209,7 +209,7 @@ export function DroneModule({
   });
   const octaveOffsetLabel = formatOctaveOffset(octaveOffset);
   const droneFrameStyle = {
-    "--drone-wood-background": woodSurfaces[wood].background,
+    "--part-module-body-background": woodSurfaces[wood].background,
   } as CSSProperties;
   useEffect(() => {
     if (focusedKey === initialFocusedKey || noteByKey.has(focusedKey)) {
@@ -241,7 +241,7 @@ export function DroneModule({
   return (
     <>
       <PartModuleFrame
-        bodyClassName={styles.droneBody}
+        bodyClassName={controlStyles.body}
         className={`${styles.droneFrame} ${controlStyles.surface}`}
         headerPrimary={<InstrumentIdentity label="Drone" />}
         headerActions={
@@ -287,11 +287,11 @@ export function DroneModule({
         showHeader={showHeader}
         style={droneFrameStyle}
       >
-        <div className={styles.droneToolSurface}>
-          <div className={styles.droneToolControls}>
+        <div className={`${styles.moduleContent} ${controlStyles.content}`}>
+          <div className={controlStyles.groupRow}>
             <TactileControlGroup
               aria-label="Drone playback and octave controls"
-              className={styles.droneToolControlGroup}
+              className={controlStyles.controlGroup}
               controlsClassName={controlStyles.buttonGroup}
             >
               <PartModuleControlButton
