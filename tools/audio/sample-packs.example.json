@@ -1,0 +1,36 @@
+{
+  "sourceSf2": "sf2/FluidR3_GM.sf2",
+  "targetSampleRate": 48000,
+  "outputDir": "public/audio/v1",
+  "manifestPath": "src/audio/samplePacks.generated.ts",
+  "attributionPath": "public/audio/v1/attribution.json",
+  "packs": [
+    {
+      "id": "piano",
+      "label": "Piano",
+      "sourcePreset": { "bank": 0, "program": 0 },
+      "channels": "mono",
+      "gain": 0.92,
+      "paddingSeconds": 0.02,
+      "roots": [36, 43, 48, 55, 60, 67, 72, 79, 84]
+    },
+    {
+      "id": "plucked-string",
+      "label": "Plucked String",
+      "sourcePreset": { "bank": 0, "program": 24 },
+      "channels": "mono",
+      "gain": 0.92,
+      "paddingSeconds": 0.02,
+      "roots": [40, 45, 50, 55, 59, 64, 69, 74]
+    },
+    {
+      "id": "bowed-strings",
+      "label": "Bowed Strings",
+      "sourcePreset": { "bank": 0, "program": 48 },
+      "channels": "mono",
+      "gain": 0.92,
+      "paddingSeconds": 0.02,
+      "roots": [36, 43, 48, 55, 60, 67, 72, 79]
+    }
+  ]
+}

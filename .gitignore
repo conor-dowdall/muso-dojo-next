@@ -46,3 +46,11 @@ next-env.d.ts
 
 # Serwist
 public/sw*
+
+# Soundfont
+sf2/
+tools/audio/sources/
+
+# Python tooling
+__pycache__/
+*.py[cod]
