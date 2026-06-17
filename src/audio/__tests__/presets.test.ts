@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   audioPresets,
-  getDefaultAudioPresetId,
   getAudioPresetsForSurface,
+  getDefaultAudioPresetId,
   isAudioPresetId,
   resolveAudioPreset,
 } from "@/audio/presets";
 import {
   type AudioPresetSurface,
   type AudioUse,
-  type VoiceInsertEffectConfig,
+  type SamplePackId,
 } from "@/audio/types";
 
 const audioUses = [
@@ -26,15 +26,13 @@ const defaultSurfaceByUse = {
   exercise: "exercise",
 } as const satisfies Record<AudioUse, AudioPresetSurface>;
 
-function isSupportedInsertEffectType(effect: VoiceInsertEffectConfig) {
-  return ["chorus", "distortion"].includes(effect.type);
-}
-
 describe("audio presets", () => {
   it("keeps every playback default visible on its relevant picker", () => {
     audioUses.forEach((use) => {
       const preset = audioPresets[getDefaultAudioPresetId(use)];
 
+      expect(preset.family).toBe("sample");
+      expect(preset.samplePackId).toBeDefined();
       expect(preset.availableOn).toContain(defaultSurfaceByUse[use]);
       expect(resolveAudioPreset(preset.id, getDefaultAudioPresetId(use))).toBe(
         preset,
@@ -42,125 +40,72 @@ describe("audio presets", () => {
     });
   });
 
-  it("gives every preset a natural one-shot duration", () => {
-    Object.values(audioPresets).forEach((preset) => {
-      expect(preset.defaultDurationSeconds).toBeGreaterThanOrEqual(0.2);
-      expect(preset.defaultDurationSeconds).toBeLessThanOrEqual(1.6);
+  it("offers a focused sample-backed instrument catalog", () => {
+    expect(
+      getAudioPresetsForSurface("instrument").map((preset) => preset.id),
+    ).toStrictEqual(["piano", "plucked-string", "bowed-strings"]);
+    expect(
+      getAudioPresetsForSurface("exercise").map((preset) => preset.id),
+    ).toStrictEqual(["piano", "plucked-string", "bowed-strings"]);
+    expect(
+      getAudioPresetsForSurface("drone").map((preset) => preset.id),
+    ).toEqual(["bowed-strings"]);
+  });
+
+  it("maps visible presets to generated sample packs", () => {
+    const expectedPackByPreset = {
+      piano: "piano",
+      "plucked-string": "plucked-string",
+      "bowed-strings": "bowed-strings",
+    } as const satisfies Record<string, SamplePackId>;
+
+    Object.entries(expectedPackByPreset).forEach(([presetId, samplePackId]) => {
+      expect(audioPresets[presetId as keyof typeof audioPresets]).toMatchObject(
+        {
+          family: "sample",
+          samplePackId,
+        },
+      );
     });
+  });
+
+  it("keeps retired generated preset ids as playback aliases", () => {
+    expect(resolveAudioPreset("reference-tone", "piano").samplePackId).toBe(
+      "piano",
+    );
+    expect(resolveAudioPreset("glass-bell", "piano").samplePackId).toBe(
+      "piano",
+    );
+    expect(resolveAudioPreset("distortion-guitar", "piano").samplePackId).toBe(
+      "plucked-string",
+    );
+    expect(resolveAudioPreset("picked-bass", "piano").samplePackId).toBe(
+      "plucked-string",
+    );
+    expect(resolveAudioPreset("mandolin", "piano").samplePackId).toBe(
+      "plucked-string",
+    );
+    expect(resolveAudioPreset("soft-organ", "piano").samplePackId).toBe(
+      "bowed-strings",
+    );
+    expect(resolveAudioPreset("warm-pad", "piano").samplePackId).toBe(
+      "bowed-strings",
+    );
+  });
+
+  it("falls back to the supplied default for unknown preset ids", () => {
+    expect(resolveAudioPreset("missing", "bowed-strings")).toBe(
+      audioPresets["bowed-strings"],
+    );
+    expect(isAudioPresetId("steel-string")).toBe(false);
+    expect(isAudioPresetId("nylon-string")).toBe(false);
+    expect(isAudioPresetId("reference-tone")).toBe(true);
+  });
+
+  it("uses string samples as the drone default", () => {
+    expect(getDefaultAudioPresetId("drone")).toBe("bowed-strings");
     expect(
       audioPresets["bowed-strings"].defaultDurationSeconds,
     ).toBeGreaterThan(audioPresets["plucked-string"].defaultDurationSeconds);
-    expect(audioPresets.mandolin.defaultDurationSeconds).toBeLessThan(
-      audioPresets.piano.defaultDurationSeconds,
-    );
-  });
-
-  it("uses insert effects for preset sound shaping", () => {
-    Object.values(audioPresets).forEach((preset) => {
-      const effects: readonly VoiceInsertEffectConfig[] | undefined =
-        "insertEffects" in preset.voice
-          ? preset.voice.insertEffects
-          : undefined;
-
-      effects?.forEach((effect) => {
-        expect(isSupportedInsertEffectType(effect)).toBe(true);
-      });
-    });
-  });
-
-  it("treats picker availability as metadata rather than a playback gate", () => {
-    expect(
-      resolveAudioPreset("plucked-string", getDefaultAudioPresetId("drone")),
-    ).toBe(audioPresets["plucked-string"]);
-    expect(
-      resolveAudioPreset("missing", getDefaultAudioPresetId("drone")),
-    ).toBe(audioPresets["reference-tone"]);
-    expect(
-      resolveAudioPreset("warm-pad", getDefaultAudioPresetId("drone")),
-    ).toBe(audioPresets["warm-pad"]);
-  });
-
-  it("keeps drone defaults lean while allowing richer shared-effect options", () => {
-    const dronePresets = getAudioPresetsForSurface("drone");
-    const referenceTone = audioPresets["reference-tone"];
-    const softOrgan = audioPresets["soft-organ"];
-    const richerDronePresets = [
-      audioPresets["bowed-strings"],
-      audioPresets["warm-pad"],
-    ];
-
-    expect(dronePresets.map((preset) => preset.id)).toStrictEqual([
-      "reference-tone",
-      "soft-organ",
-      "bowed-strings",
-      "warm-pad",
-    ]);
-    expect(getDefaultAudioPresetId("drone")).toBe("reference-tone");
-    expect(referenceTone.voice.partials).toStrictEqual([
-      { multiple: 1, gain: 1 },
-    ]);
-    expect("lowPitchAssist" in referenceTone.voice).toBe(false);
-    [referenceTone, softOrgan].forEach((preset) => {
-      expect("insertEffects" in preset.voice).toBe(false);
-      expect("unison" in preset.voice).toBe(false);
-    });
-    richerDronePresets.forEach((preset) => {
-      expect(preset.voice.insertEffects?.map((effect) => effect.type)).toEqual([
-        "chorus",
-      ]);
-      expect(preset.voice.unison?.detuneCents).toHaveLength(3);
-    });
-  });
-
-  it("offers one flat, deliberately ordered instrument catalog", () => {
-    expect(
-      getAudioPresetsForSurface("instrument").map((preset) => preset.id),
-    ).toStrictEqual([
-      "reference-tone",
-      "piano",
-      "plucked-string",
-      "picked-bass",
-      "mandolin",
-      "bowed-strings",
-      "soft-organ",
-      "warm-pad",
-      "distortion-guitar",
-      "glass-bell",
-      "hollow-synth",
-    ]);
-    expect(Object.keys(audioPresets)).toHaveLength(11);
-  });
-
-  it("offers a focused exercise catalog", () => {
-    expect(
-      getAudioPresetsForSurface("exercise").map((preset) => preset.id),
-    ).toStrictEqual([
-      "piano",
-      "plucked-string",
-      "mandolin",
-      "reference-tone",
-      "glass-bell",
-      "hollow-synth",
-    ]);
-  });
-
-  it("keeps retained voices distinct and rejects retired preset ids", () => {
-    expect(audioPresets.piano.voice.envelope.decaySeconds).toBeGreaterThan(
-      audioPresets["plucked-string"].voice.envelope.decaySeconds * 2,
-    );
-    expect(
-      audioPresets["plucked-string"].voice.partials.at(-1)?.multiple ?? 0,
-    ).toBeGreaterThan(audioPresets.piano.voice.partials.at(-1)?.multiple ?? 0);
-    expect(audioPresets["distortion-guitar"].label).toContain("Guitar");
-    expect(audioPresets["picked-bass"].label).toContain("Bass");
-    expect(audioPresets.mandolin.description).toContain("paired-course");
-    expect(isAudioPresetId("steel-string")).toBe(false);
-    expect(isAudioPresetId("nylon-string")).toBe(false);
-    expect(isAudioPresetId("bowed-sustain")).toBe(false);
-  });
-
-  it("keeps the piano clean and nearly silent before its release", () => {
-    expect("insertEffects" in audioPresets.piano.voice).toBe(false);
-    expect(audioPresets.piano.voice.envelope.sustainGain).toBeLessThan(0.03);
   });
 });

@@ -1,12 +1,6 @@
 "use client";
 
-import { PaintbrushVertical, Waves } from "lucide-react";
-import {
-  masterAmbiencePresets,
-  musoAudioEngine,
-  resolveMasterAmbiencePresetId,
-  type MasterAmbiencePresetId,
-} from "@/audio";
+import { PaintbrushVertical } from "lucide-react";
 import {
   DialogContent,
   DialogDoneFooter,
@@ -45,39 +39,16 @@ interface DojoSettingsDialogProps {
  */
 export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
   const { closeChoice, isOpen, toggleChoice } = useDisclosureList<
-    "note-colors" | "sound" | "theme"
+    "note-colors" | "theme"
   >();
   const appThemeSetting = useAppStore((state) => state.dojoSettings.appTheme);
   const noteColorConfig = useAppStore(
     (state) => state.dojoSettings.noteColorConfig,
   );
-  const masterAmbienceSetting = useAppStore(
-    (state) => state.dojoSettings.masterAmbiencePresetId,
-  );
   const setAppTheme = useAppStore((state) => state.setAppTheme);
   const setNoteColorConfig = useAppStore((state) => state.setNoteColorConfig);
-  const setMasterAmbiencePresetId = useAppStore(
-    (state) => state.setMasterAmbiencePresetId,
-  );
   const appThemeChoice = getAppThemeChoice(appThemeSetting);
   const appThemeLabel = getAppThemeLabel(appThemeChoice);
-  const masterAmbiencePresetId = resolveMasterAmbiencePresetId(
-    masterAmbienceSetting,
-  );
-  const masterAmbiencePreset = masterAmbiencePresets[masterAmbiencePresetId];
-
-  const handleMasterAmbiencePresetChange = (
-    presetId: MasterAmbiencePresetId,
-  ) => {
-    setMasterAmbiencePresetId(presetId);
-    musoAudioEngine.setMasterAmbiencePresetId(presetId);
-    void musoAudioEngine.playNote({
-      midiNote: 60,
-      presetId: "piano",
-      use: "preview",
-      velocity: 0.82,
-    });
-  };
 
   return (
     <>
@@ -118,34 +89,6 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
               onToggle={() => toggleChoice("note-colors")}
               onChange={setNoteColorConfig}
             />
-          </DisclosureListGroup>
-
-          <DisclosureListGroup>
-            <DisclosureListItem
-              ariaLabel={`Ambience. Current: ${masterAmbiencePreset.label}`}
-              icon={<Waves />}
-              isOpen={isOpen("sound")}
-              label="Ambience"
-              panelVariant="menu"
-              preview={
-                <span className={styles.soundPreview}>
-                  {masterAmbiencePreset.label}
-                </span>
-              }
-              onToggle={() => toggleChoice("sound")}
-            >
-              <DisclosureList>
-                {Object.values(masterAmbiencePresets).map((preset) => (
-                  <DisclosureListChoice
-                    key={preset.id}
-                    aria-label={`Use ${preset.label} ambience`}
-                    label={preset.label}
-                    selected={preset.id === masterAmbiencePresetId}
-                    onClick={() => handleMasterAmbiencePresetChange(preset.id)}
-                  />
-                ))}
-              </DisclosureList>
-            </DisclosureListItem>
           </DisclosureListGroup>
         </DisclosureList>
       </DialogContent>

@@ -15,6 +15,7 @@ export type AudioPresetId =
 
 export type AudioPresetFamily = "generated" | "sample";
 export type AudioPresetSurface = "instrument" | "drone" | "exercise";
+export type SamplePackId = "piano" | "plucked-string" | "bowed-strings";
 
 export type AudioVoiceHandle = string & {
   readonly __audioVoiceHandle: unique symbol;
@@ -124,6 +125,7 @@ export interface AudioPreset {
   family: AudioPresetFamily;
   id: AudioPresetId;
   label: string;
+  samplePackId?: SamplePackId;
   voice: HarmonicVoiceConfig;
 }
 
