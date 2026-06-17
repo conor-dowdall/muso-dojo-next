@@ -23,6 +23,14 @@ from typing import Any, Iterable
 
 
 GEN_PAN = 17
+GEN_DELAY_VOL_ENV = 33
+GEN_ATTACK_VOL_ENV = 34
+GEN_HOLD_VOL_ENV = 35
+GEN_DECAY_VOL_ENV = 36
+GEN_SUSTAIN_VOL_ENV = 37
+GEN_RELEASE_VOL_ENV = 38
+GEN_KEYNUM_TO_VOL_ENV_HOLD = 39
+GEN_KEYNUM_TO_VOL_ENV_DECAY = 40
 GEN_INSTRUMENT = 41
 GEN_KEY_RANGE = 43
 GEN_INITIAL_ATTENUATION = 48
@@ -88,6 +96,18 @@ class SampleHeader:
 
 
 @dataclass(frozen=True)
+class AmpEnvelope:
+    delay_seconds: float
+    attack_seconds: float
+    hold_seconds: float
+    decay_seconds: float
+    sustain_gain: float
+    release_seconds: float
+    keynum_to_hold: int
+    keynum_to_decay: int
+
+
+@dataclass(frozen=True)
 class ResolvedZone:
     preset_name: str
     preset: int
@@ -103,6 +123,7 @@ class ResolvedZone:
     attenuation_cb: int
     pan: int
     sample_modes: int
+    amp_envelope: AmpEnvelope
 
 
 @dataclass(frozen=True)
@@ -362,6 +383,7 @@ class SoundFont:
                             ),
                             pan=get_signed(values, GEN_PAN),
                             sample_modes=get_unsigned(values, GEN_SAMPLE_MODES),
+                            amp_envelope=get_amp_envelope(values),
                         )
                     )
 
@@ -430,8 +452,49 @@ def get_signed(values: dict[int, GeneratorAmount], operator: int) -> int:
     return values.get(operator).signed if operator in values else 0
 
 
+def get_signed_or_default(
+    values: dict[int, GeneratorAmount], operator: int, default: int
+) -> int:
+    return values.get(operator).signed if operator in values else default
+
+
 def get_unsigned(values: dict[int, GeneratorAmount], operator: int) -> int:
     return values.get(operator).unsigned if operator in values else 0
+
+
+def timecents_to_seconds(timecents: int) -> float:
+    if timecents <= -32768:
+        return 0
+    return 2 ** (timecents / 1200)
+
+
+def sustain_centibels_to_gain(centibels: int) -> float:
+    return 10 ** (-max(0, centibels) / 200)
+
+
+def get_amp_envelope(values: dict[int, GeneratorAmount]) -> AmpEnvelope:
+    return AmpEnvelope(
+        delay_seconds=timecents_to_seconds(
+            get_signed_or_default(values, GEN_DELAY_VOL_ENV, -12000)
+        ),
+        attack_seconds=timecents_to_seconds(
+            get_signed_or_default(values, GEN_ATTACK_VOL_ENV, -12000)
+        ),
+        hold_seconds=timecents_to_seconds(
+            get_signed_or_default(values, GEN_HOLD_VOL_ENV, -12000)
+        ),
+        decay_seconds=timecents_to_seconds(
+            get_signed_or_default(values, GEN_DECAY_VOL_ENV, -12000)
+        ),
+        sustain_gain=sustain_centibels_to_gain(
+            get_signed(values, GEN_SUSTAIN_VOL_ENV)
+        ),
+        release_seconds=timecents_to_seconds(
+            get_signed_or_default(values, GEN_RELEASE_VOL_ENV, -12000)
+        ),
+        keynum_to_hold=get_signed(values, GEN_KEYNUM_TO_VOL_ENV_HOLD),
+        keynum_to_decay=get_signed(values, GEN_KEYNUM_TO_VOL_ENV_DECAY),
+    )
 
 
 def sanitize_id(value: str) -> str:
@@ -595,12 +658,48 @@ def resample_linear(
 def find_stereo_partner(
     soundfont: SoundFont, sample: SampleHeader
 ) -> SampleHeader | None:
-    if sample.sample_link >= len(soundfont.samples) - 1:
+    if not sample.sample_type & (SAMPLE_TYPE_LEFT | SAMPLE_TYPE_RIGHT):
         return None
-    partner = soundfont.samples[sample.sample_link]
+
+    if sample.sample_link < len(soundfont.samples) - 1:
+        partner = soundfont.samples[sample.sample_link]
+        if is_stereo_partner(sample, partner):
+            return partner
+
+    for partner_index in (sample.index - 1, sample.index + 1):
+        if partner_index < 0 or partner_index >= len(soundfont.samples) - 1:
+            continue
+
+        partner = soundfont.samples[partner_index]
+        if is_stereo_partner(sample, partner):
+            return partner
+
+    return None
+
+
+def is_stereo_partner(sample: SampleHeader, partner: SampleHeader) -> bool:
     if partner.index == sample.index:
-        return None
-    return partner
+        return False
+
+    if sample.sample_type & SAMPLE_TYPE_LEFT:
+        if not partner.sample_type & SAMPLE_TYPE_RIGHT:
+            return False
+    elif sample.sample_type & SAMPLE_TYPE_RIGHT:
+        if not partner.sample_type & SAMPLE_TYPE_LEFT:
+            return False
+    else:
+        return False
+
+    return normalize_stereo_sample_name(sample.name) == normalize_stereo_sample_name(
+        partner.name
+    )
+
+
+def normalize_stereo_sample_name(name: str) -> str:
+    normalized = name.strip().lower()
+    normalized = re.sub(r"\([lr]\)\s*$", "", normalized)
+    normalized = re.sub(r"\b[lr]\s*$", "", normalized)
+    return re.sub(r"\s+", " ", normalized).strip()
 
 
 def extract_region_audio(
@@ -686,6 +785,19 @@ def apply_gain(region: RegionAudio, gain: float) -> None:
         return
     for channel_index, channel in enumerate(region.frames):
         region.frames[channel_index] = [sample * gain for sample in channel]
+
+
+def amp_envelope_to_dict(envelope: AmpEnvelope) -> dict[str, int | float]:
+    return {
+        "delaySeconds": envelope.delay_seconds,
+        "attackSeconds": envelope.attack_seconds,
+        "holdSeconds": envelope.hold_seconds,
+        "decaySeconds": envelope.decay_seconds,
+        "sustainGain": envelope.sustain_gain,
+        "releaseSeconds": envelope.release_seconds,
+        "keynumToHold": envelope.keynum_to_hold,
+        "keynumToDecay": envelope.keynum_to_decay,
+    }
 
 
 def write_wav(path: Path, channels: list[list[float]], sample_rate: int) -> None:
@@ -790,6 +902,9 @@ def build_pack(
             "durationSeconds": frame_count / target_sample_rate,
             "rootCents": zone.root_cents,
             "gain": gain,
+            "attenuationCentibels": zone.attenuation_cb,
+            "pan": zone.pan,
+            "ampEnvelope": amp_envelope_to_dict(zone.amp_envelope),
             "sourceSampleName": zone.sample.name,
             "sourceSampleRate": zone.sample.sample_rate,
         }
@@ -829,6 +944,9 @@ def build_pack(
                     "fineTune": zone.fine_tune,
                     "coarseTune": zone.coarse_tune,
                     "sampleModes": zone.sample_modes,
+                    "attenuationCentibels": zone.attenuation_cb,
+                    "pan": zone.pan,
+                    "ampEnvelope": amp_envelope_to_dict(zone.amp_envelope),
                 },
             }
         )

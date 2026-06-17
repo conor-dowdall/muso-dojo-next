@@ -1,0 +1,2092 @@
+{
+  "sourceSf2": "/p1/dev/muso-dojo-next/sf2/FluidR3_GM.sf2",
+  "targetSampleRate": 48000,
+  "packs": [
+    {
+      "id": "piano",
+      "label": "Piano",
+      "regions": [
+        {
+          "regionId": "piano-26",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1133,
+            "name": "P200 Piano D2(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 60452588,
+            "end": 60672090,
+            "startLoop": 60623481,
+            "endLoop": 60672087,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 26,
+            "rootCents": 2600,
+            "keyLow": 0,
+            "keyHigh": 26,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 6.0001559571432725,
+              "decaySeconds": 40.99852210560645,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-30",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1135,
+            "name": "P200 Piano F#2(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 60891684,
+            "end": 61086934,
+            "startLoop": 61051797,
+            "endLoop": 61086931,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 30,
+            "rootCents": 3000,
+            "keyLow": 27,
+            "keyHigh": 30,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 6.401159837781106,
+              "decaySeconds": 42.00531555756023,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-34",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1137,
+            "name": "P200 Piano A#2(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 61282276,
+            "end": 61447325,
+            "startLoop": 61411730,
+            "endLoop": 61447321,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 34,
+            "rootCents": 3400,
+            "keyLow": 31,
+            "keyHigh": 34,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 5.498990013832332,
+              "decaySeconds": 42.00531555756023,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-38",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1139,
+            "name": "P200 Piano D3(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 61612466,
+            "end": 61805582,
+            "startLoop": 61771413,
+            "endLoop": 61805577,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 38,
+            "rootCents": 3800,
+            "keyLow": 35,
+            "keyHigh": 38,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 2.8007890632437187,
+              "decaySeconds": 44.99418533191517,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-42",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1141,
+            "name": "P200 Piano F#3(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 61998790,
+            "end": 62154398,
+            "startLoop": 62119280,
+            "endLoop": 62154392,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 42,
+            "rootCents": 4200,
+            "keyLow": 39,
+            "keyHigh": 42,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 4.999094040915632,
+              "decaySeconds": 42.00531555756023,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-46",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1143,
+            "name": "P200 Piano A#3(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 62310098,
+            "end": 62451206,
+            "startLoop": 62419250,
+            "endLoop": 62451201,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 46,
+            "rootCents": 4600,
+            "keyLow": 43,
+            "keyHigh": 46,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 3.5003519789808375,
+              "decaySeconds": 42.591687911159774,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-50",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1145,
+            "name": "P200 Piano D4(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 62592406,
+            "end": 62701952,
+            "startLoop": 62669774,
+            "endLoop": 62701949,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 50,
+            "rootCents": 5000,
+            "keyLow": 47,
+            "keyHigh": 50,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 3.0000779785716363,
+              "decaySeconds": 39.99275232732504,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-54",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1147,
+            "name": "P200 Piano F#4(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 62811590,
+            "end": 62896075,
+            "startLoop": 62866609,
+            "endLoop": 62896070,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 54,
+            "rootCents": 5400,
+            "keyLow": 51,
+            "keyHigh": 54,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 1.0,
+              "decaySeconds": 42.493393814044715,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-58",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1149,
+            "name": "P200 Piano A#4(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 62980652,
+            "end": 63068197,
+            "startLoop": 63033338,
+            "endLoop": 63068194,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 58,
+            "rootCents": 5800,
+            "keyLow": 55,
+            "keyHigh": 58,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 1.0,
+              "decaySeconds": 39.99275232732504,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-62",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1151,
+            "name": "P200 Piano D5(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 63155834,
+            "end": 63259721,
+            "startLoop": 63228864,
+            "endLoop": 63259719,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 62,
+            "rootCents": 6200,
+            "keyLow": 59,
+            "keyHigh": 62,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 0.6001243333326338,
+              "decaySeconds": 29.007083309699535,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-66",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1153,
+            "name": "P200 Piano F#5(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 63363700,
+            "end": 63452131,
+            "startLoop": 63426081,
+            "endLoop": 63452126,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 66,
+            "rootCents": 6600,
+            "keyLow": 63,
+            "keyHigh": 66,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 0.6001243333326338,
+              "decaySeconds": 25.005380733519765,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-70",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1155,
+            "name": "P200 Piano A#5(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 63540654,
+            "end": 63611746,
+            "startLoop": 63592125,
+            "endLoop": 63611742,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 70,
+            "rootCents": 7000,
+            "keyLow": 67,
+            "keyHigh": 70,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 1.4003945316218593,
+              "decaySeconds": 16.0,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-74",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1157,
+            "name": "P200 Piano D6(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 63682930,
+            "end": 63749980,
+            "startLoop": 63727095,
+            "endLoop": 63749977,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 74,
+            "rootCents": 7400,
+            "keyLow": 71,
+            "keyHigh": 74,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 2.0,
+              "decaySeconds": 14.997671944959682,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-78",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1159,
+            "name": "P200 Piano F#6(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 63817122,
+            "end": 63892843,
+            "startLoop": 63864629,
+            "endLoop": 63892840,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 78,
+            "rootCents": 7800,
+            "keyLow": 75,
+            "keyHigh": 78,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 1.5000389892858181,
+              "decaySeconds": 20.298951901198897,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-84",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1161,
+            "name": "P200 Piano C7(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 63968656,
+            "end": 64015195,
+            "startLoop": 64012535,
+            "endLoop": 64015191,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 84,
+            "rootCents": 8400,
+            "keyLow": 79,
+            "keyHigh": 84,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 0.5,
+              "decaySeconds": 20.205367219066247,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-90",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1163,
+            "name": "P200 Piano F#7(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 64061826,
+            "end": 64122157,
+            "startLoop": 64102107,
+            "endLoop": 64122154,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 90,
+            "rootCents": 9000,
+            "keyLow": 85,
+            "keyHigh": 90,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 0.5,
+              "decaySeconds": 10.997980027664664,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-94",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1165,
+            "name": "P200 Piano A#7(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 64182580,
+            "end": 64224096,
+            "startLoop": 64222810,
+            "endLoop": 64224093,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 94,
+            "rootCents": 9400,
+            "keyLow": 91,
+            "keyHigh": 94,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 0.0009999660026297386,
+              "decaySeconds": 9.998188081831264,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-99",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1167,
+            "name": "P200 Piano D#8(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 64265704,
+            "end": 64283820,
+            "startLoop": 64283524,
+            "endLoop": 64283817,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 99,
+            "rootCents": 9900,
+            "keyLow": 95,
+            "keyHigh": 99,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 0.0009999660026297386,
+              "decaySeconds": 5.199357417696995,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-104",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1169,
+            "name": "P200 Piano G#9(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 64302028,
+            "end": 64316135,
+            "startLoop": 64315723,
+            "endLoop": 64316132,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 104,
+            "rootCents": 10400,
+            "keyLow": 100,
+            "keyHigh": 104,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 0.0009765625,
+              "decaySeconds": 4.8009946666610706,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "piano-108",
+          "packId": "piano",
+          "preset": {
+            "name": "Yamaha Grand Piano",
+            "bank": 0,
+            "program": 0
+          },
+          "instrumentName": "Yamaha Grand Piano",
+          "sample": {
+            "index": 1171,
+            "name": "P200 Piano C10(L)",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 64330334,
+            "end": 64343070,
+            "startLoop": 64342382,
+            "endLoop": 64343067,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 108,
+            "rootCents": 10800,
+            "keyLow": 105,
+            "keyHigh": 108,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 140,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007999728021037914,
+              "holdSeconds": 0.0009999660026297386,
+              "decaySeconds": 3.6999351900974746,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 1.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "plucked-string",
+      "label": "Plucked String",
+      "regions": [
+        {
+          "regionId": "plucked-string-40",
+          "packId": "plucked-string",
+          "preset": {
+            "name": "Nylon String Guitar",
+            "bank": 0,
+            "program": 24
+          },
+          "instrumentName": "Nylon Guitar",
+          "sample": {
+            "index": 910,
+            "name": "Nylon E3",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 48134251,
+            "end": 48327755,
+            "startLoop": 48327061,
+            "endLoop": 48327596,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 40,
+            "rootCents": 3995,
+            "keyLow": 0,
+            "keyHigh": 43,
+            "fineTune": -5,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 1.0,
+              "decaySeconds": 44.99418533191517,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 2.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "plucked-string-45",
+          "packId": "plucked-string",
+          "preset": {
+            "name": "Nylon String Guitar",
+            "bank": 0,
+            "program": 24
+          },
+          "instrumentName": "Nylon Guitar",
+          "sample": {
+            "index": 909,
+            "name": "Nylon A3",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 47992469,
+            "end": 48134205,
+            "startLoop": 48133777,
+            "endLoop": 48134180,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 45,
+            "rootCents": 4506,
+            "keyLow": 44,
+            "keyHigh": 48,
+            "fineTune": 6,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 1.0,
+              "decaySeconds": 42.00531555756023,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 2.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "plucked-string-50",
+          "packId": "plucked-string",
+          "preset": {
+            "name": "Nylon String Guitar",
+            "bank": 0,
+            "program": 24
+          },
+          "instrumentName": "Nylon Guitar",
+          "sample": {
+            "index": 908,
+            "name": "Nylon D4",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 47792327,
+            "end": 47992423,
+            "startLoop": 47991161,
+            "endLoop": 47992363,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 50,
+            "rootCents": 5000,
+            "keyLow": 49,
+            "keyHigh": 53,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 1.0,
+              "decaySeconds": 38.98912843760613,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 2.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "plucked-string-55",
+          "packId": "plucked-string",
+          "preset": {
+            "name": "Nylon String Guitar",
+            "bank": 0,
+            "program": 24
+          },
+          "instrumentName": "Nylon Guitar",
+          "sample": {
+            "index": 907,
+            "name": "Nylon G4",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 47704013,
+            "end": 47792281,
+            "startLoop": 47791590,
+            "endLoop": 47792270,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 55,
+            "rootCents": 5511,
+            "keyLow": 54,
+            "keyHigh": 58,
+            "fineTune": 11,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 1.0,
+              "decaySeconds": 36.992647921180655,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 2.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "plucked-string-59",
+          "packId": "plucked-string",
+          "preset": {
+            "name": "Nylon String Guitar",
+            "bank": 0,
+            "program": 24
+          },
+          "instrumentName": "Nylon Guitar",
+          "sample": {
+            "index": 906,
+            "name": "Nylon B4",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 47641399,
+            "end": 47703967,
+            "startLoop": 47703584,
+            "endLoop": 47703941,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 59,
+            "rootCents": 5897,
+            "keyLow": 59,
+            "keyHigh": 62,
+            "fineTune": -3,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 1.0,
+              "decaySeconds": 34.99717743846068,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 2.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "plucked-string-64",
+          "packId": "plucked-string",
+          "preset": {
+            "name": "Nylon String Guitar",
+            "bank": 0,
+            "program": 24
+          },
+          "instrumentName": "Nylon Guitar",
+          "sample": {
+            "index": 905,
+            "name": "Nylon E5",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 47601289,
+            "end": 47641353,
+            "startLoop": 47640631,
+            "endLoop": 47641168,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 64,
+            "rootCents": 6402,
+            "keyLow": 63,
+            "keyHigh": 67,
+            "fineTune": 2,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 1.0,
+              "decaySeconds": 32.0,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 2.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "plucked-string-69",
+          "packId": "plucked-string",
+          "preset": {
+            "name": "Nylon String Guitar",
+            "bank": 0,
+            "program": 24
+          },
+          "instrumentName": "Nylon Guitar",
+          "sample": {
+            "index": 904,
+            "name": "Nylon A5",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 47564211,
+            "end": 47601243,
+            "startLoop": 47600720,
+            "endLoop": 47601219,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 69,
+            "rootCents": 6892,
+            "keyLow": 68,
+            "keyHigh": 70,
+            "fineTune": -8,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.6989849670895096,
+              "decaySeconds": 22.99635549726274,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 2.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "plucked-string-71",
+          "packId": "plucked-string",
+          "preset": {
+            "name": "Nylon String Guitar",
+            "bank": 0,
+            "program": 24
+          },
+          "instrumentName": "Nylon Guitar",
+          "sample": {
+            "index": 903,
+            "name": "Nylon B6",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 47537095,
+            "end": 47564165,
+            "startLoop": 47563716,
+            "endLoop": 47564160,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 71,
+            "rootCents": 7090,
+            "keyLow": 71,
+            "keyHigh": 75,
+            "fineTune": -10,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.6989849670895096,
+              "decaySeconds": 18.00093575502095,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 2.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "plucked-string-76",
+          "packId": "plucked-string",
+          "preset": {
+            "name": "Nylon String Guitar",
+            "bank": 0,
+            "program": 24
+          },
+          "instrumentName": "Nylon Guitar",
+          "sample": {
+            "index": 902,
+            "name": "Nylon E6",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 47505577,
+            "end": 47537049,
+            "startLoop": 47536570,
+            "endLoop": 47537035,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 76,
+            "rootCents": 7587,
+            "keyLow": 76,
+            "keyHigh": 83,
+            "fineTune": -13,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.5,
+              "decaySeconds": 8.0,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 2.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "plucked-string-84",
+          "packId": "plucked-string",
+          "preset": {
+            "name": "Nylon String Guitar",
+            "bank": 0,
+            "program": 24
+          },
+          "instrumentName": "Nylon Guitar",
+          "sample": {
+            "index": 513,
+            "name": "Extension",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 24377636,
+            "end": 24397462,
+            "startLoop": 24397160,
+            "endLoop": 24397453,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 84,
+            "rootCents": 8387,
+            "keyLow": 84,
+            "keyHigh": 127,
+            "fineTune": -13,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.20003624493065955,
+              "decaySeconds": 6.0001559571432725,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 2.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "bowed-strings",
+      "label": "Bowed Strings",
+      "regions": [
+        {
+          "regionId": "bowed-strings-31",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 548,
+            "name": "Strings G2R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 27167822,
+            "end": 27274373,
+            "startLoop": 27215885,
+            "endLoop": 27274335,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 31,
+            "rootCents": 3100,
+            "keyLow": 0,
+            "keyHigh": 31,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-34",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 546,
+            "name": "Strings A#2R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 27018120,
+            "end": 27091008,
+            "startLoop": 27040279,
+            "endLoop": 27090985,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 34,
+            "rootCents": 3400,
+            "keyLow": 32,
+            "keyHigh": 34,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-37",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 544,
+            "name": "Strings C#3R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 26823653,
+            "end": 26916209,
+            "startLoop": 26861701,
+            "endLoop": 26916145,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 37,
+            "rootCents": 3700,
+            "keyLow": 35,
+            "keyHigh": 37,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-40",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 123,
+            "name": "Strings E3R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 5589938,
+            "end": 5656481,
+            "startLoop": 5626251,
+            "endLoop": 5656408,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 40,
+            "rootCents": 4000,
+            "keyLow": 38,
+            "keyHigh": 40,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-43",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 542,
+            "name": "Strings G3R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 26622778,
+            "end": 26725893,
+            "startLoop": 26655257,
+            "endLoop": 26725801,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 43,
+            "rootCents": 4300,
+            "keyLow": 41,
+            "keyHigh": 43,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-47",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 540,
+            "name": "Strings B3R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 26455648,
+            "end": 26546974,
+            "startLoop": 26481342,
+            "endLoop": 26546874,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 47,
+            "rootCents": 4700,
+            "keyLow": 44,
+            "keyHigh": 47,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-49",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 538,
+            "name": "Strings C#4R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 26256629,
+            "end": 26354284,
+            "startLoop": 26291276,
+            "endLoop": 26354260,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 49,
+            "rootCents": 4900,
+            "keyLow": 48,
+            "keyHigh": 51,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-52",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 536,
+            "name": "Strings E4R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 26027833,
+            "end": 26131917,
+            "startLoop": 26078813,
+            "endLoop": 26131890,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 52,
+            "rootCents": 5200,
+            "keyLow": 52,
+            "keyHigh": 54,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-58",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 534,
+            "name": "Strings A#4R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 25761260,
+            "end": 25878867,
+            "startLoop": 25819920,
+            "endLoop": 25878754,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 58,
+            "rootCents": 5800,
+            "keyLow": 55,
+            "keyHigh": 59,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-61",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 532,
+            "name": "Strings C#5R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 25608613,
+            "end": 25692156,
+            "startLoop": 25627083,
+            "endLoop": 25692119,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 61,
+            "rootCents": 6100,
+            "keyLow": 60,
+            "keyHigh": 62,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-64",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 530,
+            "name": "Strings E5R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 25382612,
+            "end": 25492926,
+            "startLoop": 25413723,
+            "endLoop": 25492881,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 64,
+            "rootCents": 6400,
+            "keyLow": 63,
+            "keyHigh": 65,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-67",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 528,
+            "name": "Strings G5R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 25248816,
+            "end": 25309343,
+            "startLoop": 25285001,
+            "endLoop": 25309326,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 67,
+            "rootCents": 6700,
+            "keyLow": 66,
+            "keyHigh": 68,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-70",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 526,
+            "name": "Strings A#5R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 25103721,
+            "end": 25188465,
+            "startLoop": 25144758,
+            "endLoop": 25188437,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 70,
+            "rootCents": 7000,
+            "keyLow": 69,
+            "keyHigh": 71,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-73",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 524,
+            "name": "Strings C#6R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 25008111,
+            "end": 25061970,
+            "startLoop": 25033097,
+            "endLoop": 25061941,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 73,
+            "rootCents": 7300,
+            "keyLow": 72,
+            "keyHigh": 74,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-76",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 522,
+            "name": "Strings E6R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 24907985,
+            "end": 24959605,
+            "startLoop": 24918229,
+            "endLoop": 24959574,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 76,
+            "rootCents": 7600,
+            "keyLow": 75,
+            "keyHigh": 77,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-79",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 569,
+            "name": "Strings G6 R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 27523026,
+            "end": 27568198,
+            "startLoop": 27542751,
+            "endLoop": 27568175,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 79,
+            "rootCents": 7900,
+            "keyLow": 78,
+            "keyHigh": 81,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 30,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "bowed-strings-83",
+          "packId": "bowed-strings",
+          "preset": {
+            "name": "Strings",
+            "bank": 0,
+            "program": 48
+          },
+          "instrumentName": "Strings",
+          "sample": {
+            "index": 520,
+            "name": "Strings B6R",
+            "sampleRate": 32000,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 24822437,
+            "end": 24864352,
+            "startLoop": 24835410,
+            "endLoop": 24864336,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 83,
+            "rootCents": 8300,
+            "keyLow": 82,
+            "keyHigh": 96,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "attenuationCentibels": 0,
+            "pan": 500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.10001812246532978,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 0.7079457843841379,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

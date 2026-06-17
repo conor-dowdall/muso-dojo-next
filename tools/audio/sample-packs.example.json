@@ -12,7 +12,28 @@
       "channels": "mono",
       "gain": 0.92,
       "paddingSeconds": 0.02,
-      "roots": [36, 43, 48, 55, 60, 67, 72, 79, 84]
+      "roots": [
+        { "rootMidi": 26, "lowMidi": 0, "highMidi": 26 },
+        { "rootMidi": 30, "lowMidi": 27, "highMidi": 30 },
+        { "rootMidi": 34, "lowMidi": 31, "highMidi": 34 },
+        { "rootMidi": 38, "lowMidi": 35, "highMidi": 38 },
+        { "rootMidi": 42, "lowMidi": 39, "highMidi": 42 },
+        { "rootMidi": 46, "lowMidi": 43, "highMidi": 46 },
+        { "rootMidi": 50, "lowMidi": 47, "highMidi": 50 },
+        { "rootMidi": 54, "lowMidi": 51, "highMidi": 54 },
+        { "rootMidi": 58, "lowMidi": 55, "highMidi": 58 },
+        { "rootMidi": 62, "lowMidi": 59, "highMidi": 62 },
+        { "rootMidi": 66, "lowMidi": 63, "highMidi": 66 },
+        { "rootMidi": 70, "lowMidi": 67, "highMidi": 70 },
+        { "rootMidi": 74, "lowMidi": 71, "highMidi": 74 },
+        { "rootMidi": 78, "lowMidi": 75, "highMidi": 78 },
+        { "rootMidi": 84, "lowMidi": 79, "highMidi": 84 },
+        { "rootMidi": 90, "lowMidi": 85, "highMidi": 90 },
+        { "rootMidi": 94, "lowMidi": 91, "highMidi": 94 },
+        { "rootMidi": 99, "lowMidi": 95, "highMidi": 99 },
+        { "rootMidi": 104, "lowMidi": 100, "highMidi": 104 },
+        { "rootMidi": 108, "lowMidi": 105, "highMidi": 127 }
+      ]
     },
     {
       "id": "plucked-string",
@@ -21,7 +42,18 @@
       "channels": "mono",
       "gain": 0.92,
       "paddingSeconds": 0.02,
-      "roots": [40, 45, 50, 55, 59, 64, 69, 74]
+      "roots": [
+        { "rootMidi": 40, "lowMidi": 0, "highMidi": 43 },
+        { "rootMidi": 45, "lowMidi": 44, "highMidi": 48 },
+        { "rootMidi": 50, "lowMidi": 49, "highMidi": 53 },
+        { "rootMidi": 55, "lowMidi": 54, "highMidi": 58 },
+        { "rootMidi": 59, "lowMidi": 59, "highMidi": 62 },
+        { "rootMidi": 64, "lowMidi": 63, "highMidi": 67 },
+        { "rootMidi": 69, "lowMidi": 68, "highMidi": 70 },
+        { "rootMidi": 71, "lowMidi": 71, "highMidi": 75 },
+        { "rootMidi": 76, "lowMidi": 76, "highMidi": 83 },
+        { "rootMidi": 84, "lowMidi": 84, "highMidi": 127 }
+      ]
     },
     {
       "id": "bowed-strings",
@@ -30,7 +62,25 @@
       "channels": "mono",
       "gain": 0.92,
       "paddingSeconds": 0.02,
-      "roots": [36, 43, 48, 55, 60, 67, 72, 79]
+      "roots": [
+        { "rootMidi": 31, "lowMidi": 0, "highMidi": 31 },
+        { "rootMidi": 34, "lowMidi": 32, "highMidi": 34 },
+        { "rootMidi": 37, "lowMidi": 35, "highMidi": 37 },
+        { "rootMidi": 40, "lowMidi": 38, "highMidi": 40 },
+        { "rootMidi": 43, "lowMidi": 41, "highMidi": 43 },
+        { "rootMidi": 47, "lowMidi": 44, "highMidi": 47 },
+        { "rootMidi": 49, "lowMidi": 48, "highMidi": 51 },
+        { "rootMidi": 52, "lowMidi": 52, "highMidi": 54 },
+        { "rootMidi": 58, "lowMidi": 55, "highMidi": 59 },
+        { "rootMidi": 61, "lowMidi": 60, "highMidi": 62 },
+        { "rootMidi": 64, "lowMidi": 63, "highMidi": 65 },
+        { "rootMidi": 67, "lowMidi": 66, "highMidi": 68 },
+        { "rootMidi": 70, "lowMidi": 69, "highMidi": 71 },
+        { "rootMidi": 73, "lowMidi": 72, "highMidi": 74 },
+        { "rootMidi": 76, "lowMidi": 75, "highMidi": 77 },
+        { "rootMidi": 79, "lowMidi": 78, "highMidi": 81 },
+        { "rootMidi": 83, "lowMidi": 82, "highMidi": 127 }
+      ]
     }
   ]
 }
