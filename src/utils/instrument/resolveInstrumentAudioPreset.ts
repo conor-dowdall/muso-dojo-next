@@ -10,8 +10,8 @@ const defaultInstrumentAudioPresetIds = {
 
 const defaultFretboardInstrumentAudioPresetIds = {
   guitar: "plucked-string",
-  bassGuitar: "picked-bass",
-  mandolin: "mandolin",
+  bassGuitar: "plucked-string",
+  mandolin: "plucked-string",
   ukulele: "plucked-string",
   violin: "bowed-strings",
   viola: "bowed-strings",

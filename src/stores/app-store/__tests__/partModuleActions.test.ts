@@ -143,7 +143,12 @@ describe("part module app store actions", () => {
 
     store
       .getState()
-      .setDroneAudioPresetId(sessionId, partId, addedModuleId, "warm-pad");
+      .setDroneAudioPresetId(
+        sessionId,
+        partId,
+        addedModuleId,
+        "plucked-string",
+      );
     store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 4);
     store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 5);
     store.getState().setDroneNoteCount(sessionId, partId, addedModuleId, 5);
@@ -156,7 +161,7 @@ describe("part module app store actions", () => {
       ]?.parts[0]?.modules.find((candidateModule) => candidateModule.id === addedModuleId);
 
     expect(updatedModule).toMatchObject({
-      audioPresetId: "warm-pad",
+      audioPresetId: "plucked-string",
       id: addedModuleId,
       noteCount: 5,
       octaveOffset: 4,
@@ -177,15 +182,15 @@ describe("part module app store actions", () => {
 
     store
       .getState()
-      .setDroneAudioPresetId(sessionId, partId, addedModuleId, "warm-pad");
-    store
-      .getState()
       .setDroneAudioPresetId(
         sessionId,
         partId,
         addedModuleId,
-        "reference-tone",
+        "plucked-string",
       );
+    store
+      .getState()
+      .setDroneAudioPresetId(sessionId, partId, addedModuleId, "bowed-strings");
     store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 1);
     store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 0);
     store.getState().setDroneNoteCount(sessionId, partId, addedModuleId, 2);
@@ -221,7 +226,7 @@ describe("part module app store actions", () => {
       sessionId,
       partId,
       moduleId,
-      "glass-bell",
+      "plucked-string",
     );
     state.setExerciseLooperCountInBeats(sessionId, partId, moduleId, 4);
     state.setExerciseLooperMetronomeEnabled(sessionId, partId, moduleId, true);
@@ -252,7 +257,7 @@ describe("part module app store actions", () => {
       ]?.parts[0]?.modules.find((candidate) => candidate.id === moduleId);
 
     expect(partModule).toMatchObject({
-      audioPresetId: "glass-bell",
+      audioPresetId: "plucked-string",
       countInBeats: 4,
       end: { octave: 1, stepOffset: 2 },
       id: moduleId,

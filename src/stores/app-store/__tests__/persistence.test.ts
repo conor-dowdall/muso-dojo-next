@@ -266,42 +266,6 @@ describe("app store persistence", () => {
         fallbackSnapshot,
       ).dojoSettings,
     ).toEqual({});
-
-    expect(
-      normalizeAppStoreSnapshot(
-        {
-          ...persistedState,
-          dojoSettings: {
-            masterAmbiencePresetId: "dry",
-          },
-        },
-        fallbackSnapshot,
-      ).dojoSettings,
-    ).toEqual({});
-
-    expect(
-      normalizeAppStoreSnapshot(
-        {
-          ...persistedState,
-          dojoSettings: {
-            masterAmbiencePresetId: "studio-room",
-          },
-        },
-        fallbackSnapshot,
-      ).dojoSettings.masterAmbiencePresetId,
-    ).toBe("studio-room");
-
-    expect(
-      normalizeAppStoreSnapshot(
-        {
-          ...persistedState,
-          dojoSettings: {
-            masterAmbiencePresetId: "not-a-sound",
-          },
-        },
-        fallbackSnapshot,
-      ).dojoSettings,
-    ).toEqual({});
   });
 
   it("normalizes valid custom dojo note colors", () => {

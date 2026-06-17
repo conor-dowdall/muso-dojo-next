@@ -23,7 +23,7 @@ function createRequest(id: string, midi: number): ExercisePlaybackRequest {
     ],
     id,
     metronomeEnabled: false,
-    presetId: "reference-tone",
+    presetId: "piano",
     tempoBpm: 60,
   };
 }
@@ -59,7 +59,7 @@ describe("exercisePlaybackRequestsAreEqual", () => {
       { ...request, id: "other-looper" },
       { ...request, countInBeats: 4 },
       { ...request, metronomeEnabled: true },
-      { ...request, presetId: "warm-pad" },
+      { ...request, presetId: "bowed-strings" },
       { ...request, tempoBpm: 90 },
       { ...request, events: [] },
       {
@@ -112,7 +112,6 @@ describe("ExercisePlaybackCoordinator", () => {
       prime: async () => true,
       scheduleMetronomeClick: vi.fn(),
       scheduleNote: vi.fn(),
-      subscribeToReset: () => () => undefined,
       subscribeToStopAll: () => () => undefined,
     };
     const schedulers: Array<{
@@ -161,7 +160,6 @@ describe("ExercisePlaybackCoordinator", () => {
         prime: () => primeResult.promise,
         scheduleMetronomeClick: vi.fn(),
         scheduleNote: vi.fn(),
-        subscribeToReset: () => () => undefined,
         subscribeToStopAll: () => () => undefined,
       },
       createScheduler,
@@ -205,7 +203,6 @@ describe("ExercisePlaybackCoordinator", () => {
         prime,
         scheduleMetronomeClick: vi.fn(),
         scheduleNote: vi.fn(),
-        subscribeToReset: () => () => undefined,
         subscribeToStopAll: () => () => undefined,
       },
       () => {
@@ -250,7 +247,6 @@ describe("ExercisePlaybackCoordinator", () => {
         prime: async () => true,
         scheduleMetronomeClick,
         scheduleNote: vi.fn(),
-        subscribeToReset: () => () => undefined,
         subscribeToStopAll: () => () => undefined,
       },
       () => ({
@@ -298,7 +294,6 @@ describe("ExercisePlaybackCoordinator", () => {
         prime: async () => true,
         scheduleMetronomeClick,
         scheduleNote: vi.fn(),
-        subscribeToReset: () => () => undefined,
         subscribeToStopAll: () => () => undefined,
       },
       () => ({

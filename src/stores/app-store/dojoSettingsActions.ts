@@ -1,6 +1,5 @@
 import { normalizeAppThemePreference } from "@/data/appThemes";
 import {
-  normalizeMasterAmbienceSetting,
   moduleCreationDefaultsAreEqual,
   normalizeModuleCreationDefaults,
   normalizeNoteColorSetting,
@@ -131,15 +130,6 @@ export function createDojoSettingsActions(
       const appTheme = normalizeAppThemePreference(themeChoice);
 
       setOptionalDojoSetting(set, "appTheme", appTheme);
-    },
-    setMasterAmbiencePresetId: (presetId) => {
-      const masterAmbiencePresetId = normalizeMasterAmbienceSetting(presetId);
-
-      setOptionalDojoSetting(
-        set,
-        "masterAmbiencePresetId",
-        masterAmbiencePresetId,
-      );
     },
     setNoteColorConfig: (noteColorConfig) => {
       const normalizedNoteColorConfig =

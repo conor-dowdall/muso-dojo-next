@@ -31,8 +31,7 @@ describe("audio presets", () => {
     audioUses.forEach((use) => {
       const preset = audioPresets[getDefaultAudioPresetId(use)];
 
-      expect(preset.family).toBe("sample");
-      expect(preset.samplePackId).toBeDefined();
+      expect(preset.samplePackId).toBe(preset.id);
       expect(preset.availableOn).toContain(defaultSurfaceByUse[use]);
       expect(resolveAudioPreset(preset.id, getDefaultAudioPresetId(use))).toBe(
         preset,
@@ -62,35 +61,10 @@ describe("audio presets", () => {
     Object.entries(expectedPackByPreset).forEach(([presetId, samplePackId]) => {
       expect(audioPresets[presetId as keyof typeof audioPresets]).toMatchObject(
         {
-          family: "sample",
           samplePackId,
         },
       );
     });
-  });
-
-  it("keeps retired generated preset ids as playback aliases", () => {
-    expect(resolveAudioPreset("reference-tone", "piano").samplePackId).toBe(
-      "piano",
-    );
-    expect(resolveAudioPreset("glass-bell", "piano").samplePackId).toBe(
-      "piano",
-    );
-    expect(resolveAudioPreset("distortion-guitar", "piano").samplePackId).toBe(
-      "plucked-string",
-    );
-    expect(resolveAudioPreset("picked-bass", "piano").samplePackId).toBe(
-      "plucked-string",
-    );
-    expect(resolveAudioPreset("mandolin", "piano").samplePackId).toBe(
-      "plucked-string",
-    );
-    expect(resolveAudioPreset("soft-organ", "piano").samplePackId).toBe(
-      "bowed-strings",
-    );
-    expect(resolveAudioPreset("warm-pad", "piano").samplePackId).toBe(
-      "bowed-strings",
-    );
   });
 
   it("falls back to the supplied default for unknown preset ids", () => {
@@ -99,7 +73,7 @@ describe("audio presets", () => {
     );
     expect(isAudioPresetId("steel-string")).toBe(false);
     expect(isAudioPresetId("nylon-string")).toBe(false);
-    expect(isAudioPresetId("reference-tone")).toBe(true);
+    expect(isAudioPresetId("reference-tone")).toBe(false);
   });
 
   it("uses string samples as the drone default", () => {

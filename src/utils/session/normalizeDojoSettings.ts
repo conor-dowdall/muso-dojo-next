@@ -1,8 +1,3 @@
-import {
-  DEFAULT_MASTER_AMBIENCE_PRESET_ID,
-  resolveMasterAmbiencePresetId,
-} from "@/audio/masterAmbience";
-import { type MasterAmbiencePresetId } from "@/audio/types";
 import { normalizeAppThemePreference } from "@/data/appThemes";
 import { DEFAULT_NOTE_COLOR_CONFIG } from "@/data/noteColors";
 import { type NoteColorConfig } from "@/types/note-colors";
@@ -63,14 +58,6 @@ export function normalizeNoteColorSetting(
   return noteColorConfig;
 }
 
-export function normalizeMasterAmbienceSetting(
-  value: unknown,
-): MasterAmbiencePresetId | undefined {
-  const presetId = resolveMasterAmbiencePresetId(value);
-
-  return presetId === DEFAULT_MASTER_AMBIENCE_PRESET_ID ? undefined : presetId;
-}
-
 export function normalizeDojoSettings(value: unknown): DojoSettings {
   if (!isRecord(value)) {
     return {};
@@ -85,9 +72,6 @@ export function normalizeDojoSettings(value: unknown): DojoSettings {
     normalizeSessionMaterialCreationDefaults(
       value.sessionMaterialCreationDefaults,
     );
-  const masterAmbiencePresetId = normalizeMasterAmbienceSetting(
-    value.masterAmbiencePresetId,
-  );
 
   return {
     ...(appTheme ? { appTheme } : {}),
@@ -96,7 +80,6 @@ export function normalizeDojoSettings(value: unknown): DojoSettings {
     ...(sessionMaterialCreationDefaults
       ? { sessionMaterialCreationDefaults }
       : {}),
-    ...(masterAmbiencePresetId ? { masterAmbiencePresetId } : {}),
   };
 }
 

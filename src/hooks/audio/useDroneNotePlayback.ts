@@ -82,10 +82,6 @@ export function useDroneNotePlayback({
   }, [controller, playbackNotes]);
 
   useEffect(
-    () => musoAudioEngine.subscribeToReset(() => controller.reset()),
-    [controller],
-  );
-  useEffect(
     () => musoAudioEngine.subscribeToStopAll(() => controller.reset()),
     [controller],
   );

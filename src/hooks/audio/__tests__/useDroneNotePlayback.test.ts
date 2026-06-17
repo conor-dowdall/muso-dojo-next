@@ -184,14 +184,14 @@ describe("createDroneNotePlaybackController", () => {
     const { controller, update } = createController();
 
     await controller.startNote({
-      audioPresetId: "soft-organ",
+      audioPresetId: "plucked-string",
       interval: 0,
       midi: 48,
       velocity: 0.78,
     });
     controller.reconcileNotes([
       {
-        audioPresetId: "warm-pad",
+        audioPresetId: "bowed-strings",
         interval: 0,
         midi: 60,
         velocity: 0.78,
@@ -200,7 +200,7 @@ describe("createDroneNotePlaybackController", () => {
 
     expect(update).toHaveBeenLastCalledWith("drone-handle", [
       {
-        audioPresetId: "warm-pad",
+        audioPresetId: "bowed-strings",
         interval: 0,
         midi: 60,
         velocity: 0.78,

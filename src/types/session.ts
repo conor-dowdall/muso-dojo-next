@@ -3,7 +3,7 @@ import {
   type NoteCollectionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
-import { type AudioPresetId, type MasterAmbiencePresetId } from "@/audio/types";
+import { type AudioPresetId } from "@/audio/types";
 import { type FretboardThemeName } from "@/data/fretboard/themes";
 import { type FretboardInlayPresetName } from "@/data/fretboard/inlayPresets";
 import { type KeyboardRangeName } from "@/data/keyboard/ranges";
@@ -213,7 +213,6 @@ export interface DojoSettings {
   noteColorConfig?: NoteColorConfig;
   moduleCreationDefaults?: ModuleCreationDefaults;
   sessionMaterialCreationDefaults?: SessionMaterialCreationDefaults;
-  masterAmbiencePresetId?: MasterAmbiencePresetId;
 }
 
 export interface AppStoreSnapshot {

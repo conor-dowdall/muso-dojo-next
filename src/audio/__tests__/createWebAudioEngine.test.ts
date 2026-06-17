@@ -225,13 +225,13 @@ describe("createWebAudioEngine", () => {
     expect(MockAudioContext.decodeCount).toBe(3);
   });
 
-  it("plays legacy aliases through their mapped sample pack", async () => {
+  it("plays notes through their mapped sample pack", async () => {
     installMockAudioWindow();
 
     const engine = createWebAudioEngine();
     const handle = await engine.playNote({
       midiNote: 60,
-      presetId: "reference-tone",
+      presetId: "piano",
       use: "preview",
     });
     const source = MockAudioContext.bufferSources.at(-1)!;
@@ -349,19 +349,6 @@ describe("createWebAudioEngine", () => {
 
     expect(updated).toBe(true);
     expect(MockAudioContext.bufferSources).toHaveLength(sourceCount + 1);
-  });
-
-  it("keeps ambience setters as compatibility-only state", () => {
-    installMockAudioWindow();
-
-    const engine = createWebAudioEngine();
-
-    expect(engine.getMasterAmbiencePresetId()).toBe("dry");
-
-    engine.setMasterAmbiencePresetId("studio-room");
-
-    expect(engine.getMasterAmbiencePresetId()).toBe("studio-room");
-    expect(MockAudioContext.connectionCount).toBe(0);
   });
 
   it("reports an output clock from the active context", async () => {

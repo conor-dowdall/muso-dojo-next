@@ -16,7 +16,7 @@ describe("normalizePartModuleConfig", () => {
 
   it("keeps valid persisted drone settings", () => {
     const normalizedModule = normalizePartModuleConfig({
-      audioPresetId: "warm-pad",
+      audioPresetId: "plucked-string",
       id: "drone-1",
       noteCount: 11,
       octaveOffset: 4,
@@ -26,7 +26,7 @@ describe("normalizePartModuleConfig", () => {
     });
 
     expect(normalizedModule).toStrictEqual({
-      audioPresetId: "warm-pad",
+      audioPresetId: "plucked-string",
       id: "drone-1",
       noteCount: 11,
       octaveOffset: 4,
@@ -80,7 +80,7 @@ describe("normalizePartModuleConfig", () => {
   it("normalizes persisted exercise looper settings", () => {
     expect(
       normalizePartModuleConfig({
-        audioPresetId: "glass-bell",
+        audioPresetId: "plucked-string",
         countInBeats: 3,
         end: { octave: 1, stepOffset: 2 },
         id: "looper-1",
@@ -101,7 +101,7 @@ describe("normalizePartModuleConfig", () => {
         wood: "maple",
       }),
     ).toStrictEqual({
-      audioPresetId: "glass-bell",
+      audioPresetId: "plucked-string",
       countInBeats: 3,
       end: { octave: 1, stepOffset: 2 },
       id: "looper-1",

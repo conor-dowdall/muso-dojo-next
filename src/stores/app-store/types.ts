@@ -1,6 +1,6 @@
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { type StateCreator } from "zustand";
-import { type AudioPresetId, type MasterAmbiencePresetId } from "@/audio/types";
+import { type AudioPresetId } from "@/audio/types";
 import { type AppThemeChoice } from "@/data/appThemes";
 import { type WoodSurfaceId } from "@/data/woodSurfaces";
 import { type DisplayFormatId } from "@/data/displayFormats";
@@ -61,7 +61,6 @@ export type ExerciseLooperSettingsPatch = Partial<
 
 export interface DojoSettingsActions {
   setAppTheme: (theme: AppThemeChoice) => void;
-  setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => void;
   setNoteColorConfig: (noteColorConfig: NoteColorConfig) => void;
   rememberModuleCreation: (request: RememberModuleCreationRequest) => void;
   rememberSessionMaterialCreation: (

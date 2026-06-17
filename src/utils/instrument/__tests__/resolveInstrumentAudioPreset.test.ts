@@ -23,12 +23,12 @@ describe("resolveInstrumentAudioPreset", () => {
       resolveInstrumentAudioPresetId("fretboard", undefined, {
         fretboardInstrument: "bassGuitar",
       }),
-    ).toBe("picked-bass");
+    ).toBe("plucked-string");
     expect(
       resolveInstrumentAudioPresetId("fretboard", undefined, {
         fretboardInstrument: "mandolin",
       }),
-    ).toBe("mandolin");
+    ).toBe("plucked-string");
     expect(
       resolveInstrumentAudioPresetId("fretboard", undefined, {
         fretboardInstrument: "ukulele",
@@ -48,14 +48,14 @@ describe("resolveInstrumentAudioPreset", () => {
 
   it("normalizes concrete instrument defaults out of persisted config", () => {
     expect(
-      normalizeInstrumentAudioPresetId("fretboard", "picked-bass", {
+      normalizeInstrumentAudioPresetId("fretboard", "plucked-string", {
         fretboardInstrument: "bassGuitar",
       }),
     ).toBeUndefined();
     expect(
-      normalizeInstrumentAudioPresetId("fretboard", "distortion-guitar", {
+      normalizeInstrumentAudioPresetId("fretboard", "bowed-strings", {
         fretboardInstrument: "guitar",
       }),
-    ).toBe("distortion-guitar");
+    ).toBe("bowed-strings");
   });
 });

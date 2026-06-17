@@ -41,14 +41,8 @@ import {
   normalizeExerciseWood,
 } from "@/utils/exercise-looper/exerciseConfig";
 
-const RETIRED_DEFAULT_DRONE_AUDIO_PRESET_IDS = new Set(["reference-tone"]);
-
 function normalizeDroneAudioPresetId(value: unknown) {
-  if (
-    !isAudioPresetId(value) ||
-    value === getDefaultAudioPresetId("drone") ||
-    RETIRED_DEFAULT_DRONE_AUDIO_PRESET_IDS.has(value)
-  ) {
+  if (!isAudioPresetId(value) || value === getDefaultAudioPresetId("drone")) {
     return undefined;
   }
 

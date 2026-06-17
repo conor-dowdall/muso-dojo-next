@@ -1,8 +1,20 @@
 import { getAudioContextConstructor } from "./audioContext";
 import { scheduleMetronomeClick } from "./metronome";
 import { getDefaultAudioPresetId, resolveAudioPreset } from "./presets";
-import { DEFAULT_CONCERT_PITCH_HZ, isPlayableMidiNote } from "./pitch";
-import { samplePacks } from "./samplePacks.generated";
+import { isPlayableMidiNote } from "./pitch";
+import {
+  createSamplePackLoader,
+  getConcertPitchHz,
+  SAMPLE_PACK_IDS,
+} from "./samplePackLibrary";
+import {
+  createDroneVoice,
+  createSampleVoice,
+  DEFAULT_DRONE_RELEASE_SECONDS,
+  stopDroneVoice,
+  type ActiveDroneVoice,
+  type ActiveSampleVoice,
+} from "./samplePlayback";
 import {
   type AudioClockSnapshot,
   type AudioEngine,
@@ -11,7 +23,6 @@ import {
   type AudioVoiceHandle,
   type DroneHandle,
   type DroneRequest,
-  type MasterAmbiencePresetId,
   type PlaybackGroupHandle,
   type PlayNoteRequest,
   type SamplePackId,
@@ -20,23 +31,7 @@ import {
 } from "./types";
 
 const DEFAULT_AUDIO_USE = "preview" satisfies AudioUse;
-const DEFAULT_MASTER_AMBIENCE_PRESET_ID =
-  "dry" satisfies MasterAmbiencePresetId;
-const MIN_GAIN_VALUE = 0.0001;
-const MIN_ATTACK_SECONDS = 0.003;
-const MIN_RELEASE_SECONDS = 0.02;
-const MAX_ONE_SHOT_RELEASE_SECONDS = 0.35;
-const DRONE_RELEASE_SECONDS = 0.22;
 const GROUP_CANCEL_RELEASE_SECONDS = 0.03;
-const SAMPLE_PACK_IDS = Object.keys(samplePacks) as SamplePackId[];
-
-type SamplePack = (typeof samplePacks)[SamplePackId];
-type SampleRegion = SamplePack["regions"][number];
-
-interface LoadedSamplePack {
-  buffer: AudioBuffer;
-  pack: SamplePack;
-}
 
 interface PlaybackGroup {
   clicks: Set<ScheduledClick>;
@@ -48,20 +43,8 @@ interface ScheduledClick {
   stop: () => void;
 }
 
-interface ActiveVoice {
-  disconnect: () => void;
-  gain: GainNode;
+interface ActiveVoice extends ActiveSampleVoice {
   group?: PlaybackGroupHandle;
-  source: AudioBufferSourceNode;
-  stop: (releaseSeconds?: number) => void;
-}
-
-interface ActiveDroneVoice {
-  gain: GainNode;
-  midiNote: number;
-  source: AudioBufferSourceNode;
-  stop: (releaseSeconds?: number) => void;
-  velocity: number;
 }
 
 interface ActiveDrone {
@@ -70,10 +53,6 @@ interface ActiveDrone {
   notes: Map<string, ActiveDroneVoice>;
   packId: SamplePackId;
   preset: AudioPreset;
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
 }
 
 function createPlaybackGroupHandle(index: number) {
@@ -99,180 +78,28 @@ function getPresetForRequest({
   return resolveAudioPreset(presetId, getDefaultAudioPresetId(use));
 }
 
-function getSamplePackId(preset: AudioPreset) {
-  return preset.samplePackId ?? "piano";
-}
-
-function getConcertPitchHz(concertPitchHz: number | undefined) {
-  return concertPitchHz && Number.isFinite(concertPitchHz)
-    ? concertPitchHz
-    : DEFAULT_CONCERT_PITCH_HZ;
-}
-
-function getPlaybackRate({
-  concertPitchHz,
-  midiNote,
-  region,
-}: {
-  concertPitchHz: number;
-  midiNote: number;
-  region: SampleRegion;
-}) {
-  const concertPitchCents =
-    1200 * Math.log2(concertPitchHz / DEFAULT_CONCERT_PITCH_HZ);
-  return 2 ** ((midiNote * 100 + concertPitchCents - region.rootCents) / 1200);
-}
-
-function getRegionEndSeconds(region: SampleRegion) {
-  return region.offsetSeconds + region.durationSeconds;
-}
-
-function getLoopStartSeconds(region: SampleRegion) {
-  return "loopStartSeconds" in region ? region.loopStartSeconds : undefined;
-}
-
-function getLoopEndSeconds(region: SampleRegion) {
-  return "loopEndSeconds" in region ? region.loopEndSeconds : undefined;
-}
-
-function regionHasLoop(region: SampleRegion) {
-  const loopStartSeconds = getLoopStartSeconds(region);
-  const loopEndSeconds = getLoopEndSeconds(region);
-
-  return (
-    loopStartSeconds !== undefined &&
-    loopEndSeconds !== undefined &&
-    loopEndSeconds > loopStartSeconds &&
-    loopStartSeconds >= region.offsetSeconds &&
-    loopEndSeconds <= getRegionEndSeconds(region) + 0.001
+function stopDrone(
+  drone: ActiveDrone,
+  releaseSeconds = DEFAULT_DRONE_RELEASE_SECONDS,
+) {
+  drone.notes.forEach((voice) =>
+    stopDroneVoice(voice, drone.context, releaseSeconds),
   );
-}
-
-function getRegionForMidi(pack: SamplePack, midiNote: number) {
-  return (
-    pack.regions.find(
-      (region) => midiNote >= region.lowMidi && midiNote <= region.highMidi,
-    ) ??
-    pack.regions.reduce((closest, region) =>
-      Math.abs(region.rootMidi - midiNote) <
-      Math.abs(closest.rootMidi - midiNote)
-        ? region
-        : closest,
-    )
-  );
-}
-
-function getScheduledOffset({
-  context,
-  loop,
-  playbackRate,
-  region,
-  startTime,
-}: {
-  context: AudioContext;
-  loop: boolean;
-  playbackRate: number;
-  region: SampleRegion;
-  startTime: number;
-}) {
-  const lateBufferSeconds =
-    Math.max(0, context.currentTime - startTime) * playbackRate;
-  const regionEndSeconds = getRegionEndSeconds(region);
-
-  if (!loop) {
-    const offsetSeconds = region.offsetSeconds + lateBufferSeconds;
-
-    return offsetSeconds < regionEndSeconds ? offsetSeconds : undefined;
-  }
-
-  const loopStartSeconds = getLoopStartSeconds(region);
-  const loopEndSeconds = getLoopEndSeconds(region);
-
-  if (loopStartSeconds === undefined || loopEndSeconds === undefined) {
-    return region.offsetSeconds;
-  }
-
-  const preLoopSeconds = loopStartSeconds - region.offsetSeconds;
-
-  if (lateBufferSeconds <= preLoopSeconds) {
-    return region.offsetSeconds + lateBufferSeconds;
-  }
-
-  const loopDurationSeconds = loopEndSeconds - loopStartSeconds;
-  const loopOffsetSeconds =
-    (lateBufferSeconds - preLoopSeconds) % loopDurationSeconds;
-
-  return loopStartSeconds + loopOffsetSeconds;
-}
-
-function getVoiceGain({
-  preset,
-  region,
-  use = DEFAULT_AUDIO_USE,
-  velocity,
-}: {
-  preset: AudioPreset;
-  region: SampleRegion;
-  use?: AudioUse;
-  velocity?: number;
-}) {
-  const useGain = use === "drone" ? 0.78 : use === "exercise" ? 0.86 : 0.9;
-
-  return (
-    clamp(velocity ?? 0.82, 0, 1) * preset.voice.gain * region.gain * useGain
-  );
-}
-
-function getAttackSeconds(preset: AudioPreset) {
-  return Math.max(MIN_ATTACK_SECONDS, preset.voice.envelope.attackSeconds);
-}
-
-function getReleaseSeconds(preset: AudioPreset, durationSeconds: number) {
-  return clamp(
-    preset.voice.envelope.releaseSeconds,
-    MIN_RELEASE_SECONDS,
-    Math.min(MAX_ONE_SHOT_RELEASE_SECONDS, durationSeconds * 0.5),
-  );
-}
-
-function startSource({
-  durationSeconds,
-  offsetSeconds,
-  source,
-  startTime,
-}: {
-  durationSeconds?: number;
-  offsetSeconds: number;
-  source: AudioBufferSourceNode;
-  startTime: number;
-}) {
-  if (durationSeconds === undefined) {
-    source.start(startTime, offsetSeconds);
-    return;
-  }
-
-  source.start(startTime, offsetSeconds, durationSeconds);
+  drone.notes.clear();
 }
 
 export function createWebAudioEngine(): AudioEngine {
-  const resetListeners = new Set<() => void>();
   const stopAllListeners = new Set<() => void>();
-  const loadedPacks = new Map<SamplePackId, LoadedSamplePack>();
-  const loadingPacks = new Map<
-    SamplePackId,
-    Promise<LoadedSamplePack | undefined>
-  >();
   const playbackGroups = new Map<PlaybackGroupHandle, PlaybackGroup>();
   const activeVoices = new Map<AudioVoiceHandle, ActiveVoice>();
   const voiceEndListeners = new Map<AudioVoiceHandle, Set<() => void>>();
   const endedVoices = new Set<AudioVoiceHandle>();
   const activeDrones = new Map<DroneHandle, ActiveDrone>();
+  const samplePackLoader = createSamplePackLoader();
   let context: AudioContext | undefined;
   let nextGroupId = 0;
   let nextVoiceId = 0;
   let nextDroneId = 0;
-  let masterAmbiencePresetId: MasterAmbiencePresetId =
-    DEFAULT_MASTER_AMBIENCE_PRESET_ID;
 
   const getReadyAudioContext = async () => {
     const AudioContextConstructor = getAudioContextConstructor();
@@ -298,48 +125,6 @@ export function createWebAudioEngine(): AudioEngine {
     }
 
     return context.state === "closed" ? undefined : context;
-  };
-
-  const loadSamplePack = async (
-    audioContext: AudioContext,
-    packId: SamplePackId,
-  ) => {
-    const loaded = loadedPacks.get(packId);
-
-    if (loaded) {
-      return loaded;
-    }
-
-    const loading = loadingPacks.get(packId);
-
-    if (loading) {
-      return loading;
-    }
-
-    const pack = samplePacks[packId];
-    const loadPromise = fetch(pack.url)
-      .then((response) => (response.ok ? response.arrayBuffer() : undefined))
-      .then((arrayBuffer) =>
-        arrayBuffer
-          ? audioContext.decodeAudioData(arrayBuffer.slice(0))
-          : undefined,
-      )
-      .then((buffer) => {
-        if (!buffer) {
-          return undefined;
-        }
-
-        const loadedPack = { buffer, pack };
-        loadedPacks.set(packId, loadedPack);
-        return loadedPack;
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        loadingPacks.delete(packId);
-      });
-
-    loadingPacks.set(packId, loadPromise);
-    return loadPromise;
   };
 
   const emitVoiceEnd = (handle: AudioVoiceHandle) => {
@@ -377,304 +162,62 @@ export function createWebAudioEngine(): AudioEngine {
     activeVoices.get(handle)?.stop(releaseSeconds);
   };
 
-  const createSampleVoice = ({
-    buffer,
-    context: audioContext,
+  const createManagedSampleVoice = ({
+    audioContext,
     durationSeconds,
     group,
     midiNote,
-    pack,
     preset,
     startTime,
-    use = DEFAULT_AUDIO_USE,
+    use,
     velocity,
     concertPitchHz,
   }: {
-    buffer: AudioBuffer;
+    audioContext: AudioContext;
     concertPitchHz?: number;
-    context: AudioContext;
     durationSeconds?: number;
     group?: PlaybackGroupHandle;
     midiNote: number;
-    pack: SamplePack;
     preset: AudioPreset;
     startTime: number;
     use?: AudioUse;
     velocity?: number;
   }) => {
-    if (!isPlayableMidiNote(midiNote)) {
+    const loaded = samplePackLoader.getLoadedSamplePack(preset.samplePackId);
+
+    if (!loaded) {
+      void samplePackLoader.loadSamplePack(audioContext, preset.samplePackId);
       return undefined;
     }
 
-    const region = getRegionForMidi(pack, midiNote);
-    const playbackRate = getPlaybackRate({
-      concertPitchHz: getConcertPitchHz(concertPitchHz),
-      midiNote,
-      region,
-    });
-    const requestedDurationSeconds =
-      durationSeconds ?? preset.defaultDurationSeconds;
-
-    if (requestedDurationSeconds <= 0 || playbackRate <= 0) {
-      return undefined;
-    }
-
-    const naturalDurationSeconds = region.durationSeconds / playbackRate;
-    const shouldLoop =
-      regionHasLoop(region) &&
-      requestedDurationSeconds + preset.voice.envelope.releaseSeconds >
-        naturalDurationSeconds;
-    const offsetSeconds = getScheduledOffset({
-      context: audioContext,
-      loop: shouldLoop,
-      playbackRate,
-      region,
-      startTime,
-    });
-
-    if (offsetSeconds === undefined) {
-      return undefined;
-    }
-
-    const startAt = Math.max(audioContext.currentTime, startTime);
-    const attackSeconds = Math.min(
-      getAttackSeconds(preset),
-      requestedDurationSeconds * 0.25,
-    );
-    const releaseSeconds = getReleaseSeconds(preset, requestedDurationSeconds);
-    const releaseStartTime = Math.max(
-      startAt + MIN_ATTACK_SECONDS,
-      startTime + requestedDurationSeconds,
-    );
-    const releaseEndTime = releaseStartTime + releaseSeconds;
-    const source = audioContext.createBufferSource();
-    const gain = audioContext.createGain();
-    const voiceGain = getVoiceGain({ preset, region, use, velocity });
     const handle = createVoiceHandle((nextVoiceId += 1));
-    let disconnected = false;
-    let cancelStopRequested = false;
+    const voice = createSampleVoice({
+      buffer: loaded.buffer,
+      concertPitchHz,
+      context: audioContext,
+      durationSeconds,
+      midiNote,
+      onEnded: () => finishVoice(handle),
+      pack: loaded.pack,
+      preset,
+      startTime,
+      use,
+      velocity,
+    });
 
-    source.buffer = buffer;
-    source.playbackRate.setValueAtTime(playbackRate, startAt);
-
-    if (shouldLoop) {
-      source.loop = true;
-      source.loopStart = getLoopStartSeconds(region) ?? region.offsetSeconds;
-      source.loopEnd = getLoopEndSeconds(region) ?? getRegionEndSeconds(region);
+    if (!voice) {
+      return undefined;
     }
 
-    gain.gain.setValueAtTime(MIN_GAIN_VALUE, startAt);
-    gain.gain.linearRampToValueAtTime(
-      Math.max(MIN_GAIN_VALUE, voiceGain),
-      startAt + attackSeconds,
-    );
-    gain.gain.setValueAtTime(
-      Math.max(MIN_GAIN_VALUE, voiceGain),
-      releaseStartTime,
-    );
-    gain.gain.linearRampToValueAtTime(MIN_GAIN_VALUE, releaseEndTime);
-
-    source.connect(gain);
-    gain.connect(audioContext.destination);
-
-    const disconnect = () => {
-      if (disconnected) {
-        return;
-      }
-
-      disconnected = true;
-      try {
-        source.disconnect();
-      } catch {
-        // The browser may have already disconnected the source.
-      }
-      try {
-        gain.disconnect();
-      } catch {
-        // The browser may have already disconnected the gain.
-      }
-    };
-
-    const stop = (nextReleaseSeconds = releaseSeconds) => {
-      if (cancelStopRequested) {
-        return;
-      }
-
-      cancelStopRequested = true;
-      const stopStartTime = Math.max(audioContext.currentTime, startAt);
-      const stopTime = stopStartTime + Math.max(0, nextReleaseSeconds);
-
-      gain.gain.cancelScheduledValues(stopStartTime);
-      gain.gain.setValueAtTime(
-        Math.max(MIN_GAIN_VALUE, gain.gain.value),
-        stopStartTime,
-      );
-      gain.gain.linearRampToValueAtTime(MIN_GAIN_VALUE, stopTime);
-
-      try {
-        source.stop(stopTime + 0.01);
-      } catch {
-        finishVoice(handle);
-      }
-    };
-
-    source.addEventListener("ended", () => finishVoice(handle), {
-      once: true,
-    });
     activeVoices.set(handle, {
-      disconnect,
-      gain,
+      ...voice,
       group,
-      source,
-      stop,
     });
     if (group) {
       playbackGroups.get(group)?.voices.add(handle);
     }
 
-    try {
-      startSource({
-        durationSeconds: shouldLoop
-          ? undefined
-          : getRegionEndSeconds(region) - offsetSeconds,
-        offsetSeconds,
-        source,
-        startTime: startAt,
-      });
-
-      if (shouldLoop || releaseEndTime < startAt + naturalDurationSeconds) {
-        source.stop(releaseEndTime + 0.01);
-      }
-    } catch {
-      activeVoices.delete(handle);
-      playbackGroups.get(group as PlaybackGroupHandle)?.voices.delete(handle);
-      disconnect();
-      return undefined;
-    }
-
     return handle;
-  };
-
-  const stopDroneVoice = (
-    droneVoice: ActiveDroneVoice,
-    audioContext: AudioContext,
-    releaseSeconds = DRONE_RELEASE_SECONDS,
-  ) => {
-    const stopStartTime = audioContext.currentTime;
-    const stopTime = stopStartTime + Math.max(0, releaseSeconds);
-
-    droneVoice.gain.gain.cancelScheduledValues(stopStartTime);
-    droneVoice.gain.gain.setValueAtTime(
-      Math.max(MIN_GAIN_VALUE, droneVoice.gain.gain.value),
-      stopStartTime,
-    );
-    droneVoice.gain.gain.linearRampToValueAtTime(MIN_GAIN_VALUE, stopTime);
-
-    try {
-      droneVoice.source.stop(stopTime + 0.01);
-    } catch {
-      try {
-        droneVoice.source.disconnect();
-        droneVoice.gain.disconnect();
-      } catch {
-        // The drone voice may already have stopped.
-      }
-    }
-  };
-
-  const createDroneVoice = ({
-    buffer,
-    concertPitchHz,
-    context: audioContext,
-    midiNote,
-    pack,
-    preset,
-    velocity,
-  }: {
-    buffer: AudioBuffer;
-    concertPitchHz: number;
-    context: AudioContext;
-    midiNote: number;
-    pack: SamplePack;
-    preset: AudioPreset;
-    velocity?: number;
-  }) => {
-    if (!isPlayableMidiNote(midiNote)) {
-      return undefined;
-    }
-
-    const region = getRegionForMidi(pack, midiNote);
-
-    if (!regionHasLoop(region)) {
-      return undefined;
-    }
-
-    const startTime = audioContext.currentTime;
-    const playbackRate = getPlaybackRate({
-      concertPitchHz,
-      midiNote,
-      region,
-    });
-    const source = audioContext.createBufferSource();
-    const gain = audioContext.createGain();
-    const voiceGain = getVoiceGain({
-      preset,
-      region,
-      use: "drone",
-      velocity,
-    });
-    const attackSeconds = Math.max(0.04, getAttackSeconds(preset));
-
-    source.buffer = buffer;
-    source.loop = true;
-    source.loopStart = getLoopStartSeconds(region) ?? region.offsetSeconds;
-    source.loopEnd = getLoopEndSeconds(region) ?? getRegionEndSeconds(region);
-    source.playbackRate.setValueAtTime(playbackRate, startTime);
-    gain.gain.setValueAtTime(MIN_GAIN_VALUE, startTime);
-    gain.gain.linearRampToValueAtTime(
-      Math.max(MIN_GAIN_VALUE, voiceGain),
-      startTime + attackSeconds,
-    );
-    source.connect(gain);
-    gain.connect(audioContext.destination);
-    source.start(startTime, region.offsetSeconds);
-    source.addEventListener(
-      "ended",
-      () => {
-        try {
-          source.disconnect();
-        } catch {
-          // The browser may have already disconnected the source.
-        }
-        try {
-          gain.disconnect();
-        } catch {
-          // The browser may have already disconnected the gain.
-        }
-      },
-      { once: true },
-    );
-
-    const droneVoice = {
-      gain,
-      midiNote,
-      source,
-      stop: (releaseSeconds?: number) =>
-        stopDroneVoice(droneVoice, audioContext, releaseSeconds),
-      velocity: velocity ?? 1,
-    } satisfies ActiveDroneVoice;
-
-    return droneVoice;
-  };
-
-  const stopDrone = (
-    drone: ActiveDrone,
-    releaseSeconds = DRONE_RELEASE_SECONDS,
-  ) => {
-    drone.notes.forEach((voice) =>
-      stopDroneVoice(voice, drone.context, releaseSeconds),
-    );
-    drone.notes.clear();
   };
 
   return {
@@ -703,7 +246,6 @@ export function createWebAudioEngine(): AudioEngine {
       return handle;
     },
     getCurrentTime: () => context?.currentTime,
-    getMasterAmbiencePresetId: () => masterAmbiencePresetId,
     getOutputClock: (): AudioClockSnapshot | undefined => {
       if (!context || context.state === "closed") {
         return undefined;
@@ -725,7 +267,9 @@ export function createWebAudioEngine(): AudioEngine {
       }
 
       const packs = await Promise.all(
-        SAMPLE_PACK_IDS.map((packId) => loadSamplePack(audioContext, packId)),
+        SAMPLE_PACK_IDS.map((packId) =>
+          samplePackLoader.loadSamplePack(audioContext, packId),
+        ),
       );
 
       return packs.every(Boolean);
@@ -738,22 +282,13 @@ export function createWebAudioEngine(): AudioEngine {
         return undefined;
       }
 
-      const loaded = await loadSamplePack(
+      await samplePackLoader.loadSamplePack(audioContext, preset.samplePackId);
+
+      return createManagedSampleVoice({
         audioContext,
-        getSamplePackId(preset),
-      );
-
-      if (!loaded) {
-        return undefined;
-      }
-
-      return createSampleVoice({
-        buffer: loaded.buffer,
         concertPitchHz: request.concertPitchHz,
-        context: audioContext,
         durationSeconds: request.durationSeconds,
         midiNote: request.midiNote,
-        pack: loaded.pack,
         preset,
         startTime: audioContext.currentTime,
         use: request.use,
@@ -790,36 +325,22 @@ export function createWebAudioEngine(): AudioEngine {
 
       const group = playbackGroups.get(request.group);
       const preset = getPresetForRequest(request);
-      const loaded = loadedPacks.get(getSamplePackId(preset));
 
-      if (!group || !loaded) {
-        void loadSamplePack(context, getSamplePackId(preset));
+      if (!group) {
         return undefined;
       }
 
-      return createSampleVoice({
-        buffer: loaded.buffer,
+      return createManagedSampleVoice({
+        audioContext: context,
         concertPitchHz: request.concertPitchHz,
-        context,
         durationSeconds: request.durationSeconds,
         group: request.group,
         midiNote: request.midiNote,
-        pack: loaded.pack,
         preset,
         startTime: request.startTime,
         use: request.use,
         velocity: request.velocity,
       });
-    },
-    setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => {
-      masterAmbiencePresetId = presetId;
-    },
-    subscribeToReset: (listener: () => void) => {
-      resetListeners.add(listener);
-
-      return () => {
-        resetListeners.delete(listener);
-      };
     },
     subscribeToStopAll: (listener: () => void) => {
       stopAllListeners.add(listener);
@@ -864,8 +385,10 @@ export function createWebAudioEngine(): AudioEngine {
         return undefined;
       }
 
-      const packId = getSamplePackId(preset);
-      const loaded = await loadSamplePack(audioContext, packId);
+      const loaded = await samplePackLoader.loadSamplePack(
+        audioContext,
+        preset.samplePackId,
+      );
 
       if (!loaded) {
         return undefined;
@@ -899,7 +422,7 @@ export function createWebAudioEngine(): AudioEngine {
         concertPitchHz,
         context: audioContext,
         notes: droneNotes,
-        packId,
+        packId: preset.samplePackId,
         preset,
       });
 
@@ -926,8 +449,7 @@ export function createWebAudioEngine(): AudioEngine {
         presetId: request.presetId,
         use: request.use ?? "drone",
       });
-      const packId = getSamplePackId(preset);
-      const loaded = loadedPacks.get(packId);
+      const loaded = samplePackLoader.getLoadedSamplePack(preset.samplePackId);
 
       if (!loaded) {
         stopDrone(drone, 0.05);
@@ -937,7 +459,10 @@ export function createWebAudioEngine(): AudioEngine {
 
       const concertPitchHz = getConcertPitchHz(request.concertPitchHz);
 
-      if (packId !== drone.packId || concertPitchHz !== drone.concertPitchHz) {
+      if (
+        preset.samplePackId !== drone.packId ||
+        concertPitchHz !== drone.concertPitchHz
+      ) {
         stopDrone(drone, 0.05);
         activeDrones.delete(handle);
         return false;

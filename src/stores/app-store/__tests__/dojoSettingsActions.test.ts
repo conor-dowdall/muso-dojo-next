@@ -50,29 +50,6 @@ describe("dojo settings app store actions", () => {
     expect(notificationCount).toBe(0);
   });
 
-  it("stores the selected ambience setting", () => {
-    const store = createTestStore();
-
-    store.getState().setMasterAmbiencePresetId("studio-room");
-
-    expect(store.getState().dojoSettings.masterAmbiencePresetId).toBe(
-      "studio-room",
-    );
-  });
-
-  it("clears the stored ambience setting when using the built-in default", () => {
-    const store = createTestStore({
-      ...createStoreSnapshot(),
-      dojoSettings: {
-        masterAmbiencePresetId: "studio-room",
-      },
-    });
-
-    store.getState().setMasterAmbiencePresetId("dry");
-
-    expect(store.getState().dojoSettings).toEqual({});
-  });
-
   it("stores the selected dojo note colors setting", () => {
     const store = createTestStore();
 

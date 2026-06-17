@@ -56,7 +56,6 @@ export type ExercisePlaybackAudioEngine = Pick<
   | "prime"
   | "scheduleMetronomeClick"
   | "scheduleNote"
-  | "subscribeToReset"
   | "subscribeToStopAll"
 >;
 
@@ -150,7 +149,6 @@ export class ExercisePlaybackCoordinator {
     private readonly createScheduler: ExerciseSchedulerFactory = createLookaheadScheduler,
     private readonly createMetronomeScheduler: ExerciseMetronomeSchedulerFactory = createLookaheadScheduler,
   ) {
-    this.audioEngine.subscribeToReset(() => this.reset());
     this.audioEngine.subscribeToStopAll(() => this.reset());
   }
 

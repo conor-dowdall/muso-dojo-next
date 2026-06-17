@@ -1,21 +1,8 @@
 export type AudioUse = "preview" | "tuning" | "drone" | "exercise";
 
-export type AudioPresetId =
-  | "reference-tone"
-  | "piano"
-  | "plucked-string"
-  | "distortion-guitar"
-  | "picked-bass"
-  | "mandolin"
-  | "bowed-strings"
-  | "soft-organ"
-  | "warm-pad"
-  | "glass-bell"
-  | "hollow-synth";
-
-export type AudioPresetFamily = "generated" | "sample";
-export type AudioPresetSurface = "instrument" | "drone" | "exercise";
 export type SamplePackId = "piano" | "plucked-string" | "bowed-strings";
+export type AudioPresetId = SamplePackId;
+export type AudioPresetSurface = "instrument" | "drone" | "exercise";
 
 export type AudioVoiceHandle = string & {
   readonly __audioVoiceHandle: unique symbol;
@@ -34,99 +21,22 @@ export interface AudioClockSnapshot {
   performanceTime: number;
 }
 
-export interface EnvelopeConfig {
+export interface SampleEnvelopeConfig {
   attackSeconds: number;
   decaySeconds: number;
   sustainGain: number;
   releaseSeconds: number;
 }
 
-export interface HarmonicPartialConfig {
-  multiple: number;
-  gain: number;
-}
-
-export interface PitchGainConfig {
-  highGain: number;
-  highMidi: number;
-  lowGain: number;
-  lowMidi: number;
-  referenceMidi: number;
-}
-
-export interface LowPitchAssistConfig {
-  fadeOutMidi: number;
-  fullBelowMidi: number;
-  partials: readonly HarmonicPartialConfig[];
-}
-
-export interface DistortionConfig {
-  amount: number;
-  mix?: number;
-  oversample?: OverSampleType;
-}
-
-export interface DistortionEffectConfig extends DistortionConfig {
-  type: "distortion";
-}
-
-export interface DelayEffectConfig {
-  feedback: number;
-  mix: number;
-  timeSeconds: number;
-  type: "delay";
-}
-
-export interface ChorusEffectConfig {
-  delaySeconds?: number;
-  depthSeconds: number;
-  feedback?: number;
-  mix: number;
-  rateHz: number;
-  type: "chorus";
-}
-
-export interface ReverbEffectConfig {
-  decaySeconds: number;
-  mix: number;
-  preDelaySeconds?: number;
-  toneHz?: number;
-  type: "reverb";
-}
-
-export type VoiceInsertEffectConfig =
-  | ChorusEffectConfig
-  | DistortionEffectConfig;
-
-export type MasterAmbienceEffectConfig = DelayEffectConfig | ReverbEffectConfig;
-
-export type AudioEffectConfig =
-  | MasterAmbienceEffectConfig
-  | VoiceInsertEffectConfig;
-
-export interface UnisonConfig {
-  detuneCents: readonly number[];
-}
-
-export interface HarmonicVoiceConfig {
-  envelope: EnvelopeConfig;
-  gain: number;
-  insertEffects?: readonly VoiceInsertEffectConfig[];
-  lowPitchAssist?: LowPitchAssistConfig;
-  partials: readonly HarmonicPartialConfig[];
-  pitchGain?: PitchGainConfig;
-  unison?: UnisonConfig;
-}
-
 export interface AudioPreset {
   availableOn: readonly AudioPresetSurface[];
   defaultDurationSeconds: number;
   description?: string;
-  family: AudioPresetFamily;
+  envelope: SampleEnvelopeConfig;
+  gain: number;
   id: AudioPresetId;
   label: string;
-  samplePackId?: SamplePackId;
-  voice: HarmonicVoiceConfig;
+  samplePackId: SamplePackId;
 }
 
 interface BaseAudioRequest {
@@ -162,15 +72,6 @@ export interface DroneRequest extends Omit<BaseAudioRequest, "velocity"> {
   notes: readonly DroneNoteRequest[];
 }
 
-export type MasterAmbiencePresetId = "dry" | "studio-room" | "warm-hall";
-
-export interface MasterAmbiencePreset {
-  description?: string;
-  effects: readonly MasterAmbienceEffectConfig[];
-  id: MasterAmbiencePresetId;
-  label: string;
-}
-
 export interface AudioEngine {
   cancelPlaybackGroup: (
     handle: PlaybackGroupHandle,
@@ -178,15 +79,12 @@ export interface AudioEngine {
   ) => void;
   createPlaybackGroup: () => PlaybackGroupHandle;
   getCurrentTime: () => number | undefined;
-  getMasterAmbiencePresetId: () => MasterAmbiencePresetId;
   getOutputClock: () => AudioClockSnapshot | undefined;
   isSupported: () => boolean;
   prime: () => Promise<boolean>;
   playNote: (request: PlayNoteRequest) => Promise<AudioVoiceHandle | undefined>;
   scheduleMetronomeClick: (request: ScheduleMetronomeClickRequest) => boolean;
   scheduleNote: (request: ScheduleNoteRequest) => AudioVoiceHandle | undefined;
-  setMasterAmbiencePresetId: (presetId: MasterAmbiencePresetId) => void;
-  subscribeToReset: (listener: () => void) => () => void;
   subscribeToStopAll: (listener: () => void) => () => void;
   subscribeToVoiceEnd: (
     handle: AudioVoiceHandle,
