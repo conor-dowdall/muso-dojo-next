@@ -1,8 +1,4 @@
 .partModuleFrame {
-  --part-module-frame-background: var(
-    --instrument-frame-background,
-    var(--color-surface)
-  );
   --part-module-body-radius: var(--instrument-body-radius, 0);
 
   position: relative;
@@ -23,11 +19,8 @@
   );
   align-self: center;
   gap: var(--space-2);
-  padding: var(--space-2);
   border: 0;
-  border-radius: calc(var(--radius-control) + var(--space-1));
-  background: var(--part-module-frame-background);
-  box-shadow: var(--shadow-surface-raised);
+  background: transparent;
   user-select: none;
   contain: layout;
   -webkit-touch-callout: none;
@@ -50,7 +43,7 @@
   overflow-x: hidden;
   overflow-y: hidden;
   border-radius: var(--part-module-body-radius);
-  background: rgb(0 0 0 / 0.12);
+  background: transparent;
   scrollbar-color: var(--color-border) transparent;
   scrollbar-width: thin;
 }

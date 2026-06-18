@@ -18,9 +18,9 @@ interface PartModuleFrameProps {
 }
 
 /**
- * Shared framed surface for Part modules. Instruments, Drone, and future
- * modules should use this frame so module-level headers and bodies keep one
- * visual language while their interiors stay domain-specific.
+ * Shared module layout for Part modules. Instruments, Drone, and future modules
+ * should use this wrapper so headers and bodies keep one spacing and sizing
+ * language while their interiors stay domain-specific.
  */
 export function PartModuleFrame({
   bodyClassName = "",
