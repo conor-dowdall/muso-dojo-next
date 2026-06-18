@@ -6,6 +6,12 @@ import styles from "./TactileButton.module.css";
 
 interface TactileInteractionProps {
   /**
+   * Pointerdown keeps performance controls immediate. Click is calmer for
+   * controls that open overlays, because it avoids pointerup landing inside the
+   * newly-opened surface on touch devices.
+   */
+  activationEvent?: "click" | "pointerdown";
+  /**
    * Fires on primary pointerdown for immediate controls, while preserving
    * keyboard and assistive-technology activation through click.
    */
@@ -29,6 +35,7 @@ export type TactileIconButtonProps = Omit<
   TactileInteractionProps;
 
 function getTactileInteractionProps({
+  activationEvent = "pointerdown",
   onPress,
   onUnavailablePress,
   unavailable = false,
@@ -39,12 +46,15 @@ function getTactileInteractionProps({
     "aria-disabled": unavailable ? true : undefined,
     onClick: (event: MouseEvent<HTMLButtonElement>) => {
       // Keyboard and assistive-technology clicks have no pointer click count.
-      if (event.detail === 0) {
+      if (activationEvent === "click" || event.detail === 0) {
         press?.();
       }
     },
     onPointerDown: (event: PointerEvent<HTMLButtonElement>) => {
-      if (isPrimaryPointerActivation(event)) {
+      if (
+        activationEvent === "pointerdown" &&
+        isPrimaryPointerActivation(event)
+      ) {
         press?.();
       }
     },
@@ -74,6 +84,7 @@ function getControlState(
 }
 
 export function TactileIconButton({
+  activationEvent,
   className,
   icon,
   onPress,
@@ -86,6 +97,7 @@ export function TactileIconButton({
     <IconButton
       {...props}
       {...getTactileInteractionProps({
+        activationEvent,
         onPress,
         onUnavailablePress,
         unavailable,

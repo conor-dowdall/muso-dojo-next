@@ -49,7 +49,6 @@ export function ExerciseLooperPartModuleView({
         state.setExerciseLooperMetronomeEnabled,
       setExerciseLooperOctaveOffset: state.setExerciseLooperOctaveOffset,
       setExerciseLooperPattern: state.setExerciseLooperPattern,
-      setExerciseLooperStart: state.setExerciseLooperStart,
       setExerciseLooperSubdivision: state.setExerciseLooperSubdivision,
       setExerciseLooperWood: state.setExerciseLooperWood,
     })),
@@ -115,12 +114,6 @@ export function ExerciseLooperPartModuleView({
         isPerformanceMode
           ? undefined
           : () => actions.removePartModule(sessionId, partId, moduleId)
-      }
-      onStartChange={
-        isPerformanceMode
-          ? undefined
-          : (value) =>
-              actions.setExerciseLooperStart(sessionId, partId, moduleId, value)
       }
       onSubdivisionChange={(value) =>
         actions.setExerciseLooperSubdivision(sessionId, partId, moduleId, value)

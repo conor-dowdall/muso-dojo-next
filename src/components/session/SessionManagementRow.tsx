@@ -28,6 +28,7 @@ interface SessionManagementRowProps {
   onDuplicateSession: (sessionId: string) => void;
   onRenameSession: (sessionId: string, name: string) => void;
   onSetTempoBpm: (sessionId: string, tempoBpm: number) => void;
+  onSubmitTempo: () => void;
   onRequestDeleteSession: (sessionId: string) => void;
   onToggleActions: (sessionId: string) => void;
   onToggleRename: (sessionId: string) => void;
@@ -50,6 +51,7 @@ export function SessionManagementRow({
   onDuplicateSession,
   onRenameSession,
   onSetTempoBpm,
+  onSubmitTempo,
   onRequestDeleteSession,
   onToggleActions,
   onToggleRename,
@@ -78,6 +80,7 @@ export function SessionManagementRow({
             isOpen={isTempoOpen}
             session={session}
             shouldFocusInput={shouldFocusTempoInput}
+            onSubmit={onSubmitTempo}
             onTempoBpmChange={onSetTempoBpm}
             onToggle={() => onToggleTempo(session.id)}
           />

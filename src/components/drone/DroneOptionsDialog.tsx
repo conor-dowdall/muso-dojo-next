@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioWaveform, PanelsTopLeft } from "lucide-react";
+import { AudioWaveform, SwatchBook } from "lucide-react";
 import { audioPresets, musoAudioEngine, type AudioPresetId } from "@/audio";
 import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
 import {
@@ -17,7 +17,7 @@ import { WoodSurfaceChoiceList } from "@/components/appearance/WoodSurfaceChoice
 import { WoodSurfaceSwatch } from "@/components/instrument/InstrumentThemeSwatch";
 import { woodSurfaces, type WoodSurfaceId } from "@/data/woodSurfaces";
 
-type DroneMenuChoice = "sound" | "wood";
+type DroneMenuChoice = "sound" | "appearance";
 
 interface DroneOptionsDialogProps {
   audioPresetId: AudioPresetId;
@@ -84,14 +84,13 @@ export function DroneOptionsDialog({
         </DisclosureListItem>
 
         <DisclosureListItem
-          ariaLabel={`Wood. Current: ${woodSurfaces[wood].title}`}
-          icon={<PanelsTopLeft />}
-          isOpen={isChoiceOpen("wood")}
-          label="Wood"
-          onToggle={() => toggleChoice("wood")}
+          ariaLabel={`Appearance. Current: ${woodSurfaces[wood].title}`}
+          icon={<SwatchBook />}
+          isOpen={isChoiceOpen("appearance")}
+          label="Appearance"
+          onToggle={() => toggleChoice("appearance")}
           panelVariant="menu"
           preview={<WoodSurfaceSwatch surfaceId={wood} />}
-          subtitle={woodSurfaces[wood].title}
         >
           <WoodSurfaceChoiceList value={wood} onChange={onWoodChange} />
         </DisclosureListItem>

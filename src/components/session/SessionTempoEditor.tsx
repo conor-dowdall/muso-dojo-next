@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type SyntheticEvent } from "react";
+import { useLayoutEffect, useRef, useState, type SyntheticEvent } from "react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { RangeSlider } from "@/components/ui/range-slider/RangeSlider";
 import styles from "./SessionTempoEditor.module.css";
@@ -16,11 +16,13 @@ function clampTempo(value: number) {
 
 export function SessionTempoEditor({
   label = "Session tempo",
+  onSubmit,
   onTempoBpmChange,
   shouldFocusInput = false,
   tempoBpm,
 }: {
   label?: string;
+  onSubmit?: () => void;
   onTempoBpmChange: (tempoBpm: number) => void;
   shouldFocusInput?: boolean;
   tempoBpm: number;
@@ -46,9 +48,10 @@ export function SessionTempoEditor({
   const handleSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     commitDraftTempo();
+    onSubmit?.();
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!shouldFocusInput) {
       hasFocusedInitialInput.current = false;
       return;
@@ -58,26 +61,53 @@ export function SessionTempoEditor({
       return;
     }
 
-    let secondFrameId: number | undefined;
-    const firstFrameId = window.requestAnimationFrame(() => {
-      secondFrameId = window.requestAnimationFrame(() => {
-        const input = numberInputRef.current;
+    let frameId: number | undefined;
+    let timeoutId: number | undefined;
+    let attempts = 0;
 
-        if (!input) {
-          return;
-        }
+    const focusInput = () => {
+      const input = numberInputRef.current;
+      const dialog = input?.closest("dialog");
 
-        input.scrollIntoView({ block: "nearest", inline: "nearest" });
-        input.focus();
+      if (!input || input.closest("[inert]") || (dialog && !dialog.open)) {
+        return false;
+      }
+
+      input.scrollIntoView({ block: "nearest", inline: "nearest" });
+      input.focus({ preventScroll: true });
+
+      try {
         input.select();
+      } catch {
+        // Some mobile number inputs do not expose text selection.
+      }
+
+      return document.activeElement === input;
+    };
+
+    const tryFocusInput = () => {
+      attempts += 1;
+
+      if (focusInput()) {
         hasFocusedInitialInput.current = true;
-      });
-    });
+        return;
+      }
+
+      if (attempts < 5) {
+        timeoutId = window.setTimeout(() => {
+          frameId = window.requestAnimationFrame(tryFocusInput);
+        }, 40);
+      }
+    };
+
+    frameId = window.requestAnimationFrame(tryFocusInput);
 
     return () => {
-      window.cancelAnimationFrame(firstFrameId);
-      if (secondFrameId !== undefined) {
-        window.cancelAnimationFrame(secondFrameId);
+      if (frameId !== undefined) {
+        window.cancelAnimationFrame(frameId);
+      }
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
       }
     };
   }, [shouldFocusInput]);
@@ -130,6 +160,7 @@ export function SessionTempoEditor({
             <input
               aria-label="Exact session tempo in beats per minute"
               className={styles.numberInput}
+              enterKeyHint="done"
               inputMode="numeric"
               max={MAX_TEMPO}
               min={MIN_TEMPO}

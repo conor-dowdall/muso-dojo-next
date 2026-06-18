@@ -7,7 +7,13 @@ import {
   type NoteCollectionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
-import { ListChecks, ListMusic, Music3, Shapes } from "lucide-react";
+import {
+  LayoutPanelTop,
+  ListChecks,
+  ListMusic,
+  Music3,
+  Orbit,
+} from "lucide-react";
 import {
   DialogContent,
   DialogContentSection,
@@ -76,7 +82,7 @@ interface AddToSessionDialogProps {
 
 const sessionAddOptions = [
   {
-    icon: <Shapes />,
+    icon: <LayoutPanelTop />,
     id: "part",
     title: "Part",
     subtitle: `One Part${DISPLAY_VALUE_SEPARATOR}Root Note and Chord or Scale`,
@@ -281,7 +287,7 @@ export function AddToSessionDialog({
 
                 <DisclosureListItem
                   ariaLabel={`Choose chord or scale, ${selectedNoteCollectionName} selected`}
-                  icon={<Shapes />}
+                  icon={<Orbit />}
                   isOpen={sessionDisclosure.openChoice === "collection"}
                   keepMounted
                   label="Chord or Scale"

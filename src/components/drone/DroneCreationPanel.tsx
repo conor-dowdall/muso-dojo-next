@@ -29,7 +29,8 @@ export function DroneCreationPanel({
   onChange,
   value,
 }: DroneCreationPanelProps) {
-  const { closeAll, openChoice, toggleChoice } = useDisclosureList<"wood">();
+  const { closeAll, openChoice, toggleChoice } =
+    useDisclosureList<"appearance">();
   const wood = value.wood ?? DEFAULT_WOOD_SURFACE_ID;
 
   useEffect(() => {
@@ -44,13 +45,12 @@ export function DroneCreationPanel({
     <section className={styles.section} aria-label={ariaLabel}>
       <DisclosureList>
         <DisclosureListItem
-          ariaLabel={`Choose wood, ${woodSurfaces[wood].title} selected`}
-          isOpen={openChoice === "wood"}
+          ariaLabel={`Choose appearance, ${woodSurfaces[wood].title} selected`}
+          isOpen={openChoice === "appearance"}
           keepMounted
-          label="Wood"
+          label="Appearance"
           preview={<WoodSurfaceSwatch surfaceId={wood} />}
-          subtitle={woodSurfaces[wood].title}
-          onToggle={() => toggleChoice("wood")}
+          onToggle={() => toggleChoice("appearance")}
         >
           <WoodSurfaceChoiceList value={wood} onChange={handleWoodChange} />
         </DisclosureListItem>

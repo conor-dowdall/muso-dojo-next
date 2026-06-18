@@ -50,7 +50,6 @@ import {
 import {
   createExerciseSequence,
   EXERCISE_MAX_OCTAVE_SPAN,
-  getCollectionPosition,
   getCollectionRangeBoundary,
   getExerciseAnchorPositionBounds,
   getExerciseBaseOctave,
@@ -89,7 +88,6 @@ export function ExerciseLooperModule({
   onPatternChange,
   onRemove,
   onOpenSessionTempo,
-  onStartChange,
   onSubdivisionChange,
   onWoodChange,
   pattern = DEFAULT_EXERCISE_PATTERN,
@@ -118,7 +116,6 @@ export function ExerciseLooperModule({
   onPatternChange?: (value: ExercisePattern) => void;
   onRemove?: () => void;
   onOpenSessionTempo?: () => void;
-  onStartChange?: (value: CollectionRangeBoundary) => void;
   onSubdivisionChange?: (value: ExerciseSubdivision) => void;
   onWoodChange?: (value: WoodSurfaceId) => void;
   pattern?: ExercisePattern;
@@ -327,46 +324,6 @@ export function ExerciseLooperModule({
     );
   };
 
-  const setRange = (
-    nextStart: CollectionRangeBoundary,
-    nextEnd: CollectionRangeBoundary,
-  ) => {
-    const requestedStart = getCollectionPosition(
-      nextStart,
-      collectionSize,
-      sequence.isFiniteVoicing,
-    );
-    const requestedEnd = getCollectionPosition(
-      nextEnd,
-      collectionSize,
-      sequence.isFiniteVoicing,
-    );
-    const nextFirstPosition = Math.min(
-      bounds.max,
-      Math.max(bounds.min, Math.min(requestedStart, requestedEnd)),
-    );
-    const nextLastPosition = Math.min(
-      bounds.max,
-      nextFirstPosition + collectionSize * EXERCISE_MAX_OCTAVE_SPAN,
-      Math.max(nextFirstPosition, requestedStart, requestedEnd),
-    );
-
-    onStartChange?.(
-      getCollectionRangeBoundary(
-        nextFirstPosition,
-        collectionSize,
-        sequence.isFiniteVoicing,
-      ),
-    );
-    onEndChange?.(
-      getCollectionRangeBoundary(
-        nextLastPosition,
-        collectionSize,
-        sequence.isFiniteVoicing,
-      ),
-    );
-  };
-
   return (
     <>
       <PartModuleFrame
@@ -494,6 +451,7 @@ export function ExerciseLooperModule({
                     readoutClassName={styles.pulseReadout}
                   >
                     <PartModuleControlButton
+                      activationEvent="click"
                       aria-label={`Set session tempo. Current tempo: ${tempoBpm} bpm`}
                       icon={<Gauge />}
                       onPress={() => onOpenSessionTempo?.()}
@@ -580,26 +538,11 @@ export function ExerciseLooperModule({
       {showHeader ? (
         <ExerciseLooperOptionsDialog
           audioPresetId={audioPresetId ?? getDefaultAudioPresetId("exercise")}
-          collectionSize={collectionSize}
-          end={getCollectionRangeBoundary(
-            lastPosition,
-            collectionSize,
-            sequence.isFiniteVoicing,
-          )}
-          isFiniteVoicing={sequence.isFiniteVoicing}
           isOpen={isOptionsOpen}
-          maxAnchorPosition={maxLastPosition}
-          minAnchorPosition={bounds.min}
-          start={getCollectionRangeBoundary(
-            firstPosition,
-            collectionSize,
-            sequence.isFiniteVoicing,
-          )}
           wood={wood}
           onAudioPresetIdChange={(value) => onAudioPresetIdChange?.(value)}
           onClone={onClone}
           onClose={() => setIsOptionsOpen(false)}
-          onRangeChange={setRange}
           onRemove={onRemove}
           onWoodChange={(value) => onWoodChange?.(value)}
         />

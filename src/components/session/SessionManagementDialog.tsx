@@ -215,6 +215,7 @@ export function SessionManagementDialog({
                     onDuplicateSession={handleCloneSession}
                     onRenameSession={renameSession}
                     onSetTempoBpm={setSessionTempoBpm}
+                    onSubmitTempo={onClose}
                     onRequestDeleteSession={setDeleteConfirmationSessionId}
                     onToggleActions={handleSessionActionsToggle}
                     onToggleRename={handleRenameToggle}
