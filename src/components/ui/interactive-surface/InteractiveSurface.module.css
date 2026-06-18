@@ -26,32 +26,26 @@
     var(--color-focus-ring) 76%,
     var(--color-interaction-ring-light)
   );
-  --interactive-surface-elevation-shadow: 0 0 transparent;
-  --interactive-surface-rest-shadow: 0 0 transparent;
   --interactive-surface-selected-shadow:
     inset 0 0 0 var(--border-width-medium)
       var(--interactive-surface-shadow-color),
     inset 0 0 0 var(--border-width-wide) var(--interactive-surface-ring-color),
-    inset 0 0 var(--space-4) var(--interactive-surface-ring-color),
-    var(--interactive-surface-elevation-shadow);
+    inset 0 0 var(--space-4) var(--interactive-surface-ring-color);
   --interactive-surface-highlight-shadow:
     inset 0 0 0 var(--border-width-medium) var(--color-focus-ring-contrast),
     inset 0 0 0 var(--border-width-wide)
       var(--interactive-surface-focus-ring-color),
-    inset 0 0 var(--space-5) var(--interactive-surface-focus-ring-color),
-    var(--interactive-surface-elevation-shadow);
+    inset 0 0 var(--space-5) var(--interactive-surface-focus-ring-color);
 }
 
 .surface.surface {
   border-color: var(--interactive-surface-rest-border-color);
-  box-shadow: var(--interactive-surface-rest-shadow);
+  box-shadow: none;
   transition:
     background-color var(--transition-medium) var(--ease-out),
     border-color var(--transition-fast) var(--ease-out),
     box-shadow var(--transition-fast) var(--ease-out),
-    color var(--transition-fast) var(--ease-out),
-    opacity var(--transition-medium) var(--ease-out),
-    transform var(--transition-fast) var(--ease-out);
+    color var(--transition-fast) var(--ease-out);
 }
 
 .surface.surface[data-pointer-modality="touch"] {
@@ -68,8 +62,6 @@
     var(--color-base) 76%,
     var(--color-border)
   );
-  --interactive-surface-elevation-shadow: 0 0 transparent;
-  --interactive-surface-rest-shadow: 0 0 transparent;
 }
 
 .selfInteractive.selfInteractive[data-selected="true"] {
@@ -85,8 +77,8 @@
 
 .selfInteractive.selfInteractive[aria-disabled="true"] {
   border-color: var(--interactive-surface-rest-border-color);
-  box-shadow: var(--interactive-surface-rest-shadow);
-  color: var(--color-text-muted);
+  box-shadow: none;
+  color: var(--interactive-surface-disabled-color, var(--color-text-muted));
   cursor: default;
 }
 

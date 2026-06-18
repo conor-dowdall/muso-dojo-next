@@ -11,8 +11,9 @@
   --button-border-color: var(--color-border);
   --button-border-current-color: var(--button-border-color);
   --button-border-extra-width: var(--border-width-none);
-  --button-active-background: var(--color-surface-hover);
-  --button-active-border-color: var(--color-accent);
+  --button-selected-background: var(--color-surface-hover);
+  --button-selected-border-color: var(--color-accent);
+  --button-unavailable-border-color: var(--color-border-subtle);
   --button-danger-surface: rgb(248 113 113 / 0.14);
   --button-danger-border: rgb(248 113 113 / 0.6);
 
@@ -32,6 +33,9 @@
   text-decoration: none;
   touch-action: manipulation;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -100,8 +104,8 @@
 
 .button[data-tone="danger"] {
   --button-border-color: var(--button-danger-border);
-  --button-active-background: var(--button-danger-surface);
-  --button-active-border-color: var(--color-danger);
+  --button-selected-background: var(--button-danger-surface);
+  --button-selected-border-color: var(--color-danger);
 
   color: var(--color-danger);
 }
@@ -126,8 +130,8 @@
 }
 
 .button[data-selected="true"] {
-  background-color: var(--button-active-background);
-  --button-border-current-color: var(--button-active-border-color);
+  background-color: var(--button-selected-background);
+  --button-border-current-color: var(--button-selected-border-color);
   --button-border-extra-width: var(--space-px);
 }
 
@@ -282,6 +286,17 @@
 }
 
 .button:disabled {
-  opacity: 0.42;
   cursor: default;
+}
+
+.button:disabled:not([data-selected="true"]) {
+  --button-border-current-color: var(--button-unavailable-border-color);
+  --button-border-extra-width: var(--border-width-none);
+
+  color: var(--color-text-muted);
+}
+
+.button:disabled:not([data-selected="true"]) .buttonIcon,
+.button:disabled:not([data-selected="true"]) .buttonAccessory {
+  opacity: var(--control-unavailable-content-opacity);
 }

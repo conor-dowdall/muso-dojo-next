@@ -188,14 +188,22 @@
 }
 
 .generatedNote {
-  --instrument-note-tile-label-color: var(--color-text-muted);
+  --instrument-note-tile-label-color: var(--note-label-color);
   --instrument-note-tile-label-opacity: var(
     --control-unavailable-content-opacity
   );
   --instrument-note-tile-label-transition-duration: var(--transition-fast);
 
-  background-color: var(--color-control-unavailable-background);
-  color: var(--color-text-muted);
+  background-color: color-mix(
+    in srgb,
+    var(--note-color) 22%,
+    var(--part-module-body-background) 78%
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--note-color) 28%,
+    var(--interactive-surface-rest-border-color)
+  );
 }
 
 .generatedNoteIndicator[data-note-highlighted="true"] .generatedNote {

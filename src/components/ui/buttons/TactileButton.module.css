@@ -1,21 +1,51 @@
 .tactileButton {
+  --tactile-hardware-base: #08090d;
+  --tactile-hardware-border: rgb(255 255 255 / 0.24);
+  --tactile-hardware-ring-light: rgb(255 255 255 / 0.82);
+  --tactile-hardware-ring-dark: rgb(0 0 0 / 0.62);
   --tactile-rest-background: color-mix(
     in srgb,
     var(--color-interactive-neutral) 92%,
-    var(--color-base)
+    var(--tactile-hardware-base)
   );
   --tactile-selected-background: var(--interactive-surface-selected-background);
-  --tactile-unavailable-background: var(--color-control-unavailable-background);
+  --tactile-content-color: var(--color-hardware-display-text);
+  --interactive-surface-ring-color: color-mix(
+    in srgb,
+    var(--interactive-surface-color) 55%,
+    var(--tactile-hardware-ring-light)
+  );
+  --interactive-surface-selected-background: color-mix(
+    in srgb,
+    var(--interactive-surface-color) 70%,
+    var(--tactile-hardware-ring-light)
+  );
+  --interactive-surface-selected-border-color: color-mix(
+    in srgb,
+    var(--interactive-surface-color) 58%,
+    var(--tactile-hardware-ring-light)
+  );
+  --interactive-surface-shadow-color: color-mix(
+    in srgb,
+    var(--interactive-surface-color) 28%,
+    var(--tactile-hardware-ring-dark)
+  );
+  --interactive-surface-rest-border-color: color-mix(
+    in srgb,
+    var(--tactile-hardware-base) 76%,
+    var(--tactile-hardware-border)
+  );
+  --interactive-surface-disabled-color: var(--tactile-content-color);
   --button-outline-background: var(--tactile-rest-background);
-  --button-active-background: var(--tactile-selected-background);
+  --button-selected-background: var(--tactile-selected-background);
   --button-border-color: var(--interactive-surface-rest-border-color);
-  --button-active-border-color: var(
+  --button-selected-border-color: var(
     --interactive-surface-selected-border-color
   );
   --interact-ease: var(--ease-out);
 
   background-color: var(--tactile-rest-background);
-  color: var(--color-text);
+  color: var(--tactile-content-color);
 }
 
 .tactileButton[data-control-state="selected"] {
@@ -24,8 +54,8 @@
 }
 
 .tactileButton[data-control-state="unavailable"] {
-  background-color: var(--tactile-unavailable-background);
-  color: var(--color-text-muted);
+  background-color: var(--tactile-rest-background);
+  color: var(--tactile-content-color);
 }
 
 .tactileButton[data-control-state="unavailable"] [data-sizing] {
