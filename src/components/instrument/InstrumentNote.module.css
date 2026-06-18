@@ -66,6 +66,10 @@
   margin-block-end: var(--space-2);
 }
 
+.noteCell[data-pointer-modality="touch"] .note {
+  transition-duration: 0s;
+}
+
 /* ============================================================
    Container-Query Font Sizing
    ============================================================
@@ -144,15 +148,6 @@
   text-box: trim-both cap alphabetic;
 }
 
-@media (hover: hover) {
-  .noteCell:hover:not([aria-pressed="true"]):not([data-note-highlighted="true"])
-    .note {
-    background-color: var(--interactive-surface-hover-background);
-    border-color: var(--interactive-surface-hover-border-color);
-    box-shadow: var(--interactive-surface-hover-shadow);
-  }
-}
-
 .noteCell[aria-pressed="true"] .note {
   border-color: var(--interactive-surface-selected-border-color);
   box-shadow: var(--interactive-surface-selected-shadow);
@@ -167,16 +162,6 @@
   visibility: visible !important;
   opacity: var(--note-opacity-large) !important;
   --note-scale: var(--note-scale-large) !important;
-}
-
-.noteCell:active .note {
-  transition-duration: var(--transition-snap);
-}
-
-.noteCell:active .note[data-surface="raised"] {
-  border-color: var(--interactive-surface-ring-color);
-  box-shadow: var(--interactive-surface-pressed-shadow);
-  translate: 0 var(--space-px);
 }
 
 .noteCell:focus {
@@ -239,10 +224,4 @@
 .note[data-emphasis="hidden"] {
   --note-scale: var(--note-scale-hidden);
   --note-opacity: var(--note-opacity-hidden);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .noteCell:active .note[data-surface="raised"] {
-    translate: none;
-  }
 }

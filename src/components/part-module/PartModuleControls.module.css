@@ -29,13 +29,7 @@
   min-height: 0;
   max-height: none;
   background: var(--part-module-body-background);
-  box-shadow:
-    inset 0 var(--space-px) 0
-      color-mix(in srgb, var(--color-interaction-ring-light) 22%, transparent),
-    inset 0 calc(-1 * var(--space-px)) 0
-      color-mix(in srgb, var(--color-interaction-ring-dark) 44%, transparent),
-    inset 0 0 var(--space-4)
-      color-mix(in srgb, var(--color-interaction-ring-dark) 22%, transparent);
+  box-shadow: none;
 }
 
 .content {

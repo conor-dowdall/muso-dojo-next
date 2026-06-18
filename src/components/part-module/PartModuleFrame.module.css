@@ -27,7 +27,7 @@
   border: 0;
   border-radius: calc(var(--radius-control) + var(--space-1));
   background: var(--part-module-frame-background);
-  box-shadow: var(--shadow-highlight-inset), var(--shadow-surface-raised);
+  box-shadow: var(--shadow-surface-raised);
   user-select: none;
   contain: layout;
   -webkit-touch-callout: none;

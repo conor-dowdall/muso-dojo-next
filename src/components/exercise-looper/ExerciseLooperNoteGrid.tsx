@@ -115,7 +115,6 @@ export function ExerciseLooperNoteGrid({
                   onInteract={handleItemInteraction}
                   setItemRef={setItemRef}
                   style={{ gridColumn: note.columnIndex + 1 }}
-                  surface="raised"
                 >
                   {label}
                 </InstrumentNoteCell>

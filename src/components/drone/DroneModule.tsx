@@ -357,7 +357,6 @@ export function DroneModule({
                         className={noteGridStyles.button}
                         style={{ gridColumn: note.columnIndex + 1 }}
                         largeSize="100%"
-                        surface="raised"
                       >
                         <InstrumentNoteTileLabel
                           primary={noteLabel}

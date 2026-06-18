@@ -6,21 +6,6 @@
     var(--interactive-surface-color) 55%,
     var(--color-interaction-ring-light)
   );
-  --interactive-surface-hover-border-color: color-mix(
-    in srgb,
-    var(--interactive-surface-color) 34%,
-    var(--color-border)
-  );
-  --interactive-surface-hover-ring-color: color-mix(
-    in srgb,
-    var(--interactive-surface-color) 18%,
-    transparent
-  );
-  --interactive-surface-hover-background: color-mix(
-    in srgb,
-    var(--interactive-surface-color) 88%,
-    var(--color-interaction-ring-light)
-  );
   --interactive-surface-selected-background: color-mix(
     in srgb,
     var(--interactive-surface-color) 70%,
@@ -41,42 +26,14 @@
     var(--color-focus-ring) 76%,
     var(--color-interaction-ring-light)
   );
-  --interactive-surface-light-medium: color-mix(
-    in srgb,
-    var(--color-interaction-ring-light) 22%,
-    transparent
-  );
-  --interactive-surface-shadow-soft: color-mix(
-    in srgb,
-    var(--color-interaction-ring-dark) 22%,
-    transparent
-  );
-  --interactive-surface-shadow-medium: color-mix(
-    in srgb,
-    var(--color-interaction-ring-dark) 44%,
-    transparent
-  );
   --interactive-surface-elevation-shadow: 0 0 transparent;
-  --interactive-surface-rest-shadow:
-    inset 0 0 0 0 transparent, var(--interactive-surface-elevation-shadow);
-  --interactive-surface-hover-shadow:
-    inset 0 0 0 var(--border-width-base)
-      var(--interactive-surface-hover-ring-color),
-    inset 0 0 var(--space-2) var(--interactive-surface-hover-ring-color),
-    var(--interactive-surface-elevation-shadow);
+  --interactive-surface-rest-shadow: 0 0 transparent;
   --interactive-surface-selected-shadow:
     inset 0 0 0 var(--border-width-medium)
       var(--interactive-surface-shadow-color),
     inset 0 0 0 var(--border-width-wide) var(--interactive-surface-ring-color),
     inset 0 0 var(--space-4) var(--interactive-surface-ring-color),
     var(--interactive-surface-elevation-shadow);
-  --interactive-surface-pressed-shadow:
-    inset 0 var(--space-px) var(--space-1)
-      var(--interactive-surface-shadow-soft),
-    inset 0 0 0 var(--border-width-medium)
-      var(--interactive-surface-shadow-color),
-    inset 0 0 0 var(--border-width-wide) var(--interactive-surface-ring-color),
-    inset 0 0 var(--space-4) var(--interactive-surface-ring-color);
   --interactive-surface-highlight-shadow:
     inset 0 0 0 var(--border-width-medium) var(--color-focus-ring-contrast),
     inset 0 0 0 var(--border-width-wide)
@@ -94,8 +51,11 @@
     box-shadow var(--transition-fast) var(--ease-out),
     color var(--transition-fast) var(--ease-out),
     opacity var(--transition-medium) var(--ease-out),
-    transform var(--transition-fast) var(--ease-out),
-    translate var(--transition-fast) var(--ease-out);
+    transform var(--transition-fast) var(--ease-out);
+}
+
+.surface.surface[data-pointer-modality="touch"] {
+  transition-duration: 0s;
 }
 
 .neutral {
@@ -108,34 +68,13 @@
     var(--color-base) 76%,
     var(--color-border)
   );
-  --interactive-surface-elevation-shadow: 0 var(--space-px) var(--space-1)
-    var(--interactive-surface-shadow-soft);
-  --interactive-surface-rest-shadow:
-    inset 0 var(--space-px) 0 var(--interactive-surface-light-medium),
-    inset 0 calc(-1 * var(--space-px)) 0
-      var(--interactive-surface-shadow-medium),
-    var(--interactive-surface-elevation-shadow);
-}
-
-@media (hover: hover) {
-  .selfInteractive.selfInteractive:not([aria-disabled="true"]):not(
-      [data-selected="true"]
-    ):hover {
-    border-color: var(--interactive-surface-hover-border-color);
-    box-shadow: var(--interactive-surface-hover-shadow);
-  }
+  --interactive-surface-elevation-shadow: 0 0 transparent;
+  --interactive-surface-rest-shadow: 0 0 transparent;
 }
 
 .selfInteractive.selfInteractive[data-selected="true"] {
   border-color: var(--interactive-surface-selected-border-color);
   box-shadow: var(--interactive-surface-selected-shadow);
-}
-
-.selfInteractive.selfInteractive.selfInteractive:active {
-  border-color: var(--interactive-surface-ring-color);
-  box-shadow: var(--interactive-surface-pressed-shadow);
-  translate: 0 var(--space-px);
-  transition-duration: var(--transition-snap);
 }
 
 .selfInteractive.selfInteractive:focus-visible {
@@ -151,18 +90,8 @@
   cursor: default;
 }
 
-.selfInteractive.selfInteractive.selfInteractive[aria-disabled="true"]:active {
-  border-color: var(--interactive-surface-rest-border-color);
-  box-shadow: var(--interactive-surface-rest-shadow);
-  translate: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .surface.surface {
     transition: none;
-  }
-
-  .selfInteractive.selfInteractive.selfInteractive:active {
-    translate: none;
   }
 }

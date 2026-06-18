@@ -85,6 +85,57 @@ describe("ExerciseAuditionController", () => {
     expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0");
   });
 
+  it("tracks visible keys immediately while audio is preparing", async () => {
+    let resolvePrime: (prepared: boolean) => void = () => undefined;
+    const prime = vi.fn(
+      () =>
+        new Promise<boolean>((resolve) => {
+          resolvePrime = resolve;
+        }),
+    );
+    const { audioEngine, scheduleNote } = createAudioEngine();
+    const controller = new ExerciseAuditionController({
+      ...audioEngine,
+      prime,
+    });
+
+    const audition = controller.audition({
+      durationSeconds: 0.55,
+      notes: [{ key: "position-0", midi: 60 }],
+      presetId: "piano",
+      velocity: 0.72,
+    });
+
+    expect([...controller.getSnapshot()]).toEqual(["position-0"]);
+    expect(scheduleNote).not.toHaveBeenCalled();
+
+    resolvePrime(true);
+
+    await expect(audition).resolves.toBe(true);
+    expect(scheduleNote).toHaveBeenCalledTimes(1);
+    expect([...controller.getSnapshot()]).toEqual(["position-0"]);
+  });
+
+  it("clears optimistic visible keys when audio cannot be prepared", async () => {
+    const { audioEngine } = createAudioEngine();
+    const controller = new ExerciseAuditionController({
+      ...audioEngine,
+      prime: async () => false,
+    });
+
+    const audition = controller.audition({
+      durationSeconds: 0.55,
+      notes: [{ key: "position-0", midi: 60 }],
+      presetId: "piano",
+      velocity: 0.72,
+    });
+
+    expect([...controller.getSnapshot()]).toEqual(["position-0"]);
+
+    await expect(audition).resolves.toBe(false);
+    expect([...controller.getSnapshot()]).toEqual([]);
+  });
+
   it("cancels the previous audition before starting another", async () => {
     vi.useFakeTimers();
     const { audioEngine, cancelPlaybackGroup } = createAudioEngine();
@@ -131,7 +182,10 @@ describe("ExerciseAuditionController", () => {
       velocity: 0.72,
     });
 
+    expect([...controller.getSnapshot()]).toEqual(["position-0"]);
     controller.cancel();
+    expect([...controller.getSnapshot()]).toEqual([]);
+
     resolvePrime(true);
 
     await expect(audition).resolves.toBe(false);

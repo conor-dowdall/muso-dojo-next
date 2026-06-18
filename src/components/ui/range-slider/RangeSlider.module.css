@@ -117,12 +117,6 @@
   opacity: 0.62;
 }
 
-@media (hover: hover) {
-  .slider:not(:disabled):hover {
-    --range-slider-thumb-background: var(--color-accent);
-  }
-}
-
 @media (forced-colors: active) {
   .slider {
     --range-slider-track-background: CanvasText;

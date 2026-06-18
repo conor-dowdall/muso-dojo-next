@@ -60,7 +60,6 @@
 }
 
 .actionButton[data-selected="true"],
-.actionButton:not(:disabled):hover,
 .actionButton:focus-visible {
   color: var(--color-text);
 }

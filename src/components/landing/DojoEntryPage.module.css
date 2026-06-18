@@ -19,9 +19,7 @@
   --entry-page-background-start: #0b0d12;
   --entry-page-background-end: #050609;
   --entry-card-background: rgb(255 255 255 / 0.035);
-  --entry-card-background-hover: rgb(255 255 255 / 0.055);
   --entry-card-border: rgb(255 255 255 / 0.14);
-  --entry-card-border-hover: rgb(255 255 255 / 0.24);
   --entry-card-highlight: rgb(255 255 255 / 0.1);
 
   display: grid;
@@ -150,24 +148,8 @@
   overflow-wrap: anywhere;
 }
 
-@media (hover: hover) {
-  .actionCard:hover {
-    border-color: var(--entry-card-border-hover);
-    background: var(--entry-card-background-hover);
-    box-shadow:
-      inset 0 var(--space-px) 0 rgb(255 255 255 / 0.12),
-      0 28px 90px rgb(0 0 0 / 0.46);
-    translate: 0 -1px;
-  }
-}
-
 .actionCard:focus {
   outline: none;
-}
-
-.actionCard:active {
-  background: rgb(255 255 255 / 0.03);
-  translate: 0 0;
 }
 
 .actionCard:focus-visible {

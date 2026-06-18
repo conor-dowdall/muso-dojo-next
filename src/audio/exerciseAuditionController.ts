@@ -41,6 +41,12 @@ interface ActiveAudition {
   unsubscribers: Map<AudioVoiceHandle, () => void>;
 }
 
+function getVisibleAuditionKeys(notes: readonly ExerciseAuditionNote[]) {
+  return new Set(
+    notes.flatMap((note) => (note.key === undefined ? [] : [note.key])),
+  );
+}
+
 export class ExerciseAuditionController {
   private active: ActiveAudition | undefined;
   private listeners = new Set<() => void>();
@@ -67,7 +73,9 @@ export class ExerciseAuditionController {
     this.emit();
   }
 
-  private clearActive() {
+  private clearActive(
+    nextVisibleKeys: ReadonlySet<string> = EMPTY_ACTIVE_KEYS,
+  ) {
     const active = this.active;
     this.active = undefined;
 
@@ -77,7 +85,7 @@ export class ExerciseAuditionController {
       this.audioEngine.cancelPlaybackGroup(active.group);
     }
 
-    this.setActiveKeys(EMPTY_ACTIVE_KEYS);
+    this.setActiveKeys(nextVisibleKeys);
   }
 
   private finishVoice(
@@ -119,16 +127,22 @@ export class ExerciseAuditionController {
 
   async audition(request: ExerciseAuditionRequest) {
     const revision = ++this.revision;
-    this.clearActive();
 
     if (request.notes.length === 0 || request.durationSeconds <= 0) {
+      this.clearActive();
       return false;
     }
+
+    const visibleKeys = getVisibleAuditionKeys(request.notes);
+    this.clearActive(visibleKeys);
 
     const prepared = await this.audioEngine.prime();
     const currentTime = this.audioEngine.getCurrentTime();
 
     if (!prepared || currentTime === undefined || revision !== this.revision) {
+      if (revision === this.revision) {
+        this.setActiveKeys(EMPTY_ACTIVE_KEYS);
+      }
       return false;
     }
 
@@ -150,6 +164,9 @@ export class ExerciseAuditionController {
 
     if (revision !== this.revision || scheduled.length === 0) {
       this.audioEngine.cancelPlaybackGroup(group);
+      if (revision === this.revision) {
+        this.setActiveKeys(EMPTY_ACTIVE_KEYS);
+      }
       return false;
     }
 

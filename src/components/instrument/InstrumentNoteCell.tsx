@@ -10,7 +10,8 @@ import { type ActiveNote } from "@/types/instrument-active-note";
 import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import { type InstrumentNoteColor } from "@/types/note-colors";
 import { createInstrumentNoteInteractionTarget } from "@/utils/instrument/createInstrumentNoteInteractionTarget";
-import { isPrimaryPointerActivation } from "@/utils/interaction/isPrimaryPointerActivation";
+import { isInstrumentNotePointerActivation } from "@/utils/interaction/isPrimaryPointerActivation";
+import { setPointerModality } from "@/utils/interaction/pointerModality";
 import styles from "./InstrumentNote.module.css";
 
 interface InstrumentNoteCellProps {
@@ -66,12 +67,17 @@ function InstrumentNoteCellBase({
   surface,
 }: InstrumentNoteCellProps) {
   const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
-    if (!isPrimaryPointerActivation(event)) {
+    if (!isInstrumentNotePointerActivation(event)) {
       return;
     }
 
+    setPointerModality(event.currentTarget, event.pointerType);
     onPointerDown?.(event);
     onInteract?.(createInstrumentNoteInteractionTarget(noteKey, midi));
+  };
+
+  const handlePointerEnter = (event: PointerEvent<HTMLButtonElement>) => {
+    setPointerModality(event.currentTarget, event.pointerType);
   };
 
   // Individual note emphasis (from ActiveNote) or fallback:
@@ -96,6 +102,7 @@ function InstrumentNoteCellBase({
       data-note-placement={notePlacement}
       style={style}
       onPointerDown={handlePointerDown}
+      onPointerEnter={handlePointerEnter}
       onKeyDown={(e) => handleKeyDown(e, noteKey)}
     >
       <InstrumentNote

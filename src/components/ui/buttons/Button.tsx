@@ -1,5 +1,6 @@
 import { yieldToPaint } from "@/utils/browser/yieldToPaint";
-import { type MouseEvent, type ReactNode } from "react";
+import { setPointerModality } from "@/utils/interaction/pointerModality";
+import { type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import styles from "./Button.module.css";
 import {
   Typography,
@@ -133,6 +134,8 @@ export function Button({
   type = "button",
   shouldYield = true,
   onClick,
+  onPointerDown,
+  onPointerEnter,
   style,
   ...props
 }: ButtonProps) {
@@ -144,6 +147,14 @@ export function Button({
     } else {
       onClick?.(e);
     }
+  };
+  const handlePointerDown = (e: PointerEvent<HTMLButtonElement>) => {
+    setPointerModality(e.currentTarget, e.pointerType);
+    onPointerDown?.(e);
+  };
+  const handlePointerEnter = (e: PointerEvent<HTMLButtonElement>) => {
+    setPointerModality(e.currentTarget, e.pointerType);
+    onPointerEnter?.(e);
   };
 
   const buttonClasses = [
@@ -211,6 +222,8 @@ export function Button({
       className={buttonClasses}
       aria-pressed={selectionSemantics === "pressed" ? selected : undefined}
       onClick={handleClick}
+      onPointerDown={handlePointerDown}
+      onPointerEnter={handlePointerEnter}
       style={style}
       {...props}
     >

@@ -4,18 +4,14 @@
     var(--color-interactive-neutral) 92%,
     var(--color-base)
   );
-  --tactile-hover-background: var(--interactive-surface-hover-background);
   --tactile-selected-background: var(--interactive-surface-selected-background);
   --tactile-unavailable-background: var(--color-control-unavailable-background);
   --button-outline-background: var(--tactile-rest-background);
-  --button-background-hover: var(--tactile-hover-background);
   --button-active-background: var(--tactile-selected-background);
   --button-border-color: var(--interactive-surface-rest-border-color);
-  --button-border-color-hover: var(--interactive-surface-hover-border-color);
   --button-active-border-color: var(
     --interactive-surface-selected-border-color
   );
-  --interact-y-hover: 0;
   --interact-ease: var(--ease-out);
 
   background-color: var(--tactile-rest-background);
@@ -34,24 +30,4 @@
 
 .tactileButton[data-control-state="unavailable"] [data-sizing] {
   opacity: var(--control-unavailable-content-opacity);
-}
-
-@media (hover: hover) {
-  .tactileButton[data-control-state="idle"]:hover {
-    background-color: var(--tactile-hover-background);
-  }
-
-  .tactileButton[data-control-state="selected"]:hover {
-    background-color: var(--tactile-selected-background);
-  }
-
-  .tactileButton[data-control-state="unavailable"]:hover {
-    background-color: var(--tactile-unavailable-background);
-    color: var(--color-text-muted);
-  }
-}
-
-.tactileButton[data-control-state="unavailable"]:active {
-  background-color: var(--tactile-unavailable-background);
-  color: var(--color-text-muted);
 }
