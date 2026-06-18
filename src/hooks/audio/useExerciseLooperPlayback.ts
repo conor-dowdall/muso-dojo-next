@@ -28,6 +28,8 @@ import { type ExerciseSubdivision } from "@/types/session";
 import { type ExerciseCountInBeats } from "@/types/session";
 
 const EXERCISE_AUDITION_DURATION_SECONDS = 0.55;
+const EXERCISE_VISUAL_STEP_LEAD_SECONDS = 0.02;
+const EXERCISE_VISUAL_STEP_LEAD_MAX_DURATION_RATIO = 0.35;
 
 function createPlaybackEvents(
   steps: readonly ExerciseSequenceStep[],
@@ -69,6 +71,35 @@ function getCurrentOutputTime() {
   return currentContextTime === undefined
     ? estimatedOutputTime
     : Math.min(estimatedOutputTime, currentContextTime);
+}
+
+function normalizeTempo(tempoBpm: number) {
+  return Math.min(300, Math.max(30, Math.round(tempoBpm)));
+}
+
+export function getExerciseVisualStepLeadSeconds(
+  events: readonly ExercisePlaybackEvent[],
+  tempoBpm: number,
+) {
+  if (events.length === 0) {
+    return 0;
+  }
+
+  const secondsPerBeat = 60 / normalizeTempo(tempoBpm);
+  const shortestStepDurationSeconds = events.reduce(
+    (shortestDuration, event) =>
+      Math.min(shortestDuration, event.durationBeats * secondsPerBeat),
+    Number.POSITIVE_INFINITY,
+  );
+
+  if (!Number.isFinite(shortestStepDurationSeconds)) {
+    return 0;
+  }
+
+  return Math.min(
+    EXERCISE_VISUAL_STEP_LEAD_SECONDS,
+    shortestStepDurationSeconds * EXERCISE_VISUAL_STEP_LEAD_MAX_DURATION_RATIO,
+  );
 }
 
 export function useExerciseLooperPlayback({
@@ -121,6 +152,10 @@ export function useExerciseLooperPlayback({
     }),
     [audioPresetId, countInBeats, events, id, metronomeEnabled, tempoBpm],
   );
+  const visualStepLeadSeconds = useMemo(
+    () => getExerciseVisualStepLeadSeconds(events, tempoBpm),
+    [events, tempoBpm],
+  );
   const submittedRequest = useRef(request);
 
   const start = useCallback(() => {
@@ -170,7 +205,9 @@ export function useExerciseLooperPlayback({
       const nextStepIndex =
         outputTime === undefined
           ? undefined
-          : exercisePlaybackCoordinator.getActiveStepIndex(outputTime);
+          : exercisePlaybackCoordinator.getActiveStepIndex(
+              outputTime + visualStepLeadSeconds,
+            );
 
       if (nextStepIndex !== lastStepIndex) {
         lastStepIndex = nextStepIndex;
@@ -184,7 +221,7 @@ export function useExerciseLooperPlayback({
 
     frameId = window.requestAnimationFrame(update);
     return () => window.cancelAnimationFrame(frameId);
-  }, [isPlaying]);
+  }, [isPlaying, visualStepLeadSeconds]);
 
   useEffect(
     () => () => {
