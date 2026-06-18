@@ -12,6 +12,7 @@ import {
 import { flushSync } from "react-dom";
 import {
   ExerciseAuditionController,
+  ensureAudioReady,
   exercisePlaybackRequestsAreEqual,
   exercisePlaybackCoordinator,
   getDefaultAudioPresetId,
@@ -174,6 +175,7 @@ export function useExerciseLooperPlayback({
       setActiveStepIndex(undefined);
       auditionController.cancel();
     });
+    void ensureAudioReady();
     submittedRequest.current = request;
     void exercisePlaybackCoordinator.start(request);
   }, [auditionController, request]);
@@ -183,6 +185,7 @@ export function useExerciseLooperPlayback({
   }, [id]);
   const auditionNotes = useCallback(
     (notes: readonly ExerciseAuditionNote[]) => {
+      void ensureAudioReady();
       void auditionController.audition({
         durationSeconds: EXERCISE_AUDITION_DURATION_SECONDS,
         notes,

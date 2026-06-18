@@ -1,7 +1,12 @@
 "use client";
 
 import { AudioWaveform, SwatchBook } from "lucide-react";
-import { audioPresets, musoAudioEngine, type AudioPresetId } from "@/audio";
+import {
+  audioPresets,
+  ensureAudioReady,
+  musoAudioEngine,
+  type AudioPresetId,
+} from "@/audio";
 import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
 import {
   DisclosureListGroup,
@@ -30,6 +35,7 @@ interface DroneOptionsDialogProps {
 }
 
 function auditionAudioPreset(audioPresetId: AudioPresetId) {
+  void ensureAudioReady();
   void musoAudioEngine.playNote({
     midiNote: 48,
     presetId: audioPresetId,

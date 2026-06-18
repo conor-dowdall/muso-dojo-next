@@ -1,0 +1,104 @@
+.viewport {
+  position: fixed;
+  z-index: var(--z-index-max);
+  inset-inline: var(--space-3);
+  inset-block-end: max(var(--space-4), env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.pill {
+  appearance: none;
+  display: inline-flex;
+  max-inline-size: min(100%, 22rem);
+  min-block-size: var(--control-size-md);
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: var(--border-width-base) solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  box-shadow: var(--shadow-dialog);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-none);
+  pointer-events: auto;
+  text-align: center;
+  animation: audio-status-enter var(--transition-medium) var(--ease-out) both;
+  -webkit-backdrop-filter: blur(var(--space-2));
+  backdrop-filter: blur(var(--space-2));
+}
+
+.pill[data-status="ready"] {
+  border-color: color-mix(
+    in srgb,
+    var(--color-accent) 42%,
+    var(--color-border)
+  );
+}
+
+.pill[data-status="unavailable"] {
+  border-color: color-mix(
+    in srgb,
+    var(--color-danger) 54%,
+    var(--color-border)
+  );
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  inline-size: var(--icon-size-base);
+  block-size: var(--icon-size-base);
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.pill[data-status="ready"] .icon {
+  color: var(--color-accent);
+}
+
+.pill[data-status="unavailable"] .icon {
+  color: var(--color-danger);
+}
+
+.icon > svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.pill[data-status="preparing"] .icon {
+  animation: audio-status-spin 900ms linear infinite;
+}
+
+@keyframes audio-status-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes audio-status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill,
+  .pill[data-status="preparing"] .icon {
+    animation: none;
+  }
+}

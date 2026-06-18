@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  ensureAudioReady,
   getDefaultAudioPresetId,
   musoAudioEngine,
   type AudioPresetId,
@@ -98,10 +99,15 @@ export function useDroneNotePlayback({
     activeIntervals,
     isNoteActive: (interval: number) => activeIntervals.includes(interval),
     stopAll: () => controller.stopAll(),
-    toggleNote: (note: DroneNotePlaybackNote) =>
+    toggleNote: (note: DroneNotePlaybackNote) => {
+      if (!activeIntervals.includes(note.interval)) {
+        void ensureAudioReady();
+      }
+
       controller.toggleNote(
         createDronePlaybackNote(note, resolvedAudioPresetId),
-      ),
+      );
+    },
   };
 }
 

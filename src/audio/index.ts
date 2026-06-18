@@ -1,5 +1,13 @@
 export { createWebAudioEngine, musoAudioEngine } from "./createWebAudioEngine";
 export {
+  audioReadiness,
+  createAudioReadinessController,
+  ensureAudioReady,
+  warmAudioSamplePackCache,
+  type AudioReadinessSnapshot,
+  type AudioReadinessStatus,
+} from "./audioReadiness";
+export {
   createLookaheadScheduler,
   type LookaheadScheduler,
   type LookaheadSchedulerEvent,

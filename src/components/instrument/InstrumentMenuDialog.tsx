@@ -2,7 +2,12 @@
 
 import { AudioWaveform, CaseSensitive, Ruler, SwatchBook } from "lucide-react";
 import { type StringInstrumentKey } from "@musodojo/music-theory-data";
-import { audioPresets, musoAudioEngine, type AudioPresetId } from "@/audio";
+import {
+  audioPresets,
+  ensureAudioReady,
+  musoAudioEngine,
+  type AudioPresetId,
+} from "@/audio";
 import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
 import { DisplayFormatPicker } from "@/components/music-theory/DisplayFormatPicker";
 import {
@@ -109,6 +114,7 @@ const instrumentSizeLabels = Object.fromEntries(
 ) as Record<InstrumentSize, string>;
 
 function auditionAudioPreset(audioPresetId: AudioPresetId) {
+  void ensureAudioReady();
   void musoAudioEngine.playNote({
     midiNote: 60,
     presetId: audioPresetId,

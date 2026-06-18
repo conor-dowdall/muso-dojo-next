@@ -1,7 +1,12 @@
 "use client";
 
 import { AudioWaveform, SwatchBook } from "lucide-react";
-import { audioPresets, musoAudioEngine, type AudioPresetId } from "@/audio";
+import {
+  audioPresets,
+  ensureAudioReady,
+  musoAudioEngine,
+  type AudioPresetId,
+} from "@/audio";
 import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
 import { WoodSurfaceChoiceList } from "@/components/appearance/WoodSurfaceChoiceList";
 import { WoodSurfaceSwatch } from "@/components/instrument/InstrumentThemeSwatch";
@@ -61,6 +66,7 @@ export function ExerciseLooperOptionsDialog({
             surface="exercise"
             onChange={(nextPresetId) => {
               onAudioPresetIdChange(nextPresetId);
+              void ensureAudioReady();
               void musoAudioEngine.playNote({
                 midiNote: 60,
                 presetId: nextPresetId,

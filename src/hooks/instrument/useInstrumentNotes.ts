@@ -8,6 +8,7 @@ import {
 } from "@/types/instrument-active-note";
 import {
   getDefaultAudioPresetId,
+  ensureAudioReady,
   musoAudioEngine,
   resolveAudioPreset,
   type AudioPresetId,
@@ -157,6 +158,7 @@ export function useInstrumentNotes({
         );
         const token = beginPreview(target.key);
 
+        void ensureAudioReady();
         void musoAudioEngine
           .playNote({
             midiNote: target.midi,

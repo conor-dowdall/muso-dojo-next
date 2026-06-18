@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import styles from "./page.module.css";
+import { AudioStatusViewport } from "@/components/audio/AudioStatusViewport";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { Dialog } from "@/components/ui/dialog/Dialog";
 import { AddToSessionDialog } from "@/components/session/AddToSessionDialog";
@@ -15,7 +16,12 @@ import {
   createInstrumentCreationRangeContextFromSignature,
   createInstrumentCreationRangeContextSignature,
 } from "@/components/instrument-creation/instrumentCreationRangeContext";
-import { exercisePlaybackCoordinator, musoAudioEngine } from "@/audio";
+import {
+  ensureAudioReady,
+  exercisePlaybackCoordinator,
+  musoAudioEngine,
+  warmAudioSamplePackCache,
+} from "@/audio";
 import { useAppStore, useHydrateAppStore } from "@/stores/appStore";
 import { createChordProgressionParts } from "@/utils/music-part/createChordProgressionParts";
 import { createDefaultMusicPartConfig } from "@/utils/session/createSessionEntities";
@@ -72,7 +78,7 @@ function HydratedSession({
   };
   const enterPerformanceMode = () => {
     setIsAddDialogOpen(false);
-    void musoAudioEngine.prime().catch(() => undefined);
+    void ensureAudioReady();
     onPerformanceModeChange(true);
   };
   const exitPerformanceMode = () => onPerformanceModeChange(false);
@@ -100,7 +106,7 @@ function HydratedSession({
 
     function handleFirstUserGesture() {
       removeListeners();
-      void musoAudioEngine.prime().catch(() => undefined);
+      void ensureAudioReady();
     }
 
     gestureEvents.forEach((eventName) => {
@@ -112,6 +118,27 @@ function HydratedSession({
     });
 
     return removeListeners;
+  }, [activeSessionId]);
+
+  useEffect(() => {
+    if (!activeSessionId) {
+      return;
+    }
+
+    const scheduleWarmCache = () => {
+      void warmAudioSamplePackCache();
+    };
+
+    if ("requestIdleCallback" in window) {
+      const idleHandle = window.requestIdleCallback(scheduleWarmCache, {
+        timeout: 3000,
+      });
+
+      return () => window.cancelIdleCallback(idleHandle);
+    }
+
+    const timeoutHandle = setTimeout(scheduleWarmCache, 1200);
+    return () => clearTimeout(timeoutHandle);
   }, [activeSessionId]);
 
   useEffect(() => {
@@ -234,6 +261,7 @@ function HydratedSession({
           onClose={closeAddDialog}
         />
       </Dialog>
+      <AudioStatusViewport />
     </>
   );
 }
