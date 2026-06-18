@@ -14,6 +14,7 @@ import { type ExerciseCountInBeats } from "@/types/session";
 
 const START_LOOKAHEAD_SECONDS = 0.08;
 const NOTE_GATE_RATIO = 0.9;
+const STOP_RELEASE_SECONDS = 0.08;
 
 export interface ExercisePlaybackEvent {
   durationBeats: number;
@@ -330,7 +331,9 @@ export class ExercisePlaybackCoordinator {
       const active = this.active;
       active.noteScheduler.stop();
       active.metronomeScheduler?.stop();
-      this.audioEngine.cancelPlaybackGroup(active.group);
+      this.audioEngine.cancelPlaybackGroup(active.group, {
+        releaseSeconds: STOP_RELEASE_SECONDS,
+      });
       this.active = undefined;
       this.snapshot = this.pendingStartId
         ? { ...idleSnapshot, pendingId: this.pendingStartId }

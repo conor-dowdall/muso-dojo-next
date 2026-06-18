@@ -11,6 +11,42 @@ const ACCENT_CLICK_GAIN = 0.58;
 const regularClickBufferCache = new WeakMap<AudioContext, AudioBuffer>();
 const accentClickBufferCache = new WeakMap<AudioContext, AudioBuffer>();
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function getLinearRampValue({
+  endTime,
+  endValue,
+  startTime,
+  startValue,
+  time,
+}: {
+  endTime: number;
+  endValue: number;
+  startTime: number;
+  startValue: number;
+  time: number;
+}) {
+  if (endTime <= startTime) {
+    return endValue;
+  }
+
+  const progress = clamp((time - startTime) / (endTime - startTime), 0, 1);
+
+  return startValue + (endValue - startValue) * progress;
+}
+
+function holdGainAtTime(gain: AudioParam, time: number, fallbackValue: number) {
+  if (typeof gain.cancelAndHoldAtTime === "function") {
+    gain.cancelAndHoldAtTime(time);
+    return;
+  }
+
+  gain.cancelScheduledValues(time);
+  gain.setValueAtTime(Math.max(0, fallbackValue), time);
+}
+
 function createClickBuffer({
   context,
   frequencyHz,
@@ -111,6 +147,7 @@ export function scheduleMetronomeClick({
   const fadeOutTime = stopTime - CLICK_FADE_OUT_SECONDS;
   const clickGain = accent ? ACCENT_CLICK_GAIN : REGULAR_CLICK_GAIN;
   let disconnected = false;
+  let cancellationRequested = false;
 
   source.buffer = getClickBuffer(context, accent);
   gain.gain.setValueAtTime(clickGain, startTime);
@@ -138,8 +175,33 @@ export function scheduleMetronomeClick({
     disconnect,
     startTime,
     stop: () => {
+      if (cancellationRequested) {
+        return;
+      }
+
+      cancellationRequested = true;
       try {
-        source.stop(Math.max(context.currentTime, startTime));
+        if (context.currentTime < startTime) {
+          source.stop(startTime);
+          return;
+        }
+
+        const cancelTime = Math.min(context.currentTime, stopTime);
+        const cancelGain =
+          cancelTime < fadeOutTime
+            ? clickGain
+            : getLinearRampValue({
+                endTime: stopTime,
+                endValue: 0,
+                startTime: fadeOutTime,
+                startValue: clickGain,
+                time: cancelTime,
+              });
+        const cancelStopTime = cancelTime + CLICK_FADE_OUT_SECONDS;
+
+        holdGainAtTime(gain.gain, cancelTime, cancelGain);
+        gain.gain.linearRampToValueAtTime(0, cancelStopTime);
+        source.stop(cancelStopTime + 0.001);
       } catch {
         // The click may already have stopped.
       }

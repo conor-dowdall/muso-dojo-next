@@ -276,6 +276,7 @@ describe("ExercisePlaybackCoordinator", () => {
   });
 
   it("schedules unaccented quarter-note clicks from the exercise origin", async () => {
+    const cancelPlaybackGroup = vi.fn();
     const scheduleMetronomeClick = vi.fn();
     const metronomeStart = vi.fn();
     const metronomeStop = vi.fn();
@@ -288,7 +289,7 @@ describe("ExercisePlaybackCoordinator", () => {
     );
     const coordinator = new ExercisePlaybackCoordinator(
       {
-        cancelPlaybackGroup: vi.fn(),
+        cancelPlaybackGroup,
         createPlaybackGroup: () => "group-0" as PlaybackGroupHandle,
         getCurrentTime: () => 10,
         prime: async () => true,
@@ -326,5 +327,8 @@ describe("ExercisePlaybackCoordinator", () => {
 
     coordinator.stop("looper");
     expect(metronomeStop).toHaveBeenCalledOnce();
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
+      releaseSeconds: 0.08,
+    });
   });
 });

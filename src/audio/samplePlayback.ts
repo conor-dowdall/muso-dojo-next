@@ -26,6 +26,7 @@ export interface ActiveSampleVoice {
 
 export interface ActiveDroneVoice {
   gain: GainNode;
+  getScheduledGain: (time: number) => number;
   midiNote: number;
   source: AudioBufferSourceNode;
   stop: (releaseSeconds?: number) => void;
@@ -34,6 +35,38 @@ export interface ActiveDroneVoice {
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+function getLinearRampValue({
+  endTime,
+  endValue,
+  startTime,
+  startValue,
+  time,
+}: {
+  endTime: number;
+  endValue: number;
+  startTime: number;
+  startValue: number;
+  time: number;
+}) {
+  if (endTime <= startTime) {
+    return endValue;
+  }
+
+  const progress = clamp((time - startTime) / (endTime - startTime), 0, 1);
+
+  return startValue + (endValue - startValue) * progress;
+}
+
+function holdGainAtTime(gain: AudioParam, time: number, fallbackValue: number) {
+  if (typeof gain.cancelAndHoldAtTime === "function") {
+    gain.cancelAndHoldAtTime(time);
+    return;
+  }
+
+  gain.cancelScheduledValues(time);
+  gain.setValueAtTime(Math.max(MIN_GAIN_VALUE, fallbackValue), time);
 }
 
 function getVoiceGain({
@@ -163,6 +196,33 @@ export function createSampleVoice({
   });
   let disconnected = false;
   let cancelStopRequested = false;
+  const getScheduledGain = (time: number) => {
+    if (time <= startAt) {
+      return MIN_GAIN_VALUE;
+    }
+
+    if (time < startAt + attackSeconds) {
+      return getLinearRampValue({
+        endTime: startAt + attackSeconds,
+        endValue: voiceGain,
+        startTime: startAt,
+        startValue: MIN_GAIN_VALUE,
+        time,
+      });
+    }
+
+    if (time < releaseStartTime) {
+      return voiceGain;
+    }
+
+    return getLinearRampValue({
+      endTime: releaseEndTime,
+      endValue: MIN_GAIN_VALUE,
+      startTime: releaseStartTime,
+      startValue: voiceGain,
+      time,
+    });
+  };
 
   source.buffer = buffer;
   source.playbackRate.setValueAtTime(playbackRate, startAt);
@@ -214,11 +274,7 @@ export function createSampleVoice({
     const stopStartTime = Math.max(context.currentTime, startAt);
     const stopTime = stopStartTime + Math.max(0, nextReleaseSeconds);
 
-    gain.gain.cancelScheduledValues(stopStartTime);
-    gain.gain.setValueAtTime(
-      Math.max(MIN_GAIN_VALUE, gain.gain.value),
-      stopStartTime,
-    );
+    holdGainAtTime(gain.gain, stopStartTime, getScheduledGain(stopStartTime));
     gain.gain.linearRampToValueAtTime(MIN_GAIN_VALUE, stopTime);
 
     try {
@@ -262,10 +318,10 @@ export function stopDroneVoice(
   const stopStartTime = audioContext.currentTime;
   const stopTime = stopStartTime + Math.max(0, releaseSeconds);
 
-  droneVoice.gain.gain.cancelScheduledValues(stopStartTime);
-  droneVoice.gain.gain.setValueAtTime(
-    Math.max(MIN_GAIN_VALUE, droneVoice.gain.gain.value),
+  holdGainAtTime(
+    droneVoice.gain.gain,
     stopStartTime,
+    droneVoice.getScheduledGain(stopStartTime),
   );
   droneVoice.gain.gain.linearRampToValueAtTime(MIN_GAIN_VALUE, stopTime);
 
@@ -323,17 +379,16 @@ export function createDroneVoice({
     velocity,
   });
   const attackSeconds = Math.max(0.04, getAttackSeconds(preset));
+  const startGain = MIN_GAIN_VALUE;
+  const targetGain = Math.max(MIN_GAIN_VALUE, voiceGain);
 
   source.buffer = buffer;
   source.loop = true;
   source.loopStart = getLoopStartSeconds(region) ?? region.offsetSeconds;
   source.loopEnd = getLoopEndSeconds(region) ?? getRegionEndSeconds(region);
   source.playbackRate.setValueAtTime(playbackRate, startTime);
-  gain.gain.setValueAtTime(MIN_GAIN_VALUE, startTime);
-  gain.gain.linearRampToValueAtTime(
-    Math.max(MIN_GAIN_VALUE, voiceGain),
-    startTime + attackSeconds,
-  );
+  gain.gain.setValueAtTime(startGain, startTime);
+  gain.gain.linearRampToValueAtTime(targetGain, startTime + attackSeconds);
   source.connect(gain);
   gain.connect(context.destination);
   source.start(startTime, region.offsetSeconds);
@@ -358,6 +413,19 @@ export function createDroneVoice({
     gain,
     midiNote,
     source,
+    getScheduledGain: (time: number) => {
+      if (time < startTime + attackSeconds) {
+        return getLinearRampValue({
+          endTime: startTime + attackSeconds,
+          endValue: targetGain,
+          startTime,
+          startValue: startGain,
+          time,
+        });
+      }
+
+      return targetGain;
+    },
     stop: (releaseSeconds?: number) =>
       stopDroneVoice(droneVoice, context, releaseSeconds),
     velocity: velocity ?? 1,

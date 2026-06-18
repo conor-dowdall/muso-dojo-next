@@ -228,10 +228,7 @@ export function createWebAudioEngine(): AudioEngine {
         return;
       }
 
-      group.clicks.forEach((click) => {
-        click.stop();
-        click.disconnect();
-      });
+      group.clicks.forEach((click) => click.stop());
       group.voices.forEach((voiceHandle) =>
         stopVoice(voiceHandle, options?.releaseSeconds),
       );
@@ -523,10 +520,7 @@ export function createWebAudioEngine(): AudioEngine {
     },
     stopAll: () => {
       playbackGroups.forEach((group) => {
-        group.clicks.forEach((click) => {
-          click.stop();
-          click.disconnect();
-        });
+        group.clicks.forEach((click) => click.stop());
         group.voices.forEach((handle) => stopVoice(handle, 0.02));
       });
       playbackGroups.clear();
