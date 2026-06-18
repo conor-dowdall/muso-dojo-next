@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
-import { Tooltip } from "@/components/ui/tooltip/Tooltip";
 import { RootNotePicker } from "@/components/music-theory/RootNotePicker";
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
 import { getNoteCollectionDisplayName } from "@/utils/music-theory/getNoteCollectionDisplayName";
@@ -50,22 +49,18 @@ export function MusicPartHeader({
         className={className}
         primary={
           <Heading as="h2" className={styles.titleWrapper}>
-            <Tooltip text="Change root note" describeChild={false}>
-              <Button
-                aria-label={`Change root note. Current: ${rootNoteLabel}`}
-                label={rootNoteLabel}
-                size="sm"
-                onClick={() => setDialogMode("root")}
-              />
-            </Tooltip>
-            <Tooltip text="Change chord or scale" describeChild={false}>
-              <Button
-                aria-label={`Change chord or scale. Current: ${noteCollectionName}`}
-                label={noteCollectionName}
-                size="sm"
-                onClick={() => setDialogMode("collection")}
-              />
-            </Tooltip>
+            <Button
+              aria-label={`Change root note. Current: ${rootNoteLabel}`}
+              label={rootNoteLabel}
+              size="sm"
+              onClick={() => setDialogMode("root")}
+            />
+            <Button
+              aria-label={`Change chord or scale. Current: ${noteCollectionName}`}
+              label={noteCollectionName}
+              size="sm"
+              onClick={() => setDialogMode("collection")}
+            />
           </Heading>
         }
         actions={

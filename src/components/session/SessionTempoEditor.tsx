@@ -99,7 +99,6 @@ export function SessionTempoEditor({
         }
         size="lg"
         shouldYield={false}
-        tooltip={false}
         onClick={() => {
           setDraftTempo(null);
           onTempoBpmChange(nextTempo);

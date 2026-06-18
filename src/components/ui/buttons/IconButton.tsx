@@ -1,5 +1,4 @@
 import { type ReactNode } from "react";
-import { Tooltip, type TooltipSide } from "@/components/ui/tooltip/Tooltip";
 import { Button, type ButtonProps } from "./Button";
 import styles from "./IconButton.module.css";
 
@@ -18,28 +17,19 @@ export type IconButtonProps = Omit<
 > & {
   "aria-label": string;
   icon: ReactNode;
-  /**
-   * !!! LLM COPY CONVENTION: Icon button tooltips follow Tooltip copy rules.
-   * Prefer sentence case with no period. If the aria-label would look too
-   * formal as visible tooltip text, pass a separate sentence-case tooltip.
-   */
-  tooltip?: string | false;
-  tooltipSide?: TooltipSide;
 };
 
 export function IconButton({
   "aria-label": ariaLabel,
   className = "",
   icon,
-  tooltip,
-  tooltipSide,
   ...props
 }: IconButtonProps) {
   const buttonClasses = [styles.iconButton, className]
     .filter(Boolean)
     .join(" ");
 
-  const button = (
+  return (
     <Button
       {...props}
       aria-label={ariaLabel}
@@ -47,22 +37,5 @@ export function IconButton({
       icon={icon}
       iconAriaHidden
     />
-  );
-
-  if (tooltip === false) {
-    return button;
-  }
-
-  const tooltipText = tooltip ?? ariaLabel;
-  const tooltipAddsDescription = tooltipText !== ariaLabel;
-
-  return (
-    <Tooltip
-      describeChild={tooltipAddsDescription}
-      text={tooltipText}
-      side={tooltipSide}
-    >
-      {button}
-    </Tooltip>
   );
 }

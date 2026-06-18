@@ -266,13 +266,6 @@ export function ModuleCreationList({
             actionDisabled={hasSettings ? !selected : undefined}
             actionIcon={hasSettings ? <SlidersHorizontal /> : undefined}
             actionLabel={hasSettings ? `${option.label} settings` : undefined}
-            actionTooltip={
-              hasSettings
-                ? selected
-                  ? `${option.label} settings`
-                  : `Add ${option.label} to edit settings`
-                : undefined
-            }
             icon={option.icon}
             isActionOpen={isSettingsOpen}
             keepPanelMounted={hasSettings}

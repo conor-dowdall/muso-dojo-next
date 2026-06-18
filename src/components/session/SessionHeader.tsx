@@ -63,7 +63,6 @@ export function SessionHeader({
                 disabled={!hasActiveSession}
                 icon={<Plus />}
                 size="sm"
-                tooltip="Add to session"
                 variant="filled"
                 onClick={onOpenAddDialog}
               />
@@ -73,7 +72,6 @@ export function SessionHeader({
                 icon={<Maximize2 />}
                 size="sm"
                 shouldYield={false}
-                tooltip="Performance mode"
                 onClick={onEnterPerformanceMode}
               />
               <OverflowMenuButton

@@ -157,7 +157,6 @@ export function DialogHeader({
           aria-label="Close dialog"
           icon={<X />}
           size="sm"
-          tooltip={false}
           variant="ghost"
           onClick={onClose}
           shouldYield={false}

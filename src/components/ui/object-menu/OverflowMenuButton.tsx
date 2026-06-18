@@ -6,12 +6,8 @@ import {
   type IconButtonProps,
 } from "@/components/ui/buttons/IconButton";
 
-type OverflowMenuButtonProps = Omit<
-  IconButtonProps,
-  "aria-label" | "icon" | "tooltip"
-> & {
+type OverflowMenuButtonProps = Omit<IconButtonProps, "aria-label" | "icon"> & {
   "aria-label": string;
-  tooltip?: IconButtonProps["tooltip"];
 };
 
 /**
@@ -23,7 +19,6 @@ type OverflowMenuButtonProps = Omit<
 export function OverflowMenuButton({
   "aria-label": ariaLabel,
   size = "sm",
-  tooltip,
   ...props
 }: OverflowMenuButtonProps) {
   return (
@@ -32,7 +27,6 @@ export function OverflowMenuButton({
       aria-label={ariaLabel}
       icon={<MoreHorizontal />}
       size={size}
-      tooltip={tooltip === undefined ? ariaLabel : tooltip}
     />
   );
 }

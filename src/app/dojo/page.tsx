@@ -156,7 +156,6 @@ function HydratedSession({
             className={styles.performanceModeExit}
             icon={<X />}
             size="sm"
-            tooltip={false}
             variant="ghost"
             shouldYield={false}
             onClick={exitPerformanceMode}

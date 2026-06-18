@@ -13,7 +13,6 @@ export type HeadingProps<T extends ElementType = "h2"> = TypographyProps<T> & {
  * words lowercase unless first/last: "Instrument Options", "Choose Root Note".
  * Preserve user-authored names and music/content labels as their source data
  * supplies them.
- * Tooltips are intentionally different; keep tooltip text in sentence case.
  */
 export function Heading<T extends HeadingTag = "h2">({
   as,

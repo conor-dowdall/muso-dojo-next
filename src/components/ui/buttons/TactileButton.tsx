@@ -79,7 +79,6 @@ export function TactileIconButton({
   onPress,
   onUnavailablePress,
   selected,
-  tooltip = false,
   unavailable,
   ...props
 }: TactileIconButtonProps) {
@@ -95,7 +94,6 @@ export function TactileIconButton({
       data-control-state={getControlState(selected, unavailable)}
       icon={icon}
       selected={unavailable ? false : selected}
-      tooltip={tooltip}
     />
   );
 }

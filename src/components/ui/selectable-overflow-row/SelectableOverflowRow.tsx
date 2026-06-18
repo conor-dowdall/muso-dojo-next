@@ -25,7 +25,6 @@ export interface SelectableActionRowProps {
   actionLabel?: string;
   actionSelected?: boolean;
   actionSize?: IconButtonProps["size"];
-  actionTooltip?: IconButtonProps["tooltip"];
   actionVariant?: IconButtonProps["variant"];
   children?: ReactNode;
   icon?: ReactNode;
@@ -64,7 +63,6 @@ export function SelectableActionRow({
   actionLabel,
   actionSelected,
   actionSize = "xl",
-  actionTooltip,
   actionVariant,
   children,
   icon,
@@ -138,7 +136,6 @@ export function SelectableActionRow({
             selected={actionSelected ?? isActionOpen}
             selectionSemantics="visual"
             size={actionSize}
-            tooltip={actionTooltip ?? actionLabel}
             variant={actionVariant ?? (isActionOpen ? "filled" : "outline")}
             onClick={onAction}
           />

@@ -91,28 +91,24 @@ const noteInteractionModes = [
     label: "Play",
     ariaLabel: noteInteractionModeLabels.play,
     icon: <Volume2 />,
-    tooltip: noteInteractionModeLabels.play,
   },
   {
     id: "edit-one",
     label: "Edit",
     ariaLabel: noteInteractionModeLabels["edit-one"],
     icon: <Pencil />,
-    tooltip: noteInteractionModeLabels["edit-one"],
   },
   {
     id: "edit-pitch-class",
     label: "Edit All",
     ariaLabel: noteInteractionModeLabels["edit-pitch-class"],
     icon: <SquarePen />,
-    tooltip: noteInteractionModeLabels["edit-pitch-class"],
   },
 ] as const satisfies readonly {
   ariaLabel: string;
   icon: ReactNode;
   id: InstrumentNoteInteractionMode;
   label: string;
-  tooltip: string;
 }[];
 
 const noteEmphasisLabels = {
@@ -237,11 +233,6 @@ export const InstrumentHeaderActions = ({
                 icon={getNoteEmphasisIcon(noteEmphasis)}
                 size="sm"
                 onClick={cycleNoteSize}
-                tooltip={
-                  activeNotesLocked
-                    ? "Unlock to change note size"
-                    : `Note size: ${noteEmphasisLabel}`
-                }
               />
             </ControlHeaderCluster>
 
@@ -262,9 +253,6 @@ export const InstrumentHeaderActions = ({
                     size="sm"
                     onClick={() => setNoteInteractionMode(mode.id)}
                     selected={effectiveNoteInteractionMode === mode.id}
-                    tooltip={
-                      modeDisabled ? "Unlock to edit notes" : mode.tooltip
-                    }
                     variant={
                       effectiveNoteInteractionMode === mode.id
                         ? "filled"
@@ -283,7 +271,6 @@ export const InstrumentHeaderActions = ({
                 size="sm"
                 onClick={toggleActiveNotesLock}
                 selected={activeNotesLocked}
-                tooltip={activeNotesLockLabel}
                 variant={activeNotesLocked ? "filled" : "outline"}
               />
               <IconButton
@@ -292,7 +279,6 @@ export const InstrumentHeaderActions = ({
                 size="sm"
                 onClick={onResetNotes}
                 disabled={!canResetNotes}
-                tooltip={resetNotesLabel}
                 variant={canResetNotes ? "filled" : "ghost"}
               />
             </ControlHeaderCluster>

@@ -19,7 +19,6 @@ export function SessionMenu({ onOpenDojoSettings }: SessionMenuProps) {
         aria-label="Dojo settings"
         icon={<Settings2 />}
         size="sm"
-        tooltip="Dojo settings"
         onClick={onOpenDojoSettings}
       />
     </span>
