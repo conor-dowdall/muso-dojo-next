@@ -30,6 +30,7 @@ import { type ExerciseCountInBeats } from "@/types/session";
 const EXERCISE_AUDITION_DURATION_SECONDS = 0.55;
 const EXERCISE_VISUAL_STEP_LEAD_SECONDS = 0.02;
 const EXERCISE_VISUAL_STEP_LEAD_MAX_DURATION_RATIO = 0.35;
+const EMPTY_AUDITION_ACTIVE_KEYS: ReadonlySet<string> = new Set();
 
 function createPlaybackEvents(
   steps: readonly ExerciseSequenceStep[],
@@ -71,6 +72,16 @@ function getCurrentOutputTime() {
   return currentContextTime === undefined
     ? estimatedOutputTime
     : Math.min(estimatedOutputTime, currentContextTime);
+}
+
+function getCurrentPlaybackStepIndex(visualStepLeadSeconds: number) {
+  const outputTime = getCurrentOutputTime();
+
+  return outputTime === undefined
+    ? undefined
+    : exercisePlaybackCoordinator.getActiveStepIndex(
+        outputTime + visualStepLeadSeconds,
+      );
 }
 
 function normalizeTempo(tempoBpm: number) {
@@ -159,11 +170,15 @@ export function useExerciseLooperPlayback({
   const submittedRequest = useRef(request);
 
   const start = useCallback(() => {
-    auditionController.cancel();
+    flushSync(() => {
+      setActiveStepIndex(undefined);
+      auditionController.cancel();
+    });
     submittedRequest.current = request;
     void exercisePlaybackCoordinator.start(request);
   }, [auditionController, request]);
   const stop = useCallback(() => {
+    flushSync(() => setActiveStepIndex(undefined));
     exercisePlaybackCoordinator.stop(id);
   }, [id]);
   const auditionNotes = useCallback(
@@ -187,6 +202,7 @@ export function useExerciseLooperPlayback({
       isActive &&
       !exercisePlaybackRequestsAreEqual(submittedRequest.current, request)
     ) {
+      setActiveStepIndex(undefined);
       submittedRequest.current = request;
       void exercisePlaybackCoordinator.start(request);
     }
@@ -200,22 +216,25 @@ export function useExerciseLooperPlayback({
     let frameId = 0;
     let lastStepIndex: number | undefined | null = null;
 
-    const update = () => {
-      const outputTime = getCurrentOutputTime();
-      const nextStepIndex =
-        outputTime === undefined
-          ? undefined
-          : exercisePlaybackCoordinator.getActiveStepIndex(
-              outputTime + visualStepLeadSeconds,
-            );
+    const commitStepIndex = (syncToFrame: boolean) => {
+      const nextStepIndex = getCurrentPlaybackStepIndex(visualStepLeadSeconds);
 
       if (nextStepIndex !== lastStepIndex) {
         lastStepIndex = nextStepIndex;
-        // Commit before this animation frame paints so the light does not trail
-        // the audible step by an additional browser frame.
-        flushSync(() => setActiveStepIndex(nextStepIndex));
-      }
 
+        if (syncToFrame) {
+          // Commit before this animation frame paints so the light does not trail
+          // the audible step by an additional browser frame.
+          flushSync(() => setActiveStepIndex(nextStepIndex));
+          return;
+        }
+
+        setActiveStepIndex(nextStepIndex);
+      }
+    };
+
+    const update = () => {
+      commitStepIndex(true);
       frameId = window.requestAnimationFrame(update);
     };
 
@@ -231,9 +250,13 @@ export function useExerciseLooperPlayback({
     [auditionController, id],
   );
 
+  const renderedActiveStepIndex =
+    isPlaying && activeStepIndex === undefined
+      ? getCurrentPlaybackStepIndex(visualStepLeadSeconds)
+      : activeStepIndex;
   const activeStep =
-    isPlaying && activeStepIndex !== undefined
-      ? steps[activeStepIndex]
+    isPlaying && renderedActiveStepIndex !== undefined
+      ? steps[renderedActiveStepIndex]
       : undefined;
   const activeCollectionPositions = useMemo(
     () =>
@@ -245,7 +268,9 @@ export function useExerciseLooperPlayback({
     activeAnchorPosition: activeStep?.notes[0]?.anchorPosition,
     activeCollectionPositions,
     audition,
-    auditionActiveKeys,
+    auditionActiveKeys: isActive
+      ? EMPTY_AUDITION_ACTIVE_KEYS
+      : auditionActiveKeys,
     auditionChord: auditionNotes,
     isActive,
     isPending,
