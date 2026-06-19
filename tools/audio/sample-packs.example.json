@@ -91,14 +91,9 @@
       "paddingSeconds": 0.02,
       "keys": [
         {
-          "id": "regular",
-          "midi": 77,
-          "sampleName": "Low Woodblock"
-        },
-        {
-          "id": "accent",
-          "midi": 76,
-          "sampleName": "High Woodblock"
+          "id": "click",
+          "midi": 33,
+          "sampleName": "Metronome Click"
         }
       ]
     }

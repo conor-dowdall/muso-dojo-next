@@ -6,38 +6,11 @@ import { type SamplePackId } from "./types";
 
 export const METRONOME_SAMPLE_PACK_ID = "metronome" satisfies SamplePackId;
 
-const METRONOME_REGULAR_REGION_ID = "metronome-regular";
-const METRONOME_ACCENT_REGION_ID = "metronome-accent";
-const CLICK_FADE_OUT_SECONDS = 0.012;
-const REGULAR_CLICK_GAIN = 0.82;
-const ACCENT_CLICK_GAIN = 0.9;
+const METRONOME_REGION_ID = "metronome-click";
+const CLICK_CANCEL_FADE_OUT_SECONDS = 0.004;
+const REGULAR_CLICK_GAIN = 0.7;
+const ACCENT_CLICK_GAIN = 1.2;
 const MIN_GAIN_VALUE = 0.0001;
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function getLinearRampValue({
-  endTime,
-  endValue,
-  startTime,
-  startValue,
-  time,
-}: {
-  endTime: number;
-  endValue: number;
-  startTime: number;
-  startValue: number;
-  time: number;
-}) {
-  if (endTime <= startTime) {
-    return endValue;
-  }
-
-  const progress = clamp((time - startTime) / (endTime - startTime), 0, 1);
-
-  return startValue + (endValue - startValue) * progress;
-}
 
 function holdGainAtTime(gain: AudioParam, time: number, fallbackValue: number) {
   if (typeof gain.cancelAndHoldAtTime === "function") {
@@ -49,18 +22,10 @@ function holdGainAtTime(gain: AudioParam, time: number, fallbackValue: number) {
   gain.setValueAtTime(Math.max(MIN_GAIN_VALUE, fallbackValue), time);
 }
 
-function getMetronomeRegion({
-  accent,
-  loaded,
-}: {
-  accent: boolean;
-  loaded: LoadedSamplePack;
-}) {
-  const regionId = accent
-    ? METRONOME_ACCENT_REGION_ID
-    : METRONOME_REGULAR_REGION_ID;
-
-  return loaded.pack.regions.find((region) => region.id === regionId);
+function getMetronomeRegion(loaded: LoadedSamplePack) {
+  return loaded.pack.regions.find(
+    (region) => region.id === METRONOME_REGION_ID,
+  );
 }
 
 export interface ScheduledMetronomeClick {
@@ -84,7 +49,7 @@ export function scheduleMetronomeClick({
   onEnded?: () => void;
   startTime: number;
 }): ScheduledMetronomeClick | undefined {
-  const region = getMetronomeRegion({ accent, loaded });
+  const region = getMetronomeRegion(loaded);
 
   if (!region) {
     return undefined;
@@ -93,15 +58,12 @@ export function scheduleMetronomeClick({
   const source = context.createBufferSource();
   const gain = context.createGain();
   const stopTime = startTime + region.durationSeconds;
-  const fadeOutTime = Math.max(startTime, stopTime - CLICK_FADE_OUT_SECONDS);
   const clickGain = accent ? ACCENT_CLICK_GAIN : REGULAR_CLICK_GAIN;
   let disconnected = false;
   let cancellationRequested = false;
 
   source.buffer = loaded.buffer;
   gain.gain.setValueAtTime(clickGain, startTime);
-  gain.gain.setValueAtTime(clickGain, fadeOutTime);
-  gain.gain.linearRampToValueAtTime(MIN_GAIN_VALUE, stopTime);
   source.connect(gain);
   gain.connect(destination);
 
@@ -153,19 +115,12 @@ export function scheduleMetronomeClick({
         }
 
         const cancelTime = Math.min(context.currentTime, stopTime);
-        const cancelGain =
-          cancelTime < fadeOutTime
-            ? clickGain
-            : getLinearRampValue({
-                endTime: stopTime,
-                endValue: MIN_GAIN_VALUE,
-                startTime: fadeOutTime,
-                startValue: clickGain,
-                time: cancelTime,
-              });
-        const cancelStopTime = cancelTime + CLICK_FADE_OUT_SECONDS;
+        const cancelStopTime = Math.min(
+          stopTime,
+          cancelTime + CLICK_CANCEL_FADE_OUT_SECONDS,
+        );
 
-        holdGainAtTime(gain.gain, cancelTime, cancelGain);
+        holdGainAtTime(gain.gain, cancelTime, clickGain);
         gain.gain.linearRampToValueAtTime(MIN_GAIN_VALUE, cancelStopTime);
         source.stop(cancelStopTime + 0.001);
       } catch {

@@ -2,32 +2,21 @@ import { describe, expect, it } from "vitest";
 import { samplePacks } from "@/audio/samplePacks.generated";
 
 describe("generated sample packs", () => {
-  it("includes exact woodblock regions for the metronome pack", () => {
+  it("includes one exact click region for the metronome pack", () => {
     const metronome = samplePacks.metronome;
-    const regular = metronome.regions.find(
-      (region) => region.id === "metronome-regular",
-    );
-    const accent = metronome.regions.find(
-      (region) => region.id === "metronome-accent",
-    );
+    const [click] = metronome.regions;
 
-    expect(regular).toMatchObject({
+    expect(metronome.regions).toHaveLength(1);
+    expect(click).toMatchObject({
+      durationSeconds: expect.any(Number),
       exclusiveClass: 0,
-      highMidi: 77,
-      lowMidi: 77,
-      rootMidi: 77,
-      sourceSampleName: "Low Woodblock(L)",
+      highMidi: 33,
+      lowMidi: 33,
+      rootMidi: 33,
+      sourceSampleName: "Metronome Click",
       velocityHigh: 127,
       velocityLow: 0,
     });
-    expect(accent).toMatchObject({
-      exclusiveClass: 0,
-      highMidi: 76,
-      lowMidi: 76,
-      rootMidi: 76,
-      sourceSampleName: "High Woodblock(L)",
-      velocityHigh: 127,
-      velocityLow: 0,
-    });
+    expect(click?.durationSeconds).toBeLessThan(0.02);
   });
 });

@@ -416,15 +416,26 @@ describe("createWebAudioEngine", () => {
 
     const regularSource = MockAudioContext.bufferSources.at(-2)!;
     const accentSource = MockAudioContext.bufferSources.at(-1)!;
+    const regularGain = MockAudioContext.gainNodes.at(-2)!
+      .gain as unknown as MockAudioParam;
+    const accentGain = MockAudioContext.gainNodes.at(-1)!
+      .gain as unknown as MockAudioParam;
     const regularStart = regularSource.startCalls.at(-1)!;
     const accentStart = accentSource.startCalls.at(-1)!;
+    const regularLevel = regularGain.events.find(
+      (event) => event.type === "set" && event.time === 1,
+    )?.value;
+    const accentLevel = accentGain.events.find(
+      (event) => event.type === "set" && event.time === 2,
+    )?.value;
 
     expect(regularStart.time).toBe(1);
     expect(accentStart.time).toBe(2);
-    expect(regularStart.offset).toBe(0);
-    expect(accentStart.offset).toBeGreaterThan(regularStart.offset ?? 0);
+    expect(regularStart.offset).toBeGreaterThanOrEqual(0);
+    expect(accentStart.offset).toBe(regularStart.offset);
     expect(regularStart.duration).toBeGreaterThan(0);
-    expect(accentStart.duration).toBeGreaterThan(0);
+    expect(accentStart.duration).toBe(regularStart.duration);
+    expect(accentLevel).toBeGreaterThan(regularLevel ?? 0);
   });
 
   it("creates looped drones from the bowed string sample regions", async () => {
