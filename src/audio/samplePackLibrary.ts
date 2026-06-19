@@ -12,6 +12,12 @@ export interface LoadedSamplePack {
   pack: SamplePack;
 }
 
+const samplePackAssets = new Map<SamplePackId, ArrayBuffer>();
+const loadingSamplePackAssets = new Map<
+  SamplePackId,
+  Promise<ArrayBuffer | undefined>
+>();
+
 export function getSamplePackIdFromUnknown(value: unknown): SamplePackId {
   return SAMPLE_PACK_IDS.includes(value as SamplePackId)
     ? (value as SamplePackId)
@@ -121,6 +127,57 @@ export function getScheduledOffset({
   return loopStartSeconds + loopOffsetSeconds;
 }
 
+export function loadSamplePackAsset(packId: SamplePackId) {
+  const cached = samplePackAssets.get(packId);
+
+  if (cached) {
+    return Promise.resolve(cached);
+  }
+
+  const loading = loadingSamplePackAssets.get(packId);
+
+  if (loading) {
+    return loading;
+  }
+
+  if (typeof fetch === "undefined") {
+    return Promise.resolve(undefined);
+  }
+
+  const pack = samplePacks[packId];
+  const loadPromise = fetch(pack.url)
+    .then((response) => (response.ok ? response.arrayBuffer() : undefined))
+    .then((arrayBuffer) => {
+      if (arrayBuffer) {
+        samplePackAssets.set(packId, arrayBuffer);
+      }
+
+      return arrayBuffer;
+    })
+    .catch(() => undefined)
+    .finally(() => {
+      loadingSamplePackAssets.delete(packId);
+    });
+
+  loadingSamplePackAssets.set(packId, loadPromise);
+  return loadPromise;
+}
+
+export function preloadSamplePackAssets() {
+  return Promise.all(
+    SAMPLE_PACK_IDS.map((packId) => loadSamplePackAsset(packId)),
+  ).then(() => undefined);
+}
+
+function releaseSamplePackAsset(packId: SamplePackId) {
+  samplePackAssets.delete(packId);
+}
+
+export function clearSamplePackAssetCacheForTests() {
+  samplePackAssets.clear();
+  loadingSamplePackAssets.clear();
+}
+
 export function createSamplePackLoader() {
   const loadedPacks = new Map<SamplePackId, LoadedSamplePack>();
   const loadingPacks = new Map<
@@ -145,8 +202,7 @@ export function createSamplePackLoader() {
     }
 
     const pack = samplePacks[packId];
-    const loadPromise = fetch(pack.url)
-      .then((response) => (response.ok ? response.arrayBuffer() : undefined))
+    const loadPromise = loadSamplePackAsset(packId)
       .then((arrayBuffer) =>
         arrayBuffer
           ? audioContext.decodeAudioData(arrayBuffer.slice(0))
@@ -159,6 +215,7 @@ export function createSamplePackLoader() {
 
         const loadedPack = { buffer, pack };
         loadedPacks.set(packId, loadedPack);
+        releaseSamplePackAsset(packId);
         return loadedPack;
       })
       .catch(() => undefined)

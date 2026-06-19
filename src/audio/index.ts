@@ -3,7 +3,6 @@ export {
   audioReadiness,
   createAudioReadinessController,
   ensureAudioReady,
-  warmAudioSamplePackCache,
   type AudioReadinessSnapshot,
   type AudioReadinessStatus,
 } from "./audioReadiness";
@@ -47,6 +46,7 @@ export {
   isAudioPresetAvailableOn,
   resolveAudioPreset,
 } from "./presets";
+export { preloadSamplePackAssets } from "./samplePackLibrary";
 export type {
   AudioEngine,
   AudioPreset,

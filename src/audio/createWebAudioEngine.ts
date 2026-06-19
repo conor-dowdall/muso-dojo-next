@@ -275,11 +275,22 @@ export function createWebAudioEngine(): AudioEngine {
       const preset = getPresetForRequest(request);
       const audioContext = await getReadyAudioContext();
 
-      if (!audioContext || !isPlayableMidiNote(request.midiNote)) {
+      if (
+        request.signal?.aborted ||
+        !audioContext ||
+        !isPlayableMidiNote(request.midiNote)
+      ) {
         return undefined;
       }
 
-      await samplePackLoader.loadSamplePack(audioContext, preset.samplePackId);
+      const loaded = await samplePackLoader.loadSamplePack(
+        audioContext,
+        preset.samplePackId,
+      );
+
+      if (!loaded || request.signal?.aborted) {
+        return undefined;
+      }
 
       return createManagedSampleVoice({
         audioContext,

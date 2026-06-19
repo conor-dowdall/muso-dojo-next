@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { useEffectiveMusicSystem } from "@/hooks/instrument/useEffectiveMusicSystem";
 import { useActiveNotes } from "@/hooks/instrument/useActiveNotes";
 import {
@@ -30,6 +30,7 @@ import { useNoteColors } from "@/components/note-colors/NoteColorProvider";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
 import { assertNever } from "@/utils/assertNever";
 import { usePlaybackActiveKeys } from "@/hooks/audio/usePlaybackActiveKeys";
+import { useAudioReadinessSnapshot } from "@/hooks/audio/useAudioReadinessSnapshot";
 
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
@@ -55,6 +56,12 @@ interface UseInstrumentNotesParams {
   setIsModified?: (isModified: boolean) => void;
   setActiveNotesLockSnapshot?: (snapshot: ActiveNotesLockSnapshot) => void;
   setActiveNotesSourceKey?: (sourceKey: string) => void;
+}
+
+interface PendingPreviewRequest {
+  controller: AbortController;
+  key: string;
+  token: number;
 }
 
 /**
@@ -86,6 +93,10 @@ export function useInstrumentNotes({
     begin: beginPreview,
     cancel: cancelPreview,
   } = usePlaybackActiveKeys();
+  const { status: audioReadinessStatus } = useAudioReadinessSnapshot();
+  const pendingPreviewRef = useRef<PendingPreviewRequest | undefined>(
+    undefined,
+  );
   const musicSystem = useEffectiveMusicSystem({
     rootNote,
     noteCollectionKey,
@@ -129,6 +140,21 @@ export function useInstrumentNotes({
     setIsModified?.(isModified);
   }, [isModified, setIsModified]);
 
+  useEffect(
+    () => () => {
+      const pending = pendingPreviewRef.current;
+
+      if (!pending) {
+        return;
+      }
+
+      pending.controller.abort();
+      cancelPreview(pending.key, pending.token);
+      pendingPreviewRef.current = undefined;
+    },
+    [cancelPreview],
+  );
+
   useLayoutEffect(() => {
     setActiveNotesSourceKey?.(activeNotesSourceKey);
 
@@ -149,6 +175,18 @@ export function useInstrumentNotes({
     activeNotesLocked,
     noteInteractionMode,
   });
+  const clearPendingPreview = () => {
+    const pending = pendingPreviewRef.current;
+
+    if (!pending) {
+      return;
+    }
+
+    pending.controller.abort();
+    cancelPreview(pending.key, pending.token);
+    pendingPreviewRef.current = undefined;
+  };
+
   const handleInteract = (target: InstrumentNoteInteractionTarget) => {
     switch (effectiveNoteInteractionMode) {
       case "play": {
@@ -156,16 +194,45 @@ export function useInstrumentNotes({
           previewAudioPresetId,
           getDefaultAudioPresetId("preview"),
         );
-        const token = beginPreview(target.key);
 
-        void ensureAudioReady();
+        clearPendingPreview();
+
+        const token = beginPreview(target.key);
+        const controller =
+          audioReadinessStatus === "ready" ? undefined : new AbortController();
+
+        if (controller) {
+          pendingPreviewRef.current = {
+            controller,
+            key: target.key,
+            token,
+          };
+          void ensureAudioReady();
+        }
+
         void musoAudioEngine
           .playNote({
             midiNote: target.midi,
             use: "preview",
             presetId: previewAudioPresetId,
+            signal: controller?.signal,
           })
           .then((handle) => {
+            if (controller) {
+              const pending = pendingPreviewRef.current;
+
+              if (
+                controller.signal.aborted ||
+                pending?.key !== target.key ||
+                pending.token !== token
+              ) {
+                cancelPreview(target.key, token);
+                return;
+              }
+
+              pendingPreviewRef.current = undefined;
+            }
+
             if (handle === undefined) {
               cancelPreview(target.key, token);
               return;
@@ -178,7 +245,13 @@ export function useInstrumentNotes({
               preset.defaultDurationSeconds,
             );
           })
-          .catch(() => cancelPreview(target.key, token));
+          .catch(() => {
+            if (controller && pendingPreviewRef.current?.token === token) {
+              pendingPreviewRef.current = undefined;
+            }
+
+            cancelPreview(target.key, token);
+          });
         return;
       }
       case "edit-one":

@@ -1,5 +1,4 @@
 import { musoAudioEngine } from "./createWebAudioEngine";
-import { samplePacks } from "./samplePacks.generated";
 import { type AudioEngine } from "./types";
 
 export type AudioReadinessStatus =
@@ -14,8 +13,6 @@ export interface AudioReadinessSnapshot {
 }
 
 type AudioReadinessEngine = Pick<AudioEngine, "isSupported" | "prime">;
-
-const audioSamplePackUrls = Object.values(samplePacks).map((pack) => pack.url);
 
 export function createAudioReadinessController(
   engine: AudioReadinessEngine = musoAudioEngine,
@@ -86,29 +83,3 @@ export function createAudioReadinessController(
 export const audioReadiness = createAudioReadinessController();
 
 export const ensureAudioReady = audioReadiness.ensureReady;
-
-let cacheWarmPromise: Promise<void> | undefined;
-
-export function warmAudioSamplePackCache() {
-  if (typeof window === "undefined" || typeof fetch === "undefined") {
-    return Promise.resolve();
-  }
-
-  if (cacheWarmPromise) {
-    return cacheWarmPromise;
-  }
-
-  cacheWarmPromise = (async () => {
-    if ("serviceWorker" in navigator) {
-      await navigator.serviceWorker.ready.catch(() => undefined);
-    }
-
-    await Promise.all(
-      audioSamplePackUrls.map((url) =>
-        fetch(url, { cache: "force-cache" }).catch(() => undefined),
-      ),
-    );
-  })();
-
-  return cacheWarmPromise;
-}

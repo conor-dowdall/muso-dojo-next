@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createWebAudioEngine } from "@/audio/createWebAudioEngine";
+import {
+  clearSamplePackAssetCacheForTests,
+  loadSamplePackAsset,
+  preloadSamplePackAssets,
+} from "@/audio/samplePackLibrary";
 
 class MockAudioParam {
   readonly events: Array<{
@@ -208,6 +213,7 @@ function installMockAudioWindow() {
 
 describe("createWebAudioEngine", () => {
   afterEach(() => {
+    clearSamplePackAssetCacheForTests();
     vi.unstubAllGlobals();
   });
 
@@ -223,6 +229,78 @@ describe("createWebAudioEngine", () => {
     });
     expect(fetch).toHaveBeenCalledTimes(3);
     expect(MockAudioContext.decodeCount).toBe(3);
+  });
+
+  it("shares wav fetches when a sample asset request overlaps with priming", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+
+    await Promise.all([loadSamplePackAsset("piano"), engine.prime()]);
+
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(MockAudioContext.decodeCount).toBe(3);
+  });
+
+  it("shares wav fetches when background sample preloading overlaps with priming", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+
+    await Promise.all([preloadSamplePackAssets(), engine.prime()]);
+
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(MockAudioContext.decodeCount).toBe(3);
+  });
+
+  it("shares wav fetches when a note preview overlaps with priming", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+
+    await Promise.all([
+      engine.prime(),
+      engine.playNote({
+        midiNote: 60,
+        presetId: "piano",
+        use: "preview",
+      }),
+    ]);
+
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(MockAudioContext.decodeCount).toBe(3);
+  });
+
+  it("does not start an aborted note preview after its sample finishes loading", async () => {
+    installMockAudioWindow();
+
+    let resolveDecode: (buffer: AudioBuffer) => void = () => undefined;
+    const decodeSpy = vi
+      .spyOn(MockAudioContext.prototype, "decodeAudioData")
+      .mockImplementation(
+        () =>
+          new Promise<AudioBuffer>((resolve) => {
+            resolveDecode = resolve;
+          }),
+      );
+    const engine = createWebAudioEngine();
+    const controller = new AbortController();
+    const preview = engine.playNote({
+      midiNote: 60,
+      presetId: "piano",
+      signal: controller.signal,
+      use: "preview",
+    });
+
+    controller.abort();
+    resolveDecode(
+      new MockAudioBuffer(1, 8 * 60 * 48_000, 48_000) as unknown as AudioBuffer,
+    );
+
+    await expect(preview).resolves.toBeUndefined();
+    expect(MockAudioContext.bufferSourceStartCalls).toHaveLength(0);
+
+    decodeSpy.mockRestore();
   });
 
   it("plays notes through their mapped sample pack", async () => {

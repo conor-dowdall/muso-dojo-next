@@ -29,6 +29,12 @@ function isExplicitPrecacheEntry(url) {
   );
 }
 
+function isAudioPrecacheEntry(url) {
+  const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
+
+  return normalizedUrl.startsWith("/audio/");
+}
+
 export default serwist({
   swSrc: "src/app/sw.ts",
   swDest: "public/sw.js",
@@ -37,7 +43,8 @@ export default serwist({
   manifestTransforms: [
     (manifestEntries) => ({
       manifest: manifestEntries.filter(
-        ({ url }) => !isExplicitPrecacheEntry(url),
+        ({ url }) =>
+          !isExplicitPrecacheEntry(url) && !isAudioPrecacheEntry(url),
       ),
       warnings: [],
     }),

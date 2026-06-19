@@ -20,7 +20,7 @@ import {
   ensureAudioReady,
   exercisePlaybackCoordinator,
   musoAudioEngine,
-  warmAudioSamplePackCache,
+  preloadSamplePackAssets,
 } from "@/audio";
 import { useAppStore, useHydrateAppStore } from "@/stores/appStore";
 import { createChordProgressionParts } from "@/utils/music-part/createChordProgressionParts";
@@ -121,23 +121,23 @@ function HydratedSession({
   }, [activeSessionId]);
 
   useEffect(() => {
-    if (!activeSessionId) {
+    if (!activeSessionId || !musoAudioEngine.isSupported()) {
       return;
     }
 
-    const scheduleWarmCache = () => {
-      void warmAudioSamplePackCache();
+    const preloadSamples = () => {
+      void preloadSamplePackAssets();
     };
 
     if ("requestIdleCallback" in window) {
-      const idleHandle = window.requestIdleCallback(scheduleWarmCache, {
+      const idleHandle = window.requestIdleCallback(preloadSamples, {
         timeout: 3000,
       });
 
       return () => window.cancelIdleCallback(idleHandle);
     }
 
-    const timeoutHandle = setTimeout(scheduleWarmCache, 1200);
+    const timeoutHandle = setTimeout(preloadSamples, 1200);
     return () => clearTimeout(timeoutHandle);
   }, [activeSessionId]);
 

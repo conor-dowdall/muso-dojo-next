@@ -49,6 +49,7 @@ interface BaseAudioRequest {
 export interface PlayNoteRequest extends BaseAudioRequest {
   durationSeconds?: number;
   midiNote: number;
+  signal?: AbortSignal;
 }
 
 export interface ScheduleNoteRequest extends PlayNoteRequest {
