@@ -1,4 +1,4 @@
-const DIATONIC_STEPS_PER_OCTAVE = 7;
+export const DIATONIC_STEPS_PER_OCTAVE = 7;
 
 export function getIntervalLabelDegree(intervalLabel: string) {
   const match = intervalLabel.match(/^[^\d]*(\d+)$/);

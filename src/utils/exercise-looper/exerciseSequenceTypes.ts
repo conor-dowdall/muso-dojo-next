@@ -34,8 +34,10 @@ export interface ExerciseSequenceNote {
 }
 
 export interface ExerciseDisplayNote {
+  collectionDegreeSignature?: string;
   collectionPosition: number;
   columnIndex: number;
+  intervalDegree?: number;
   intervalLabel: string;
   isAnchor: boolean;
   key: string;

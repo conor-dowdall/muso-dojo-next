@@ -7,7 +7,6 @@ import {
   resolveCollectionPositionMatch,
   type CollectionPositionIdentity,
 } from "@/utils/music-theory/collectionPositionIdentity";
-import { getIntervalLabelDegree } from "@/utils/music-theory/intervalLabel";
 
 export type ExerciseStudyAnchorIdentity = CollectionPositionIdentity;
 
@@ -30,12 +29,16 @@ function hasAnchorPosition(sequence: ExerciseSequence, position: number) {
 
 export function createExerciseStudyAnchorIdentity(
   sequence: ExerciseSequence,
-  note: Pick<ExerciseDisplayNote, "collectionPosition" | "intervalLabel">,
+  note: Pick<
+    ExerciseDisplayNote,
+    "collectionDegreeSignature" | "collectionPosition" | "intervalDegree"
+  >,
 ): ExerciseStudyAnchorIdentity {
   return {
+    collectionDegreeSignature: note.collectionDegreeSignature,
     collectionPosition: note.collectionPosition,
     collectionSize: sequence.collectionSize,
-    intervalDegree: getIntervalLabelDegree(note.intervalLabel),
+    intervalDegree: note.intervalDegree,
   };
 }
 

@@ -249,6 +249,30 @@ describe("resolveExerciseStudyDisplay", () => {
     ).toBe(4);
   });
 
+  it("remaps same-sized collections by interval degree when their degree patterns differ", () => {
+    const majorPentatonic = createExerciseSequence({
+      noteCollectionKey: "majorPentatonic",
+      rootNote: "C",
+    });
+    const major6Add9 = createExerciseSequence({
+      noteCollectionKey: "major6Add9",
+      rootNote: "C",
+    });
+
+    expect(
+      resolveExerciseStudyAnchorPosition({
+        selectedAnchor: getAnchor(majorPentatonic, 2),
+        sequence: major6Add9,
+      }),
+    ).toBe(1);
+    expect(
+      resolveExerciseStudyAnchorPosition({
+        selectedAnchor: getAnchor(majorPentatonic, 1),
+        sequence: major6Add9,
+      }),
+    ).toBe(0);
+  });
+
   it("drops selected scale anchors when the degree is absent from a chord", () => {
     const ionian = createExerciseSequence({
       end: { octave: 1, stepOffset: 5 },

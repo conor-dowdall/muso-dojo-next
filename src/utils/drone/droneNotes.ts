@@ -20,7 +20,6 @@ import {
   getCollectionToneAtPosition,
   getCollectionToneSequenceMetadata,
 } from "@/utils/music-theory/collectionToneSequence";
-import { getIntervalLabelDegree } from "@/utils/music-theory/intervalLabel";
 
 // Middle-register anchor for generated drone pitches; octave controls offset
 // from here before the notes are handed to the audio engine.
@@ -48,6 +47,7 @@ export const DRONE_MAX_OCTAVE_OFFSET = Math.floor(
 export interface DroneNoteButton {
   baseInterval: number;
   baseIntervalLabel: string;
+  collectionDegreeSignature?: string;
   columnIndex: number;
   collectionPosition: number;
   collectionSize: number;
@@ -223,11 +223,12 @@ export function resolveDroneNotes({
 
     candidates.push({
       ...baseNote,
+      collectionDegreeSignature: toneSequence.degreeSignature,
       columnIndex: tone.columnIndex,
       collectionPosition: position,
       collectionSize: baseNotes.length,
       interval,
-      intervalDegree: getIntervalLabelDegree(tone.intervalLabel),
+      intervalDegree: tone.intervalDegree,
       intervalLabel: tone.intervalLabel,
       key: `position-${position}`,
       label: labels[pitchClass] ?? "",

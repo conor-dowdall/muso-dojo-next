@@ -8,6 +8,7 @@ const DRONE_ABOVE_ROOT_MIN_SCALE = 0.1;
 
 export interface DroneNotePlaybackNote {
   audioPresetId?: AudioPresetId;
+  collectionDegreeSignature?: string;
   collectionPosition: number;
   collectionSize: number;
   interval: number;
@@ -49,6 +50,7 @@ function notesMatch(
 ) {
   return (
     current?.audioPresetId === next.audioPresetId &&
+    current?.collectionDegreeSignature === next.collectionDegreeSignature &&
     current?.collectionSize === next.collectionSize &&
     current?.interval === next.interval &&
     current?.intervalDegree === next.intervalDegree &&

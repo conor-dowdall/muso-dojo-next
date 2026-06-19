@@ -140,6 +140,7 @@ function createDisplayRows({
   octaveOffset: number;
   rootNote: ReturnType<typeof resolveExerciseRootNote>;
 }) {
+  const metadata = getCollectionToneSequenceMetadata(collectionKey);
   const firstOctave =
     getCollectionToneAtPosition(collectionKey, firstPosition)?.octave ?? 0;
   const lastDisplayPosition = displayPositions.at(-1) ?? lastPosition;
@@ -171,8 +172,10 @@ function createDisplayRows({
 
     const rowIndex = tone.octave - firstOctave;
     const displayNote: ExerciseDisplayNote = {
+      collectionDegreeSignature: metadata.degreeSignature,
       collectionPosition,
       columnIndex: tone.columnIndex,
+      intervalDegree: tone.intervalDegree,
       intervalLabel: tone.intervalLabel,
       isAnchor:
         collectionPosition >= firstPosition &&

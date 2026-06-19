@@ -8,12 +8,14 @@ describe("collection tone sequences", () => {
   it("preserves ordinary collection cycles", () => {
     expect(getCollectionToneAtPosition("ionian", -1)).toMatchObject({
       collectionIndex: 6,
+      intervalDegree: 7,
       intervalLabel: "7",
       octave: -1,
       semitones: -1,
     });
     expect(getCollectionToneAtPosition("ionian", 7)).toMatchObject({
       collectionIndex: 0,
+      intervalDegree: 8,
       intervalLabel: "8",
       octave: 1,
       semitones: 12,
@@ -39,6 +41,11 @@ describe("collection tone sequences", () => {
       );
 
       expect(metadata.isFiniteVoicing).toBe(true);
+      expect(metadata.degreeSignature).toBe(
+        expectedIntervals
+          .map((interval) => interval.match(/\d+/)?.[0])
+          .join(","),
+      );
       expect(metadata.supportsOctaveRangeEditing).toBe(true);
       expect(tones.map((tone) => tone?.semitones)).toEqual(expectedSemitones);
       expect(tones.map((tone) => tone?.intervalLabel)).toEqual(
@@ -88,6 +95,9 @@ describe("collection tone sequences", () => {
       "12",
       "14",
       "16",
+    ]);
+    expect(tones.map((tone) => tone?.intervalDegree)).toEqual([
+      1, 3, 5, 7, 9, 8, 10, 12, 14, 16,
     ]);
   });
 

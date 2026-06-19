@@ -2,13 +2,18 @@ import {
   noteCollections,
   type NoteCollectionKey,
 } from "@musodojo/music-theory-data";
-import { shiftIntervalLabelByOctaves } from "./intervalLabel";
+import {
+  DIATONIC_STEPS_PER_OCTAVE,
+  getIntervalLabelDegree,
+  shiftIntervalLabelByOctaves,
+} from "./intervalLabel";
 
 const SEMITONES_PER_OCTAVE = 12;
 
 export interface CollectionTone {
   collectionIndex: number;
   columnIndex: number;
+  intervalDegree?: number;
   intervalLabel: string;
   octave: number;
   semitones: number;
@@ -16,6 +21,7 @@ export interface CollectionTone {
 
 export interface CollectionToneSequenceMetadata {
   columnCount: number;
+  degreeSignature?: string;
   isFiniteVoicing: boolean;
   supportsOctaveRangeEditing: boolean;
   tones: readonly CollectionTone[];
@@ -49,6 +55,14 @@ function getFiniteVoicingColumns(integers: readonly number[]) {
   };
 }
 
+function getDegreeSignature(tones: readonly CollectionTone[]) {
+  const degrees = tones.map((tone) => tone.intervalDegree);
+
+  return degrees.every((degree) => degree !== undefined)
+    ? degrees.join(",")
+    : undefined;
+}
+
 function createMetadata(
   collectionKey: NoteCollectionKey,
 ): CollectionToneSequenceMetadata {
@@ -64,6 +78,9 @@ function createMetadata(
   const tones = integers.map(
     (semitones: number, collectionIndex: number): CollectionTone => {
       const octave = floorDivide(semitones, SEMITONES_PER_OCTAVE);
+      const intervalLabel = String(
+        intervals[collectionIndex] ?? collectionIndex + 1,
+      );
       const columnIndex = isFiniteVoicing
         ? (finiteColumns?.columnByPitchClass.get(
             modulo(semitones, SEMITONES_PER_OCTAVE),
@@ -73,9 +90,8 @@ function createMetadata(
       return {
         collectionIndex,
         columnIndex,
-        intervalLabel: String(
-          intervals[collectionIndex] ?? collectionIndex + 1,
-        ),
+        intervalDegree: getIntervalLabelDegree(intervalLabel),
+        intervalLabel,
         octave,
         semitones,
       };
@@ -84,6 +100,7 @@ function createMetadata(
 
   return {
     columnCount: finiteColumns?.columnCount ?? tones.length,
+    degreeSignature: getDegreeSignature(tones),
     isFiniteVoicing,
     supportsOctaveRangeEditing: true,
     tones,
@@ -124,9 +141,14 @@ export function getCollectionToneAtPosition(
   }
 
   const semitones = baseTone.semitones + cycle * SEMITONES_PER_OCTAVE;
+  const intervalDegree =
+    baseTone.intervalDegree === undefined || cycle < 0
+      ? baseTone.intervalDegree
+      : baseTone.intervalDegree + cycle * DIATONIC_STEPS_PER_OCTAVE;
 
   return {
     ...baseTone,
+    intervalDegree,
     intervalLabel:
       cycle < 0
         ? baseTone.intervalLabel

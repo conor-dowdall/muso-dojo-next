@@ -46,9 +46,14 @@ function createNote(
     Omit<DroneNotePlaybackNote, "collectionPosition" | "interval" | "midi">
   > = {},
 ): DroneNotePlaybackNote {
+  const collectionSize = options.collectionSize ?? 3;
+
   return {
+    collectionDegreeSignature:
+      options.collectionDegreeSignature ??
+      Array.from({ length: collectionSize }, (_, index) => index + 1).join(","),
     collectionPosition,
-    collectionSize: 3,
+    collectionSize,
     intervalDegree: collectionPosition + 1,
     interval,
     midi,
@@ -312,6 +317,47 @@ describe("createDroneNotePlaybackController", () => {
       createNote(0, 0, 48, { collectionSize: 7, intervalDegree: 1 }),
       createNote(2, 4, 52, { collectionSize: 7, intervalDegree: 3 }),
       createNote(4, 7, 55, { collectionSize: 7, intervalDegree: 5 }),
+    ]);
+  });
+
+  it("remaps active notes by interval degree when same-sized collections have different degree patterns", async () => {
+    const { activeIntervals, activeNoteIds, controller, update } =
+      createController();
+
+    await controller.startNote(
+      createNote(2, 4, 52, {
+        collectionDegreeSignature: "1,2,3,5,6",
+        collectionSize: 5,
+        intervalDegree: 3,
+      }),
+    );
+    controller.reconcileNotes([
+      createNote(0, 0, 48, {
+        collectionDegreeSignature: "1,3,5,6,9",
+        collectionSize: 5,
+        intervalDegree: 1,
+      }),
+      createNote(1, 4, 52, {
+        collectionDegreeSignature: "1,3,5,6,9",
+        collectionSize: 5,
+        intervalDegree: 3,
+      }),
+      createNote(2, 7, 55, {
+        collectionDegreeSignature: "1,3,5,6,9",
+        collectionSize: 5,
+        intervalDegree: 5,
+      }),
+    ]);
+
+    expect(controller.getActiveIntervals()).toStrictEqual([4]);
+    expect(activeIntervals.at(-1)).toStrictEqual([4]);
+    expect(activeNoteIds.at(-1)).toStrictEqual(["1"]);
+    expect(update).toHaveBeenLastCalledWith("drone-handle", [
+      createNote(1, 4, 52, {
+        collectionDegreeSignature: "1,3,5,6,9",
+        collectionSize: 5,
+        intervalDegree: 3,
+      }),
     ]);
   });
 
