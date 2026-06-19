@@ -58,6 +58,7 @@ import {
 } from "@/utils/exercise-looper/exerciseSequence";
 import {
   getExerciseAnchorDisplayNotes,
+  resolveExerciseStudyAnchorPosition,
   resolveExerciseStudyDisplay,
 } from "@/utils/exercise-looper/exerciseStudyDisplay";
 import { getClosestNoteInColumn } from "@/utils/instrument/getClosestNoteInColumn";
@@ -127,6 +128,8 @@ export function ExerciseLooperModule({
   wood?: WoodSurfaceId;
 }) {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [selectedStudyAnchorPosition, setSelectedStudyAnchorPosition] =
+    useState<number | undefined>();
   const noteColors = useNoteColors();
   const requestedSequence = useMemo(
     () =>
@@ -198,9 +201,21 @@ export function ExerciseLooperModule({
     () => new Map(sequence.notes.map((note) => [note.key, note])),
     [sequence.notes],
   );
+  const selectStudyAnchorForKey = useCallback(
+    (key: string) => {
+      const note = noteByKey.get(key);
+
+      if (note !== undefined) {
+        setSelectedStudyAnchorPosition(note.collectionPosition);
+      }
+
+      return note;
+    },
+    [noteByKey],
+  );
   const handleNoteAudition = useCallback(
     (target: InstrumentNoteInteractionTarget) => {
-      const root = noteByKey.get(target.key);
+      const root = selectStudyAnchorForKey(target.key);
 
       if (effectivePattern.mode !== "single" && root !== undefined) {
         const exerciseNotes = getExerciseAnchorDisplayNotes(
@@ -216,7 +231,7 @@ export function ExerciseLooperModule({
 
       playback.audition(target);
     },
-    [effectivePattern.mode, noteByKey, playback, sequence],
+    [effectivePattern.mode, playback, selectStudyAnchorForKey, sequence],
   );
   const {
     focusedKey,
@@ -238,23 +253,30 @@ export function ExerciseLooperModule({
           nextRow,
           currentNote.columnIndex,
         );
+        const nextKey = nextNote?.key ?? currentKey;
 
-        return nextNote?.key ?? currentKey;
+        selectStudyAnchorForKey(nextKey);
+        return nextKey;
       }
 
       const currentIndex = noteKeys.indexOf(currentKey);
       const delta = direction === "left" ? -1 : 1;
-      return (
+      const nextKey =
         noteKeys[
           Math.max(0, Math.min(noteKeys.length - 1, currentIndex + delta))
-        ] ?? currentKey
-      );
+        ] ?? currentKey;
+
+      selectStudyAnchorForKey(nextKey);
+      return nextKey;
     },
   });
-  const focusedNote = noteByKey.get(focusedKey);
+  const studyAnchorPosition = resolveExerciseStudyAnchorPosition({
+    selectedAnchorPosition: selectedStudyAnchorPosition,
+    sequence,
+  });
   const studyDisplay = resolveExerciseStudyDisplay({
     activeAnchorPosition: playback.activeAnchorPosition,
-    focusedAnchorPosition: focusedNote?.collectionPosition,
+    selectedAnchorPosition: studyAnchorPosition,
     mode: effectivePattern.mode,
     sequence,
   });

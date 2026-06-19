@@ -144,7 +144,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: var(--leading-none);
-  text-box: trim-both cap alphabetic;
+  text-box: none;
   white-space: nowrap;
 }
 

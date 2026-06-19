@@ -17,6 +17,42 @@ export type ExerciseStudyDisplay =
       notes: readonly string[];
     };
 
+function hasAnchorPosition(sequence: ExerciseSequence, position: number) {
+  return sequence.notes.some((note) => note.collectionPosition === position);
+}
+
+/**
+ * Study readouts carry a selected collection position across root, collection,
+ * and mode changes. That preserves the musical comparison point: for example,
+ * a selected third can naturally become major, minor, or altered as the
+ * surrounding collection changes.
+ */
+export function resolveExerciseStudyAnchorPosition({
+  activeAnchorPosition,
+  selectedAnchorPosition,
+  sequence,
+}: {
+  activeAnchorPosition?: number;
+  selectedAnchorPosition?: number;
+  sequence: ExerciseSequence;
+}) {
+  if (
+    activeAnchorPosition !== undefined &&
+    hasAnchorPosition(sequence, activeAnchorPosition)
+  ) {
+    return activeAnchorPosition;
+  }
+
+  if (
+    selectedAnchorPosition !== undefined &&
+    hasAnchorPosition(sequence, selectedAnchorPosition)
+  ) {
+    return selectedAnchorPosition;
+  }
+
+  return sequence.notes[0]?.collectionPosition;
+}
+
 export function getExerciseAnchorDisplayNotes(
   sequence: ExerciseSequence,
   anchorPosition: number,
@@ -44,12 +80,12 @@ export function getExerciseAnchorDisplayNotes(
 
 export function resolveExerciseStudyDisplay({
   activeAnchorPosition,
-  focusedAnchorPosition,
+  selectedAnchorPosition,
   mode,
   sequence,
 }: {
   activeAnchorPosition?: number;
-  focusedAnchorPosition?: number;
+  selectedAnchorPosition?: number;
   mode: ExercisePatternMode;
   sequence: ExerciseSequence;
 }): ExerciseStudyDisplay {
@@ -61,7 +97,11 @@ export function resolveExerciseStudyDisplay({
     };
   }
 
-  const anchorPosition = activeAnchorPosition ?? focusedAnchorPosition;
+  const anchorPosition = resolveExerciseStudyAnchorPosition({
+    activeAnchorPosition,
+    selectedAnchorPosition,
+    sequence,
+  });
 
   if (mode === "extension" && anchorPosition !== undefined) {
     const chordDescriptor =

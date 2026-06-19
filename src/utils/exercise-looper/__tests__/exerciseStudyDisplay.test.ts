@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createExerciseSequence } from "@/utils/exercise-looper/exerciseSequence";
-import { resolveExerciseStudyDisplay } from "@/utils/exercise-looper/exerciseStudyDisplay";
+import {
+  resolveExerciseStudyAnchorPosition,
+  resolveExerciseStudyDisplay,
+} from "@/utils/exercise-looper/exerciseStudyDisplay";
 
 describe("resolveExerciseStudyDisplay", () => {
   it("shows one complete scale octave in single-note mode", () => {
@@ -40,7 +43,7 @@ describe("resolveExerciseStudyDisplay", () => {
     });
   });
 
-  it("shows the focused interval while idle", () => {
+  it("shows the selected interval while idle", () => {
     const sequence = createExerciseSequence({
       end: { octave: 0, stepOffset: 1 },
       noteCollectionKey: "ionian",
@@ -58,7 +61,7 @@ describe("resolveExerciseStudyDisplay", () => {
 
     expect(
       resolveExerciseStudyDisplay({
-        focusedAnchorPosition: 0,
+        selectedAnchorPosition: 0,
         mode: "interval",
         sequence,
       }),
@@ -69,7 +72,7 @@ describe("resolveExerciseStudyDisplay", () => {
     });
   });
 
-  it("prefers the sounding interval over the focused interval", () => {
+  it("prefers the sounding interval over the selected interval", () => {
     const sequence = createExerciseSequence({
       end: { octave: 0, stepOffset: 1 },
       noteCollectionKey: "ionian",
@@ -88,7 +91,7 @@ describe("resolveExerciseStudyDisplay", () => {
     expect(
       resolveExerciseStudyDisplay({
         activeAnchorPosition: 1,
-        focusedAnchorPosition: 0,
+        selectedAnchorPosition: 0,
         mode: "interval",
         sequence,
       }),
@@ -117,7 +120,7 @@ describe("resolveExerciseStudyDisplay", () => {
 
     expect(
       resolveExerciseStudyDisplay({
-        focusedAnchorPosition: 1,
+        selectedAnchorPosition: 1,
         mode: "interval",
         sequence,
       }),
@@ -146,7 +149,7 @@ describe("resolveExerciseStudyDisplay", () => {
 
     expect(
       resolveExerciseStudyDisplay({
-        focusedAnchorPosition: 0,
+        selectedAnchorPosition: 0,
         mode: "extension",
         sequence,
       }),
@@ -156,5 +159,84 @@ describe("resolveExerciseStudyDisplay", () => {
       kind: "chord",
       notes: ["C", "E", "G", "B"],
     });
+  });
+
+  it("preserves the selected collection position when the collection changes", () => {
+    const pattern = {
+      direction: "ascending",
+      extensionDegree: 7,
+      extensionDirection: "ascending",
+      intervalDegree: 3,
+      intervalDirection: "ascending",
+      mode: "interval",
+      notePlayback: "together",
+    } as const;
+    const selectedAnchorPosition = 0;
+    const ionian = createExerciseSequence({
+      end: { octave: 0, stepOffset: 1 },
+      noteCollectionKey: "ionian",
+      pattern,
+      rootNote: "C",
+    });
+    const dorian = createExerciseSequence({
+      end: { octave: 0, stepOffset: 1 },
+      noteCollectionKey: "dorian",
+      pattern,
+      rootNote: "C",
+    });
+
+    expect(
+      resolveExerciseStudyDisplay({
+        mode: "interval",
+        selectedAnchorPosition,
+        sequence: ionian,
+      }),
+    ).toEqual({
+      intervals: ["1", "3"],
+      kind: "notes",
+      notes: ["C", "E"],
+    });
+    expect(
+      resolveExerciseStudyDisplay({
+        mode: "interval",
+        selectedAnchorPosition,
+        sequence: dorian,
+      }),
+    ).toEqual({
+      intervals: ["1", "♭3"],
+      kind: "notes",
+      notes: ["C", "E♭"],
+    });
+  });
+
+  it("normalizes an unavailable selected anchor to the root anchor", () => {
+    const sequence = createExerciseSequence({
+      end: { octave: 0, stepOffset: 1 },
+      noteCollectionKey: "ionian",
+      rootNote: "C",
+    });
+
+    expect(
+      resolveExerciseStudyAnchorPosition({
+        selectedAnchorPosition: 12,
+        sequence,
+      }),
+    ).toBe(0);
+  });
+
+  it("falls back from an unavailable sounding anchor to the selected anchor", () => {
+    const sequence = createExerciseSequence({
+      end: { octave: 0, stepOffset: 1 },
+      noteCollectionKey: "ionian",
+      rootNote: "C",
+    });
+
+    expect(
+      resolveExerciseStudyAnchorPosition({
+        activeAnchorPosition: 12,
+        selectedAnchorPosition: 1,
+        sequence,
+      }),
+    ).toBe(1);
   });
 });

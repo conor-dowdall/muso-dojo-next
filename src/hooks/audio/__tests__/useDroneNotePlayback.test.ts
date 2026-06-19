@@ -187,14 +187,14 @@ describe("createDroneNotePlaybackController", () => {
       audioPresetId: "plucked-string",
       interval: 0,
       midi: 48,
-      velocity: 0.78,
+      velocity: 0.65,
     });
     controller.reconcileNotes([
       {
         audioPresetId: "bowed-strings",
         interval: 0,
         midi: 60,
-        velocity: 0.78,
+        velocity: 0.65,
       },
     ]);
 
@@ -203,7 +203,7 @@ describe("createDroneNotePlaybackController", () => {
         audioPresetId: "bowed-strings",
         interval: 0,
         midi: 60,
-        velocity: 0.78,
+        velocity: 0.65,
       },
     ]);
   });
@@ -211,7 +211,7 @@ describe("createDroneNotePlaybackController", () => {
   it("reconciles velocity changes through the persistent group", async () => {
     const { controller, update } = createController();
 
-    await controller.startNote({ interval: 0, midi: 48, velocity: 0.78 });
+    await controller.startNote({ interval: 0, midi: 48, velocity: 0.65 });
     controller.reconcileNotes([{ interval: 0, midi: 48, velocity: 0.62 }]);
 
     expect(update).toHaveBeenLastCalledWith("drone-handle", [
@@ -243,7 +243,7 @@ describe("getDronePlaybackVelocity", () => {
       interval: 24,
     });
 
-    expect(root).toBeCloseTo(0.78);
+    expect(root).toBeCloseTo(0.65);
     expect(third).toBeLessThan(root);
     expect(fifth).toBeLessThan(third);
     expect(octave).toBeLessThan(fifth);
