@@ -16,7 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "audio:inspect": "python3 tools/audio/build_sample_packs.py inspect",
-    "audio:build": "python3 tools/audio/build_sample_packs.py build",
+    "audio:build": "python3 tools/audio/build_sample_packs.py build && prettier --write src/audio/samplePacks.generated.ts",
     "audio:build:dry": "python3 tools/audio/build_sample_packs.py build --dry-run",
     "format": "prettier --write src/",
     "format:check": "prettier --check src/",

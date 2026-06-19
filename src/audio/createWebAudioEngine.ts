@@ -1,5 +1,5 @@
 import { getAudioContextConstructor } from "./audioContext";
-import { scheduleMetronomeClick } from "./metronome";
+import { METRONOME_SAMPLE_PACK_ID, scheduleMetronomeClick } from "./metronome";
 import { getDefaultAudioPresetId, resolveAudioPreset } from "./presets";
 import { isPlayableMidiNote } from "./pitch";
 import {
@@ -315,13 +315,33 @@ export function createWebAudioEngine(): AudioEngine {
         return false;
       }
 
+      const loaded = samplePackLoader.getLoadedSamplePack(
+        METRONOME_SAMPLE_PACK_ID,
+      );
+
+      if (!loaded) {
+        void samplePackLoader.loadSamplePack(context, METRONOME_SAMPLE_PACK_ID);
+        return false;
+      }
+
+      const clickRef: { current?: ScheduledClick } = {};
       const click = scheduleMetronomeClick({
         accent: request.accent ?? false,
         context,
         destination: context.destination,
-        onEnded: () => group.clicks.delete(click),
+        loaded,
+        onEnded: () => {
+          if (clickRef.current) {
+            group.clicks.delete(clickRef.current);
+          }
+        },
         startTime: request.startTime,
       });
+      if (!click) {
+        return false;
+      }
+
+      clickRef.current = click;
       group.clicks.add(click);
       return true;
     },

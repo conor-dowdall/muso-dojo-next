@@ -1,7 +1,7 @@
 export type AudioUse = "preview" | "tuning" | "drone" | "exercise";
 
-export type SamplePackId = "piano" | "plucked-string" | "bowed-strings";
-export type AudioPresetId = SamplePackId;
+export type AudioPresetId = "piano" | "plucked-string" | "bowed-strings";
+export type SamplePackId = AudioPresetId | "metronome";
 export type AudioPresetSurface = "instrument" | "drone" | "exercise";
 
 export type AudioVoiceHandle = string & {

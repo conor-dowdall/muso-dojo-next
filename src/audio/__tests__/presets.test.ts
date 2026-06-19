@@ -11,6 +11,7 @@ import {
   type AudioUse,
   type SamplePackId,
 } from "@/audio/types";
+import { SAMPLE_PACK_IDS } from "@/audio/samplePackLibrary";
 
 const audioUses = [
   "preview",
@@ -40,6 +41,8 @@ describe("audio presets", () => {
   });
 
   it("offers a focused sample-backed instrument catalog", () => {
+    expect(SAMPLE_PACK_IDS).toContain("metronome");
+    expect(isAudioPresetId("metronome")).toBe(false);
     expect(
       getAudioPresetsForSurface("instrument").map((preset) => preset.id),
     ).toStrictEqual(["piano", "plucked-string", "bowed-strings"]);

@@ -81,6 +81,26 @@
         { "rootMidi": 79, "lowMidi": 78, "highMidi": 81 },
         { "rootMidi": 83, "lowMidi": 82, "highMidi": 127 }
       ]
+    },
+    {
+      "id": "metronome",
+      "label": "Metronome",
+      "sourcePreset": { "bank": 128, "program": 0 },
+      "channels": "mono",
+      "gain": 0.88,
+      "paddingSeconds": 0.02,
+      "keys": [
+        {
+          "id": "regular",
+          "midi": 77,
+          "sampleName": "Low Woodblock"
+        },
+        {
+          "id": "accent",
+          "midi": 76,
+          "sampleName": "High Woodblock"
+        }
+      ]
     }
   ]
 }

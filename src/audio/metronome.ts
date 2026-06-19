@@ -1,15 +1,17 @@
-const CLICK_DURATION_SECONDS = 0.08;
-const CLICK_SAMPLE_RATE_FALLBACK = 48_000;
-const CLICK_FADE_OUT_SECONDS = 0.012;
-const CLICK_PEAK_SAMPLE = 0.9;
-const IMPACT_FILTER_FREQUENCY_HZ = 2_400;
-const REGULAR_CLICK_FREQUENCY_HZ = 680;
-const ACCENT_CLICK_FREQUENCY_HZ = 880;
-const REGULAR_CLICK_GAIN = 0.42;
-const ACCENT_CLICK_GAIN = 0.58;
+import {
+  getRegionEndSeconds,
+  type LoadedSamplePack,
+} from "./samplePackLibrary";
+import { type SamplePackId } from "./types";
 
-const regularClickBufferCache = new WeakMap<AudioContext, AudioBuffer>();
-const accentClickBufferCache = new WeakMap<AudioContext, AudioBuffer>();
+export const METRONOME_SAMPLE_PACK_ID = "metronome" satisfies SamplePackId;
+
+const METRONOME_REGULAR_REGION_ID = "metronome-regular";
+const METRONOME_ACCENT_REGION_ID = "metronome-accent";
+const CLICK_FADE_OUT_SECONDS = 0.012;
+const REGULAR_CLICK_GAIN = 0.82;
+const ACCENT_CLICK_GAIN = 0.9;
+const MIN_GAIN_VALUE = 0.0001;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -44,82 +46,21 @@ function holdGainAtTime(gain: AudioParam, time: number, fallbackValue: number) {
   }
 
   gain.cancelScheduledValues(time);
-  gain.setValueAtTime(Math.max(0, fallbackValue), time);
+  gain.setValueAtTime(Math.max(MIN_GAIN_VALUE, fallbackValue), time);
 }
 
-function createClickBuffer({
-  context,
-  frequencyHz,
-  noiseSeed,
+function getMetronomeRegion({
+  accent,
+  loaded,
 }: {
-  context: AudioContext;
-  frequencyHz: number;
-  noiseSeed: number;
+  accent: boolean;
+  loaded: LoadedSamplePack;
 }) {
-  const sampleRate = context.sampleRate || CLICK_SAMPLE_RATE_FALLBACK;
-  const length = Math.max(1, Math.ceil(sampleRate * CLICK_DURATION_SECONDS));
-  const buffer = context.createBuffer(1, length, sampleRate);
-  const channel = buffer.getChannelData(0);
-  const impactFilterCoefficient =
-    1 - Math.exp((-2 * Math.PI * IMPACT_FILTER_FREQUENCY_HZ) / sampleRate);
-  let filteredNoise = 0;
-  let peak = 0;
-  let noiseState = noiseSeed;
+  const regionId = accent
+    ? METRONOME_ACCENT_REGION_ID
+    : METRONOME_REGULAR_REGION_ID;
 
-  for (let index = 0; index < channel.length; index += 1) {
-    const time = index / sampleRate;
-    const attack = Math.min(1, time / 0.0007);
-
-    noiseState = (Math.imul(noiseState, 1_664_525) + 1_013_904_223) >>> 0;
-    const noise = noiseState / 0x80000000 - 1;
-    filteredNoise += impactFilterCoefficient * (noise - filteredNoise);
-
-    // Unevenly spaced resonances give the hit the body of a small wooden block.
-    const body =
-      Math.sin(2 * Math.PI * frequencyHz * time) * Math.exp(-time * 30) +
-      0.46 *
-        Math.sin(2 * Math.PI * frequencyHz * 1.51 * time + Math.PI / 5) *
-        Math.exp(-time * 43) +
-      0.2 *
-        Math.sin(2 * Math.PI * frequencyHz * 2.13 * time + Math.PI / 3) *
-        Math.exp(-time * 66);
-    const impact =
-      filteredNoise * Math.exp(-time * 105) +
-      noise * Math.exp(-time * 420) * 0.12;
-    const sample = attack * (body * 0.82 + impact * 0.18);
-
-    channel[index] = sample;
-    peak = Math.max(peak, Math.abs(sample));
-  }
-
-  if (peak > 0) {
-    const normalizationGain = CLICK_PEAK_SAMPLE / peak;
-
-    for (let index = 0; index < channel.length; index += 1) {
-      channel[index] *= normalizationGain;
-    }
-  }
-
-  return buffer;
-}
-
-function getClickBuffer(context: AudioContext, accent: boolean) {
-  const cache = accent ? accentClickBufferCache : regularClickBufferCache;
-  const cached = cache.get(context);
-
-  if (cached) {
-    return cached;
-  }
-
-  const buffer = createClickBuffer({
-    context,
-    frequencyHz: accent
-      ? ACCENT_CLICK_FREQUENCY_HZ
-      : REGULAR_CLICK_FREQUENCY_HZ,
-    noiseSeed: accent ? 0x2f6e2b1 : 0x17a53d9,
-  });
-  cache.set(context, buffer);
-  return buffer;
+  return loaded.pack.regions.find((region) => region.id === regionId);
 }
 
 export interface ScheduledMetronomeClick {
@@ -132,31 +73,37 @@ export function scheduleMetronomeClick({
   accent,
   context,
   destination,
+  loaded,
   onEnded,
   startTime,
 }: {
   accent: boolean;
   context: AudioContext;
   destination: AudioNode;
+  loaded: LoadedSamplePack;
   onEnded?: () => void;
   startTime: number;
-}): ScheduledMetronomeClick {
+}): ScheduledMetronomeClick | undefined {
+  const region = getMetronomeRegion({ accent, loaded });
+
+  if (!region) {
+    return undefined;
+  }
+
   const source = context.createBufferSource();
   const gain = context.createGain();
-  const stopTime = startTime + CLICK_DURATION_SECONDS;
-  const fadeOutTime = stopTime - CLICK_FADE_OUT_SECONDS;
+  const stopTime = startTime + region.durationSeconds;
+  const fadeOutTime = Math.max(startTime, stopTime - CLICK_FADE_OUT_SECONDS);
   const clickGain = accent ? ACCENT_CLICK_GAIN : REGULAR_CLICK_GAIN;
   let disconnected = false;
   let cancellationRequested = false;
 
-  source.buffer = getClickBuffer(context, accent);
+  source.buffer = loaded.buffer;
   gain.gain.setValueAtTime(clickGain, startTime);
   gain.gain.setValueAtTime(clickGain, fadeOutTime);
-  gain.gain.linearRampToValueAtTime(0, stopTime);
+  gain.gain.linearRampToValueAtTime(MIN_GAIN_VALUE, stopTime);
   source.connect(gain);
   gain.connect(destination);
-  source.start(startTime);
-  source.stop(stopTime);
 
   const disconnect = () => {
     if (disconnected) {
@@ -164,12 +111,31 @@ export function scheduleMetronomeClick({
     }
 
     disconnected = true;
-    source.disconnect();
-    gain.disconnect();
+    try {
+      source.disconnect();
+    } catch {
+      // The browser may have already disconnected the source.
+    }
+    try {
+      gain.disconnect();
+    } catch {
+      // The browser may have already disconnected the gain.
+    }
     onEnded?.();
   };
 
   source.addEventListener("ended", disconnect, { once: true });
+
+  try {
+    source.start(
+      startTime,
+      region.offsetSeconds,
+      getRegionEndSeconds(region) - region.offsetSeconds,
+    );
+  } catch {
+    disconnect();
+    return undefined;
+  }
 
   return {
     disconnect,
@@ -192,7 +158,7 @@ export function scheduleMetronomeClick({
             ? clickGain
             : getLinearRampValue({
                 endTime: stopTime,
-                endValue: 0,
+                endValue: MIN_GAIN_VALUE,
                 startTime: fadeOutTime,
                 startValue: clickGain,
                 time: cancelTime,
@@ -200,7 +166,7 @@ export function scheduleMetronomeClick({
         const cancelStopTime = cancelTime + CLICK_FADE_OUT_SECONDS;
 
         holdGainAtTime(gain.gain, cancelTime, cancelGain);
-        gain.gain.linearRampToValueAtTime(0, cancelStopTime);
+        gain.gain.linearRampToValueAtTime(MIN_GAIN_VALUE, cancelStopTime);
         source.stop(cancelStopTime + 0.001);
       } catch {
         // The click may already have stopped.

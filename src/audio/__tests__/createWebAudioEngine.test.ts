@@ -227,8 +227,8 @@ describe("createWebAudioEngine", () => {
     expect(MockAudioContext.lastOptions).toMatchObject({
       latencyHint: "interactive",
     });
-    expect(fetch).toHaveBeenCalledTimes(3);
-    expect(MockAudioContext.decodeCount).toBe(3);
+    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(MockAudioContext.decodeCount).toBe(4);
   });
 
   it("shares wav fetches when a sample asset request overlaps with priming", async () => {
@@ -238,8 +238,8 @@ describe("createWebAudioEngine", () => {
 
     await Promise.all([loadSamplePackAsset("piano"), engine.prime()]);
 
-    expect(fetch).toHaveBeenCalledTimes(3);
-    expect(MockAudioContext.decodeCount).toBe(3);
+    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(MockAudioContext.decodeCount).toBe(4);
   });
 
   it("shares wav fetches when background sample preloading overlaps with priming", async () => {
@@ -249,8 +249,8 @@ describe("createWebAudioEngine", () => {
 
     await Promise.all([preloadSamplePackAssets(), engine.prime()]);
 
-    expect(fetch).toHaveBeenCalledTimes(3);
-    expect(MockAudioContext.decodeCount).toBe(3);
+    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(MockAudioContext.decodeCount).toBe(4);
   });
 
   it("shares wav fetches when a note preview overlaps with priming", async () => {
@@ -267,8 +267,8 @@ describe("createWebAudioEngine", () => {
       }),
     ]);
 
-    expect(fetch).toHaveBeenCalledTimes(3);
-    expect(MockAudioContext.decodeCount).toBe(3);
+    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(MockAudioContext.decodeCount).toBe(4);
   });
 
   it("does not start an aborted note preview after its sample finishes loading", async () => {
@@ -390,6 +390,41 @@ describe("createWebAudioEngine", () => {
         (call) => call.time !== undefined && call.time <= 2.25,
       ),
     ).toBe(true);
+  });
+
+  it("schedules regular and accented clicks from the metronome sprite", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    const group = engine.createPlaybackGroup();
+
+    expect(
+      engine.scheduleMetronomeClick({
+        accent: false,
+        group,
+        startTime: 1,
+      }),
+    ).toBe(true);
+    expect(
+      engine.scheduleMetronomeClick({
+        accent: true,
+        group,
+        startTime: 2,
+      }),
+    ).toBe(true);
+
+    const regularSource = MockAudioContext.bufferSources.at(-2)!;
+    const accentSource = MockAudioContext.bufferSources.at(-1)!;
+    const regularStart = regularSource.startCalls.at(-1)!;
+    const accentStart = accentSource.startCalls.at(-1)!;
+
+    expect(regularStart.time).toBe(1);
+    expect(accentStart.time).toBe(2);
+    expect(regularStart.offset).toBe(0);
+    expect(accentStart.offset).toBeGreaterThan(regularStart.offset ?? 0);
+    expect(regularStart.duration).toBeGreaterThan(0);
+    expect(accentStart.duration).toBeGreaterThan(0);
   });
 
   it("creates looped drones from the bowed string sample regions", async () => {

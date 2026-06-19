@@ -33,12 +33,14 @@ GEN_KEYNUM_TO_VOL_ENV_HOLD = 39
 GEN_KEYNUM_TO_VOL_ENV_DECAY = 40
 GEN_INSTRUMENT = 41
 GEN_KEY_RANGE = 43
+GEN_VEL_RANGE = 44
 GEN_INITIAL_ATTENUATION = 48
 GEN_COARSE_TUNE = 51
 GEN_FINE_TUNE = 52
 GEN_SAMPLE_ID = 53
 GEN_SAMPLE_MODES = 54
 GEN_SCALE_TUNING = 56
+GEN_EXCLUSIVE_CLASS = 57
 GEN_OVERRIDING_ROOT_KEY = 58
 
 SAMPLE_TYPE_MONO = 1
@@ -123,6 +125,9 @@ class ResolvedZone:
     attenuation_cb: int
     pan: int
     sample_modes: int
+    velocity_low: int
+    velocity_high: int
+    exclusive_class: int
     amp_envelope: AmpEnvelope
 
 
@@ -131,8 +136,10 @@ class RootRequest:
     root_midi: int
     low_midi: int | None = None
     high_midi: int | None = None
+    id: str | None = None
     sample_name: str | None = None
     sample_index: int | None = None
+    velocity: int | None = None
 
 
 @dataclass
@@ -350,6 +357,18 @@ class SoundFont:
                     )
                     if key_high < key_low:
                         continue
+                    preset_velocity_range = get_velocity_range(preset_values)
+                    instrument_velocity_range = get_velocity_range(
+                        {
+                            **instrument_global,
+                            **gens_to_map(instrument_generators),
+                        }
+                    )
+                    velocity_low, velocity_high = intersect_ranges(
+                        preset_velocity_range, instrument_velocity_range
+                    )
+                    if velocity_high < velocity_low:
+                        continue
                     sample = self.samples[sample_index]
                     overriding_root = values.get(GEN_OVERRIDING_ROOT_KEY)
                     root_midi = (
@@ -383,6 +402,9 @@ class SoundFont:
                             ),
                             pan=get_signed(values, GEN_PAN),
                             sample_modes=get_unsigned(values, GEN_SAMPLE_MODES),
+                            velocity_low=velocity_low,
+                            velocity_high=velocity_high,
+                            exclusive_class=get_unsigned(values, GEN_EXCLUSIVE_CLASS),
                             amp_envelope=get_amp_envelope(values),
                         )
                     )
@@ -440,6 +462,13 @@ def get_key_range(values: dict[int, GeneratorAmount]) -> tuple[int, int]:
     if key_range is None:
         return 0, 127
     return key_range.low, key_range.high
+
+
+def get_velocity_range(values: dict[int, GeneratorAmount]) -> tuple[int, int]:
+    velocity_range = values.get(GEN_VEL_RANGE)
+    if velocity_range is None:
+        return 0, 127
+    return velocity_range.low, velocity_range.high
 
 
 def intersect_ranges(left: tuple[int, int], right: tuple[int, int]) -> tuple[int, int]:
@@ -534,17 +563,56 @@ def parse_roots(raw_roots: Any) -> list[RootRequest]:
         if not isinstance(entry, dict) or not isinstance(entry.get("rootMidi"), int):
             raise Sf2Error("Root entries must be integers or objects with rootMidi")
 
+        velocity = entry.get("velocity")
         roots.append(
             RootRequest(
                 root_midi=entry["rootMidi"],
                 low_midi=entry.get("lowMidi"),
                 high_midi=entry.get("highMidi"),
+                id=entry.get("id") if isinstance(entry.get("id"), str) else None,
                 sample_name=entry.get("sampleName"),
                 sample_index=entry.get("sampleIndex"),
+                velocity=max(0, min(127, velocity))
+                if isinstance(velocity, int)
+                else None,
             )
         )
 
     return sorted(roots, key=lambda root: root.root_midi)
+
+
+def parse_keys(raw_keys: Any) -> list[RootRequest]:
+    if not isinstance(raw_keys, list) or not raw_keys:
+        raise Sf2Error("Pack keys must be a non-empty array")
+
+    keys: list[RootRequest] = []
+    for entry in raw_keys:
+        if isinstance(entry, int):
+            keys.append(
+                RootRequest(root_midi=entry, low_midi=entry, high_midi=entry)
+            )
+            continue
+
+        if not isinstance(entry, dict) or not isinstance(entry.get("midi"), int):
+            raise Sf2Error("Key entries must be integers or objects with midi")
+
+        midi = max(0, min(127, entry["midi"]))
+        velocity = entry.get("velocity")
+        keys.append(
+            RootRequest(
+                root_midi=midi,
+                low_midi=midi,
+                high_midi=midi,
+                id=entry.get("id") if isinstance(entry.get("id"), str) else None,
+                sample_name=entry.get("sampleName"),
+                sample_index=entry.get("sampleIndex"),
+                velocity=max(0, min(127, velocity))
+                if isinstance(velocity, int)
+                else None,
+            )
+        )
+
+    return keys
 
 
 def infer_ranges(roots: list[RootRequest]) -> list[RootRequest]:
@@ -571,8 +639,10 @@ def infer_ranges(roots: list[RootRequest]) -> list[RootRequest]:
                 root_midi=root.root_midi,
                 low_midi=max(0, min(127, inferred_low)),
                 high_midi=max(0, min(127, inferred_high)),
+                id=root.id,
                 sample_name=root.sample_name,
                 sample_index=root.sample_index,
+                velocity=root.velocity,
             )
         )
     return resolved
@@ -615,6 +685,12 @@ def choose_zone(zones: list[ResolvedZone], request: RootRequest) -> ResolvedZone
         candidates = [
             zone for zone in candidates if sample_name in zone.sample.name.lower()
         ]
+    if request.velocity is not None:
+        candidates = [
+            zone
+            for zone in candidates
+            if zone.velocity_low <= request.velocity <= zone.velocity_high
+        ]
     if not candidates:
         raise Sf2Error(f"No sample zone matches root request {request}")
 
@@ -626,6 +702,10 @@ def choose_zone(zones: list[ResolvedZone], request: RootRequest) -> ResolvedZone
         scored,
         key=lambda zone: (
             0 if zone.key_low <= request.root_midi <= zone.key_high else 1,
+            0
+            if request.velocity is None
+            or zone.velocity_low <= request.velocity <= zone.velocity_high
+            else 1,
             abs(zone.root_midi - request.root_midi),
             abs(((zone.key_low + zone.key_high) / 2) - request.root_midi),
             zone.sample.index,
@@ -848,7 +928,15 @@ def build_pack(
     padding_frames = max(0, round(padding_seconds * target_sample_rate))
     gain = float(pack.get("gain", 1))
     preset_zones = select_preset_zones(soundfont, pack.get("sourcePreset"))
-    roots = infer_ranges(parse_roots(pack.get("roots")))
+    has_roots = "roots" in pack
+    has_keys = "keys" in pack
+    if has_roots == has_keys:
+        raise Sf2Error(f"Pack {pack_id}: provide exactly one of roots or keys")
+    roots = (
+        parse_keys(pack.get("keys"))
+        if has_keys
+        else infer_ranges(parse_roots(pack.get("roots")))
+    )
     sprite_channels = (
         None if dry_run else [[] for _ in range(output_channels)]
     )
@@ -892,7 +980,11 @@ def build_pack(
                 cursor + round((zone.sample.end_loop - zone.sample.start) * scale)
             ) / target_sample_rate
 
-        region_id = f"{pack_id}-{root.root_midi}"
+        region_id = (
+            f"{pack_id}-{sanitize_id(root.id)}"
+            if root.id
+            else f"{pack_id}-{root.root_midi}"
+        )
         manifest = {
             "id": region_id,
             "rootMidi": root.root_midi,
@@ -904,6 +996,9 @@ def build_pack(
             "gain": gain,
             "attenuationCentibels": zone.attenuation_cb,
             "pan": zone.pan,
+            "velocityLow": zone.velocity_low,
+            "velocityHigh": zone.velocity_high,
+            "exclusiveClass": zone.exclusive_class,
             "ampEnvelope": amp_envelope_to_dict(zone.amp_envelope),
             "sourceSampleName": zone.sample.name,
             "sourceSampleRate": zone.sample.sample_rate,
@@ -941,9 +1036,12 @@ def build_pack(
                     "rootCents": zone.root_cents,
                     "keyLow": zone.key_low,
                     "keyHigh": zone.key_high,
+                    "velocityLow": zone.velocity_low,
+                    "velocityHigh": zone.velocity_high,
                     "fineTune": zone.fine_tune,
                     "coarseTune": zone.coarse_tune,
                     "sampleModes": zone.sample_modes,
+                    "exclusiveClass": zone.exclusive_class,
                     "attenuationCentibels": zone.attenuation_cb,
                     "pan": zone.pan,
                     "ampEnvelope": amp_envelope_to_dict(zone.amp_envelope),
