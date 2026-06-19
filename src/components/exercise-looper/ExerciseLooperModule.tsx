@@ -38,7 +38,6 @@ import {
 } from "@/types/session";
 import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import {
-  DEFAULT_EXERCISE_COUNT_IN_BEATS,
   DEFAULT_EXERCISE_METRONOME_ENABLED,
   DEFAULT_EXERCISE_PATTERN,
   DEFAULT_EXERCISE_START,
@@ -75,7 +74,6 @@ const countInChoices = [2, 3, 4] as const satisfies readonly Exclude<
 
 export function ExerciseLooperModule({
   audioPresetId,
-  countInBeats = DEFAULT_EXERCISE_COUNT_IN_BEATS,
   end,
   moduleId,
   metronomeEnabled = DEFAULT_EXERCISE_METRONOME_ENABLED,
@@ -83,7 +81,6 @@ export function ExerciseLooperModule({
   octaveOffset = 0,
   onAudioPresetIdChange,
   onClone,
-  onCountInBeatsChange,
   onEndChange,
   onMetronomeEnabledChange,
   onOctaveOffsetChange,
@@ -101,7 +98,6 @@ export function ExerciseLooperModule({
   wood = DEFAULT_WOOD_SURFACE_ID,
 }: {
   audioPresetId?: AudioPresetId;
-  countInBeats?: ExerciseCountInBeats;
   end?: CollectionRangeBoundary;
   moduleId: string;
   metronomeEnabled?: boolean;
@@ -111,7 +107,6 @@ export function ExerciseLooperModule({
   octaveOffset?: number;
   onAudioPresetIdChange?: (value: AudioPresetId) => void;
   onClone?: () => void;
-  onCountInBeatsChange?: (value: ExerciseCountInBeats) => void;
   onEndChange?: (value: CollectionRangeBoundary) => void;
   onMetronomeEnabledChange?: (value: boolean) => void;
   onOctaveOffsetChange?: (value: number) => void;
@@ -187,7 +182,6 @@ export function ExerciseLooperModule({
   );
   const playback = useExerciseLooperPlayback({
     audioPresetId,
-    countInBeats,
     id: moduleId,
     metronomeEnabled,
     steps: sequence.steps,
@@ -319,7 +313,9 @@ export function ExerciseLooperModule({
     firstPosition >= higherOctaveBounds.min &&
     lastPosition <= higherOctaveBounds.max;
   const countInReadout =
-    countInBeats === 0 ? "No Count In" : `${countInBeats} Beat Count In`;
+    playback.activeCountInBeats === undefined
+      ? "No Count In"
+      : `${playback.activeCountInBeats} Beat Count In`;
   const octaveReadout = `Octave ${getExerciseBaseOctave(octaveOffset)}`;
   useEffect(() => {
     if (!exercisePatternsAreEqual(effectivePattern, pattern)) {
@@ -427,30 +423,21 @@ export function ExerciseLooperModule({
                   readout={countInReadout}
                   readoutAriaLabel={countInReadout}
                 >
-                  {countInChoices.map((beatCount) => {
-                    const isSelected = countInBeats === beatCount;
-
-                    return (
-                      <PartModuleControlButton
-                        key={beatCount}
-                        aria-label={
-                          isSelected
-                            ? `Turn off the ${beatCount}-beat count-in`
-                            : `Use a ${beatCount}-beat count-in`
-                        }
-                        icon={
-                          <span aria-hidden="true" className={styles.beatCount}>
-                            {beatCount}
-                          </span>
-                        }
-                        onPress={() =>
-                          onCountInBeatsChange?.(isSelected ? 0 : beatCount)
-                        }
-                        selected={isSelected}
-                        unavailable={!onCountInBeatsChange}
-                      />
-                    );
-                  })}
+                  {countInChoices.map((beatCount) => (
+                    <PartModuleControlButton
+                      key={beatCount}
+                      aria-label={`${
+                        playback.isActive ? "Restart" : "Play"
+                      } exercise with a ${beatCount}-beat count-in`}
+                      icon={
+                        <span aria-hidden="true" className={styles.beatCount}>
+                          {beatCount}
+                        </span>
+                      }
+                      onPress={() => playback.startWithIntro(beatCount)}
+                      selected={playback.activeCountInBeats === beatCount}
+                    />
+                  ))}
                 </TactileControlGroup>
               </div>
 

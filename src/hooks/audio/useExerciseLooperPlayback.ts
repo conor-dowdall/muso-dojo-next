@@ -13,7 +13,7 @@ import { flushSync } from "react-dom";
 import {
   ExerciseAuditionController,
   ensureAudioReady,
-  exercisePlaybackRequestsAreEqual,
+  exercisePlaybackRestartRequestsAreEqual,
   exercisePlaybackCoordinator,
   getDefaultAudioPresetId,
   isExercisePlaybackActive,
@@ -116,7 +116,6 @@ export function getExerciseVisualStepLeadSeconds(
 
 export function useExerciseLooperPlayback({
   audioPresetId,
-  countInBeats,
   id,
   metronomeEnabled,
   steps,
@@ -124,7 +123,6 @@ export function useExerciseLooperPlayback({
   tempoBpm,
 }: {
   audioPresetId?: AudioPresetId;
-  countInBeats: ExerciseCountInBeats;
   id: string;
   metronomeEnabled: boolean;
   steps: readonly ExerciseSequenceStep[];
@@ -155,14 +153,14 @@ export function useExerciseLooperPlayback({
   );
   const request = useMemo(
     () => ({
-      countInBeats,
+      countInBeats: 0 as ExerciseCountInBeats,
       events,
       id,
       metronomeEnabled,
       presetId: audioPresetId ?? getDefaultAudioPresetId("exercise"),
       tempoBpm,
     }),
-    [audioPresetId, countInBeats, events, id, metronomeEnabled, tempoBpm],
+    [audioPresetId, events, id, metronomeEnabled, tempoBpm],
   );
   const visualStepLeadSeconds = useMemo(
     () => getExerciseVisualStepLeadSeconds(events, tempoBpm),
@@ -170,15 +168,30 @@ export function useExerciseLooperPlayback({
   );
   const submittedRequest = useRef(request);
 
+  const startWithCountIn = useCallback(
+    (countInBeats: ExerciseCountInBeats) => {
+      const nextRequest = { ...request, countInBeats };
+
+      flushSync(() => {
+        setActiveStepIndex(undefined);
+        auditionController.cancel();
+      });
+      void ensureAudioReady();
+      submittedRequest.current = nextRequest;
+      void exercisePlaybackCoordinator.start(nextRequest);
+    },
+    [auditionController, request],
+  );
   const start = useCallback(() => {
-    flushSync(() => {
-      setActiveStepIndex(undefined);
-      auditionController.cancel();
-    });
-    void ensureAudioReady();
-    submittedRequest.current = request;
-    void exercisePlaybackCoordinator.start(request);
-  }, [auditionController, request]);
+    startWithCountIn(0);
+  }, [startWithCountIn]);
+
+  const startWithIntro = useCallback(
+    (countInBeats: ExerciseCountInBeats) => {
+      startWithCountIn(countInBeats);
+    },
+    [startWithCountIn],
+  );
   const stop = useCallback(() => {
     flushSync(() => setActiveStepIndex(undefined));
     exercisePlaybackCoordinator.stop(id);
@@ -203,13 +216,26 @@ export function useExerciseLooperPlayback({
   useLayoutEffect(() => {
     if (
       isActive &&
-      !exercisePlaybackRequestsAreEqual(submittedRequest.current, request)
+      !exercisePlaybackRestartRequestsAreEqual(
+        submittedRequest.current,
+        request,
+      )
     ) {
       setActiveStepIndex(undefined);
       submittedRequest.current = request;
       void exercisePlaybackCoordinator.start(request);
     }
   }, [isActive, request]);
+
+  useLayoutEffect(() => {
+    if (!isPlaying) {
+      return;
+    }
+
+    exercisePlaybackCoordinator.setMetronomeEnabled(id, metronomeEnabled);
+    exercisePlaybackCoordinator.setTempo(id, tempoBpm);
+    submittedRequest.current = request;
+  }, [id, isPlaying, metronomeEnabled, request, tempoBpm]);
 
   useEffect(() => {
     if (!isPlaying || document.visibilityState === "hidden") {
@@ -261,6 +287,19 @@ export function useExerciseLooperPlayback({
     isPlaying && renderedActiveStepIndex !== undefined
       ? steps[renderedActiveStepIndex]
       : undefined;
+  const countInOutputTime =
+    isPlaying && renderedActiveStepIndex === undefined
+      ? getCurrentOutputTime()
+      : undefined;
+  const activeCountInBeats =
+    isPlaying &&
+    renderedActiveStepIndex === undefined &&
+    snapshot.countInBeats !== undefined &&
+    snapshot.countInBeats > 0 &&
+    snapshot.originTime !== undefined &&
+    (countInOutputTime === undefined || countInOutputTime < snapshot.originTime)
+      ? snapshot.countInBeats
+      : undefined;
   const activeCollectionPositions = useMemo(
     () =>
       new Set(activeStep?.notes.map((note) => note.collectionPosition) ?? []),
@@ -269,6 +308,7 @@ export function useExerciseLooperPlayback({
 
   return {
     activeAnchorPosition: activeStep?.notes[0]?.anchorPosition,
+    activeCountInBeats,
     activeCollectionPositions,
     audition,
     auditionActiveKeys: isActive
@@ -279,6 +319,7 @@ export function useExerciseLooperPlayback({
     isPending,
     isPlaying,
     start,
+    startWithIntro,
     stop,
   };
 }

@@ -4,6 +4,7 @@ import {
   type LookaheadSchedulerEvent,
   type LookaheadSchedulerOptions,
 } from "./lookaheadScheduler";
+import { AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS } from "./audioTimingConfig";
 import { musoAudioEngine } from "./createWebAudioEngine";
 import {
   type AudioEngine,
@@ -34,6 +35,8 @@ export interface ExercisePlaybackRequest {
 
 export interface ExercisePlaybackSnapshot {
   activeId?: string;
+  countInBeats?: ExerciseCountInBeats;
+  countInStartTime?: number;
   cycleDuration?: number;
   events: readonly ExercisePlaybackEvent[];
   originTime?: number;
@@ -43,9 +46,12 @@ export interface ExercisePlaybackSnapshot {
 }
 
 interface ActiveExercisePlayback {
-  group: PlaybackGroupHandle;
+  countInGroup?: PlaybackGroupHandle;
+  metronomeGroup?: PlaybackGroupHandle;
   metronomeScheduler?: LookaheadScheduler;
+  noteGroup: PlaybackGroupHandle;
   noteScheduler: LookaheadScheduler;
+  request: ExercisePlaybackRequest;
   snapshot: ExercisePlaybackSnapshot;
 }
 
@@ -90,16 +96,13 @@ export function isExercisePlaybackActive(
   );
 }
 
-export function exercisePlaybackRequestsAreEqual(
+export function exercisePlaybackRestartRequestsAreEqual(
   left: ExercisePlaybackRequest,
   right: ExercisePlaybackRequest,
 ) {
   return (
-    left.countInBeats === right.countInBeats &&
     left.id === right.id &&
-    left.metronomeEnabled === right.metronomeEnabled &&
     left.presetId === right.presetId &&
-    normalizeTempo(left.tempoBpm) === normalizeTempo(right.tempoBpm) &&
     left.events.length === right.events.length &&
     left.events.every((event, index) => {
       const other = right.events[index];
@@ -158,8 +161,9 @@ export class ExercisePlaybackCoordinator {
   }
 
   private reset() {
-    this.active?.noteScheduler.stop();
-    this.active?.metronomeScheduler?.stop();
+    if (this.active) {
+      this.stopActivePlayback(this.active);
+    }
     this.active = undefined;
     this.pendingStartId = undefined;
     this.snapshot = idleSnapshot;
@@ -168,6 +172,108 @@ export class ExercisePlaybackCoordinator {
   }
 
   getSnapshot = () => this.snapshot;
+
+  private cancelGroup(
+    group: PlaybackGroupHandle | undefined,
+    options?: { releaseSeconds?: number },
+  ) {
+    if (group) {
+      this.audioEngine.cancelPlaybackGroup(group, options);
+    }
+  }
+
+  private stopActivePlayback(
+    active: ActiveExercisePlayback,
+    options?: { releaseSeconds?: number },
+  ) {
+    active.noteScheduler.stop();
+    active.metronomeScheduler?.stop();
+    this.cancelGroup(active.countInGroup);
+    this.cancelGroup(active.metronomeGroup);
+    this.cancelGroup(active.noteGroup, options);
+  }
+
+  private createNoteScheduler({
+    group,
+    request,
+    secondsPerBeat,
+  }: {
+    group: PlaybackGroupHandle;
+    request: ExercisePlaybackRequest;
+    secondsPerBeat: number;
+  }) {
+    return this.createScheduler({
+      events: toSchedulerEvents(request.events, secondsPerBeat),
+      getCurrentTime: this.audioEngine.getCurrentTime,
+      onSchedule: (scheduledEvent, startTime) => {
+        this.audioEngine.scheduleNote({
+          durationSeconds: scheduledEvent.duration * NOTE_GATE_RATIO,
+          group,
+          midiNote: scheduledEvent.payload.midi,
+          presetId: request.presetId,
+          startTime,
+          use: "exercise",
+          velocity: 0.76,
+        });
+      },
+    });
+  }
+
+  private createMetronomeClickScheduler({
+    group,
+    secondsPerBeat,
+  }: {
+    group: PlaybackGroupHandle;
+    secondsPerBeat: number;
+  }) {
+    return this.createMetronomeScheduler({
+      // A one-beat cycle keeps the click grid steady when an exercise loop
+      // has a fractional length, as triplet exercises often do.
+      events: [
+        {
+          duration: secondsPerBeat,
+          offset: 0,
+          payload: true,
+        },
+      ],
+      getCurrentTime: this.audioEngine.getCurrentTime,
+      onSchedule: (_scheduledEvent, startTime) => {
+        this.audioEngine.scheduleMetronomeClick({
+          accent: false,
+          group,
+          startTime,
+        });
+      },
+    });
+  }
+
+  private scheduleCountIn({
+    countInBeats,
+    countInStartTime,
+    group,
+    secondsPerBeat,
+    earliestStartTime = Number.NEGATIVE_INFINITY,
+  }: {
+    countInBeats: ExerciseCountInBeats;
+    countInStartTime: number;
+    group: PlaybackGroupHandle;
+    secondsPerBeat: number;
+    earliestStartTime?: number;
+  }) {
+    for (let beatIndex = 0; beatIndex < countInBeats; beatIndex += 1) {
+      const startTime = countInStartTime + beatIndex * secondsPerBeat;
+
+      if (startTime < earliestStartTime) {
+        continue;
+      }
+
+      this.audioEngine.scheduleMetronomeClick({
+        accent: beatIndex === 0,
+        group,
+        startTime,
+      });
+    }
+  }
 
   getActiveStepIndex(outputContextTime: number) {
     const { cycleDuration, events, originTime, playing, secondsPerBeat } =
@@ -233,62 +339,47 @@ export class ExercisePlaybackCoordinator {
     }
 
     const secondsPerBeat = 60 / normalizeTempo(request.tempoBpm);
-    const previous = this.active;
     const countInStartTime = currentTime + START_LOOKAHEAD_SECONDS;
     const originTime = countInStartTime + request.countInBeats * secondsPerBeat;
 
-    previous?.noteScheduler.stop();
-    previous?.metronomeScheduler?.stop();
+    const previous = this.active;
     if (previous) {
-      this.audioEngine.cancelPlaybackGroup(previous.group);
+      this.stopActivePlayback(previous);
     }
 
-    const group = this.audioEngine.createPlaybackGroup();
-    for (let beatIndex = 0; beatIndex < request.countInBeats; beatIndex += 1) {
-      this.audioEngine.scheduleMetronomeClick({
-        accent: beatIndex === 0,
-        group,
-        startTime: countInStartTime + beatIndex * secondsPerBeat,
+    const countInGroup =
+      request.countInBeats > 0
+        ? this.audioEngine.createPlaybackGroup()
+        : undefined;
+    const noteGroup = this.audioEngine.createPlaybackGroup();
+    const metronomeGroup = request.metronomeEnabled
+      ? this.audioEngine.createPlaybackGroup()
+      : undefined;
+
+    if (countInGroup) {
+      this.scheduleCountIn({
+        countInBeats: request.countInBeats,
+        countInStartTime,
+        group: countInGroup,
+        secondsPerBeat,
       });
     }
-    const noteScheduler = this.createScheduler({
-      events: toSchedulerEvents(request.events, secondsPerBeat),
-      getCurrentTime: this.audioEngine.getCurrentTime,
-      onSchedule: (scheduledEvent, startTime) => {
-        this.audioEngine.scheduleNote({
-          durationSeconds: scheduledEvent.duration * NOTE_GATE_RATIO,
-          group,
-          midiNote: scheduledEvent.payload.midi,
-          presetId: request.presetId,
-          startTime,
-          use: "exercise",
-          velocity: 0.76,
-        });
-      },
+    const noteScheduler = this.createNoteScheduler({
+      group: noteGroup,
+      request,
+      secondsPerBeat,
     });
-    const metronomeScheduler = request.metronomeEnabled
-      ? this.createMetronomeScheduler({
-          // A one-beat cycle keeps the click grid steady when an exercise loop
-          // has a fractional length, as triplet exercises often do.
-          events: [
-            {
-              duration: secondsPerBeat,
-              offset: 0,
-              payload: true,
-            },
-          ],
-          getCurrentTime: this.audioEngine.getCurrentTime,
-          onSchedule: (_scheduledEvent, startTime) => {
-            this.audioEngine.scheduleMetronomeClick({
-              accent: false,
-              group,
-              startTime,
-            });
-          },
+    const metronomeScheduler = metronomeGroup
+      ? this.createMetronomeClickScheduler({
+          group: metronomeGroup,
+          secondsPerBeat,
         })
       : undefined;
     const snapshot: ExercisePlaybackSnapshot = {
       activeId: request.id,
+      ...(request.countInBeats > 0
+        ? { countInBeats: request.countInBeats, countInStartTime }
+        : {}),
       cycleDuration,
       events: request.events,
       originTime,
@@ -297,15 +388,192 @@ export class ExercisePlaybackCoordinator {
     };
 
     this.active = {
-      group,
+      countInGroup,
+      metronomeGroup,
       metronomeScheduler,
+      noteGroup,
       noteScheduler,
+      request,
       snapshot,
     };
     this.pendingStartId = undefined;
     this.snapshot = snapshot;
     noteScheduler.start(originTime);
     metronomeScheduler?.start(originTime);
+    this.emit();
+    return true;
+  }
+
+  setMetronomeEnabled(id: string, enabled: boolean) {
+    const active = this.active;
+
+    if (!active || active.snapshot.activeId !== id) {
+      return false;
+    }
+
+    const isEnabled = active.metronomeScheduler !== undefined;
+
+    if (isEnabled === enabled) {
+      return true;
+    }
+
+    active.metronomeScheduler?.stop();
+    this.cancelGroup(active.metronomeGroup);
+    active.metronomeScheduler = undefined;
+    active.metronomeGroup = undefined;
+
+    if (enabled) {
+      const { originTime, secondsPerBeat } = active.snapshot;
+
+      if (originTime === undefined || secondsPerBeat === undefined) {
+        return false;
+      }
+
+      const metronomeGroup = this.audioEngine.createPlaybackGroup();
+      const metronomeScheduler = this.createMetronomeClickScheduler({
+        group: metronomeGroup,
+        secondsPerBeat,
+      });
+
+      active.metronomeGroup = metronomeGroup;
+      active.metronomeScheduler = metronomeScheduler;
+      metronomeScheduler.start(originTime);
+    }
+
+    active.request = {
+      ...active.request,
+      metronomeEnabled: enabled,
+    };
+    active.snapshot = {
+      ...active.snapshot,
+    };
+    this.snapshot = active.snapshot;
+    this.emit();
+    return true;
+  }
+
+  setTempo(id: string, tempoBpm: number) {
+    const active = this.active;
+    const currentTime = this.audioEngine.getCurrentTime();
+
+    if (
+      !active ||
+      active.snapshot.activeId !== id ||
+      currentTime === undefined
+    ) {
+      return false;
+    }
+
+    const nextTempoBpm = normalizeTempo(tempoBpm);
+    const currentTempoBpm = normalizeTempo(active.request.tempoBpm);
+
+    if (nextTempoBpm === currentTempoBpm) {
+      return true;
+    }
+
+    const { countInBeats, countInStartTime, originTime, secondsPerBeat } =
+      active.snapshot;
+
+    if (originTime === undefined || secondsPerBeat === undefined) {
+      return false;
+    }
+
+    const nextSecondsPerBeat = 60 / nextTempoBpm;
+    let nextCountInStartTime = countInStartTime;
+    let nextOriginTime = originTime;
+
+    if (
+      countInBeats !== undefined &&
+      countInBeats > 0 &&
+      countInStartTime !== undefined &&
+      currentTime < originTime
+    ) {
+      const countInPositionBeats = Math.max(
+        0,
+        (currentTime - countInStartTime) / secondsPerBeat,
+      );
+      nextCountInStartTime =
+        currentTime - countInPositionBeats * nextSecondsPerBeat;
+      nextOriginTime = nextCountInStartTime + countInBeats * nextSecondsPerBeat;
+    } else {
+      const positionBeats = Math.max(
+        0,
+        (currentTime - originTime) / secondsPerBeat,
+      );
+      nextOriginTime = currentTime - positionBeats * nextSecondsPerBeat;
+    }
+
+    active.noteScheduler.stop();
+    active.metronomeScheduler?.stop();
+    this.cancelGroup(active.countInGroup);
+    this.cancelGroup(active.metronomeGroup);
+    this.cancelGroup(active.noteGroup, {
+      releaseSeconds: STOP_RELEASE_SECONDS,
+    });
+
+    const nextRequest = {
+      ...active.request,
+      tempoBpm: nextTempoBpm,
+    };
+    const continuesCountIn =
+      countInBeats !== undefined &&
+      countInBeats > 0 &&
+      nextCountInStartTime !== undefined &&
+      currentTime < originTime;
+    const nextCountInGroup = continuesCountIn
+      ? this.audioEngine.createPlaybackGroup()
+      : undefined;
+    const nextNoteGroup = this.audioEngine.createPlaybackGroup();
+    const nextMetronomeGroup = active.request.metronomeEnabled
+      ? this.audioEngine.createPlaybackGroup()
+      : undefined;
+
+    if (
+      nextCountInGroup &&
+      nextCountInStartTime !== undefined &&
+      countInBeats !== undefined
+    ) {
+      this.scheduleCountIn({
+        countInBeats,
+        countInStartTime: nextCountInStartTime,
+        earliestStartTime: currentTime + AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS,
+        group: nextCountInGroup,
+        secondsPerBeat: nextSecondsPerBeat,
+      });
+    }
+
+    const nextNoteScheduler = this.createNoteScheduler({
+      group: nextNoteGroup,
+      request: nextRequest,
+      secondsPerBeat: nextSecondsPerBeat,
+    });
+    const nextMetronomeScheduler = nextMetronomeGroup
+      ? this.createMetronomeClickScheduler({
+          group: nextMetronomeGroup,
+          secondsPerBeat: nextSecondsPerBeat,
+        })
+      : undefined;
+
+    active.countInGroup = nextCountInGroup;
+    active.metronomeGroup = nextMetronomeGroup;
+    active.metronomeScheduler = nextMetronomeScheduler;
+    active.noteGroup = nextNoteGroup;
+    active.noteScheduler = nextNoteScheduler;
+    active.request = nextRequest;
+    active.snapshot = {
+      ...active.snapshot,
+      ...(nextCountInStartTime !== undefined &&
+      countInBeats !== undefined &&
+      countInBeats > 0 &&
+      currentTime < originTime
+        ? { countInStartTime: nextCountInStartTime }
+        : {}),
+      originTime: nextOriginTime,
+      secondsPerBeat: nextSecondsPerBeat,
+    };
+    this.snapshot = active.snapshot;
+    nextNoteScheduler.start(nextOriginTime);
+    nextMetronomeScheduler?.start(nextOriginTime);
     this.emit();
     return true;
   }
@@ -329,9 +597,7 @@ export class ExercisePlaybackCoordinator {
 
     if (stopsActive && this.active) {
       const active = this.active;
-      active.noteScheduler.stop();
-      active.metronomeScheduler?.stop();
-      this.audioEngine.cancelPlaybackGroup(active.group, {
+      this.stopActivePlayback(active, {
         releaseSeconds: STOP_RELEASE_SECONDS,
       });
       this.active = undefined;

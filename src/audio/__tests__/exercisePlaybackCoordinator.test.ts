@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   ExercisePlaybackCoordinator,
-  exercisePlaybackRequestsAreEqual,
+  exercisePlaybackRestartRequestsAreEqual,
   isExercisePlaybackActive,
   type ExercisePlaybackAudioEngine,
   type ExerciseMetronomeSchedulerFactory,
@@ -37,7 +37,7 @@ function createDeferred<T>() {
   return { promise, resolve };
 }
 
-describe("exercisePlaybackRequestsAreEqual", () => {
+describe("exercisePlaybackRestartRequestsAreEqual", () => {
   it("treats rebuilt requests with the same musical contents as equal", () => {
     const request = createRequest("looper", 60);
     const rebuiltRequest = {
@@ -47,20 +47,32 @@ describe("exercisePlaybackRequestsAreEqual", () => {
 
     expect(rebuiltRequest).not.toBe(request);
     expect(rebuiltRequest.events).not.toBe(request.events);
-    expect(exercisePlaybackRequestsAreEqual(request, rebuiltRequest)).toBe(
-      true,
-    );
+    expect(
+      exercisePlaybackRestartRequestsAreEqual(request, rebuiltRequest),
+    ).toBe(true);
   });
 
-  it("detects changes to every scheduler-relevant request field", () => {
+  it("ignores one-shot and live playback control differences", () => {
+    const request = createRequest("looper", 60);
+    const changedRequests: ExercisePlaybackRequest[] = [
+      { ...request, countInBeats: 4 },
+      { ...request, metronomeEnabled: true },
+      { ...request, tempoBpm: 90 },
+    ];
+
+    changedRequests.forEach((changedRequest) => {
+      expect(
+        exercisePlaybackRestartRequestsAreEqual(request, changedRequest),
+      ).toBe(true);
+    });
+  });
+
+  it("detects changes to ongoing playback request fields", () => {
     const request = createRequest("looper", 60);
     const event = request.events[0]!;
     const changedRequests: ExercisePlaybackRequest[] = [
       { ...request, id: "other-looper" },
-      { ...request, countInBeats: 4 },
-      { ...request, metronomeEnabled: true },
       { ...request, presetId: "bowed-strings" },
-      { ...request, tempoBpm: 90 },
       { ...request, events: [] },
       {
         ...request,
@@ -81,9 +93,9 @@ describe("exercisePlaybackRequestsAreEqual", () => {
     ];
 
     changedRequests.forEach((changedRequest) => {
-      expect(exercisePlaybackRequestsAreEqual(request, changedRequest)).toBe(
-        false,
-      );
+      expect(
+        exercisePlaybackRestartRequestsAreEqual(request, changedRequest),
+      ).toBe(false);
     });
   });
 });
@@ -140,7 +152,7 @@ describe("ExercisePlaybackCoordinator", () => {
     await coordinator.start(createRequest("looper", 62));
 
     expect(schedulers[0]?.stop).toHaveBeenCalledOnce();
-    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0");
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", undefined);
     expect(schedulers[1]?.start).toHaveBeenCalledWith(10.28);
     expect(coordinator.getSnapshot()).toMatchObject({
       activeId: "looper",
@@ -239,10 +251,12 @@ describe("ExercisePlaybackCoordinator", () => {
   it("schedules an accented count-in before the exercise origin", async () => {
     const scheduleMetronomeClick = vi.fn();
     const schedulerStart = vi.fn();
+    let nextGroupId = 0;
     const coordinator = new ExercisePlaybackCoordinator(
       {
         cancelPlaybackGroup: vi.fn(),
-        createPlaybackGroup: () => "group-0" as PlaybackGroupHandle,
+        createPlaybackGroup: () =>
+          `group-${nextGroupId++}` as PlaybackGroupHandle,
         getCurrentTime: () => 10,
         prime: async () => true,
         scheduleMetronomeClick,
@@ -270,6 +284,8 @@ describe("ExercisePlaybackCoordinator", () => {
     ]);
     expect(schedulerStart).toHaveBeenCalledWith(14.08);
     expect(coordinator.getSnapshot()).toMatchObject({
+      countInBeats: 4,
+      countInStartTime: 10.08,
       originTime: 14.08,
       playing: true,
     });
@@ -280,6 +296,7 @@ describe("ExercisePlaybackCoordinator", () => {
     const scheduleMetronomeClick = vi.fn();
     const metronomeStart = vi.fn();
     const metronomeStop = vi.fn();
+    let nextGroupId = 0;
     const createMetronomeScheduler = vi.fn<ExerciseMetronomeSchedulerFactory>(
       () => ({
         isRunning: () => true,
@@ -290,7 +307,8 @@ describe("ExercisePlaybackCoordinator", () => {
     const coordinator = new ExercisePlaybackCoordinator(
       {
         cancelPlaybackGroup,
-        createPlaybackGroup: () => "group-0" as PlaybackGroupHandle,
+        createPlaybackGroup: () =>
+          `group-${nextGroupId++}` as PlaybackGroupHandle,
         getCurrentTime: () => 10,
         prime: async () => true,
         scheduleMetronomeClick,
@@ -320,15 +338,117 @@ describe("ExercisePlaybackCoordinator", () => {
     options?.onSchedule(options.events[0]!, 11.08, 0, 0);
     expect(scheduleMetronomeClick).toHaveBeenLastCalledWith({
       accent: false,
-      group: "group-0",
+      group: "group-2",
       startTime: 11.08,
     });
     expect(metronomeStart).toHaveBeenCalledWith(11.08);
 
     coordinator.stop("looper");
     expect(metronomeStop).toHaveBeenCalledOnce();
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", undefined);
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-2", undefined);
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-1", {
+      releaseSeconds: 0.08,
+    });
+  });
+
+  it("toggles the metronome without restarting exercise notes", async () => {
+    let currentTime = 10;
+    let nextGroupId = 0;
+    const cancelPlaybackGroup = vi.fn();
+    const noteScheduler = {
+      isRunning: () => true,
+      start: vi.fn(),
+      stop: vi.fn(),
+    };
+    const metronomeScheduler = {
+      isRunning: () => true,
+      start: vi.fn(),
+      stop: vi.fn(),
+    };
+    const createMetronomeScheduler = vi.fn<ExerciseMetronomeSchedulerFactory>(
+      () => metronomeScheduler,
+    );
+    const coordinator = new ExercisePlaybackCoordinator(
+      {
+        cancelPlaybackGroup,
+        createPlaybackGroup: () =>
+          `group-${nextGroupId++}` as PlaybackGroupHandle,
+        getCurrentTime: () => currentTime,
+        prime: async () => true,
+        scheduleMetronomeClick: vi.fn(),
+        scheduleNote: vi.fn(),
+        subscribeToStopAll: () => () => undefined,
+      },
+      () => noteScheduler,
+      createMetronomeScheduler,
+    );
+
+    await coordinator.start(createRequest("looper", 60));
+    currentTime = 11;
+
+    expect(coordinator.setMetronomeEnabled("looper", true)).toBe(true);
+
+    expect(noteScheduler.stop).not.toHaveBeenCalled();
+    expect(metronomeScheduler.start).toHaveBeenCalledWith(10.08);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeId: "looper",
+      originTime: 10.08,
+      playing: true,
+    });
+
+    expect(coordinator.setMetronomeEnabled("looper", false)).toBe(true);
+
+    expect(noteScheduler.stop).not.toHaveBeenCalled();
+    expect(metronomeScheduler.stop).toHaveBeenCalledOnce();
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-1", undefined);
+  });
+
+  it("changes tempo by preserving beat position instead of resetting to beat one", async () => {
+    let currentTime = 10;
+    let nextGroupId = 0;
+    const cancelPlaybackGroup = vi.fn();
+    const schedulers: Array<{
+      start: ReturnType<typeof vi.fn>;
+      stop: ReturnType<typeof vi.fn>;
+    }> = [];
+    const coordinator = new ExercisePlaybackCoordinator(
+      {
+        cancelPlaybackGroup,
+        createPlaybackGroup: () =>
+          `group-${nextGroupId++}` as PlaybackGroupHandle,
+        getCurrentTime: () => currentTime,
+        prime: async () => true,
+        scheduleMetronomeClick: vi.fn(),
+        scheduleNote: vi.fn(),
+        subscribeToStopAll: () => () => undefined,
+      },
+      () => {
+        const scheduler = {
+          isRunning: () => true,
+          start: vi.fn(),
+          stop: vi.fn(),
+        };
+        schedulers.push(scheduler);
+        return scheduler;
+      },
+    );
+
+    await coordinator.start(createRequest("looper", 60));
+    currentTime = 12.08;
+
+    expect(coordinator.setTempo("looper", 120)).toBe(true);
+
+    expect(schedulers[0]?.stop).toHaveBeenCalledOnce();
+    expect(schedulers[1]?.start).toHaveBeenCalledWith(11.08);
     expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
       releaseSeconds: 0.08,
     });
+    expect(coordinator.getSnapshot()).toMatchObject({
+      originTime: 11.08,
+      playing: true,
+      secondsPerBeat: 0.5,
+    });
+    expect(coordinator.getActiveStepIndex(12.08)).toBe(0);
   });
 });

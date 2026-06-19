@@ -43,7 +43,6 @@ export function ExerciseLooperPartModuleView({
       clonePartModule: state.clonePartModule,
       removePartModule: state.removePartModule,
       setExerciseLooperAudioPresetId: state.setExerciseLooperAudioPresetId,
-      setExerciseLooperCountInBeats: state.setExerciseLooperCountInBeats,
       setExerciseLooperEnd: state.setExerciseLooperEnd,
       setExerciseLooperMetronomeEnabled:
         state.setExerciseLooperMetronomeEnabled,
@@ -71,14 +70,6 @@ export function ExerciseLooperPartModuleView({
                 moduleId,
                 value,
               )
-      }
-      onCountInBeatsChange={(value) =>
-        actions.setExerciseLooperCountInBeats(
-          sessionId,
-          partId,
-          moduleId,
-          value,
-        )
       }
       onClone={
         isPerformanceMode

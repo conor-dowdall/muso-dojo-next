@@ -13,7 +13,7 @@ export {
   type LookaheadSchedulerOptions,
 } from "./lookaheadScheduler";
 export {
-  exercisePlaybackRequestsAreEqual,
+  exercisePlaybackRestartRequestsAreEqual,
   exercisePlaybackCoordinator,
   isExercisePlaybackActive,
   type ExercisePlaybackEvent,
