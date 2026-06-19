@@ -1,9 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { createExerciseSequence } from "@/utils/exercise-looper/exerciseSequence";
 import {
+  createExerciseSequence,
+  type ExerciseSequence,
+} from "@/utils/exercise-looper/exerciseSequence";
+import {
+  createExerciseStudyAnchorIdentity,
   resolveExerciseStudyAnchorPosition,
   resolveExerciseStudyDisplay,
 } from "@/utils/exercise-looper/exerciseStudyDisplay";
+
+function getAnchor(sequence: ExerciseSequence, collectionPosition: number) {
+  const note = sequence.notes.find(
+    (candidate) => candidate.collectionPosition === collectionPosition,
+  );
+
+  if (note === undefined) {
+    throw new Error(`No exercise anchor at position ${collectionPosition}`);
+  }
+
+  return createExerciseStudyAnchorIdentity(sequence, note);
+}
 
 describe("resolveExerciseStudyDisplay", () => {
   it("shows one complete scale octave in single-note mode", () => {
@@ -61,7 +77,7 @@ describe("resolveExerciseStudyDisplay", () => {
 
     expect(
       resolveExerciseStudyDisplay({
-        selectedAnchorPosition: 0,
+        selectedAnchor: getAnchor(sequence, 0),
         mode: "interval",
         sequence,
       }),
@@ -91,7 +107,7 @@ describe("resolveExerciseStudyDisplay", () => {
     expect(
       resolveExerciseStudyDisplay({
         activeAnchorPosition: 1,
-        selectedAnchorPosition: 0,
+        selectedAnchor: getAnchor(sequence, 0),
         mode: "interval",
         sequence,
       }),
@@ -120,7 +136,7 @@ describe("resolveExerciseStudyDisplay", () => {
 
     expect(
       resolveExerciseStudyDisplay({
-        selectedAnchorPosition: 1,
+        selectedAnchor: getAnchor(sequence, 1),
         mode: "interval",
         sequence,
       }),
@@ -149,7 +165,7 @@ describe("resolveExerciseStudyDisplay", () => {
 
     expect(
       resolveExerciseStudyDisplay({
-        selectedAnchorPosition: 0,
+        selectedAnchor: getAnchor(sequence, 0),
         mode: "extension",
         sequence,
       }),
@@ -171,7 +187,6 @@ describe("resolveExerciseStudyDisplay", () => {
       mode: "interval",
       notePlayback: "together",
     } as const;
-    const selectedAnchorPosition = 0;
     const ionian = createExerciseSequence({
       end: { octave: 0, stepOffset: 1 },
       noteCollectionKey: "ionian",
@@ -184,11 +199,12 @@ describe("resolveExerciseStudyDisplay", () => {
       pattern,
       rootNote: "C",
     });
+    const selectedAnchor = getAnchor(ionian, 0);
 
     expect(
       resolveExerciseStudyDisplay({
         mode: "interval",
-        selectedAnchorPosition,
+        selectedAnchor,
         sequence: ionian,
       }),
     ).toEqual({
@@ -199,7 +215,7 @@ describe("resolveExerciseStudyDisplay", () => {
     expect(
       resolveExerciseStudyDisplay({
         mode: "interval",
-        selectedAnchorPosition,
+        selectedAnchor,
         sequence: dorian,
       }),
     ).toEqual({
@@ -207,6 +223,55 @@ describe("resolveExerciseStudyDisplay", () => {
       kind: "notes",
       notes: ["C", "E♭"],
     });
+  });
+
+  it("remaps selected chord anchors by interval degree when changing to a scale", () => {
+    const major = createExerciseSequence({
+      noteCollectionKey: "major",
+      rootNote: "C",
+    });
+    const ionian = createExerciseSequence({
+      noteCollectionKey: "ionian",
+      rootNote: "C",
+    });
+
+    expect(
+      resolveExerciseStudyAnchorPosition({
+        selectedAnchor: getAnchor(major, 1),
+        sequence: ionian,
+      }),
+    ).toBe(2);
+    expect(
+      resolveExerciseStudyAnchorPosition({
+        selectedAnchor: getAnchor(major, 2),
+        sequence: ionian,
+      }),
+    ).toBe(4);
+  });
+
+  it("drops selected scale anchors when the degree is absent from a chord", () => {
+    const ionian = createExerciseSequence({
+      end: { octave: 1, stepOffset: 5 },
+      noteCollectionKey: "ionian",
+      rootNote: "C",
+    });
+    const major = createExerciseSequence({
+      noteCollectionKey: "major",
+      rootNote: "C",
+    });
+
+    expect(
+      resolveExerciseStudyAnchorPosition({
+        selectedAnchor: getAnchor(ionian, 8),
+        sequence: major,
+      }),
+    ).toBe(0);
+    expect(
+      resolveExerciseStudyAnchorPosition({
+        selectedAnchor: getAnchor(ionian, 12),
+        sequence: major,
+      }),
+    ).toBe(0);
   });
 
   it("normalizes an unavailable selected anchor to the root anchor", () => {
@@ -218,7 +283,11 @@ describe("resolveExerciseStudyDisplay", () => {
 
     expect(
       resolveExerciseStudyAnchorPosition({
-        selectedAnchorPosition: 12,
+        selectedAnchor: {
+          collectionPosition: 12,
+          collectionSize: sequence.collectionSize,
+          intervalDegree: 13,
+        },
         sequence,
       }),
     ).toBe(0);
@@ -234,7 +303,7 @@ describe("resolveExerciseStudyDisplay", () => {
     expect(
       resolveExerciseStudyAnchorPosition({
         activeAnchorPosition: 12,
-        selectedAnchorPosition: 1,
+        selectedAnchor: getAnchor(sequence, 1),
         sequence,
       }),
     ).toBe(1);

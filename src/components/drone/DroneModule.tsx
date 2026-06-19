@@ -331,7 +331,7 @@ export function DroneModule({
                       mode: noteColors.mode,
                       rootNote: droneNotes.rootNote,
                     });
-                    const isActive = isNoteActive(note.interval);
+                    const isActive = isNoteActive(note);
                     const noteLabel = formatSpelledMidiNote(
                       note.label,
                       note.midi,

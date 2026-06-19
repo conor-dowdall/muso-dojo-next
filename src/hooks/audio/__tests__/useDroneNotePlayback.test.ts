@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createDroneNotePlaybackController,
   getDronePlaybackVelocity,
+  type DroneNotePlaybackNote,
 } from "@/hooks/audio/droneNotePlaybackController";
 
 function createDeferred<T>() {
@@ -18,34 +19,63 @@ function createController() {
   const destroy = vi.fn();
   const update = vi.fn();
   const activeIntervals: number[][] = [];
+  const activeNoteIds: string[][] = [];
   const controller = createDroneNotePlaybackController({
     create,
     destroy,
+    onActiveNoteIdsChange: (ids) => activeNoteIds.push(ids),
     onActiveIntervalsChange: (intervals) => activeIntervals.push(intervals),
     update,
   });
 
-  return { activeIntervals, controller, create, destroy, update };
+  return {
+    activeIntervals,
+    activeNoteIds,
+    controller,
+    create,
+    destroy,
+    update,
+  };
+}
+
+function createNote(
+  collectionPosition: number,
+  interval: number,
+  midi: number,
+  options: Partial<
+    Omit<DroneNotePlaybackNote, "collectionPosition" | "interval" | "midi">
+  > = {},
+): DroneNotePlaybackNote {
+  return {
+    collectionPosition,
+    collectionSize: 3,
+    intervalDegree: collectionPosition + 1,
+    interval,
+    midi,
+    ...options,
+  };
 }
 
 describe("createDroneNotePlaybackController", () => {
   it("creates one persistent drone and updates it for note toggles", async () => {
-    const { activeIntervals, controller, create, update } = createController();
+    const { activeIntervals, activeNoteIds, controller, create, update } =
+      createController();
 
-    await controller.startNote({ interval: 0, midi: 48 });
-    await controller.startNote({ interval: 7, midi: 55 });
-    controller.toggleNote({ interval: 0, midi: 48 });
+    await controller.startNote(createNote(0, 0, 48));
+    await controller.startNote(createNote(2, 7, 55, { intervalDegree: 5 }));
+    controller.toggleNote(createNote(0, 0, 48));
 
     expect(create).toHaveBeenCalledTimes(1);
-    expect(create).toHaveBeenCalledWith([{ interval: 0, midi: 48 }]);
+    expect(create).toHaveBeenCalledWith([createNote(0, 0, 48)]);
     expect(update).toHaveBeenNthCalledWith(1, "drone-handle", [
-      { interval: 0, midi: 48 },
-      { interval: 7, midi: 55 },
+      createNote(0, 0, 48),
+      createNote(2, 7, 55, { intervalDegree: 5 }),
     ]);
     expect(update).toHaveBeenNthCalledWith(2, "drone-handle", [
-      { interval: 7, midi: 55 },
+      createNote(2, 7, 55, { intervalDegree: 5 }),
     ]);
     expect(activeIntervals).toStrictEqual([[0], [0, 7], [7]]);
+    expect(activeNoteIds).toStrictEqual([["0"], ["0", "2"], ["2"]]);
   });
 
   it("reconciles the latest state after a delayed first handle", async () => {
@@ -57,7 +87,9 @@ describe("createDroneNotePlaybackController", () => {
       update,
     });
 
-    const startPromise = controller.startNote({ interval: 7, midi: 55 });
+    const startPromise = controller.startNote(
+      createNote(2, 7, 55, { intervalDegree: 5 }),
+    );
     controller.stopNote(7);
     deferred.resolve("drone-handle");
     await startPromise;
@@ -75,7 +107,7 @@ describe("createDroneNotePlaybackController", () => {
       update: vi.fn(),
     });
 
-    const startPromise = controller.startNote({ interval: 0, midi: 48 });
+    const startPromise = controller.startNote(createNote(0, 0, 48));
     controller.dispose();
     deferred.resolve("drone-handle");
     await startPromise;
@@ -89,7 +121,7 @@ describe("createDroneNotePlaybackController", () => {
     controller.activate();
     controller.dispose();
     controller.activate();
-    await controller.startNote({ interval: 0, midi: 48 });
+    await controller.startNote(createNote(0, 0, 48));
 
     expect(create).toHaveBeenCalledOnce();
     expect(destroy).not.toHaveBeenCalled();
@@ -109,10 +141,10 @@ describe("createDroneNotePlaybackController", () => {
       update: vi.fn(),
     });
 
-    const firstStart = controller.startNote({ interval: 0, midi: 48 });
+    const firstStart = controller.startNote(createNote(0, 0, 48));
     controller.dispose();
     controller.activate();
-    await controller.startNote({ interval: 7, midi: 55 });
+    await controller.startNote(createNote(2, 7, 55, { intervalDegree: 5 }));
     firstHandle.resolve("stale-handle");
     await firstStart;
 
@@ -134,13 +166,13 @@ describe("createDroneNotePlaybackController", () => {
       update,
     });
 
-    await controller.startNote({ interval: 0, midi: 48 });
-    await controller.startNote({ interval: 7, midi: 55 });
+    await controller.startNote(createNote(0, 0, 48));
+    await controller.startNote(createNote(2, 7, 55, { intervalDegree: 5 }));
 
     expect(create).toHaveBeenCalledTimes(2);
     expect(create).toHaveBeenLastCalledWith([
-      { interval: 0, midi: 48 },
-      { interval: 7, midi: 55 },
+      createNote(0, 0, 48),
+      createNote(2, 7, 55, { intervalDegree: 5 }),
     ]);
   });
 
@@ -153,7 +185,7 @@ describe("createDroneNotePlaybackController", () => {
       update: vi.fn(),
     });
 
-    await controller.startNote({ interval: 0, midi: 48 });
+    await controller.startNote(createNote(0, 0, 48));
 
     expect(controller.getActiveIntervals()).toStrictEqual([]);
     expect(activeIntervals).toStrictEqual([[0], []]);
@@ -162,7 +194,7 @@ describe("createDroneNotePlaybackController", () => {
   it("clears active state immediately when the audio engine resets", async () => {
     const { activeIntervals, controller } = createController();
 
-    await controller.startNote({ interval: 0, midi: 48 });
+    await controller.startNote(createNote(0, 0, 48));
     controller.reset();
 
     expect(controller.getActiveIntervals()).toStrictEqual([]);
@@ -172,8 +204,8 @@ describe("createDroneNotePlaybackController", () => {
   it("reconciles an empty note set for Stop All", async () => {
     const { controller, update } = createController();
 
-    await controller.startNote({ interval: 0, midi: 48 });
-    await controller.startNote({ interval: 7, midi: 55 });
+    await controller.startNote(createNote(0, 0, 48));
+    await controller.startNote(createNote(2, 7, 55, { intervalDegree: 5 }));
     controller.stopAll();
 
     expect(controller.getActiveIntervals()).toStrictEqual([]);
@@ -183,53 +215,132 @@ describe("createDroneNotePlaybackController", () => {
   it("leaves pitch and sound transition choices to the audio engine", async () => {
     const { controller, update } = createController();
 
-    await controller.startNote({
-      audioPresetId: "plucked-string",
-      interval: 0,
-      midi: 48,
-      velocity: 0.65,
-    });
-    controller.reconcileNotes([
-      {
-        audioPresetId: "bowed-strings",
-        interval: 0,
-        midi: 60,
+    await controller.startNote(
+      createNote(0, 0, 48, {
+        audioPresetId: "plucked-string",
         velocity: 0.65,
-      },
+      }),
+    );
+    controller.reconcileNotes([
+      createNote(0, 0, 60, {
+        audioPresetId: "bowed-strings",
+        velocity: 0.65,
+      }),
     ]);
 
     expect(update).toHaveBeenLastCalledWith("drone-handle", [
-      {
+      createNote(0, 0, 60, {
         audioPresetId: "bowed-strings",
-        interval: 0,
-        midi: 60,
         velocity: 0.65,
-      },
+      }),
     ]);
   });
 
   it("reconciles velocity changes through the persistent group", async () => {
     const { controller, update } = createController();
 
-    await controller.startNote({ interval: 0, midi: 48, velocity: 0.65 });
-    controller.reconcileNotes([{ interval: 0, midi: 48, velocity: 0.62 }]);
+    await controller.startNote(createNote(0, 0, 48, { velocity: 0.65 }));
+    controller.reconcileNotes([createNote(0, 0, 48, { velocity: 0.62 })]);
 
     expect(update).toHaveBeenLastCalledWith("drone-handle", [
-      { interval: 0, midi: 48, velocity: 0.62 },
+      createNote(0, 0, 48, { velocity: 0.62 }),
     ]);
   });
 
   it("releases notes removed by a collection change incrementally", async () => {
     const { controller, update } = createController();
 
-    await controller.startNote({ interval: 0, midi: 48 });
-    await controller.startNote({ interval: 14, midi: 62 });
-    controller.reconcileNotes([{ interval: 0, midi: 48 }]);
+    await controller.startNote(createNote(0, 0, 48));
+    await controller.startNote(createNote(4, 14, 62, { intervalDegree: 9 }));
+    controller.reconcileNotes([createNote(0, 0, 48)]);
 
     expect(controller.getActiveIntervals()).toStrictEqual([0]);
     expect(update).toHaveBeenLastCalledWith("drone-handle", [
-      { interval: 0, midi: 48 },
+      createNote(0, 0, 48),
     ]);
+  });
+
+  it("does not confuse collection positions with intervals when stopping", async () => {
+    const { controller, update } = createController();
+
+    await controller.startNote(createNote(7, 11, 59));
+    controller.stopNote(7);
+
+    expect(controller.getActiveIntervals()).toStrictEqual([11]);
+    expect(update).toHaveBeenCalledTimes(0);
+  });
+
+  it("preserves active collection positions when intervals change", async () => {
+    const { activeIntervals, activeNoteIds, controller, update } =
+      createController();
+
+    await controller.startNote(
+      createNote(1, 4, 52, { collectionSize: 7, intervalDegree: 3 }),
+    );
+    controller.reconcileNotes([
+      createNote(0, 0, 48, { collectionSize: 7, intervalDegree: 1 }),
+      createNote(1, 3, 51, { collectionSize: 7, intervalDegree: 3 }),
+    ]);
+
+    expect(controller.getActiveIntervals()).toStrictEqual([3]);
+    expect(activeIntervals).toStrictEqual([[4], [3]]);
+    expect(activeNoteIds).toStrictEqual([["1"], ["1"]]);
+    expect(update).toHaveBeenLastCalledWith("drone-handle", [
+      createNote(1, 3, 51, { collectionSize: 7, intervalDegree: 3 }),
+    ]);
+  });
+
+  it("remaps active notes by interval degree when collection sizes change", async () => {
+    const { activeIntervals, activeNoteIds, controller, update } =
+      createController();
+
+    await controller.startNote(createNote(0, 0, 48, { intervalDegree: 1 }));
+    await controller.startNote(createNote(1, 4, 52, { intervalDegree: 3 }));
+    await controller.startNote(createNote(2, 7, 55, { intervalDegree: 5 }));
+    controller.reconcileNotes([
+      createNote(0, 0, 48, { collectionSize: 7, intervalDegree: 1 }),
+      createNote(1, 2, 50, { collectionSize: 7, intervalDegree: 2 }),
+      createNote(2, 4, 52, { collectionSize: 7, intervalDegree: 3 }),
+      createNote(3, 5, 53, { collectionSize: 7, intervalDegree: 4 }),
+      createNote(4, 7, 55, { collectionSize: 7, intervalDegree: 5 }),
+    ]);
+
+    expect(controller.getActiveIntervals()).toStrictEqual([0, 4, 7]);
+    expect(activeIntervals.at(-1)).toStrictEqual([0, 4, 7]);
+    expect(activeNoteIds.at(-1)).toStrictEqual(["0", "2", "4"]);
+    expect(update).toHaveBeenLastCalledWith("drone-handle", [
+      createNote(0, 0, 48, { collectionSize: 7, intervalDegree: 1 }),
+      createNote(2, 4, 52, { collectionSize: 7, intervalDegree: 3 }),
+      createNote(4, 7, 55, { collectionSize: 7, intervalDegree: 5 }),
+    ]);
+  });
+
+  it("drops active degrees that are unavailable after collection size changes", async () => {
+    const { activeIntervals, activeNoteIds, controller, update } =
+      createController();
+
+    await controller.startNote(
+      createNote(8, 14, 62, {
+        collectionSize: 7,
+        intervalDegree: 9,
+      }),
+    );
+    await controller.startNote(
+      createNote(12, 21, 69, {
+        collectionSize: 7,
+        intervalDegree: 13,
+      }),
+    );
+    controller.reconcileNotes([
+      createNote(0, 0, 48, { intervalDegree: 1 }),
+      createNote(1, 4, 52, { intervalDegree: 3 }),
+      createNote(2, 7, 55, { intervalDegree: 5 }),
+    ]);
+
+    expect(controller.getActiveIntervals()).toStrictEqual([]);
+    expect(activeIntervals.at(-1)).toStrictEqual([]);
+    expect(activeNoteIds.at(-1)).toStrictEqual([]);
+    expect(update).toHaveBeenLastCalledWith("drone-handle", []);
   });
 });
 

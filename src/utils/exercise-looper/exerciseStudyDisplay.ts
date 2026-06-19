@@ -3,6 +3,13 @@ import {
   type ExercisePatternMode,
   type ExerciseSequence,
 } from "./exerciseSequence";
+import {
+  resolveCollectionPositionMatch,
+  type CollectionPositionIdentity,
+} from "@/utils/music-theory/collectionPositionIdentity";
+import { getIntervalLabelDegree } from "@/utils/music-theory/intervalLabel";
+
+export type ExerciseStudyAnchorIdentity = CollectionPositionIdentity;
 
 export type ExerciseStudyDisplay =
   | {
@@ -21,19 +28,36 @@ function hasAnchorPosition(sequence: ExerciseSequence, position: number) {
   return sequence.notes.some((note) => note.collectionPosition === position);
 }
 
+export function createExerciseStudyAnchorIdentity(
+  sequence: ExerciseSequence,
+  note: Pick<ExerciseDisplayNote, "collectionPosition" | "intervalLabel">,
+): ExerciseStudyAnchorIdentity {
+  return {
+    collectionPosition: note.collectionPosition,
+    collectionSize: sequence.collectionSize,
+    intervalDegree: getIntervalLabelDegree(note.intervalLabel),
+  };
+}
+
+function getExerciseStudyAnchorCandidates(sequence: ExerciseSequence) {
+  return sequence.notes.map((note) =>
+    createExerciseStudyAnchorIdentity(sequence, note),
+  );
+}
+
 /**
  * Study readouts carry a selected collection position across root, collection,
- * and mode changes. That preserves the musical comparison point: for example,
- * a selected third can naturally become major, minor, or altered as the
- * surrounding collection changes.
+ * and mode changes. Like-sized collections preserve the same modal slot. When
+ * the collection size changes, the readout preserves the musical degree
+ * instead, so a triad's 1-3-5 maps to a scale's 1-3-5 instead of 1-2-3.
  */
 export function resolveExerciseStudyAnchorPosition({
   activeAnchorPosition,
-  selectedAnchorPosition,
+  selectedAnchor,
   sequence,
 }: {
   activeAnchorPosition?: number;
-  selectedAnchorPosition?: number;
+  selectedAnchor?: ExerciseStudyAnchorIdentity;
   sequence: ExerciseSequence;
 }) {
   if (
@@ -43,11 +67,15 @@ export function resolveExerciseStudyAnchorPosition({
     return activeAnchorPosition;
   }
 
-  if (
-    selectedAnchorPosition !== undefined &&
-    hasAnchorPosition(sequence, selectedAnchorPosition)
-  ) {
-    return selectedAnchorPosition;
+  if (selectedAnchor !== undefined) {
+    const match = resolveCollectionPositionMatch({
+      candidates: getExerciseStudyAnchorCandidates(sequence),
+      identity: selectedAnchor,
+    });
+
+    if (match !== undefined) {
+      return match.collectionPosition;
+    }
   }
 
   return sequence.notes[0]?.collectionPosition;
@@ -80,12 +108,12 @@ export function getExerciseAnchorDisplayNotes(
 
 export function resolveExerciseStudyDisplay({
   activeAnchorPosition,
-  selectedAnchorPosition,
+  selectedAnchor,
   mode,
   sequence,
 }: {
   activeAnchorPosition?: number;
-  selectedAnchorPosition?: number;
+  selectedAnchor?: ExerciseStudyAnchorIdentity;
   mode: ExercisePatternMode;
   sequence: ExerciseSequence;
 }): ExerciseStudyDisplay {
@@ -99,7 +127,7 @@ export function resolveExerciseStudyDisplay({
 
   const anchorPosition = resolveExerciseStudyAnchorPosition({
     activeAnchorPosition,
-    selectedAnchorPosition,
+    selectedAnchor,
     sequence,
   });
 

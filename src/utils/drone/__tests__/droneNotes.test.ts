@@ -164,6 +164,80 @@ describe("droneNotes", () => {
     ]);
   });
 
+  it("assigns stable collection positions across collection changes", () => {
+    const major = resolveDroneNotes({
+      noteCollectionKey: "major",
+      rootNote: "C",
+    });
+    const minor = resolveDroneNotes({
+      noteCollectionKey: "minor",
+      rootNote: "C",
+    });
+
+    expect(
+      major.notes.map((note) => ({
+        collectionPosition: note.collectionPosition,
+        collectionSize: note.collectionSize,
+        interval: note.interval,
+        intervalDegree: note.intervalDegree,
+        key: note.key,
+      })),
+    ).toStrictEqual([
+      {
+        collectionPosition: 0,
+        collectionSize: 3,
+        interval: 0,
+        intervalDegree: 1,
+        key: "position-0",
+      },
+      {
+        collectionPosition: 1,
+        collectionSize: 3,
+        interval: 4,
+        intervalDegree: 3,
+        key: "position-1",
+      },
+      {
+        collectionPosition: 2,
+        collectionSize: 3,
+        interval: 7,
+        intervalDegree: 5,
+        key: "position-2",
+      },
+    ]);
+    expect(
+      minor.notes.map((note) => ({
+        collectionPosition: note.collectionPosition,
+        collectionSize: note.collectionSize,
+        interval: note.interval,
+        intervalDegree: note.intervalDegree,
+        key: note.key,
+      })),
+    ).toStrictEqual([
+      {
+        collectionPosition: 0,
+        collectionSize: 3,
+        interval: 0,
+        intervalDegree: 1,
+        key: "position-0",
+      },
+      {
+        collectionPosition: 1,
+        collectionSize: 3,
+        interval: 3,
+        intervalDegree: 3,
+        key: "position-1",
+      },
+      {
+        collectionPosition: 2,
+        collectionSize: 3,
+        interval: 7,
+        intervalDegree: 5,
+        key: "position-2",
+      },
+    ]);
+  });
+
   it("limits an individual-note range to four octaves", () => {
     const droneNotes = resolveDroneNotes({
       noteCollectionKey: "chromatic",

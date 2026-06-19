@@ -1,4 +1,5 @@
 import { type AudioPresetId } from "@/audio";
+import { resolveCollectionPositionMatch } from "@/utils/music-theory/collectionPositionIdentity";
 
 const DRONE_BASE_VELOCITY = 0.65;
 const DRONE_BALANCE_REFERENCE_INTERVAL = 24;
@@ -7,7 +8,10 @@ const DRONE_ABOVE_ROOT_MIN_SCALE = 0.1;
 
 export interface DroneNotePlaybackNote {
   audioPresetId?: AudioPresetId;
+  collectionPosition: number;
+  collectionSize: number;
   interval: number;
+  intervalDegree?: number;
   midi: number;
   velocity?: number;
 }
@@ -17,6 +21,7 @@ interface DroneNotePlaybackControllerOptions<THandle> {
     notes: readonly DroneNotePlaybackNote[],
   ) => Promise<THandle | undefined>;
   destroy: (handle: THandle) => void;
+  onActiveNoteIdsChange?: (activeNoteIds: string[]) => void;
   onActiveIntervalsChange?: (activeIntervals: number[]) => void;
   update: (
     handle: THandle,
@@ -24,13 +29,17 @@ interface DroneNotePlaybackControllerOptions<THandle> {
   ) => boolean | void;
 }
 
-function getSortedNotes(activeNotes: Map<number, DroneNotePlaybackNote>) {
+export function getDroneNoteId(note: DroneNotePlaybackNote) {
+  return String(note.collectionPosition);
+}
+
+function getSortedNotes(activeNotes: Map<string, DroneNotePlaybackNote>) {
   return [...activeNotes.values()].sort(
     (left, right) => left.interval - right.interval,
   );
 }
 
-function getSortedIntervals(activeNotes: Map<number, DroneNotePlaybackNote>) {
+function getSortedIntervals(activeNotes: Map<string, DroneNotePlaybackNote>) {
   return getSortedNotes(activeNotes).map((note) => note.interval);
 }
 
@@ -40,6 +49,9 @@ function notesMatch(
 ) {
   return (
     current?.audioPresetId === next.audioPresetId &&
+    current?.collectionSize === next.collectionSize &&
+    current?.interval === next.interval &&
+    current?.intervalDegree === next.intervalDegree &&
     current?.midi === next.midi &&
     current?.velocity === next.velocity
   );
@@ -79,10 +91,11 @@ export function createDronePlaybackNote(
 export function createDroneNotePlaybackController<THandle>({
   create,
   destroy,
+  onActiveNoteIdsChange,
   onActiveIntervalsChange,
   update,
 }: DroneNotePlaybackControllerOptions<THandle>) {
-  const activeNotes = new Map<number, DroneNotePlaybackNote>();
+  const activeNotes = new Map<string, DroneNotePlaybackNote>();
   let createOperation = create;
   let destroyOperation = destroy;
   let updateOperation = update;
@@ -92,8 +105,11 @@ export function createDroneNotePlaybackController<THandle>({
   let lifecycleRevision = 0;
   let revision = 0;
 
-  const emitActiveIntervals = () => {
+  const emitActiveNotes = () => {
     onActiveIntervalsChange?.(getSortedIntervals(activeNotes));
+    onActiveNoteIdsChange?.(
+      getSortedNotes(activeNotes).map((note) => getDroneNoteId(note)),
+    );
   };
 
   const sync = () => {
@@ -125,7 +141,7 @@ export function createDroneNotePlaybackController<THandle>({
         if (nextHandle === undefined) {
           if (!disposed && lifecycleRevision === createLifecycleRevision) {
             activeNotes.clear();
-            emitActiveIntervals();
+            emitActiveNotes();
           }
           return;
         }
@@ -144,7 +160,7 @@ export function createDroneNotePlaybackController<THandle>({
       .catch(() => {
         if (!disposed && lifecycleRevision === createLifecycleRevision) {
           activeNotes.clear();
-          emitActiveIntervals();
+          emitActiveNotes();
         }
       })
       .finally(() => {
@@ -155,27 +171,32 @@ export function createDroneNotePlaybackController<THandle>({
   };
 
   const startNote = (note: DroneNotePlaybackNote) => {
-    const current = activeNotes.get(note.interval);
+    const noteId = getDroneNoteId(note);
+    const current = activeNotes.get(noteId);
 
     if (notesMatch(current, note)) {
       return Promise.resolve();
     }
 
-    activeNotes.set(note.interval, note);
+    activeNotes.set(noteId, note);
 
     if (!current) {
-      emitActiveIntervals();
+      emitActiveNotes();
     }
 
     return sync();
   };
 
   const stopNote = (interval: number) => {
-    if (!activeNotes.delete(interval)) {
+    const noteId = [...activeNotes].find(
+      ([, note]) => note.interval === interval,
+    )?.[0];
+
+    if (noteId === undefined || !activeNotes.delete(noteId)) {
       return;
     }
 
-    emitActiveIntervals();
+    emitActiveNotes();
     void sync();
   };
 
@@ -197,22 +218,24 @@ export function createDroneNotePlaybackController<THandle>({
     },
     getActiveIntervals: () => getSortedIntervals(activeNotes),
     reconcileNotes: (notes: readonly DroneNotePlaybackNote[]) => {
-      const notesByInterval = new Map(
-        notes.map((note) => [note.interval, note]),
-      );
+      const nextActiveNotes = new Map<string, DroneNotePlaybackNote>();
       let changed = false;
 
-      activeNotes.forEach((activeNote, interval) => {
-        const nextNote = notesByInterval.get(interval);
+      activeNotes.forEach((activeNote, noteId) => {
+        const nextNote = resolveCollectionPositionMatch({
+          candidates: notes,
+          identity: activeNote,
+        });
 
         if (!nextNote) {
-          activeNotes.delete(interval);
           changed = true;
           return;
         }
 
-        if (!notesMatch(activeNote, nextNote)) {
-          activeNotes.set(interval, nextNote);
+        const nextNoteId = getDroneNoteId(nextNote);
+        nextActiveNotes.set(nextNoteId, nextNote);
+
+        if (noteId !== nextNoteId || !notesMatch(activeNote, nextNote)) {
           changed = true;
         }
       });
@@ -221,7 +244,9 @@ export function createDroneNotePlaybackController<THandle>({
         return;
       }
 
-      emitActiveIntervals();
+      activeNotes.clear();
+      nextActiveNotes.forEach((note, noteId) => activeNotes.set(noteId, note));
+      emitActiveNotes();
       void sync();
     },
     reset: () => {
@@ -232,7 +257,7 @@ export function createDroneNotePlaybackController<THandle>({
 
       if (activeNotes.size > 0) {
         activeNotes.clear();
-        emitActiveIntervals();
+        emitActiveNotes();
       }
     },
     setOperations: (operations: {
@@ -256,13 +281,17 @@ export function createDroneNotePlaybackController<THandle>({
       }
 
       activeNotes.clear();
-      emitActiveIntervals();
+      emitActiveNotes();
       void sync();
     },
     stopNote,
     toggleNote: (note: DroneNotePlaybackNote) => {
-      if (activeNotes.has(note.interval)) {
-        stopNote(note.interval);
+      const noteId = getDroneNoteId(note);
+
+      if (activeNotes.has(noteId)) {
+        activeNotes.delete(noteId);
+        emitActiveNotes();
+        void sync();
         return;
       }
 

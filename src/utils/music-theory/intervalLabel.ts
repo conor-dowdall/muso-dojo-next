@@ -1,5 +1,17 @@
 const DIATONIC_STEPS_PER_OCTAVE = 7;
 
+export function getIntervalLabelDegree(intervalLabel: string) {
+  const match = intervalLabel.match(/^[^\d]*(\d+)$/);
+
+  if (!match) {
+    return undefined;
+  }
+
+  const intervalNumber = Number(match[1]);
+
+  return Number.isFinite(intervalNumber) ? intervalNumber : undefined;
+}
+
 export function shiftIntervalLabelByOctaves(
   intervalLabel: string,
   octaveOffset: number,

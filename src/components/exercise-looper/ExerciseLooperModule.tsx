@@ -57,9 +57,10 @@ import {
   type ExercisePattern,
 } from "@/utils/exercise-looper/exerciseSequence";
 import {
+  createExerciseStudyAnchorIdentity,
   getExerciseAnchorDisplayNotes,
-  resolveExerciseStudyAnchorPosition,
   resolveExerciseStudyDisplay,
+  type ExerciseStudyAnchorIdentity,
 } from "@/utils/exercise-looper/exerciseStudyDisplay";
 import { getClosestNoteInColumn } from "@/utils/instrument/getClosestNoteInColumn";
 import { ExerciseLooperNoteGrid } from "./ExerciseLooperNoteGrid";
@@ -128,8 +129,8 @@ export function ExerciseLooperModule({
   wood?: WoodSurfaceId;
 }) {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
-  const [selectedStudyAnchorPosition, setSelectedStudyAnchorPosition] =
-    useState<number | undefined>();
+  const [selectedStudyAnchor, setSelectedStudyAnchor] =
+    useState<ExerciseStudyAnchorIdentity>();
   const noteColors = useNoteColors();
   const requestedSequence = useMemo(
     () =>
@@ -206,12 +207,14 @@ export function ExerciseLooperModule({
       const note = noteByKey.get(key);
 
       if (note !== undefined) {
-        setSelectedStudyAnchorPosition(note.collectionPosition);
+        setSelectedStudyAnchor(
+          createExerciseStudyAnchorIdentity(sequence, note),
+        );
       }
 
       return note;
     },
-    [noteByKey],
+    [noteByKey, sequence],
   );
   const handleNoteAudition = useCallback(
     (target: InstrumentNoteInteractionTarget) => {
@@ -270,13 +273,9 @@ export function ExerciseLooperModule({
       return nextKey;
     },
   });
-  const studyAnchorPosition = resolveExerciseStudyAnchorPosition({
-    selectedAnchorPosition: selectedStudyAnchorPosition,
-    sequence,
-  });
   const studyDisplay = resolveExerciseStudyDisplay({
     activeAnchorPosition: playback.activeAnchorPosition,
-    selectedAnchorPosition: studyAnchorPosition,
+    selectedAnchor: selectedStudyAnchor,
     mode: effectivePattern.mode,
     sequence,
   });
