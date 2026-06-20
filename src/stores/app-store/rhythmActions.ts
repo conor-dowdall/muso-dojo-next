@@ -1,6 +1,6 @@
 import {
-  DEFAULT_RHYTHM_PRESET_ID,
-  isRhythmPresetId,
+  getRhythmSelectionRecipe,
+  normalizeRhythmRecipe,
   normalizeRhythmSelection,
 } from "@/utils/rhythm/rhythmConfig";
 import { isRhythmPartModule } from "@/utils/session/partModuleTypes";
@@ -48,27 +48,17 @@ export function createRhythmActions(
         ),
       );
     },
-    setRhythmPresetId: (sessionId, partId, moduleId, value) => {
+    setRhythmRecipe: (sessionId, partId, moduleId, value) => {
       const partModule = getRhythmModule(sessionId, partId, moduleId);
       if (!partModule) return;
 
-      const current =
-        partModule.rhythm.source === "preset"
-          ? partModule.rhythm.presetId
-          : partModule.rhythm.basedOnPresetId;
-      const next = resolveSettingValue(
-        value,
-        current ?? DEFAULT_RHYTHM_PRESET_ID,
-      );
-
-      if (!isRhythmPresetId(next) || next === current) {
-        return;
-      }
+      const current = getRhythmSelectionRecipe(partModule.rhythm);
+      const next = normalizeRhythmRecipe(resolveSettingValue(value, current));
 
       get().updateRhythmSettings(sessionId, partId, moduleId, {
         rhythm: normalizeRhythmSelection({
-          presetId: next,
-          source: "preset",
+          recipe: next,
+          source: "recipe",
         }),
       });
     },

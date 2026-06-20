@@ -32,7 +32,7 @@ import {
   type RhythmPartModuleConfig,
   type SessionConfig,
 } from "@/types/session";
-import { type RhythmPresetId } from "@/utils/rhythm/rhythmConfig";
+import { type RhythmRecipe } from "@/utils/rhythm/rhythmConfig";
 import {
   type CollectionRangeBoundary,
   type ExercisePattern,
@@ -289,11 +289,11 @@ export interface RhythmActions {
     moduleId: string,
     patch: RhythmSettingsPatch,
   ) => void;
-  setRhythmPresetId: (
+  setRhythmRecipe: (
     sessionId: string,
     partId: string,
     moduleId: string,
-    presetId: SettingValue<RhythmPresetId>,
+    recipe: SettingValue<RhythmRecipe>,
   ) => void;
 }
 

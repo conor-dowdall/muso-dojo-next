@@ -1,36 +1,37 @@
 import {
   RHYTHM_PPQ,
-  rhythmPresetIds,
-  rhythmPresets,
+  RHYTHM_MAX_BEATS,
+  RHYTHM_MIN_BEATS,
+  DEFAULT_RHYTHM_RECIPE,
+  createRhythmPatternFromRecipe,
+  getRhythmRecipeLabel,
+  getRhythmTimekeeperOptionLabel,
   type PercussionSampleId,
   type RhythmHit,
   type RhythmMeter,
   type RhythmPattern,
-  type RhythmPresetId,
+  type RhythmRecipe,
   type RhythmSwing,
+  type RhythmTimekeeperFeel,
+  type RhythmTimekeeperRecipe,
+  type RhythmTimekeeperSound,
+  type RhythmTimekeeperSubdivision,
 } from "@/data/rhythmPresets";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 
-export const DEFAULT_RHYTHM_PRESET_ID = "simple-4-4" satisfies RhythmPresetId;
+export const DEFAULT_RHYTHM_RECIPE_SELECTION = {
+  recipe: DEFAULT_RHYTHM_RECIPE,
+  source: "recipe",
+} as const satisfies RecipeRhythmSelection;
 
-export interface PresetRhythmSelection {
-  presetId: RhythmPresetId;
-  source: "preset";
+export interface RecipeRhythmSelection {
+  recipe: RhythmRecipe;
+  source: "recipe";
 }
 
-export interface CustomRhythmSelection {
-  basedOnPresetId?: RhythmPresetId;
-  name?: string;
-  pattern: RhythmPattern;
-  source: "custom";
-}
+export type RhythmSelection = RecipeRhythmSelection;
 
-export type RhythmSelection = PresetRhythmSelection | CustomRhythmSelection;
-
-export const DEFAULT_RHYTHM_SELECTION = {
-  presetId: DEFAULT_RHYTHM_PRESET_ID,
-  source: "preset",
-} as const satisfies PresetRhythmSelection;
+export const DEFAULT_RHYTHM_SELECTION = DEFAULT_RHYTHM_RECIPE_SELECTION;
 
 const percussionSampleIds = {
   "closed-hat": true,
@@ -49,16 +50,89 @@ const percussionSampleIds = {
   tambourine: true,
 } as const satisfies Record<PercussionSampleId, true>;
 
+const rhythmTimekeeperSoundIds = {
+  hat: true,
+  off: true,
+  ride: true,
+  shaker: true,
+} as const satisfies Record<RhythmTimekeeperSound, true>;
+
+const rhythmTimekeeperSubdivisionIds = {
+  eighth: true,
+  quarter: true,
+  sixteenth: true,
+} as const satisfies Record<RhythmTimekeeperSubdivision, true>;
+
+const rhythmTimekeeperFeelIds = {
+  straight: true,
+  triplet: true,
+  swing: true,
+} as const satisfies Record<RhythmTimekeeperFeel, true>;
+
 function hasOwnKey(record: object, value: string) {
   return Object.prototype.hasOwnProperty.call(record, value);
 }
 
-export function isRhythmPresetId(value: unknown): value is RhythmPresetId {
-  return typeof value === "string" && hasOwnKey(rhythmPresets, value);
+function normalizeRecipeField<T extends string>(
+  record: Record<T, true>,
+  value: unknown,
+  fallback: T,
+): T {
+  return typeof value === "string" && hasOwnKey(record, value)
+    ? (value as T)
+    : fallback;
 }
 
-function normalizeRhythmPresetId(value: unknown) {
-  return isRhythmPresetId(value) ? value : undefined;
+function normalizeRhythmBeatCount(value: unknown) {
+  return typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= RHYTHM_MIN_BEATS &&
+    value <= RHYTHM_MAX_BEATS
+    ? value
+    : DEFAULT_RHYTHM_RECIPE.beats;
+}
+
+export function normalizeRhythmRecipe(value: unknown): RhythmRecipe {
+  if (!isRecord(value)) {
+    return DEFAULT_RHYTHM_RECIPE;
+  }
+
+  return {
+    beats: normalizeRhythmBeatCount(value.beats),
+    timekeeper: normalizeRhythmTimekeeperRecipe(value.timekeeper),
+  };
+}
+
+function normalizeRhythmTimekeeperRecipe(
+  value: unknown,
+): RhythmTimekeeperRecipe {
+  if (!isRecord(value)) {
+    return DEFAULT_RHYTHM_RECIPE.timekeeper;
+  }
+
+  const subdivision = normalizeRecipeField<RhythmTimekeeperSubdivision>(
+    rhythmTimekeeperSubdivisionIds,
+    value.subdivision,
+    DEFAULT_RHYTHM_RECIPE.timekeeper.subdivision,
+  );
+  const rawFeel = normalizeRecipeField<RhythmTimekeeperFeel>(
+    rhythmTimekeeperFeelIds,
+    value.feel,
+    DEFAULT_RHYTHM_RECIPE.timekeeper.feel,
+  );
+
+  return {
+    feel:
+      subdivision === "quarter" && rawFeel !== "straight"
+        ? "straight"
+        : rawFeel,
+    sound: normalizeRecipeField(
+      rhythmTimekeeperSoundIds,
+      value.sound,
+      DEFAULT_RHYTHM_RECIPE.timekeeper.sound,
+    ),
+    subdivision,
+  };
 }
 
 function normalizePercussionSampleId(
@@ -187,65 +261,38 @@ export function normalizeRhythmPattern(
   };
 }
 
-function normalizeCustomRhythmSelection(
-  value: Record<string, unknown>,
-): CustomRhythmSelection | undefined {
-  const pattern = normalizeRhythmPattern(value.pattern);
-
-  if (!pattern) {
-    return undefined;
-  }
-
-  const basedOnPresetId = normalizeRhythmPresetId(value.basedOnPresetId);
-  const name =
-    typeof value.name === "string" && value.name.trim()
-      ? value.name.trim().slice(0, 80)
-      : undefined;
-
-  return {
-    ...(basedOnPresetId ? { basedOnPresetId } : {}),
-    ...(name ? { name } : {}),
-    pattern,
-    source: "custom",
-  };
-}
-
 export function normalizeRhythmSelection(value: unknown): RhythmSelection {
   if (!isRecord(value)) {
     return DEFAULT_RHYTHM_SELECTION;
   }
 
-  if (value.source === "custom") {
-    return normalizeCustomRhythmSelection(value) ?? DEFAULT_RHYTHM_SELECTION;
+  if (value.source === "recipe") {
+    return {
+      recipe: normalizeRhythmRecipe(value.recipe),
+      source: "recipe",
+    };
   }
 
-  const presetId = normalizeRhythmPresetId(value.presetId);
-
-  return {
-    presetId: presetId ?? DEFAULT_RHYTHM_PRESET_ID,
-    source: "preset",
-  };
+  return DEFAULT_RHYTHM_SELECTION;
 }
 
-export function getRhythmSelectionPresetId(selection: RhythmSelection) {
-  return selection.source === "preset"
-    ? selection.presetId
-    : selection.basedOnPresetId;
+export function getRhythmSelectionRecipe(selection: RhythmSelection) {
+  return selection.recipe;
 }
 
 export function getRhythmSelectionLabel(selection: RhythmSelection) {
-  if (selection.source === "custom") {
-    return selection.name ?? "Custom Rhythm";
-  }
-
-  return rhythmPresets[selection.presetId].label;
+  return getRhythmRecipeLabel(selection.recipe);
 }
 
 export function getRhythmSelectionPattern(selection: RhythmSelection) {
-  return selection.source === "custom"
-    ? selection.pattern
-    : rhythmPresets[selection.presetId].pattern;
+  return createRhythmPatternFromRecipe(selection.recipe);
 }
 
-export { rhythmPresetIds, rhythmPresets };
-export type { RhythmPresetId };
+export { DEFAULT_RHYTHM_RECIPE, getRhythmTimekeeperOptionLabel };
+export type {
+  RhythmRecipe,
+  RhythmTimekeeperFeel,
+  RhythmTimekeeperRecipe,
+  RhythmTimekeeperSound,
+  RhythmTimekeeperSubdivision,
+};

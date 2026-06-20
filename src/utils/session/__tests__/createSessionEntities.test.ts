@@ -48,8 +48,15 @@ describe("createSessionEntities", () => {
     });
     expect(part.modules[3]).toMatchObject({
       rhythm: {
-        presetId: "simple-4-4",
-        source: "preset",
+        recipe: {
+          beats: 4,
+          timekeeper: {
+            feel: "straight",
+            sound: "hat",
+            subdivision: "eighth",
+          },
+        },
+        source: "recipe",
       },
       type: "rhythm",
     });

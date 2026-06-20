@@ -16,8 +16,50 @@
   gap: var(--part-module-control-group-gap);
 }
 
-.rhythmReadout {
-  min-inline-size: var(--space-24);
+.recipeSummary {
+  box-sizing: border-box;
+  display: block;
+  inline-size: min(100%, var(--space-80));
+  min-block-size: var(--part-module-control-readout-height);
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  line-height: var(--leading-tight);
+  text-align: center;
+}
+
+.recipeReadout {
+  min-inline-size: var(--space-14);
+}
+
+.soundButtonLabel {
+  display: inline-flex;
+  min-inline-size: 2.6em;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.tripletButtonLabel {
+  font-size: var(--text-sm);
+  font-style: italic;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-light);
+  letter-spacing: 0;
+}
+
+.swingButtonLabel {
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  letter-spacing: 0;
+  line-height: 1;
 }
 
 @container rhythm (max-width: 32rem) {

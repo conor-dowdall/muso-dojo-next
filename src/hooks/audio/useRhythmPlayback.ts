@@ -26,7 +26,7 @@ export function useRhythmPlayback({
     rhythmPlaybackCoordinator.getSnapshot,
     rhythmPlaybackCoordinator.getSnapshot,
   );
-  const pattern = getRhythmSelectionPattern(rhythm);
+  const pattern = useMemo(() => getRhythmSelectionPattern(rhythm), [rhythm]);
   const request = useMemo(
     () => ({
       id,

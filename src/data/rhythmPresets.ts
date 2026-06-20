@@ -40,24 +40,130 @@ export interface RhythmPattern {
   swing?: RhythmSwing;
 }
 
-export type RhythmPresetId =
-  | "click"
-  | "simple-4-4"
-  | "waltz-3-4"
-  | "six-eight"
-  | "swing-4-4"
-  | "five-four"
-  | "seven-four";
+export type RhythmTimekeeperSound = "off" | "hat" | "ride" | "shaker";
+export type RhythmTimekeeperSubdivision = "quarter" | "eighth" | "sixteenth";
+export type RhythmTimekeeperFeel = "straight" | "triplet" | "swing";
 
-export interface RhythmPreset {
+export interface RhythmTimekeeperRecipe {
+  feel: RhythmTimekeeperFeel;
+  sound: RhythmTimekeeperSound;
+  subdivision: RhythmTimekeeperSubdivision;
+}
+
+export interface RhythmRecipe {
+  beats: number;
+  timekeeper: RhythmTimekeeperRecipe;
+}
+
+export interface RhythmRecipeOption<T extends string> {
   description: string;
-  id: RhythmPresetId;
+  id: T;
   label: string;
-  pattern: RhythmPattern;
 }
 
 const Q = RHYTHM_PPQ;
 const E = RHYTHM_PPQ / 2;
+const SIXTEENTH = RHYTHM_PPQ / 4;
+
+export const RHYTHM_MIN_BEATS = 2;
+export const RHYTHM_MAX_BEATS = 12;
+
+export const rhythmTimekeeperSoundOptions = [
+  {
+    id: "off",
+    label: "Off",
+    description: "No timekeeping percussion lane.",
+  },
+  {
+    id: "hat",
+    label: "Hat",
+    description: "A closed hi-hat timekeeper.",
+  },
+  {
+    id: "ride",
+    label: "Ride",
+    description: "A lighter cymbal timekeeper.",
+  },
+  {
+    id: "shaker",
+    label: "Shaker",
+    description: "A soft noise texture.",
+  },
+] as const satisfies readonly RhythmRecipeOption<RhythmTimekeeperSound>[];
+
+export const rhythmTimekeeperSubdivisionOptions = [
+  {
+    id: "quarter",
+    label: "Quarter",
+    description: "One timekeeper hit per quarter note.",
+  },
+  {
+    id: "eighth",
+    label: "Eighth",
+    description: "Two timekeeper hits per quarter note.",
+  },
+  {
+    id: "sixteenth",
+    label: "Sixteenth",
+    description: "Four timekeeper hits per quarter note.",
+  },
+] as const satisfies readonly RhythmRecipeOption<RhythmTimekeeperSubdivision>[];
+
+export const rhythmTimekeeperFeelOptions = [
+  {
+    id: "straight",
+    label: "Straight",
+    description: "Even subdivisions.",
+  },
+  {
+    id: "triplet",
+    label: "Triplet",
+    description: "Triplet subdivisions.",
+  },
+  {
+    id: "swing",
+    label: "Swing",
+    description: "Soft swung offbeats leading into the pulse.",
+  },
+] as const satisfies readonly RhythmRecipeOption<RhythmTimekeeperFeel>[];
+
+export const rhythmTimekeeperOptions = {
+  feel: rhythmTimekeeperFeelOptions,
+  sound: rhythmTimekeeperSoundOptions,
+  subdivision: rhythmTimekeeperSubdivisionOptions,
+} as const;
+
+export const DEFAULT_RHYTHM_RECIPE = {
+  beats: 4,
+  timekeeper: {
+    feel: "straight",
+    sound: "hat",
+    subdivision: "eighth",
+  },
+} as const satisfies RhythmRecipe;
+
+interface RhythmMeterSpec {
+  beatCount: number;
+  beatTicks: number;
+  cycleTicks: number;
+  meter: RhythmMeter;
+}
+
+const timekeeperSamples = {
+  off: undefined,
+  hat: {
+    sampleId: "closed-hat",
+  },
+  ride: {
+    sampleId: "ride",
+  },
+  shaker: {
+    sampleId: "shaker",
+  },
+} as const satisfies Record<
+  RhythmTimekeeperSound,
+  { sampleId: PercussionSampleId } | undefined
+>;
 
 function hit(
   atTicks: number,
@@ -71,140 +177,314 @@ function hit(
   };
 }
 
-function hats(cycleTicks: number, sampleId: PercussionSampleId = "closed-hat") {
-  return Array.from({ length: cycleTicks / E }, (_, index) =>
-    hit(index * E, sampleId, index % 2 === 0 ? 0.58 : 0.42),
+function getOptionLabel(
+  options: readonly { id: string; label: string }[],
+  id: string,
+) {
+  return options.find((option) => option.id === id)?.label ?? id;
+}
+
+export function getRhythmTimekeeperOptionLabel<
+  T extends keyof RhythmTimekeeperRecipe,
+>(category: T, timekeeper: RhythmTimekeeperRecipe) {
+  return getOptionLabel(
+    rhythmTimekeeperOptions[category],
+    timekeeper[category],
   );
 }
 
-export const rhythmPresets = {
-  click: {
-    id: "click",
-    label: "Click",
-    description: "A plain four-beat practice pulse.",
-    pattern: {
-      cycleTicks: 4 * Q,
-      meter: { beats: 4, beatUnit: 4 },
-      ppq: RHYTHM_PPQ,
-      hits: [
-        hit(0, "metronome-click", 1),
-        hit(Q, "metronome-click", 0.62),
-        hit(2 * Q, "metronome-click", 0.62),
-        hit(3 * Q, "metronome-click", 0.62),
-      ],
-    },
-  },
-  "simple-4-4": {
-    id: "simple-4-4",
-    label: "Simple 4/4",
-    description: "Steady kick, snare, and hat for everyday practice.",
-    pattern: {
-      cycleTicks: 4 * Q,
-      meter: { beats: 4, beatUnit: 4 },
-      ppq: RHYTHM_PPQ,
-      hits: [
-        hit(0, "kick", 0.9),
-        hit(2 * Q, "kick", 0.72),
-        hit(Q, "snare", 0.72),
-        hit(3 * Q, "snare", 0.76),
-        ...hats(4 * Q),
-      ],
-    },
-  },
-  "waltz-3-4": {
-    id: "waltz-3-4",
-    label: "3/4",
-    description: "A clear one-two-three feel.",
-    pattern: {
-      cycleTicks: 3 * Q,
-      meter: { beats: 3, beatUnit: 4 },
-      ppq: RHYTHM_PPQ,
-      hits: [
-        hit(0, "kick", 0.82),
-        hit(Q, "side-stick", 0.52),
-        hit(2 * Q, "side-stick", 0.5),
-        ...hats(3 * Q, "closed-hat"),
-      ],
-    },
-  },
-  "six-eight": {
-    id: "six-eight",
-    label: "6/8",
-    description: "Two dotted-feel groups over quarter-note tempo.",
-    pattern: {
-      cycleTicks: 3 * Q,
-      meter: { beats: 6, beatUnit: 8 },
-      ppq: RHYTHM_PPQ,
-      hits: [
-        hit(0, "kick", 0.86),
-        hit(3 * E, "kick", 0.56),
-        hit(3 * E, "side-stick", 0.6),
-        ...Array.from({ length: 6 }, (_, index) =>
-          hit(
-            index * E,
-            "closed-hat",
-            index === 0 || index === 3 ? 0.58 : 0.38,
-          ),
-        ),
-      ],
-    },
-  },
-  "swing-4-4": {
-    id: "swing-4-4",
-    label: "Swing 4/4",
-    description: "A light swung ride pattern with two and four.",
-    pattern: {
-      cycleTicks: 4 * Q,
-      meter: { beats: 4, beatUnit: 4 },
-      ppq: RHYTHM_PPQ,
-      swing: { ratio: 0.6, unitTicks: E },
-      hits: [
-        hit(0, "kick", 0.68),
-        hit(2 * Q, "kick", 0.56),
-        hit(Q, "side-stick", 0.58),
-        hit(3 * Q, "side-stick", 0.62),
-        ...hats(4 * Q, "ride"),
-      ],
-    },
-  },
-  "five-four": {
-    id: "five-four",
-    label: "5/4",
-    description: "A steady five-beat grouping for odd-meter practice.",
-    pattern: {
-      cycleTicks: 5 * Q,
-      meter: { beats: 5, beatUnit: 4 },
-      ppq: RHYTHM_PPQ,
-      hits: [
-        hit(0, "kick", 0.86),
-        hit(3 * Q, "kick", 0.62),
-        hit(2 * Q, "snare", 0.64),
-        hit(4 * Q, "snare", 0.68),
-        ...hats(5 * Q),
-      ],
-    },
-  },
-  "seven-four": {
-    id: "seven-four",
-    label: "7/4",
-    description: "A calm seven-beat groove for long phrase practice.",
-    pattern: {
-      cycleTicks: 7 * Q,
-      meter: { beats: 7, beatUnit: 4 },
-      ppq: RHYTHM_PPQ,
-      hits: [
-        hit(0, "kick", 0.86),
-        hit(3 * Q, "kick", 0.58),
-        hit(5 * Q, "kick", 0.6),
-        hit(2 * Q, "snare", 0.62),
-        hit(6 * Q, "snare", 0.7),
-        ...hats(7 * Q),
-      ],
-    },
-  },
-} as const satisfies Record<RhythmPresetId, RhythmPreset>;
+function addHit(
+  hits: RhythmHit[],
+  cycleTicks: number,
+  atTicks: number,
+  sampleId: PercussionSampleId,
+  velocity: number,
+) {
+  if (atTicks < 0 || atTicks >= cycleTicks) {
+    return;
+  }
 
-export const rhythmPresetIds = Object.keys(rhythmPresets) as RhythmPresetId[];
+  const existing = hits.find(
+    (candidate) =>
+      candidate.atTicks === atTicks && candidate.sampleId === sampleId,
+  );
+
+  if (existing) {
+    existing.velocity = Math.max(existing.velocity ?? 0, velocity);
+    return;
+  }
+
+  hits.push(hit(atTicks, sampleId, velocity));
+}
+
+function createRhythmMeterSpec(beats: number): RhythmMeterSpec {
+  return {
+    beatCount: beats,
+    beatTicks: Q,
+    cycleTicks: beats * Q,
+    meter: { beats, beatUnit: 4 },
+  };
+}
+
+function addCoreBeatHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
+  const addKick = (atTicks: number, velocity = 0.78) =>
+    addHit(hits, spec.cycleTicks, atTicks, "kick", velocity);
+  const addSnare = (atTicks: number, velocity = 0.68) =>
+    addHit(hits, spec.cycleTicks, atTicks, "snare", velocity);
+
+  addKick(0, 0.9);
+
+  if (spec.beatCount === 2) {
+    addSnare(Q, 0.62);
+    return;
+  }
+
+  if (spec.beatCount === 3) {
+    addSnare(Q, 0.5);
+    addSnare(2 * Q, 0.54);
+    return;
+  }
+
+  addKick(Math.floor(spec.beatCount / 2) * Q, 0.68);
+  addSnare(Q, 0.66);
+  addSnare((spec.beatCount - 1) * Q, 0.72);
+}
+
+function isTimekeeperAnchor(spec: RhythmMeterSpec, atTicks: number) {
+  return (
+    atTicks === 0 ||
+    (spec.beatCount >= 4 && atTicks === Math.floor(spec.beatCount / 2) * Q)
+  );
+}
+
+function getStraightTimekeeperVelocity(
+  spec: RhythmMeterSpec,
+  atTicks: number,
+  index: number,
+  subdivision: RhythmTimekeeperSubdivision,
+) {
+  if (isTimekeeperAnchor(spec, atTicks)) {
+    return 0.54;
+  }
+
+  const isBeat = atTicks % spec.beatTicks === 0;
+
+  if (subdivision === "sixteenth") {
+    return isBeat ? 0.34 : index % 2 === 0 ? 0.28 : 0.22;
+  }
+
+  return isBeat ? 0.42 : 0.32;
+}
+
+function getStraightSubdivisionTicks(subdivision: RhythmTimekeeperSubdivision) {
+  switch (subdivision) {
+    case "quarter":
+      return Q;
+    case "eighth":
+      return E;
+    case "sixteenth":
+      return SIXTEENTH;
+  }
+}
+
+function addStraightTimekeeperHits(
+  hits: RhythmHit[],
+  spec: RhythmMeterSpec,
+  sampleId: PercussionSampleId,
+  subdivision: RhythmTimekeeperSubdivision,
+) {
+  const stepTicks = getStraightSubdivisionTicks(subdivision);
+  const count = Math.ceil(spec.cycleTicks / stepTicks);
+
+  Array.from({ length: count }, (_, index) => index * stepTicks).forEach(
+    (atTicks, index) => {
+      addHit(
+        hits,
+        spec.cycleTicks,
+        atTicks,
+        sampleId,
+        getStraightTimekeeperVelocity(spec, atTicks, index, subdivision),
+      );
+    },
+  );
+}
+
+function addTripletTimekeeperHits(
+  hits: RhythmHit[],
+  spec: RhythmMeterSpec,
+  sampleId: PercussionSampleId,
+  subdivision: RhythmTimekeeperSubdivision,
+) {
+  if (subdivision === "quarter") {
+    addStraightTimekeeperHits(hits, spec, sampleId, subdivision);
+    return;
+  }
+
+  const stepTicks = subdivision === "eighth" ? Q / 3 : Q / 6;
+  const count = Math.ceil(spec.cycleTicks / stepTicks);
+
+  Array.from({ length: count }, (_, index) => index * stepTicks).forEach(
+    (atTicks) => {
+      const isBeat = atTicks % Q === 0;
+      const velocity = isTimekeeperAnchor(spec, atTicks)
+        ? 0.5
+        : isBeat
+          ? 0.34
+          : subdivision === "sixteenth"
+            ? 0.18
+            : 0.26;
+      addHit(hits, spec.cycleTicks, atTicks, sampleId, velocity);
+    },
+  );
+}
+
+function addSwingTimekeeperHits(
+  hits: RhythmHit[],
+  spec: RhythmMeterSpec,
+  sampleId: PercussionSampleId,
+  subdivision: RhythmTimekeeperSubdivision,
+) {
+  if (subdivision === "quarter") {
+    addStraightTimekeeperHits(hits, spec, sampleId, subdivision);
+    return;
+  }
+
+  const pairTicks = subdivision === "sixteenth" ? E : Q;
+  const offbeatTicks = Math.round((pairTicks * 2) / 3);
+  const count = Math.ceil(spec.cycleTicks / pairTicks);
+
+  Array.from({ length: count }, (_, index) => index * pairTicks).forEach(
+    (atTicks, index) => {
+      const isBeat = atTicks % Q === 0;
+      addHit(
+        hits,
+        spec.cycleTicks,
+        atTicks,
+        sampleId,
+        isTimekeeperAnchor(spec, atTicks)
+          ? 0.52
+          : isBeat
+            ? 0.4
+            : index % 2 === 0
+              ? 0.34
+              : 0.3,
+      );
+      addHit(
+        hits,
+        spec.cycleTicks,
+        atTicks + offbeatTicks,
+        sampleId,
+        subdivision === "sixteenth" ? 0.2 : 0.24,
+      );
+    },
+  );
+}
+
+function addTimekeeperHits(
+  hits: RhythmHit[],
+  recipe: RhythmRecipe,
+  spec: RhythmMeterSpec,
+) {
+  const sample = timekeeperSamples[recipe.timekeeper.sound];
+
+  if (!sample) {
+    return;
+  }
+
+  switch (recipe.timekeeper.feel) {
+    case "straight":
+      addStraightTimekeeperHits(
+        hits,
+        spec,
+        sample.sampleId,
+        recipe.timekeeper.subdivision,
+      );
+      break;
+    case "triplet":
+      addTripletTimekeeperHits(
+        hits,
+        spec,
+        sample.sampleId,
+        recipe.timekeeper.subdivision,
+      );
+      break;
+    case "swing":
+      addSwingTimekeeperHits(
+        hits,
+        spec,
+        sample.sampleId,
+        recipe.timekeeper.subdivision,
+      );
+      break;
+  }
+}
+
+function sortHits(hits: RhythmHit[]) {
+  return [...hits].sort((left, right) => {
+    if (left.atTicks !== right.atTicks) {
+      return left.atTicks - right.atTicks;
+    }
+
+    return left.sampleId.localeCompare(right.sampleId);
+  });
+}
+
+export function createRhythmPatternFromRecipe(
+  recipe: RhythmRecipe,
+): RhythmPattern {
+  const spec = createRhythmMeterSpec(recipe.beats);
+  const hits: RhythmHit[] = [];
+
+  addCoreBeatHits(hits, spec);
+  addTimekeeperHits(hits, recipe, spec);
+
+  return {
+    cycleTicks: spec.cycleTicks,
+    hits: sortHits(hits),
+    meter: spec.meter,
+    ppq: RHYTHM_PPQ,
+  };
+}
+
+export function getRhythmRecipeLabel(recipe: RhythmRecipe) {
+  const beatLabel = getRhythmBeatCountLabel(recipe.beats);
+  const timekeeperLabel = getRhythmTimekeeperLabel(recipe.timekeeper);
+  const suffix =
+    recipe.timekeeper.sound === "off"
+      ? "No Timekeeper"
+      : `${timekeeperLabel} Timekeeper`;
+
+  return `${beatLabel} - ${suffix}`;
+}
+
+export function getRhythmBeatCountLabel(beats: number) {
+  return `${beats} ${beats === 1 ? "Beat" : "Beats"}`;
+}
+
+export function getRhythmTimekeeperLabel(timekeeper: RhythmTimekeeperRecipe) {
+  if (timekeeper.sound === "off") {
+    return "Off";
+  }
+
+  const soundLabel = getOptionLabel(
+    rhythmTimekeeperSoundOptions,
+    timekeeper.sound,
+  );
+  const subdivisionLabel = getOptionLabel(
+    rhythmTimekeeperSubdivisionOptions,
+    timekeeper.subdivision,
+  );
+
+  if (timekeeper.feel === "straight") {
+    return `${soundLabel} ${subdivisionLabel}`;
+  }
+
+  const feelLabel = getOptionLabel(
+    rhythmTimekeeperFeelOptions,
+    timekeeper.feel,
+  );
+  return `${soundLabel} ${feelLabel} ${subdivisionLabel}`;
+}
 
 export function getPercussionRegionId(sampleId: PercussionSampleId) {
   return `percussion-${sampleId}`;

@@ -35,7 +35,7 @@ export function RhythmPartModuleView({
     useShallow((state) => ({
       clonePartModule: state.clonePartModule,
       removePartModule: state.removePartModule,
-      setRhythmPresetId: state.setRhythmPresetId,
+      setRhythmRecipe: state.setRhythmRecipe,
     })),
   );
 
@@ -59,11 +59,11 @@ export function RhythmPartModuleView({
           ? undefined
           : () => actions.removePartModule(sessionId, partId, moduleId)
       }
-      onRhythmPresetIdChange={
+      onRhythmRecipeChange={
         isPerformanceMode
           ? undefined
           : (value) =>
-              actions.setRhythmPresetId(sessionId, partId, moduleId, value)
+              actions.setRhythmRecipe(sessionId, partId, moduleId, value)
       }
     />
   );

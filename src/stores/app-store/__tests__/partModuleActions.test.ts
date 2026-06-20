@@ -115,9 +115,14 @@ describe("part module app store actions", () => {
       throw new Error("Expected a rhythm module id");
     }
 
-    store
-      .getState()
-      .setRhythmPresetId(sessionId, partId, moduleId, "swing-4-4");
+    store.getState().setRhythmRecipe(sessionId, partId, moduleId, {
+      beats: 7,
+      timekeeper: {
+        feel: "swing",
+        sound: "ride",
+        subdivision: "eighth",
+      },
+    });
 
     const partModule = store
       .getState()
@@ -128,8 +133,15 @@ describe("part module app store actions", () => {
     expect(partModule).toStrictEqual({
       id: moduleId,
       rhythm: {
-        presetId: "swing-4-4",
-        source: "preset",
+        recipe: {
+          beats: 7,
+          timekeeper: {
+            feel: "swing",
+            sound: "ride",
+            subdivision: "eighth",
+          },
+        },
+        source: "recipe",
       },
       type: "rhythm",
     });

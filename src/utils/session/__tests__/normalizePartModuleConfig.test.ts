@@ -197,8 +197,15 @@ describe("normalizePartModuleConfig", () => {
       normalizePartModuleConfig({
         id: "rhythm-1",
         rhythm: {
-          presetId: "swing-4-4",
-          source: "preset",
+          recipe: {
+            beats: 7,
+            timekeeper: {
+              feel: "swing",
+              sound: "ride",
+              subdivision: "eighth",
+            },
+          },
+          source: "recipe",
         },
         type: "rhythm",
         volume: 0.4,
@@ -206,8 +213,15 @@ describe("normalizePartModuleConfig", () => {
     ).toStrictEqual({
       id: "rhythm-1",
       rhythm: {
-        presetId: "swing-4-4",
-        source: "preset",
+        recipe: {
+          beats: 7,
+          timekeeper: {
+            feel: "swing",
+            sound: "ride",
+            subdivision: "eighth",
+          },
+        },
+        source: "recipe",
       },
       type: "rhythm",
     });
@@ -218,16 +232,22 @@ describe("normalizePartModuleConfig", () => {
       normalizePartModuleConfig({
         id: "rhythm-1",
         rhythm: {
-          presetId: "not-a-rhythm",
-          source: "preset",
+          source: "unknown",
         },
         type: "rhythm",
       }),
     ).toStrictEqual({
       id: "rhythm-1",
       rhythm: {
-        presetId: "simple-4-4",
-        source: "preset",
+        recipe: {
+          beats: 4,
+          timekeeper: {
+            feel: "straight",
+            sound: "hat",
+            subdivision: "eighth",
+          },
+        },
+        source: "recipe",
       },
       type: "rhythm",
     });
