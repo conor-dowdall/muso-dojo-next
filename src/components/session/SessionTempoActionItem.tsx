@@ -6,17 +6,13 @@ import { SessionTempoEditor } from "./SessionTempoEditor";
 
 export function SessionTempoActionItem({
   isOpen,
-  onSubmit,
   onTempoBpmChange,
   onToggle,
   session,
-  shouldFocusInput = false,
 }: {
   isOpen: boolean;
-  onSubmit?: () => void;
   onTempoBpmChange: (sessionId: string, tempoBpm: number) => void;
   onToggle: () => void;
-  shouldFocusInput?: boolean;
   session: {
     id: string;
     name: string;
@@ -35,9 +31,7 @@ export function SessionTempoActionItem({
     >
       <SessionTempoEditor
         label={`Tempo for ${session.name}`}
-        shouldFocusInput={Boolean(shouldFocusInput && isOpen)}
         tempoBpm={session.tempoBpm}
-        onSubmit={onSubmit}
         onTempoBpmChange={(tempoBpm) => onTempoBpmChange(session.id, tempoBpm)}
       />
     </DisclosureListActionItem>

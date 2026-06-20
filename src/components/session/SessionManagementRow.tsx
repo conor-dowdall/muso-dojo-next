@@ -21,14 +21,12 @@ interface SessionManagementRowProps {
   isOpen: boolean;
   isRenameOpen: boolean;
   isTempoOpen: boolean;
-  shouldFocusTempoInput?: boolean;
   onCancelDeleteSession: () => void;
   onCloseRename: () => void;
   onDeleteSession: (sessionId: string) => void;
   onDuplicateSession: (sessionId: string) => void;
   onRenameSession: (sessionId: string, name: string) => void;
   onSetTempoBpm: (sessionId: string, tempoBpm: number) => void;
-  onSubmitTempo: () => void;
   onRequestDeleteSession: (sessionId: string) => void;
   onToggleActions: (sessionId: string) => void;
   onToggleRename: (sessionId: string) => void;
@@ -44,14 +42,12 @@ export function SessionManagementRow({
   isOpen,
   isRenameOpen,
   isTempoOpen,
-  shouldFocusTempoInput = false,
   onCancelDeleteSession,
   onCloseRename,
   onDeleteSession,
   onDuplicateSession,
   onRenameSession,
   onSetTempoBpm,
-  onSubmitTempo,
   onRequestDeleteSession,
   onToggleActions,
   onToggleRename,
@@ -79,8 +75,6 @@ export function SessionManagementRow({
           <SessionTempoActionItem
             isOpen={isTempoOpen}
             session={session}
-            shouldFocusInput={shouldFocusTempoInput}
-            onSubmit={onSubmitTempo}
             onTempoBpmChange={onSetTempoBpm}
             onToggle={() => onToggleTempo(session.id)}
           />

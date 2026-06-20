@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type SyntheticEvent } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { RangeSlider } from "@/components/ui/range-slider/RangeSlider";
 import styles from "./SessionTempoEditor.module.css";
@@ -16,19 +16,13 @@ function clampTempo(value: number) {
 
 export function SessionTempoEditor({
   label = "Session tempo",
-  onSubmit,
   onTempoBpmChange,
-  shouldFocusInput = false,
   tempoBpm,
 }: {
   label?: string;
-  onSubmit?: () => void;
   onTempoBpmChange: (tempoBpm: number) => void;
-  shouldFocusInput?: boolean;
   tempoBpm: number;
 }) {
-  const numberInputRef = useRef<HTMLInputElement>(null);
-  const hasFocusedInitialInput = useRef(false);
   const [draftTempo, setDraftTempo] = useState<string | null>(null);
   const displayedTempo = draftTempo ?? String(tempoBpm);
 
@@ -45,72 +39,15 @@ export function SessionTempoEditor({
     onTempoBpmChange(nextTempo);
   };
 
-  const handleSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
+  const handleNumberInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== "Enter") {
+      return;
+    }
+
     event.preventDefault();
     commitDraftTempo();
-    onSubmit?.();
+    event.currentTarget.blur();
   };
-
-  useLayoutEffect(() => {
-    if (!shouldFocusInput) {
-      hasFocusedInitialInput.current = false;
-      return;
-    }
-
-    if (hasFocusedInitialInput.current) {
-      return;
-    }
-
-    let frameId: number | undefined;
-    let timeoutId: number | undefined;
-    let attempts = 0;
-
-    const focusInput = () => {
-      const input = numberInputRef.current;
-      const dialog = input?.closest("dialog");
-
-      if (!input || input.closest("[inert]") || (dialog && !dialog.open)) {
-        return false;
-      }
-
-      input.scrollIntoView({ block: "nearest", inline: "nearest" });
-      input.focus({ preventScroll: true });
-
-      try {
-        input.select();
-      } catch {
-        // Some mobile number inputs do not expose text selection.
-      }
-
-      return document.activeElement === input;
-    };
-
-    const tryFocusInput = () => {
-      attempts += 1;
-
-      if (focusInput()) {
-        hasFocusedInitialInput.current = true;
-        return;
-      }
-
-      if (attempts < 5) {
-        timeoutId = window.setTimeout(() => {
-          frameId = window.requestAnimationFrame(tryFocusInput);
-        }, 40);
-      }
-    };
-
-    frameId = window.requestAnimationFrame(tryFocusInput);
-
-    return () => {
-      if (frameId !== undefined) {
-        window.cancelAnimationFrame(frameId);
-      }
-      if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId);
-      }
-    };
-  }, [shouldFocusInput]);
 
   const renderAdjustmentButton = (adjustment: number) => {
     const nextTempo = clampTempo(tempoBpm + adjustment);
@@ -152,7 +89,7 @@ export function SessionTempoEditor({
         }
       />
 
-      <form className={styles.exactEditor} onSubmit={handleSubmit}>
+      <div className={styles.exactEditor}>
         {lowerTempoAdjustments.map(renderAdjustmentButton)}
 
         <label className={styles.numberField}>
@@ -164,19 +101,10 @@ export function SessionTempoEditor({
               inputMode="numeric"
               max={MAX_TEMPO}
               min={MIN_TEMPO}
-              ref={numberInputRef}
               step={1}
               type="number"
               value={displayedTempo}
-              onBlur={(event) => {
-                if (
-                  !event.currentTarget.form?.contains(
-                    event.relatedTarget as Node | null,
-                  )
-                ) {
-                  commitDraftTempo();
-                }
-              }}
+              onBlur={commitDraftTempo}
               onChange={(event) => {
                 const nextDraft = event.currentTarget.value;
                 const nextTempo = Number(nextDraft);
@@ -192,6 +120,7 @@ export function SessionTempoEditor({
                   onTempoBpmChange(nextTempo);
                 }
               }}
+              onKeyDown={handleNumberInputKeyDown}
             />
             <span className={styles.unit} aria-hidden="true">
               bpm
@@ -200,7 +129,7 @@ export function SessionTempoEditor({
         </label>
 
         {higherTempoAdjustments.map(renderAdjustmentButton)}
-      </form>
+      </div>
     </div>
   );
 }

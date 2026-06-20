@@ -196,9 +196,6 @@ export function SessionManagementDialog({
                     isOpen={session.id === openSessionId}
                     isRenameOpen={session.id === openRenameSessionId}
                     isTempoOpen={session.id === openTempoSessionId}
-                    shouldFocusTempoInput={
-                      session.id === initialOpenTempoSessionId
-                    }
                     session={session}
                     sessions={sessionList}
                     onCancelDeleteSession={() =>
@@ -215,7 +212,6 @@ export function SessionManagementDialog({
                     onDuplicateSession={handleCloneSession}
                     onRenameSession={renameSession}
                     onSetTempoBpm={setSessionTempoBpm}
-                    onSubmitTempo={onClose}
                     onRequestDeleteSession={setDeleteConfirmationSessionId}
                     onToggleActions={handleSessionActionsToggle}
                     onToggleRename={handleRenameToggle}
