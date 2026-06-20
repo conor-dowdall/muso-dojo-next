@@ -224,13 +224,15 @@ class MockOfflineAudioContext {
 
 function installMockAudioWindow({
   offline = false,
-}: { offline?: boolean } = {}) {
+  search = "",
+}: { offline?: boolean; search?: string } = {}) {
   MockAudioContext.resetCounts();
   MockOfflineAudioContext.resetCounts();
   vi.stubGlobal("window", {
     AudioContext: MockAudioContext,
     ...(offline ? { OfflineAudioContext: MockOfflineAudioContext } : {}),
     clearTimeout: globalThis.clearTimeout,
+    location: { search } satisfies Partial<Location>,
     setTimeout: globalThis.setTimeout,
   });
   vi.stubGlobal(
@@ -306,7 +308,7 @@ describe("createWebAudioEngine", () => {
     expect(fetch).toHaveBeenCalledTimes(4);
   });
 
-  it("shares wav fetches when a sample asset request overlaps with priming", async () => {
+  it("shares sample fetches when a sample asset request overlaps with priming", async () => {
     installMockAudioWindow();
 
     const engine = createWebAudioEngine();
@@ -317,7 +319,7 @@ describe("createWebAudioEngine", () => {
     expect(MockAudioContext.decodeCount).toBe(4);
   });
 
-  it("shares wav fetches when background sample preloading overlaps with priming", async () => {
+  it("shares sample fetches when background sample preloading overlaps with priming", async () => {
     installMockAudioWindow();
 
     const engine = createWebAudioEngine();
@@ -328,7 +330,7 @@ describe("createWebAudioEngine", () => {
     expect(MockAudioContext.decodeCount).toBe(4);
   });
 
-  it("shares wav fetches when a note preview overlaps with priming", async () => {
+  it("shares sample fetches when a note preview overlaps with priming", async () => {
     installMockAudioWindow();
 
     const engine = createWebAudioEngine();
@@ -390,10 +392,24 @@ describe("createWebAudioEngine", () => {
     const source = MockAudioContext.bufferSources.at(-1)!;
 
     expect(handle).toBeDefined();
-    expect(fetch).toHaveBeenCalledWith("/audio/v1/piano.wav");
+    expect(fetch).toHaveBeenCalledWith("/audio/v1/piano.ogg");
     expect(source.loop).toBe(false);
     expect(source.startCalls.at(-1)?.time).toBe(0);
     expect(source.startCalls.at(-1)?.offset).toBeGreaterThan(0);
+  });
+
+  it("can audition wav sample sprites from the browser format flag", async () => {
+    installMockAudioWindow({ search: "?audioFormat=wav" });
+
+    const engine = createWebAudioEngine();
+    const handle = await engine.playNote({
+      midiNote: 60,
+      presetId: "piano",
+      use: "preview",
+    });
+
+    expect(handle).toBeDefined();
+    expect(fetch).toHaveBeenCalledWith("/audio/v1/piano.wav");
   });
 
   it("schedules exercise notes from decoded sprites", async () => {

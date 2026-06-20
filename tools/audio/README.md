@@ -1,7 +1,7 @@
 # Audio Sample Pack Tooling
 
 This folder contains build-time tooling for compiling a curated SoundFont 2
-subset into Web Audio-friendly WAV sprites plus generated metadata.
+subset into Web Audio-friendly sprite files plus generated metadata.
 
 ## Quick Start
 
@@ -26,11 +26,17 @@ Dry-run the example recipe without writing WAV files:
 pnpm audio:build:dry
 ```
 
-Build sprites and generated metadata:
+Build sprites and generated metadata. The default recipe writes both WAV and
+Ogg Vorbis sprites, and uses Ogg as the normal runtime URL. WAV files remain
+available as local reference assets and manual browser audition targets:
 
 ```sh
 pnpm audio:build
 ```
+
+To audition a specific format in the browser after building, open the app with
+`?audioFormat=ogg` or `?audioFormat=wav`, for example `/dojo?audioFormat=wav`.
+Without a query parameter, the app uses the recipe's preferred format.
 
 ## Recipe Notes
 
@@ -53,3 +59,7 @@ halfway between neighboring roots. Use explicit ranges for final curation.
 The script converts SF2 sample-header loop points into sprite-buffer seconds
 after resampling, so the app does not need to understand SF2 global sample
 indexes.
+
+Change `preferredDeliveryFormat` in the recipe and rebuild if the default
+delivery format needs to change. Keep `deliveryFormats` as `["wav", "ogg"]`
+while WAV reference files are useful for audio comparisons.

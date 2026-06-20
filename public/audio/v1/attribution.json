@@ -1,10 +1,21 @@
 {
   "sourceSf2": "/p1/dev/muso-dojo-next/sf2/FluidR3_GM.sf2",
   "targetSampleRate": 48000,
+  "deliveryFormats": [
+    "wav",
+    "ogg"
+  ],
+  "preferredDeliveryFormat": "ogg",
+  "oggQuality": 8.0,
   "packs": [
     {
       "id": "piano",
       "label": "Piano",
+      "deliveryFormats": [
+        "wav",
+        "ogg"
+      ],
+      "preferredDeliveryFormat": "ogg",
       "regions": [
         {
           "regionId": "piano-26",
@@ -951,6 +962,11 @@
     {
       "id": "plucked-string",
       "label": "Plucked String",
+      "deliveryFormats": [
+        "wav",
+        "ogg"
+      ],
+      "preferredDeliveryFormat": "ogg",
       "regions": [
         {
           "regionId": "plucked-string-40",
@@ -1427,6 +1443,11 @@
     {
       "id": "bowed-strings",
       "label": "Bowed Strings",
+      "deliveryFormats": [
+        "wav",
+        "ogg"
+      ],
+      "preferredDeliveryFormat": "ogg",
       "regions": [
         {
           "regionId": "bowed-strings-31",
@@ -2232,6 +2253,11 @@
     {
       "id": "metronome",
       "label": "Metronome",
+      "deliveryFormats": [
+        "wav",
+        "ogg"
+      ],
+      "preferredDeliveryFormat": "ogg",
       "regions": [
         {
           "regionId": "metronome-click",

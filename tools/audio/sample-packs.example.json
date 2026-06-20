@@ -1,6 +1,9 @@
 {
   "sourceSf2": "sf2/FluidR3_GM.sf2",
   "targetSampleRate": 48000,
+  "deliveryFormats": ["wav", "ogg"],
+  "preferredDeliveryFormat": "ogg",
+  "oggQuality": 8,
   "outputDir": "public/audio/v1",
   "manifestPath": "src/audio/samplePacks.generated.ts",
   "attributionPath": "public/audio/v1/attribution.json",

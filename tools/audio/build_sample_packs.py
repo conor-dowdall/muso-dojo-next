@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile a curated SF2 subset into browser-ready WAV sprites.
+"""Compile a curated SF2 subset into browser-ready audio sprites.
 
 This tool intentionally avoids runtime SoundFont parsing in the app. It reads
 the SF2 structure, resolves preset/instrument/sample zones, extracts only the
@@ -16,6 +16,8 @@ import math
 import os
 import re
 import struct
+import subprocess
+import tempfile
 import wave
 from dataclasses import dataclass
 from pathlib import Path
@@ -50,6 +52,7 @@ SAMPLE_TYPE_LINKED = 8
 
 INT16_MAX = 32767
 INT16_MIN = -32768
+SUPPORTED_DELIVERY_FORMATS = {"wav", "ogg"}
 
 
 @dataclass(frozen=True)
@@ -538,6 +541,49 @@ def load_recipe(path: Path) -> dict[str, Any]:
     return recipe
 
 
+def parse_delivery_formats(raw_formats: Any) -> list[str]:
+    if isinstance(raw_formats, str):
+        formats = [raw_formats]
+    elif isinstance(raw_formats, list):
+        formats = raw_formats
+    elif raw_formats is None:
+        formats = ["wav"]
+    else:
+        raise Sf2Error("deliveryFormats must be a string or array")
+
+    normalized: list[str] = []
+    for audio_format in formats:
+        if not isinstance(audio_format, str):
+            raise Sf2Error("deliveryFormats entries must be strings")
+        audio_format = audio_format.lower()
+        if audio_format not in SUPPORTED_DELIVERY_FORMATS:
+            supported = ", ".join(sorted(SUPPORTED_DELIVERY_FORMATS))
+            raise Sf2Error(
+                f"Unsupported delivery format {audio_format!r}; expected {supported}"
+            )
+        if audio_format not in normalized:
+            normalized.append(audio_format)
+
+    if not normalized:
+        raise Sf2Error("At least one delivery format is required")
+    return normalized
+
+
+def parse_preferred_delivery_format(raw_format: Any, delivery_formats: list[str]) -> str:
+    if raw_format is None:
+        return delivery_formats[0]
+    if not isinstance(raw_format, str):
+        raise Sf2Error("preferredDeliveryFormat must be a string")
+
+    preferred = raw_format.lower()
+    if preferred not in delivery_formats:
+        joined = ", ".join(delivery_formats)
+        raise Sf2Error(
+            f"preferredDeliveryFormat must be one of the enabled formats: {joined}"
+        )
+    return preferred
+
+
 def resolve_input_path(raw_path: str, recipe_path: Path) -> Path:
     path = Path(raw_path)
     if path.is_absolute():
@@ -912,10 +958,49 @@ def write_wav(path: Path, channels: list[list[float]], sample_rate: int) -> None
         print(f"warning: clipped {clipped} samples while writing {path}")
 
 
+def write_ogg_vorbis(
+    path: Path,
+    channels: list[list[float]],
+    sample_rate: int,
+    quality: float,
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="muso-dojo-audio-") as temp_dir:
+        wav_path = Path(temp_dir) / "source.wav"
+        write_wav(wav_path, channels, sample_rate)
+        try:
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-hide_banner",
+                    "-loglevel",
+                    "error",
+                    "-y",
+                    "-i",
+                    str(wav_path),
+                    "-codec:a",
+                    "libvorbis",
+                    "-q:a",
+                    str(quality),
+                    str(path),
+                ],
+                check=True,
+            )
+        except FileNotFoundError as error:
+            raise Sf2Error(
+                "ffmpeg is required to write Ogg Vorbis sprites. "
+                "Install ffmpeg or remove 'ogg' from deliveryFormats."
+            ) from error
+        except subprocess.CalledProcessError as error:
+            raise Sf2Error(f"ffmpeg failed while writing {path}") from error
+
+
 def build_pack(
     soundfont: SoundFont,
     pack: dict[str, Any],
     target_sample_rate: int,
+    recipe_delivery_formats: list[str],
+    recipe_preferred_delivery_format: str,
     dry_run: bool,
 ) -> tuple[dict[str, Any], list[dict[str, Any]], list[list[float]] | None]:
     pack_id = require_string(pack, "id")
@@ -923,6 +1008,17 @@ def build_pack(
     if channels not in ("mono", "stereo"):
         raise Sf2Error(f"Pack {pack_id}: channels must be mono or stereo")
 
+    delivery_formats = parse_delivery_formats(
+        pack.get("deliveryFormats", recipe_delivery_formats)
+    )
+    preferred_delivery_format = parse_preferred_delivery_format(
+        pack.get("preferredDeliveryFormat", recipe_preferred_delivery_format),
+        delivery_formats,
+    )
+    urls = {
+        audio_format: f"/audio/v1/{pack_id}.{audio_format}"
+        for audio_format in delivery_formats
+    }
     output_channels = 1 if channels == "mono" else 2
     padding_seconds = float(pack.get("paddingSeconds", 0.02))
     padding_frames = max(0, round(padding_seconds * target_sample_rate))
@@ -1059,7 +1155,10 @@ def build_pack(
     pack_manifest = {
         "id": pack_id,
         "label": pack.get("label", pack_id),
-        "url": f"/audio/v1/{pack_id}.wav",
+        "url": urls[preferred_delivery_format],
+        "deliveryFormat": preferred_delivery_format,
+        "deliveryFormats": delivery_formats,
+        "urls": urls,
         "channels": output_channels,
         "sampleRate": target_sample_rate,
         "regions": regions,
@@ -1091,6 +1190,16 @@ def run_build(args: argparse.Namespace) -> None:
     source_sf2 = resolve_input_path(str(recipe.get("sourceSf2", "")), recipe_path)
 
     target_sample_rate = int(recipe.get("targetSampleRate", 48000))
+    recipe_delivery_formats = parse_delivery_formats(
+        recipe.get("deliveryFormats", recipe.get("deliveryFormat", "wav"))
+    )
+    recipe_preferred_delivery_format = parse_preferred_delivery_format(
+        recipe.get("preferredDeliveryFormat"),
+        recipe_delivery_formats,
+    )
+    ogg_quality = float(recipe.get("oggQuality", 5))
+    if ogg_quality < -1 or ogg_quality > 10:
+        raise Sf2Error("oggQuality must be between -1 and 10")
     output_dir = Path(recipe.get("outputDir", "public/audio/v1"))
     manifest_path = Path(recipe.get("manifestPath", "src/audio/samplePacks.generated.ts"))
     attribution_path = Path(recipe.get("attributionPath", "public/audio/v1/attribution.json"))
@@ -1103,6 +1212,9 @@ def run_build(args: argparse.Namespace) -> None:
     attribution: dict[str, Any] = {
         "sourceSf2": str(source_sf2),
         "targetSampleRate": target_sample_rate,
+        "deliveryFormats": recipe_delivery_formats,
+        "preferredDeliveryFormat": recipe_preferred_delivery_format,
+        "oggQuality": ogg_quality,
         "packs": [],
     }
 
@@ -1110,23 +1222,43 @@ def run_build(args: argparse.Namespace) -> None:
         if not isinstance(pack, dict):
             raise Sf2Error("Each pack must be an object")
         pack_manifest, pack_attribution, sprite_channels = build_pack(
-            soundfont, pack, target_sample_rate, args.dry_run
+            soundfont,
+            pack,
+            target_sample_rate,
+            recipe_delivery_formats,
+            recipe_preferred_delivery_format,
+            args.dry_run,
         )
         built_packs[pack_manifest["id"]] = pack_manifest
         attribution["packs"].append(
             {
                 "id": pack_manifest["id"],
                 "label": pack_manifest["label"],
+                "deliveryFormats": pack_manifest["deliveryFormats"],
+                "preferredDeliveryFormat": pack_manifest["deliveryFormat"],
                 "regions": pack_attribution,
             }
         )
 
         if not args.dry_run and sprite_channels is not None:
-            write_wav(output_dir / f"{pack_manifest['id']}.wav", sprite_channels, target_sample_rate)
+            for audio_format in pack_manifest["deliveryFormats"]:
+                output_path = output_dir / f"{pack_manifest['id']}.{audio_format}"
+                if audio_format == "wav":
+                    write_wav(output_path, sprite_channels, target_sample_rate)
+                elif audio_format == "ogg":
+                    write_ogg_vorbis(
+                        output_path,
+                        sprite_channels,
+                        target_sample_rate,
+                        ogg_quality,
+                    )
+                else:
+                    raise Sf2Error(f"Unsupported delivery format {audio_format}")
 
         print(
             f"{pack_manifest['id']}: {len(pack_manifest['regions'])} regions, "
-            f"{pack_manifest['channels']} channel(s)"
+            f"{pack_manifest['channels']} channel(s), "
+            f"formats={','.join(pack_manifest['deliveryFormats'])}"
         )
 
     if args.dry_run:
@@ -1176,7 +1308,7 @@ def create_parser() -> argparse.ArgumentParser:
     )
     inspect.set_defaults(func=run_inspect)
 
-    build = subparsers.add_parser("build", help="build WAV sprites and manifest")
+    build = subparsers.add_parser("build", help="build audio sprites and manifest")
     build.add_argument(
         "recipe",
         nargs="?",
@@ -1186,7 +1318,7 @@ def create_parser() -> argparse.ArgumentParser:
     build.add_argument(
         "--dry-run",
         action="store_true",
-        help="emit planned manifests without writing WAV/TS/JSON outputs",
+        help="emit planned manifests without writing audio/TS/JSON outputs",
     )
     build.set_defaults(func=run_build)
 

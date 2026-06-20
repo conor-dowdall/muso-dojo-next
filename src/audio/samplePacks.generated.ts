@@ -4,7 +4,13 @@ export const samplePacks = {
   piano: {
     id: "piano",
     label: "Piano",
-    url: "/audio/v1/piano.wav",
+    url: "/audio/v1/piano.ogg",
+    deliveryFormat: "ogg",
+    deliveryFormats: ["wav", "ogg"],
+    urls: {
+      wav: "/audio/v1/piano.wav",
+      ogg: "/audio/v1/piano.ogg",
+    },
     channels: 1,
     sampleRate: 48000,
     regions: [
@@ -593,7 +599,13 @@ export const samplePacks = {
   "plucked-string": {
     id: "plucked-string",
     label: "Plucked String",
-    url: "/audio/v1/plucked-string.wav",
+    url: "/audio/v1/plucked-string.ogg",
+    deliveryFormat: "ogg",
+    deliveryFormats: ["wav", "ogg"],
+    urls: {
+      wav: "/audio/v1/plucked-string.wav",
+      ogg: "/audio/v1/plucked-string.ogg",
+    },
     channels: 1,
     sampleRate: 48000,
     regions: [
@@ -892,7 +904,13 @@ export const samplePacks = {
   "bowed-strings": {
     id: "bowed-strings",
     label: "Bowed Strings",
-    url: "/audio/v1/bowed-strings.wav",
+    url: "/audio/v1/bowed-strings.ogg",
+    deliveryFormat: "ogg",
+    deliveryFormats: ["wav", "ogg"],
+    urls: {
+      wav: "/audio/v1/bowed-strings.wav",
+      ogg: "/audio/v1/bowed-strings.ogg",
+    },
     channels: 1,
     sampleRate: 48000,
     regions: [
@@ -1394,7 +1412,13 @@ export const samplePacks = {
   metronome: {
     id: "metronome",
     label: "Metronome",
-    url: "/audio/v1/metronome.wav",
+    url: "/audio/v1/metronome.ogg",
+    deliveryFormat: "ogg",
+    deliveryFormats: ["wav", "ogg"],
+    urls: {
+      wav: "/audio/v1/metronome.wav",
+      ogg: "/audio/v1/metronome.ogg",
+    },
     channels: 1,
     sampleRate: 48000,
     regions: [

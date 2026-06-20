@@ -2,6 +2,20 @@ import { DEFAULT_CONCERT_PITCH_HZ } from "./pitch";
 import { samplePacks } from "./samplePacks.generated";
 import { type SamplePackId } from "./types";
 
+type SamplePackDeliveryFormat = "wav" | "ogg";
+type SamplePackAssetKey = `${SamplePackId}:${string}`;
+
+interface SamplePackAssetRequest {
+  key: SamplePackAssetKey;
+  pack: SamplePack;
+  url: string;
+}
+
+type SamplePackWithDeliveryUrls = SamplePack & {
+  deliveryFormat?: SamplePackDeliveryFormat;
+  urls?: Partial<Record<SamplePackDeliveryFormat, string>>;
+};
+
 export const SAMPLE_PACK_IDS = Object.keys(samplePacks) as SamplePackId[];
 
 export type SamplePack = (typeof samplePacks)[SamplePackId];
@@ -12,11 +26,16 @@ export interface LoadedSamplePack {
   pack: SamplePack;
 }
 
-const samplePackAssets = new Map<SamplePackId, ArrayBuffer>();
+const samplePackAssets = new Map<SamplePackAssetKey, ArrayBuffer>();
 const loadingSamplePackAssets = new Map<
-  SamplePackId,
+  SamplePackAssetKey,
   Promise<ArrayBuffer | undefined>
 >();
+const SAMPLE_PACK_AUDIO_FORMAT_QUERY_KEYS = [
+  "audioFormat",
+  "sampleFormat",
+  "audio",
+] as const;
 
 export function getSamplePackIdFromUnknown(value: unknown): SamplePackId {
   return SAMPLE_PACK_IDS.includes(value as SamplePackId)
@@ -84,6 +103,84 @@ export function getRegionForMidi(pack: SamplePack, midiNote: number) {
   );
 }
 
+function isSamplePackDeliveryFormat(
+  value: string | null | undefined,
+): value is SamplePackDeliveryFormat {
+  return value === "wav" || value === "ogg";
+}
+
+function getRequestedSamplePackDeliveryFormat() {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  try {
+    const search = (window as Partial<Window>).location?.search ?? "";
+    const params = new URLSearchParams(search);
+
+    for (const key of SAMPLE_PACK_AUDIO_FORMAT_QUERY_KEYS) {
+      const value = params.get(key)?.toLowerCase();
+
+      if (!value) {
+        continue;
+      }
+
+      if (value === "default" || value === "auto") {
+        return undefined;
+      }
+
+      if (isSamplePackDeliveryFormat(value)) {
+        return value;
+      }
+    }
+
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function getDefaultSamplePackDeliveryFormat(pack: SamplePack) {
+  const deliveryPack = pack as SamplePackWithDeliveryUrls;
+
+  if (isSamplePackDeliveryFormat(deliveryPack.deliveryFormat)) {
+    return deliveryPack.deliveryFormat;
+  }
+
+  return pack.url.endsWith(".ogg") ? "ogg" : "wav";
+}
+
+function getSamplePackUrlForFormat(
+  pack: SamplePack,
+  format: SamplePackDeliveryFormat,
+) {
+  const deliveryPack = pack as SamplePackWithDeliveryUrls;
+  return deliveryPack.urls?.[format];
+}
+
+function getSamplePackAssetRequest(
+  packId: SamplePackId,
+): SamplePackAssetRequest {
+  const pack = samplePacks[packId];
+  const defaultFormat = getDefaultSamplePackDeliveryFormat(pack);
+  const requestedFormat = getRequestedSamplePackDeliveryFormat();
+  const selectedFormat =
+    requestedFormat && getSamplePackUrlForFormat(pack, requestedFormat)
+      ? requestedFormat
+      : defaultFormat;
+  const url = getSamplePackUrlForFormat(pack, selectedFormat) ?? pack.url;
+
+  return {
+    key: `${packId}:${url}` as SamplePackAssetKey,
+    pack,
+    url,
+  };
+}
+
+export function getSamplePackAssetUrl(packId: SamplePackId) {
+  return getSamplePackAssetRequest(packId).url;
+}
+
 export function getScheduledOffset({
   context,
   loop,
@@ -128,13 +225,17 @@ export function getScheduledOffset({
 }
 
 export function loadSamplePackAsset(packId: SamplePackId) {
-  const cached = samplePackAssets.get(packId);
+  return loadSamplePackAssetRequest(getSamplePackAssetRequest(packId));
+}
+
+function loadSamplePackAssetRequest(request: SamplePackAssetRequest) {
+  const cached = samplePackAssets.get(request.key);
 
   if (cached) {
     return Promise.resolve(cached);
   }
 
-  const loading = loadingSamplePackAssets.get(packId);
+  const loading = loadingSamplePackAssets.get(request.key);
 
   if (loading) {
     return loading;
@@ -144,22 +245,21 @@ export function loadSamplePackAsset(packId: SamplePackId) {
     return Promise.resolve(undefined);
   }
 
-  const pack = samplePacks[packId];
-  const loadPromise = fetch(pack.url)
+  const loadPromise = fetch(request.url)
     .then((response) => (response.ok ? response.arrayBuffer() : undefined))
     .then((arrayBuffer) => {
       if (arrayBuffer) {
-        samplePackAssets.set(packId, arrayBuffer);
+        samplePackAssets.set(request.key, arrayBuffer);
       }
 
       return arrayBuffer;
     })
     .catch(() => undefined)
     .finally(() => {
-      loadingSamplePackAssets.delete(packId);
+      loadingSamplePackAssets.delete(request.key);
     });
 
-  loadingSamplePackAssets.set(packId, loadPromise);
+  loadingSamplePackAssets.set(request.key, loadPromise);
   return loadPromise;
 }
 
@@ -169,8 +269,8 @@ export function preloadSamplePackAssets() {
   ).then(() => undefined);
 }
 
-function releaseSamplePackAsset(packId: SamplePackId) {
-  samplePackAssets.delete(packId);
+function releaseSamplePackAsset(key: SamplePackAssetKey) {
+  samplePackAssets.delete(key);
 }
 
 export function clearSamplePackAssetCacheForTests() {
@@ -179,9 +279,9 @@ export function clearSamplePackAssetCacheForTests() {
 }
 
 export function createSamplePackLoader() {
-  const loadedPacks = new Map<SamplePackId, LoadedSamplePack>();
+  const loadedPacks = new Map<SamplePackAssetKey, LoadedSamplePack>();
   const loadingPacks = new Map<
-    SamplePackId,
+    SamplePackAssetKey,
     Promise<LoadedSamplePack | undefined>
   >();
 
@@ -189,20 +289,20 @@ export function createSamplePackLoader() {
     audioContext: BaseAudioContext,
     packId: SamplePackId,
   ) => {
-    const loaded = loadedPacks.get(packId);
+    const request = getSamplePackAssetRequest(packId);
+    const loaded = loadedPacks.get(request.key);
 
     if (loaded) {
       return loaded;
     }
 
-    const loading = loadingPacks.get(packId);
+    const loading = loadingPacks.get(request.key);
 
     if (loading) {
       return loading;
     }
 
-    const pack = samplePacks[packId];
-    const loadPromise = loadSamplePackAsset(packId)
+    const loadPromise = loadSamplePackAssetRequest(request)
       .then((arrayBuffer) =>
         arrayBuffer
           ? audioContext.decodeAudioData(arrayBuffer.slice(0))
@@ -213,22 +313,23 @@ export function createSamplePackLoader() {
           return undefined;
         }
 
-        const loadedPack = { buffer, pack };
-        loadedPacks.set(packId, loadedPack);
-        releaseSamplePackAsset(packId);
+        const loadedPack = { buffer, pack: request.pack };
+        loadedPacks.set(request.key, loadedPack);
+        releaseSamplePackAsset(request.key);
         return loadedPack;
       })
       .catch(() => undefined)
       .finally(() => {
-        loadingPacks.delete(packId);
+        loadingPacks.delete(request.key);
       });
 
-    loadingPacks.set(packId, loadPromise);
+    loadingPacks.set(request.key, loadPromise);
     return loadPromise;
   };
 
   return {
-    getLoadedSamplePack: (packId: SamplePackId) => loadedPacks.get(packId),
+    getLoadedSamplePack: (packId: SamplePackId) =>
+      loadedPacks.get(getSamplePackAssetRequest(packId).key),
     loadSamplePack,
   };
 }
