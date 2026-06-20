@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { Guitar, Piano, Repeat, Waves } from "lucide-react";
+import { Drum, Guitar, Piano, Repeat, Waves } from "lucide-react";
 import { type ModuleCreationKind } from "@/types/instrument-creation-defaults";
 
 export interface ModuleCreationOption {
@@ -13,6 +13,7 @@ export const MODULE_CREATION_KIND_LABELS = {
   drone: "Drone",
   fretboard: "Fretboard",
   keyboard: "Keyboard",
+  rhythm: "Rhythm",
   "exercise-looper": "Looper",
 } as const satisfies Record<ModuleCreationKind, string>;
 
@@ -44,6 +45,12 @@ export const MODULE_CREATION_OPTIONS = [
     kind: "exercise-looper",
     label: MODULE_CREATION_KIND_LABELS["exercise-looper"],
     subtitle: "Timed note exercises",
+  },
+  {
+    icon: <Drum />,
+    kind: "rhythm",
+    label: MODULE_CREATION_KIND_LABELS.rhythm,
+    subtitle: "Practice groove",
   },
 ] as const satisfies readonly ModuleCreationOption[];
 

@@ -22,6 +22,12 @@ export {
   type ExercisePlaybackSnapshot,
 } from "./exercisePlaybackCoordinator";
 export {
+  isRhythmPlaybackActive,
+  rhythmPlaybackCoordinator,
+  type RhythmPlaybackRequest,
+  type RhythmPlaybackSnapshot,
+} from "./rhythmPlaybackCoordinator";
+export {
   ExerciseAuditionController,
   type ExerciseAuditionAudioEngine,
   type ExerciseAuditionNote,
@@ -64,4 +70,5 @@ export type {
   SamplePackId,
   ScheduleMetronomeClickRequest,
   ScheduleNoteRequest,
+  SchedulePercussionHitRequest,
 } from "./types";

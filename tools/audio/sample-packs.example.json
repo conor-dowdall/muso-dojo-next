@@ -86,18 +86,27 @@
       ]
     },
     {
-      "id": "metronome",
-      "label": "Metronome",
+      "id": "percussion",
+      "label": "Percussion",
       "sourcePreset": { "bank": 128, "program": 0 },
       "channels": "mono",
       "gain": 0.88,
       "paddingSeconds": 0.02,
       "keys": [
-        {
-          "id": "click",
-          "midi": 33,
-          "sampleName": "Metronome Click"
-        }
+        { "id": "metronome-click", "midi": 33, "sampleName": "Metronome Click" },
+        { "id": "kick", "midi": 36 },
+        { "id": "side-stick", "midi": 37 },
+        { "id": "snare", "midi": 38 },
+        { "id": "closed-hat", "midi": 42 },
+        { "id": "pedal-hat", "midi": 44 },
+        { "id": "open-hat", "midi": 46 },
+        { "id": "crash", "midi": 49 },
+        { "id": "ride", "midi": 51 },
+        { "id": "tambourine", "midi": 54 },
+        { "id": "claves", "midi": 75 },
+        { "id": "high-woodblock", "midi": 76 },
+        { "id": "low-woodblock", "midi": 77 },
+        { "id": "shaker", "midi": 82 }
       ]
     }
   ]

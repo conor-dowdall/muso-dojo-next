@@ -1,0 +1,27 @@
+.frame {
+  container: rhythm / inline-size;
+}
+
+.content {
+  align-items: center;
+}
+
+.controlDeck {
+  display: flex;
+  inline-size: 100%;
+  min-inline-size: 0;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--part-module-control-group-gap);
+}
+
+.rhythmReadout {
+  min-inline-size: var(--space-24);
+}
+
+@container rhythm (max-width: 32rem) {
+  .controlDeck {
+    justify-content: center;
+  }
+}

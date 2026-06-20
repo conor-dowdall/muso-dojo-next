@@ -10,10 +10,11 @@ describe("object management copy", () => {
     expect(dangerCopy.confirmLabel).toBe("Delete this session?");
   });
 
-  it("uses Remove for parts, instruments, and drones", () => {
+  it("uses Remove for parts, instruments, drones, and rhythms", () => {
     const [, partDangerCopy] = getObjectManagementActions("part");
     const [, instrumentDangerCopy] = getObjectManagementActions("instrument");
     const [, droneDangerCopy] = getObjectManagementActions("drone");
+    const [, rhythmDangerCopy] = getObjectManagementActions("rhythm");
 
     expect(partDangerCopy.label).toBe("Remove");
     expect(partDangerCopy.confirmLabel).toBe("Remove this part?");
@@ -21,6 +22,8 @@ describe("object management copy", () => {
     expect(instrumentDangerCopy.confirmLabel).toBe("Remove this instrument?");
     expect(droneDangerCopy.label).toBe("Remove");
     expect(droneDangerCopy.confirmLabel).toBe("Remove this drone?");
+    expect(rhythmDangerCopy.label).toBe("Remove");
+    expect(rhythmDangerCopy.confirmLabel).toBe("Remove this rhythm?");
   });
 
   it("keeps management labels scoped to object lifecycle actions", () => {
@@ -28,11 +31,13 @@ describe("object management copy", () => {
     const [partDuplicate] = getObjectManagementActions("part");
     const [instrumentDuplicate] = getObjectManagementActions("instrument");
     const [droneDuplicate] = getObjectManagementActions("drone");
+    const [rhythmDuplicate] = getObjectManagementActions("rhythm");
 
     expect(sessionDuplicate.ariaLabel).toBe("Duplicate session");
     expect(partDuplicate.ariaLabel).toBe("Duplicate part");
     expect(instrumentDuplicate.ariaLabel).toBe("Duplicate instrument");
     expect(droneDuplicate.ariaLabel).toBe("Duplicate drone");
+    expect(rhythmDuplicate.ariaLabel).toBe("Duplicate rhythm");
   });
 
   it("keeps management actions ordered as duplicate then danger", () => {

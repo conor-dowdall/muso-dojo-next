@@ -2,7 +2,8 @@ import {
   getAudioContextConstructor,
   getOfflineAudioContextConstructor,
 } from "./audioContext";
-import { METRONOME_SAMPLE_PACK_ID, scheduleMetronomeClick } from "./metronome";
+import { scheduleMetronomeClick } from "./metronome";
+import { PERCUSSION_SAMPLE_PACK_ID, schedulePercussionHit } from "./percussion";
 import { getDefaultAudioPresetId, resolveAudioPreset } from "./presets";
 import { isPlayableMidiNote } from "./pitch";
 import {
@@ -31,17 +32,18 @@ import {
   type SamplePackId,
   type ScheduleMetronomeClickRequest,
   type ScheduleNoteRequest,
+  type SchedulePercussionHitRequest,
 } from "./types";
 
 const DEFAULT_AUDIO_USE = "preview" satisfies AudioUse;
 const GROUP_CANCEL_RELEASE_SECONDS = 0.03;
 
 interface PlaybackGroup {
-  clicks: Set<ScheduledClick>;
+  hits: Set<ScheduledHit>;
   voices: Set<AudioVoiceHandle>;
 }
 
-interface ScheduledClick {
+interface ScheduledHit {
   disconnect: () => void;
   stop: () => void;
 }
@@ -265,7 +267,7 @@ export function createWebAudioEngine(): AudioEngine {
         return;
       }
 
-      group.clicks.forEach((click) => click.stop());
+      group.hits.forEach((hit) => hit.stop());
       group.voices.forEach((voiceHandle) =>
         stopVoice(voiceHandle, options?.releaseSeconds),
       );
@@ -274,7 +276,7 @@ export function createWebAudioEngine(): AudioEngine {
     createPlaybackGroup: () => {
       const handle = createPlaybackGroupHandle((nextGroupId += 1));
       playbackGroups.set(handle, {
-        clicks: new Set(),
+        hits: new Set(),
         voices: new Set(),
       });
       return handle;
@@ -343,6 +345,52 @@ export function createWebAudioEngine(): AudioEngine {
         velocity: request.velocity,
       });
     },
+    schedulePercussionHit: (request: SchedulePercussionHitRequest) => {
+      if (!context || context.state === "closed") {
+        void getReadyAudioContext();
+        return false;
+      }
+
+      const group = playbackGroups.get(request.group);
+
+      if (!group) {
+        return false;
+      }
+
+      const loaded = samplePackLoader.getLoadedSamplePack(
+        PERCUSSION_SAMPLE_PACK_ID,
+      );
+
+      if (!loaded) {
+        void samplePackLoader.loadSamplePack(
+          context,
+          PERCUSSION_SAMPLE_PACK_ID,
+        );
+        return false;
+      }
+
+      const hitRef: { current?: ScheduledHit } = {};
+      const hit = schedulePercussionHit({
+        context,
+        destination: context.destination,
+        loaded,
+        onEnded: () => {
+          if (hitRef.current) {
+            group.hits.delete(hitRef.current);
+          }
+        },
+        sampleId: request.sampleId,
+        startTime: request.startTime,
+        velocity: request.velocity,
+      });
+      if (!hit) {
+        return false;
+      }
+
+      hitRef.current = hit;
+      group.hits.add(hit);
+      return true;
+    },
     scheduleMetronomeClick: (request: ScheduleMetronomeClickRequest) => {
       if (!context || context.state === "closed") {
         void getReadyAudioContext();
@@ -356,33 +404,36 @@ export function createWebAudioEngine(): AudioEngine {
       }
 
       const loaded = samplePackLoader.getLoadedSamplePack(
-        METRONOME_SAMPLE_PACK_ID,
+        PERCUSSION_SAMPLE_PACK_ID,
       );
 
       if (!loaded) {
-        void samplePackLoader.loadSamplePack(context, METRONOME_SAMPLE_PACK_ID);
+        void samplePackLoader.loadSamplePack(
+          context,
+          PERCUSSION_SAMPLE_PACK_ID,
+        );
         return false;
       }
 
-      const clickRef: { current?: ScheduledClick } = {};
-      const click = scheduleMetronomeClick({
+      const hitRef: { current?: ScheduledHit } = {};
+      const hit = scheduleMetronomeClick({
         accent: request.accent ?? false,
         context,
         destination: context.destination,
         loaded,
         onEnded: () => {
-          if (clickRef.current) {
-            group.clicks.delete(clickRef.current);
+          if (hitRef.current) {
+            group.hits.delete(hitRef.current);
           }
         },
         startTime: request.startTime,
       });
-      if (!click) {
+      if (!hit) {
         return false;
       }
 
-      clickRef.current = click;
-      group.clicks.add(click);
+      hitRef.current = hit;
+      group.hits.add(hit);
       return true;
     },
     scheduleNote: (request: ScheduleNoteRequest) => {
@@ -591,7 +642,7 @@ export function createWebAudioEngine(): AudioEngine {
     },
     stopAll: () => {
       playbackGroups.forEach((group) => {
-        group.clicks.forEach((click) => click.stop());
+        group.hits.forEach((hit) => hit.stop());
         group.voices.forEach((handle) => stopVoice(handle, 0.02));
       });
       playbackGroups.clear();

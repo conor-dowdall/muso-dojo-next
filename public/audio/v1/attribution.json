@@ -2251,8 +2251,8 @@
       ]
     },
     {
-      "id": "metronome",
-      "label": "Metronome",
+      "id": "percussion",
+      "label": "Percussion",
       "deliveryFormats": [
         "wav",
         "ogg"
@@ -2260,8 +2260,8 @@
       "preferredDeliveryFormat": "ogg",
       "regions": [
         {
-          "regionId": "metronome-click",
-          "packId": "metronome",
+          "regionId": "percussion-metronome-click",
+          "packId": "percussion",
           "preset": {
             "name": "Standard",
             "bank": 128,
@@ -2301,6 +2301,617 @@
               "decaySeconds": 4.0,
               "sustainGain": 1.0,
               "releaseSeconds": 2.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "percussion-kick",
+          "packId": "percussion",
+          "preset": {
+            "name": "Standard",
+            "bank": 128,
+            "program": 0
+          },
+          "instrumentName": "Std Kick",
+          "sample": {
+            "index": 776,
+            "name": "Std Kick(L)",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 39204914,
+            "end": 39217376,
+            "startLoop": 39204922,
+            "endLoop": 39217368,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 36,
+            "rootCents": 3594,
+            "keyLow": 35,
+            "keyHigh": 36,
+            "velocityLow": 0,
+            "velocityHigh": 80,
+            "fineTune": -6,
+            "coarseTune": 0,
+            "sampleModes": 0,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007000465952437129,
+              "holdSeconds": 0.0009765625,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "percussion-side-stick",
+          "packId": "percussion",
+          "preset": {
+            "name": "Standard",
+            "bank": 128,
+            "program": 0
+          },
+          "instrumentName": "Misc. Percussion",
+          "sample": {
+            "index": 1095,
+            "name": "Rim Tap(L)",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 58604817,
+            "end": 58668817,
+            "startLoop": 58604825,
+            "endLoop": 58668809,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 37,
+            "rootCents": 3700,
+            "keyLow": 37,
+            "keyHigh": 37,
+            "velocityLow": 0,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 0,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 100,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.0009765625,
+              "decaySeconds": 4.0,
+              "sustainGain": 1.0,
+              "releaseSeconds": 8.510044445246102,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "percussion-snare",
+          "packId": "percussion",
+          "preset": {
+            "name": "Standard",
+            "bank": 128,
+            "program": 0
+          },
+          "instrumentName": "Std Snare 1",
+          "sample": {
+            "index": 734,
+            "name": "Std Snr 1(L)",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 36114258,
+            "end": 36134898,
+            "startLoop": 36114266,
+            "endLoop": 36134890,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 38,
+            "rootCents": 3800,
+            "keyLow": 38,
+            "keyHigh": 38,
+            "velocityLow": 0,
+            "velocityHigh": 80,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 0,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.007000465952437129,
+              "holdSeconds": 0.0009765625,
+              "decaySeconds": 3.0000779785716363,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 3.0000779785716363,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "percussion-closed-hat",
+          "packId": "percussion",
+          "preset": {
+            "name": "Standard",
+            "bank": 128,
+            "program": 0
+          },
+          "instrumentName": "Hi Hats Treb",
+          "sample": {
+            "index": 1062,
+            "name": "Hi-Hat Closed(L)",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 57561373,
+            "end": 57592733,
+            "startLoop": 57561381,
+            "endLoop": 57592725,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 42,
+            "rootCents": 4200,
+            "keyLow": 42,
+            "keyHigh": 42,
+            "velocityLow": 0,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 0,
+            "exclusiveClass": 1,
+            "attenuationCentibels": 170,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 4.999094040915632,
+              "decaySeconds": 0.0009765625,
+              "sustainGain": 1.0,
+              "releaseSeconds": 29.007083309699535,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "percussion-pedal-hat",
+          "packId": "percussion",
+          "preset": {
+            "name": "Standard",
+            "bank": 128,
+            "program": 0
+          },
+          "instrumentName": "Hi Hats Treb",
+          "sample": {
+            "index": 1060,
+            "name": "Hi-Hat Foot(L)",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 57516225,
+            "end": 57538753,
+            "startLoop": 57516233,
+            "endLoop": 57538745,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 44,
+            "rootCents": 4400,
+            "keyLow": 44,
+            "keyHigh": 44,
+            "velocityLow": 0,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 0,
+            "exclusiveClass": 1,
+            "attenuationCentibels": 170,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 4.999094040915632,
+              "decaySeconds": 0.0009765625,
+              "sustainGain": 1.0,
+              "releaseSeconds": 29.007083309699535,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "percussion-open-hat",
+          "packId": "percussion",
+          "preset": {
+            "name": "Standard",
+            "bank": 128,
+            "program": 0
+          },
+          "instrumentName": "Hi Hats Treb",
+          "sample": {
+            "index": 1058,
+            "name": "Hi-Hat Half-Open(L)",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 57236793,
+            "end": 57376463,
+            "startLoop": 57236801,
+            "endLoop": 57376455,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 46,
+            "rootCents": 4600,
+            "keyLow": 46,
+            "keyHigh": 46,
+            "velocityLow": 0,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 0,
+            "exclusiveClass": 1,
+            "attenuationCentibels": 70,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 4.999094040915632,
+              "decaySeconds": 0.0009765625,
+              "sustainGain": 1.0,
+              "releaseSeconds": 29.007083309699535,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "percussion-crash",
+          "packId": "percussion",
+          "preset": {
+            "name": "Standard",
+            "bank": 128,
+            "program": 0
+          },
+          "instrumentName": "Crashes & Rides",
+          "sample": {
+            "index": 772,
+            "name": "Crsh 1(L)",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 37950538,
+            "end": 38326368,
+            "startLoop": 37950546,
+            "endLoop": 38326360,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 49,
+            "rootCents": 4900,
+            "keyLow": 49,
+            "keyHigh": 49,
+            "velocityLow": 0,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 0,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 80,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 7.8037451641421285,
+              "decaySeconds": 44.99418533191517,
+              "sustainGain": 1.0,
+              "releaseSeconds": 29.995343889919354,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "percussion-ride",
+          "packId": "percussion",
+          "preset": {
+            "name": "Standard",
+            "bank": 128,
+            "program": 0
+          },
+          "instrumentName": "Crashes & Rides",
+          "sample": {
+            "index": 768,
+            "name": "Ride1(L)",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 37432722,
+            "end": 37546642,
+            "startLoop": 37432730,
+            "endLoop": 37546634,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 51,
+            "rootCents": 5100,
+            "keyLow": 51,
+            "keyHigh": 51,
+            "velocityLow": 0,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 0,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 115,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 7.8037451641421285,
+              "decaySeconds": 44.99418533191517,
+              "sustainGain": 1.0,
+              "releaseSeconds": 19.99637616366252,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "percussion-tambourine",
+          "packId": "percussion",
+          "preset": {
+            "name": "Standard",
+            "bank": 128,
+            "program": 0
+          },
+          "instrumentName": "Misc. Percussion",
+          "sample": {
+            "index": 1089,
+            "name": "Tambourine(L)",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 58538263,
+            "end": 58560919,
+            "startLoop": 58538271,
+            "endLoop": 58560911,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 54,
+            "rootCents": 5400,
+            "keyLow": 54,
+            "keyHigh": 54,
+            "velocityLow": 0,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 0,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.0009765625,
+              "decaySeconds": 4.0,
+              "sustainGain": 1.0,
+              "releaseSeconds": 2.0,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "percussion-claves",
+          "packId": "percussion",
+          "preset": {
+            "name": "Standard",
+            "bank": 128,
+            "program": 0
+          },
+          "instrumentName": "Percussion",
+          "sample": {
+            "index": 1066,
+            "name": "Clave(L)",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 57659905,
+            "end": 57664481,
+            "startLoop": 57659913,
+            "endLoop": 57664473,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 75,
+            "rootCents": 7500,
+            "keyLow": 75,
+            "keyHigh": 75,
+            "velocityLow": 0,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 0,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.0009765625,
+              "decaySeconds": 0.0009765625,
+              "sustainGain": 1.0,
+              "releaseSeconds": 5.339359416680137,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "percussion-high-woodblock",
+          "packId": "percussion",
+          "preset": {
+            "name": "Standard",
+            "bank": 128,
+            "program": 0
+          },
+          "instrumentName": "Percussion",
+          "sample": {
+            "index": 1175,
+            "name": "High Woodblock(L)",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 64380780,
+            "end": 64394156,
+            "startLoop": 64380788,
+            "endLoop": 64394148,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 76,
+            "rootCents": 7600,
+            "keyLow": 76,
+            "keyHigh": 76,
+            "velocityLow": 0,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 0,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.0009765625,
+              "decaySeconds": 0.0009765625,
+              "sustainGain": 1.0,
+              "releaseSeconds": 5.339359416680137,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "percussion-low-woodblock",
+          "packId": "percussion",
+          "preset": {
+            "name": "Standard",
+            "bank": 128,
+            "program": 0
+          },
+          "instrumentName": "Percussion",
+          "sample": {
+            "index": 1073,
+            "name": "Low Woodblock(L)",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 58017217,
+            "end": 58031553,
+            "startLoop": 58017225,
+            "endLoop": 58031545,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 77,
+            "rootCents": 7700,
+            "keyLow": 77,
+            "keyHigh": 77,
+            "velocityLow": 0,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 0,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.0009765625,
+              "decaySeconds": 0.0009765625,
+              "sustainGain": 1.0,
+              "releaseSeconds": 5.339359416680137,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "percussion-shaker",
+          "packId": "percussion",
+          "preset": {
+            "name": "Standard",
+            "bank": 128,
+            "program": 0
+          },
+          "instrumentName": "Percussion",
+          "sample": {
+            "index": 1077,
+            "name": "Small Shaker (L)",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 58055301,
+            "end": 58085729,
+            "startLoop": 58055309,
+            "endLoop": 58085721,
+            "sampleType": 4,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 82,
+            "rootCents": 8200,
+            "keyLow": 82,
+            "keyHigh": 82,
+            "velocityLow": 0,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 0,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 15,
+            "pan": -500,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.0009765625,
+              "decaySeconds": 0.0009765625,
+              "sustainGain": 1.0,
+              "releaseSeconds": 1.0436707604137487,
               "keynumToHold": 0,
               "keynumToDecay": 0
             }

@@ -3,6 +3,7 @@ import {
   isDronePartModule,
   isExerciseLooperPartModule,
   isInstrumentPartModule,
+  isRhythmPartModule,
 } from "@/utils/session/partModuleTypes";
 
 export function selectPart(state: AppStore, sessionId: string, partId: string) {
@@ -51,4 +52,15 @@ export function selectExerciseLooperPartModule(
   const partModule = selectPartModule(state, sessionId, partId, moduleId);
 
   return isExerciseLooperPartModule(partModule) ? partModule : undefined;
+}
+
+export function selectRhythmPartModule(
+  state: AppStore,
+  sessionId: string,
+  partId: string,
+  moduleId: string,
+) {
+  const partModule = selectPartModule(state, sessionId, partId, moduleId);
+
+  return isRhythmPartModule(partModule) ? partModule : undefined;
 }

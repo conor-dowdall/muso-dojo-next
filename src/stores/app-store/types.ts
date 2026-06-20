@@ -29,8 +29,10 @@ import {
   type PartModuleCreationRequest,
   type PartModuleType,
   type RememberSessionMaterialCreationRequest,
+  type RhythmPartModuleConfig,
   type SessionConfig,
 } from "@/types/session";
+import { type RhythmPresetId } from "@/utils/rhythm/rhythmConfig";
 import {
   type CollectionRangeBoundary,
   type ExercisePattern,
@@ -57,6 +59,10 @@ export type DroneSettingsPatch = Partial<
 
 export type ExerciseLooperSettingsPatch = Partial<
   Omit<ExerciseLooperPartModuleConfig, "id" | "type">
+>;
+
+export type RhythmSettingsPatch = Partial<
+  Omit<RhythmPartModuleConfig, "id" | "type">
 >;
 
 export interface DojoSettingsActions {
@@ -276,6 +282,21 @@ export interface ExerciseLooperActions {
   ) => void;
 }
 
+export interface RhythmActions {
+  updateRhythmSettings: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    patch: RhythmSettingsPatch,
+  ) => void;
+  setRhythmPresetId: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    presetId: SettingValue<RhythmPresetId>,
+  ) => void;
+}
+
 // Action slices follow the product hierarchy: Dojo -> Session -> Part ->
 // Module -> Instrument.
 export type AppStoreActions = DojoSettingsActions &
@@ -284,6 +305,7 @@ export type AppStoreActions = DojoSettingsActions &
   PartModuleActions &
   DroneActions &
   ExerciseLooperActions &
+  RhythmActions &
   InstrumentActions;
 export type AppStore = AppStoreSnapshot & AppStoreActions;
 export type AppStoreSet = Parameters<StateCreator<AppStore>>[0];

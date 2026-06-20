@@ -12,8 +12,10 @@ import {
   type PartModuleConfig,
   type PartModuleCreationRequest,
   type PartModuleType,
+  type RhythmPartModuleConfig,
   type SessionConfig,
 } from "@/types/session";
+import { DEFAULT_RHYTHM_SELECTION } from "@/utils/rhythm/rhythmConfig";
 import { normalizeInstrumentInstanceConfig } from "@/utils/session/normalizeInstrumentConfig";
 import { normalizeMusicPartConfig } from "@/utils/session/normalizeMusicPartConfig";
 import { normalizeSessionConfig } from "@/utils/session/normalizeSessionConfig";
@@ -104,6 +106,13 @@ export function createDefaultPartModuleConfig<T extends PartModuleType>(
           instrumentSettings,
         ),
       };
+    }
+    case "rhythm": {
+      return {
+        id: createEntityId("module"),
+        rhythm: DEFAULT_RHYTHM_SELECTION,
+        type: request.type,
+      } satisfies RhythmPartModuleConfig;
     }
     default:
       return assertNever(request, "Unsupported part module type");

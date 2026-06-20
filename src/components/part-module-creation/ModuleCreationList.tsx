@@ -101,6 +101,8 @@ function getModuleCreationRequest({
           fretboardSelection,
         ),
       };
+    case "rhythm":
+      return { type: "rhythm" };
   }
 }
 
@@ -258,7 +260,9 @@ export function ModuleCreationList({
                 ].title
               : option.kind === "fretboard"
                 ? formatFretboardCreationSummary(fretboardSelection)
-                : formatKeyboardCreationSummary(keyboardSelection);
+                : option.kind === "keyboard"
+                  ? formatKeyboardCreationSummary(keyboardSelection)
+                  : option.subtitle;
 
         return (
           <SelectableActionRow

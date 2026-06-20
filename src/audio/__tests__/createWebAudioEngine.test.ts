@@ -483,7 +483,7 @@ describe("createWebAudioEngine", () => {
     ).toBe(true);
   });
 
-  it("schedules regular and accented clicks from the metronome sprite", async () => {
+  it("schedules regular and accented clicks from the percussion sprite", async () => {
     installMockAudioWindow();
 
     const engine = createWebAudioEngine();
@@ -527,6 +527,36 @@ describe("createWebAudioEngine", () => {
     expect(regularStart.duration).toBeGreaterThan(0);
     expect(accentStart.duration).toBe(regularStart.duration);
     expect(accentLevel).toBeGreaterThan(regularLevel ?? 0);
+  });
+
+  it("schedules named percussion hits from the percussion sprite", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    const group = engine.createPlaybackGroup();
+
+    expect(
+      engine.schedulePercussionHit({
+        group,
+        sampleId: "kick",
+        startTime: 3,
+        velocity: 0.8,
+      }),
+    ).toBe(true);
+
+    const source = MockAudioContext.bufferSources.at(-1)!;
+    const gain = MockAudioContext.gainNodes.at(-1)!
+      .gain as unknown as MockAudioParam;
+    const start = source.startCalls.at(-1)!;
+    const level = gain.events.find(
+      (event) => event.type === "set" && event.time === 3,
+    )?.value;
+
+    expect(start.time).toBe(3);
+    expect(start.offset).toBeGreaterThan(0);
+    expect(start.duration).toBeGreaterThan(0.1);
+    expect(level).toBeGreaterThan(0);
   });
 
   it("creates looped drones from the bowed string sample regions", async () => {

@@ -3,7 +3,8 @@ export type ManagedObjectKind =
   | "part"
   | "instrument"
   | "drone"
-  | "exercise looper";
+  | "exercise looper"
+  | "rhythm";
 
 export type ObjectManagementActionKind = "duplicate" | "danger";
 
@@ -57,6 +58,11 @@ const objectManagementCopy = {
     dangerGerund: "removing",
     dangerVerb: "Remove",
     noun: "exercise looper",
+  },
+  rhythm: {
+    dangerGerund: "removing",
+    dangerVerb: "Remove",
+    noun: "rhythm",
   },
 } as const satisfies Record<ManagedObjectKind, ObjectManagementCopy>;
 

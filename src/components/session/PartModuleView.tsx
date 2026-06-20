@@ -5,6 +5,7 @@ import { assertNever } from "@/utils/assertNever";
 import { DronePartModuleView } from "./DronePartModuleView";
 import { InstrumentPartModuleView } from "./InstrumentPartModuleView";
 import { ExerciseLooperPartModuleView } from "./ExerciseLooperPartModuleView";
+import { RhythmPartModuleView } from "./RhythmPartModuleView";
 import { selectPartModule } from "./sessionSelectors";
 
 interface PartModuleViewProps {
@@ -50,6 +51,16 @@ export function PartModuleView({
     case "exercise-looper":
       return (
         <ExerciseLooperPartModuleView
+          sessionId={sessionId}
+          partId={partId}
+          moduleId={moduleId}
+          isPerformanceMode={isPerformanceMode}
+          onOpenSessionTempo={onOpenSessionTempo}
+        />
+      );
+    case "rhythm":
+      return (
+        <RhythmPartModuleView
           sessionId={sessionId}
           partId={partId}
           moduleId={moduleId}

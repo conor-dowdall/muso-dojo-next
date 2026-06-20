@@ -4,6 +4,7 @@ import { createExerciseLooperActions } from "./exerciseLooperActions";
 import { createInstrumentActions } from "./instrumentActions";
 import { createPartActions } from "./partActions";
 import { createPartModuleActions } from "./partModuleActions";
+import { createRhythmActions } from "./rhythmActions";
 import { createSessionActions } from "./sessionActions";
 import {
   type AppStoreActions,
@@ -22,6 +23,7 @@ export function createAppStoreActions(
     ...createPartModuleActions(set, get),
     ...createDroneActions(set, get),
     ...createExerciseLooperActions(set, get),
+    ...createRhythmActions(set, get),
     ...createInstrumentActions(set, get),
   };
 }

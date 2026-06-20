@@ -3,6 +3,7 @@ import {
   type ExerciseLooperPartModuleConfig,
   type InstrumentPartModuleConfig,
   type PartModuleConfig,
+  type RhythmPartModuleConfig,
 } from "@/types/session";
 import { getDefaultAudioPresetId, isAudioPresetId } from "@/audio/presets";
 import { assertNever } from "@/utils/assertNever";
@@ -40,6 +41,7 @@ import {
   normalizeExerciseSubdivision,
   normalizeExerciseWood,
 } from "@/utils/exercise-looper/exerciseConfig";
+import { normalizeRhythmSelection } from "@/utils/rhythm/rhythmConfig";
 
 function normalizeDroneAudioPresetId(value: unknown) {
   if (!isAudioPresetId(value) || value === getDefaultAudioPresetId("drone")) {
@@ -198,6 +200,13 @@ export function normalizePartModuleConfig(
         type: value.type,
         instrument,
       } satisfies InstrumentPartModuleConfig;
+    }
+    case "rhythm": {
+      return {
+        id: normalizeId(value.id, `module-${index + 1}`),
+        rhythm: normalizeRhythmSelection(value.rhythm),
+        type: value.type,
+      } satisfies RhythmPartModuleConfig;
     }
     default:
       return assertNever(value.type, "Unsupported part module type");

@@ -13,7 +13,8 @@ export type ModuleCreationKind =
   | "fretboard"
   | "keyboard"
   | "drone"
-  | "exercise-looper";
+  | "exercise-looper"
+  | "rhythm";
 
 export interface FretboardCreationDefault {
   instrument: StringInstrumentKey;

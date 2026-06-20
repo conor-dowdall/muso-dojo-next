@@ -78,6 +78,7 @@ function clearModuleActiveNotesAffectedByPartTheory(
   switch (module.type) {
     case "drone":
     case "exercise-looper":
+    case "rhythm":
       return module;
     case "instrument":
       if (module.instrument.activeNotesLocked) {

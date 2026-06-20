@@ -1,7 +1,9 @@
+import { type PercussionSampleId } from "@/data/rhythmPresets";
+
 export type AudioUse = "preview" | "tuning" | "drone" | "exercise";
 
 export type AudioPresetId = "piano" | "plucked-string" | "bowed-strings";
-export type SamplePackId = AudioPresetId | "metronome";
+export type SamplePackId = AudioPresetId | "percussion";
 export type AudioPresetSurface = "instrument" | "drone" | "exercise";
 
 export type AudioVoiceHandle = string & {
@@ -63,6 +65,13 @@ export interface ScheduleMetronomeClickRequest {
   startTime: number;
 }
 
+export interface SchedulePercussionHitRequest {
+  group: PlaybackGroupHandle;
+  sampleId: PercussionSampleId;
+  startTime: number;
+  velocity?: number;
+}
+
 export interface DroneNoteRequest {
   id: string;
   midiNote: number;
@@ -87,6 +96,7 @@ export interface AudioEngine {
   playNote: (request: PlayNoteRequest) => Promise<AudioVoiceHandle | undefined>;
   scheduleMetronomeClick: (request: ScheduleMetronomeClickRequest) => boolean;
   scheduleNote: (request: ScheduleNoteRequest) => AudioVoiceHandle | undefined;
+  schedulePercussionHit: (request: SchedulePercussionHitRequest) => boolean;
   subscribeToStopAll: (listener: () => void) => () => void;
   subscribeToVoiceEnd: (
     handle: AudioVoiceHandle,

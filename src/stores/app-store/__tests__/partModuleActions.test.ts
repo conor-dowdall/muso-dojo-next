@@ -104,6 +104,37 @@ describe("part module app store actions", () => {
     });
   });
 
+  it("adds and updates a rhythm module without volume settings", () => {
+    const store = createTestStore();
+
+    const moduleId = store.getState().addPartModule(sessionId, partId, {
+      type: "rhythm",
+    });
+
+    if (!moduleId) {
+      throw new Error("Expected a rhythm module id");
+    }
+
+    store
+      .getState()
+      .setRhythmPresetId(sessionId, partId, moduleId, "swing-4-4");
+
+    const partModule = store
+      .getState()
+      .sessions[
+        sessionId
+      ]?.parts[0]?.modules.find((candidate) => candidate.id === moduleId);
+
+    expect(partModule).toStrictEqual({
+      id: moduleId,
+      rhythm: {
+        presetId: "swing-4-4",
+        source: "preset",
+      },
+      type: "rhythm",
+    });
+  });
+
   it("clones a drone module", () => {
     const store = createTestStore();
     const addedModuleId = store.getState().addPartModule(sessionId, partId, {

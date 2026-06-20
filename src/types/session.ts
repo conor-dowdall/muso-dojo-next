@@ -25,6 +25,7 @@ import {
   type CollectionRangeBoundary,
   type ExercisePattern,
 } from "@/utils/exercise-looper/exerciseSequence";
+import { type RhythmSelection } from "@/utils/rhythm/rhythmConfig";
 
 export type ChordProgressionChordListMode =
   | "each-chord-once"
@@ -125,10 +126,16 @@ export interface ExerciseLooperPartModuleConfig extends PartModuleBaseConfig<"ex
   wood?: WoodSurfaceId;
 }
 
+export interface RhythmPartModuleConfig extends PartModuleBaseConfig<"rhythm"> {
+  rhythm: RhythmSelection;
+  type: "rhythm";
+}
+
 export interface PartModuleConfigByType {
   drone: DronePartModuleConfig;
   "exercise-looper": ExerciseLooperPartModuleConfig;
   instrument: InstrumentPartModuleConfig;
+  rhythm: RhythmPartModuleConfig;
 }
 
 export type PartModuleType = keyof PartModuleConfigByType;
@@ -149,6 +156,7 @@ export interface PartModuleCreationConfigByType {
     wood?: WoodSurfaceId;
   };
   instrument: InstrumentPartModuleCreationConfig;
+  rhythm: Record<string, never>;
 }
 
 export type PartModuleCreationConfig<

@@ -41,8 +41,8 @@ describe("audio presets", () => {
   });
 
   it("offers a focused sample-backed instrument catalog", () => {
-    expect(SAMPLE_PACK_IDS).toContain("metronome");
-    expect(isAudioPresetId("metronome")).toBe(false);
+    expect(SAMPLE_PACK_IDS).toContain("percussion");
+    expect(isAudioPresetId("percussion")).toBe(false);
     expect(
       getAudioPresetsForSurface("instrument").map((preset) => preset.id),
     ).toStrictEqual(["piano", "plucked-string", "bowed-strings"]);

@@ -49,6 +49,7 @@ const MODULE_CREATION_KINDS = {
   "exercise-looper": true,
   fretboard: true,
   keyboard: true,
+  rhythm: true,
 } as const satisfies Record<ModuleCreationKind, true>;
 
 const FRET_RANGE_MIN = 0;

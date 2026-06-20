@@ -56,6 +56,9 @@ an integer MIDI note or an object:
 When `lowMidi` and `highMidi` are omitted, the script infers split points
 halfway between neighboring roots. Use explicit ranges for final curation.
 
+Percussion packs use `keys` instead of pitched `roots`; each key extracts one
+exact MIDI drum sound and emits `lowMidi = highMidi = midi` in the manifest.
+
 The script converts SF2 sample-header loop points into sprite-buffer seconds
 after resampling, so the app does not need to understand SF2 global sample
 indexes.

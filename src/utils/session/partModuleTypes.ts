@@ -5,12 +5,14 @@ import {
   type InstrumentType,
   type PartModuleConfig,
   type PartModuleType,
+  type RhythmPartModuleConfig,
 } from "@/types/session";
 
 const partModuleTypes = {
   drone: true,
   "exercise-looper": true,
   instrument: true,
+  rhythm: true,
 } satisfies Record<PartModuleType, true>;
 
 const instrumentTypes = {
@@ -42,4 +44,10 @@ export function isExerciseLooperPartModule(
   module: PartModuleConfig | undefined,
 ): module is ExerciseLooperPartModuleConfig {
   return module?.type === "exercise-looper";
+}
+
+export function isRhythmPartModule(
+  module: PartModuleConfig | undefined,
+): module is RhythmPartModuleConfig {
+  return module?.type === "rhythm";
 }

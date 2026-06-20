@@ -191,4 +191,45 @@ describe("normalizePartModuleConfig", () => {
       },
     });
   });
+
+  it("normalizes rhythm modules without persisted volume", () => {
+    expect(
+      normalizePartModuleConfig({
+        id: "rhythm-1",
+        rhythm: {
+          presetId: "swing-4-4",
+          source: "preset",
+        },
+        type: "rhythm",
+        volume: 0.4,
+      }),
+    ).toStrictEqual({
+      id: "rhythm-1",
+      rhythm: {
+        presetId: "swing-4-4",
+        source: "preset",
+      },
+      type: "rhythm",
+    });
+  });
+
+  it("falls back to the default rhythm selection for invalid rhythm modules", () => {
+    expect(
+      normalizePartModuleConfig({
+        id: "rhythm-1",
+        rhythm: {
+          presetId: "not-a-rhythm",
+          source: "preset",
+        },
+        type: "rhythm",
+      }),
+    ).toStrictEqual({
+      id: "rhythm-1",
+      rhythm: {
+        presetId: "simple-4-4",
+        source: "preset",
+      },
+      type: "rhythm",
+    });
+  });
 });

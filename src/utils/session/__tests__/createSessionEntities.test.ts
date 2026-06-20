@@ -22,12 +22,15 @@ describe("createSessionEntities", () => {
         {
           type: "drone",
         },
+        {
+          type: "rhythm",
+        },
       ],
     });
 
     expect(part.rootNote).toBe("D");
     expect(part.noteCollectionKey).toBe("minor");
-    expect(part.modules).toHaveLength(3);
+    expect(part.modules).toHaveLength(4);
     expect(part.modules[0]).toMatchObject({
       type: "instrument",
       instrument: {
@@ -42,6 +45,13 @@ describe("createSessionEntities", () => {
     });
     expect(part.modules[2]).toMatchObject({
       type: "drone",
+    });
+    expect(part.modules[3]).toMatchObject({
+      rhythm: {
+        presetId: "simple-4-4",
+        source: "preset",
+      },
+      type: "rhythm",
     });
   });
 

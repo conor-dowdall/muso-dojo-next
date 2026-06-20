@@ -16,7 +16,13 @@ describe("createRememberModuleCreationRequest", () => {
           tuningKey: "guitarStandardE",
         },
         keyboard: { theme: "studio" },
-        moduleKinds: ["drone", "exercise-looper", "fretboard", "keyboard"],
+        moduleKinds: [
+          "drone",
+          "exercise-looper",
+          "fretboard",
+          "keyboard",
+          "rhythm",
+        ],
         moduleRequests: [],
       }),
     ).toStrictEqual({
@@ -31,7 +37,13 @@ describe("createRememberModuleCreationRequest", () => {
         tuningKey: "guitarStandardE",
       },
       keyboard: { theme: "studio" },
-      moduleKinds: ["drone", "exercise-looper", "fretboard", "keyboard"],
+      moduleKinds: [
+        "drone",
+        "exercise-looper",
+        "fretboard",
+        "keyboard",
+        "rhythm",
+      ],
     });
   });
 });
