@@ -20,7 +20,6 @@ import {
   ensureAudioReady,
   exercisePlaybackCoordinator,
   musoAudioEngine,
-  preloadSamplePackAssets,
 } from "@/audio";
 import { useAppStore, useHydrateAppStore } from "@/stores/appStore";
 import { createChordProgressionParts } from "@/utils/music-part/createChordProgressionParts";
@@ -78,7 +77,7 @@ function HydratedSession({
   };
   const enterPerformanceMode = () => {
     setIsAddDialogOpen(false);
-    void ensureAudioReady();
+    void ensureAudioReady({ feedback: "silent" });
     onPerformanceModeChange(true);
   };
   const exitPerformanceMode = () => onPerformanceModeChange(false);
@@ -106,7 +105,7 @@ function HydratedSession({
 
     function handleFirstUserGesture() {
       removeListeners();
-      void ensureAudioReady();
+      void ensureAudioReady({ feedback: "silent" });
     }
 
     gestureEvents.forEach((eventName) => {
@@ -125,20 +124,7 @@ function HydratedSession({
       return;
     }
 
-    const preloadSamples = () => {
-      void preloadSamplePackAssets();
-    };
-
-    if ("requestIdleCallback" in window) {
-      const idleHandle = window.requestIdleCallback(preloadSamples, {
-        timeout: 3000,
-      });
-
-      return () => window.cancelIdleCallback(idleHandle);
-    }
-
-    const timeoutHandle = setTimeout(preloadSamples, 1200);
-    return () => clearTimeout(timeoutHandle);
+    void musoAudioEngine.warm();
   }, [activeSessionId]);
 
   useEffect(() => {

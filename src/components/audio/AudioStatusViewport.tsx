@@ -29,11 +29,14 @@ function getStatusIcon(status: VisibleAudioStatus) {
 }
 
 export function AudioStatusViewport() {
-  const { status } = useAudioReadinessSnapshot();
+  const { attemptRevision, feedbackAttemptRevision, status } =
+    useAudioReadinessSnapshot();
   const [visibleStatus, setVisibleStatus] = useState<VisibleAudioStatus | null>(
     null,
   );
   const preparingWasVisible = useRef(false);
+  const shouldShowFeedback =
+    status !== "idle" && feedbackAttemptRevision === attemptRevision;
 
   useEffect(() => {
     let preparingTimer: number | undefined;
@@ -46,7 +49,10 @@ export function AudioStatusViewport() {
       }, 0);
     };
 
-    if (status === "preparing") {
+    if (!shouldShowFeedback) {
+      preparingWasVisible.current = false;
+      setVisibleStatusSoon(null);
+    } else if (status === "preparing") {
       preparingWasVisible.current = false;
       preparingTimer = window.setTimeout(() => {
         preparingWasVisible.current = true;
@@ -81,7 +87,7 @@ export function AudioStatusViewport() {
         window.clearTimeout(statusTimer);
       }
     };
-  }, [status]);
+  }, [shouldShowFeedback, status]);
 
   if (!visibleStatus) {
     return null;

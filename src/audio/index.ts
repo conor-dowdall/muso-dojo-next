@@ -5,6 +5,7 @@ export {
   ensureAudioReady,
   type AudioReadinessSnapshot,
   type AudioReadinessStatus,
+  type EnsureAudioReadyOptions,
 } from "./audioReadiness";
 export {
   createLookaheadScheduler,
@@ -46,7 +47,6 @@ export {
   isAudioPresetAvailableOn,
   resolveAudioPreset,
 } from "./presets";
-export { preloadSamplePackAssets } from "./samplePackLibrary";
 export type {
   AudioEngine,
   AudioPreset,

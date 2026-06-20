@@ -83,6 +83,7 @@ export interface AudioEngine {
   getOutputClock: () => AudioClockSnapshot | undefined;
   isSupported: () => boolean;
   prime: () => Promise<boolean>;
+  warm: () => Promise<boolean>;
   playNote: (request: PlayNoteRequest) => Promise<AudioVoiceHandle | undefined>;
   scheduleMetronomeClick: (request: ScheduleMetronomeClickRequest) => boolean;
   scheduleNote: (request: ScheduleNoteRequest) => AudioVoiceHandle | undefined;

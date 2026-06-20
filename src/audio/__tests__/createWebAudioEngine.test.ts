@@ -124,17 +124,20 @@ class MockAudioContext {
   static decodeCount = 0;
   static disconnectionCount = 0;
   static gainNodes: MockGainNode[] = [];
+  static initialState: AudioContextState = "running";
   static lastInstance: MockAudioContext | undefined;
   static lastOptions: AudioContextOptions | undefined;
+  static resumeCount = 0;
 
   readonly destination = new MockAudioNode(
     this,
   ) as unknown as AudioDestinationNode;
   readonly sampleRate = 48_000;
   currentTime = 0;
-  state: AudioContextState = "running";
+  state: AudioContextState;
 
   constructor(options?: AudioContextOptions) {
+    this.state = MockAudioContext.initialState;
     MockAudioContext.lastInstance = this;
     MockAudioContext.lastOptions = options;
   }
@@ -147,8 +150,10 @@ class MockAudioContext {
     MockAudioContext.decodeCount = 0;
     MockAudioContext.disconnectionCount = 0;
     MockAudioContext.gainNodes = [];
+    MockAudioContext.initialState = "running";
     MockAudioContext.lastInstance = undefined;
     MockAudioContext.lastOptions = undefined;
+    MockAudioContext.resumeCount = 0;
   }
 
   createBuffer(numberOfChannels: number, length: number, sampleRate: number) {
@@ -188,15 +193,43 @@ class MockAudioContext {
   }
 
   resume() {
+    MockAudioContext.resumeCount += 1;
     this.state = "running";
     return Promise.resolve();
   }
 }
 
-function installMockAudioWindow() {
+class MockOfflineAudioContext {
+  static instanceCount = 0;
+
+  readonly sampleRate: number;
+
+  constructor(options?: OfflineAudioContextOptions | number) {
+    MockOfflineAudioContext.instanceCount += 1;
+    this.sampleRate =
+      typeof options === "object" && options ? options.sampleRate : 48_000;
+  }
+
+  static resetCounts() {
+    MockOfflineAudioContext.instanceCount = 0;
+  }
+
+  decodeAudioData() {
+    MockAudioContext.decodeCount += 1;
+    return Promise.resolve(
+      new MockAudioBuffer(1, 8 * 60 * 48_000, 48_000) as unknown as AudioBuffer,
+    );
+  }
+}
+
+function installMockAudioWindow({
+  offline = false,
+}: { offline?: boolean } = {}) {
   MockAudioContext.resetCounts();
+  MockOfflineAudioContext.resetCounts();
   vi.stubGlobal("window", {
     AudioContext: MockAudioContext,
+    ...(offline ? { OfflineAudioContext: MockOfflineAudioContext } : {}),
     clearTimeout: globalThis.clearTimeout,
     setTimeout: globalThis.setTimeout,
   });
@@ -229,6 +262,48 @@ describe("createWebAudioEngine", () => {
     });
     expect(fetch).toHaveBeenCalledTimes(4);
     expect(MockAudioContext.decodeCount).toBe(4);
+  });
+
+  it("warms generated sample packs without resuming a suspended context", async () => {
+    installMockAudioWindow();
+    MockAudioContext.initialState = "suspended";
+
+    const engine = createWebAudioEngine();
+    const warmed = await engine.warm();
+
+    expect(warmed).toBe(true);
+    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(MockAudioContext.decodeCount).toBe(4);
+    expect(MockAudioContext.resumeCount).toBe(0);
+    expect(MockAudioContext.lastInstance?.state).toBe("suspended");
+
+    const prepared = await engine.prime();
+
+    expect(prepared).toBe(true);
+    expect(MockAudioContext.resumeCount).toBe(1);
+    expect(MockAudioContext.decodeCount).toBe(4);
+    expect(fetch).toHaveBeenCalledTimes(4);
+  });
+
+  it("prefers an offline context when warming generated sample packs", async () => {
+    installMockAudioWindow({ offline: true });
+    MockAudioContext.initialState = "suspended";
+
+    const engine = createWebAudioEngine();
+    const warmed = await engine.warm();
+
+    expect(warmed).toBe(true);
+    expect(MockOfflineAudioContext.instanceCount).toBe(1);
+    expect(MockAudioContext.lastInstance).toBeUndefined();
+    expect(MockAudioContext.resumeCount).toBe(0);
+    expect(MockAudioContext.decodeCount).toBe(4);
+
+    const prepared = await engine.prime();
+
+    expect(prepared).toBe(true);
+    expect(MockAudioContext.resumeCount).toBe(1);
+    expect(MockAudioContext.decodeCount).toBe(4);
+    expect(fetch).toHaveBeenCalledTimes(4);
   });
 
   it("shares wav fetches when a sample asset request overlaps with priming", async () => {

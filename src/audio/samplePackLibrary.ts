@@ -186,7 +186,7 @@ export function createSamplePackLoader() {
   >();
 
   const loadSamplePack = async (
-    audioContext: AudioContext,
+    audioContext: BaseAudioContext,
     packId: SamplePackId,
   ) => {
     const loaded = loadedPacks.get(packId);

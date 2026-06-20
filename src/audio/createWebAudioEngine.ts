@@ -1,4 +1,7 @@
-import { getAudioContextConstructor } from "./audioContext";
+import {
+  getAudioContextConstructor,
+  getOfflineAudioContextConstructor,
+} from "./audioContext";
 import { METRONOME_SAMPLE_PACK_ID, scheduleMetronomeClick } from "./metronome";
 import { getDefaultAudioPresetId, resolveAudioPreset } from "./presets";
 import { isPlayableMidiNote } from "./pitch";
@@ -101,7 +104,7 @@ export function createWebAudioEngine(): AudioEngine {
   let nextVoiceId = 0;
   let nextDroneId = 0;
 
-  const getReadyAudioContext = async () => {
+  const getAudioContext = async ({ resume }: { resume: boolean }) => {
     const AudioContextConstructor = getAudioContextConstructor();
 
     if (!AudioContextConstructor) {
@@ -116,7 +119,7 @@ export function createWebAudioEngine(): AudioEngine {
       }
     }
 
-    if (context.state === "suspended") {
+    if (resume && context.state === "suspended") {
       try {
         await context.resume();
       } catch {
@@ -125,6 +128,40 @@ export function createWebAudioEngine(): AudioEngine {
     }
 
     return context.state === "closed" ? undefined : context;
+  };
+
+  const getReadyAudioContext = () => getAudioContext({ resume: true });
+
+  const getWarmAudioContext = async () => {
+    const OfflineAudioContextConstructor = getOfflineAudioContextConstructor();
+
+    if (OfflineAudioContextConstructor) {
+      try {
+        return new OfflineAudioContextConstructor({
+          length: 1,
+          numberOfChannels: 1,
+          sampleRate: 48_000,
+        });
+      } catch {
+        try {
+          return new OfflineAudioContextConstructor(1, 1, 48_000);
+        } catch {
+          // Fall back to a suspended live context below.
+        }
+      }
+    }
+
+    return getAudioContext({ resume: false });
+  };
+
+  const loadAllSamplePacks = async (audioContext: BaseAudioContext) => {
+    const packs = await Promise.all(
+      SAMPLE_PACK_IDS.map((packId) =>
+        samplePackLoader.loadSamplePack(audioContext, packId),
+      ),
+    );
+
+    return packs.every(Boolean);
   };
 
   const emitVoiceEnd = (handle: AudioVoiceHandle) => {
@@ -263,13 +300,16 @@ export function createWebAudioEngine(): AudioEngine {
         return false;
       }
 
-      const packs = await Promise.all(
-        SAMPLE_PACK_IDS.map((packId) =>
-          samplePackLoader.loadSamplePack(audioContext, packId),
-        ),
-      );
+      return loadAllSamplePacks(audioContext);
+    },
+    warm: async () => {
+      const audioContext = await getWarmAudioContext();
 
-      return packs.every(Boolean);
+      if (!audioContext) {
+        return false;
+      }
+
+      return loadAllSamplePacks(audioContext);
     },
     playNote: async (request) => {
       const preset = getPresetForRequest(request);
