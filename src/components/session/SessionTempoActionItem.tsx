@@ -30,7 +30,7 @@ export function SessionTempoActionItem({
       onToggle={onToggle}
     >
       <SessionTempoEditor
-        label={`Tempo for ${session.name}`}
+        label={`Tempo (BPM) for ${session.name}`}
         tempoBpm={session.tempoBpm}
         onTempoBpmChange={(tempoBpm) => onTempoBpmChange(session.id, tempoBpm)}
       />

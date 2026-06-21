@@ -43,6 +43,8 @@ export interface RhythmPattern {
 export type RhythmTimekeeperSound = "off" | "hat" | "ride" | "shaker";
 export type RhythmTimekeeperSubdivision = "quarter" | "eighth" | "sixteenth";
 export type RhythmTimekeeperFeel = "straight" | "triplet" | "swing";
+export type RhythmGroove = "off" | "kick" | "backbeat" | "sparse";
+export type RhythmGrouping = "auto" | "2+3" | "3+2" | "3+4" | "4+3";
 
 export interface RhythmTimekeeperRecipe {
   feel: RhythmTimekeeperFeel;
@@ -52,6 +54,8 @@ export interface RhythmTimekeeperRecipe {
 
 export interface RhythmRecipe {
   beats: number;
+  groove: RhythmGroove;
+  grouping: RhythmGrouping;
   timekeeper: RhythmTimekeeperRecipe;
 }
 
@@ -66,7 +70,7 @@ const E = RHYTHM_PPQ / 2;
 const SIXTEENTH = RHYTHM_PPQ / 4;
 
 export const RHYTHM_MIN_BEATS = 2;
-export const RHYTHM_MAX_BEATS = 12;
+export const RHYTHM_MAX_BEATS = 8;
 
 export const rhythmTimekeeperSoundOptions = [
   {
@@ -94,18 +98,18 @@ export const rhythmTimekeeperSoundOptions = [
 export const rhythmTimekeeperSubdivisionOptions = [
   {
     id: "quarter",
-    label: "Quarter",
-    description: "One timekeeper hit per quarter note.",
+    label: "1 / Beat",
+    description: "One timekeeper hit per beat.",
   },
   {
     id: "eighth",
-    label: "Eighth",
-    description: "Two timekeeper hits per quarter note.",
+    label: "2 / Beat",
+    description: "Two timekeeper hits per beat.",
   },
   {
     id: "sixteenth",
-    label: "Sixteenth",
-    description: "Four timekeeper hits per quarter note.",
+    label: "4 / Beat",
+    description: "Four timekeeper hits per beat.",
   },
 ] as const satisfies readonly RhythmRecipeOption<RhythmTimekeeperSubdivision>[];
 
@@ -117,13 +121,13 @@ export const rhythmTimekeeperFeelOptions = [
   },
   {
     id: "triplet",
-    label: "Triplet",
-    description: "Triplet subdivisions.",
+    label: "3 / Beat",
+    description: "Three evenly spaced subdivisions per beat.",
   },
   {
     id: "swing",
     label: "Swing",
-    description: "Soft swung offbeats leading into the pulse.",
+    description: "Soft swung offbeats leading into the beat.",
   },
 ] as const satisfies readonly RhythmRecipeOption<RhythmTimekeeperFeel>[];
 
@@ -133,8 +137,61 @@ export const rhythmTimekeeperOptions = {
   subdivision: rhythmTimekeeperSubdivisionOptions,
 } as const;
 
+export const rhythmGrooveOptions = [
+  {
+    id: "off",
+    label: "Off",
+    description: "No kick or snare foundation.",
+  },
+  {
+    id: "kick",
+    label: "Kick",
+    description: "Bass drum on every beat.",
+  },
+  {
+    id: "backbeat",
+    label: "Backbeat",
+    description: "A simple kick and snare foundation.",
+  },
+  {
+    id: "sparse",
+    label: "Light",
+    description: "A lighter kick and snare outline.",
+  },
+] as const satisfies readonly RhythmRecipeOption<RhythmGroove>[];
+
+export const rhythmGroupingOptions = [
+  {
+    id: "auto",
+    label: "Auto",
+    description: "Use the default grouping for this beat count.",
+  },
+  {
+    id: "3+2",
+    label: "3+2",
+    description: "Group five beats as three plus two.",
+  },
+  {
+    id: "2+3",
+    label: "2+3",
+    description: "Group five beats as two plus three.",
+  },
+  {
+    id: "4+3",
+    label: "4+3",
+    description: "Group seven beats as four plus three.",
+  },
+  {
+    id: "3+4",
+    label: "3+4",
+    description: "Group seven beats as three plus four.",
+  },
+] as const satisfies readonly RhythmRecipeOption<RhythmGrouping>[];
+
 export const DEFAULT_RHYTHM_RECIPE = {
   beats: 4,
+  groove: "backbeat",
+  grouping: "auto",
   timekeeper: {
     feel: "straight",
     sound: "hat",
@@ -143,7 +200,8 @@ export const DEFAULT_RHYTHM_RECIPE = {
 } as const satisfies RhythmRecipe;
 
 interface RhythmMeterSpec {
-  beatCount: number;
+  groupStarts: readonly number[];
+  groups: readonly number[];
   beatTicks: number;
   cycleTicks: number;
   meter: RhythmMeter;
@@ -217,16 +275,91 @@ function addHit(
   hits.push(hit(atTicks, sampleId, velocity));
 }
 
-function createRhythmMeterSpec(beats: number): RhythmMeterSpec {
+const defaultRhythmBeatGroups = {
+  2: [2],
+  3: [3],
+  4: [2, 2],
+  5: [3, 2],
+  6: [3, 3],
+  7: [4, 3],
+  8: [4, 4],
+} as const satisfies Record<number, readonly number[]>;
+
+const rhythmBeatGroupsByGrouping = {
+  "2+3": [2, 3],
+  "3+2": [3, 2],
+  "3+4": [3, 4],
+  "4+3": [4, 3],
+} as const satisfies Record<Exclude<RhythmGrouping, "auto">, readonly number[]>;
+
+const rhythmGroupingOptionsByBeatCount: Partial<
+  Record<number, readonly RhythmGrouping[]>
+> = {
+  5: ["auto", "3+2", "2+3"],
+  7: ["auto", "4+3", "3+4"],
+};
+
+export function getRhythmGroupingOptions(
+  beats: number,
+): readonly RhythmGrouping[] {
+  return rhythmGroupingOptionsByBeatCount[beats] ?? (["auto"] as const);
+}
+
+export function getRhythmGroupingOptionLabel(grouping: RhythmGrouping) {
+  return getOptionLabel(rhythmGroupingOptions, grouping);
+}
+
+export function getRhythmGrooveOptionLabel(groove: RhythmGroove) {
+  return getOptionLabel(rhythmGrooveOptions, groove);
+}
+
+export function getRhythmGroupingReadout(recipe: RhythmRecipe) {
+  const groupingLabel = getRhythmBeatGroups(recipe).join("+");
+
+  return recipe.grouping === "auto" ? `Auto ${groupingLabel}` : groupingLabel;
+}
+
+export function isRhythmGroupingValidForBeats(
+  beats: number,
+  grouping: RhythmGrouping,
+) {
+  return getRhythmGroupingOptions(beats).includes(grouping);
+}
+
+function getRhythmBeatGroups(recipe: RhythmRecipe) {
+  if (
+    recipe.grouping !== "auto" &&
+    isRhythmGroupingValidForBeats(recipe.beats, recipe.grouping)
+  ) {
+    return rhythmBeatGroupsByGrouping[recipe.grouping];
+  }
+
+  return (
+    defaultRhythmBeatGroups[
+      recipe.beats as keyof typeof defaultRhythmBeatGroups
+    ] ?? [recipe.beats]
+  );
+}
+
+function createRhythmMeterSpec(recipe: RhythmRecipe): RhythmMeterSpec {
+  const groups = getRhythmBeatGroups(recipe);
+  let currentStart = 0;
+  const groupStarts = groups.map((group) => {
+    const start = currentStart;
+    currentStart += group;
+    return start;
+  });
+
   return {
-    beatCount: beats,
+    groupStarts,
+    groups,
     beatTicks: Q,
-    cycleTicks: beats * Q,
-    meter: { beats, beatUnit: 4 },
+    cycleTicks: recipe.beats * Q,
+    meter: { beats: recipe.beats, beatUnit: 4 },
   };
 }
 
-function addCoreBeatHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
+function addBackbeatGrooveHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
   const addKick = (atTicks: number, velocity = 0.78) =>
     addHit(hits, spec.cycleTicks, atTicks, "kick", velocity);
   const addSnare = (atTicks: number, velocity = 0.68) =>
@@ -234,27 +367,70 @@ function addCoreBeatHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
 
   addKick(0, 0.9);
 
-  if (spec.beatCount === 2) {
-    addSnare(Q, 0.62);
-    return;
-  }
-
-  if (spec.beatCount === 3) {
+  if (spec.groups.length === 1 && spec.groups[0] === 3) {
     addSnare(Q, 0.5);
-    addSnare(2 * Q, 0.54);
-    return;
   }
 
-  addKick(Math.floor(spec.beatCount / 2) * Q, 0.68);
-  addSnare(Q, 0.66);
-  addSnare((spec.beatCount - 1) * Q, 0.72);
+  spec.groups.forEach((group, index) => {
+    const groupStart = spec.groupStarts[index];
+    const isFirstGroup = groupStart === 0;
+    const groupEnd = groupStart + group - 1;
+    const isLastGroup = index === spec.groups.length - 1;
+
+    if (!isFirstGroup) {
+      addKick(groupStart * Q, 0.62);
+    }
+
+    addSnare(groupEnd * Q, isLastGroup ? 0.72 : 0.58);
+  });
+}
+
+function addKickGrooveHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
+  const beatCount = spec.meter.beats;
+
+  Array.from({ length: beatCount }, (_, index) => index * Q).forEach(
+    (atTicks) => {
+      const velocity =
+        atTicks === 0 ? 0.9 : isTimekeeperAnchor(spec, atTicks) ? 0.68 : 0.56;
+      addHit(hits, spec.cycleTicks, atTicks, "kick", velocity);
+    },
+  );
+}
+
+function addSparseGrooveHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
+  addHit(hits, spec.cycleTicks, 0, "kick", 0.84);
+
+  spec.groupStarts.slice(1).forEach((groupStart) => {
+    addHit(hits, spec.cycleTicks, groupStart * Q, "kick", 0.5);
+  });
+
+  if (spec.meter.beats > 1) {
+    addHit(hits, spec.cycleTicks, (spec.meter.beats - 1) * Q, "snare", 0.54);
+  }
+}
+
+function addGrooveHits(
+  hits: RhythmHit[],
+  recipe: RhythmRecipe,
+  spec: RhythmMeterSpec,
+) {
+  switch (recipe.groove) {
+    case "off":
+      break;
+    case "kick":
+      addKickGrooveHits(hits, spec);
+      break;
+    case "backbeat":
+      addBackbeatGrooveHits(hits, spec);
+      break;
+    case "sparse":
+      addSparseGrooveHits(hits, spec);
+      break;
+  }
 }
 
 function isTimekeeperAnchor(spec: RhythmMeterSpec, atTicks: number) {
-  return (
-    atTicks === 0 ||
-    (spec.beatCount >= 4 && atTicks === Math.floor(spec.beatCount / 2) * Q)
-  );
+  return spec.groupStarts.some((groupStart) => atTicks === groupStart * Q);
 }
 
 function getStraightTimekeeperVelocity(
@@ -432,10 +608,10 @@ function sortHits(hits: RhythmHit[]) {
 export function createRhythmPatternFromRecipe(
   recipe: RhythmRecipe,
 ): RhythmPattern {
-  const spec = createRhythmMeterSpec(recipe.beats);
+  const spec = createRhythmMeterSpec(recipe);
   const hits: RhythmHit[] = [];
 
-  addCoreBeatHits(hits, spec);
+  addGrooveHits(hits, recipe, spec);
   addTimekeeperHits(hits, recipe, spec);
 
   return {
@@ -447,18 +623,70 @@ export function createRhythmPatternFromRecipe(
 }
 
 export function getRhythmRecipeLabel(recipe: RhythmRecipe) {
-  const beatLabel = getRhythmBeatCountLabel(recipe.beats);
+  const beatLabel = getRhythmBeatCountLabel(recipe);
+  const grooveLabel = getRhythmGrooveOptionLabel(recipe.groove);
   const timekeeperLabel = getRhythmTimekeeperLabel(recipe.timekeeper);
   const suffix =
     recipe.timekeeper.sound === "off"
       ? "No Timekeeper"
       : `${timekeeperLabel} Timekeeper`;
 
-  return `${beatLabel} - ${suffix}`;
+  return `${beatLabel} - ${grooveLabel} - ${suffix}`;
 }
 
-export function getRhythmBeatCountLabel(beats: number) {
-  return `${beats} ${beats === 1 ? "Beat" : "Beats"}`;
+export function getRhythmBeatCountLabel(recipe: RhythmRecipe) {
+  const base = `${recipe.beats} ${recipe.beats === 1 ? "Beat" : "Beats"}`;
+  const feelLabel = getRhythmMeterFeelLabel(recipe);
+
+  return feelLabel ? `${base} (${feelLabel})` : base;
+}
+
+function getRhythmMeterFeelLabel(recipe: RhythmRecipe) {
+  const perBeat = getRhythmSubdivisionCountPerBeat(recipe.timekeeper);
+  const feelLabels: string[] = [];
+
+  if (perBeat === 3 && [2, 3, 4, 5, 7].includes(recipe.beats)) {
+    feelLabels.push(`${recipe.beats * 3}/8 Feel`);
+  }
+
+  if (perBeat !== 3 && [3, 4, 5, 7].includes(recipe.beats)) {
+    feelLabels.push(`${recipe.beats}/4 Feel`);
+  }
+
+  const groupingLabel = getRhythmVisibleGroupingLabel(recipe);
+
+  if (groupingLabel) {
+    feelLabels.push(groupingLabel);
+  }
+
+  return feelLabels.length > 0 ? feelLabels.join(", ") : undefined;
+}
+
+function getRhythmVisibleGroupingLabel(recipe: RhythmRecipe) {
+  if (getRhythmGroupingOptions(recipe.beats).length <= 1) {
+    return undefined;
+  }
+
+  return getRhythmBeatGroups(recipe).join("+");
+}
+
+function getRhythmSubdivisionCountPerBeat(timekeeper: RhythmTimekeeperRecipe) {
+  if (timekeeper.feel === "triplet") {
+    return 3;
+  }
+
+  if (timekeeper.feel === "swing") {
+    return 2;
+  }
+
+  switch (timekeeper.subdivision) {
+    case "quarter":
+      return 1;
+    case "eighth":
+      return 2;
+    case "sixteenth":
+      return 4;
+  }
 }
 
 export function getRhythmTimekeeperLabel(timekeeper: RhythmTimekeeperRecipe) {
@@ -470,20 +698,15 @@ export function getRhythmTimekeeperLabel(timekeeper: RhythmTimekeeperRecipe) {
     rhythmTimekeeperSoundOptions,
     timekeeper.sound,
   );
-  const subdivisionLabel = getOptionLabel(
-    rhythmTimekeeperSubdivisionOptions,
-    timekeeper.subdivision,
-  );
+  const rhythmLabel =
+    timekeeper.feel === "straight"
+      ? getOptionLabel(
+          rhythmTimekeeperSubdivisionOptions,
+          timekeeper.subdivision,
+        )
+      : getOptionLabel(rhythmTimekeeperFeelOptions, timekeeper.feel);
 
-  if (timekeeper.feel === "straight") {
-    return `${soundLabel} ${subdivisionLabel}`;
-  }
-
-  const feelLabel = getOptionLabel(
-    rhythmTimekeeperFeelOptions,
-    timekeeper.feel,
-  );
-  return `${soundLabel} ${feelLabel} ${subdivisionLabel}`;
+  return `${soundLabel} ${rhythmLabel}`;
 }
 
 export function getPercussionRegionId(sampleId: PercussionSampleId) {

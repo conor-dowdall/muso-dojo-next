@@ -15,7 +15,7 @@ function clampTempo(value: number) {
 }
 
 export function SessionTempoEditor({
-  label = "Session tempo",
+  label = "Tempo (BPM)",
   onTempoBpmChange,
   tempoBpm,
 }: {

@@ -1,16 +1,7 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
-import {
-  Gauge,
-  Minus,
-  Music,
-  Music3,
-  Music4,
-  Play,
-  Plus,
-  Square,
-} from "lucide-react";
+import { type CSSProperties, type ReactNode, useState } from "react";
+import { Gauge, Minus, Play, Plus, Square } from "lucide-react";
 import { InstrumentIdentity } from "@/components/instrument/InstrumentIdentity";
 import { PartModuleControlButton } from "@/components/part-module/PartModuleControlButton";
 import controlStyles from "@/components/part-module/PartModuleControls.module.css";
@@ -20,14 +11,19 @@ import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { TactileControlGroup } from "@/components/ui/tactile-control-group/TactileControlGroup";
 import { useRhythmPlayback } from "@/hooks/audio/useRhythmPlayback";
 import {
+  getRhythmGroupingOptionLabel,
+  getRhythmGroupingOptions,
+  getRhythmGroupingReadout,
+  getRhythmGrooveOptionLabel,
   RHYTHM_MAX_BEATS,
   RHYTHM_MIN_BEATS,
-  getRhythmBeatCountLabel,
 } from "@/data/rhythmPresets";
+import { woodSurfaces } from "@/data/woodSurfaces";
 import {
-  getRhythmSelectionLabel,
   getRhythmSelectionRecipe,
   getRhythmTimekeeperOptionLabel,
+  type RhythmGroove,
+  type RhythmGrouping,
   type RhythmRecipe,
   type RhythmSelection,
   type RhythmTimekeeperFeel,
@@ -80,24 +76,61 @@ const timekeeperSoundChoices = [
   sound: RhythmTimekeeperSound;
 }[];
 
+const grooveChoices = [
+  {
+    groove: "off",
+    label: "Turn kick and snare foundation off",
+    text: "Off",
+  },
+  {
+    groove: "kick",
+    label: "Use bass drum on every beat",
+    text: "Kick",
+  },
+  {
+    groove: "backbeat",
+    label: "Use simple kick and snare backbeat",
+    text: "Back",
+  },
+  {
+    groove: "sparse",
+    label: "Use light kick and snare outline",
+    text: "Light",
+  },
+] as const satisfies readonly {
+  groove: RhythmGroove;
+  label: string;
+  text: string;
+}[];
+
 const timekeeperSubdivisionChoices = [
   {
-    icon: <Music3 />,
-    label: "Quarter-note timekeeper",
+    count: 1,
+    feel: "straight",
+    label: "Use one subdivision per beat",
     subdivision: "quarter",
   },
   {
-    icon: <Music />,
-    label: "Eighth-note timekeeper",
+    count: 2,
+    feel: "straight",
+    label: "Use two subdivisions per beat",
     subdivision: "eighth",
   },
   {
-    icon: <Music4 />,
-    label: "Sixteenth-note timekeeper",
+    count: 3,
+    feel: "triplet",
+    label: "Use three subdivisions per beat",
+    subdivision: "eighth",
+  },
+  {
+    count: 4,
+    feel: "straight",
+    label: "Use four subdivisions per beat",
     subdivision: "sixteenth",
   },
 ] as const satisfies readonly {
-  icon: ReactNode;
+  count: number;
+  feel: RhythmTimekeeperFeel;
   label: string;
   subdivision: RhythmTimekeeperSubdivision;
 }[];
@@ -107,9 +140,34 @@ function clampBeatCount(beats: number) {
 }
 
 function getRecipeWithBeatCount(recipe: RhythmRecipe, beats: number) {
+  const nextBeats = clampBeatCount(beats);
+
   return {
     ...recipe,
-    beats: clampBeatCount(beats),
+    beats: nextBeats,
+    grouping: getRhythmGroupingOptions(nextBeats).includes(recipe.grouping)
+      ? recipe.grouping
+      : "auto",
+  };
+}
+
+function getRecipeWithGrouping(
+  recipe: RhythmRecipe,
+  grouping: RhythmGrouping,
+): RhythmRecipe {
+  return {
+    ...recipe,
+    grouping,
+  };
+}
+
+function getRecipeWithGroove(
+  recipe: RhythmRecipe,
+  groove: RhythmGroove,
+): RhythmRecipe {
+  return {
+    ...recipe,
+    groove,
   };
 }
 
@@ -125,30 +183,44 @@ function getRecipeWithTimekeeper(
     ...recipe.timekeeper,
     ...patch,
   };
+  const subdivision =
+    timekeeper.feel === "triplet" || timekeeper.feel === "swing"
+      ? "eighth"
+      : timekeeper.subdivision;
 
   return {
     ...recipe,
     timekeeper: {
       ...timekeeper,
-      feel:
-        timekeeper.subdivision === "quarter" && timekeeper.feel !== "straight"
-          ? "straight"
-          : timekeeper.feel,
+      subdivision,
     },
   };
 }
 
 function getTimekeeperRhythmReadout(recipe: RhythmRecipe) {
-  const subdivisionLabel = getRhythmTimekeeperOptionLabel(
-    "subdivision",
-    recipe.timekeeper,
-  );
-
-  if (recipe.timekeeper.feel === "straight") {
-    return subdivisionLabel;
+  if (recipe.timekeeper.feel === "swing") {
+    return "Swing";
   }
 
-  return `${getRhythmTimekeeperOptionLabel("feel", recipe.timekeeper)} ${subdivisionLabel}`;
+  const subdivisionChoice = timekeeperSubdivisionChoices.find(
+    (choice) =>
+      choice.feel === recipe.timekeeper.feel &&
+      choice.subdivision === recipe.timekeeper.subdivision,
+  );
+
+  return `${subdivisionChoice?.count ?? 2} / Beat`;
+}
+
+function getBeatControlLabel(beats: number) {
+  return `${beats} ${beats === 1 ? "Beat" : "Beats"}`;
+}
+
+function getGroupingControlLabel(grouping: RhythmGrouping) {
+  if (grouping === "auto") {
+    return "Use default beat grouping";
+  }
+
+  return `Group beats as ${getRhythmGroupingOptionLabel(grouping)}`;
 }
 
 export function RhythmModule({
@@ -177,8 +249,10 @@ export function RhythmModule({
     tempoBpm,
   });
   const recipe = getRhythmSelectionRecipe(rhythm);
-  const rhythmLabel = getRhythmSelectionLabel(rhythm);
-  const beatCountLabel = getRhythmBeatCountLabel(recipe.beats);
+  const beatCountLabel = getBeatControlLabel(recipe.beats);
+  const grooveLabel = getRhythmGrooveOptionLabel(recipe.groove);
+  const groupingChoices = getRhythmGroupingOptions(recipe.beats);
+  const groupingReadout = getRhythmGroupingReadout(recipe);
   const timekeeperSoundLabel = getRhythmTimekeeperOptionLabel(
     "sound",
     recipe.timekeeper,
@@ -186,11 +260,20 @@ export function RhythmModule({
   const timekeeperRhythmLabel = getTimekeeperRhythmReadout(recipe);
   const canDecreaseBeats = recipe.beats > RHYTHM_MIN_BEATS;
   const canIncreaseBeats = recipe.beats < RHYTHM_MAX_BEATS;
-  const timekeeperModifierUnavailable =
-    !onRhythmRecipeChange || recipe.timekeeper.subdivision === "quarter";
+  const rhythmFrameStyle = {
+    "--part-module-body-background": woodSurfaces.rosewood.background,
+  } as CSSProperties;
 
   const setBeats = (beats: number) => {
     onRhythmRecipeChange?.(getRecipeWithBeatCount(recipe, beats));
+  };
+
+  const setGrouping = (grouping: RhythmGrouping) => {
+    onRhythmRecipeChange?.(getRecipeWithGrouping(recipe, grouping));
+  };
+
+  const setGroove = (groove: RhythmGroove) => {
+    onRhythmRecipeChange?.(getRecipeWithGroove(recipe, groove));
   };
 
   const updateTimekeeper = (
@@ -199,15 +282,10 @@ export function RhythmModule({
     onRhythmRecipeChange?.(getRecipeWithTimekeeper(recipe, patch));
   };
 
-  const toggleTimekeeperFeel = (
-    feel: Exclude<RhythmTimekeeperFeel, "straight">,
-  ) => {
-    if (recipe.timekeeper.subdivision === "quarter") {
-      return;
-    }
-
+  const toggleSwingTimekeeper = () => {
     updateTimekeeper({
-      feel: recipe.timekeeper.feel === feel ? "straight" : feel,
+      feel: recipe.timekeeper.feel === "swing" ? "straight" : "swing",
+      subdivision: "eighth",
     });
   };
 
@@ -218,6 +296,7 @@ export function RhythmModule({
         className={`${styles.frame} ${controlStyles.surface}`}
         headerPrimary={<InstrumentIdentity label="Rhythm" />}
         showHeader={showHeader}
+        style={rhythmFrameStyle}
         headerActions={
           showHeader ? (
             <PartModuleHeaderActions
@@ -271,46 +350,95 @@ export function RhythmModule({
               </TactileControlGroup>
             </div>
 
-            <output
-              aria-label={`Current rhythm: ${rhythmLabel}`}
-              className={styles.recipeSummary}
-            >
-              {rhythmLabel}
-            </output>
-
             <div
-              aria-label="Rhythm length"
+              aria-label="Rhythm beats"
               className={controlStyles.groupRow}
               role="group"
             >
               <TactileControlGroup
-                aria-label="Loop length"
+                aria-label="Loop beats"
                 className={controlStyles.controlGroup}
                 controlsClassName={controlStyles.buttonGroup}
                 readout={beatCountLabel}
-                readoutAriaLabel={`Loop length: ${beatCountLabel}`}
+                readoutAriaLabel={`Loop beats: ${beatCountLabel}`}
                 readoutClassName={styles.recipeReadout}
               >
                 <PartModuleControlButton
-                  aria-label={`Remove one beat. Current loop length: ${beatCountLabel}`}
+                  aria-label={`Remove one beat. Current loop: ${beatCountLabel}`}
                   icon={<Minus />}
                   onPress={() => setBeats(recipe.beats - 1)}
                   unavailable={!onRhythmRecipeChange || !canDecreaseBeats}
                 />
                 <PartModuleControlButton
-                  aria-label={`Add one beat. Current loop length: ${beatCountLabel}`}
+                  aria-label={`Add one beat. Current loop: ${beatCountLabel}`}
                   icon={<Plus />}
                   onPress={() => setBeats(recipe.beats + 1)}
                   unavailable={!onRhythmRecipeChange || !canIncreaseBeats}
                 />
               </TactileControlGroup>
+
+              {groupingChoices.length > 1 ? (
+                <TactileControlGroup
+                  aria-label="Beat grouping"
+                  className={controlStyles.controlGroup}
+                  controlsClassName={controlStyles.buttonGroup}
+                  readout={groupingReadout}
+                  readoutAriaLabel={`Beat grouping: ${groupingReadout}`}
+                  readoutClassName={styles.recipeReadout}
+                >
+                  {groupingChoices.map((grouping) => (
+                    <PartModuleControlButton
+                      key={grouping}
+                      aria-label={getGroupingControlLabel(grouping)}
+                      icon={
+                        <span
+                          aria-hidden="true"
+                          className={styles.soundButtonLabel}
+                        >
+                          {getRhythmGroupingOptionLabel(grouping)}
+                        </span>
+                      }
+                      onPress={() => setGrouping(grouping)}
+                      selected={recipe.grouping === grouping}
+                      unavailable={!onRhythmRecipeChange}
+                    />
+                  ))}
+                </TactileControlGroup>
+              ) : null}
             </div>
 
             <div
-              aria-label="Timekeeper lane"
+              aria-label="Groove and timekeeper"
               className={controlStyles.groupRow}
               role="group"
             >
+              <TactileControlGroup
+                aria-label="Groove foundation"
+                className={controlStyles.controlGroup}
+                controlsClassName={controlStyles.buttonGroup}
+                readout={grooveLabel}
+                readoutAriaLabel={`Groove foundation: ${grooveLabel}`}
+                readoutClassName={styles.recipeReadout}
+              >
+                {grooveChoices.map((choice) => (
+                  <PartModuleControlButton
+                    key={choice.groove}
+                    aria-label={choice.label}
+                    icon={
+                      <span
+                        aria-hidden="true"
+                        className={styles.soundButtonLabel}
+                      >
+                        {choice.text}
+                      </span>
+                    }
+                    onPress={() => setGroove(choice.groove)}
+                    selected={recipe.groove === choice.groove}
+                    unavailable={!onRhythmRecipeChange}
+                  />
+                ))}
+              </TactileControlGroup>
+
               <TactileControlGroup
                 aria-label="Timekeeper sound"
                 className={controlStyles.controlGroup}
@@ -340,21 +468,30 @@ export function RhythmModule({
                 readoutClassName={styles.recipeReadout}
               >
                 <span
-                  aria-label="Timekeeper note value"
+                  aria-label="Timekeeper subdivisions"
                   className={controlStyles.buttonGroup}
                   role="group"
                 >
                   {timekeeperSubdivisionChoices.map((choice) => (
                     <PartModuleControlButton
-                      key={choice.subdivision}
+                      key={`${choice.subdivision}-${choice.feel}`}
                       aria-label={choice.label}
-                      icon={choice.icon}
+                      icon={
+                        <span
+                          aria-hidden="true"
+                          className={styles.subdivisionButtonLabel}
+                        >
+                          {choice.count}
+                        </span>
+                      }
                       onPress={() =>
                         updateTimekeeper({
+                          feel: choice.feel,
                           subdivision: choice.subdivision,
                         })
                       }
                       selected={
+                        recipe.timekeeper.feel === choice.feel &&
                         recipe.timekeeper.subdivision === choice.subdivision
                       }
                       unavailable={!onRhythmRecipeChange}
@@ -364,28 +501,9 @@ export function RhythmModule({
 
                 <PartModuleControlButton
                   aria-label={
-                    recipe.timekeeper.feel === "triplet"
-                      ? "Use straight timekeeper notes"
-                      : "Use triplet timekeeper notes"
-                  }
-                  icon={
-                    <span
-                      aria-hidden="true"
-                      className={styles.tripletButtonLabel}
-                    >
-                      3
-                    </span>
-                  }
-                  onPress={() => toggleTimekeeperFeel("triplet")}
-                  selected={recipe.timekeeper.feel === "triplet"}
-                  unavailable={timekeeperModifierUnavailable}
-                />
-
-                <PartModuleControlButton
-                  aria-label={
                     recipe.timekeeper.feel === "swing"
-                      ? "Use straight timekeeper notes"
-                      : "Use swung timekeeper notes"
+                      ? "Use straight two-subdivision feel"
+                      : "Use swung two-subdivision feel"
                   }
                   icon={
                     <span
@@ -395,9 +513,9 @@ export function RhythmModule({
                       Sw
                     </span>
                   }
-                  onPress={() => toggleTimekeeperFeel("swing")}
+                  onPress={toggleSwingTimekeeper}
                   selected={recipe.timekeeper.feel === "swing"}
-                  unavailable={timekeeperModifierUnavailable}
+                  unavailable={!onRhythmRecipeChange}
                 />
               </TactileControlGroup>
             </div>

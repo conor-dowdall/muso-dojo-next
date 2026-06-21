@@ -16,22 +16,6 @@
   gap: var(--part-module-control-group-gap);
 }
 
-.recipeSummary {
-  box-sizing: border-box;
-  display: block;
-  inline-size: min(100%, var(--space-80));
-  min-block-size: var(--part-module-control-readout-height);
-  padding-block: var(--space-1);
-  padding-inline: var(--space-3);
-  border-radius: var(--radius-control);
-  background: color-mix(in srgb, var(--color-text) 8%, transparent);
-  color: var(--color-text);
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  line-height: var(--leading-tight);
-  text-align: center;
-}
-
 .recipeReadout {
   min-inline-size: var(--space-14);
 }
@@ -47,12 +31,12 @@
   line-height: 1;
 }
 
-.tripletButtonLabel {
+.subdivisionButtonLabel {
   font-size: var(--text-sm);
-  font-style: italic;
   font-variant-numeric: tabular-nums;
-  font-weight: var(--font-light);
+  font-weight: var(--font-bold);
   letter-spacing: 0;
+  line-height: 1;
 }
 
 .swingButtonLabel {

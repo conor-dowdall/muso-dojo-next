@@ -6,7 +6,10 @@ import {
   createRhythmPatternFromRecipe,
   getRhythmRecipeLabel,
   getRhythmTimekeeperOptionLabel,
+  isRhythmGroupingValidForBeats,
   type PercussionSampleId,
+  type RhythmGroove,
+  type RhythmGrouping,
   type RhythmHit,
   type RhythmMeter,
   type RhythmPattern,
@@ -69,6 +72,21 @@ const rhythmTimekeeperFeelIds = {
   swing: true,
 } as const satisfies Record<RhythmTimekeeperFeel, true>;
 
+const rhythmGrooveIds = {
+  backbeat: true,
+  kick: true,
+  off: true,
+  sparse: true,
+} as const satisfies Record<RhythmGroove, true>;
+
+const rhythmGroupingIds = {
+  "2+3": true,
+  "3+2": true,
+  "3+4": true,
+  "4+3": true,
+  auto: true,
+} as const satisfies Record<RhythmGrouping, true>;
+
 function hasOwnKey(record: object, value: string) {
   return Object.prototype.hasOwnProperty.call(record, value);
 }
@@ -97,8 +115,23 @@ export function normalizeRhythmRecipe(value: unknown): RhythmRecipe {
     return DEFAULT_RHYTHM_RECIPE;
   }
 
+  const beats = normalizeRhythmBeatCount(value.beats);
+  const rawGrouping = normalizeRecipeField<RhythmGrouping>(
+    rhythmGroupingIds,
+    value.grouping,
+    DEFAULT_RHYTHM_RECIPE.grouping,
+  );
+
   return {
-    beats: normalizeRhythmBeatCount(value.beats),
+    beats,
+    groove: normalizeRecipeField(
+      rhythmGrooveIds,
+      value.groove,
+      DEFAULT_RHYTHM_RECIPE.groove,
+    ),
+    grouping: isRhythmGroupingValidForBeats(beats, rawGrouping)
+      ? rawGrouping
+      : DEFAULT_RHYTHM_RECIPE.grouping,
     timekeeper: normalizeRhythmTimekeeperRecipe(value.timekeeper),
   };
 }
@@ -110,7 +143,7 @@ function normalizeRhythmTimekeeperRecipe(
     return DEFAULT_RHYTHM_RECIPE.timekeeper;
   }
 
-  const subdivision = normalizeRecipeField<RhythmTimekeeperSubdivision>(
+  const rawSubdivision = normalizeRecipeField<RhythmTimekeeperSubdivision>(
     rhythmTimekeeperSubdivisionIds,
     value.subdivision,
     DEFAULT_RHYTHM_RECIPE.timekeeper.subdivision,
@@ -120,12 +153,11 @@ function normalizeRhythmTimekeeperRecipe(
     value.feel,
     DEFAULT_RHYTHM_RECIPE.timekeeper.feel,
   );
+  const subdivision =
+    rawFeel === "triplet" || rawFeel === "swing" ? "eighth" : rawSubdivision;
 
   return {
-    feel:
-      subdivision === "quarter" && rawFeel !== "straight"
-        ? "straight"
-        : rawFeel,
+    feel: rawFeel,
     sound: normalizeRecipeField(
       rhythmTimekeeperSoundIds,
       value.sound,
@@ -291,6 +323,8 @@ export function getRhythmSelectionPattern(selection: RhythmSelection) {
 export { DEFAULT_RHYTHM_RECIPE, getRhythmTimekeeperOptionLabel };
 export type {
   RhythmRecipe,
+  RhythmGroove,
+  RhythmGrouping,
   RhythmTimekeeperFeel,
   RhythmTimekeeperRecipe,
   RhythmTimekeeperSound,

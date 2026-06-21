@@ -199,6 +199,8 @@ describe("normalizePartModuleConfig", () => {
         rhythm: {
           recipe: {
             beats: 7,
+            groove: "sparse",
+            grouping: "3+4",
             timekeeper: {
               feel: "swing",
               sound: "ride",
@@ -215,6 +217,8 @@ describe("normalizePartModuleConfig", () => {
       rhythm: {
         recipe: {
           beats: 7,
+          groove: "sparse",
+          grouping: "3+4",
           timekeeper: {
             feel: "swing",
             sound: "ride",
@@ -241,6 +245,8 @@ describe("normalizePartModuleConfig", () => {
       rhythm: {
         recipe: {
           beats: 4,
+          groove: "backbeat",
+          grouping: "auto",
           timekeeper: {
             feel: "straight",
             sound: "hat",

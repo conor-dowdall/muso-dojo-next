@@ -16,6 +16,8 @@ describe("rhythmConfig", () => {
       normalizeRhythmSelection({
         recipe: {
           beats: 7,
+          groove: "kick",
+          grouping: "4+3",
           timekeeper: {
             feel: "swing",
             sound: "ride",
@@ -29,6 +31,8 @@ describe("rhythmConfig", () => {
     ).toStrictEqual({
       recipe: {
         beats: 7,
+        groove: "kick",
+        grouping: "4+3",
         timekeeper: {
           feel: "swing",
           sound: "ride",
@@ -52,7 +56,7 @@ describe("rhythmConfig", () => {
     ).toStrictEqual(DEFAULT_RHYTHM_RECIPE);
   });
 
-  it("normalizes impossible timekeeper combinations", () => {
+  it("normalizes timekeeper modifiers to canonical subdivisions", () => {
     expect(
       normalizeRhythmRecipe({
         beats: 5,
@@ -64,10 +68,36 @@ describe("rhythmConfig", () => {
       }),
     ).toStrictEqual({
       beats: 5,
+      groove: "backbeat",
+      grouping: "auto",
+      timekeeper: {
+        feel: "triplet",
+        sound: "hat",
+        subdivision: "eighth",
+      },
+    });
+  });
+
+  it("normalizes grouping against the beat count", () => {
+    expect(
+      normalizeRhythmRecipe({
+        beats: 4,
+        groove: "kick",
+        grouping: "2+3",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      }),
+    ).toStrictEqual({
+      beats: 4,
+      groove: "kick",
+      grouping: "auto",
       timekeeper: {
         feel: "straight",
         sound: "hat",
-        subdivision: "quarter",
+        subdivision: "eighth",
       },
     });
   });
@@ -87,6 +117,8 @@ describe("rhythmConfig", () => {
     const selection = normalizeRhythmSelection({
       recipe: {
         beats: 4,
+        groove: "backbeat",
+        grouping: "auto",
         timekeeper: {
           feel: "swing",
           sound: "ride",
@@ -99,7 +131,7 @@ describe("rhythmConfig", () => {
     const pattern = getRhythmSelectionPattern(selection);
 
     expect(getRhythmSelectionLabel(selection)).toBe(
-      "4 Beats - Ride Swing Eighth Timekeeper",
+      "4 Beats (4/4 Feel) - Backbeat - Ride Swing Timekeeper",
     );
     expect(pattern).toMatchObject({
       cycleTicks: RHYTHM_PPQ * 4,
@@ -116,8 +148,8 @@ describe("rhythmConfig", () => {
           sampleId: "ride",
           velocity: 0.24,
         },
-        { atTicks: RHYTHM_PPQ, sampleId: "snare", velocity: 0.66 },
-        { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.68 },
+        { atTicks: RHYTHM_PPQ, sampleId: "snare", velocity: 0.58 },
+        { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.62 },
         { atTicks: RHYTHM_PPQ * 3, sampleId: "snare", velocity: 0.72 },
       ]),
     );
@@ -127,6 +159,8 @@ describe("rhythmConfig", () => {
     const pattern = getRhythmSelectionPattern({
       recipe: {
         beats: 4,
+        groove: "backbeat",
+        grouping: "auto",
         timekeeper: {
           feel: "straight",
           sound: "off",
@@ -143,10 +177,35 @@ describe("rhythmConfig", () => {
     expect(pattern.hits.some((hit) => hit.sampleId === "snare")).toBe(true);
   });
 
+  it("can generate a bass-drum-only practice beat", () => {
+    const pattern = getRhythmSelectionPattern({
+      recipe: {
+        beats: 4,
+        groove: "kick",
+        grouping: "auto",
+        timekeeper: {
+          feel: "straight",
+          sound: "off",
+          subdivision: "eighth",
+        },
+      },
+      source: "recipe",
+    });
+
+    expect(pattern.hits).toEqual([
+      { atTicks: 0, sampleId: "kick", velocity: 0.9 },
+      { atTicks: RHYTHM_PPQ, sampleId: "kick", velocity: 0.56 },
+      { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.68 },
+      { atTicks: RHYTHM_PPQ * 3, sampleId: "kick", velocity: 0.56 },
+    ]);
+  });
+
   it("generates triplet timekeeper hits without moving the groove lane", () => {
     const pattern = getRhythmSelectionPattern({
       recipe: {
         beats: 4,
+        groove: "backbeat",
+        grouping: "auto",
         timekeeper: {
           feel: "triplet",
           sound: "hat",
@@ -159,10 +218,123 @@ describe("rhythmConfig", () => {
     expect(pattern.hits).toEqual(
       expect.arrayContaining([
         { atTicks: 0, sampleId: "kick", velocity: 0.9 },
-        { atTicks: RHYTHM_PPQ, sampleId: "snare", velocity: 0.66 },
+        { atTicks: RHYTHM_PPQ, sampleId: "snare", velocity: 0.58 },
         { atTicks: RHYTHM_PPQ / 3, sampleId: "closed-hat", velocity: 0.26 },
       ]),
     );
+  });
+
+  it("labels two three-subdivision beats as a 6/8 feel", () => {
+    const selection = normalizeRhythmSelection({
+      recipe: {
+        beats: 2,
+        groove: "backbeat",
+        grouping: "auto",
+        timekeeper: {
+          feel: "triplet",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      },
+      source: "recipe",
+    });
+
+    expect(getRhythmSelectionLabel(selection)).toBe(
+      "2 Beats (6/8 Feel) - Backbeat - Hat 3 / Beat Timekeeper",
+    );
+  });
+
+  it("labels common straight and compound beat feels", () => {
+    expect(
+      getRhythmSelectionLabel(
+        normalizeRhythmSelection({
+          recipe: {
+            beats: 3,
+            groove: "backbeat",
+            grouping: "auto",
+            timekeeper: {
+              feel: "straight",
+              sound: "hat",
+              subdivision: "eighth",
+            },
+          },
+          source: "recipe",
+        }),
+      ),
+    ).toBe("3 Beats (3/4 Feel) - Backbeat - Hat 2 / Beat Timekeeper");
+    expect(
+      getRhythmSelectionLabel(
+        normalizeRhythmSelection({
+          recipe: {
+            beats: 4,
+            groove: "backbeat",
+            grouping: "auto",
+            timekeeper: {
+              feel: "triplet",
+              sound: "ride",
+              subdivision: "eighth",
+            },
+          },
+          source: "recipe",
+        }),
+      ),
+    ).toBe("4 Beats (12/8 Feel) - Backbeat - Ride 3 / Beat Timekeeper");
+  });
+
+  it("groups odd beat counts into musical kick and snare anchors", () => {
+    const pattern = getRhythmSelectionPattern({
+      recipe: {
+        beats: 7,
+        groove: "backbeat",
+        grouping: "auto",
+        timekeeper: {
+          feel: "straight",
+          sound: "off",
+          subdivision: "eighth",
+        },
+      },
+      source: "recipe",
+    });
+
+    expect(pattern).toMatchObject({
+      cycleTicks: RHYTHM_PPQ * 7,
+      meter: { beats: 7, beatUnit: 4 },
+    });
+    expect(pattern.hits).toEqual(
+      expect.arrayContaining([
+        { atTicks: 0, sampleId: "kick", velocity: 0.9 },
+        { atTicks: RHYTHM_PPQ * 3, sampleId: "snare", velocity: 0.58 },
+        { atTicks: RHYTHM_PPQ * 4, sampleId: "kick", velocity: 0.62 },
+        { atTicks: RHYTHM_PPQ * 6, sampleId: "snare", velocity: 0.72 },
+      ]),
+    );
+  });
+
+  it("can reverse odd beat grouping", () => {
+    const selection = normalizeRhythmSelection({
+      recipe: {
+        beats: 5,
+        groove: "backbeat",
+        grouping: "2+3",
+        timekeeper: {
+          feel: "straight",
+          sound: "off",
+          subdivision: "eighth",
+        },
+      },
+      source: "recipe",
+    });
+    const pattern = getRhythmSelectionPattern(selection);
+
+    expect(getRhythmSelectionLabel(selection)).toBe(
+      "5 Beats (5/4 Feel, 2+3) - Backbeat - No Timekeeper",
+    );
+    expect(pattern.hits).toEqual([
+      { atTicks: 0, sampleId: "kick", velocity: 0.9 },
+      { atTicks: RHYTHM_PPQ, sampleId: "snare", velocity: 0.58 },
+      { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.62 },
+      { atTicks: RHYTHM_PPQ * 4, sampleId: "snare", velocity: 0.72 },
+    ]);
   });
 
   it("normalizes raw tick patterns without mixer data", () => {

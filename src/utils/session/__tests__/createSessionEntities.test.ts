@@ -50,6 +50,8 @@ describe("createSessionEntities", () => {
       rhythm: {
         recipe: {
           beats: 4,
+          groove: "backbeat",
+          grouping: "auto",
           timekeeper: {
             feel: "straight",
             sound: "hat",
