@@ -8,7 +8,14 @@ import {
   normalizeRhythmRecipe,
   normalizeRhythmSelection,
 } from "@/utils/rhythm/rhythmConfig";
-import { RHYTHM_PPQ } from "@/data/rhythmPresets";
+import {
+  getRhythmGroupingChoiceLabel,
+  getRhythmGroupingOptions,
+  getRhythmGroupingReadout,
+  getRhythmTemplateForRecipe,
+  RHYTHM_PPQ,
+  rhythmTemplateOptions,
+} from "@/data/rhythmPresets";
 
 describe("rhythmConfig", () => {
   it("normalizes recipe rhythm selections without mixer data", () => {
@@ -17,7 +24,7 @@ describe("rhythmConfig", () => {
         recipe: {
           beats: 7,
           groove: "kick",
-          grouping: "4+3",
+          grouping: "3+4",
           timekeeper: {
             feel: "swing",
             sound: "ride",
@@ -32,7 +39,7 @@ describe("rhythmConfig", () => {
       recipe: {
         beats: 7,
         groove: "kick",
-        grouping: "4+3",
+        grouping: "3+4",
         timekeeper: {
           feel: "swing",
           sound: "ride",
@@ -78,6 +85,28 @@ describe("rhythmConfig", () => {
     });
   });
 
+  it("normalizes legacy off sound into the timekeeper rhythm", () => {
+    expect(
+      normalizeRhythmRecipe({
+        beats: 4,
+        timekeeper: {
+          feel: "straight",
+          sound: "off",
+          subdivision: "eighth",
+        },
+      }),
+    ).toStrictEqual({
+      beats: 4,
+      groove: "backbeat",
+      grouping: "auto",
+      timekeeper: {
+        feel: "off",
+        sound: "hat",
+        subdivision: "eighth",
+      },
+    });
+  });
+
   it("normalizes grouping against the beat count", () => {
     expect(
       normalizeRhythmRecipe({
@@ -111,6 +140,38 @@ describe("rhythmConfig", () => {
     expect(normalizeRhythmSelection(undefined)).toStrictEqual(
       DEFAULT_RHYTHM_SELECTION,
     );
+  });
+
+  it("matches rhythm templates against generated recipe settings", () => {
+    expect(getRhythmTemplateForRecipe(DEFAULT_RHYTHM_RECIPE)?.id).toBe(
+      "straight-4-4",
+    );
+    expect(
+      getRhythmTemplateForRecipe({
+        ...DEFAULT_RHYTHM_RECIPE,
+        timekeeper: {
+          ...DEFAULT_RHYTHM_RECIPE.timekeeper,
+          sound: "ride",
+        },
+      }),
+    ).toBeUndefined();
+  });
+
+  it("uses the generator controls to represent the 6/8 template", () => {
+    const template = rhythmTemplateOptions.find(
+      (candidate) => candidate.id === "compound-6-8",
+    );
+
+    expect(template?.recipe).toStrictEqual({
+      beats: 2,
+      groove: "backbeat",
+      grouping: "auto",
+      timekeeper: {
+        feel: "triplet",
+        sound: "hat",
+        subdivision: "eighth",
+      },
+    });
   });
 
   it("generates concrete hits from a rhythm recipe", () => {
@@ -162,8 +223,8 @@ describe("rhythmConfig", () => {
         groove: "backbeat",
         grouping: "auto",
         timekeeper: {
-          feel: "straight",
-          sound: "off",
+          feel: "off",
+          sound: "hat",
           subdivision: "eighth",
         },
       },
@@ -184,8 +245,8 @@ describe("rhythmConfig", () => {
         groove: "kick",
         grouping: "auto",
         timekeeper: {
-          feel: "straight",
-          sound: "off",
+          feel: "off",
+          sound: "hat",
           subdivision: "eighth",
         },
       },
@@ -197,6 +258,45 @@ describe("rhythmConfig", () => {
       { atTicks: RHYTHM_PPQ, sampleId: "kick", velocity: 0.56 },
       { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.68 },
       { atTicks: RHYTHM_PPQ * 3, sampleId: "kick", velocity: 0.56 },
+    ]);
+  });
+
+  it("generates a bluegrass-style offbeat snare drive", () => {
+    const pattern = getRhythmSelectionPattern({
+      recipe: {
+        beats: 4,
+        groove: "bluegrass",
+        grouping: "auto",
+        timekeeper: {
+          feel: "off",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      },
+      source: "recipe",
+    });
+
+    expect(pattern.hits).toEqual([
+      { atTicks: 0, sampleId: "kick", velocity: 0.88 },
+      { atTicks: RHYTHM_PPQ / 2, sampleId: "snare", velocity: 0.52 },
+      { atTicks: RHYTHM_PPQ, sampleId: "kick", velocity: 0.58 },
+      {
+        atTicks: RHYTHM_PPQ + RHYTHM_PPQ / 2,
+        sampleId: "snare",
+        velocity: 0.52,
+      },
+      { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.7 },
+      {
+        atTicks: RHYTHM_PPQ * 2 + RHYTHM_PPQ / 2,
+        sampleId: "snare",
+        velocity: 0.52,
+      },
+      { atTicks: RHYTHM_PPQ * 3, sampleId: "kick", velocity: 0.58 },
+      {
+        atTicks: RHYTHM_PPQ * 3 + RHYTHM_PPQ / 2,
+        sampleId: "snare",
+        velocity: 0.52,
+      },
     ]);
   });
 
@@ -288,8 +388,8 @@ describe("rhythmConfig", () => {
         groove: "backbeat",
         grouping: "auto",
         timekeeper: {
-          feel: "straight",
-          sound: "off",
+          feel: "off",
+          sound: "hat",
           subdivision: "eighth",
         },
       },
@@ -317,8 +417,8 @@ describe("rhythmConfig", () => {
         groove: "backbeat",
         grouping: "2+3",
         timekeeper: {
-          feel: "straight",
-          sound: "off",
+          feel: "off",
+          sound: "hat",
           subdivision: "eighth",
         },
       },
@@ -335,6 +435,37 @@ describe("rhythmConfig", () => {
       { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.62 },
       { atTicks: RHYTHM_PPQ * 4, sampleId: "snare", velocity: 0.72 },
     ]);
+  });
+
+  it("keeps distinct grouping choices available for every beat count", () => {
+    expect(
+      [2, 3, 4, 5, 6, 7, 8].map((beats) => [
+        beats,
+        getRhythmGroupingOptions(beats),
+      ]),
+    ).toStrictEqual([
+      [2, ["auto", "1+1"]],
+      [3, ["auto", "2+1", "1+2"]],
+      [4, ["auto", "4", "3+1"]],
+      [5, ["auto", "2+3", "2+2+1"]],
+      [6, ["auto", "2+2+2", "2+4"]],
+      [7, ["auto", "3+4", "2+2+3"]],
+      [8, ["auto", "3+3+2", "2+3+3"]],
+    ]);
+    expect(getRhythmGroupingChoiceLabel(2, "auto")).toBe("2");
+    expect(getRhythmGroupingChoiceLabel(5, "auto")).toBe("3+2");
+    expect(
+      getRhythmGroupingReadout({
+        beats: 5,
+        groove: "backbeat",
+        grouping: "auto",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      }),
+    ).toBe("3+2");
   });
 
   it("normalizes raw tick patterns without mixer data", () => {

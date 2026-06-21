@@ -9,7 +9,6 @@ export type IconButtonProps = Omit<
   | "icon"
   | "iconAriaHidden"
   | "iconPosition"
-  | "iconSizing"
   | "label"
   | "labelProps"
   | "layout"

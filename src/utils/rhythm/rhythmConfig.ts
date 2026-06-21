@@ -55,7 +55,6 @@ const percussionSampleIds = {
 
 const rhythmTimekeeperSoundIds = {
   hat: true,
-  off: true,
   ride: true,
   shaker: true,
 } as const satisfies Record<RhythmTimekeeperSound, true>;
@@ -67,6 +66,7 @@ const rhythmTimekeeperSubdivisionIds = {
 } as const satisfies Record<RhythmTimekeeperSubdivision, true>;
 
 const rhythmTimekeeperFeelIds = {
+  off: true,
   straight: true,
   triplet: true,
   swing: true,
@@ -74,15 +74,27 @@ const rhythmTimekeeperFeelIds = {
 
 const rhythmGrooveIds = {
   backbeat: true,
+  bluegrass: true,
   kick: true,
-  off: true,
-  sparse: true,
 } as const satisfies Record<RhythmGroove, true>;
 
 const rhythmGroupingIds = {
+  "1+1": true,
+  "1+2": true,
+  "1+3": true,
+  "2": true,
+  "2+1": true,
+  "2+2+1": true,
+  "2+2+2": true,
+  "2+2+3": true,
   "2+3": true,
+  "2+3+3": true,
+  "2+4": true,
+  "3+1": true,
   "3+2": true,
+  "3+3+2": true,
   "3+4": true,
+  "4": true,
   "4+3": true,
   auto: true,
 } as const satisfies Record<RhythmGrouping, true>;
@@ -153,16 +165,20 @@ function normalizeRhythmTimekeeperRecipe(
     value.feel,
     DEFAULT_RHYTHM_RECIPE.timekeeper.feel,
   );
+  const legacySoundOff = value.sound === "off";
+  const feel = legacySoundOff ? "off" : rawFeel;
   const subdivision =
-    rawFeel === "triplet" || rawFeel === "swing" ? "eighth" : rawSubdivision;
+    feel === "triplet" || feel === "swing" ? "eighth" : rawSubdivision;
 
   return {
-    feel: rawFeel,
-    sound: normalizeRecipeField(
-      rhythmTimekeeperSoundIds,
-      value.sound,
-      DEFAULT_RHYTHM_RECIPE.timekeeper.sound,
-    ),
+    feel,
+    sound: legacySoundOff
+      ? DEFAULT_RHYTHM_RECIPE.timekeeper.sound
+      : normalizeRecipeField(
+          rhythmTimekeeperSoundIds,
+          value.sound,
+          DEFAULT_RHYTHM_RECIPE.timekeeper.sound,
+        ),
     subdivision,
   };
 }

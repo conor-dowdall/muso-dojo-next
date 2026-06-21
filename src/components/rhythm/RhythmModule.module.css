@@ -10,17 +10,25 @@
   display: flex;
   inline-size: 100%;
   min-inline-size: 0;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: center;
-  gap: var(--part-module-control-group-gap);
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--part-module-section-gap);
 }
 
 .recipeReadout {
   min-inline-size: var(--space-14);
 }
 
-.soundButtonLabel {
+.groupingControl {
+  min-inline-size: calc(
+    var(--part-module-control-size) * 3 + var(--part-module-control-gap) * 2
+  );
+}
+
+.soundButtonLabel,
+.groupingButtonLabel,
+.templateButtonLabel {
   display: inline-flex;
   min-inline-size: 2.6em;
   align-items: center;
@@ -31,16 +39,23 @@
   line-height: 1;
 }
 
-.subdivisionButtonLabel {
-  font-size: var(--text-sm);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--font-bold);
-  letter-spacing: 0;
-  line-height: 1;
+.groupingButtonLabel {
+  min-inline-size: 0;
+  font-size: var(--text-2xs);
 }
 
-.swingButtonLabel {
+.templateButtonLabel {
+  min-inline-size: 0;
+  font-size: var(--text-2xs);
+}
+
+.timekeeperRhythmButtonLabel {
+  display: inline-flex;
+  min-inline-size: 1.35em;
+  align-items: center;
+  justify-content: center;
   font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
   font-weight: var(--font-bold);
   letter-spacing: 0;
   line-height: 1;
@@ -48,6 +63,6 @@
 
 @container rhythm (max-width: 32rem) {
   .controlDeck {
-    justify-content: center;
+    --part-module-control-group-gap: var(--space-2);
   }
 }
