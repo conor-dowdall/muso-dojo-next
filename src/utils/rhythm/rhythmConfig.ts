@@ -7,6 +7,7 @@ import {
   getRhythmRecipeLabel,
   getRhythmTimekeeperOptionLabel,
   isRhythmGroupingValidForBeats,
+  rhythmGrooveUsesGrouping,
   type PercussionSampleId,
   type RhythmGroove,
   type RhythmGrouping,
@@ -67,6 +68,7 @@ const rhythmTimekeeperSubdivisionIds = {
 
 const rhythmTimekeeperFeelIds = {
   off: true,
+  shuffle: true,
   straight: true,
   triplet: true,
   swing: true,
@@ -75,7 +77,7 @@ const rhythmTimekeeperFeelIds = {
 const rhythmGrooveIds = {
   backbeat: true,
   bluegrass: true,
-  kick: true,
+  pulse: true,
 } as const satisfies Record<RhythmGroove, true>;
 
 const rhythmGroupingIds = {
@@ -133,17 +135,21 @@ export function normalizeRhythmRecipe(value: unknown): RhythmRecipe {
     value.grouping,
     DEFAULT_RHYTHM_RECIPE.grouping,
   );
+  const groove = normalizeRecipeField(
+    rhythmGrooveIds,
+    value.groove,
+    DEFAULT_RHYTHM_RECIPE.groove,
+  );
+  const grouping =
+    rhythmGrooveUsesGrouping(groove) &&
+    isRhythmGroupingValidForBeats(beats, rawGrouping)
+      ? rawGrouping
+      : DEFAULT_RHYTHM_RECIPE.grouping;
 
   return {
     beats,
-    groove: normalizeRecipeField(
-      rhythmGrooveIds,
-      value.groove,
-      DEFAULT_RHYTHM_RECIPE.groove,
-    ),
-    grouping: isRhythmGroupingValidForBeats(beats, rawGrouping)
-      ? rawGrouping
-      : DEFAULT_RHYTHM_RECIPE.grouping,
+    groove,
+    grouping,
     timekeeper: normalizeRhythmTimekeeperRecipe(value.timekeeper),
   };
 }
@@ -168,7 +174,9 @@ function normalizeRhythmTimekeeperRecipe(
   const legacySoundOff = value.sound === "off";
   const feel = legacySoundOff ? "off" : rawFeel;
   const subdivision =
-    feel === "triplet" || feel === "swing" ? "eighth" : rawSubdivision;
+    feel === "triplet" || feel === "swing" || feel === "shuffle"
+      ? "eighth"
+      : rawSubdivision;
 
   return {
     feel,

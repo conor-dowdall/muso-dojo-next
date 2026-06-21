@@ -117,7 +117,7 @@ describe("part module app store actions", () => {
 
     store.getState().setRhythmRecipe(sessionId, partId, moduleId, {
       beats: 7,
-      groove: "kick",
+      groove: "pulse",
       grouping: "3+4",
       timekeeper: {
         feel: "swing",
@@ -137,8 +137,8 @@ describe("part module app store actions", () => {
       rhythm: {
         recipe: {
           beats: 7,
-          groove: "kick",
-          grouping: "3+4",
+          groove: "pulse",
+          grouping: "auto",
           timekeeper: {
             feel: "swing",
             sound: "ride",

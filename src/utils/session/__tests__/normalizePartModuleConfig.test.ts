@@ -218,7 +218,7 @@ describe("normalizePartModuleConfig", () => {
         recipe: {
           beats: 7,
           groove: "bluegrass",
-          grouping: "3+4",
+          grouping: "auto",
           timekeeper: {
             feel: "swing",
             sound: "ride",
