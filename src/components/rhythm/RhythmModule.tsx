@@ -14,11 +14,11 @@ import {
   getRhythmGroupingChoiceLabel,
   getRhythmGroupingOptions,
   getRhythmGroupingReadout,
-  getRhythmTemplateForRecipe,
+  getRhythmTheoryReadout,
   RHYTHM_MAX_BEATS,
   RHYTHM_MIN_BEATS,
+  rhythmGrooveSupportsTimekeeperFeel,
   rhythmGrooveUsesGrouping,
-  rhythmTemplateOptions,
 } from "@/data/rhythmPresets";
 import { woodSurfaces } from "@/data/woodSurfaces";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
@@ -37,6 +37,15 @@ import { RhythmOptionsDialog } from "./RhythmOptionsDialog";
 import styles from "./RhythmModule.module.css";
 
 const timekeeperSoundChoices = [
+  {
+    icon: (
+      <span aria-hidden="true" className={styles.soundButtonLabel}>
+        Off
+      </span>
+    ),
+    label: "Turn timekeeper off",
+    sound: undefined,
+  },
   {
     icon: (
       <span aria-hidden="true" className={styles.soundButtonLabel}>
@@ -67,7 +76,7 @@ const timekeeperSoundChoices = [
 ] as const satisfies readonly {
   icon: ReactNode;
   label: string;
-  sound: RhythmTimekeeperSound;
+  sound: RhythmTimekeeperSound | undefined;
 }[];
 
 const grooveChoices = [
@@ -93,12 +102,6 @@ const grooveChoices = [
 }[];
 
 const timekeeperSubdivisionChoices = [
-  {
-    label: "Turn timekeeper rhythm off",
-    text: "0",
-    feel: "off",
-    subdivision: "eighth",
-  },
   {
     label: "Use one subdivision per beat",
     text: "1",
@@ -131,7 +134,7 @@ const timekeeperSubdivisionChoices = [
   },
   {
     label: "Use shuffle offbeat feel",
-    text: "Shuf",
+    text: "Shf",
     feel: "shuffle",
     subdivision: "eighth",
   },
@@ -172,10 +175,18 @@ function getRecipeWithGroove(
   recipe: RhythmRecipe,
   groove: RhythmGroove,
 ): RhythmRecipe {
+  const timekeeper = rhythmGrooveSupportsTimekeeperFeel(
+    groove,
+    recipe.timekeeper.feel,
+  )
+    ? recipe.timekeeper
+    : { ...recipe.timekeeper, feel: "off" as const };
+
   return {
     ...recipe,
     groove,
     grouping: rhythmGrooveUsesGrouping(groove) ? recipe.grouping : "auto",
+    timekeeper,
   };
 }
 
@@ -198,18 +209,26 @@ function getRecipeWithTimekeeper(
       ? "eighth"
       : timekeeper.subdivision;
 
+  const normalizedTimekeeper = {
+    ...timekeeper,
+    subdivision,
+  };
+  const compatibleTimekeeper = rhythmGrooveSupportsTimekeeperFeel(
+    recipe.groove,
+    normalizedTimekeeper.feel,
+  )
+    ? normalizedTimekeeper
+    : { ...normalizedTimekeeper, feel: "off" as const };
+
   return {
     ...recipe,
-    timekeeper: {
-      ...timekeeper,
-      subdivision,
-    },
+    timekeeper: compatibleTimekeeper,
   };
 }
 
 function getTimekeeperRhythmReadout(recipe: RhythmRecipe) {
   if (recipe.timekeeper.feel === "off") {
-    return "0 per beat";
+    return "Off";
   }
 
   if (recipe.timekeeper.feel === "swing") {
@@ -226,7 +245,7 @@ function getTimekeeperRhythmReadout(recipe: RhythmRecipe) {
       choice.subdivision === recipe.timekeeper.subdivision,
   );
 
-  return `${subdivisionChoice?.text ?? 2} per beat`;
+  return `${subdivisionChoice?.text ?? 2} per Beat`;
 }
 
 function getBeatControlLabel(beats: number) {
@@ -280,7 +299,6 @@ export function RhythmModule({
   const groupingReadout =
     getFixedFoundationReadout(recipe.groove) ??
     getRhythmGroupingReadout(recipe);
-  const activeTemplate = getRhythmTemplateForRecipe(recipe);
   const timekeeperSoundLabel = getRhythmTimekeeperOptionLabel(
     "sound",
     recipe.timekeeper,
@@ -291,6 +309,7 @@ export function RhythmModule({
       ? "Off"
       : `${timekeeperSoundLabel}${DISPLAY_VALUE_SEPARATOR}${timekeeperRhythmLabel}`;
   const isTimekeeperOff = recipe.timekeeper.feel === "off";
+  const rhythmTheoryReadout = getRhythmTheoryReadout(recipe);
   const canDecreaseBeats = recipe.beats > RHYTHM_MIN_BEATS;
   const canIncreaseBeats = recipe.beats < RHYTHM_MAX_BEATS;
   const rhythmFrameStyle = {
@@ -315,10 +334,15 @@ export function RhythmModule({
     onRhythmRecipeChange?.(getRecipeWithTimekeeper(recipe, patch));
   };
 
-  const setTemplate = (templateRecipe: RhythmRecipe) => {
-    onRhythmRecipeChange?.({
-      ...templateRecipe,
-      timekeeper: { ...templateRecipe.timekeeper },
+  const setTimekeeperSound = (sound: RhythmTimekeeperSound | undefined) => {
+    if (sound === undefined) {
+      updateTimekeeper({ feel: "off" });
+      return;
+    }
+
+    updateTimekeeper({
+      sound,
+      ...(isTimekeeperOff ? { feel: "straight" as const } : {}),
     });
   };
 
@@ -383,36 +407,18 @@ export function RhythmModule({
               </TactileControlGroup>
             </div>
 
-            <div
-              aria-label="Rhythm templates"
-              className={controlStyles.groupRow}
-              role="group"
+            <output
+              aria-label={`Rhythm theory: ${rhythmTheoryReadout.title}. ${rhythmTheoryReadout.detail}`}
+              aria-live="off"
+              className={styles.rhythmReadout}
             >
-              <TactileControlGroup
-                aria-label="Rhythm templates"
-                className={controlStyles.controlGroup}
-                controlsClassName={controlStyles.buttonGroup}
-              >
-                {rhythmTemplateOptions.map((template) => (
-                  <PartModuleControlButton
-                    key={template.id}
-                    aria-label={`Use ${template.label} rhythm template`}
-                    icon={
-                      <span
-                        aria-hidden="true"
-                        className={styles.templateButtonLabel}
-                      >
-                        {template.buttonLabel}
-                      </span>
-                    }
-                    iconSizing="content"
-                    onPress={() => setTemplate(template.recipe)}
-                    selected={activeTemplate?.id === template.id}
-                    unavailable={!onRhythmRecipeChange}
-                  />
-                ))}
-              </TactileControlGroup>
-            </div>
+              <span className={styles.rhythmReadoutTitle}>
+                {rhythmTheoryReadout.title}
+              </span>
+              <span className={styles.rhythmReadoutDetail}>
+                {rhythmTheoryReadout.detail}
+              </span>
+            </output>
 
             <div
               aria-label="Rhythm beats"
@@ -495,7 +501,13 @@ export function RhythmModule({
                     iconSizing="content"
                     onPress={() => setGroove(choice.groove)}
                     selected={recipe.groove === choice.groove}
-                    unavailable={!onRhythmRecipeChange}
+                    unavailable={
+                      !onRhythmRecipeChange ||
+                      !rhythmGrooveSupportsTimekeeperFeel(
+                        choice.groove,
+                        recipe.timekeeper.feel,
+                      )
+                    }
                   />
                 ))}
               </TactileControlGroup>
@@ -521,16 +533,18 @@ export function RhythmModule({
                 >
                   {timekeeperSoundChoices.map((choice) => (
                     <PartModuleControlButton
-                      key={choice.sound}
+                      key={choice.sound ?? "off"}
                       aria-label={choice.label}
                       icon={choice.icon}
                       iconSizing="content"
-                      onPress={() => updateTimekeeper({ sound: choice.sound })}
+                      onPress={() => setTimekeeperSound(choice.sound)}
                       selected={
-                        !isTimekeeperOff &&
-                        recipe.timekeeper.sound === choice.sound
+                        choice.sound === undefined
+                          ? isTimekeeperOff
+                          : !isTimekeeperOff &&
+                            recipe.timekeeper.sound === choice.sound
                       }
-                      unavailable={!onRhythmRecipeChange || isTimekeeperOff}
+                      unavailable={!onRhythmRecipeChange}
                     />
                   ))}
                 </span>
@@ -561,10 +575,16 @@ export function RhythmModule({
                       }
                       selected={
                         recipe.timekeeper.feel === choice.feel &&
-                        (choice.feel === "off" ||
-                          recipe.timekeeper.subdivision === choice.subdivision)
+                        recipe.timekeeper.subdivision === choice.subdivision
                       }
-                      unavailable={!onRhythmRecipeChange}
+                      unavailable={
+                        !onRhythmRecipeChange ||
+                        isTimekeeperOff ||
+                        !rhythmGrooveSupportsTimekeeperFeel(
+                          recipe.groove,
+                          choice.feel,
+                        )
+                      }
                     />
                   ))}
                 </span>

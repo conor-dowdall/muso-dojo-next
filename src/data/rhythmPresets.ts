@@ -56,16 +56,17 @@ const rhythmBeatGroupsByGrouping = {
   "2": [2],
   "2+1": [2, 1],
   "2+2+1": [2, 2, 1],
-  "2+2+2": [2, 2, 2],
   "2+2+3": [2, 2, 3],
   "2+3": [2, 3],
   "2+3+3": [2, 3, 3],
   "2+4": [2, 4],
   "3+1": [3, 1],
   "3+2": [3, 2],
+  "3+3": [3, 3],
   "3+3+2": [3, 3, 2],
   "3+4": [3, 4],
   "4": [4],
+  "4+2": [4, 2],
   "4+3": [4, 3],
 } as const satisfies Record<string, readonly number[]>;
 
@@ -91,12 +92,9 @@ export interface RhythmRecipeOption<T extends string> {
   label: string;
 }
 
-export interface RhythmTemplateOption {
-  buttonLabel: string;
-  description: string;
-  id: string;
-  label: string;
-  recipe: RhythmRecipe;
+export interface RhythmTheoryReadout {
+  detail: string;
+  title: string;
 }
 
 const Q = RHYTHM_PPQ;
@@ -127,17 +125,17 @@ export const rhythmTimekeeperSoundOptions = [
 export const rhythmTimekeeperSubdivisionOptions = [
   {
     id: "quarter",
-    label: "1 per beat",
+    label: "1 per Beat",
     description: "One timekeeper hit per beat.",
   },
   {
     id: "eighth",
-    label: "2 per beat",
+    label: "2 per Beat",
     description: "Two timekeeper hits per beat.",
   },
   {
     id: "sixteenth",
-    label: "4 per beat",
+    label: "4 per Beat",
     description: "Four timekeeper hits per beat.",
   },
 ] as const satisfies readonly RhythmRecipeOption<RhythmTimekeeperSubdivision>[];
@@ -145,7 +143,7 @@ export const rhythmTimekeeperSubdivisionOptions = [
 export const rhythmTimekeeperFeelOptions = [
   {
     id: "off",
-    label: "0 per beat",
+    label: "Off",
     description: "No timekeeper hits.",
   },
   {
@@ -155,7 +153,7 @@ export const rhythmTimekeeperFeelOptions = [
   },
   {
     id: "triplet",
-    label: "3 per beat",
+    label: "3 per Beat",
     description: "Three evenly spaced subdivisions per beat.",
   },
   {
@@ -231,11 +229,6 @@ export const rhythmGroupingOptions = [
     description: "Group five beats as two plus two plus one.",
   },
   {
-    id: "2+2+2",
-    label: "2+2+2",
-    description: "Group six beats as two plus two plus two.",
-  },
-  {
     id: "2+2+3",
     label: "2+2+3",
     description: "Group seven beats as two plus two plus three.",
@@ -244,6 +237,11 @@ export const rhythmGroupingOptions = [
     id: "3+2",
     label: "3+2",
     description: "Group five beats as three plus two.",
+  },
+  {
+    id: "3+3",
+    label: "3+3",
+    description: "Group six beats as three plus three.",
   },
   {
     id: "2+3",
@@ -285,6 +283,11 @@ export const rhythmGroupingOptions = [
     label: "4",
     description: "Group four beats as one phrase.",
   },
+  {
+    id: "4+2",
+    label: "4+2",
+    description: "Group six beats as four plus two.",
+  },
 ] as const satisfies readonly RhythmRecipeOption<RhythmGrouping>[];
 
 export const DEFAULT_RHYTHM_RECIPE = {
@@ -297,113 +300,6 @@ export const DEFAULT_RHYTHM_RECIPE = {
     subdivision: "eighth",
   },
 } as const satisfies RhythmRecipe;
-
-export const rhythmTemplateOptions = [
-  {
-    id: "straight-4-4",
-    buttonLabel: "4/4",
-    label: "4/4",
-    description: "A simple straight 4/4 backbeat.",
-    recipe: DEFAULT_RHYTHM_RECIPE,
-  },
-  {
-    id: "waltz-3-4",
-    buttonLabel: "3/4",
-    label: "3/4",
-    description: "A simple three-beat practice groove.",
-    recipe: {
-      beats: 3,
-      groove: "backbeat",
-      grouping: "auto",
-      timekeeper: {
-        feel: "straight",
-        sound: "hat",
-        subdivision: "eighth",
-      },
-    },
-  },
-  {
-    id: "compound-6-8",
-    buttonLabel: "6/8",
-    label: "6/8",
-    description: "Two counted beats with three subdivisions each.",
-    recipe: {
-      beats: 2,
-      groove: "backbeat",
-      grouping: "auto",
-      timekeeper: {
-        feel: "triplet",
-        sound: "hat",
-        subdivision: "eighth",
-      },
-    },
-  },
-  {
-    id: "swing-4-4",
-    buttonLabel: "Swing",
-    label: "Swing",
-    description: "A swung 4/4 practice groove.",
-    recipe: {
-      beats: 4,
-      groove: "backbeat",
-      grouping: "auto",
-      timekeeper: {
-        feel: "swing",
-        sound: "ride",
-        subdivision: "eighth",
-      },
-    },
-  },
-  {
-    id: "shuffle-4-4",
-    buttonLabel: "Shuf",
-    label: "Shuffle",
-    description: "A 4/4 shuffle groove.",
-    recipe: {
-      beats: 4,
-      groove: "backbeat",
-      grouping: "auto",
-      timekeeper: {
-        feel: "shuffle",
-        sound: "ride",
-        subdivision: "eighth",
-      },
-    },
-  },
-  {
-    id: "bluegrass-4-4",
-    buttonLabel: "Drive",
-    label: "Bluegrass Drive",
-    description: "Bass drum on the beat with snare on the offbeats.",
-    recipe: {
-      beats: 4,
-      groove: "bluegrass",
-      grouping: "auto",
-      timekeeper: {
-        feel: "off",
-        sound: "hat",
-        subdivision: "eighth",
-      },
-    },
-  },
-] as const satisfies readonly RhythmTemplateOption[];
-
-export function rhythmRecipesAreEqual(left: RhythmRecipe, right: RhythmRecipe) {
-  return (
-    left.beats === right.beats &&
-    left.groove === right.groove &&
-    left.grouping === right.grouping &&
-    left.timekeeper.feel === right.timekeeper.feel &&
-    left.timekeeper.sound === right.timekeeper.sound &&
-    left.timekeeper.subdivision === right.timekeeper.subdivision
-  );
-}
-
-export function getRhythmTemplateForRecipe(recipe: RhythmRecipe) {
-  return rhythmTemplateOptions.find((template) =>
-    rhythmRecipesAreEqual(template.recipe, recipe),
-  );
-}
 
 interface RhythmMeterSpec {
   groupStarts: readonly number[];
@@ -506,7 +402,7 @@ const defaultRhythmBeatGroups = {
   3: [3],
   4: [2, 2],
   5: [3, 2],
-  6: [3, 3],
+  6: [4, 2],
   7: [4, 3],
   8: [4, 4],
 } as const satisfies Record<number, readonly number[]>;
@@ -519,7 +415,7 @@ const rhythmGroupingOptionsByBeatCount: Record<
   3: ["auto", "2+1", "1+2"],
   4: ["auto", "4", "3+1"],
   5: ["auto", "2+3", "2+2+1"],
-  6: ["auto", "2+2+2", "2+4"],
+  6: ["auto", "2+4", "3+3"],
   7: ["auto", "3+4", "2+2+3"],
   8: ["auto", "3+3+2", "2+3+3"],
 };
@@ -550,6 +446,13 @@ export function getRhythmGrooveOptionLabel(groove: RhythmGroove) {
 
 export function rhythmGrooveUsesGrouping(groove: RhythmGroove) {
   return groove === "backbeat";
+}
+
+export function rhythmGrooveSupportsTimekeeperFeel(
+  groove: RhythmGroove,
+  feel: RhythmTimekeeperFeel,
+) {
+  return groove !== "bluegrass" || feel === "off" || feel === "straight";
 }
 
 export function getRhythmGroupingReadout(recipe: RhythmRecipe) {
@@ -913,7 +816,7 @@ export function createRhythmPatternFromRecipe(
 }
 
 export function getRhythmRecipeLabel(recipe: RhythmRecipe) {
-  const beatLabel = getRhythmBeatCountLabel(recipe);
+  const beatLabel = getRhythmRecipeMeterLabel(recipe);
   const grooveLabel = getRhythmGrooveOptionLabel(recipe.groove);
   const timekeeperLabel = getRhythmTimekeeperLabel(recipe.timekeeper);
   const suffix =
@@ -924,36 +827,146 @@ export function getRhythmRecipeLabel(recipe: RhythmRecipe) {
   return `${beatLabel} - ${grooveLabel} - ${suffix}`;
 }
 
-export function getRhythmBeatCountLabel(recipe: RhythmRecipe) {
-  const base = `${recipe.beats} ${recipe.beats === 1 ? "Beat" : "Beats"}`;
-  const feelLabel = getRhythmMeterFeelLabel(recipe);
-
-  return feelLabel ? `${base} (${feelLabel})` : base;
-}
-
-function getRhythmMeterFeelLabel(recipe: RhythmRecipe) {
-  const perBeat = getRhythmSubdivisionCountPerBeat(recipe.timekeeper);
-  const feelLabels: string[] = [];
-
-  if (perBeat === 3 && [2, 3, 4].includes(recipe.beats)) {
-    feelLabels.push(`${recipe.beats * 3}/8 Feel`);
-  }
-
-  if (perBeat === 3 && [5, 6, 7, 8].includes(recipe.beats)) {
-    feelLabels.push("Compound Feel");
-  }
-
-  if (perBeat !== 3 && [3, 4, 5, 7].includes(recipe.beats)) {
-    feelLabels.push(`${recipe.beats}/4 Feel`);
-  }
-
+function getRhythmRecipeMeterLabel(recipe: RhythmRecipe) {
+  const title = getRhythmTheoryReadout(recipe).title;
   const groupingLabel = getRhythmVisibleGroupingLabel(recipe);
 
-  if (groupingLabel) {
-    feelLabels.push(groupingLabel);
+  return groupingLabel ? `${title} (${groupingLabel})` : title;
+}
+
+export function getRhythmTheoryReadout(
+  recipe: RhythmRecipe,
+): RhythmTheoryReadout {
+  const title = getRhythmTheoryMeterTitle(recipe);
+  const details = [
+    getRhythmTheoryMeterClassDetail(recipe, title),
+    getRhythmTheoryGroupingDetail(recipe, title),
+    getRhythmSubdivisionDetail(recipe, title),
+  ].filter((detail): detail is string => Boolean(detail));
+
+  return {
+    title,
+    detail: details.join(" • "),
+  };
+}
+
+function getRhythmTheoryMeterTitle(recipe: RhythmRecipe) {
+  const perBeat = getRhythmSubdivisionCountPerBeat(recipe.timekeeper);
+  const groups = getRhythmBeatGroups(recipe);
+
+  if (perBeat === 3) {
+    if ([2, 3, 4].includes(recipe.beats)) {
+      return `${recipe.beats * 3}/8`;
+    }
+
+    if (groups.length === 2 && groups.every((group) => group === 3)) {
+      return "2 Bars of 9/8";
+    }
+
+    if (groups.length === 2 && groups.every((group) => group === 4)) {
+      return "2 Bars of 12/8";
+    }
   }
 
-  return feelLabels.length > 0 ? feelLabels.join(", ") : undefined;
+  if (groups.length === 2 && groups.every((group) => group === 3)) {
+    return "2 Bars of 3/4";
+  }
+
+  if (groups.length === 2 && groups.every((group) => group === 4)) {
+    return "2 Bars of 4/4";
+  }
+
+  return `${recipe.beats}/4`;
+}
+
+function getRhythmTheoryMeterClassDetail(
+  recipe: RhythmRecipe,
+  meterTitle: string,
+) {
+  const singleBarMeter = getSingleBarMeterTitle(meterTitle);
+
+  switch (singleBarMeter) {
+    case "2/4":
+      return "Simple Duple Meter";
+    case "3/4":
+      return "Simple Triple Meter";
+    case "4/4":
+      return "Simple Quadruple Meter";
+    case "6/8":
+      return "Compound Duple Meter";
+    case "9/8":
+      return "Compound Triple Meter";
+    case "12/8":
+      return "Compound Quadruple Meter";
+  }
+
+  if (
+    recipe.beats === 5 ||
+    recipe.beats === 7 ||
+    getRhythmVisibleGroupingLabel(recipe) !== undefined
+  ) {
+    return "Additive Meter";
+  }
+
+  return undefined;
+}
+
+function getSingleBarMeterTitle(meterTitle: string) {
+  return meterTitle.startsWith("2 Bars of ")
+    ? meterTitle.slice("2 Bars of ".length)
+    : meterTitle;
+}
+
+function isCompoundMeterTitle(meterTitle: string) {
+  const singleBarMeter = getSingleBarMeterTitle(meterTitle);
+
+  return (
+    singleBarMeter === "6/8" ||
+    singleBarMeter === "9/8" ||
+    singleBarMeter === "12/8"
+  );
+}
+
+function getRhythmTheoryGroupingDetail(
+  recipe: RhythmRecipe,
+  meterTitle: string,
+) {
+  const perBeat = getRhythmSubdivisionCountPerBeat(recipe.timekeeper);
+
+  if (perBeat === 3 && [2, 3, 4].includes(recipe.beats)) {
+    return `${recipe.beats} ${recipe.beats === 1 ? "Group" : "Groups"} of 3`;
+  }
+
+  if (meterTitle.startsWith("2 Bars of ")) {
+    return undefined;
+  }
+
+  return getRhythmVisibleGroupingLabel(recipe);
+}
+
+function getRhythmSubdivisionDetail(recipe: RhythmRecipe, meterTitle: string) {
+  switch (recipe.timekeeper.feel) {
+    case "off":
+      return "Quarter-Note Pulse";
+    case "straight":
+      switch (recipe.timekeeper.subdivision) {
+        case "quarter":
+          return "Quarter Notes";
+        case "eighth":
+          return "Straight Eighths";
+        case "sixteenth":
+          return "Straight Sixteenths";
+      }
+    case "triplet":
+      return isCompoundMeterTitle(meterTitle) ||
+        [2, 3, 4].includes(recipe.beats)
+        ? undefined
+        : "Triplet Subdivision";
+    case "swing":
+      return "Swing Eighths";
+    case "shuffle":
+      return "Shuffle Eighths";
+  }
 }
 
 function getRhythmVisibleGroupingLabel(recipe: RhythmRecipe) {
@@ -961,7 +974,7 @@ function getRhythmVisibleGroupingLabel(recipe: RhythmRecipe) {
     return undefined;
   }
 
-  if (recipe.grouping === "auto" && ![5, 7].includes(recipe.beats)) {
+  if (recipe.grouping === "auto" && ![5, 6, 7].includes(recipe.beats)) {
     return undefined;
   }
 

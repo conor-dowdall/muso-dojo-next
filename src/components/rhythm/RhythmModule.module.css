@@ -20,6 +20,49 @@
   min-inline-size: var(--space-14);
 }
 
+.rhythmReadout {
+  box-sizing: border-box;
+  display: grid;
+  inline-size: min(100%, calc(var(--space-80) + var(--space-8)));
+  block-size: calc(var(--space-12) + var(--space-1));
+  min-inline-size: 0;
+  flex: 0 0 auto;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  padding-inline: var(--space-3);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--color-hardware-display-background-soft);
+  color: var(--color-hardware-display-text-soft);
+  font-family: var(--font-sans);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tightest);
+  text-align: center;
+}
+
+.rhythmReadoutTitle,
+.rhythmReadoutDetail {
+  min-inline-size: 0;
+  overflow: hidden;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rhythmReadoutTitle {
+  align-self: end;
+  padding-block-end: var(--part-module-split-label-gap);
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+}
+
+.rhythmReadoutDetail {
+  align-self: start;
+  padding-block-start: var(--part-module-split-label-gap);
+  font-size: var(--text-xs);
+}
+
 .groupingControl {
   min-inline-size: calc(
     var(--part-module-control-size) * 3 + var(--part-module-control-gap) * 2
@@ -27,8 +70,7 @@
 }
 
 .soundButtonLabel,
-.groupingButtonLabel,
-.templateButtonLabel {
+.groupingButtonLabel {
   display: inline-flex;
   min-inline-size: 2.6em;
   align-items: center;
@@ -40,11 +82,6 @@
 }
 
 .groupingButtonLabel {
-  min-inline-size: 0;
-  font-size: var(--text-2xs);
-}
-
-.templateButtonLabel {
   min-inline-size: 0;
   font-size: var(--text-2xs);
 }

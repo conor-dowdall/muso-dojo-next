@@ -7,6 +7,7 @@ import {
   getRhythmRecipeLabel,
   getRhythmTimekeeperOptionLabel,
   isRhythmGroupingValidForBeats,
+  rhythmGrooveSupportsTimekeeperFeel,
   rhythmGrooveUsesGrouping,
   type PercussionSampleId,
   type RhythmGroove,
@@ -87,16 +88,17 @@ const rhythmGroupingIds = {
   "2": true,
   "2+1": true,
   "2+2+1": true,
-  "2+2+2": true,
   "2+2+3": true,
   "2+3": true,
   "2+3+3": true,
   "2+4": true,
   "3+1": true,
   "3+2": true,
+  "3+3": true,
   "3+3+2": true,
   "3+4": true,
   "4": true,
+  "4+2": true,
   "4+3": true,
   auto: true,
 } as const satisfies Record<RhythmGrouping, true>;
@@ -145,12 +147,21 @@ export function normalizeRhythmRecipe(value: unknown): RhythmRecipe {
     isRhythmGroupingValidForBeats(beats, rawGrouping)
       ? rawGrouping
       : DEFAULT_RHYTHM_RECIPE.grouping;
+  const normalizedTimekeeper = normalizeRhythmTimekeeperRecipe(
+    value.timekeeper,
+  );
+  const timekeeper = rhythmGrooveSupportsTimekeeperFeel(
+    groove,
+    normalizedTimekeeper.feel,
+  )
+    ? normalizedTimekeeper
+    : { ...normalizedTimekeeper, feel: "off" as const };
 
   return {
     beats,
     groove,
     grouping,
-    timekeeper: normalizeRhythmTimekeeperRecipe(value.timekeeper),
+    timekeeper,
   };
 }
 

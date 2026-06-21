@@ -220,7 +220,7 @@ describe("normalizePartModuleConfig", () => {
           groove: "bluegrass",
           grouping: "auto",
           timekeeper: {
-            feel: "swing",
+            feel: "off",
             sound: "ride",
             subdivision: "eighth",
           },
