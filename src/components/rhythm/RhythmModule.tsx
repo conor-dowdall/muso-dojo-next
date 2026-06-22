@@ -10,15 +10,17 @@ import { PartModuleHeaderActions } from "@/components/part-module/PartModuleHead
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { TactileControlGroup } from "@/components/ui/tactile-control-group/TactileControlGroup";
 import { useRhythmPlayback } from "@/hooks/audio/useRhythmPlayback";
+import { useScopedTransportShortcuts } from "@/hooks/interaction/useScopedTransportShortcuts";
 import {
+  getRhythmCompatibleTimekeeper,
   getRhythmGroupingChoiceLabel,
   getRhythmGroupingOptions,
-  getRhythmGroupingReadout,
   getRhythmTheoryReadout,
+  getRhythmTimekeeperRhythmReadoutLabel,
   RHYTHM_MAX_BEATS,
   RHYTHM_MIN_BEATS,
-  rhythmGrooveSupportsTimekeeperFeel,
-  rhythmGrooveUsesGrouping,
+  rhythmGrooveSupportsBeatCount,
+  rhythmRecipeSupportsTimekeeperFeel,
 } from "@/data/rhythmPresets";
 import { woodSurfaces } from "@/data/woodSurfaces";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
@@ -86,9 +88,9 @@ const grooveChoices = [
     text: "Pulse",
   },
   {
-    groove: "backbeat",
-    label: "Use simple kick and snare backbeat",
-    text: "Back",
+    groove: "kit",
+    label: "Use kick and snare kit foundation",
+    text: "Kit",
   },
   {
     groove: "bluegrass",
@@ -145,19 +147,33 @@ const timekeeperSubdivisionChoices = [
   text: string;
 }[];
 
+const RHYTHM_FRAME_STYLE = {
+  "--part-module-body-background": woodSurfaces.rosewood.background,
+} as CSSProperties;
+
 function clampBeatCount(beats: number) {
   return Math.min(RHYTHM_MAX_BEATS, Math.max(RHYTHM_MIN_BEATS, beats));
 }
 
 function getRecipeWithBeatCount(recipe: RhythmRecipe, beats: number) {
   const nextBeats = clampBeatCount(beats);
+  const groove = rhythmGrooveSupportsBeatCount(recipe.groove, nextBeats)
+    ? recipe.groove
+    : "pulse";
+  const timekeeper = getRhythmCompatibleTimekeeper(
+    groove,
+    nextBeats,
+    recipe.timekeeper,
+  );
 
   return {
     ...recipe,
     beats: nextBeats,
+    groove,
     grouping: getRhythmGroupingOptions(nextBeats).includes(recipe.grouping)
       ? recipe.grouping
       : "auto",
+    timekeeper,
   };
 }
 
@@ -175,17 +191,18 @@ function getRecipeWithGroove(
   recipe: RhythmRecipe,
   groove: RhythmGroove,
 ): RhythmRecipe {
-  const timekeeper = rhythmGrooveSupportsTimekeeperFeel(
-    groove,
-    recipe.timekeeper.feel,
-  )
-    ? recipe.timekeeper
-    : { ...recipe.timekeeper, feel: "off" as const };
+  const nextGroove = rhythmGrooveSupportsBeatCount(groove, recipe.beats)
+    ? groove
+    : "pulse";
+  const timekeeper = getRhythmCompatibleTimekeeper(
+    nextGroove,
+    recipe.beats,
+    recipe.timekeeper,
+  );
 
   return {
     ...recipe,
-    groove,
-    grouping: rhythmGrooveUsesGrouping(groove) ? recipe.grouping : "auto",
+    groove: nextGroove,
     timekeeper,
   };
 }
@@ -198,54 +215,19 @@ function getRecipeWithTimekeeper(
     subdivision: RhythmTimekeeperSubdivision;
   }>,
 ): RhythmRecipe {
-  const timekeeper = {
-    ...recipe.timekeeper,
-    ...patch,
-  };
-  const subdivision =
-    timekeeper.feel === "triplet" ||
-    timekeeper.feel === "swing" ||
-    timekeeper.feel === "shuffle"
-      ? "eighth"
-      : timekeeper.subdivision;
-
-  const normalizedTimekeeper = {
-    ...timekeeper,
-    subdivision,
-  };
-  const compatibleTimekeeper = rhythmGrooveSupportsTimekeeperFeel(
+  const compatibleTimekeeper = getRhythmCompatibleTimekeeper(
     recipe.groove,
-    normalizedTimekeeper.feel,
-  )
-    ? normalizedTimekeeper
-    : { ...normalizedTimekeeper, feel: "off" as const };
+    recipe.beats,
+    {
+      ...recipe.timekeeper,
+      ...patch,
+    },
+  );
 
   return {
     ...recipe,
     timekeeper: compatibleTimekeeper,
   };
-}
-
-function getTimekeeperRhythmReadout(recipe: RhythmRecipe) {
-  if (recipe.timekeeper.feel === "off") {
-    return "Off";
-  }
-
-  if (recipe.timekeeper.feel === "swing") {
-    return "Swing Eighths";
-  }
-
-  if (recipe.timekeeper.feel === "shuffle") {
-    return "Shuffle Eighths";
-  }
-
-  const subdivisionChoice = timekeeperSubdivisionChoices.find(
-    (choice) =>
-      choice.feel === recipe.timekeeper.feel &&
-      choice.subdivision === recipe.timekeeper.subdivision,
-  );
-
-  return `${subdivisionChoice?.text ?? 2} per Beat`;
 }
 
 function getBeatControlLabel(beats: number) {
@@ -254,17 +236,6 @@ function getBeatControlLabel(beats: number) {
 
 function getGroupingControlLabel(beats: number, grouping: RhythmGrouping) {
   return `Group beats as ${getRhythmGroupingChoiceLabel(beats, grouping)}`;
-}
-
-function getFixedFoundationReadout(groove: RhythmGroove) {
-  switch (groove) {
-    case "pulse":
-      return "Every Beat";
-    case "bluegrass":
-      return "Offbeats";
-    case "backbeat":
-      return undefined;
-  }
 }
 
 export function RhythmModule({
@@ -292,18 +263,20 @@ export function RhythmModule({
     rhythm,
     tempoBpm,
   });
+  const handleTransportKeyDown = useScopedTransportShortcuts({
+    isActive: playback.isActive,
+    onStop: playback.stop,
+  });
   const recipe = getRhythmSelectionRecipe(rhythm);
   const beatCountLabel = getBeatControlLabel(recipe.beats);
   const groupingChoices = getRhythmGroupingOptions(recipe.beats);
-  const grooveUsesGrouping = rhythmGrooveUsesGrouping(recipe.groove);
-  const groupingReadout =
-    getFixedFoundationReadout(recipe.groove) ??
-    getRhythmGroupingReadout(recipe);
   const timekeeperSoundLabel = getRhythmTimekeeperOptionLabel(
     "sound",
     recipe.timekeeper,
   );
-  const timekeeperRhythmLabel = getTimekeeperRhythmReadout(recipe);
+  const timekeeperRhythmLabel = getRhythmTimekeeperRhythmReadoutLabel(
+    recipe.timekeeper,
+  );
   const timekeeperLabel =
     recipe.timekeeper.feel === "off"
       ? "Off"
@@ -315,9 +288,6 @@ export function RhythmModule({
     : `Rhythm theory: ${rhythmTheoryReadout.title}`;
   const canDecreaseBeats = recipe.beats > RHYTHM_MIN_BEATS;
   const canIncreaseBeats = recipe.beats < RHYTHM_MAX_BEATS;
-  const rhythmFrameStyle = {
-    "--part-module-body-background": woodSurfaces.rosewood.background,
-  } as CSSProperties;
 
   const setBeats = (beats: number) => {
     onRhythmRecipeChange?.(getRecipeWithBeatCount(recipe, beats));
@@ -355,8 +325,9 @@ export function RhythmModule({
         bodyClassName={controlStyles.body}
         className={`${styles.frame} ${controlStyles.surface}`}
         headerPrimary={<InstrumentIdentity label="Rhythm" />}
+        onKeyDownCapture={handleTransportKeyDown}
         showHeader={showHeader}
-        style={rhythmFrameStyle}
+        style={RHYTHM_FRAME_STYLE}
         headerActions={
           showHeader ? (
             <PartModuleHeaderActions
@@ -387,6 +358,9 @@ export function RhythmModule({
               >
                 <PartModuleControlButton
                   aria-label={playback.isActive ? "Stop rhythm" : "Play rhythm"}
+                  aria-keyshortcuts={
+                    playback.isActive ? "Space Escape" : undefined
+                  }
                   icon={playback.isActive ? <Square /> : <Play />}
                   onPress={playback.isActive ? playback.stop : playback.start}
                   prominence="primary"
@@ -415,55 +389,61 @@ export function RhythmModule({
               className={controlStyles.groupRow}
               role="group"
             >
-              <TactileControlGroup
-                aria-label="Loop beats"
-                className={controlStyles.controlGroup}
-                controlsClassName={controlStyles.buttonGroup}
-                readout={beatCountLabel}
-                readoutAriaLabel={`Loop beats: ${beatCountLabel}`}
-                readoutClassName={styles.recipeReadout}
+              <div
+                aria-label="Meter"
+                className={controlStyles.controlStack}
+                role="group"
               >
-                <PartModuleControlButton
-                  aria-label={`Remove one beat. Current loop: ${beatCountLabel}`}
-                  icon={<Minus />}
-                  onPress={() => setBeats(recipe.beats - 1)}
-                  unavailable={!onRhythmRecipeChange || !canDecreaseBeats}
-                />
-                <PartModuleControlButton
-                  aria-label={`Add one beat. Current loop: ${beatCountLabel}`}
-                  icon={<Plus />}
-                  onPress={() => setBeats(recipe.beats + 1)}
-                  unavailable={!onRhythmRecipeChange || !canIncreaseBeats}
-                />
-              </TactileControlGroup>
-
-              <TactileControlGroup
-                aria-label="Beat variation"
-                className={`${controlStyles.controlGroup} ${styles.groupingControl}`}
-                controlsClassName={controlStyles.buttonGroup}
-                readout={groupingReadout}
-                readoutAriaLabel={`Beat variation: ${groupingReadout}`}
-                readoutClassName={styles.recipeReadout}
-              >
-                {groupingChoices.map((grouping) => (
+                <TactileControlGroup
+                  aria-label="Loop beats"
+                  className={controlStyles.controlGroup}
+                  controlsClassName={controlStyles.buttonGroup}
+                  readout={beatCountLabel}
+                  readoutAriaLabel={`Loop beats: ${beatCountLabel}`}
+                  readoutClassName={styles.recipeReadout}
+                >
                   <PartModuleControlButton
-                    key={grouping}
-                    aria-label={getGroupingControlLabel(recipe.beats, grouping)}
-                    icon={
-                      <span
-                        aria-hidden="true"
-                        className={styles.groupingButtonLabel}
-                      >
-                        {getRhythmGroupingChoiceLabel(recipe.beats, grouping)}
-                      </span>
-                    }
-                    iconSizing="content"
-                    onPress={() => setGrouping(grouping)}
-                    selected={recipe.grouping === grouping}
-                    unavailable={!onRhythmRecipeChange || !grooveUsesGrouping}
+                    aria-label={`Remove one beat. Current loop: ${beatCountLabel}`}
+                    icon={<Minus />}
+                    onPress={() => setBeats(recipe.beats - 1)}
+                    unavailable={!onRhythmRecipeChange || !canDecreaseBeats}
                   />
-                ))}
-              </TactileControlGroup>
+                  <PartModuleControlButton
+                    aria-label={`Add one beat. Current loop: ${beatCountLabel}`}
+                    icon={<Plus />}
+                    onPress={() => setBeats(recipe.beats + 1)}
+                    unavailable={!onRhythmRecipeChange || !canIncreaseBeats}
+                  />
+                </TactileControlGroup>
+
+                <TactileControlGroup
+                  aria-label="Beat variation"
+                  className={`${controlStyles.controlGroup} ${styles.groupingControl}`}
+                  controlsClassName={controlStyles.buttonGroup}
+                >
+                  {groupingChoices.map((grouping) => (
+                    <PartModuleControlButton
+                      key={grouping}
+                      aria-label={getGroupingControlLabel(
+                        recipe.beats,
+                        grouping,
+                      )}
+                      icon={
+                        <span
+                          aria-hidden="true"
+                          className={styles.groupingButtonLabel}
+                        >
+                          {getRhythmGroupingChoiceLabel(recipe.beats, grouping)}
+                        </span>
+                      }
+                      iconSizing="content"
+                      onPress={() => setGrouping(grouping)}
+                      selected={recipe.grouping === grouping}
+                      unavailable={!onRhythmRecipeChange}
+                    />
+                  ))}
+                </TactileControlGroup>
+              </div>
             </div>
 
             <div
@@ -483,7 +463,7 @@ export function RhythmModule({
                     icon={
                       <span
                         aria-hidden="true"
-                        className={styles.soundButtonLabel}
+                        className={styles.grooveButtonLabel}
                       >
                         {choice.text}
                       </span>
@@ -493,9 +473,9 @@ export function RhythmModule({
                     selected={recipe.groove === choice.groove}
                     unavailable={
                       !onRhythmRecipeChange ||
-                      !rhythmGrooveSupportsTimekeeperFeel(
+                      !rhythmGrooveSupportsBeatCount(
                         choice.groove,
-                        recipe.timekeeper.feel,
+                        recipe.beats,
                       )
                     }
                   />
@@ -570,8 +550,9 @@ export function RhythmModule({
                       unavailable={
                         !onRhythmRecipeChange ||
                         isTimekeeperOff ||
-                        !rhythmGrooveSupportsTimekeeperFeel(
+                        !rhythmRecipeSupportsTimekeeperFeel(
                           recipe.groove,
+                          recipe.beats,
                           choice.feel,
                         )
                       }

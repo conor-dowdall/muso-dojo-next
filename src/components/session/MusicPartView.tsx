@@ -80,7 +80,7 @@ export function MusicPartView({
       onNoteCollectionKeyChange={(noteCollectionKey) =>
         setPartNoteCollectionKey(sessionId, partId, noteCollectionKey)
       }
-      showHeader={isPerformanceMode ? true : partSettings.showHeader}
+      showHeader={isPerformanceMode ? false : partSettings.showHeader}
       onAddPartModules={
         isPerformanceMode
           ? undefined

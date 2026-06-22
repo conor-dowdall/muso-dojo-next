@@ -218,9 +218,9 @@ describe("normalizePartModuleConfig", () => {
         recipe: {
           beats: 7,
           groove: "bluegrass",
-          grouping: "auto",
+          grouping: "3+4",
           timekeeper: {
-            feel: "off",
+            feel: "straight",
             sound: "ride",
             subdivision: "eighth",
           },
@@ -245,7 +245,7 @@ describe("normalizePartModuleConfig", () => {
       rhythm: {
         recipe: {
           beats: 4,
-          groove: "backbeat",
+          groove: "kit",
           grouping: "auto",
           timekeeper: {
             feel: "straight",

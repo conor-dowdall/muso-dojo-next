@@ -59,11 +59,8 @@ export function RhythmPartModuleView({
           ? undefined
           : () => actions.removePartModule(sessionId, partId, moduleId)
       }
-      onRhythmRecipeChange={
-        isPerformanceMode
-          ? undefined
-          : (value) =>
-              actions.setRhythmRecipe(sessionId, partId, moduleId, value)
+      onRhythmRecipeChange={(value) =>
+        actions.setRhythmRecipe(sessionId, partId, moduleId, value)
       }
     />
   );

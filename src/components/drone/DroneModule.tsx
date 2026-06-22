@@ -18,6 +18,7 @@ import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { TactileControlGroup } from "@/components/ui/tactile-control-group/TactileControlGroup";
 import { useDroneNotePlayback } from "@/hooks/audio/useDroneNotePlayback";
 import { useInstrumentNavigation } from "@/hooks/instrument/useInstrumentNavigation";
+import { useScopedTransportShortcuts } from "@/hooks/interaction/useScopedTransportShortcuts";
 import { useControllableState } from "@/hooks/useControllableState";
 import { type SettingSetter } from "@/types/state";
 import {
@@ -157,6 +158,10 @@ export function DroneModule({
       notes: droneNotes.notes,
     });
   const hasActiveNotes = activeIntervals.length > 0;
+  const handleTransportKeyDown = useScopedTransportShortcuts({
+    isActive: hasActiveNotes,
+    onStop: stopAll,
+  });
   const {
     focusedKey,
     setFocusedKey,
@@ -237,6 +242,7 @@ export function DroneModule({
         bodyClassName={controlStyles.body}
         className={`${styles.droneFrame} ${controlStyles.surface}`}
         headerPrimary={<InstrumentIdentity label="Drone" />}
+        onKeyDownCapture={handleTransportKeyDown}
         headerActions={
           showHeader ? (
             <PartModuleHeaderActions
@@ -292,6 +298,7 @@ export function DroneModule({
             >
               <PartModuleControlButton
                 aria-label="Stop all active drone notes"
+                aria-keyshortcuts={hasActiveNotes ? "Space Escape" : undefined}
                 icon={<Square />}
                 onPress={stopAll}
                 prominence="primary"

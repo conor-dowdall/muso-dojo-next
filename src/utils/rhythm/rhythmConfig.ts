@@ -4,13 +4,14 @@ import {
   RHYTHM_MIN_BEATS,
   DEFAULT_RHYTHM_RECIPE,
   createRhythmPatternFromRecipe,
+  getRhythmCanonicalTimekeeper,
   getRhythmRecipeLabel,
   getRhythmTimekeeperOptionLabel,
+  getRhythmCompatibleTimekeeper,
   isRhythmGroupingValidForBeats,
   rhythmGroupingOptions,
   rhythmGrooveOptions,
-  rhythmGrooveSupportsTimekeeperFeel,
-  rhythmGrooveUsesGrouping,
+  rhythmGrooveSupportsBeatCount,
   rhythmTimekeeperFeelOptions,
   rhythmTimekeeperSoundOptions,
   rhythmTimekeeperSubdivisionOptions,
@@ -119,25 +120,25 @@ export function normalizeRhythmRecipe(value: unknown): RhythmRecipe {
     value.grouping,
     DEFAULT_RHYTHM_RECIPE.grouping,
   );
-  const groove = normalizeRecipeField(
+  const rawGroove = normalizeRecipeField(
     rhythmGrooveIds,
     value.groove,
     DEFAULT_RHYTHM_RECIPE.groove,
   );
-  const grouping =
-    rhythmGrooveUsesGrouping(groove) &&
-    isRhythmGroupingValidForBeats(beats, rawGrouping)
-      ? rawGrouping
-      : DEFAULT_RHYTHM_RECIPE.grouping;
+  const groove = rhythmGrooveSupportsBeatCount(rawGroove, beats)
+    ? rawGroove
+    : "pulse";
+  const grouping = isRhythmGroupingValidForBeats(beats, rawGrouping)
+    ? rawGrouping
+    : DEFAULT_RHYTHM_RECIPE.grouping;
   const normalizedTimekeeper = normalizeRhythmTimekeeperRecipe(
     value.timekeeper,
   );
-  const timekeeper = rhythmGrooveSupportsTimekeeperFeel(
+  const timekeeper = getRhythmCompatibleTimekeeper(
     groove,
-    normalizedTimekeeper.feel,
-  )
-    ? normalizedTimekeeper
-    : { ...normalizedTimekeeper, feel: "off" as const };
+    beats,
+    normalizedTimekeeper,
+  );
 
   return {
     beats,
@@ -166,12 +167,8 @@ function normalizeRhythmTimekeeperRecipe(
   );
   const legacySoundOff = value.sound === "off";
   const feel = legacySoundOff ? "off" : rawFeel;
-  const subdivision =
-    feel === "triplet" || feel === "swing" || feel === "shuffle"
-      ? "eighth"
-      : rawSubdivision;
 
-  return {
+  return getRhythmCanonicalTimekeeper({
     feel,
     sound: legacySoundOff
       ? DEFAULT_RHYTHM_RECIPE.timekeeper.sound
@@ -180,8 +177,8 @@ function normalizeRhythmTimekeeperRecipe(
           value.sound,
           DEFAULT_RHYTHM_RECIPE.timekeeper.sound,
         ),
-    subdivision,
-  };
+    subdivision: rawSubdivision,
+  });
 }
 
 function normalizePercussionSampleId(

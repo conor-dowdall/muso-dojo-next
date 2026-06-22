@@ -32,6 +32,7 @@ import {
 } from "@/data/woodSurfaces";
 import { useExerciseLooperPlayback } from "@/hooks/audio/useExerciseLooperPlayback";
 import { useInstrumentNavigation } from "@/hooks/instrument/useInstrumentNavigation";
+import { useScopedTransportShortcuts } from "@/hooks/interaction/useScopedTransportShortcuts";
 import {
   type ExerciseCountInBeats,
   type ExerciseSubdivision,
@@ -187,6 +188,10 @@ export function ExerciseLooperModule({
     steps: sequence.steps,
     subdivision,
     tempoBpm,
+  });
+  const handleTransportKeyDown = useScopedTransportShortcuts({
+    isActive: playback.isActive,
+    onStop: playback.stop,
   });
   const noteKeys = useMemo(
     () => sequence.notes.map((note) => note.key),
@@ -347,6 +352,7 @@ export function ExerciseLooperModule({
         bodyClassName={controlStyles.body}
         className={`${styles.frame} ${controlStyles.surface}`}
         headerPrimary={<InstrumentIdentity label="Looper" />}
+        onKeyDownCapture={handleTransportKeyDown}
         showHeader={showHeader}
         style={
           {
@@ -408,6 +414,9 @@ export function ExerciseLooperModule({
                   <PartModuleControlButton
                     aria-label={
                       playback.isActive ? "Stop exercise" : "Play exercise"
+                    }
+                    aria-keyshortcuts={
+                      playback.isActive ? "Space Escape" : undefined
                     }
                     icon={playback.isActive ? <Square /> : <Play />}
                     onPress={playback.isActive ? playback.stop : playback.start}

@@ -11,9 +11,9 @@ import {
 import {
   getRhythmGroupingChoiceLabel,
   getRhythmGroupingOptions,
-  getRhythmGroupingReadout,
   getRhythmTheoryReadout,
   RHYTHM_PPQ,
+  rhythmRecipeSupportsTimekeeperFeel,
 } from "@/data/rhythmPresets";
 
 describe("rhythmConfig", () => {
@@ -22,7 +22,7 @@ describe("rhythmConfig", () => {
       normalizeRhythmSelection({
         recipe: {
           beats: 7,
-          groove: "backbeat",
+          groove: "kit",
           grouping: "3+4",
           timekeeper: {
             feel: "swing",
@@ -37,7 +37,7 @@ describe("rhythmConfig", () => {
     ).toStrictEqual({
       recipe: {
         beats: 7,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "3+4",
         timekeeper: {
           feel: "swing",
@@ -74,7 +74,7 @@ describe("rhythmConfig", () => {
       }),
     ).toStrictEqual({
       beats: 5,
-      groove: "backbeat",
+      groove: "kit",
       grouping: "auto",
       timekeeper: {
         feel: "triplet",
@@ -93,7 +93,7 @@ describe("rhythmConfig", () => {
       }),
     ).toStrictEqual({
       beats: 4,
-      groove: "backbeat",
+      groove: "kit",
       grouping: "auto",
       timekeeper: {
         feel: "shuffle",
@@ -115,7 +115,7 @@ describe("rhythmConfig", () => {
       }),
     ).toStrictEqual({
       beats: 4,
-      groove: "backbeat",
+      groove: "kit",
       grouping: "auto",
       timekeeper: {
         feel: "off",
@@ -129,7 +129,7 @@ describe("rhythmConfig", () => {
     expect(
       normalizeRhythmRecipe({
         beats: 4,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "2+3",
         timekeeper: {
           feel: "straight",
@@ -139,7 +139,7 @@ describe("rhythmConfig", () => {
       }),
     ).toStrictEqual({
       beats: 4,
-      groove: "backbeat",
+      groove: "kit",
       grouping: "auto",
       timekeeper: {
         feel: "straight",
@@ -149,7 +149,31 @@ describe("rhythmConfig", () => {
     });
   });
 
-  it("normalizes fixed foundation grooves to the default variation", () => {
+  it("normalizes one-beat kit rhythms to pulse", () => {
+    expect(
+      normalizeRhythmRecipe({
+        beats: 1,
+        groove: "kit",
+        grouping: "auto",
+        timekeeper: {
+          feel: "off",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      }),
+    ).toStrictEqual({
+      beats: 1,
+      groove: "pulse",
+      grouping: "auto",
+      timekeeper: {
+        feel: "off",
+        sound: "hat",
+        subdivision: "eighth",
+      },
+    });
+  });
+
+  it("preserves beat grouping across foundation grooves", () => {
     const pulseSelection = normalizeRhythmSelection({
       recipe: {
         beats: 5,
@@ -165,7 +189,7 @@ describe("rhythmConfig", () => {
     });
 
     expect(getRhythmSelectionLabel(pulseSelection)).toBe(
-      "5/4 - Pulse - No Timekeeper",
+      "5/4 (2+3) - Pulse - No Timekeeper",
     );
     expect(
       normalizeRhythmRecipe({
@@ -181,7 +205,7 @@ describe("rhythmConfig", () => {
     ).toMatchObject({
       beats: 5,
       groove: "pulse",
-      grouping: "auto",
+      grouping: "2+3",
     });
     expect(
       normalizeRhythmRecipe({
@@ -197,11 +221,11 @@ describe("rhythmConfig", () => {
     ).toMatchObject({
       beats: 7,
       groove: "bluegrass",
-      grouping: "auto",
+      grouping: "3+4",
     });
   });
 
-  it("normalizes moved offbeat timekeepers away from drive grooves", () => {
+  it("normalizes moved offbeat timekeepers to straight drive timekeepers", () => {
     expect(
       normalizeRhythmRecipe({
         beats: 4,
@@ -218,7 +242,7 @@ describe("rhythmConfig", () => {
       groove: "bluegrass",
       grouping: "auto",
       timekeeper: {
-        feel: "off",
+        feel: "straight",
         sound: "ride",
         subdivision: "eighth",
       },
@@ -240,7 +264,7 @@ describe("rhythmConfig", () => {
     const selection = normalizeRhythmSelection({
       recipe: {
         beats: 4,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "swing",
@@ -254,7 +278,7 @@ describe("rhythmConfig", () => {
     const pattern = getRhythmSelectionPattern(selection);
 
     expect(getRhythmSelectionLabel(selection)).toBe(
-      "4/4 - Backbeat - Ride Swing Timekeeper",
+      "4/4 - Kit - Ride Swing Timekeeper",
     );
     expect(pattern).toMatchObject({
       cycleTicks: RHYTHM_PPQ * 4,
@@ -264,18 +288,19 @@ describe("rhythmConfig", () => {
     expect(pattern.swing).toBeUndefined();
     expect(pattern.hits).toEqual(
       expect.arrayContaining([
-        { atTicks: 0, sampleId: "kick", velocity: 0.9 },
+        { atTicks: 0, sampleId: "kick", velocity: 0.26 },
         { atTicks: 0, sampleId: "ride", velocity: 0.234 },
+        { atTicks: RHYTHM_PPQ, sampleId: "kick", velocity: 0.2 },
         {
           atTicks: RHYTHM_PPQ + Math.round((RHYTHM_PPQ * 2) / 3),
           sampleId: "ride",
           velocity: 0.108,
         },
-        { atTicks: RHYTHM_PPQ, sampleId: "snare", velocity: 0.58 },
-        { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.62 },
-        { atTicks: RHYTHM_PPQ * 3, sampleId: "snare", velocity: 0.72 },
+        { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.24 },
+        { atTicks: RHYTHM_PPQ * 3, sampleId: "kick", velocity: 0.2 },
       ]),
     );
+    expect(pattern.hits.some((hit) => hit.sampleId === "snare")).toBe(false);
     expect(pattern.hits).not.toEqual(
       expect.arrayContaining([
         {
@@ -287,11 +312,38 @@ describe("rhythmConfig", () => {
     );
   });
 
+  it("keeps swing kit variations subtly audible", () => {
+    const pattern = getRhythmSelectionPattern({
+      recipe: {
+        beats: 5,
+        groove: "kit",
+        grouping: "2+3",
+        timekeeper: {
+          feel: "swing",
+          sound: "ride",
+          subdivision: "eighth",
+        },
+      },
+      source: "recipe",
+    });
+
+    expect(pattern.hits).toEqual(
+      expect.arrayContaining([
+        { atTicks: 0, sampleId: "kick", velocity: 0.26 },
+        { atTicks: RHYTHM_PPQ, sampleId: "kick", velocity: 0.2 },
+        { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.24 },
+        { atTicks: RHYTHM_PPQ * 3, sampleId: "kick", velocity: 0.2 },
+        { atTicks: RHYTHM_PPQ * 4, sampleId: "kick", velocity: 0.2 },
+      ]),
+    );
+    expect(pattern.hits.some((hit) => hit.sampleId === "snare")).toBe(false);
+  });
+
   it("keeps shuffle as a denser swung offbeat pattern", () => {
     const selection = normalizeRhythmSelection({
       recipe: {
         beats: 4,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "shuffle",
@@ -305,7 +357,7 @@ describe("rhythmConfig", () => {
     const pattern = getRhythmSelectionPattern(selection);
 
     expect(getRhythmSelectionLabel(selection)).toBe(
-      "4/4 - Backbeat - Ride Shuffle Timekeeper",
+      "4/4 - Kit - Ride Shuffle Timekeeper",
     );
     expect(pattern.hits).toEqual(
       expect.arrayContaining([
@@ -327,7 +379,7 @@ describe("rhythmConfig", () => {
     const pattern = getRhythmSelectionPattern({
       recipe: {
         beats: 4,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "off",
@@ -363,9 +415,61 @@ describe("rhythmConfig", () => {
     expect(pattern.hits).toEqual([
       { atTicks: 0, sampleId: "kick", velocity: 0.9 },
       { atTicks: RHYTHM_PPQ, sampleId: "kick", velocity: 0.58 },
-      { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.58 },
+      { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.68 },
       { atTicks: RHYTHM_PPQ * 3, sampleId: "kick", velocity: 0.58 },
     ]);
+  });
+
+  it("can generate a flat bass-drum pulse", () => {
+    const selection = normalizeRhythmSelection({
+      recipe: {
+        beats: 1,
+        groove: "pulse",
+        grouping: "auto",
+        timekeeper: {
+          feel: "off",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      },
+      source: "recipe",
+    });
+    const pattern = getRhythmSelectionPattern(selection);
+
+    expect(getRhythmSelectionLabel(selection)).toBe(
+      "1/4 - Pulse - No Timekeeper",
+    );
+    expect(pattern.hits).toEqual([
+      { atTicks: 0, sampleId: "kick", velocity: 0.68 },
+    ]);
+  });
+
+  it("keeps two-beat swing phrasing out of one-beat loops", () => {
+    expect(rhythmRecipeSupportsTimekeeperFeel("pulse", 1, "swing")).toBe(false);
+    expect(rhythmRecipeSupportsTimekeeperFeel("pulse", 1, "shuffle")).toBe(
+      true,
+    );
+    expect(
+      normalizeRhythmRecipe({
+        beats: 1,
+        groove: "pulse",
+        grouping: "auto",
+        timekeeper: {
+          feel: "swing",
+          sound: "ride",
+          subdivision: "eighth",
+        },
+      }),
+    ).toStrictEqual({
+      beats: 1,
+      groove: "pulse",
+      grouping: "auto",
+      timekeeper: {
+        feel: "straight",
+        sound: "ride",
+        subdivision: "eighth",
+      },
+    });
   });
 
   it("generates a bluegrass-style offbeat snare drive", () => {
@@ -392,7 +496,7 @@ describe("rhythmConfig", () => {
         sampleId: "snare",
         velocity: 0.52,
       },
-      { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.58 },
+      { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.66 },
       {
         atTicks: RHYTHM_PPQ * 2 + RHYTHM_PPQ / 2,
         sampleId: "snare",
@@ -411,7 +515,7 @@ describe("rhythmConfig", () => {
     const pattern = getRhythmSelectionPattern({
       recipe: {
         beats: 4,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "triplet",
@@ -435,7 +539,7 @@ describe("rhythmConfig", () => {
     const selection = normalizeRhythmSelection({
       recipe: {
         beats: 2,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "triplet",
@@ -447,7 +551,7 @@ describe("rhythmConfig", () => {
     });
 
     expect(getRhythmSelectionLabel(selection)).toBe(
-      "6/8 - Backbeat - Hi-Hat 3 per Beat Timekeeper",
+      "6/8 - Kit - Hi-Hat 3 per Beat Timekeeper",
     );
     expect(getRhythmTheoryReadout(selection.recipe)).toStrictEqual({
       title: "6/8",
@@ -459,7 +563,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 2,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "straight",
@@ -474,7 +578,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 2,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "straight",
@@ -489,7 +593,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 3,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "straight",
@@ -504,7 +608,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 4,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "straight",
@@ -519,7 +623,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 3,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "triplet",
@@ -534,7 +638,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 4,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "swing",
@@ -549,7 +653,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 4,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "triplet",
@@ -566,7 +670,7 @@ describe("rhythmConfig", () => {
         normalizeRhythmSelection({
           recipe: {
             beats: 4,
-            groove: "backbeat",
+            groove: "kit",
             grouping: "auto",
             timekeeper: {
               feel: "triplet",
@@ -577,14 +681,14 @@ describe("rhythmConfig", () => {
           source: "recipe",
         }),
       ),
-    ).toBe("12/8 - Backbeat - Ride 3 per Beat Timekeeper");
+    ).toBe("12/8 - Kit - Ride 3 per Beat Timekeeper");
   });
 
   it("groups odd beat counts into musical kick and snare anchors", () => {
     const pattern = getRhythmSelectionPattern({
       recipe: {
         beats: 7,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "off",
@@ -613,7 +717,7 @@ describe("rhythmConfig", () => {
     const selection = normalizeRhythmSelection({
       recipe: {
         beats: 5,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "2+3",
         timekeeper: {
           feel: "off",
@@ -626,7 +730,7 @@ describe("rhythmConfig", () => {
     const pattern = getRhythmSelectionPattern(selection);
 
     expect(getRhythmSelectionLabel(selection)).toBe(
-      "5/4 (2+3) - Backbeat - No Timekeeper",
+      "5/4 (2+3) - Kit - No Timekeeper",
     );
     expect(pattern.hits).toEqual([
       { atTicks: 0, sampleId: "kick", velocity: 0.9 },
@@ -636,11 +740,11 @@ describe("rhythmConfig", () => {
     ]);
   });
 
-  it("keeps four-beat backbeat variations musically distinct", () => {
+  it("keeps four-beat kit variations musically distinct", () => {
     const halfTime = getRhythmSelectionPattern({
       recipe: {
         beats: 4,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "4",
         timekeeper: {
           feel: "off",
@@ -653,7 +757,7 @@ describe("rhythmConfig", () => {
     const push = getRhythmSelectionPattern({
       recipe: {
         beats: 4,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "3+1",
         timekeeper: {
           feel: "off",
@@ -677,12 +781,13 @@ describe("rhythmConfig", () => {
 
   it("keeps distinct grouping choices available for every beat count", () => {
     expect(
-      [2, 3, 4, 5, 6, 7, 8].map((beats) => [
+      [1, 2, 3, 4, 5, 6, 7, 8].map((beats) => [
         beats,
         getRhythmGroupingOptions(beats),
       ]),
     ).toStrictEqual([
-      [2, ["auto", "1+1"]],
+      [1, ["auto"]],
+      [2, ["auto"]],
       [3, ["auto", "2+1", "1+2"]],
       [4, ["auto", "4", "3+1"]],
       [5, ["auto", "2+3", "2+2+1"]],
@@ -690,31 +795,20 @@ describe("rhythmConfig", () => {
       [7, ["auto", "3+4", "2+2+3"]],
       [8, ["auto", "3+2+3", "2+3+3"]],
     ]);
+    expect(getRhythmGroupingChoiceLabel(1, "auto")).toBe("1");
     expect(getRhythmGroupingChoiceLabel(2, "auto")).toBe("2");
     expect(getRhythmGroupingChoiceLabel(5, "auto")).toBe("3+2");
     expect(getRhythmGroupingChoiceLabel(6, "auto")).toBe("4+2");
     expect(getRhythmGroupingChoiceLabel(6, "5+1")).toBe("5+1");
     expect(getRhythmGroupingChoiceLabel(8, "auto")).toBe("3+3+2");
     expect(getRhythmGroupingChoiceLabel(8, "3+2+3")).toBe("3+2+3");
-    expect(
-      getRhythmGroupingReadout({
-        beats: 5,
-        groove: "backbeat",
-        grouping: "auto",
-        timekeeper: {
-          feel: "straight",
-          sound: "hat",
-          subdivision: "eighth",
-        },
-      }),
-    ).toBe("3+2");
   });
 
   it("keeps meter class and grouping details intentional", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 4,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "straight",
@@ -729,7 +823,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 4,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "4",
         timekeeper: {
           feel: "straight",
@@ -744,7 +838,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 4,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "3+1",
         timekeeper: {
           feel: "straight",
@@ -759,7 +853,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 8,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "straight",
@@ -774,7 +868,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 8,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "3+3+2",
         timekeeper: {
           feel: "straight",
@@ -789,7 +883,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 8,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "3+2+3",
         timekeeper: {
           feel: "straight",
@@ -804,7 +898,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 5,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "straight",
@@ -819,7 +913,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 5,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "2+3",
         timekeeper: {
           feel: "straight",
@@ -834,7 +928,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 5,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "2+2+1",
         timekeeper: {
           feel: "straight",
@@ -864,7 +958,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 6,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "auto",
         timekeeper: {
           feel: "straight",
@@ -879,7 +973,7 @@ describe("rhythmConfig", () => {
     expect(
       getRhythmTheoryReadout({
         beats: 6,
-        groove: "backbeat",
+        groove: "kit",
         grouping: "5+1",
         timekeeper: {
           feel: "straight",
@@ -894,7 +988,7 @@ describe("rhythmConfig", () => {
   });
 
   it("always reports a meter class for normalized recipe combinations", () => {
-    const grooves = ["pulse", "backbeat", "bluegrass"] as const;
+    const grooves = ["pulse", "kit", "bluegrass"] as const;
     const timekeepers = [
       { feel: "off", sound: "hat", subdivision: "eighth" },
       { feel: "straight", sound: "hat", subdivision: "quarter" },
@@ -905,7 +999,7 @@ describe("rhythmConfig", () => {
       { feel: "shuffle", sound: "shaker", subdivision: "eighth" },
     ] as const;
 
-    for (let beats = 2; beats <= 8; beats += 1) {
+    for (let beats = 1; beats <= 8; beats += 1) {
       for (const grouping of getRhythmGroupingOptions(beats)) {
         for (const groove of grooves) {
           for (const timekeeper of timekeepers) {

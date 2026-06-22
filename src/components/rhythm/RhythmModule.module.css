@@ -39,11 +39,6 @@
   line-height: var(--leading-none);
 }
 
-.theoryReadout[data-has-detail="true"] .theoryReadoutTitle {
-  align-self: center;
-  padding-block-end: 0;
-}
-
 .theoryReadoutDetail {
   align-self: center;
   padding-block-start: 0;
@@ -63,6 +58,7 @@
 }
 
 .soundButtonLabel,
+.grooveButtonLabel,
 .groupingButtonLabel {
   display: inline-flex;
   min-inline-size: 2.6em;

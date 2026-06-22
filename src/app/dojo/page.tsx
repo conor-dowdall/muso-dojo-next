@@ -18,8 +18,8 @@ import {
 } from "@/components/instrument-creation/instrumentCreationRangeContext";
 import {
   ensureAudioReady,
-  exercisePlaybackCoordinator,
   musoAudioEngine,
+  stopAllAudioPlayback,
 } from "@/audio";
 import { useAppStore, useHydrateAppStore } from "@/stores/appStore";
 import { createChordProgressionParts } from "@/utils/music-part/createChordProgressionParts";
@@ -134,6 +134,17 @@ function HydratedSession({
   }, [activeSessionId, isPerformanceMode, onPerformanceModeChange]);
 
   useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        stopAllAudioPlayback();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
     if (!isPerformanceMode) {
       return;
     }
@@ -151,7 +162,7 @@ function HydratedSession({
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        exercisePlaybackCoordinator.stop();
+        stopAllAudioPlayback();
       }
     };
 

@@ -138,7 +138,7 @@ describe("part module app store actions", () => {
         recipe: {
           beats: 7,
           groove: "pulse",
-          grouping: "auto",
+          grouping: "3+4",
           timekeeper: {
             feel: "swing",
             sound: "ride",

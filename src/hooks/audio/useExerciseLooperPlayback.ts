@@ -272,6 +272,11 @@ export function useExerciseLooperPlayback({
   }, [isPlaying, visualStepLeadSeconds]);
 
   useEffect(
+    () => musoAudioEngine.subscribeToStopAll(() => auditionController.cancel()),
+    [auditionController],
+  );
+
+  useEffect(
     () => () => {
       auditionController.dispose();
       exercisePlaybackCoordinator.stop(id);

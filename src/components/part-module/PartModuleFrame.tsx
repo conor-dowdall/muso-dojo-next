@@ -1,4 +1,8 @@
-import { type CSSProperties, type ReactNode } from "react";
+import {
+  type CSSProperties,
+  type KeyboardEventHandler,
+  type ReactNode,
+} from "react";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type InstrumentWidthMode } from "@/types/instrument-layout";
 import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
@@ -12,6 +16,7 @@ interface PartModuleFrameProps {
   headerActionsGrow?: boolean;
   headerPrimary?: ReactNode;
   noteEmphasis?: InstrumentNoteEmphasis;
+  onKeyDownCapture?: KeyboardEventHandler<HTMLDivElement>;
   showHeader?: boolean;
   style?: CSSProperties;
   widthMode?: InstrumentWidthMode;
@@ -30,6 +35,7 @@ export function PartModuleFrame({
   headerActionsGrow = false,
   headerPrimary,
   noteEmphasis,
+  onKeyDownCapture,
   showHeader = true,
   style,
   widthMode = "auto",
@@ -40,6 +46,7 @@ export function PartModuleFrame({
       style={style}
       data-width-mode={widthMode}
       data-note-emphasis={noteEmphasis}
+      onKeyDownCapture={onKeyDownCapture}
     >
       {showHeader && (headerPrimary || headerActions) ? (
         <ControlHeader
