@@ -20,6 +20,7 @@ import {
   getCollectionToneAtPosition,
   getCollectionToneSequenceMetadata,
 } from "@/utils/music-theory/collectionToneSequence";
+import { getMidiOctave } from "@/utils/music-theory/midiNote";
 
 // Middle-register anchor for generated drone pitches; octave controls offset
 // from here before the notes are handed to the audio engine.
@@ -43,6 +44,12 @@ export const DRONE_MAX_OCTAVE_OFFSET = Math.floor(
   (MUSICAL_SURFACE_MIDI_MAX - DRONE_BASE_ROOT_MIDI) /
     DRONE_SEMITONES_PER_OCTAVE,
 );
+
+export function getDroneBaseOctave(octaveOffset = 0) {
+  return getMidiOctave(
+    DRONE_BASE_ROOT_MIDI + octaveOffset * DRONE_SEMITONES_PER_OCTAVE,
+  );
+}
 
 export interface DroneNoteButton {
   baseInterval: number;

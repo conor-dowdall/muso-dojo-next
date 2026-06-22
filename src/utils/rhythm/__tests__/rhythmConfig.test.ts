@@ -451,11 +451,26 @@ describe("rhythmConfig", () => {
     );
     expect(getRhythmTheoryReadout(selection.recipe)).toStrictEqual({
       title: "6/8",
-      detail: "Compound Duple Meter • 2 Groups of 3",
+      detail: "Compound Duple • 2 Groups of 3 Eighths",
     });
   });
 
   it("uses theory-only labels for straight and compound readouts", () => {
+    expect(
+      getRhythmTheoryReadout({
+        beats: 2,
+        groove: "backbeat",
+        grouping: "auto",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "sixteenth",
+        },
+      }),
+    ).toStrictEqual({
+      title: "2/4",
+      detail: "Simple Duple • Straight Sixteenths",
+    });
     expect(
       getRhythmTheoryReadout({
         beats: 2,
@@ -469,7 +484,7 @@ describe("rhythmConfig", () => {
       }),
     ).toStrictEqual({
       title: "2/4",
-      detail: "Simple Duple Meter • Straight Eighths",
+      detail: "Simple Duple • Straight Eighths",
     });
     expect(
       getRhythmTheoryReadout({
@@ -484,7 +499,7 @@ describe("rhythmConfig", () => {
       }),
     ).toStrictEqual({
       title: "3/4",
-      detail: "Simple Triple Meter • Straight Eighths",
+      detail: "Simple Triple • Straight Eighths",
     });
     expect(
       getRhythmTheoryReadout({
@@ -499,7 +514,7 @@ describe("rhythmConfig", () => {
       }),
     ).toStrictEqual({
       title: "4/4",
-      detail: "Simple Quadruple Meter • Straight Eighths",
+      detail: "Simple Quadruple • Straight Eighths",
     });
     expect(
       getRhythmTheoryReadout({
@@ -514,7 +529,22 @@ describe("rhythmConfig", () => {
       }),
     ).toStrictEqual({
       title: "9/8",
-      detail: "Compound Triple Meter • 3 Groups of 3",
+      detail: "Compound Triple • 3 Groups of 3 Eighths",
+    });
+    expect(
+      getRhythmTheoryReadout({
+        beats: 4,
+        groove: "backbeat",
+        grouping: "auto",
+        timekeeper: {
+          feel: "swing",
+          sound: "ride",
+          subdivision: "eighth",
+        },
+      }),
+    ).toStrictEqual({
+      title: "4/4",
+      detail: "Simple Quadruple • Swing Eighths",
     });
     expect(
       getRhythmTheoryReadout({
@@ -529,7 +559,7 @@ describe("rhythmConfig", () => {
       }),
     ).toStrictEqual({
       title: "12/8",
-      detail: "Compound Quadruple Meter • 4 Groups of 3",
+      detail: "Compound Quadruple • 4 Groups of 3 Eighths",
     });
     expect(
       getRhythmSelectionLabel(
@@ -656,13 +686,16 @@ describe("rhythmConfig", () => {
       [3, ["auto", "2+1", "1+2"]],
       [4, ["auto", "4", "3+1"]],
       [5, ["auto", "2+3", "2+2+1"]],
-      [6, ["auto", "2+4", "3+3"]],
+      [6, ["auto", "2+4", "5+1"]],
       [7, ["auto", "3+4", "2+2+3"]],
-      [8, ["auto", "3+3+2", "2+3+3"]],
+      [8, ["auto", "3+2+3", "2+3+3"]],
     ]);
     expect(getRhythmGroupingChoiceLabel(2, "auto")).toBe("2");
     expect(getRhythmGroupingChoiceLabel(5, "auto")).toBe("3+2");
     expect(getRhythmGroupingChoiceLabel(6, "auto")).toBe("4+2");
+    expect(getRhythmGroupingChoiceLabel(6, "5+1")).toBe("5+1");
+    expect(getRhythmGroupingChoiceLabel(8, "auto")).toBe("3+3+2");
+    expect(getRhythmGroupingChoiceLabel(8, "3+2+3")).toBe("3+2+3");
     expect(
       getRhythmGroupingReadout({
         beats: 5,
@@ -677,7 +710,52 @@ describe("rhythmConfig", () => {
     ).toBe("3+2");
   });
 
-  it("names extended beat counts as bars or additive meters", () => {
+  it("keeps meter class and grouping details intentional", () => {
+    expect(
+      getRhythmTheoryReadout({
+        beats: 4,
+        groove: "backbeat",
+        grouping: "auto",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      }),
+    ).toStrictEqual({
+      title: "4/4",
+      detail: "Simple Quadruple • Straight Eighths",
+    });
+    expect(
+      getRhythmTheoryReadout({
+        beats: 4,
+        groove: "backbeat",
+        grouping: "4",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      }),
+    ).toStrictEqual({
+      title: "4/4",
+      detail: "Simple Quadruple • Straight Eighths",
+    });
+    expect(
+      getRhythmTheoryReadout({
+        beats: 4,
+        groove: "backbeat",
+        grouping: "3+1",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      }),
+    ).toStrictEqual({
+      title: "4/4",
+      detail: "Simple Quadruple • Straight Eighths",
+    });
     expect(
       getRhythmTheoryReadout({
         beats: 8,
@@ -690,8 +768,8 @@ describe("rhythmConfig", () => {
         },
       }),
     ).toStrictEqual({
-      title: "2 Bars of 4/4",
-      detail: "Simple Quadruple Meter • Straight Eighths",
+      title: "8/4",
+      detail: "Additive • Straight Eighths",
     });
     expect(
       getRhythmTheoryReadout({
@@ -706,7 +784,82 @@ describe("rhythmConfig", () => {
       }),
     ).toStrictEqual({
       title: "8/4",
-      detail: "Additive Meter • 3+3+2 • Straight Eighths",
+      detail: "Additive • Straight Eighths",
+    });
+    expect(
+      getRhythmTheoryReadout({
+        beats: 8,
+        groove: "backbeat",
+        grouping: "3+2+3",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      }),
+    ).toStrictEqual({
+      title: "8/4",
+      detail: "Additive • Straight Eighths",
+    });
+    expect(
+      getRhythmTheoryReadout({
+        beats: 5,
+        groove: "backbeat",
+        grouping: "auto",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      }),
+    ).toStrictEqual({
+      title: "5/4",
+      detail: "Additive • Straight Eighths",
+    });
+    expect(
+      getRhythmTheoryReadout({
+        beats: 5,
+        groove: "backbeat",
+        grouping: "2+3",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      }),
+    ).toStrictEqual({
+      title: "5/4",
+      detail: "Additive • Straight Eighths",
+    });
+    expect(
+      getRhythmTheoryReadout({
+        beats: 5,
+        groove: "backbeat",
+        grouping: "2+2+1",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      }),
+    ).toStrictEqual({
+      title: "5/4",
+      detail: "Additive • Straight Eighths",
+    });
+    expect(
+      getRhythmTheoryReadout({
+        beats: 5,
+        groove: "pulse",
+        grouping: "auto",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      }),
+    ).toStrictEqual({
+      title: "5/4",
+      detail: "Additive • Straight Eighths",
     });
     expect(
       getRhythmTheoryReadout({
@@ -721,23 +874,56 @@ describe("rhythmConfig", () => {
       }),
     ).toStrictEqual({
       title: "6/4",
-      detail: "Additive Meter • 4+2 • Straight Eighths",
+      detail: "Additive • Straight Eighths",
     });
     expect(
       getRhythmTheoryReadout({
         beats: 6,
         groove: "backbeat",
-        grouping: "3+3",
+        grouping: "5+1",
         timekeeper: {
-          feel: "triplet",
+          feel: "straight",
           sound: "hat",
           subdivision: "eighth",
         },
       }),
     ).toStrictEqual({
-      title: "2 Bars of 9/8",
-      detail: "Compound Triple Meter",
+      title: "6/4",
+      detail: "Additive • Straight Eighths",
     });
+  });
+
+  it("always reports a meter class for normalized recipe combinations", () => {
+    const grooves = ["pulse", "backbeat", "bluegrass"] as const;
+    const timekeepers = [
+      { feel: "off", sound: "hat", subdivision: "eighth" },
+      { feel: "straight", sound: "hat", subdivision: "quarter" },
+      { feel: "straight", sound: "hat", subdivision: "eighth" },
+      { feel: "straight", sound: "hat", subdivision: "sixteenth" },
+      { feel: "triplet", sound: "ride", subdivision: "eighth" },
+      { feel: "swing", sound: "ride", subdivision: "eighth" },
+      { feel: "shuffle", sound: "shaker", subdivision: "eighth" },
+    ] as const;
+
+    for (let beats = 2; beats <= 8; beats += 1) {
+      for (const grouping of getRhythmGroupingOptions(beats)) {
+        for (const groove of grooves) {
+          for (const timekeeper of timekeepers) {
+            const recipe = normalizeRhythmRecipe({
+              beats,
+              groove,
+              grouping,
+              timekeeper,
+            });
+            const readout = getRhythmTheoryReadout(recipe);
+
+            expect(readout.detail, JSON.stringify(recipe)).toMatch(
+              /^(Simple|Compound|Additive)\b/,
+            );
+          }
+        }
+      }
+    }
   });
 
   it("normalizes raw tick patterns without mixer data", () => {

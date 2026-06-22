@@ -127,13 +127,13 @@ const timekeeperSubdivisionChoices = [
     subdivision: "sixteenth",
   },
   {
-    label: "Use swung two-subdivision feel",
+    label: "Use swing eighths timekeeper pattern",
     text: "Sw",
     feel: "swing",
     subdivision: "eighth",
   },
   {
-    label: "Use shuffle offbeat feel",
+    label: "Use shuffle eighths timekeeper pattern",
     text: "Shf",
     feel: "shuffle",
     subdivision: "eighth",
@@ -232,11 +232,11 @@ function getTimekeeperRhythmReadout(recipe: RhythmRecipe) {
   }
 
   if (recipe.timekeeper.feel === "swing") {
-    return "Swing";
+    return "Swing Eighths";
   }
 
   if (recipe.timekeeper.feel === "shuffle") {
-    return "Shuffle";
+    return "Shuffle Eighths";
   }
 
   const subdivisionChoice = timekeeperSubdivisionChoices.find(
@@ -310,6 +310,9 @@ export function RhythmModule({
       : `${timekeeperSoundLabel}${DISPLAY_VALUE_SEPARATOR}${timekeeperRhythmLabel}`;
   const isTimekeeperOff = recipe.timekeeper.feel === "off";
   const rhythmTheoryReadout = getRhythmTheoryReadout(recipe);
+  const rhythmTheoryAriaLabel = rhythmTheoryReadout.detail
+    ? `Rhythm theory: ${rhythmTheoryReadout.title}. ${rhythmTheoryReadout.detail}`
+    : `Rhythm theory: ${rhythmTheoryReadout.title}`;
   const canDecreaseBeats = recipe.beats > RHYTHM_MIN_BEATS;
   const canIncreaseBeats = recipe.beats < RHYTHM_MAX_BEATS;
   const rhythmFrameStyle = {
@@ -406,19 +409,6 @@ export function RhythmModule({
                 />
               </TactileControlGroup>
             </div>
-
-            <output
-              aria-label={`Rhythm theory: ${rhythmTheoryReadout.title}. ${rhythmTheoryReadout.detail}`}
-              aria-live="off"
-              className={styles.rhythmReadout}
-            >
-              <span className={styles.rhythmReadoutTitle}>
-                {rhythmTheoryReadout.title}
-              </span>
-              <span className={styles.rhythmReadoutDetail}>
-                {rhythmTheoryReadout.detail}
-              </span>
-            </output>
 
             <div
               aria-label="Rhythm beats"
@@ -590,6 +580,26 @@ export function RhythmModule({
                 </span>
               </TactileControlGroup>
             </div>
+
+            <output
+              aria-label={rhythmTheoryAriaLabel}
+              aria-live="off"
+              className={`${controlStyles.moduleReadoutPanel} ${styles.theoryReadout}`}
+              data-has-detail={rhythmTheoryReadout.detail ? true : undefined}
+            >
+              <span
+                className={`${controlStyles.moduleReadoutPanelPrimary} ${styles.theoryReadoutTitle}`}
+              >
+                {rhythmTheoryReadout.title}
+              </span>
+              {rhythmTheoryReadout.detail ? (
+                <span
+                  className={`${controlStyles.moduleReadoutPanelSecondary} ${styles.theoryReadoutDetail}`}
+                >
+                  {rhythmTheoryReadout.detail}
+                </span>
+              ) : null}
+            </output>
           </div>
         </div>
       </PartModuleFrame>

@@ -62,12 +62,13 @@ const rhythmBeatGroupsByGrouping = {
   "2+4": [2, 4],
   "3+1": [3, 1],
   "3+2": [3, 2],
-  "3+3": [3, 3],
+  "3+2+3": [3, 2, 3],
   "3+3+2": [3, 3, 2],
   "3+4": [3, 4],
   "4": [4],
   "4+2": [4, 2],
   "4+3": [4, 3],
+  "5+1": [5, 1],
 } as const satisfies Record<string, readonly number[]>;
 
 export type RhythmGroove = "pulse" | "backbeat" | "bluegrass";
@@ -96,6 +97,62 @@ export interface RhythmTheoryReadout {
   detail: string;
   title: string;
 }
+
+type RhythmTheoryMeterClass =
+  | "additive"
+  | "compound-duple"
+  | "compound-quadruple"
+  | "compound-triple"
+  | "simple"
+  | "simple-duple"
+  | "simple-quadruple"
+  | "simple-triple";
+
+type RhythmTheoryCompoundMeterClass = Extract<
+  RhythmTheoryMeterClass,
+  "compound-duple" | "compound-quadruple" | "compound-triple"
+>;
+type RhythmTheorySimpleMeterClass = Exclude<
+  RhythmTheoryMeterClass,
+  RhythmTheoryCompoundMeterClass
+>;
+
+interface RhythmTheoryCompoundGrouping {
+  groupCount: number;
+  unitCount: number;
+  unitName: "Eighth" | "Quarter Note";
+}
+
+type RhythmTheoryMeter =
+  | {
+      classDetail: RhythmTheoryCompoundMeterClass;
+      compoundGrouping: RhythmTheoryCompoundGrouping;
+      isCompound: true;
+      title: string;
+    }
+  | {
+      classDetail: RhythmTheorySimpleMeterClass;
+      isCompound: false;
+      title: string;
+    };
+
+interface RhythmTheoryCompoundMeter {
+  classDetail: RhythmTheoryCompoundMeterClass;
+  compoundGrouping: RhythmTheoryCompoundGrouping;
+  isCompound: true;
+  title: string;
+}
+
+const rhythmTheoryMeterClassLabels = {
+  additive: "Additive",
+  "compound-duple": "Compound Duple",
+  "compound-quadruple": "Compound Quadruple",
+  "compound-triple": "Compound Triple",
+  simple: "Simple",
+  "simple-duple": "Simple Duple",
+  "simple-quadruple": "Simple Quadruple",
+  "simple-triple": "Simple Triple",
+} as const satisfies Record<RhythmTheoryMeterClass, string>;
 
 const Q = RHYTHM_PPQ;
 const E = RHYTHM_PPQ / 2;
@@ -239,11 +296,6 @@ export const rhythmGroupingOptions = [
     description: "Group five beats as three plus two.",
   },
   {
-    id: "3+3",
-    label: "3+3",
-    description: "Group six beats as three plus three.",
-  },
-  {
     id: "2+3",
     label: "2+3",
     description: "Group five beats as two plus three.",
@@ -259,9 +311,19 @@ export const rhythmGroupingOptions = [
     description: "Group six beats as two plus four.",
   },
   {
+    id: "5+1",
+    label: "5+1",
+    description: "Group six beats as five plus one.",
+  },
+  {
     id: "3+1",
     label: "3+1",
     description: "Group four beats as three plus one.",
+  },
+  {
+    id: "3+2+3",
+    label: "3+2+3",
+    description: "Group eight beats as three plus two plus three.",
   },
   {
     id: "3+3+2",
@@ -404,7 +466,7 @@ const defaultRhythmBeatGroups = {
   5: [3, 2],
   6: [4, 2],
   7: [4, 3],
-  8: [4, 4],
+  8: [3, 3, 2],
 } as const satisfies Record<number, readonly number[]>;
 
 const rhythmGroupingOptionsByBeatCount: Record<
@@ -415,9 +477,9 @@ const rhythmGroupingOptionsByBeatCount: Record<
   3: ["auto", "2+1", "1+2"],
   4: ["auto", "4", "3+1"],
   5: ["auto", "2+3", "2+2+1"],
-  6: ["auto", "2+4", "3+3"],
+  6: ["auto", "2+4", "5+1"],
   7: ["auto", "3+4", "2+2+3"],
-  8: ["auto", "3+3+2", "2+3+3"],
+  8: ["auto", "3+2+3", "2+3+3"],
 };
 
 export function getRhythmGroupingOptions(
@@ -837,117 +899,168 @@ function getRhythmRecipeMeterLabel(recipe: RhythmRecipe) {
 export function getRhythmTheoryReadout(
   recipe: RhythmRecipe,
 ): RhythmTheoryReadout {
-  const title = getRhythmTheoryMeterTitle(recipe);
+  const meter = getRhythmTheoryMeter(recipe);
   const details = [
-    getRhythmTheoryMeterClassDetail(recipe, title),
-    getRhythmTheoryGroupingDetail(recipe, title),
-    getRhythmSubdivisionDetail(recipe, title),
+    rhythmTheoryMeterClassLabels[meter.classDetail],
+    getRhythmTheoryCompoundGroupingDetail(meter),
+    getRhythmSubdivisionDetail(recipe, meter),
   ].filter((detail): detail is string => Boolean(detail));
 
   return {
-    title,
+    title: meter.title,
     detail: details.join(" • "),
   };
 }
 
-function getRhythmTheoryMeterTitle(recipe: RhythmRecipe) {
+function getRhythmTheoryMeter(recipe: RhythmRecipe): RhythmTheoryMeter {
   const perBeat = getRhythmSubdivisionCountPerBeat(recipe.timekeeper);
   const groups = getRhythmBeatGroups(recipe);
 
   if (perBeat === 3) {
-    if ([2, 3, 4].includes(recipe.beats)) {
-      return `${recipe.beats * 3}/8`;
-    }
+    const singleBarCompoundMeter = getCompoundMeterForPrimaryBeats(
+      recipe.beats,
+    );
 
-    if (groups.length === 2 && groups.every((group) => group === 3)) {
-      return "2 Bars of 9/8";
-    }
-
-    if (groups.length === 2 && groups.every((group) => group === 4)) {
-      return "2 Bars of 12/8";
+    if (singleBarCompoundMeter) {
+      return singleBarCompoundMeter;
     }
   }
 
-  if (groups.length === 2 && groups.every((group) => group === 3)) {
-    return "2 Bars of 3/4";
+  const compoundClassDetail =
+    getCompoundMeterClassForEqualTripletGroups(groups);
+
+  if (compoundClassDetail) {
+    return {
+      classDetail: compoundClassDetail,
+      compoundGrouping: {
+        groupCount: groups.length,
+        unitCount: 3,
+        unitName: "Quarter Note",
+      },
+      isCompound: true,
+      title: `${recipe.beats}/4`,
+    };
   }
 
-  if (groups.length === 2 && groups.every((group) => group === 4)) {
-    return "2 Bars of 4/4";
-  }
+  const classDetail =
+    getSimpleMeterClassForPrimaryBeats(recipe.beats) ??
+    getAdditiveMeterClass(groups) ??
+    "simple";
 
-  return `${recipe.beats}/4`;
+  return {
+    classDetail,
+    isCompound: false,
+    title: `${recipe.beats}/4`,
+  };
 }
 
-function getRhythmTheoryMeterClassDetail(
-  recipe: RhythmRecipe,
-  meterTitle: string,
-) {
-  const singleBarMeter = getSingleBarMeterTitle(meterTitle);
-
-  switch (singleBarMeter) {
-    case "2/4":
-      return "Simple Duple Meter";
-    case "3/4":
-      return "Simple Triple Meter";
-    case "4/4":
-      return "Simple Quadruple Meter";
-    case "6/8":
-      return "Compound Duple Meter";
-    case "9/8":
-      return "Compound Triple Meter";
-    case "12/8":
-      return "Compound Quadruple Meter";
+function getSimpleMeterClassForPrimaryBeats(
+  beats: number,
+): RhythmTheorySimpleMeterClass | undefined {
+  switch (beats) {
+    case 2:
+      return "simple-duple";
+    case 3:
+      return "simple-triple";
+    case 4:
+      return "simple-quadruple";
+    default:
+      return undefined;
   }
-
-  if (
-    recipe.beats === 5 ||
-    recipe.beats === 7 ||
-    getRhythmVisibleGroupingLabel(recipe) !== undefined
-  ) {
-    return "Additive Meter";
-  }
-
-  return undefined;
 }
 
-function getSingleBarMeterTitle(meterTitle: string) {
-  return meterTitle.startsWith("2 Bars of ")
-    ? meterTitle.slice("2 Bars of ".length)
-    : meterTitle;
-}
-
-function isCompoundMeterTitle(meterTitle: string) {
-  const singleBarMeter = getSingleBarMeterTitle(meterTitle);
-
-  return (
-    singleBarMeter === "6/8" ||
-    singleBarMeter === "9/8" ||
-    singleBarMeter === "12/8"
-  );
-}
-
-function getRhythmTheoryGroupingDetail(
-  recipe: RhythmRecipe,
-  meterTitle: string,
-) {
-  const perBeat = getRhythmSubdivisionCountPerBeat(recipe.timekeeper);
-
-  if (perBeat === 3 && [2, 3, 4].includes(recipe.beats)) {
-    return `${recipe.beats} ${recipe.beats === 1 ? "Group" : "Groups"} of 3`;
+function getCompoundMeterForPrimaryBeats(
+  beats: number,
+): RhythmTheoryCompoundMeter | undefined {
+  switch (beats) {
+    case 2:
+      return {
+        classDetail: "compound-duple",
+        compoundGrouping: {
+          groupCount: 2,
+          unitCount: 3,
+          unitName: "Eighth",
+        },
+        isCompound: true,
+        title: "6/8",
+      };
+    case 3:
+      return {
+        classDetail: "compound-triple",
+        compoundGrouping: {
+          groupCount: 3,
+          unitCount: 3,
+          unitName: "Eighth",
+        },
+        isCompound: true,
+        title: "9/8",
+      };
+    case 4:
+      return {
+        classDetail: "compound-quadruple",
+        compoundGrouping: {
+          groupCount: 4,
+          unitCount: 3,
+          unitName: "Eighth",
+        },
+        isCompound: true,
+        title: "12/8",
+      };
+    default:
+      return undefined;
   }
+}
 
-  if (meterTitle.startsWith("2 Bars of ")) {
+function getCompoundMeterClassForEqualTripletGroups(
+  groups: readonly number[],
+): RhythmTheoryCompoundMeterClass | undefined {
+  if (!groups.every((group) => group === 3)) {
     return undefined;
   }
 
-  return getRhythmVisibleGroupingLabel(recipe);
+  switch (groups.length) {
+    case 2:
+      return "compound-duple";
+    case 3:
+      return "compound-triple";
+    case 4:
+      return "compound-quadruple";
+    default:
+      return undefined;
+  }
 }
 
-function getRhythmSubdivisionDetail(recipe: RhythmRecipe, meterTitle: string) {
+function getAdditiveMeterClass(
+  groups: readonly number[],
+): RhythmTheorySimpleMeterClass | undefined {
+  return groups.length <= 1 || groups.every((group) => group === groups[0])
+    ? undefined
+    : "additive";
+}
+
+function getRhythmTheoryCompoundGroupingDetail(meter: RhythmTheoryMeter) {
+  if (!meter.isCompound) {
+    return undefined;
+  }
+
+  const { groupCount, unitCount, unitName } = meter.compoundGrouping;
+  const groupLabel = groupCount === 1 ? "Group" : "Groups";
+  const unitLabel = unitCount === 1 ? unitName : `${unitName}s`;
+
+  return `${groupCount} ${groupLabel} of ${unitCount} ${unitLabel}`;
+}
+
+function getRhythmSubdivisionDetail(
+  recipe: RhythmRecipe,
+  meter: RhythmTheoryMeter,
+) {
+  if (meter.isCompound) {
+    return undefined;
+  }
+
   switch (recipe.timekeeper.feel) {
     case "off":
-      return "Quarter-Note Pulse";
+      return undefined;
     case "straight":
       switch (recipe.timekeeper.subdivision) {
         case "quarter":
@@ -958,10 +1071,7 @@ function getRhythmSubdivisionDetail(recipe: RhythmRecipe, meterTitle: string) {
           return "Straight Sixteenths";
       }
     case "triplet":
-      return isCompoundMeterTitle(meterTitle) ||
-        [2, 3, 4].includes(recipe.beats)
-        ? undefined
-        : "Triplet Subdivision";
+      return "Triplet Eighths";
     case "swing":
       return "Swing Eighths";
     case "shuffle":
@@ -974,7 +1084,10 @@ function getRhythmVisibleGroupingLabel(recipe: RhythmRecipe) {
     return undefined;
   }
 
-  if (recipe.grouping === "auto" && ![5, 6, 7].includes(recipe.beats)) {
+  // Common simple meters already imply their default grouping. Show those only
+  // when the user deliberately chooses a variation; for longer meters the
+  // default grouping is part of the musical idea.
+  if (recipe.grouping === "auto" && ![5, 6, 7, 8].includes(recipe.beats)) {
     return undefined;
   }
 

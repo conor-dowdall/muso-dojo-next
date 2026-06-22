@@ -20,47 +20,40 @@
   min-inline-size: var(--space-14);
 }
 
-.rhythmReadout {
-  box-sizing: border-box;
-  display: grid;
-  inline-size: min(100%, calc(var(--space-80) + var(--space-8)));
-  block-size: calc(var(--space-12) + var(--space-1));
-  min-inline-size: 0;
-  flex: 0 0 auto;
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
-  padding-inline: var(--space-3);
-  overflow: hidden;
-  border: 0;
-  border-radius: var(--radius-control);
-  background: var(--color-hardware-display-background-soft);
-  color: var(--color-hardware-display-text-soft);
-  font-family: var(--font-sans);
+.theoryReadout {
+  --part-module-readout-height: calc(var(--space-14) + var(--space-1));
+
+  grid-template-rows: auto;
+  align-content: center;
+  row-gap: var(--space-1);
+}
+
+.theoryReadout[data-has-detail="true"] {
+  grid-template-rows: auto auto;
+}
+
+.theoryReadoutTitle {
+  align-self: center;
+  padding-block-end: 0;
+  font-size: var(--text-xl);
+  line-height: var(--leading-none);
+}
+
+.theoryReadout[data-has-detail="true"] .theoryReadoutTitle {
+  align-self: center;
+  padding-block-end: 0;
+}
+
+.theoryReadoutDetail {
+  align-self: center;
+  padding-block-start: 0;
+  color: color-mix(
+    in srgb,
+    var(--color-hardware-display-text-soft) 68%,
+    transparent
+  );
+  font-size: var(--text-2xs);
   font-weight: var(--font-semibold);
-  line-height: var(--leading-tightest);
-  text-align: center;
-}
-
-.rhythmReadoutTitle,
-.rhythmReadoutDetail {
-  min-inline-size: 0;
-  overflow: hidden;
-  letter-spacing: 0;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rhythmReadoutTitle {
-  align-self: end;
-  padding-block-end: var(--part-module-split-label-gap);
-  font-size: var(--text-sm);
-  font-weight: var(--font-bold);
-}
-
-.rhythmReadoutDetail {
-  align-self: start;
-  padding-block-start: var(--part-module-split-label-gap);
-  font-size: var(--text-xs);
 }
 
 .groupingControl {

@@ -1,5 +1,5 @@
 .frame {
-  --looper-study-readout-height: calc(var(--space-12) + var(--space-1));
+  --part-module-readout-height: calc(var(--space-12) + var(--space-1));
 
   container: exercise-looper / inline-size;
 }
@@ -66,24 +66,7 @@
 }
 
 .studyReadout {
-  box-sizing: border-box;
-  display: grid;
-  inline-size: min(100%, calc(var(--space-80) + var(--space-8)));
-  block-size: var(--looper-study-readout-height);
-  min-inline-size: 0;
-  flex: 0 0 auto;
-  grid-template-rows: 1fr 1fr;
-  align-items: center;
-  padding-inline: var(--space-3);
-  overflow: hidden;
-  border-radius: var(--radius-control);
-  background: var(--color-hardware-display-background-soft);
   container-type: inline-size;
-  color: var(--color-hardware-display-text-soft);
-  font-family: var(--font-sans);
-  font-weight: var(--font-semibold);
-  line-height: var(--leading-tightest);
-  text-align: center;
 }
 
 .studyDisplayContent {

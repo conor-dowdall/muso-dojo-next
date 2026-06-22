@@ -7,8 +7,13 @@ import {
   getRhythmRecipeLabel,
   getRhythmTimekeeperOptionLabel,
   isRhythmGroupingValidForBeats,
+  rhythmGroupingOptions,
+  rhythmGrooveOptions,
   rhythmGrooveSupportsTimekeeperFeel,
   rhythmGrooveUsesGrouping,
+  rhythmTimekeeperFeelOptions,
+  rhythmTimekeeperSoundOptions,
+  rhythmTimekeeperSubdivisionOptions,
   type PercussionSampleId,
   type RhythmGroove,
   type RhythmGrouping,
@@ -55,53 +60,30 @@ const percussionSampleIds = {
   tambourine: true,
 } as const satisfies Record<PercussionSampleId, true>;
 
-const rhythmTimekeeperSoundIds = {
-  hat: true,
-  ride: true,
-  shaker: true,
-} as const satisfies Record<RhythmTimekeeperSound, true>;
+function createOptionIdRecord<T extends string>(options: readonly { id: T }[]) {
+  return Object.fromEntries(
+    options.map((option) => [option.id, true]),
+  ) as Record<T, true>;
+}
 
-const rhythmTimekeeperSubdivisionIds = {
-  eighth: true,
-  quarter: true,
-  sixteenth: true,
-} as const satisfies Record<RhythmTimekeeperSubdivision, true>;
+const rhythmTimekeeperSoundIds = createOptionIdRecord<RhythmTimekeeperSound>(
+  rhythmTimekeeperSoundOptions,
+);
 
-const rhythmTimekeeperFeelIds = {
-  off: true,
-  shuffle: true,
-  straight: true,
-  triplet: true,
-  swing: true,
-} as const satisfies Record<RhythmTimekeeperFeel, true>;
+const rhythmTimekeeperSubdivisionIds =
+  createOptionIdRecord<RhythmTimekeeperSubdivision>(
+    rhythmTimekeeperSubdivisionOptions,
+  );
 
-const rhythmGrooveIds = {
-  backbeat: true,
-  bluegrass: true,
-  pulse: true,
-} as const satisfies Record<RhythmGroove, true>;
+const rhythmTimekeeperFeelIds = createOptionIdRecord<RhythmTimekeeperFeel>(
+  rhythmTimekeeperFeelOptions,
+);
 
-const rhythmGroupingIds = {
-  "1+1": true,
-  "1+2": true,
-  "1+3": true,
-  "2": true,
-  "2+1": true,
-  "2+2+1": true,
-  "2+2+3": true,
-  "2+3": true,
-  "2+3+3": true,
-  "2+4": true,
-  "3+1": true,
-  "3+2": true,
-  "3+3": true,
-  "3+3+2": true,
-  "3+4": true,
-  "4": true,
-  "4+2": true,
-  "4+3": true,
-  auto: true,
-} as const satisfies Record<RhythmGrouping, true>;
+const rhythmGrooveIds = createOptionIdRecord<RhythmGroove>(rhythmGrooveOptions);
+
+const rhythmGroupingIds = createOptionIdRecord<RhythmGrouping>(
+  rhythmGroupingOptions,
+);
 
 function hasOwnKey(record: object, value: string) {
   return Object.prototype.hasOwnProperty.call(record, value);

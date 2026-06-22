@@ -6,10 +6,17 @@ import {
 import {
   DRONE_MAX_OCTAVE_OFFSET,
   DRONE_MIN_OCTAVE_OFFSET,
+  getDroneBaseOctave,
   resolveDroneNotes,
 } from "@/utils/drone/droneNotes";
 
 describe("droneNotes", () => {
+  it("formats octave offsets as musical octave numbers", () => {
+    expect(getDroneBaseOctave()).toBe(3);
+    expect(getDroneBaseOctave(1)).toBe(4);
+    expect(getDroneBaseOctave(-1)).toBe(2);
+  });
+
   it("starts finite compound voicings at the declared formula", () => {
     const droneNotes = resolveDroneNotes({
       noteCollectionKey: "major9",

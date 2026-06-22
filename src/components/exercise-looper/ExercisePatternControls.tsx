@@ -80,7 +80,7 @@ function ExerciseStudyReadout({ display }: { display: ExerciseStudyDisplay }) {
     <output
       aria-label={getStudyDisplayAriaLabel(display)}
       aria-live="off"
-      className={styles.studyReadout}
+      className={`${controlStyles.moduleReadoutPanel} ${styles.studyReadout}`}
     >
       <span
         className={styles.studyDisplayContent}
@@ -433,8 +433,6 @@ export function ExercisePatternControls({
           ))}
         </TactileControlGroup>
 
-        <ExerciseStudyReadout display={studyDisplay} />
-
         <div
           aria-label={
             pattern.mode === "single"
@@ -523,6 +521,8 @@ export function ExercisePatternControls({
             ))}
           </TactileControlGroup>
         </div>
+
+        <ExerciseStudyReadout display={studyDisplay} />
       </div>
     </div>
   );

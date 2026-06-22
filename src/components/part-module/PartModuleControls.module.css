@@ -13,6 +13,8 @@
   --part-module-note-row-gap: var(--part-module-control-gap);
   --part-module-note-column-gap: var(--part-module-control-gap);
   --part-module-split-label-gap: var(--space-1);
+  --part-module-readout-height: calc(var(--space-12) + var(--space-1));
+  --part-module-readout-max-width: calc(var(--space-80) + var(--space-8));
   --part-module-body-radius: var(--radius-control);
   --part-module-min-readable-width: 0;
   --part-module-preferred-width: calc(var(--space-80) + var(--space-24));
@@ -99,4 +101,47 @@
 .controlGroup {
   min-inline-size: 0;
   flex: 0 0 auto;
+}
+
+.moduleReadoutPanel {
+  box-sizing: border-box;
+  display: grid;
+  inline-size: min(100%, var(--part-module-readout-max-width));
+  block-size: var(--part-module-readout-height);
+  min-inline-size: 0;
+  flex: 0 0 auto;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  padding-inline: var(--space-3);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--color-hardware-display-background-soft);
+  color: var(--color-hardware-display-text-soft);
+  font-family: var(--font-sans);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tightest);
+  text-align: center;
+}
+
+.moduleReadoutPanelPrimary,
+.moduleReadoutPanelSecondary {
+  min-inline-size: 0;
+  overflow: hidden;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.moduleReadoutPanelPrimary {
+  align-self: end;
+  padding-block-end: var(--part-module-split-label-gap);
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+}
+
+.moduleReadoutPanelSecondary {
+  align-self: start;
+  padding-block-start: var(--part-module-split-label-gap);
+  font-size: var(--text-xs);
 }

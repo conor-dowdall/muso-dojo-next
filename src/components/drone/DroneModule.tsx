@@ -29,6 +29,7 @@ import {
   DRONE_MAX_OCTAVE_OFFSET,
   DRONE_MIN_OCTAVE_OFFSET,
   DRONE_MIN_OCTAVE_ROWS,
+  getDroneBaseOctave,
   resolveDroneNotes,
 } from "@/utils/drone/droneNotes";
 import { formatSpelledMidiNote } from "@/utils/music-theory/midiNote";
@@ -51,14 +52,6 @@ interface DroneModuleProps {
   rootNote?: string;
   showHeader?: boolean;
   wood?: WoodSurfaceId;
-}
-
-function formatOctaveOffset(octaveOffset: number) {
-  if (octaveOffset === 0) {
-    return "0";
-  }
-
-  return octaveOffset > 0 ? `+${octaveOffset}` : String(octaveOffset);
 }
 
 export function DroneModule({
@@ -207,7 +200,7 @@ export function DroneModule({
       return noteKeys[nextIndex] ?? currentKey;
     },
   });
-  const octaveOffsetLabel = formatOctaveOffset(octaveOffset);
+  const octaveReadout = `Octave ${getDroneBaseOctave(octaveOffset)}`;
   const droneFrameStyle = {
     "--part-module-body-background": woodSurfaces[wood].background,
   } as CSSProperties;
@@ -288,26 +281,40 @@ export function DroneModule({
         style={droneFrameStyle}
       >
         <div className={`${styles.moduleContent} ${controlStyles.content}`}>
-          <div className={controlStyles.groupRow}>
+          <div
+            aria-label="Drone performance controls"
+            className={controlStyles.groupRow}
+            role="group"
+          >
             <TactileControlGroup
-              aria-label="Drone playback and octave controls"
+              aria-label="Drone playback"
               className={controlStyles.controlGroup}
-              controlsClassName={controlStyles.buttonGroup}
             >
               <PartModuleControlButton
-                aria-label={`Shift drone down one octave. Current octave offset: ${octaveOffsetLabel}`}
+                aria-label="Stop all active drone notes"
+                icon={<Square />}
+                onPress={stopAll}
+                prominence="primary"
+                selected={hasActiveNotes}
+                unavailable={!hasActiveNotes}
+              />
+            </TactileControlGroup>
+
+            <TactileControlGroup
+              aria-label="Drone octave"
+              className={controlStyles.controlGroup}
+              controlsClassName={controlStyles.buttonGroup}
+              readout={octaveReadout}
+              readoutAriaLabel={`Drone octave: ${octaveReadout}`}
+            >
+              <PartModuleControlButton
+                aria-label={`Shift drone down one octave. Current octave: ${octaveReadout}`}
                 icon={<WavesArrowDown />}
                 onPress={shiftOctaveDown}
                 unavailable={!canShiftOctaveDown}
               />
               <PartModuleControlButton
-                aria-label="Stop all active drone notes"
-                icon={<Square />}
-                onPress={stopAll}
-                unavailable={!hasActiveNotes}
-              />
-              <PartModuleControlButton
-                aria-label={`Shift drone up one octave. Current octave offset: ${octaveOffsetLabel}`}
+                aria-label={`Shift drone up one octave. Current octave: ${octaveReadout}`}
                 icon={<WavesArrowUp />}
                 onPress={shiftOctaveUp}
                 unavailable={!canShiftOctaveUp}
