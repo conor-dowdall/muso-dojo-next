@@ -27,10 +27,6 @@
   -webkit-user-select: none;
 }
 
-.partModuleFrame:focus {
-  outline: none;
-}
-
 .partModuleFrame[data-width-mode="fill"],
 .partModuleFrame[data-width-mode="scroll"] {
   width: 100%;

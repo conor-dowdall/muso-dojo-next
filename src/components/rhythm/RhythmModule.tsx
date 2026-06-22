@@ -263,7 +263,7 @@ export function RhythmModule({
     rhythm,
     tempoBpm,
   });
-  const handleTransportKeyDown = useScopedTransportShortcuts({
+  const transportShortcuts = useScopedTransportShortcuts({
     isActive: playback.isActive,
     onStop: playback.stop,
   });
@@ -325,7 +325,8 @@ export function RhythmModule({
         bodyClassName={controlStyles.body}
         className={`${styles.frame} ${controlStyles.surface}`}
         headerPrimary={<InstrumentIdentity label="Rhythm" />}
-        onKeyDownCapture={handleTransportKeyDown}
+        onKeyDownCapture={transportShortcuts.onKeyDownCapture}
+        onPointerDownCapture={transportShortcuts.onPointerDownCapture}
         showHeader={showHeader}
         style={RHYTHM_FRAME_STYLE}
         headerActions={

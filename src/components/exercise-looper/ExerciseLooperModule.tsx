@@ -189,7 +189,7 @@ export function ExerciseLooperModule({
     subdivision,
     tempoBpm,
   });
-  const handleTransportKeyDown = useScopedTransportShortcuts({
+  const transportShortcuts = useScopedTransportShortcuts({
     isActive: playback.isActive,
     onStop: playback.stop,
   });
@@ -352,7 +352,8 @@ export function ExerciseLooperModule({
         bodyClassName={controlStyles.body}
         className={`${styles.frame} ${controlStyles.surface}`}
         headerPrimary={<InstrumentIdentity label="Looper" />}
-        onKeyDownCapture={handleTransportKeyDown}
+        onKeyDownCapture={transportShortcuts.onKeyDownCapture}
+        onPointerDownCapture={transportShortcuts.onPointerDownCapture}
         showHeader={showHeader}
         style={
           {

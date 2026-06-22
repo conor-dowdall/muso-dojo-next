@@ -158,7 +158,7 @@ export function DroneModule({
       notes: droneNotes.notes,
     });
   const hasActiveNotes = activeIntervals.length > 0;
-  const handleTransportKeyDown = useScopedTransportShortcuts({
+  const transportShortcuts = useScopedTransportShortcuts({
     isActive: hasActiveNotes,
     onStop: stopAll,
   });
@@ -242,7 +242,8 @@ export function DroneModule({
         bodyClassName={controlStyles.body}
         className={`${styles.droneFrame} ${controlStyles.surface}`}
         headerPrimary={<InstrumentIdentity label="Drone" />}
-        onKeyDownCapture={handleTransportKeyDown}
+        onKeyDownCapture={transportShortcuts.onKeyDownCapture}
+        onPointerDownCapture={transportShortcuts.onPointerDownCapture}
         headerActions={
           showHeader ? (
             <PartModuleHeaderActions
