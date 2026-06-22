@@ -1,12 +1,37 @@
 import {
   type CSSProperties,
   type KeyboardEventHandler,
+  type PointerEventHandler,
   type ReactNode,
 } from "react";
 import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type InstrumentWidthMode } from "@/types/instrument-layout";
 import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 import styles from "./PartModuleFrame.module.css";
+
+const interactiveShortcutTargetSelector = [
+  "a[href]",
+  "button",
+  "input",
+  "select",
+  "summary",
+  "textarea",
+  "[contenteditable]",
+  '[role="button"]',
+  '[role="checkbox"]',
+  '[role="combobox"]',
+  '[role="link"]',
+  '[role="listbox"]',
+  '[role="menuitem"]',
+  '[role="radio"]',
+  '[role="searchbox"]',
+  '[role="slider"]',
+  '[role="spinbutton"]',
+  '[role="switch"]',
+  '[role="tab"]',
+  '[role="textbox"]',
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
 
 interface PartModuleFrameProps {
   bodyClassName?: string;
@@ -17,9 +42,16 @@ interface PartModuleFrameProps {
   headerPrimary?: ReactNode;
   noteEmphasis?: InstrumentNoteEmphasis;
   onKeyDownCapture?: KeyboardEventHandler<HTMLDivElement>;
+  onPointerDownCapture?: PointerEventHandler<HTMLDivElement>;
   showHeader?: boolean;
   style?: CSSProperties;
   widthMode?: InstrumentWidthMode;
+}
+
+function isInteractiveShortcutTarget(target: EventTarget | null) {
+  return target instanceof Element
+    ? target.closest(interactiveShortcutTargetSelector) !== null
+    : false;
 }
 
 /**
@@ -36,10 +68,26 @@ export function PartModuleFrame({
   headerPrimary,
   noteEmphasis,
   onKeyDownCapture,
+  onPointerDownCapture,
   showHeader = true,
   style,
   widthMode = "auto",
 }: PartModuleFrameProps) {
+  const handlePointerDownCapture: PointerEventHandler<HTMLDivElement> = (
+    event,
+  ) => {
+    onPointerDownCapture?.(event);
+
+    if (
+      onKeyDownCapture &&
+      !event.defaultPrevented &&
+      event.button === 0 &&
+      !isInteractiveShortcutTarget(event.target)
+    ) {
+      event.currentTarget.focus({ preventScroll: true });
+    }
+  };
+
   return (
     <div
       className={`${styles.partModuleFrame} ${className}`}
@@ -47,6 +95,8 @@ export function PartModuleFrame({
       data-width-mode={widthMode}
       data-note-emphasis={noteEmphasis}
       onKeyDownCapture={onKeyDownCapture}
+      onPointerDownCapture={handlePointerDownCapture}
+      tabIndex={onKeyDownCapture ? -1 : undefined}
     >
       {showHeader && (headerPrimary || headerActions) ? (
         <ControlHeader
