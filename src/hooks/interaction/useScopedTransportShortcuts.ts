@@ -34,6 +34,7 @@ interface TransportKeyEvent {
   key?: string;
   metaKey: boolean;
   preventDefault: () => void;
+  shiftKey: boolean;
   stopPropagation: () => void;
   target: EventTarget | null;
 }
@@ -44,6 +45,12 @@ interface ScopedTransportShortcutHandlers {
 }
 
 let activeTransportShortcutScope: symbol | null = null;
+
+function clearShortcutScope(scopeId: symbol) {
+  if (activeTransportShortcutScope === scopeId) {
+    activeTransportShortcutScope = null;
+  }
+}
 
 function isSpaceKey(event: TransportKeyEvent) {
   return event.key === " " || event.code === "Space";
@@ -81,6 +88,7 @@ function shouldIgnoreTransportShortcut(event: TransportKeyEvent) {
     event.altKey ||
     event.ctrlKey ||
     event.metaKey ||
+    event.shiftKey ||
     isEditableShortcutTarget(event.target)
   );
 }
@@ -114,14 +122,19 @@ export function useScopedTransportShortcuts({
     activeTransportShortcutScope = scopeId.current;
   }, []);
 
+  const releaseShortcutScope = useCallback(() => {
+    clearShortcutScope(scopeId.current);
+  }, []);
+
   const stopFromShortcut = useCallback(
     (event: TransportKeyEvent, root: HTMLElement | null) => {
       event.preventDefault();
       event.stopPropagation();
       onStopRef.current();
       blurFocusedShortcutTarget(root);
+      releaseShortcutScope();
     },
-    [],
+    [releaseShortcutScope],
   );
 
   const onKeyDownCapture = useCallback(
@@ -149,12 +162,6 @@ export function useScopedTransportShortcuts({
   useEffect(() => {
     const currentScopeId = scopeId.current;
 
-    const clearCurrentScope = () => {
-      if (activeTransportShortcutScope === currentScopeId) {
-        activeTransportShortcutScope = null;
-      }
-    };
-
     const handleWindowKeyDown = (event: globalThis.KeyboardEvent) => {
       if (activeTransportShortcutScope !== currentScopeId) {
         return;
@@ -168,7 +175,7 @@ export function useScopedTransportShortcuts({
     };
 
     const handleWindowPointerDown = () => {
-      clearCurrentScope();
+      clearShortcutScope(currentScopeId);
     };
 
     const handleWindowFocusIn = (event: FocusEvent) => {
@@ -179,7 +186,7 @@ export function useScopedTransportShortcuts({
       const root = scopeRoot.current;
 
       if (root && isNodeTarget(event.target) && !root.contains(event.target)) {
-        clearCurrentScope();
+        clearShortcutScope(currentScopeId);
       }
     };
 
@@ -191,7 +198,7 @@ export function useScopedTransportShortcuts({
       window.removeEventListener("keydown", handleWindowKeyDown);
       window.removeEventListener("pointerdown", handleWindowPointerDown, true);
       window.removeEventListener("focusin", handleWindowFocusIn);
-      clearCurrentScope();
+      clearShortcutScope(currentScopeId);
     };
   }, [stopFromShortcut]);
 

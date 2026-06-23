@@ -41,6 +41,7 @@ import styles from "./DroneModule.module.css";
 
 interface DroneModuleProps {
   audioPresetId?: AudioPresetId;
+  moduleId: string;
   noteCount?: number;
   noteCollectionKey?: NoteCollectionKey;
   octaveOffset?: number;
@@ -57,6 +58,7 @@ interface DroneModuleProps {
 
 export function DroneModule({
   audioPresetId: controlledAudioPresetId,
+  moduleId,
   noteCount: controlledNoteCount,
   noteCollectionKey,
   octaveOffset: controlledOctaveOffset,
@@ -155,6 +157,7 @@ export function DroneModule({
   const { activeIntervals, isNoteActive, stopAll, toggleNote } =
     useDroneNotePlayback({
       audioPresetId,
+      id: moduleId,
       notes: droneNotes.notes,
     });
   const hasActiveNotes = activeIntervals.length > 0;

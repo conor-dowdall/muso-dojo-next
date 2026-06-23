@@ -15,9 +15,11 @@ import {
   getDroneNoteId,
   type DroneNotePlaybackNote,
 } from "./droneNotePlaybackController";
+import { dronePlaybackCoordinator } from "./dronePlaybackCoordinator";
 
 interface UseDroneNotePlaybackOptions {
   audioPresetId?: AudioPresetId;
+  id: string;
   notes: readonly DroneNotePlaybackNote[];
 }
 
@@ -38,6 +40,7 @@ function createDroneRequest(
 
 export function useDroneNotePlayback({
   audioPresetId,
+  id,
   notes,
 }: UseDroneNotePlaybackOptions) {
   const resolvedAudioPresetId =
@@ -86,8 +89,26 @@ export function useDroneNotePlayback({
   }, [controller, playbackNotes]);
 
   useEffect(
-    () => musoAudioEngine.subscribeToStopAll(() => controller.reset()),
-    [controller],
+    () =>
+      dronePlaybackCoordinator.register(id, {
+        stopAll: () => controller.stopAll(),
+      }),
+    [controller, id],
+  );
+
+  useEffect(() => {
+    if (activeNoteIds.length === 0) {
+      dronePlaybackCoordinator.clear(id);
+    }
+  }, [activeNoteIds.length, id]);
+
+  useEffect(
+    () =>
+      musoAudioEngine.subscribeToStopAll(() => {
+        controller.reset();
+        dronePlaybackCoordinator.clear(id);
+      }),
+    [controller, id],
   );
 
   useEffect(() => {
@@ -102,15 +123,26 @@ export function useDroneNotePlayback({
     activeIntervals,
     isNoteActive: (note: DroneNotePlaybackNote) =>
       activeNoteIds.includes(getDroneNoteId(note)),
-    stopAll: () => controller.stopAll(),
+    stopAll: () => {
+      controller.stopAll();
+      dronePlaybackCoordinator.clear(id);
+    },
     toggleNote: (note: DroneNotePlaybackNote) => {
-      if (!activeNoteIds.includes(getDroneNoteId(note))) {
+      const noteId = getDroneNoteId(note);
+      const startsNote = !activeNoteIds.includes(noteId);
+
+      if (startsNote) {
         void ensureAudioReady();
+        dronePlaybackCoordinator.activate(id);
       }
 
       controller.toggleNote(
         createDronePlaybackNote(note, resolvedAudioPresetId),
       );
+
+      if (activeNoteIds.length === 1 && !startsNote) {
+        dronePlaybackCoordinator.clear(id);
+      }
     },
   };
 }

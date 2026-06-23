@@ -3,14 +3,25 @@
 import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import { useSyncExternalStore } from "react";
 import {
+  beatTransportCoordinator,
   ensureAudioReady,
   isRhythmPlaybackActive,
   rhythmPlaybackCoordinator,
 } from "@/audio";
 import {
+  getRhythmSelectionRecipe,
   getRhythmSelectionPattern,
+  type RhythmRecipe,
   type RhythmSelection,
 } from "@/utils/rhythm/rhythmConfig";
+
+function rhythmResetFieldsAreEqual(left: RhythmRecipe, right: RhythmRecipe) {
+  return (
+    left.beats === right.beats &&
+    left.grouping === right.grouping &&
+    left.groove === right.groove
+  );
+}
 
 export function useRhythmPlayback({
   id,
@@ -26,6 +37,7 @@ export function useRhythmPlayback({
     rhythmPlaybackCoordinator.getSnapshot,
     rhythmPlaybackCoordinator.getSnapshot,
   );
+  const recipe = useMemo(() => getRhythmSelectionRecipe(rhythm), [rhythm]);
   const pattern = useMemo(() => getRhythmSelectionPattern(rhythm), [rhythm]);
   const request = useMemo(
     () => ({
@@ -36,32 +48,44 @@ export function useRhythmPlayback({
     [id, pattern, tempoBpm],
   );
   const submittedRequest = useRef(request);
+  const submittedRecipe = useRef(recipe);
   const isActive = isRhythmPlaybackActive(snapshot, id);
   const isPlaying = snapshot.playing && snapshot.activeId === id;
   const start = useCallback(() => {
     void ensureAudioReady();
     submittedRequest.current = request;
-    void rhythmPlaybackCoordinator.start(request);
-  }, [request]);
+    submittedRecipe.current = recipe;
+    void beatTransportCoordinator.startRhythm(request);
+  }, [recipe, request]);
   const stop = useCallback(() => {
-    rhythmPlaybackCoordinator.stop(id);
+    beatTransportCoordinator.stopRhythm(id);
   }, [id]);
 
   useLayoutEffect(() => {
     const submitted = submittedRequest.current;
 
-    if (
-      !isPlaying ||
-      (submitted.id === request.id &&
-        submitted.pattern === request.pattern &&
-        submitted.tempoBpm === request.tempoBpm)
-    ) {
+    if (!isPlaying) {
       return;
     }
 
+    if (
+      submitted.id !== request.id ||
+      submitted.tempoBpm !== request.tempoBpm ||
+      !rhythmResetFieldsAreEqual(submittedRecipe.current, recipe)
+    ) {
+      submittedRequest.current = request;
+      submittedRecipe.current = recipe;
+      void beatTransportCoordinator.startRhythm(request);
+      return;
+    }
+
+    if (submitted.pattern !== request.pattern) {
+      rhythmPlaybackCoordinator.setPattern(id, request.pattern);
+    }
+
     submittedRequest.current = request;
-    void rhythmPlaybackCoordinator.start(request);
-  }, [isPlaying, request]);
+    submittedRecipe.current = recipe;
+  }, [id, isPlaying, recipe, request]);
 
   return {
     isActive,

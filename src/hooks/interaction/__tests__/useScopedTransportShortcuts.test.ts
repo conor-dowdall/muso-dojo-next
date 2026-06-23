@@ -14,6 +14,7 @@ function createKeyEvent(
     key: " ",
     metaKey: false,
     preventDefault: () => undefined,
+    shiftKey: false,
     stopPropagation: () => undefined,
     target: null,
     ...overrides,
@@ -40,6 +41,12 @@ describe("shouldHandleScopedTransportShortcut", () => {
     expect(
       shouldHandleScopedTransportShortcut(
         createKeyEvent({ metaKey: true }),
+        true,
+      ),
+    ).toBe(false);
+    expect(
+      shouldHandleScopedTransportShortcut(
+        createKeyEvent({ shiftKey: true }),
         true,
       ),
     ).toBe(false);

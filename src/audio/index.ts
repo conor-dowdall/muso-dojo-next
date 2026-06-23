@@ -15,6 +15,10 @@ export {
   type LookaheadSchedulerOptions,
 } from "./lookaheadScheduler";
 export {
+  beatTransportCoordinator,
+  BeatTransportCoordinator,
+} from "./beatTransportCoordinator";
+export {
   exercisePlaybackRestartRequestsAreEqual,
   exercisePlaybackCoordinator,
   isExercisePlaybackActive,

@@ -59,6 +59,7 @@ export function DronePartModuleView({
   return (
     <DroneModule
       audioPresetId={model.audioPresetId}
+      moduleId={moduleId}
       noteCount={model.noteCount}
       noteCollectionKey={model.noteCollectionKey}
       octaveOffset={model.octaveOffset}

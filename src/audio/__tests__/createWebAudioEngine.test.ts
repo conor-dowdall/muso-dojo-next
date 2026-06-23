@@ -249,6 +249,7 @@ function installMockAudioWindow({
 describe("createWebAudioEngine", () => {
   afterEach(() => {
     clearSamplePackAssetCacheForTests();
+    vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
@@ -479,6 +480,79 @@ describe("createWebAudioEngine", () => {
     expect(
       MockAudioContext.bufferSourceStopCalls.some(
         (call) => call.time !== undefined && call.time <= 2.25,
+      ),
+    ).toBe(true);
+  });
+
+  it("can schedule grouped playback cancellation at a future audio time", async () => {
+    vi.useFakeTimers();
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    MockAudioContext.lastInstance!.currentTime = 1;
+    const group = engine.createPlaybackGroup();
+    const voiceHandle = engine.scheduleNote({
+      durationSeconds: 1,
+      group,
+      midiNote: 60,
+      startTime: 1.1,
+      use: "exercise",
+    });
+    const clickScheduled = engine.scheduleMetronomeClick({
+      group,
+      startTime: 1.2,
+    });
+
+    engine.cancelPlaybackGroup(group, { atTime: 1.5, releaseSeconds: 0.02 });
+
+    expect(voiceHandle).toBeDefined();
+    expect(clickScheduled).toBe(true);
+    expect(
+      MockAudioContext.bufferSourceStopCalls.some(
+        (call) => call.time !== undefined && call.time >= 1.5,
+      ),
+    ).toBe(true);
+    expect(
+      engine.scheduleNote({
+        durationSeconds: 1,
+        group,
+        midiNote: 60,
+        startTime: 1.6,
+        use: "exercise",
+      }),
+    ).toBeUndefined();
+    expect(
+      engine.scheduleMetronomeClick({
+        group,
+        startTime: 1.6,
+      }),
+    ).toBe(false);
+  });
+
+  it("lets an immediate group cancellation preempt a scheduled future cancellation", async () => {
+    vi.useFakeTimers();
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    MockAudioContext.lastInstance!.currentTime = 1;
+    const group = engine.createPlaybackGroup();
+
+    engine.scheduleNote({
+      durationSeconds: 1,
+      group,
+      midiNote: 60,
+      startTime: 1.1,
+      use: "exercise",
+    });
+    engine.cancelPlaybackGroup(group, { atTime: 1.5, releaseSeconds: 0.02 });
+    MockAudioContext.lastInstance!.currentTime = 1.25;
+    engine.cancelPlaybackGroup(group);
+
+    expect(
+      MockAudioContext.bufferSourceStopCalls.some(
+        (call) => call.time !== undefined && call.time <= 1.29,
       ),
     ).toBe(true);
   });

@@ -11,6 +11,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import {
+  beatTransportCoordinator,
   ExerciseAuditionController,
   ensureAudioReady,
   exercisePlaybackRestartRequestsAreEqual,
@@ -178,7 +179,7 @@ export function useExerciseLooperPlayback({
       });
       void ensureAudioReady();
       submittedRequest.current = nextRequest;
-      void exercisePlaybackCoordinator.start(nextRequest);
+      void beatTransportCoordinator.startExercise(nextRequest);
     },
     [auditionController, request],
   );
@@ -194,7 +195,7 @@ export function useExerciseLooperPlayback({
   );
   const stop = useCallback(() => {
     flushSync(() => setActiveStepIndex(undefined));
-    exercisePlaybackCoordinator.stop(id);
+    beatTransportCoordinator.stopExercise(id);
   }, [id]);
   const auditionNotes = useCallback(
     (notes: readonly ExerciseAuditionNote[]) => {
@@ -223,7 +224,7 @@ export function useExerciseLooperPlayback({
     ) {
       setActiveStepIndex(undefined);
       submittedRequest.current = request;
-      void exercisePlaybackCoordinator.start(request);
+      void beatTransportCoordinator.startExercise(request);
     }
   }, [isActive, request]);
 
@@ -233,9 +234,8 @@ export function useExerciseLooperPlayback({
     }
 
     exercisePlaybackCoordinator.setMetronomeEnabled(id, metronomeEnabled);
-    exercisePlaybackCoordinator.setTempo(id, tempoBpm);
     submittedRequest.current = request;
-  }, [id, isPlaying, metronomeEnabled, request, tempoBpm]);
+  }, [id, isPlaying, metronomeEnabled, request]);
 
   useEffect(() => {
     if (!isPlaying || document.visibilityState === "hidden") {
@@ -279,7 +279,7 @@ export function useExerciseLooperPlayback({
   useEffect(
     () => () => {
       auditionController.dispose();
-      exercisePlaybackCoordinator.stop(id);
+      beatTransportCoordinator.stopExercise(id);
     },
     [auditionController, id],
   );

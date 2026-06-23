@@ -85,7 +85,7 @@ export interface DroneRequest extends Omit<BaseAudioRequest, "velocity"> {
 export interface AudioEngine {
   cancelPlaybackGroup: (
     handle: PlaybackGroupHandle,
-    options?: { releaseSeconds?: number },
+    options?: { atTime?: number; releaseSeconds?: number },
   ) => void;
   createPlaybackGroup: () => PlaybackGroupHandle;
   getCurrentTime: () => number | undefined;

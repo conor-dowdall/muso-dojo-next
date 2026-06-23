@@ -21,7 +21,7 @@ export const DEFAULT_DRONE_RELEASE_SECONDS = 0.22;
 
 export interface ActiveSampleVoice {
   disconnect: () => void;
-  stop: (releaseSeconds?: number) => void;
+  stop: (releaseSeconds?: number, atTime?: number) => void;
 }
 
 export interface ActiveDroneVoice {
@@ -195,7 +195,7 @@ export function createSampleVoice({
     velocity,
   });
   let disconnected = false;
-  let cancelStopRequested = false;
+  let cancelStartTime: number | undefined;
   const getScheduledGain = (time: number) => {
     if (time <= startAt) {
       return MIN_GAIN_VALUE;
@@ -265,20 +265,20 @@ export function createSampleVoice({
     }
   };
 
-  const stop = (nextReleaseSeconds = releaseSeconds) => {
-    if (cancelStopRequested) {
+  const stop = (nextReleaseSeconds = releaseSeconds, atTime?: number) => {
+    const stopStartTime = Math.max(context.currentTime, atTime ?? startAt);
+    const stopTime = stopStartTime + Math.max(0, nextReleaseSeconds);
+
+    if (cancelStartTime !== undefined && stopStartTime >= cancelStartTime) {
       return;
     }
 
-    cancelStopRequested = true;
-    const stopStartTime = Math.max(context.currentTime, startAt);
-    const stopTime = stopStartTime + Math.max(0, nextReleaseSeconds);
-
+    cancelStartTime = stopStartTime;
     holdGainAtTime(gain.gain, stopStartTime, getScheduledGain(stopStartTime));
     gain.gain.linearRampToValueAtTime(MIN_GAIN_VALUE, stopTime);
 
     try {
-      source.stop(stopTime + 0.01);
+      source.stop(Math.max(startAt, stopTime + 0.01));
     } catch {
       onEnded();
     }

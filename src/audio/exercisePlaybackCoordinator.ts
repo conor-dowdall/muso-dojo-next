@@ -16,6 +16,7 @@ import { type ExerciseCountInBeats } from "@/types/session";
 const START_LOOKAHEAD_SECONDS = 0.08;
 const NOTE_GATE_RATIO = 0.9;
 const STOP_RELEASE_SECONDS = 0.08;
+const HANDOFF_COMMIT_LEAD_SECONDS = AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS;
 
 export interface ExercisePlaybackEvent {
   durationBeats: number;
@@ -41,8 +42,14 @@ export interface ExercisePlaybackSnapshot {
   events: readonly ExercisePlaybackEvent[];
   originTime?: number;
   pendingId?: string;
+  pendingOriginTime?: number;
   playing: boolean;
   secondsPerBeat?: number;
+}
+
+export interface ExercisePlaybackStartOptions {
+  handoff?: boolean;
+  originTime?: number;
 }
 
 interface ActiveExercisePlayback {
@@ -53,6 +60,13 @@ interface ActiveExercisePlayback {
   noteScheduler: LookaheadScheduler;
   request: ExercisePlaybackRequest;
   snapshot: ExercisePlaybackSnapshot;
+}
+
+interface PendingExerciseHandoff {
+  playback: ActiveExercisePlayback;
+  revision: number;
+  snapshot: ExercisePlaybackSnapshot;
+  timer: ReturnType<typeof globalThis.setTimeout>;
 }
 
 export type ExercisePlaybackAudioEngine = Pick<
@@ -84,6 +98,7 @@ function withoutPendingStart(
 ): ExercisePlaybackSnapshot {
   const nextSnapshot = { ...snapshot };
   delete nextSnapshot.pendingId;
+  delete nextSnapshot.pendingOriginTime;
   return nextSnapshot;
 }
 
@@ -103,6 +118,7 @@ export function exercisePlaybackRestartRequestsAreEqual(
   return (
     left.id === right.id &&
     left.presetId === right.presetId &&
+    normalizeTempo(left.tempoBpm) === normalizeTempo(right.tempoBpm) &&
     left.events.length === right.events.length &&
     left.events.every((event, index) => {
       const other = right.events[index];
@@ -144,7 +160,9 @@ function toSchedulerEvents(
 export class ExercisePlaybackCoordinator {
   private active: ActiveExercisePlayback | undefined;
   private listeners = new Set<() => void>();
+  private pendingHandoff: PendingExerciseHandoff | undefined;
   private pendingStartId: string | undefined;
+  private pendingStartRequest: ExercisePlaybackRequest | undefined;
   private snapshot: ExercisePlaybackSnapshot = idleSnapshot;
   private startRevision = 0;
 
@@ -161,11 +179,13 @@ export class ExercisePlaybackCoordinator {
   }
 
   private reset() {
+    this.cancelPendingHandoff();
     if (this.active) {
       this.stopActivePlayback(this.active);
     }
     this.active = undefined;
     this.pendingStartId = undefined;
+    this.pendingStartRequest = undefined;
     this.snapshot = idleSnapshot;
     this.startRevision += 1;
     this.emit();
@@ -173,9 +193,15 @@ export class ExercisePlaybackCoordinator {
 
   getSnapshot = () => this.snapshot;
 
+  getActiveRequest = () => this.active?.request;
+
+  getPendingRequest = () => this.pendingStartRequest;
+
+  getCurrentTime = () => this.audioEngine.getCurrentTime();
+
   private cancelGroup(
     group: PlaybackGroupHandle | undefined,
-    options?: { releaseSeconds?: number },
+    options?: { atTime?: number; releaseSeconds?: number },
   ) {
     if (group) {
       this.audioEngine.cancelPlaybackGroup(group, options);
@@ -184,13 +210,58 @@ export class ExercisePlaybackCoordinator {
 
   private stopActivePlayback(
     active: ActiveExercisePlayback,
-    options?: { releaseSeconds?: number },
+    options?: { atTime?: number; releaseSeconds?: number },
   ) {
     active.noteScheduler.stop();
     active.metronomeScheduler?.stop();
-    this.cancelGroup(active.countInGroup);
-    this.cancelGroup(active.metronomeGroup);
+    this.cancelGroup(active.countInGroup, options);
+    this.cancelGroup(active.metronomeGroup, options);
     this.cancelGroup(active.noteGroup, options);
+  }
+
+  private cancelPendingHandoff() {
+    if (!this.pendingHandoff) {
+      return;
+    }
+
+    globalThis.clearTimeout(this.pendingHandoff.timer);
+    this.stopActivePlayback(this.pendingHandoff.playback);
+    this.pendingHandoff = undefined;
+  }
+
+  private commitPendingHandoff(revision: number) {
+    const pendingHandoff = this.pendingHandoff;
+
+    if (!pendingHandoff || pendingHandoff.revision !== revision) {
+      return;
+    }
+
+    if (this.active) {
+      this.stopActivePlayback(this.active, {
+        atTime: pendingHandoff.snapshot.originTime,
+        releaseSeconds: STOP_RELEASE_SECONDS,
+      });
+    }
+
+    this.active = pendingHandoff.playback;
+    this.pendingHandoff = undefined;
+    this.pendingStartId = undefined;
+    this.pendingStartRequest = undefined;
+    this.snapshot = pendingHandoff.snapshot;
+    this.emit();
+  }
+
+  cancelPendingStart() {
+    if (this.pendingStartId === undefined) {
+      return;
+    }
+
+    this.cancelPendingHandoff();
+    this.pendingStartId = undefined;
+    this.pendingStartRequest = undefined;
+    this.startRevision += 1;
+    this.snapshot = withoutPendingStart(this.snapshot);
+    this.emit();
   }
 
   private createNoteScheduler({
@@ -305,12 +376,20 @@ export class ExercisePlaybackCoordinator {
     return () => this.listeners.delete(listener);
   };
 
-  async start(request: ExercisePlaybackRequest) {
+  async start(
+    request: ExercisePlaybackRequest,
+    options: ExercisePlaybackStartOptions = {},
+  ) {
     const revision = ++this.startRevision;
+    this.cancelPendingHandoff();
     this.pendingStartId = request.id;
+    this.pendingStartRequest = request;
     this.snapshot = {
       ...this.snapshot,
       pendingId: request.id,
+      ...(options.originTime === undefined
+        ? {}
+        : { pendingOriginTime: options.originTime }),
     };
     this.emit();
     const prepared = await this.audioEngine.prime();
@@ -323,6 +402,7 @@ export class ExercisePlaybackCoordinator {
     ) {
       if (revision === this.startRevision) {
         this.pendingStartId = undefined;
+        this.pendingStartRequest = undefined;
         this.snapshot = withoutPendingStart(this.snapshot);
         this.emit();
       }
@@ -333,17 +413,28 @@ export class ExercisePlaybackCoordinator {
 
     if (request.events.length === 0 || cycleDuration <= 0) {
       this.pendingStartId = undefined;
+      this.pendingStartRequest = undefined;
       this.snapshot = withoutPendingStart(this.snapshot);
       this.emit();
       return false;
     }
 
     const secondsPerBeat = 60 / normalizeTempo(request.tempoBpm);
-    const countInStartTime = currentTime + START_LOOKAHEAD_SECONDS;
-    const originTime = countInStartTime + request.countInBeats * secondsPerBeat;
+    const countInStartTime =
+      options.originTime === undefined
+        ? currentTime + START_LOOKAHEAD_SECONDS
+        : options.originTime - request.countInBeats * secondsPerBeat;
+    const originTime =
+      options.originTime ??
+      countInStartTime + request.countInBeats * secondsPerBeat;
 
     const previous = this.active;
-    if (previous) {
+    const shouldHandoff =
+      options.handoff === true &&
+      previous !== undefined &&
+      originTime > currentTime + HANDOFF_COMMIT_LEAD_SECONDS;
+
+    if (previous && !shouldHandoff) {
       this.stopActivePlayback(previous);
     }
 
@@ -360,6 +451,12 @@ export class ExercisePlaybackCoordinator {
       this.scheduleCountIn({
         countInBeats: request.countInBeats,
         countInStartTime,
+        ...(options.originTime === undefined
+          ? {}
+          : {
+              earliestStartTime:
+                currentTime + AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS,
+            }),
         group: countInGroup,
         secondsPerBeat,
       });
@@ -387,7 +484,7 @@ export class ExercisePlaybackCoordinator {
       secondsPerBeat,
     };
 
-    this.active = {
+    const nextActive = {
       countInGroup,
       metronomeGroup,
       metronomeScheduler,
@@ -396,10 +493,36 @@ export class ExercisePlaybackCoordinator {
       request,
       snapshot,
     };
-    this.pendingStartId = undefined;
-    this.snapshot = snapshot;
     noteScheduler.start(originTime);
     metronomeScheduler?.start(originTime);
+    if (shouldHandoff) {
+      const commitDelayMilliseconds = Math.max(
+        0,
+        (originTime - currentTime - HANDOFF_COMMIT_LEAD_SECONDS) * 1000,
+      );
+
+      this.pendingHandoff = {
+        playback: nextActive,
+        revision,
+        snapshot,
+        timer: globalThis.setTimeout(
+          () => this.commitPendingHandoff(revision),
+          commitDelayMilliseconds,
+        ),
+      };
+      this.snapshot = {
+        ...previous.snapshot,
+        pendingId: request.id,
+        pendingOriginTime: originTime,
+      };
+      this.emit();
+      return true;
+    }
+
+    this.active = nextActive;
+    this.pendingStartId = undefined;
+    this.pendingStartRequest = undefined;
+    this.snapshot = snapshot;
     this.emit();
     return true;
   }
@@ -452,133 +575,8 @@ export class ExercisePlaybackCoordinator {
     return true;
   }
 
-  setTempo(id: string, tempoBpm: number) {
-    const active = this.active;
-    const currentTime = this.audioEngine.getCurrentTime();
-
-    if (
-      !active ||
-      active.snapshot.activeId !== id ||
-      currentTime === undefined
-    ) {
-      return false;
-    }
-
-    const nextTempoBpm = normalizeTempo(tempoBpm);
-    const currentTempoBpm = normalizeTempo(active.request.tempoBpm);
-
-    if (nextTempoBpm === currentTempoBpm) {
-      return true;
-    }
-
-    const { countInBeats, countInStartTime, originTime, secondsPerBeat } =
-      active.snapshot;
-
-    if (originTime === undefined || secondsPerBeat === undefined) {
-      return false;
-    }
-
-    const nextSecondsPerBeat = 60 / nextTempoBpm;
-    let nextCountInStartTime = countInStartTime;
-    let nextOriginTime = originTime;
-
-    if (
-      countInBeats !== undefined &&
-      countInBeats > 0 &&
-      countInStartTime !== undefined &&
-      currentTime < originTime
-    ) {
-      const countInPositionBeats = Math.max(
-        0,
-        (currentTime - countInStartTime) / secondsPerBeat,
-      );
-      nextCountInStartTime =
-        currentTime - countInPositionBeats * nextSecondsPerBeat;
-      nextOriginTime = nextCountInStartTime + countInBeats * nextSecondsPerBeat;
-    } else {
-      const positionBeats = Math.max(
-        0,
-        (currentTime - originTime) / secondsPerBeat,
-      );
-      nextOriginTime = currentTime - positionBeats * nextSecondsPerBeat;
-    }
-
-    active.noteScheduler.stop();
-    active.metronomeScheduler?.stop();
-    this.cancelGroup(active.countInGroup);
-    this.cancelGroup(active.metronomeGroup);
-    this.cancelGroup(active.noteGroup, {
-      releaseSeconds: STOP_RELEASE_SECONDS,
-    });
-
-    const nextRequest = {
-      ...active.request,
-      tempoBpm: nextTempoBpm,
-    };
-    const continuesCountIn =
-      countInBeats !== undefined &&
-      countInBeats > 0 &&
-      nextCountInStartTime !== undefined &&
-      currentTime < originTime;
-    const nextCountInGroup = continuesCountIn
-      ? this.audioEngine.createPlaybackGroup()
-      : undefined;
-    const nextNoteGroup = this.audioEngine.createPlaybackGroup();
-    const nextMetronomeGroup = active.request.metronomeEnabled
-      ? this.audioEngine.createPlaybackGroup()
-      : undefined;
-
-    if (
-      nextCountInGroup &&
-      nextCountInStartTime !== undefined &&
-      countInBeats !== undefined
-    ) {
-      this.scheduleCountIn({
-        countInBeats,
-        countInStartTime: nextCountInStartTime,
-        earliestStartTime: currentTime + AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS,
-        group: nextCountInGroup,
-        secondsPerBeat: nextSecondsPerBeat,
-      });
-    }
-
-    const nextNoteScheduler = this.createNoteScheduler({
-      group: nextNoteGroup,
-      request: nextRequest,
-      secondsPerBeat: nextSecondsPerBeat,
-    });
-    const nextMetronomeScheduler = nextMetronomeGroup
-      ? this.createMetronomeClickScheduler({
-          group: nextMetronomeGroup,
-          secondsPerBeat: nextSecondsPerBeat,
-        })
-      : undefined;
-
-    active.countInGroup = nextCountInGroup;
-    active.metronomeGroup = nextMetronomeGroup;
-    active.metronomeScheduler = nextMetronomeScheduler;
-    active.noteGroup = nextNoteGroup;
-    active.noteScheduler = nextNoteScheduler;
-    active.request = nextRequest;
-    active.snapshot = {
-      ...active.snapshot,
-      ...(nextCountInStartTime !== undefined &&
-      countInBeats !== undefined &&
-      countInBeats > 0 &&
-      currentTime < originTime
-        ? { countInStartTime: nextCountInStartTime }
-        : {}),
-      originTime: nextOriginTime,
-      secondsPerBeat: nextSecondsPerBeat,
-    };
-    this.snapshot = active.snapshot;
-    nextNoteScheduler.start(nextOriginTime);
-    nextMetronomeScheduler?.start(nextOriginTime);
-    this.emit();
-    return true;
-  }
-
   stop(id?: string) {
+    const pendingHandoff = this.pendingHandoff;
     const stopsActive =
       this.active !== undefined &&
       (id === undefined || id === this.snapshot.activeId);
@@ -591,7 +589,14 @@ export class ExercisePlaybackCoordinator {
     }
 
     if (stopsPending) {
+      this.cancelPendingHandoff();
       this.pendingStartId = undefined;
+      this.pendingStartRequest = undefined;
+      this.startRevision += 1;
+    } else if (stopsActive && pendingHandoff) {
+      this.cancelPendingHandoff();
+      this.pendingStartId = undefined;
+      this.pendingStartRequest = undefined;
       this.startRevision += 1;
     }
 

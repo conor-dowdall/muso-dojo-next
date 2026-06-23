@@ -36,7 +36,7 @@ function getPercussionRegion(
 export interface ScheduledPercussionHit {
   disconnect: () => void;
   startTime: number;
-  stop: () => void;
+  stop: (atTime?: number) => void;
 }
 
 export function schedulePercussionHit({
@@ -70,7 +70,7 @@ export function schedulePercussionHit({
     Math.min(1.4, velocity) * PERCUSSION_TRIM_GAIN,
   );
   let disconnected = false;
-  let cancellationRequested = false;
+  let cancelStartTime: number | undefined;
 
   source.buffer = loaded.buffer;
   gain.gain.setValueAtTime(hitGain, startTime);
@@ -112,27 +112,37 @@ export function schedulePercussionHit({
   return {
     disconnect,
     startTime,
-    stop: () => {
-      if (cancellationRequested) {
-        return;
-      }
-
-      cancellationRequested = true;
+    stop: (atTime) => {
       try {
-        if (context.currentTime < startTime) {
+        const requestedCancelTime = atTime ?? context.currentTime;
+
+        if (requestedCancelTime <= startTime) {
+          if (cancelStartTime !== undefined && startTime >= cancelStartTime) {
+            return;
+          }
+
+          cancelStartTime = startTime;
           source.stop(startTime);
           return;
         }
 
-        const cancelTime = Math.min(context.currentTime, stopTime);
-        const cancelStopTime = Math.min(
+        const cancelTime = Math.min(
+          Math.max(context.currentTime, requestedCancelTime),
+          stopTime,
+        );
+        const nextCancelStopTime = Math.min(
           stopTime,
           cancelTime + HIT_CANCEL_FADE_OUT_SECONDS,
         );
 
+        if (cancelStartTime !== undefined && cancelTime >= cancelStartTime) {
+          return;
+        }
+
+        cancelStartTime = cancelTime;
         holdGainAtTime(gain.gain, cancelTime, hitGain);
-        gain.gain.linearRampToValueAtTime(MIN_GAIN_VALUE, cancelStopTime);
-        source.stop(cancelStopTime + 0.001);
+        gain.gain.linearRampToValueAtTime(MIN_GAIN_VALUE, nextCancelStopTime);
+        source.stop(nextCancelStopTime + 0.001);
       } catch {
         // The hit may already have stopped.
       }

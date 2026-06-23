@@ -81,7 +81,7 @@
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
   font-weight: var(--font-semibold);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 @container (width < 19rem) {

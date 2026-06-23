@@ -39,13 +39,16 @@ const DEFAULT_AUDIO_USE = "preview" satisfies AudioUse;
 const GROUP_CANCEL_RELEASE_SECONDS = 0.03;
 
 interface PlaybackGroup {
+  cancelAtTime?: number;
+  cancelTimer?: ReturnType<typeof globalThis.setTimeout>;
   hits: Set<ScheduledHit>;
+  releaseSeconds?: number;
   voices: Set<AudioVoiceHandle>;
 }
 
 interface ScheduledHit {
   disconnect: () => void;
-  stop: () => void;
+  stop: (atTime?: number) => void;
 }
 
 interface ActiveVoice extends ActiveSampleVoice {
@@ -197,8 +200,51 @@ export function createWebAudioEngine(): AudioEngine {
   const stopVoice = (
     handle: AudioVoiceHandle,
     releaseSeconds = GROUP_CANCEL_RELEASE_SECONDS,
+    atTime?: number,
   ) => {
-    activeVoices.get(handle)?.stop(releaseSeconds);
+    activeVoices.get(handle)?.stop(releaseSeconds, atTime);
+  };
+
+  const clearPlaybackGroupCancelTimer = (group: PlaybackGroup) => {
+    if (group.cancelTimer === undefined) {
+      return;
+    }
+
+    globalThis.clearTimeout(group.cancelTimer);
+    group.cancelTimer = undefined;
+  };
+
+  const deletePlaybackGroup = (handle: PlaybackGroupHandle) => {
+    const group = playbackGroups.get(handle);
+
+    if (!group) {
+      return;
+    }
+
+    clearPlaybackGroupCancelTimer(group);
+    playbackGroups.delete(handle);
+  };
+
+  const applyScheduledGroupCancelToVoice = (
+    group: PlaybackGroup,
+    voiceHandle: AudioVoiceHandle,
+  ) => {
+    if (group.cancelAtTime === undefined) {
+      return;
+    }
+
+    stopVoice(voiceHandle, group.releaseSeconds, group.cancelAtTime);
+  };
+
+  const applyScheduledGroupCancelToHit = (
+    group: PlaybackGroup,
+    hit: ScheduledHit,
+  ) => {
+    if (group.cancelAtTime === undefined) {
+      return;
+    }
+
+    hit.stop(group.cancelAtTime);
   };
 
   const createManagedSampleVoice = ({
@@ -267,11 +313,38 @@ export function createWebAudioEngine(): AudioEngine {
         return;
       }
 
+      const cancelAtTime = options?.atTime;
+      const releaseSeconds = options?.releaseSeconds;
+
+      if (
+        cancelAtTime !== undefined &&
+        context &&
+        cancelAtTime > context.currentTime
+      ) {
+        if (
+          group.cancelAtTime === undefined ||
+          cancelAtTime < group.cancelAtTime
+        ) {
+          group.cancelAtTime = cancelAtTime;
+          group.releaseSeconds = releaseSeconds;
+        }
+        group.hits.forEach((hit) => applyScheduledGroupCancelToHit(group, hit));
+        group.voices.forEach((voiceHandle) =>
+          applyScheduledGroupCancelToVoice(group, voiceHandle),
+        );
+        clearPlaybackGroupCancelTimer(group);
+        group.cancelTimer = globalThis.setTimeout(
+          () => deletePlaybackGroup(handle),
+          Math.max(0, (group.cancelAtTime - context.currentTime + 0.25) * 1000),
+        );
+        return;
+      }
+
       group.hits.forEach((hit) => hit.stop());
       group.voices.forEach((voiceHandle) =>
-        stopVoice(voiceHandle, options?.releaseSeconds),
+        stopVoice(voiceHandle, releaseSeconds),
       );
-      playbackGroups.delete(handle);
+      deletePlaybackGroup(handle);
     },
     createPlaybackGroup: () => {
       const handle = createPlaybackGroupHandle((nextGroupId += 1));
@@ -357,6 +430,13 @@ export function createWebAudioEngine(): AudioEngine {
         return false;
       }
 
+      if (
+        group.cancelAtTime !== undefined &&
+        request.startTime >= group.cancelAtTime
+      ) {
+        return false;
+      }
+
       const loaded = samplePackLoader.getLoadedSamplePack(
         PERCUSSION_SAMPLE_PACK_ID,
       );
@@ -389,6 +469,7 @@ export function createWebAudioEngine(): AudioEngine {
 
       hitRef.current = hit;
       group.hits.add(hit);
+      applyScheduledGroupCancelToHit(group, hit);
       return true;
     },
     scheduleMetronomeClick: (request: ScheduleMetronomeClickRequest) => {
@@ -400,6 +481,13 @@ export function createWebAudioEngine(): AudioEngine {
       const group = playbackGroups.get(request.group);
 
       if (!group) {
+        return false;
+      }
+
+      if (
+        group.cancelAtTime !== undefined &&
+        request.startTime >= group.cancelAtTime
+      ) {
         return false;
       }
 
@@ -434,6 +522,7 @@ export function createWebAudioEngine(): AudioEngine {
 
       hitRef.current = hit;
       group.hits.add(hit);
+      applyScheduledGroupCancelToHit(group, hit);
       return true;
     },
     scheduleNote: (request: ScheduleNoteRequest) => {
@@ -449,7 +538,14 @@ export function createWebAudioEngine(): AudioEngine {
         return undefined;
       }
 
-      return createManagedSampleVoice({
+      if (
+        group.cancelAtTime !== undefined &&
+        request.startTime >= group.cancelAtTime
+      ) {
+        return undefined;
+      }
+
+      const handle = createManagedSampleVoice({
         audioContext: context,
         concertPitchHz: request.concertPitchHz,
         durationSeconds: request.durationSeconds,
@@ -460,6 +556,12 @@ export function createWebAudioEngine(): AudioEngine {
         use: request.use,
         velocity: request.velocity,
       });
+
+      if (handle) {
+        applyScheduledGroupCancelToVoice(group, handle);
+      }
+
+      return handle;
     },
     subscribeToStopAll: (listener: () => void) => {
       stopAllListeners.add(listener);
@@ -641,11 +743,11 @@ export function createWebAudioEngine(): AudioEngine {
       return true;
     },
     stopAll: () => {
-      playbackGroups.forEach((group) => {
+      Array.from(playbackGroups.entries()).forEach(([groupHandle, group]) => {
         group.hits.forEach((hit) => hit.stop());
-        group.voices.forEach((handle) => stopVoice(handle, 0.02));
+        group.voices.forEach((voiceHandle) => stopVoice(voiceHandle, 0.02));
+        deletePlaybackGroup(groupHandle);
       });
-      playbackGroups.clear();
       activeDrones.forEach((drone) => stopDrone(drone, 0.05));
       activeDrones.clear();
       stopAllListeners.forEach((listener) => listener());
