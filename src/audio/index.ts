@@ -15,8 +15,26 @@ export {
   type LookaheadSchedulerOptions,
 } from "./lookaheadScheduler";
 export {
+  createExercisePlaybackEvents,
+  createExercisePlaybackRequest,
+  getExercisePlaybackCycleDurationBeats,
+} from "./exercisePlaybackRequest";
+export {
+  createPartSequencePlaybackPlan,
+  type PartSequencePlaybackPlan,
+  type PartSequenceStepPlan,
+} from "./partSequencePlanning";
+export {
+  partSequenceCoordinator,
+  PartSequenceCoordinator,
+  type PartSequenceSnapshot,
+  type PartSequenceStopOptions,
+} from "./partSequenceCoordinator";
+export {
   beatTransportCoordinator,
   BeatTransportCoordinator,
+  type BeatTransportPartStartRequest,
+  type BeatTransportStartSource,
 } from "./beatTransportCoordinator";
 export {
   exercisePlaybackRestartRequestsAreEqual,

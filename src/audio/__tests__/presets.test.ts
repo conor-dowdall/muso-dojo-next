@@ -85,4 +85,8 @@ describe("audio presets", () => {
       audioPresets["bowed-strings"].defaultDurationSeconds,
     ).toBeGreaterThan(audioPresets["plucked-string"].defaultDurationSeconds);
   });
+
+  it("uses plucked string samples as the exercise default", () => {
+    expect(getDefaultAudioPresetId("exercise")).toBe("plucked-string");
+  });
 });

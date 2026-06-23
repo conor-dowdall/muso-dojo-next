@@ -14,9 +14,20 @@ import {
 const TRANSPORT_HANDOFF_LEAD_SECONDS = 0.08;
 const BEAT_GRID_EPSILON = 1e-6;
 
+export type BeatTransportStartSource = "manual" | "part-sequence";
+
 interface BeatGrid {
   originTime: number;
   secondsPerBeat: number;
+}
+
+export interface BeatTransportPartStartRequest {
+  exercise?: ExercisePlaybackRequest;
+  handoff?: boolean;
+  originTime?: number;
+  rhythm?: RhythmPlaybackRequest;
+  source?: BeatTransportStartSource;
+  stopMissing?: boolean;
 }
 
 function normalizeTempo(tempoBpm: number) {
@@ -94,6 +105,7 @@ function getStartedOriginTime({
 }
 
 export class BeatTransportCoordinator {
+  private manualStartListeners = new Set<() => void>();
   private pendingCompanionStart:
     | { revision: number; target: "exercise" | "rhythm" }
     | undefined;
@@ -103,6 +115,22 @@ export class BeatTransportCoordinator {
     private readonly exercise: ExercisePlaybackCoordinator = exercisePlaybackCoordinator,
     private readonly rhythm: RhythmPlaybackCoordinator = rhythmPlaybackCoordinator,
   ) {}
+
+  private notifyManualStart(source: BeatTransportStartSource = "manual") {
+    if (source !== "manual") {
+      return;
+    }
+
+    this.manualStartListeners.forEach((listener) => listener());
+  }
+
+  subscribeToManualStart = (listener: () => void) => {
+    this.manualStartListeners.add(listener);
+    return () => this.manualStartListeners.delete(listener);
+  };
+
+  getCurrentTime = () =>
+    this.exercise.getCurrentTime() ?? this.rhythm.getCurrentTime();
 
   private cancelPendingCompanionStart(target?: "exercise" | "rhythm") {
     if (
@@ -133,11 +161,14 @@ export class BeatTransportCoordinator {
     }
   }
 
-  async startExercise(request: ExercisePlaybackRequest) {
+  async startExercise(
+    request: ExercisePlaybackRequest,
+    options: { source?: BeatTransportStartSource } = {},
+  ) {
+    this.notifyManualStart(options.source);
     const revision = ++this.revision;
     const exerciseSnapshot = this.exercise.getSnapshot();
-    const currentTime =
-      this.exercise.getCurrentTime() ?? this.rhythm.getCurrentTime();
+    const currentTime = this.getCurrentTime();
     const sameExerciseIsPlaying =
       exerciseSnapshot.playing && exerciseSnapshot.activeId === request.id;
     const launchGrid =
@@ -191,11 +222,14 @@ export class BeatTransportCoordinator {
     return true;
   }
 
-  async startRhythm(request: RhythmPlaybackRequest) {
+  async startRhythm(
+    request: RhythmPlaybackRequest,
+    options: { source?: BeatTransportStartSource } = {},
+  ) {
+    this.notifyManualStart(options.source);
     const revision = ++this.revision;
     const rhythmSnapshot = this.rhythm.getSnapshot();
-    const currentTime =
-      this.rhythm.getCurrentTime() ?? this.exercise.getCurrentTime();
+    const currentTime = this.getCurrentTime();
     const sameRhythmIsPlaying =
       rhythmSnapshot.playing && rhythmSnapshot.activeId === request.id;
     const launchGrid = !sameRhythmIsPlaying
@@ -245,6 +279,91 @@ export class BeatTransportCoordinator {
     return true;
   }
 
+  async startPart({
+    exercise,
+    handoff = false,
+    originTime,
+    rhythm,
+    source = "manual",
+    stopMissing = true,
+  }: BeatTransportPartStartRequest) {
+    this.notifyManualStart(source);
+    const revision = ++this.revision;
+    const currentTime = this.getCurrentTime();
+    const resolvedOriginTime =
+      originTime ??
+      (currentTime === undefined
+        ? undefined
+        : currentTime + TRANSPORT_HANDOFF_LEAD_SECONDS);
+
+    this.cancelPendingCompanionStart();
+
+    if (exercise) {
+      this.exercise.cancelPendingStart();
+    } else if (stopMissing) {
+      this.exercise.cancelPendingStart();
+      this.exercise.stop(undefined, {
+        atTime: resolvedOriginTime,
+      });
+    }
+
+    if (rhythm) {
+      this.rhythm.cancelPendingStart();
+    } else if (stopMissing) {
+      this.rhythm.cancelPendingStart();
+      this.rhythm.stop(undefined, {
+        atTime: resolvedOriginTime,
+      });
+    }
+
+    if (resolvedOriginTime === undefined && exercise && rhythm) {
+      const exerciseStarted = await this.exercise.start(exercise, { handoff });
+      const startedOriginTime =
+        this.exercise.getSnapshot().originTime ??
+        this.exercise.getSnapshot().pendingOriginTime;
+      const rhythmStarted =
+        startedOriginTime === undefined
+          ? false
+          : await this.rhythm.start(rhythm, {
+              handoff,
+              originTime: startedOriginTime,
+            });
+
+      if (revision !== this.revision) {
+        return { originTime: startedOriginTime, started: false };
+      }
+
+      return {
+        originTime: startedOriginTime,
+        started: exerciseStarted !== false && rhythmStarted !== false,
+      };
+    }
+
+    const [exerciseStarted, rhythmStarted] = await Promise.all([
+      exercise
+        ? this.exercise.start(exercise, {
+            handoff,
+            originTime: resolvedOriginTime,
+          })
+        : Promise.resolve(undefined),
+      rhythm
+        ? this.rhythm.start(rhythm, {
+            handoff,
+            originTime: resolvedOriginTime,
+          })
+        : Promise.resolve(undefined),
+    ]);
+
+    if (revision !== this.revision) {
+      return { originTime: resolvedOriginTime, started: false };
+    }
+
+    return {
+      originTime: resolvedOriginTime,
+      started: exerciseStarted !== false && rhythmStarted !== false,
+    };
+  }
+
   stopExercise(id?: string) {
     this.revision += 1;
     this.cancelPendingCompanionStart("rhythm");
@@ -255,6 +374,13 @@ export class BeatTransportCoordinator {
     this.revision += 1;
     this.cancelPendingCompanionStart("exercise");
     this.rhythm.stop(id);
+  }
+
+  stopPartPlayback() {
+    this.revision += 1;
+    this.cancelPendingCompanionStart();
+    this.exercise.stop();
+    this.rhythm.stop();
   }
 }
 

@@ -269,12 +269,7 @@ describe("part module app store actions", () => {
     }
 
     const state = store.getState();
-    state.setExerciseLooperAudioPresetId(
-      sessionId,
-      partId,
-      moduleId,
-      "plucked-string",
-    );
+    state.setExerciseLooperAudioPresetId(sessionId, partId, moduleId, "piano");
     state.setExerciseLooperCountInBeats(sessionId, partId, moduleId, 4);
     state.setExerciseLooperMetronomeEnabled(sessionId, partId, moduleId, true);
     state.setExerciseLooperPattern(sessionId, partId, moduleId, {
@@ -304,7 +299,7 @@ describe("part module app store actions", () => {
       ]?.parts[0]?.modules.find((candidate) => candidate.id === moduleId);
 
     expect(partModule).toMatchObject({
-      audioPresetId: "plucked-string",
+      audioPresetId: "piano",
       countInBeats: 4,
       end: { octave: 1, stepOffset: 2 },
       id: moduleId,

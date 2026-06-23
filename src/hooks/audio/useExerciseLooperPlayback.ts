@@ -12,18 +12,17 @@ import {
 import { flushSync } from "react-dom";
 import {
   beatTransportCoordinator,
+  createExercisePlaybackRequest,
   ExerciseAuditionController,
   ensureAudioReady,
   exercisePlaybackRestartRequestsAreEqual,
   exercisePlaybackCoordinator,
-  getDefaultAudioPresetId,
   isExercisePlaybackActive,
   musoAudioEngine,
   type AudioPresetId,
   type ExerciseAuditionNote,
   type ExercisePlaybackEvent,
 } from "@/audio";
-import { exerciseSubdivisionBeats } from "@/utils/exercise-looper/exerciseConfig";
 import { type ExerciseSequenceStep } from "@/utils/exercise-looper/exerciseSequence";
 import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import { type ExerciseSubdivision } from "@/types/session";
@@ -33,29 +32,6 @@ const EXERCISE_AUDITION_DURATION_SECONDS = 0.55;
 const EXERCISE_VISUAL_STEP_LEAD_SECONDS = 0.02;
 const EXERCISE_VISUAL_STEP_LEAD_MAX_DURATION_RATIO = 0.35;
 const EMPTY_AUDITION_ACTIVE_KEYS: ReadonlySet<string> = new Set();
-
-function createPlaybackEvents(
-  steps: readonly ExerciseSequenceStep[],
-  subdivisionBeats: number,
-) {
-  let offsetBeats = 0;
-  const events: ExercisePlaybackEvent[] = [];
-
-  steps.forEach((step, stepIndex) => {
-    const durationBeats = step.durationUnits * subdivisionBeats;
-    step.notes.forEach((note) => {
-      events.push({
-        durationBeats,
-        midi: note.midi,
-        offsetBeats,
-        stepIndex,
-      });
-    });
-    offsetBeats += durationBeats;
-  });
-
-  return events;
-}
 
 function getCurrentOutputTime() {
   const clock = musoAudioEngine.getOutputClock();
@@ -147,22 +123,20 @@ export function useExerciseLooperPlayback({
   const isPending = snapshot.pendingId === id;
   const isPlaying = snapshot.playing && snapshot.activeId === id;
   const isActive = isExercisePlaybackActive(snapshot, id);
-  const subdivisionBeats = exerciseSubdivisionBeats[subdivision];
-  const events = useMemo(
-    () => createPlaybackEvents(steps, subdivisionBeats),
-    [steps, subdivisionBeats],
-  );
   const request = useMemo(
-    () => ({
-      countInBeats: 0 as ExerciseCountInBeats,
-      events,
-      id,
-      metronomeEnabled,
-      presetId: audioPresetId ?? getDefaultAudioPresetId("exercise"),
-      tempoBpm,
-    }),
-    [audioPresetId, events, id, metronomeEnabled, tempoBpm],
+    () =>
+      createExercisePlaybackRequest({
+        audioPresetId,
+        countInBeats: 0 as ExerciseCountInBeats,
+        id,
+        metronomeEnabled,
+        steps,
+        subdivision,
+        tempoBpm,
+      }),
+    [audioPresetId, id, metronomeEnabled, steps, subdivision, tempoBpm],
   );
+  const events = request.events;
   const visualStepLeadSeconds = useMemo(
     () => getExerciseVisualStepLeadSeconds(events, tempoBpm),
     [events, tempoBpm],
@@ -215,8 +189,12 @@ export function useExerciseLooperPlayback({
   );
 
   useLayoutEffect(() => {
+    if (!isActive) {
+      submittedRequest.current = request;
+      return;
+    }
+
     if (
-      isActive &&
       !exercisePlaybackRestartRequestsAreEqual(
         submittedRequest.current,
         request,

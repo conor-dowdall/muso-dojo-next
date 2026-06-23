@@ -32,6 +32,27 @@
   }
 }
 
+.musicPart[data-part-sequence-state="active"],
+.musicPart[data-part-sequence-state="pending"] {
+  border-color: color-mix(
+    in srgb,
+    var(--color-accent) 56%,
+    var(--color-border)
+  );
+}
+
+.musicPart[data-part-sequence-state="active"] {
+  box-shadow:
+    inset 0 0 0 var(--space-px)
+      color-mix(in srgb, var(--color-accent) 42%, transparent),
+    var(--shadow-highlight-inset),
+    var(--shadow-surface-elevated);
+}
+
+.musicPart[data-part-sequence-state="pending"] {
+  border-style: dashed;
+}
+
 .content {
   display: flex;
   flex-direction: column;

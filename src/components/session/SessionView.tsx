@@ -1,7 +1,9 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { Plus } from "lucide-react";
+import { partSequenceCoordinator } from "@/audio";
 import { NoteColorProvider } from "@/components/note-colors/NoteColorProvider";
 import { Button } from "@/components/ui/buttons/Button";
 import { useAppStore } from "@/stores/appStore";
@@ -29,6 +31,14 @@ export function SessionView({
       (state) => state.sessions[sessionId]?.parts.map((part) => part.id) ?? [],
     ),
   );
+  const partSequenceSnapshot = useSyncExternalStore(
+    partSequenceCoordinator.subscribe,
+    partSequenceCoordinator.getSnapshot,
+    partSequenceCoordinator.getSnapshot,
+  );
+  const partSequenceIsActive =
+    partSequenceSnapshot.playing &&
+    partSequenceSnapshot.sessionId === sessionId;
 
   return (
     <NoteColorProvider config={noteColorConfig}>
@@ -48,6 +58,15 @@ export function SessionView({
             key={partId}
             sessionId={sessionId}
             partId={partId}
+            partSequenceState={
+              partSequenceIsActive &&
+              partSequenceSnapshot.pendingPartId === partId
+                ? "pending"
+                : partSequenceIsActive &&
+                    partSequenceSnapshot.activePartId === partId
+                  ? "active"
+                  : undefined
+            }
             isPerformanceMode={isPerformanceMode}
             onOpenSessionTempo={onOpenSessionTempo}
           />

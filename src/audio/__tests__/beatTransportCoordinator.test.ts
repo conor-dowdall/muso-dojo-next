@@ -83,6 +83,8 @@ function createHarness({
 } = {}) {
   let currentTime = 10;
   let nextGroupId = 0;
+  const exerciseCancelPlaybackGroup = vi.fn();
+  const rhythmCancelPlaybackGroup = vi.fn();
   const createPlaybackGroup = () =>
     `group-${nextGroupId++}` as PlaybackGroupHandle;
   const createExerciseScheduler: ExerciseSchedulerFactory = () => ({
@@ -97,7 +99,7 @@ function createHarness({
   });
   const exercise = new ExercisePlaybackCoordinator(
     {
-      cancelPlaybackGroup: vi.fn(),
+      cancelPlaybackGroup: exerciseCancelPlaybackGroup,
       createPlaybackGroup,
       getCurrentTime: () => currentTime,
       prime: exercisePrime,
@@ -109,7 +111,7 @@ function createHarness({
   );
   const rhythm = new RhythmPlaybackCoordinator(
     {
-      cancelPlaybackGroup: vi.fn(),
+      cancelPlaybackGroup: rhythmCancelPlaybackGroup,
       createPlaybackGroup,
       getCurrentTime: () => currentTime,
       prime: rhythmPrime,
@@ -121,7 +123,9 @@ function createHarness({
 
   return {
     exercise,
+    exerciseCancelPlaybackGroup,
     rhythm,
+    rhythmCancelPlaybackGroup,
     setCurrentTime: (value: number) => {
       currentTime = value;
     },
@@ -274,6 +278,54 @@ describe("BeatTransportCoordinator", () => {
     });
     expect(exercise.getSnapshot().countInBeats).toBeUndefined();
     expect(exercise.getActiveRequest()?.tempoBpm).toBe(120);
+  });
+
+  it("starts explicit part exercise and rhythm requests on the same origin", async () => {
+    const { exercise, rhythm, setCurrentTime, transport } = createHarness();
+
+    setCurrentTime(20);
+
+    const result = await transport.startPart({
+      exercise: createExerciseRequest("exercise"),
+      originTime: 24,
+      rhythm: createRhythmRequest("rhythm"),
+      source: "part-sequence",
+    });
+
+    expect(result).toEqual({ originTime: 24, started: true });
+    expect(exercise.getSnapshot()).toMatchObject({
+      activeId: "exercise",
+      originTime: 24,
+      playing: true,
+    });
+    expect(rhythm.getSnapshot()).toMatchObject({
+      activeId: "rhythm",
+      originTime: 24,
+      playing: true,
+    });
+  });
+
+  it("stops a missing part family at the supplied origin", async () => {
+    const { rhythm, rhythmCancelPlaybackGroup, setCurrentTime, transport } =
+      createHarness();
+
+    await rhythm.start(createRhythmRequest("rhythm"));
+    setCurrentTime(20);
+
+    await transport.startPart({
+      exercise: createExerciseRequest("exercise"),
+      originTime: 24,
+      source: "part-sequence",
+      stopMissing: true,
+    });
+
+    expect(rhythmCancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
+      atTime: 24,
+    });
+    expect(rhythm.getSnapshot()).toMatchObject({
+      activeId: "rhythm",
+      playing: true,
+    });
   });
 
   it("cancels stale pending starts before they can resync playback", async () => {

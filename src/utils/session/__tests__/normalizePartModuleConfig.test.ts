@@ -80,7 +80,7 @@ describe("normalizePartModuleConfig", () => {
   it("normalizes persisted exercise looper settings", () => {
     expect(
       normalizePartModuleConfig({
-        audioPresetId: "plucked-string",
+        audioPresetId: "bowed-strings",
         countInBeats: 3,
         end: { octave: 1, stepOffset: 2 },
         id: "looper-1",
@@ -101,7 +101,7 @@ describe("normalizePartModuleConfig", () => {
         wood: "maple",
       }),
     ).toStrictEqual({
-      audioPresetId: "plucked-string",
+      audioPresetId: "bowed-strings",
       countInBeats: 3,
       end: { octave: 1, stepOffset: 2 },
       id: "looper-1",
@@ -126,12 +126,12 @@ describe("normalizePartModuleConfig", () => {
   it("drops invalid and default exercise looper settings", () => {
     expect(
       normalizePartModuleConfig({
-        audioPresetId: "piano",
+        audioPresetId: "plucked-string",
         countInBeats: 0,
         end: { octave: 1, stepOffset: 0 },
         id: "looper-1",
         metronomeEnabled: false,
-        octaveOffset: 99,
+        octaveOffset: -1,
         pattern: {
           direction: "up-down",
           extensionDegree: 5,

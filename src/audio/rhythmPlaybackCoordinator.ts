@@ -55,6 +55,11 @@ interface PendingRhythmHandoff {
   timer: ReturnType<typeof globalThis.setTimeout>;
 }
 
+interface PendingRhythmStop {
+  active: ActiveRhythmPlayback;
+  timer: ReturnType<typeof globalThis.setTimeout>;
+}
+
 export type RhythmPlaybackAudioEngine = Pick<
   AudioEngine,
   | "cancelPlaybackGroup"
@@ -171,6 +176,7 @@ export class RhythmPlaybackCoordinator {
   private active: ActiveRhythmPlayback | undefined;
   private listeners = new Set<() => void>();
   private pendingHandoff: PendingRhythmHandoff | undefined;
+  private pendingStop: PendingRhythmStop | undefined;
   private pendingStartId: string | undefined;
   private pendingStartRequest: RhythmPlaybackRequest | undefined;
   private snapshot: RhythmPlaybackSnapshot = idleSnapshot;
@@ -189,6 +195,7 @@ export class RhythmPlaybackCoordinator {
 
   private reset() {
     this.cancelPendingHandoff();
+    this.cancelPendingStopTimer();
     if (this.active) {
       this.stopActivePlayback(this.active);
     }
@@ -213,7 +220,72 @@ export class RhythmPlaybackCoordinator {
     return () => this.listeners.delete(listener);
   };
 
-  private stopActivePlayback(active: ActiveRhythmPlayback) {
+  private cancelPendingStopTimer() {
+    if (!this.pendingStop) {
+      return;
+    }
+
+    globalThis.clearTimeout(this.pendingStop.timer);
+    this.pendingStop = undefined;
+  }
+
+  private commitPendingStop(active: ActiveRhythmPlayback) {
+    if (this.pendingStop?.active !== active) {
+      return;
+    }
+
+    this.pendingStop = undefined;
+
+    if (this.active !== active) {
+      return;
+    }
+
+    active.scheduler.stop();
+    this.active = undefined;
+    this.snapshot = this.pendingStartId
+      ? { ...idleSnapshot, pendingId: this.pendingStartId }
+      : idleSnapshot;
+    this.emit();
+  }
+
+  private scheduleActivePlaybackStop(
+    active: ActiveRhythmPlayback,
+    options: { atTime: number },
+  ) {
+    const currentTime = this.audioEngine.getCurrentTime();
+
+    if (
+      currentTime === undefined ||
+      options.atTime <= currentTime + HANDOFF_COMMIT_LEAD_SECONDS
+    ) {
+      this.stopActivePlayback(active);
+      return;
+    }
+
+    this.cancelPendingStopTimer();
+    this.audioEngine.cancelPlaybackGroup(active.group, options);
+
+    this.pendingStop = {
+      active,
+      timer: globalThis.setTimeout(
+        () => this.commitPendingStop(active),
+        Math.max(0, (options.atTime - currentTime) * 1000),
+      ),
+    };
+  }
+
+  private stopActivePlayback(
+    active: ActiveRhythmPlayback,
+    options?: { atTime?: number },
+  ) {
+    if (options?.atTime !== undefined) {
+      this.scheduleActivePlaybackStop(active, {
+        atTime: options.atTime,
+      });
+      return;
+    }
+
+    this.cancelPendingStopTimer();
     active.scheduler.stop();
     this.audioEngine.cancelPlaybackGroup(active.group);
   }
@@ -300,6 +372,7 @@ export class RhythmPlaybackCoordinator {
 
     const revision = ++this.startRevision;
     this.cancelPendingHandoff();
+    this.cancelPendingStopTimer();
     this.pendingStartId = request.id;
     this.pendingStartRequest = request;
     this.snapshot = {
@@ -457,7 +530,7 @@ export class RhythmPlaybackCoordinator {
     return true;
   }
 
-  stop(id?: string) {
+  stop(id?: string, options?: { atTime?: number }) {
     const pendingHandoff = this.pendingHandoff;
     const stopsActive =
       this.active !== undefined &&
@@ -483,11 +556,13 @@ export class RhythmPlaybackCoordinator {
     }
 
     if (stopsActive && this.active) {
-      this.stopActivePlayback(this.active);
-      this.active = undefined;
-      this.snapshot = this.pendingStartId
-        ? { ...idleSnapshot, pendingId: this.pendingStartId }
-        : idleSnapshot;
+      this.stopActivePlayback(this.active, options);
+      if (options?.atTime === undefined) {
+        this.active = undefined;
+        this.snapshot = this.pendingStartId
+          ? { ...idleSnapshot, pendingId: this.pendingStartId }
+          : idleSnapshot;
+      }
     } else if (stopsPending) {
       this.snapshot = withoutPendingStart(this.snapshot);
     }

@@ -40,6 +40,7 @@ import {
 import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import {
   DEFAULT_EXERCISE_METRONOME_ENABLED,
+  DEFAULT_EXERCISE_OCTAVE_OFFSET,
   DEFAULT_EXERCISE_PATTERN,
   DEFAULT_EXERCISE_START,
   DEFAULT_EXERCISE_SUBDIVISION,
@@ -79,7 +80,7 @@ export function ExerciseLooperModule({
   moduleId,
   metronomeEnabled = DEFAULT_EXERCISE_METRONOME_ENABLED,
   noteCollectionKey,
-  octaveOffset = 0,
+  octaveOffset = DEFAULT_EXERCISE_OCTAVE_OFFSET,
   onAudioPresetIdChange,
   onClone,
   onEndChange,

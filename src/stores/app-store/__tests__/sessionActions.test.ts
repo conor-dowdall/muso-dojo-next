@@ -40,4 +40,32 @@ describe("session app store actions", () => {
       tempoBpm: 132,
     });
   });
+
+  it("adds and updates one Practice Band per session", () => {
+    const store = createTestStore();
+
+    store.getState().addPracticeBand(sessionId, {
+      audioPresetId: "piano",
+      drums: false,
+      octaveOffset: 0,
+    });
+    store.getState().addPracticeBand(sessionId, {
+      audioPresetId: "bowed-strings",
+    });
+
+    expect(store.getState().sessions[sessionId]?.practiceBand).toEqual({
+      audioPresetId: "piano",
+      drums: false,
+      octaveOffset: 0,
+    });
+
+    store.getState().updatePracticeBandSettings(sessionId, {
+      drums: true,
+    });
+
+    expect(store.getState().sessions[sessionId]?.practiceBand).toEqual({
+      audioPresetId: "piano",
+      octaveOffset: 0,
+    });
+  });
 });

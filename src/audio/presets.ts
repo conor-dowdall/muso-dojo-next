@@ -84,7 +84,7 @@ export const defaultAudioPresetIds = {
   preview: "piano",
   tuning: "piano",
   drone: "bowed-strings",
-  exercise: "piano",
+  exercise: "plucked-string",
 } as const satisfies Record<AudioUse, AudioPresetId>;
 
 const audioPresetOrderBySurface = {

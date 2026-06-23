@@ -64,6 +64,12 @@ export function useRhythmPlayback({
   useLayoutEffect(() => {
     const submitted = submittedRequest.current;
 
+    if (!isActive) {
+      submittedRequest.current = request;
+      submittedRecipe.current = recipe;
+      return;
+    }
+
     if (!isPlaying) {
       return;
     }
@@ -85,7 +91,7 @@ export function useRhythmPlayback({
 
     submittedRequest.current = request;
     submittedRecipe.current = recipe;
-  }, [id, isPlaying, recipe, request]);
+  }, [id, isActive, isPlaying, recipe, request]);
 
   return {
     isActive,

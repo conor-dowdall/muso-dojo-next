@@ -41,6 +41,12 @@ export interface SessionMaterialCreationDefaults {
   rootNote?: RootNote;
 }
 
+export interface PracticeBandConfig {
+  audioPresetId?: AudioPresetId;
+  drums?: boolean;
+  octaveOffset?: number;
+}
+
 export type RememberSessionMaterialCreationRequest =
   SessionMaterialCreationDefaults;
 
@@ -208,6 +214,7 @@ export interface SessionConfig {
   name: string;
   lastModified: string;
   parts: MusicPartConfig[];
+  practiceBand?: PracticeBandConfig;
   tempoBpm?: number;
 }
 

@@ -69,6 +69,11 @@ interface PendingExerciseHandoff {
   timer: ReturnType<typeof globalThis.setTimeout>;
 }
 
+interface PendingExerciseStop {
+  active: ActiveExercisePlayback;
+  timer: ReturnType<typeof globalThis.setTimeout>;
+}
+
 export type ExercisePlaybackAudioEngine = Pick<
   AudioEngine,
   | "cancelPlaybackGroup"
@@ -161,6 +166,7 @@ export class ExercisePlaybackCoordinator {
   private active: ActiveExercisePlayback | undefined;
   private listeners = new Set<() => void>();
   private pendingHandoff: PendingExerciseHandoff | undefined;
+  private pendingStop: PendingExerciseStop | undefined;
   private pendingStartId: string | undefined;
   private pendingStartRequest: ExercisePlaybackRequest | undefined;
   private snapshot: ExercisePlaybackSnapshot = idleSnapshot;
@@ -180,6 +186,7 @@ export class ExercisePlaybackCoordinator {
 
   private reset() {
     this.cancelPendingHandoff();
+    this.cancelPendingStopTimer();
     if (this.active) {
       this.stopActivePlayback(this.active);
     }
@@ -208,10 +215,78 @@ export class ExercisePlaybackCoordinator {
     }
   }
 
+  private cancelPendingStopTimer() {
+    if (!this.pendingStop) {
+      return;
+    }
+
+    globalThis.clearTimeout(this.pendingStop.timer);
+    this.pendingStop = undefined;
+  }
+
+  private commitPendingStop(active: ActiveExercisePlayback) {
+    if (this.pendingStop?.active !== active) {
+      return;
+    }
+
+    this.pendingStop = undefined;
+
+    if (this.active !== active) {
+      return;
+    }
+
+    active.noteScheduler.stop();
+    active.metronomeScheduler?.stop();
+    this.active = undefined;
+    this.snapshot = this.pendingStartId
+      ? { ...idleSnapshot, pendingId: this.pendingStartId }
+      : idleSnapshot;
+    this.emit();
+  }
+
+  private scheduleActivePlaybackStop(
+    active: ActiveExercisePlayback,
+    options: { atTime: number; releaseSeconds?: number },
+  ) {
+    const currentTime = this.audioEngine.getCurrentTime();
+
+    if (
+      currentTime === undefined ||
+      options.atTime <= currentTime + HANDOFF_COMMIT_LEAD_SECONDS
+    ) {
+      this.stopActivePlayback(active, {
+        releaseSeconds: options.releaseSeconds,
+      });
+      return;
+    }
+
+    this.cancelPendingStopTimer();
+    this.cancelGroup(active.countInGroup, options);
+    this.cancelGroup(active.metronomeGroup, options);
+    this.cancelGroup(active.noteGroup, options);
+
+    this.pendingStop = {
+      active,
+      timer: globalThis.setTimeout(
+        () => this.commitPendingStop(active),
+        Math.max(0, (options.atTime - currentTime) * 1000),
+      ),
+    };
+  }
+
   private stopActivePlayback(
     active: ActiveExercisePlayback,
     options?: { atTime?: number; releaseSeconds?: number },
   ) {
+    if (options?.atTime !== undefined) {
+      this.scheduleActivePlaybackStop(active, {
+        atTime: options.atTime,
+        releaseSeconds: options.releaseSeconds,
+      });
+      return;
+    }
+
+    this.cancelPendingStopTimer();
     active.noteScheduler.stop();
     active.metronomeScheduler?.stop();
     this.cancelGroup(active.countInGroup, options);
@@ -382,6 +457,7 @@ export class ExercisePlaybackCoordinator {
   ) {
     const revision = ++this.startRevision;
     this.cancelPendingHandoff();
+    this.cancelPendingStopTimer();
     this.pendingStartId = request.id;
     this.pendingStartRequest = request;
     this.snapshot = {
@@ -575,7 +651,7 @@ export class ExercisePlaybackCoordinator {
     return true;
   }
 
-  stop(id?: string) {
+  stop(id?: string, options?: { atTime?: number; releaseSeconds?: number }) {
     const pendingHandoff = this.pendingHandoff;
     const stopsActive =
       this.active !== undefined &&
@@ -603,12 +679,15 @@ export class ExercisePlaybackCoordinator {
     if (stopsActive && this.active) {
       const active = this.active;
       this.stopActivePlayback(active, {
-        releaseSeconds: STOP_RELEASE_SECONDS,
+        atTime: options?.atTime,
+        releaseSeconds: options?.releaseSeconds ?? STOP_RELEASE_SECONDS,
       });
-      this.active = undefined;
-      this.snapshot = this.pendingStartId
-        ? { ...idleSnapshot, pendingId: this.pendingStartId }
-        : idleSnapshot;
+      if (options?.atTime === undefined) {
+        this.active = undefined;
+        this.snapshot = this.pendingStartId
+          ? { ...idleSnapshot, pendingId: this.pendingStartId }
+          : idleSnapshot;
+      }
     } else if (stopsPending) {
       this.snapshot = withoutPendingStart(this.snapshot);
     }

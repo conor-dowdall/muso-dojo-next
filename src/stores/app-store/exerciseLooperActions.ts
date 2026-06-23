@@ -8,6 +8,7 @@ import {
   DEFAULT_EXERCISE_COUNT_IN_BEATS,
   DEFAULT_EXERCISE_END,
   DEFAULT_EXERCISE_METRONOME_ENABLED,
+  DEFAULT_EXERCISE_OCTAVE_OFFSET,
   DEFAULT_EXERCISE_PATTERN,
   DEFAULT_EXERCISE_START,
   DEFAULT_EXERCISE_SUBDIVISION,
@@ -109,7 +110,7 @@ export function createExerciseLooperActions(
     setExerciseLooperOctaveOffset: (sessionId, partId, moduleId, value) => {
       const partModule = getLooper(sessionId, partId, moduleId);
       if (!partModule) return;
-      const current = partModule.octaveOffset ?? 0;
+      const current = partModule.octaveOffset ?? DEFAULT_EXERCISE_OCTAVE_OFFSET;
       const next = resolveSettingValue(value, current);
       if (
         next !== current &&

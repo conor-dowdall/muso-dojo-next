@@ -28,6 +28,7 @@ import {
   type MusicPartConfig,
   type PartModuleCreationRequest,
   type PartModuleType,
+  type PracticeBandConfig,
   type RememberSessionMaterialCreationRequest,
   type RhythmPartModuleConfig,
   type SessionConfig,
@@ -65,6 +66,8 @@ export type RhythmSettingsPatch = Partial<
   Omit<RhythmPartModuleConfig, "id" | "type">
 >;
 
+export type PracticeBandSettingsPatch = Partial<PracticeBandConfig>;
+
 export interface DojoSettingsActions {
   setAppTheme: (theme: AppThemeChoice) => void;
   setNoteColorConfig: (noteColorConfig: NoteColorConfig) => void;
@@ -81,6 +84,15 @@ export interface SessionActions {
   cloneSession: (sessionId: string) => string | undefined;
   removeSession: (sessionId: string) => void;
   renameSession: (sessionId: string, name: string) => void;
+  addPracticeBand: (
+    sessionId: string,
+    settings?: PracticeBandSettingsPatch,
+  ) => void;
+  removePracticeBand: (sessionId: string) => void;
+  updatePracticeBandSettings: (
+    sessionId: string,
+    patch: PracticeBandSettingsPatch,
+  ) => void;
   setSessionTempoBpm: (sessionId: string, tempoBpm: number) => void;
 }
 

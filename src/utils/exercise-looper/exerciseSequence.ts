@@ -50,6 +50,7 @@ export {
   getExerciseBaseOctave,
   getMidiForCollectionPosition,
 } from "./exerciseSequenceRange";
+export { DEFAULT_EXERCISE_OCTAVE_OFFSET } from "./exerciseSequenceRange";
 export {
   EXERCISE_INTERVAL_MAX,
   EXERCISE_INTERVAL_MIN,

@@ -12,6 +12,7 @@ import { SessionHeader } from "@/components/session/SessionHeader";
 import { SessionLoader } from "@/components/session/SessionLoader";
 import { SessionManagementDialog } from "@/components/session/SessionManagementDialog";
 import { SessionView } from "@/components/session/SessionView";
+import { PracticeBandTransport } from "@/components/session/PracticeBandTransport";
 import {
   createInstrumentCreationRangeContextFromSignature,
   createInstrumentCreationRangeContextSignature,
@@ -19,6 +20,7 @@ import {
 import {
   ensureAudioReady,
   musoAudioEngine,
+  partSequenceCoordinator,
   stopAllAudioPlayback,
 } from "@/audio";
 import { useAppStore, useHydrateAppStore } from "@/stores/appStore";
@@ -53,7 +55,13 @@ function HydratedSession({
   );
   const addPart = useAppStore((state) => state.addPart);
   const addParts = useAppStore((state) => state.addParts);
+  const addPracticeBand = useAppStore((state) => state.addPracticeBand);
   const replaceParts = useAppStore((state) => state.replaceParts);
+  const activeSessionHasPracticeBand = useAppStore((state) =>
+    state.activeSessionId
+      ? Boolean(state.sessions[state.activeSessionId]?.practiceBand)
+      : false,
+  );
   const activeSessionPartCount = useAppStore((state) =>
     state.activeSessionId
       ? (state.sessions[state.activeSessionId]?.parts.length ?? 0)
@@ -134,6 +142,17 @@ function HydratedSession({
   }, [activeSessionId, isPerformanceMode, onPerformanceModeChange]);
 
   useEffect(() => {
+    const snapshot = partSequenceCoordinator.getSnapshot();
+
+    if (
+      snapshot.playing &&
+      (activeSessionId === null || snapshot.sessionId !== activeSessionId)
+    ) {
+      partSequenceCoordinator.stop();
+    }
+  }, [activeSessionId]);
+
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         stopAllAudioPlayback();
@@ -175,6 +194,12 @@ function HydratedSession({
     <>
       {isPerformanceMode ? (
         <div className={styles.performanceModeHeader}>
+          {activeSessionId ? (
+            <PracticeBandTransport
+              isPerformanceMode
+              sessionId={activeSessionId}
+            />
+          ) : null}
           <IconButton
             aria-label="Exit performance mode"
             className={styles.performanceModeExit}
@@ -186,11 +211,16 @@ function HydratedSession({
           />
         </div>
       ) : (
-        <SessionHeader
-          onEnterPerformanceMode={enterPerformanceMode}
-          onOpenAddDialog={openAddDialog}
-          onOpenSessionsDialog={() => openSessionDialog()}
-        />
+        <>
+          <SessionHeader
+            onEnterPerformanceMode={enterPerformanceMode}
+            onOpenAddDialog={openAddDialog}
+            onOpenSessionsDialog={() => openSessionDialog()}
+          />
+          {activeSessionId ? (
+            <PracticeBandTransport sessionId={activeSessionId} />
+          ) : null}
+        </>
       )}
       {activeSessionId ? (
         <SessionView
@@ -215,6 +245,7 @@ function HydratedSession({
         <AddToSessionDialog
           key={addDialogKey}
           canReplaceSession={activeSessionPartCount > 0}
+          hasPracticeBand={activeSessionHasPracticeBand}
           instrumentCreationRangeContext={instrumentCreationRangeContext}
           onAddCustomChordOrScale={({
             rootNote,
@@ -254,6 +285,13 @@ function HydratedSession({
             }
 
             addParts(activeSessionId, parts);
+          }}
+          onAddPracticeBand={(settings) => {
+            if (!activeSessionId) {
+              return;
+            }
+
+            addPracticeBand(activeSessionId, settings);
           }}
           onClose={closeAddDialog}
         />

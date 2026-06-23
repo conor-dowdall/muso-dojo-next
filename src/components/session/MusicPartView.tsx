@@ -15,6 +15,7 @@ interface MusicPartViewProps {
   partId: string;
   isPerformanceMode?: boolean;
   onOpenSessionTempo?: (sessionId: string) => void;
+  partSequenceState?: "active" | "pending";
 }
 
 export function MusicPartView({
@@ -22,6 +23,7 @@ export function MusicPartView({
   partId,
   isPerformanceMode = false,
   onOpenSessionTempo,
+  partSequenceState,
 }: MusicPartViewProps) {
   const partSettings = useAppStore(
     useShallow((state) => {
@@ -70,6 +72,7 @@ export function MusicPartView({
   return (
     <MusicPart
       partId={partId}
+      partSequenceState={partSequenceState}
       instrumentCreationRangeContext={instrumentCreationRangeContext}
       isPerformanceMode={isPerformanceMode}
       rootNote={partSettings.rootNote}

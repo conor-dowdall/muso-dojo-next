@@ -4,6 +4,7 @@ import {
   normalizeWoodSurfaceId,
 } from "@/data/woodSurfaces";
 import {
+  DEFAULT_EXERCISE_OCTAVE_OFFSET,
   EXERCISE_INTERVAL_MAX,
   EXERCISE_INTERVAL_MIN,
   type CollectionRangeBoundary,
@@ -15,6 +16,8 @@ import {
   type ExerciseSubdivision,
 } from "@/types/session";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
+
+export { DEFAULT_EXERCISE_OCTAVE_OFFSET };
 
 export const DEFAULT_EXERCISE_COUNT_IN_BEATS = 0 satisfies ExerciseCountInBeats;
 export const DEFAULT_EXERCISE_METRONOME_ENABLED = false;

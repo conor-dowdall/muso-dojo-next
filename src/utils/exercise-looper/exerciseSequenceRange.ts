@@ -21,6 +21,7 @@ import {
 
 const SEMITONES_PER_OCTAVE = 12;
 const BASE_ROOT_MIDI = 48;
+export const DEFAULT_EXERCISE_OCTAVE_OFFSET = -1;
 
 export function getExerciseBaseOctave(octaveOffset = 0) {
   return getMidiOctave(BASE_ROOT_MIDI + octaveOffset * SEMITONES_PER_OCTAVE);

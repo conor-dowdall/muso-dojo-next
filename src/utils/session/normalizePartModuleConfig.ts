@@ -27,6 +27,7 @@ import {
   DEFAULT_EXERCISE_COUNT_IN_BEATS,
   DEFAULT_EXERCISE_END,
   DEFAULT_EXERCISE_METRONOME_ENABLED,
+  DEFAULT_EXERCISE_OCTAVE_OFFSET,
   DEFAULT_EXERCISE_PATTERN,
   DEFAULT_EXERCISE_START,
   DEFAULT_EXERCISE_SUBDIVISION,
@@ -152,7 +153,7 @@ export function normalizePartModuleConfig(
       const pattern = normalizeExercisePattern(value.pattern);
       const subdivision = normalizeExerciseSubdivision(value.subdivision);
       const octaveOffset = normalizeOptionalDroneInteger({
-        defaultValue: 0,
+        defaultValue: DEFAULT_EXERCISE_OCTAVE_OFFSET,
         max: EXERCISE_MAX_OCTAVE_OFFSET,
         min: EXERCISE_MIN_OCTAVE_OFFSET,
         value: value.octaveOffset,

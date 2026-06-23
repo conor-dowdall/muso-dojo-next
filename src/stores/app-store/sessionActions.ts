@@ -1,4 +1,5 @@
 import { createDefaultSessionConfig } from "@/utils/session/createSessionEntities";
+import { normalizePracticeBandConfig } from "@/utils/practice-band/practiceBandConfig";
 import {
   createUniqueSessionName,
   normalizeSessionNameForComparison,
@@ -126,6 +127,53 @@ export function createSessionActions(
         updateSessionById(state, sessionId, (session) => ({
           ...session,
           name: trimmedName,
+        })),
+      );
+    },
+    addPracticeBand: (sessionId, settings = {}) => {
+      const session = get().sessions[sessionId];
+
+      if (!session || session.practiceBand) {
+        return;
+      }
+
+      set((state) =>
+        updateSessionById(state, sessionId, (session) => ({
+          ...session,
+          practiceBand: normalizePracticeBandConfig(settings) ?? {},
+        })),
+      );
+    },
+    removePracticeBand: (sessionId) => {
+      const session = get().sessions[sessionId];
+
+      if (!session?.practiceBand) {
+        return;
+      }
+
+      set((state) =>
+        updateSessionById(state, sessionId, (session) => {
+          const nextSession = { ...session };
+          delete nextSession.practiceBand;
+          return nextSession;
+        }),
+      );
+    },
+    updatePracticeBandSettings: (sessionId, patch) => {
+      const session = get().sessions[sessionId];
+
+      if (!session?.practiceBand) {
+        return;
+      }
+
+      set((state) =>
+        updateSessionById(state, sessionId, (session) => ({
+          ...session,
+          practiceBand:
+            normalizePracticeBandConfig({
+              ...session.practiceBand,
+              ...patch,
+            }) ?? {},
         })),
       );
     },

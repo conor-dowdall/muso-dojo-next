@@ -1,0 +1,315 @@
+import {
+  beatTransportCoordinator,
+  type BeatTransportCoordinator,
+} from "./beatTransportCoordinator";
+import { type PartSequencePlaybackPlan } from "./partSequencePlanning";
+
+const PART_SEQUENCE_HANDOFF_LEAD_SECONDS = 0.18;
+const PART_SEQUENCE_COMMIT_LEAD_SECONDS = 0.01;
+
+export interface PartSequenceSnapshot {
+  activeIndex?: number;
+  activePartId?: string;
+  contentSignature?: string;
+  cycleEndTime?: number;
+  originTime?: number;
+  partCount: number;
+  pendingIndex?: number;
+  pendingPartId?: string;
+  playing: boolean;
+  sessionId?: string;
+  signature?: string;
+  sourceSignature?: string;
+  tempoBpm?: number;
+}
+
+export interface PartSequenceStopOptions {
+  stopPlayback?: boolean;
+}
+
+const idleSnapshot: PartSequenceSnapshot = {
+  partCount: 0,
+  playing: false,
+};
+
+function normalizeTempo(tempoBpm: number) {
+  return Math.min(300, Math.max(30, Math.round(tempoBpm)));
+}
+
+function getSecondsPerBeat(tempoBpm: number) {
+  return 60 / normalizeTempo(tempoBpm);
+}
+
+export class PartSequenceCoordinator {
+  private listeners = new Set<() => void>();
+  private plan: PartSequencePlaybackPlan | undefined;
+  private revision = 0;
+  private snapshot: PartSequenceSnapshot = idleSnapshot;
+  private timer: ReturnType<typeof globalThis.setTimeout> | undefined;
+
+  constructor(
+    private readonly transport: BeatTransportCoordinator = beatTransportCoordinator,
+  ) {
+    this.transport.subscribeToManualStart(() => {
+      this.stop({ stopPlayback: false });
+    });
+  }
+
+  private emit() {
+    this.listeners.forEach((listener) => listener());
+  }
+
+  private clearTimer() {
+    if (this.timer === undefined) {
+      return;
+    }
+
+    globalThis.clearTimeout(this.timer);
+    this.timer = undefined;
+  }
+
+  private getTimerDelayMilliseconds(targetTime: number, leadSeconds = 0) {
+    const currentTime = this.transport.getCurrentTime();
+
+    return currentTime === undefined
+      ? 0
+      : Math.max(0, (targetTime - currentTime - leadSeconds) * 1000);
+  }
+
+  private commitPart({
+    index,
+    originTime,
+    plan,
+    revision,
+  }: {
+    index: number;
+    originTime?: number;
+    plan: PartSequencePlaybackPlan;
+    revision: number;
+  }) {
+    if (revision !== this.revision || this.plan !== plan) {
+      return;
+    }
+
+    const part = plan.parts[index];
+
+    if (!part) {
+      this.stop({ stopPlayback: false });
+      return;
+    }
+
+    const durationSeconds =
+      part.durationBeats * getSecondsPerBeat(plan.tempoBpm);
+    const cycleEndTime =
+      originTime === undefined ? undefined : originTime + durationSeconds;
+
+    this.snapshot = {
+      activeIndex: index,
+      activePartId: part.partId,
+      contentSignature: plan.contentSignature,
+      ...(cycleEndTime === undefined ? {} : { cycleEndTime }),
+      ...(originTime === undefined ? {} : { originTime }),
+      partCount: plan.parts.length,
+      playing: true,
+      sessionId: plan.sessionId,
+      signature: plan.signature,
+      sourceSignature: plan.sourceSignature,
+      tempoBpm: plan.tempoBpm,
+    };
+    this.emit();
+    this.scheduleNextPart({
+      durationSeconds,
+      index,
+      originTime,
+      plan,
+      revision,
+    });
+  }
+
+  private scheduleNextPart({
+    durationSeconds,
+    index,
+    originTime,
+    plan,
+    revision,
+  }: {
+    durationSeconds: number;
+    index: number;
+    originTime?: number;
+    plan: PartSequencePlaybackPlan;
+    revision: number;
+  }) {
+    const nextIndex = (index + 1) % plan.parts.length;
+    const nextOriginTime =
+      originTime === undefined ? undefined : originTime + durationSeconds;
+    const delayMilliseconds =
+      nextOriginTime === undefined
+        ? durationSeconds * 1000
+        : this.getTimerDelayMilliseconds(
+            nextOriginTime,
+            PART_SEQUENCE_HANDOFF_LEAD_SECONDS,
+          );
+
+    this.clearTimer();
+    this.timer = globalThis.setTimeout(() => {
+      void this.startPartAtIndex({
+        handoff: true,
+        index: nextIndex,
+        originTime: nextOriginTime,
+        plan,
+        revision,
+      });
+    }, delayMilliseconds);
+  }
+
+  private async startPartAtIndex({
+    handoff,
+    index,
+    originTime,
+    plan,
+    revision,
+  }: {
+    handoff: boolean;
+    index: number;
+    originTime?: number;
+    plan: PartSequencePlaybackPlan;
+    revision: number;
+  }) {
+    if (revision !== this.revision || this.plan !== plan) {
+      return false;
+    }
+
+    const part = plan.parts[index];
+
+    if (!part) {
+      this.stop({ stopPlayback: false });
+      return false;
+    }
+
+    this.clearTimer();
+    this.snapshot = {
+      ...this.snapshot,
+      contentSignature: plan.contentSignature,
+      partCount: plan.parts.length,
+      pendingIndex: index,
+      pendingPartId: part.partId,
+      playing: true,
+      sessionId: plan.sessionId,
+      signature: plan.signature,
+      sourceSignature: plan.sourceSignature,
+      tempoBpm: plan.tempoBpm,
+    };
+    this.emit();
+
+    const result = await this.transport.startPart({
+      exercise: part.exerciseRequest,
+      handoff,
+      originTime,
+      rhythm: part.rhythmRequest,
+      source: "part-sequence",
+      stopMissing: true,
+    });
+
+    if (revision !== this.revision || this.plan !== plan) {
+      return false;
+    }
+
+    if (!result.started) {
+      this.stop({ stopPlayback: false });
+      return false;
+    }
+
+    const startedOriginTime = result.originTime ?? originTime;
+    const currentTime = this.transport.getCurrentTime();
+    const shouldCommitLater =
+      handoff &&
+      startedOriginTime !== undefined &&
+      currentTime !== undefined &&
+      startedOriginTime > currentTime + PART_SEQUENCE_COMMIT_LEAD_SECONDS;
+
+    if (!shouldCommitLater) {
+      this.commitPart({
+        index,
+        originTime: startedOriginTime,
+        plan,
+        revision,
+      });
+      return true;
+    }
+
+    this.timer = globalThis.setTimeout(
+      () =>
+        this.commitPart({
+          index,
+          originTime: startedOriginTime,
+          plan,
+          revision,
+        }),
+      this.getTimerDelayMilliseconds(startedOriginTime),
+    );
+
+    return true;
+  }
+
+  getSnapshot = () => this.snapshot;
+
+  subscribe = (listener: () => void) => {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  };
+
+  async start(plan: PartSequencePlaybackPlan) {
+    this.stop({ stopPlayback: false });
+
+    if (plan.parts.length === 0) {
+      return false;
+    }
+
+    const revision = ++this.revision;
+    this.plan = plan;
+
+    return this.startPartAtIndex({
+      handoff: false,
+      index: 0,
+      plan,
+      revision,
+    });
+  }
+
+  async restartCurrentPart(plan: PartSequencePlaybackPlan) {
+    const currentIndex = this.snapshot.activeIndex;
+
+    if (
+      !this.snapshot.playing ||
+      currentIndex === undefined ||
+      plan.parts.length === 0
+    ) {
+      return this.start(plan);
+    }
+
+    this.clearTimer();
+    const revision = ++this.revision;
+    this.plan = plan;
+
+    return this.startPartAtIndex({
+      handoff: true,
+      index: Math.min(currentIndex, plan.parts.length - 1),
+      plan,
+      revision,
+    });
+  }
+
+  stop({ stopPlayback = true }: PartSequenceStopOptions = {}) {
+    this.clearTimer();
+    this.plan = undefined;
+    this.revision += 1;
+    this.snapshot = idleSnapshot;
+    this.emit();
+
+    if (stopPlayback) {
+      this.transport.stopPartPlayback();
+    }
+  }
+}
+
+export const partSequenceCoordinator = new PartSequenceCoordinator();
