@@ -28,18 +28,16 @@ describe("normalizeSessionConfig", () => {
     expect(session).not.toHaveProperty("tempoBpm");
   });
 
-  it("keeps an empty Practice Band config as an enabled session feature", () => {
-    expect(
-      normalizeSessionConfig({
-        id: "session-1",
-        lastModified: "2026-06-07T00:00:00.000Z",
-        name: "Practice",
-        parts: [],
-        practiceBand: {},
-      }),
-    ).toMatchObject({
+  it("omits empty Practice Band settings", () => {
+    const session = normalizeSessionConfig({
+      id: "session-1",
+      lastModified: "2026-06-07T00:00:00.000Z",
+      name: "Practice",
+      parts: [],
       practiceBand: {},
     });
+
+    expect(session).not.toHaveProperty("practiceBand");
   });
 
   it("normalizes Practice Band settings and omits defaults", () => {
@@ -63,6 +61,22 @@ describe("normalizeSessionConfig", () => {
       },
     });
 
+    const defaultSession = normalizeSessionConfig({
+      id: "session-1",
+      lastModified: "2026-06-07T00:00:00.000Z",
+      name: "Practice",
+      parts: [],
+      practiceBand: {
+        audioPresetId: "plucked-string",
+        drums: true,
+        octaveOffset: -1,
+      },
+    });
+
+    expect(defaultSession).not.toHaveProperty("practiceBand");
+  });
+
+  it("keeps partial Practice Band settings", () => {
     expect(
       normalizeSessionConfig({
         id: "session-1",
@@ -70,13 +84,13 @@ describe("normalizeSessionConfig", () => {
         name: "Practice",
         parts: [],
         practiceBand: {
-          audioPresetId: "plucked-string",
-          drums: true,
-          octaveOffset: -1,
+          drums: false,
         },
       }),
     ).toMatchObject({
-      practiceBand: {},
+      practiceBand: {
+        drums: false,
+      },
     });
   });
 });

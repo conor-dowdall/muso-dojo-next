@@ -19,6 +19,13 @@
     both;
 }
 
+.sessionChrome {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
 .performanceModeExit {
   color: var(--color-text-muted);
 }

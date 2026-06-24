@@ -84,11 +84,6 @@ export interface SessionActions {
   cloneSession: (sessionId: string) => string | undefined;
   removeSession: (sessionId: string) => void;
   renameSession: (sessionId: string, name: string) => void;
-  addPracticeBand: (
-    sessionId: string,
-    settings?: PracticeBandSettingsPatch,
-  ) => void;
-  removePracticeBand: (sessionId: string) => void;
   updatePracticeBandSettings: (
     sessionId: string,
     patch: PracticeBandSettingsPatch,

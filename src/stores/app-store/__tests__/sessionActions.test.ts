@@ -41,16 +41,13 @@ describe("session app store actions", () => {
     });
   });
 
-  it("adds and updates one Practice Band per session", () => {
+  it("updates persisted Practice Band settings without an enable step", () => {
     const store = createTestStore();
 
-    store.getState().addPracticeBand(sessionId, {
+    store.getState().updatePracticeBandSettings(sessionId, {
       audioPresetId: "piano",
       drums: false,
       octaveOffset: 0,
-    });
-    store.getState().addPracticeBand(sessionId, {
-      audioPresetId: "bowed-strings",
     });
 
     expect(store.getState().sessions[sessionId]?.practiceBand).toEqual({
@@ -67,5 +64,20 @@ describe("session app store actions", () => {
       audioPresetId: "piano",
       octaveOffset: 0,
     });
+  });
+
+  it("removes Practice Band settings when they return to defaults", () => {
+    const store = createTestStore();
+
+    store.getState().updatePracticeBandSettings(sessionId, {
+      drums: false,
+    });
+    store.getState().updatePracticeBandSettings(sessionId, {
+      drums: true,
+    });
+
+    expect(store.getState().sessions[sessionId]).not.toHaveProperty(
+      "practiceBand",
+    );
   });
 });

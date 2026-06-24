@@ -55,13 +55,7 @@ function HydratedSession({
   );
   const addPart = useAppStore((state) => state.addPart);
   const addParts = useAppStore((state) => state.addParts);
-  const addPracticeBand = useAppStore((state) => state.addPracticeBand);
   const replaceParts = useAppStore((state) => state.replaceParts);
-  const activeSessionHasPracticeBand = useAppStore((state) =>
-    state.activeSessionId
-      ? Boolean(state.sessions[state.activeSessionId]?.practiceBand)
-      : false,
-  );
   const activeSessionPartCount = useAppStore((state) =>
     state.activeSessionId
       ? (state.sessions[state.activeSessionId]?.parts.length ?? 0)
@@ -211,16 +205,13 @@ function HydratedSession({
           />
         </div>
       ) : (
-        <>
+        <div className={styles.sessionChrome}>
           <SessionHeader
             onEnterPerformanceMode={enterPerformanceMode}
             onOpenAddDialog={openAddDialog}
             onOpenSessionsDialog={() => openSessionDialog()}
           />
-          {activeSessionId ? (
-            <PracticeBandTransport sessionId={activeSessionId} />
-          ) : null}
-        </>
+        </div>
       )}
       {activeSessionId ? (
         <SessionView
@@ -245,7 +236,6 @@ function HydratedSession({
         <AddToSessionDialog
           key={addDialogKey}
           canReplaceSession={activeSessionPartCount > 0}
-          hasPracticeBand={activeSessionHasPracticeBand}
           instrumentCreationRangeContext={instrumentCreationRangeContext}
           onAddCustomChordOrScale={({
             rootNote,
@@ -285,13 +275,6 @@ function HydratedSession({
             }
 
             addParts(activeSessionId, parts);
-          }}
-          onAddPracticeBand={(settings) => {
-            if (!activeSessionId) {
-              return;
-            }
-
-            addPracticeBand(activeSessionId, settings);
           }}
           onClose={closeAddDialog}
         />

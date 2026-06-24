@@ -1,11 +1,13 @@
 import { type ComponentPropsWithoutRef, type ReactNode } from "react";
 import styles from "./ControlHeader.module.css";
 
-interface ControlHeaderProps {
+interface ControlHeaderProps extends Omit<
+  ComponentPropsWithoutRef<"header">,
+  "children"
+> {
   actions?: ReactNode;
   actionsClassName?: string;
   actionsGrow?: boolean;
-  className?: string;
   primary?: ReactNode;
   primaryClassName?: string;
 }
@@ -69,9 +71,10 @@ export function ControlHeader({
   className,
   primary,
   primaryClassName,
+  ...props
 }: ControlHeaderProps) {
   return (
-    <header className={joinClasses(styles.controlHeader, className)}>
+    <header {...props} className={joinClasses(styles.controlHeader, className)}>
       {primary !== undefined && primary !== null ? (
         <div className={joinClasses(styles.primary, primaryClassName)}>
           {primary}

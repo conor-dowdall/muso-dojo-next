@@ -130,51 +130,29 @@ export function createSessionActions(
         })),
       );
     },
-    addPracticeBand: (sessionId, settings = {}) => {
+    updatePracticeBandSettings: (sessionId, patch) => {
       const session = get().sessions[sessionId];
 
-      if (!session || session.practiceBand) {
-        return;
-      }
-
-      set((state) =>
-        updateSessionById(state, sessionId, (session) => ({
-          ...session,
-          practiceBand: normalizePracticeBandConfig(settings) ?? {},
-        })),
-      );
-    },
-    removePracticeBand: (sessionId) => {
-      const session = get().sessions[sessionId];
-
-      if (!session?.practiceBand) {
+      if (!session) {
         return;
       }
 
       set((state) =>
         updateSessionById(state, sessionId, (session) => {
+          const practiceBand = normalizePracticeBandConfig({
+            ...session.practiceBand,
+            ...patch,
+          });
           const nextSession = { ...session };
-          delete nextSession.practiceBand;
+
+          if (practiceBand) {
+            nextSession.practiceBand = practiceBand;
+          } else {
+            delete nextSession.practiceBand;
+          }
+
           return nextSession;
         }),
-      );
-    },
-    updatePracticeBandSettings: (sessionId, patch) => {
-      const session = get().sessions[sessionId];
-
-      if (!session?.practiceBand) {
-        return;
-      }
-
-      set((state) =>
-        updateSessionById(state, sessionId, (session) => ({
-          ...session,
-          practiceBand:
-            normalizePracticeBandConfig({
-              ...session.practiceBand,
-              ...patch,
-            }) ?? {},
-        })),
       );
     },
     setSessionTempoBpm: (sessionId, tempoBpm) => {

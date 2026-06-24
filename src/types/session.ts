@@ -214,6 +214,7 @@ export interface SessionConfig {
   name: string;
   lastModified: string;
   parts: MusicPartConfig[];
+  /** Optional Practice Band settings. The transport itself is derived from Parts. */
   practiceBand?: PracticeBandConfig;
   tempoBpm?: number;
 }

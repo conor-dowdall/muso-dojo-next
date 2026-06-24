@@ -65,12 +65,13 @@ export function normalizePracticeBandConfig(
   const audioPresetId = normalizePracticeBandAudioPresetId(value.audioPresetId);
   const drums = normalizePracticeBandDrums(value.drums);
   const octaveOffset = normalizePracticeBandOctaveOffset(value.octaveOffset);
-
-  return {
+  const config = {
     ...(audioPresetId ? { audioPresetId } : {}),
     ...(drums !== undefined ? { drums } : {}),
     ...(octaveOffset !== undefined ? { octaveOffset } : {}),
   };
+
+  return Object.keys(config).length > 0 ? config : undefined;
 }
 
 export function resolvePracticeBandConfig(

@@ -22,7 +22,6 @@ function createSession(parts: MusicPartConfig[]): SessionConfig {
     lastModified: "2026-06-23T00:00:00.000Z",
     name: "Session",
     parts,
-    practiceBand: {},
     tempoBpm: 120,
   };
 }
@@ -195,7 +194,6 @@ describe("createPartSequencePlaybackPlan", () => {
     const quietPlan = createPartSequencePlaybackPlan({
       ...session,
       practiceBand: {
-        ...session.practiceBand,
         drums: false,
       },
     });

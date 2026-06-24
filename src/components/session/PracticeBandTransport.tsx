@@ -1,28 +1,43 @@
 "use client";
 
-import { useEffect, useMemo, useSyncExternalStore } from "react";
-import { Drum, Play, Square } from "lucide-react";
+import {
+  type ComponentPropsWithoutRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+} from "react";
+import { Play, Square } from "lucide-react";
 import {
   createPartSequencePlaybackPlan,
   ensureAudioReady,
   partSequenceCoordinator,
 } from "@/audio";
 import { useAppStore } from "@/stores/appStore";
-import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { useScopedTransportShortcuts } from "@/hooks/interaction/useScopedTransportShortcuts";
 import { type SessionConfig } from "@/types/session";
 import { normalizeRootNoteString } from "@musodojo/music-theory-data";
 import { getNoteCollectionDisplayName } from "@/utils/music-theory/getNoteCollectionDisplayName";
-import { resolvePracticeBandConfig } from "@/utils/practice-band/practiceBandConfig";
+import {
+  resolvePracticeBandConfig,
+  type ResolvedPracticeBandConfig,
+} from "@/utils/practice-band/practiceBandConfig";
 import styles from "./PracticeBandTransport.module.css";
 
-interface PracticeBandTransportProps {
-  isPerformanceMode?: boolean;
-  sessionId: string;
+export interface PracticeBandReadoutModel {
+  collectionName?: string;
+  countLabel: string;
+  partCount: number;
+  partNumber?: number;
+  rootNote?: string;
 }
 
-function getPartReadout({
+function formatPartCount(partCount: number) {
+  return partCount === 1 ? "1 Part" : `${partCount} Parts`;
+}
+
+function createPartReadout({
   activeIndex,
   partCount,
   session,
@@ -30,64 +45,83 @@ function getPartReadout({
   activeIndex: number | undefined;
   partCount: number;
   session: SessionConfig;
-}) {
+}): PracticeBandReadoutModel {
   const part =
     activeIndex === undefined ? undefined : session.parts[activeIndex];
+  const countLabel = formatPartCount(partCount);
 
   if (activeIndex === undefined || !part) {
-    return `${partCount} ${partCount === 1 ? "Part" : "Parts"}`;
+    return {
+      countLabel,
+      partCount,
+    };
   }
 
   const rootNote = normalizeRootNoteString(part.rootNote) || part.rootNote;
   const collectionName = getNoteCollectionDisplayName(part.noteCollectionKey);
-  const partNumber = activeIndex + 1;
 
-  return `Part ${partNumber} / ${partCount} | ${rootNote} ${collectionName}`;
+  return {
+    collectionName,
+    countLabel,
+    partCount,
+    partNumber: activeIndex + 1,
+    rootNote,
+  };
 }
 
-export function PracticeBandTransport({
-  isPerformanceMode = false,
-  sessionId,
-}: PracticeBandTransportProps) {
-  const session = useAppStore((state) => state.sessions[sessionId]);
-  const updatePracticeBandSettings = useAppStore(
-    (state) => state.updatePracticeBandSettings,
+interface PracticeBandTransportState {
+  canPlay: boolean;
+  isActive: boolean;
+  readout: PracticeBandReadoutModel | null;
+  resolvedConfig: ResolvedPracticeBandConfig;
+  shortcuts: ReturnType<typeof useScopedTransportShortcuts>;
+  togglePlayback: () => void;
+}
+
+export function usePracticeBandTransport(
+  sessionId: string | null,
+): PracticeBandTransportState {
+  const session = useAppStore((state) =>
+    sessionId ? state.sessions[sessionId] : undefined,
   );
   const snapshot = useSyncExternalStore(
     partSequenceCoordinator.subscribe,
     partSequenceCoordinator.getSnapshot,
     partSequenceCoordinator.getSnapshot,
   );
-  const practiceBand = session?.practiceBand;
-  const resolvedPracticeBand = useMemo(
-    () => (practiceBand ? resolvePracticeBandConfig(practiceBand) : undefined),
-    [practiceBand],
+  const resolvedConfig = useMemo(
+    () => resolvePracticeBandConfig(session?.practiceBand),
+    [session?.practiceBand],
   );
   const plan = useMemo(
-    () =>
-      session && resolvedPracticeBand
-        ? createPartSequencePlaybackPlan(session)
-        : undefined,
-    [resolvedPracticeBand, session],
+    () => (session ? createPartSequencePlaybackPlan(session) : undefined),
+    [session],
   );
-  const isActive = snapshot.playing && snapshot.sessionId === sessionId;
+  const isActive =
+    sessionId !== null && snapshot.playing && snapshot.sessionId === sessionId;
   const displayIndex = isActive
     ? (snapshot.pendingIndex ?? snapshot.activeIndex)
-    : 0;
+    : undefined;
   const partCount = session?.parts.length ?? 0;
-  const readout = session
-    ? getPartReadout({
-        activeIndex: displayIndex,
-        partCount,
-        session,
-      })
-    : "No Session";
+  const canPlay = sessionId !== null && partCount > 0 && plan !== undefined;
+  const readout =
+    session && isActive
+      ? createPartReadout({
+          activeIndex: displayIndex,
+          partCount,
+          session,
+        })
+      : null;
   const shortcuts = useScopedTransportShortcuts({
     isActive,
     onStop: () => partSequenceCoordinator.stop(),
   });
 
   useEffect(() => {
+    if (!sessionId) {
+      return;
+    }
+
     const currentSnapshot = partSequenceCoordinator.getSnapshot();
 
     if (!currentSnapshot.playing || currentSnapshot.sessionId !== sessionId) {
@@ -112,11 +146,11 @@ export function PracticeBandTransport({
     }
   }, [plan, sessionId]);
 
-  if (!session || partCount === 0 || !plan || !resolvedPracticeBand) {
-    return null;
-  }
+  const togglePlayback = useCallback(() => {
+    if (!canPlay || !plan) {
+      return;
+    }
 
-  const handlePress = () => {
     if (isActive) {
       partSequenceCoordinator.stop();
       return;
@@ -124,57 +158,132 @@ export function PracticeBandTransport({
 
     void ensureAudioReady();
     void partSequenceCoordinator.start(plan);
-  };
+  }, [canPlay, isActive, plan]);
 
+  return {
+    canPlay,
+    isActive,
+    readout,
+    resolvedConfig,
+    shortcuts,
+    togglePlayback,
+  };
+}
+
+interface PracticeBandPlayButtonProps extends Omit<
+  ComponentPropsWithoutRef<typeof IconButton>,
+  "aria-label" | "icon"
+> {
+  transport: PracticeBandTransportState;
+}
+
+export function PracticeBandPlayButton({
+  transport,
+  ...props
+}: PracticeBandPlayButtonProps) {
   return (
-    <div
-      className={styles.transport}
-      data-performance-mode={isPerformanceMode ? true : undefined}
-      onKeyDownCapture={shortcuts.onKeyDownCapture}
-      onPointerDownCapture={shortcuts.onPointerDownCapture}
-    >
-      <IconButton
-        aria-label={isActive ? "Stop Practice Band" : "Play Practice Band"}
-        aria-keyshortcuts={isActive ? "Space Escape" : undefined}
-        icon={isActive ? <Square /> : <Play />}
-        selected={isActive}
-        shouldYield={false}
-        size="sm"
-        variant="filled"
-        onClick={handlePress}
-      />
+    <IconButton
+      {...props}
+      aria-label={
+        transport.isActive ? "Stop Practice Band" : "Play Practice Band"
+      }
+      aria-keyshortcuts={transport.isActive ? "Space Escape" : undefined}
+      disabled={!transport.canPlay}
+      icon={transport.isActive ? <Square /> : <Play />}
+      selected={transport.isActive}
+      shouldYield={false}
+      size="sm"
+      variant="filled"
+      onClick={transport.togglePlayback}
+    />
+  );
+}
+
+interface PracticeBandReadoutProps {
+  prominence?: "compact" | "title";
+  readout: PracticeBandReadoutModel | null;
+}
+
+function formatPartNumber(value: number, partCount: number) {
+  return String(value).padStart(Math.max(2, String(partCount).length), "0");
+}
+
+export function PracticeBandReadout({
+  prominence = "compact",
+  readout,
+}: PracticeBandReadoutProps) {
+  if (!readout) {
+    return null;
+  }
+
+  if (
+    readout.partNumber === undefined ||
+    !readout.rootNote ||
+    !readout.collectionName
+  ) {
+    return (
       <output
         aria-live="polite"
         className={styles.readout}
-        data-active={isActive ? true : undefined}
+        data-prominence={prominence}
       >
-        {readout}
+        {readout.countLabel}
       </output>
-      <div
-        aria-label="Practice Band options"
-        className={styles.optionsControls}
-        role="group"
-      >
-        <Button
-          aria-label={
-            resolvedPracticeBand.drums
-              ? "Mute Practice Band drums"
-              : "Unmute Practice Band drums"
-          }
-          density="compact"
-          icon={<Drum />}
-          label="Drums"
-          selected={resolvedPracticeBand.drums}
-          shouldYield={false}
-          size="xs"
-          variant="outline"
-          onClick={() =>
-            updatePracticeBandSettings(sessionId, {
-              drums: !resolvedPracticeBand.drums,
-            })
-          }
-        />
-      </div>
+    );
+  }
+
+  const partNumber = formatPartNumber(readout.partNumber, readout.partCount);
+  const partCount = formatPartNumber(readout.partCount, readout.partCount);
+  const accessibleLabel = `Part ${readout.partNumber} of ${readout.partCount}. ${readout.rootNote} ${readout.collectionName}.`;
+
+  return (
+    <output
+      aria-label={accessibleLabel}
+      aria-live="polite"
+      className={styles.readout}
+      data-prominence={prominence}
+    >
+      <span aria-hidden="true" className={styles.partPosition}>
+        <span className={styles.partLabel}>Part</span>
+        <span className={styles.partNumber}>{partNumber}</span>
+        <span className={styles.partOf}>of</span>
+        <span className={styles.partTotal}>{partCount}</span>
+      </span>
+      <span aria-hidden="true" className={styles.partRoot}>
+        {readout.rootNote}
+      </span>
+      <span aria-hidden="true" className={styles.partCollection}>
+        {readout.collectionName}
+      </span>
+    </output>
+  );
+}
+
+interface PracticeBandTransportProps {
+  isPerformanceMode?: boolean;
+  sessionId: string;
+}
+
+export function PracticeBandTransport({
+  isPerformanceMode = false,
+  sessionId,
+}: PracticeBandTransportProps) {
+  const transport = usePracticeBandTransport(sessionId);
+
+  if (!transport.canPlay) {
+    return null;
+  }
+
+  return (
+    <div
+      aria-label="Practice Band"
+      className={styles.transport}
+      data-performance-mode={isPerformanceMode ? true : undefined}
+      onKeyDownCapture={transport.shortcuts.onKeyDownCapture}
+      onPointerDownCapture={transport.shortcuts.onPointerDownCapture}
+    >
+      <PracticeBandReadout prominence="title" readout={transport.readout} />
+      <PracticeBandPlayButton transport={transport} />
     </div>
   );
 }

@@ -8,24 +8,12 @@ import {
   type RootNote,
 } from "@musodojo/music-theory-data";
 import {
-  AudioWaveform,
-  Drum,
   LayoutPanelTop,
   ListChecks,
   ListMusic,
   Music3,
   Orbit,
-  UsersRound,
-  WavesArrowDown,
-  WavesArrowUp,
 } from "lucide-react";
-import {
-  audioPresets,
-  ensureAudioReady,
-  musoAudioEngine,
-  type AudioPresetId,
-} from "@/audio";
-import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
 import {
   DialogContent,
   DialogContentSection,
@@ -59,7 +47,6 @@ import localStyles from "./AddToSessionDialog.module.css";
 import {
   type ChordProgressionChordListMode,
   type PartModuleCreationRequest,
-  type PracticeBandConfig,
   type SessionMaterialCreationKind,
 } from "@/types/session";
 import {
@@ -71,25 +58,8 @@ import {
   DEFAULT_SESSION_MATERIAL_CREATION_KIND,
   DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY,
 } from "@/utils/session/sessionMaterialCreationDefaults";
-import {
-  DEFAULT_PRACTICE_BAND_AUDIO_PRESET_ID,
-  DEFAULT_PRACTICE_BAND_DRUMS_ENABLED,
-  DEFAULT_PRACTICE_BAND_OCTAVE_OFFSET,
-  formatPracticeBandOctave,
-} from "@/utils/practice-band/practiceBandConfig";
-import {
-  EXERCISE_MAX_OCTAVE_OFFSET,
-  EXERCISE_MIN_OCTAVE_OFFSET,
-} from "@/utils/exercise-looper/exerciseConfig";
 
-type AddToSessionMode = SessionMaterialCreationKind | "practice-band";
-type SessionChoice =
-  | "key"
-  | "collection"
-  | "progression"
-  | "chord-list"
-  | "practice-band-sound"
-  | "practice-band-octave";
+type SessionChoice = "key" | "collection" | "progression" | "chord-list";
 
 interface AddToSessionDialogProps {
   canReplaceSession?: boolean;
@@ -107,8 +77,6 @@ interface AddToSessionDialogProps {
     moduleRequests: PartModuleCreationRequest[];
     replaceSession: boolean;
   }) => void;
-  hasPracticeBand?: boolean;
-  onAddPracticeBand: (settings: PracticeBandConfig) => void;
   onClose: () => void;
 }
 
@@ -125,25 +93,12 @@ const sessionAddOptions = [
     title: "Chord Progression",
     subtitle: `Two or More Parts${DISPLAY_VALUE_SEPARATOR}Tonal Center and Progression`,
   },
-  {
-    icon: <UsersRound />,
-    id: "practice-band",
-    title: "Practice Band",
-    subtitle: `Follows Parts${DISPLAY_VALUE_SEPARATOR}Looper and Drums`,
-  },
 ] as const satisfies readonly {
   icon: ReactNode;
-  id: AddToSessionMode;
+  id: SessionMaterialCreationKind;
   title: string;
   subtitle: string;
 }[];
-
-const practiceBandOctaveOffsets = Array.from(
-  {
-    length: EXERCISE_MAX_OCTAVE_OFFSET - EXERCISE_MIN_OCTAVE_OFFSET + 1,
-  },
-  (_, index) => EXERCISE_MIN_OCTAVE_OFFSET + index,
-);
 
 const chordListOptions = [
   {
@@ -175,17 +130,15 @@ function getChordListOption(mode: ChordProgressionChordListMode) {
 
 export function AddToSessionDialog({
   canReplaceSession = true,
-  hasPracticeBand = false,
   instrumentCreationRangeContext,
   onAddCustomChordOrScale,
   onAddChordProgression,
-  onAddPracticeBand,
   onClose,
 }: AddToSessionDialogProps) {
   const sessionMaterialCreationDefaults = useAppStore(
     (state) => state.dojoSettings.sessionMaterialCreationDefaults,
   );
-  const [selectedMode, setSelectedMode] = useState<AddToSessionMode>(
+  const [selectedMode, setSelectedMode] = useState<SessionMaterialCreationKind>(
     () =>
       sessionMaterialCreationDefaults?.materialKind ??
       DEFAULT_SESSION_MATERIAL_CREATION_KIND,
@@ -210,14 +163,6 @@ export function AddToSessionDialog({
         DEFAULT_SESSION_MATERIAL_CREATION_CHORD_LIST_MODE,
     );
   const [replaceSession, setReplaceSession] = useState(false);
-  const [practiceBandAudioPresetId, setPracticeBandAudioPresetId] =
-    useState<AudioPresetId>(DEFAULT_PRACTICE_BAND_AUDIO_PRESET_ID);
-  const [practiceBandDrums, setPracticeBandDrums] = useState(
-    DEFAULT_PRACTICE_BAND_DRUMS_ENABLED,
-  );
-  const [practiceBandOctaveOffset, setPracticeBandOctaveOffset] = useState(
-    DEFAULT_PRACTICE_BAND_OCTAVE_OFFSET,
-  );
   const [moduleDraft, setModuleDraft] =
     useState<ModuleCreationListDraft>(emptyModuleDraft);
   const sessionDisclosure = useDisclosureList<SessionChoice>();
@@ -238,31 +183,15 @@ export function AddToSessionDialog({
   const selectedChordListOption = getChordListOption(chordListMode);
   const selectedNoteCollectionName =
     getNoteCollectionDisplayName(noteCollectionKey);
-  const selectedPracticeBandPreset = audioPresets[practiceBandAudioPresetId];
-  const practiceBandOctaveLabel = formatPracticeBandOctave(
-    practiceBandOctaveOffset,
-  );
-  const canSubmit =
-    selectedMode === "practice-band"
-      ? !hasPracticeBand
-      : moduleDraft.moduleRequests.length > 0;
-  const effectiveReplaceSession =
-    selectedMode !== "practice-band" && canReplaceSession && replaceSession;
+  const canSubmit = moduleDraft.moduleRequests.length > 0;
+  const effectiveReplaceSession = canReplaceSession && replaceSession;
   const actionLabel = effectiveReplaceSession
     ? "Replace Session"
     : selectedMode === "part"
       ? "Add Part"
-      : selectedMode === "chord-progression"
-        ? "Add Progression"
-        : hasPracticeBand
-          ? "Practice Band Added"
-          : "Add Practice Band";
+      : "Add Progression";
 
-  const handleModeSelect = (mode: AddToSessionMode) => {
-    if (mode === "practice-band" && hasPracticeBand) {
-      return;
-    }
-
+  const handleModeSelect = (mode: SessionMaterialCreationKind) => {
     setSelectedMode(mode);
     sessionDisclosure.closeAll();
   };
@@ -284,10 +213,6 @@ export function AddToSessionDialog({
   };
 
   const rememberSessionMaterial = () => {
-    if (selectedMode === "practice-band") {
-      return;
-    }
-
     rememberSessionMaterialCreation({
       chordListMode,
       materialKind: selectedMode,
@@ -299,16 +224,6 @@ export function AddToSessionDialog({
 
   const handleSubmit = () => {
     if (!canSubmit) {
-      return;
-    }
-
-    if (selectedMode === "practice-band") {
-      onAddPracticeBand({
-        audioPresetId: practiceBandAudioPresetId,
-        drums: practiceBandDrums,
-        octaveOffset: practiceBandOctaveOffset,
-      });
-      onClose();
       return;
     }
 
@@ -343,244 +258,136 @@ export function AddToSessionDialog({
       <DialogContent layout="stack" menuRhythm="standard">
         <DialogContentSection ariaLabel="Material">
           <DisclosureList>
-            {sessionAddOptions.map((option) => {
-              const practiceBandAlreadyAdded =
-                option.id === "practice-band" && hasPracticeBand;
-
-              return (
-                <DisclosureListChoice
-                  key={option.id}
-                  disabled={practiceBandAlreadyAdded}
-                  icon={option.icon}
-                  label={option.title}
-                  preview={practiceBandAlreadyAdded ? "Added" : undefined}
-                  selected={selectedMode === option.id}
-                  subtitle={
-                    practiceBandAlreadyAdded
-                      ? `Already in Session${DISPLAY_VALUE_SEPARATOR}One per Session`
-                      : option.subtitle
-                  }
-                  onClick={() => handleModeSelect(option.id)}
-                />
-              );
-            })}
+            {sessionAddOptions.map((option) => (
+              <DisclosureListChoice
+                key={option.id}
+                icon={option.icon}
+                label={option.title}
+                selected={selectedMode === option.id}
+                subtitle={option.subtitle}
+                onClick={() => handleModeSelect(option.id)}
+              />
+            ))}
           </DisclosureList>
         </DialogContentSection>
 
-        {selectedMode === "practice-band" ? (
-          <DialogContentSection ariaLabel="Practice Band">
-            <DisclosureList>
-              <DisclosureListItem
-                ariaLabel={`Choose Practice Band sound, ${selectedPracticeBandPreset.label} selected`}
-                icon={<AudioWaveform />}
-                isOpen={sessionDisclosure.openChoice === "practice-band-sound"}
-                keepMounted
-                label="Playback Sound"
-                panelVariant="menu"
-                preview={selectedPracticeBandPreset.label}
-                onToggle={() =>
-                  sessionDisclosure.toggleChoice("practice-band-sound")
-                }
-              >
-                <AudioPresetChoiceList
-                  getChoiceAriaLabel={(choice) =>
-                    `Use ${choice.label} for Practice Band notes`
-                  }
-                  selectedPresetId={practiceBandAudioPresetId}
-                  surface="exercise"
-                  onChange={(nextPresetId) => {
-                    setPracticeBandAudioPresetId(nextPresetId);
-                    void ensureAudioReady();
-                    void musoAudioEngine.playNote({
-                      midiNote: 48,
-                      presetId: nextPresetId,
-                      use: "exercise",
-                    });
-                  }}
+        <DialogContentSection ariaLabel="Music">
+          <DisclosureList>
+            {selectedMode === "part" ? (
+              <>
+                <AddToSessionRootNoteItem
+                  icon={<Music3 />}
+                  isOpen={sessionDisclosure.openChoice === "key"}
+                  label="Root Note"
+                  selectedRootNote={selectedRootNote}
+                  value={rootNote}
+                  onChange={handleRootNoteSelect}
+                  onToggle={() => sessionDisclosure.toggleChoice("key")}
                 />
-              </DisclosureListItem>
 
-              <DisclosureListItem
-                ariaLabel={`Choose Practice Band octave, ${practiceBandOctaveLabel} selected`}
-                icon={<WavesArrowUp />}
-                isOpen={sessionDisclosure.openChoice === "practice-band-octave"}
-                keepMounted
-                label="Octave"
-                panelVariant="menu"
-                preview={practiceBandOctaveLabel}
-                onToggle={() =>
-                  sessionDisclosure.toggleChoice("practice-band-octave")
-                }
-              >
-                <DisclosureList density="compact">
-                  {practiceBandOctaveOffsets.map((octaveOffset) => {
-                    const octaveLabel = formatPracticeBandOctave(octaveOffset);
+                <DisclosureListItem
+                  ariaLabel={`Choose chord or scale, ${selectedNoteCollectionName} selected`}
+                  icon={<Orbit />}
+                  isOpen={sessionDisclosure.openChoice === "collection"}
+                  keepMounted
+                  label="Chord or Scale"
+                  panelVariant="menu"
+                  preview={selectedNoteCollectionName}
+                  onToggle={() => sessionDisclosure.toggleChoice("collection")}
+                >
+                  <NoteCollectionPicker
+                    value={noteCollectionKey}
+                    onChange={handleNoteCollectionSelect}
+                  />
+                </DisclosureListItem>
+              </>
+            ) : (
+              <>
+                <AddToSessionRootNoteItem
+                  icon={<Music3 />}
+                  isOpen={sessionDisclosure.openChoice === "key"}
+                  label="Tonal Center"
+                  selectedRootNote={selectedRootNote}
+                  value={rootNote}
+                  onChange={handleRootNoteSelect}
+                  onToggle={() => sessionDisclosure.toggleChoice("key")}
+                />
 
-                    return (
+                <DisclosureListItem
+                  ariaLabel={`Choose chord progression, ${progressionRomanLabel} gives ${progressionChordLabel}`}
+                  icon={<ListMusic />}
+                  isOpen={sessionDisclosure.openChoice === "progression"}
+                  keepMounted
+                  label="Progression"
+                  panelVariant="menu"
+                  preview={
+                    <span
+                      className={localStyles.progressionChordPreview}
+                      title={progressionTitleLabel}
+                    >
+                      {progressionTitleLabel}
+                    </span>
+                  }
+                  subtitle={
+                    <span
+                      className={localStyles.progressionChordPreview}
+                      title={progressionChordLabel}
+                    >
+                      {progressionChordLabel}
+                    </span>
+                  }
+                  onToggle={() => sessionDisclosure.toggleChoice("progression")}
+                >
+                  <ChordProgressionPicker
+                    rootNote={selectedRootNote}
+                    value={progressionKey}
+                    onChange={(candidateKey) => {
+                      setProgressionKey(candidateKey);
+                      sessionDisclosure.closeChoice("progression");
+                    }}
+                  />
+                </DisclosureListItem>
+
+                <DisclosureListItem
+                  ariaLabel={`Choose chords to add, ${selectedChordListOption.title} selected`}
+                  icon={<ListChecks />}
+                  isOpen={sessionDisclosure.openChoice === "chord-list"}
+                  keepMounted
+                  label="Chords to Add"
+                  panelVariant="menu"
+                  preview={selectedChordListOption.title}
+                  onToggle={() => sessionDisclosure.toggleChoice("chord-list")}
+                >
+                  <DisclosureList>
+                    {chordListOptions.map((option) => (
                       <DisclosureListChoice
-                        key={octaveOffset}
-                        aria-label={`Use ${octaveLabel} for Practice Band notes`}
-                        icon={
-                          octaveOffset < practiceBandOctaveOffset ? (
-                            <WavesArrowDown />
-                          ) : octaveOffset > practiceBandOctaveOffset ? (
-                            <WavesArrowUp />
-                          ) : undefined
-                        }
-                        label={octaveLabel}
-                        selected={practiceBandOctaveOffset === octaveOffset}
+                        key={option.id}
+                        label={option.title}
+                        selected={chordListMode === option.id}
+                        subtitle={option.subtitle}
                         onClick={() => {
-                          setPracticeBandOctaveOffset(octaveOffset);
-                          sessionDisclosure.closeChoice("practice-band-octave");
+                          setChordListMode(option.id);
+                          sessionDisclosure.closeChoice("chord-list");
                         }}
                       />
-                    );
-                  })}
-                </DisclosureList>
-              </DisclosureListItem>
+                    ))}
+                  </DisclosureList>
+                </DisclosureListItem>
+              </>
+            )}
+          </DisclosureList>
+        </DialogContentSection>
 
-              <DisclosureListChoice
-                aria-label={
-                  practiceBandDrums
-                    ? "Turn off default Practice Band drums"
-                    : "Turn on default Practice Band drums"
-                }
-                icon={<Drum />}
-                label="Drums"
-                preview={practiceBandDrums ? "On" : "Off"}
-                selected={practiceBandDrums}
-                subtitle="Plays Part rhythms and default drums"
-                onClick={() => setPracticeBandDrums((enabled) => !enabled)}
-              />
-            </DisclosureList>
-          </DialogContentSection>
-        ) : (
-          <>
-            <DialogContentSection ariaLabel="Music">
-              <DisclosureList>
-                {selectedMode === "part" ? (
-                  <>
-                    <AddToSessionRootNoteItem
-                      icon={<Music3 />}
-                      isOpen={sessionDisclosure.openChoice === "key"}
-                      label="Root Note"
-                      selectedRootNote={selectedRootNote}
-                      value={rootNote}
-                      onChange={handleRootNoteSelect}
-                      onToggle={() => sessionDisclosure.toggleChoice("key")}
-                    />
-
-                    <DisclosureListItem
-                      ariaLabel={`Choose chord or scale, ${selectedNoteCollectionName} selected`}
-                      icon={<Orbit />}
-                      isOpen={sessionDisclosure.openChoice === "collection"}
-                      keepMounted
-                      label="Chord or Scale"
-                      panelVariant="menu"
-                      preview={selectedNoteCollectionName}
-                      onToggle={() =>
-                        sessionDisclosure.toggleChoice("collection")
-                      }
-                    >
-                      <NoteCollectionPicker
-                        value={noteCollectionKey}
-                        onChange={handleNoteCollectionSelect}
-                      />
-                    </DisclosureListItem>
-                  </>
-                ) : (
-                  <>
-                    <AddToSessionRootNoteItem
-                      icon={<Music3 />}
-                      isOpen={sessionDisclosure.openChoice === "key"}
-                      label="Tonal Center"
-                      selectedRootNote={selectedRootNote}
-                      value={rootNote}
-                      onChange={handleRootNoteSelect}
-                      onToggle={() => sessionDisclosure.toggleChoice("key")}
-                    />
-
-                    <DisclosureListItem
-                      ariaLabel={`Choose chord progression, ${progressionRomanLabel} gives ${progressionChordLabel}`}
-                      icon={<ListMusic />}
-                      isOpen={sessionDisclosure.openChoice === "progression"}
-                      keepMounted
-                      label="Progression"
-                      panelVariant="menu"
-                      preview={
-                        <span
-                          className={localStyles.progressionChordPreview}
-                          title={progressionTitleLabel}
-                        >
-                          {progressionTitleLabel}
-                        </span>
-                      }
-                      subtitle={
-                        <span
-                          className={localStyles.progressionChordPreview}
-                          title={progressionChordLabel}
-                        >
-                          {progressionChordLabel}
-                        </span>
-                      }
-                      onToggle={() =>
-                        sessionDisclosure.toggleChoice("progression")
-                      }
-                    >
-                      <ChordProgressionPicker
-                        rootNote={selectedRootNote}
-                        value={progressionKey}
-                        onChange={(candidateKey) => {
-                          setProgressionKey(candidateKey);
-                          sessionDisclosure.closeChoice("progression");
-                        }}
-                      />
-                    </DisclosureListItem>
-
-                    <DisclosureListItem
-                      ariaLabel={`Choose chords to add, ${selectedChordListOption.title} selected`}
-                      icon={<ListChecks />}
-                      isOpen={sessionDisclosure.openChoice === "chord-list"}
-                      keepMounted
-                      label="Chords to Add"
-                      panelVariant="menu"
-                      preview={selectedChordListOption.title}
-                      onToggle={() =>
-                        sessionDisclosure.toggleChoice("chord-list")
-                      }
-                    >
-                      <DisclosureList>
-                        {chordListOptions.map((option) => (
-                          <DisclosureListChoice
-                            key={option.id}
-                            label={option.title}
-                            selected={chordListMode === option.id}
-                            subtitle={option.subtitle}
-                            onClick={() => {
-                              setChordListMode(option.id);
-                              sessionDisclosure.closeChoice("chord-list");
-                            }}
-                          />
-                        ))}
-                      </DisclosureList>
-                    </DisclosureListItem>
-                  </>
-                )}
-              </DisclosureList>
-            </DialogContentSection>
-
-            <DialogContentSection ariaLabel="Start With">
-              <ModuleCreationList
-                instrumentCreationRangeContext={instrumentCreationRangeContext}
-                onDraftChange={setModuleDraft}
-              />
-            </DialogContentSection>
-          </>
-        )}
+        <DialogContentSection ariaLabel="Start With">
+          <ModuleCreationList
+            instrumentCreationRangeContext={instrumentCreationRangeContext}
+            onDraftChange={setModuleDraft}
+          />
+        </DialogContentSection>
       </DialogContent>
       <DialogFooter>
         <DialogFooterActionBar ariaLabel="Selection">
-          {selectedMode !== "practice-band" && canReplaceSession ? (
+          {canReplaceSession ? (
             <DialogFooterActionGroup placement="secondary">
               <CheckOptionButton
                 label="Replace Current Session"
