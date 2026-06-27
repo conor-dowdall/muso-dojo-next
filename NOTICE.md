@@ -1,7 +1,6 @@
 # Third-Party Notices
 
-This software includes audio samples extracted from Fluid R3 GM SF2 Soundfont.
-The extracted samples are located in public/audio/v1/.
+This software includes audio samples extracted from Fluid R3 GM SF2 Soundfont. The extracted samples are located in public/audio/v1/.
 
 ## Fluid R3 GM
 
