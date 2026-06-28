@@ -8,11 +8,8 @@ export type HeadingProps<T extends ElementType = "h2"> = TypographyProps<T> & {
 };
 
 /**
- * !!! LLM COPY CONVENTION: Heading text is an app title/section title.
- * Prefer Title Case for visible headings and dialog titles, leaving minor
- * words lowercase unless first/last: "Instrument Options", "Choose Root Note".
- * Preserve user-authored names and music/content labels as their source data
- * supplies them.
+ * Heading text names a page, section, dialog, or user-authored object.
+ * Preserve user-authored names and music/content labels as supplied.
  */
 export function Heading<T extends HeadingTag = "h2">({
   as,

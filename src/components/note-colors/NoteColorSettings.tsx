@@ -397,7 +397,6 @@ export function NoteColorSettings({
           </DisclosureListChoiceItem>
         </DisclosureList>
 
-        {/* !!! LLM COPY CONVENTION: This is a local inline editor Done action. */}
         <DisclosureListPanelActions>
           <Button label="Done" size="sm" onClick={closeNoteColors} />
         </DisclosureListPanelActions>

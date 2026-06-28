@@ -49,82 +49,8 @@ function resolveSelectedPreview({
 }
 
 /**
- * !!! LLM COPY CONVENTION: Disclosure lists are scan surfaces, not articles.
- * Top-level option/action rows and setting categories should use short, stable labels,
- * usually Title Case when naming a category, object setting, or object action:
- * "Root Note", "Chord or Scale", "Duplicate".
- * Subtitles are either explanatory microcopy in sentence case or compact value
- * summaries. Value summaries often use Title Case source labels joined with
- * DISPLAY_VALUE_SEPARATOR from "@/utils/valueSummary", such as
- * "One Part • Root Note and Chord or Scale".
- * Previews are compact current values or tangible samples, not extra help text.
- * Preview is also the app's selected-state convention. Prefer a useful value
- * or sample; fall back to a shared state badge only when the row has no better
- * preview. Use CURRENT for the active existing object, INCLUDED for staged
- * creation checklists, and SELECTED for plain peer-choice fallbacks. Chevrons
- * disclose nested content only.
- *
- * Shared vertical option pattern for object rows, configuration rows, action rows,
- * danger rows, and nested editors. Panels can stay mounted for calmer
- * transitions while inert keeps closed inputs out of the focus order. Panel
- * actions give interactive editors a consistent footer without teaching
- * disclosure rows about a specific "Done" behavior.
- *
- * Row hierarchy:
- * - Use stable labels for menu and setting rows so beginners can keep their
- *   place.
- * - Put compact current values or visual samples in preview. Use subtitle for
- *   explanatory text, examples, longer derived values, or readable summaries.
- *   Do not force sentence case when the subtitle is a title-cased value summary.
- * - In peer choice lists, label is the choice name and subtitle explains the
- *   difference between choices. If a choice opens nested settings, subtitle may
- *   summarize the nested setting values. Use preview only for tangible samples
- *   or very compact resolved values.
- * - Use icons as visual landmarks for top-level setting categories, semantic
- *   actions, and high-level choices where the symbol clarifies a real
- *   difference. In complex mode-driven menus, nested setting rows may also use
- *   icons as signposts, and may repeat the parent icon when they continue the
- *   same decision path.
- * - Avoid icon noise in short, obvious setting groups and in long peer lists
- *   where every row would receive a generic decoration. Visual samples belong
- *   in preview instead.
- * - Use DefaultPreferenceAction for "Use X for New Y" preference actions.
- *   Use its row variant when the default action is part of the main scan
- *   surface, and its footer variant when it supports a dense inline editor.
- *   Keep labels behavior-first, such as "Use This Setup for New Instruments".
- *   Row subtitles may put the exact saved scope in a DISPLAY_VALUE_SEPARATOR
- *   summary, and row previews should carry compact visual state.
- *
- * Quick action boundary:
- * - Keep high-frequency, reversible, low-risk controls available as quick
- *   actions near the object they affect.
- * - Put lower-frequency configuration, object-management actions, and
- *   destructive actions inside a disclosure list or dialog, with confirmation
- *   where needed.
- * - Use DisclosureListActionItem for an action row that reveals a compact
- *   inline editor. Keep its label verb-first, such as "Rename", and avoid
- *   presenting it as a setting category.
- * - If a panel is a compact inline editor with several local controls, add a
- *   local DisclosureListPanelActions footer with a Done button. This closes the
- *   editor panel only; it is not a dialog-level commit action.
- *
- * Grouping model:
- * - Use visible DisclosureListGroup sections for scan-and-compare lists where
- *   browsing across groups should stay effortless.
- * - Use nested DisclosureListItem submenus when the group label is likely the
- *   user's first decision before selecting an item.
- * - Do not nest solely for symmetry; nest when the grouping represents a real
- *   step in the user's choice path.
- *
- * Open/close behavior:
- * - Keep a selected choice panel open when the row defines the active workflow
- *   mode and the panel contains required settings for that mode.
- * - Let detail panels open and close independently when the row is a selected
- *   value with optional configuration beneath it. In that case, summarize the
- *   closed state with label, subtitle, or preview instead of requiring the panel
- *   to stay open.
- * - Treat selection and openness as separate state unless the panel is the main
- *   body of the selected mode.
+ * Disclosure lists are scan surfaces for settings, choices, and object actions.
+ * Keep labels stable, previews compact, and explanatory text in subtitles.
  */
 interface DisclosureListProps extends DivProps {
   children: ReactNode;
@@ -282,9 +208,7 @@ type DisclosureListActionItemProps = Omit<
 >;
 
 /**
- * !!! LLM COPY CONVENTION: Use this for object actions that reveal a local
- * editor, such as "Rename". The row is still an accessible disclosure, but it
- * should read visually as an action instead of a settings submenu.
+ * Object action row that reveals a local editor, such as Rename.
  */
 export function DisclosureListActionItem({
   isOpen,
@@ -520,10 +444,7 @@ interface DisclosureListPanelActionsProps extends DivProps {
 }
 
 /**
- * !!! LLM COPY CONVENTION: Use this for local inline editor actions.
- * A Done button here should close the currently open panel after immediate
- * changes have already applied. Do not use this for dialog-level Add/Cancel
- * or Save/Cancel decisions; those belong in DialogFooter.
+ * Local inline editor actions. Dialog-level decisions belong in DialogFooter.
  */
 export function DisclosureListPanelActions({
   align = "end",

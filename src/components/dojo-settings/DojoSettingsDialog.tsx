@@ -30,13 +30,6 @@ interface DojoSettingsDialogProps {
   onClose: () => void;
 }
 
-/**
- * !!! LLM COPY CONVENTION: Dojo Settings are workspace-level behavior.
- * Launch them from the Dojo settings header action. Keep Dojo-wide appearance,
- * sound, defaults, and accessibility here. Sessions manage musical workspaces;
- * object overflow surfaces such as Part Actions and Instrument Options manage
- * the object beside their ellipsis.
- */
 export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
   const { closeChoice, isOpen, toggleChoice } = useDisclosureList<
     "note-colors" | "theme"

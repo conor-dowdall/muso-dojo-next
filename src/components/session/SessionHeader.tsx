@@ -130,7 +130,7 @@ export function SessionHeader({
 
       <ObjectMenuDialog
         isOpen={isMenuOpen}
-        title="Session"
+        title="Session Menu"
         onClose={() => setIsMenuOpen(false)}
       >
         <DisclosureListGroup>
