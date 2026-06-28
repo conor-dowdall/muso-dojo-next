@@ -381,12 +381,13 @@ class SoundFont:
                     )
                     fine_tune = get_signed(values, GEN_FINE_TUNE)
                     coarse_tune = get_signed(values, GEN_COARSE_TUNE)
-                    root_cents = (
-                        root_midi * 100
-                        + sample.pitch_correction
-                        + fine_tune
-                        + coarse_tune * 100
-                    )
+                    sample_root_cents = root_midi * 100 + sample.pitch_correction
+                    tuning_cents = fine_tune + coarse_tune * 100
+                    # SF2 tune generators alter the played note. The browser
+                    # manifest stores the equivalent root cents for
+                    # playbackRate = requestedPitch - rootCents, so the sign is
+                    # inverted here.
+                    root_cents = sample_root_cents - tuning_cents
                     zones.append(
                         ResolvedZone(
                             preset_name=preset_header.name,
@@ -982,6 +983,7 @@ def write_ogg_vorbis(
                     "libvorbis",
                     "-q:a",
                     str(quality),
+                    "-bitexact",
                     str(path),
                 ],
                 check=True,
@@ -1103,6 +1105,36 @@ def build_pack(
             manifest["loopStartSeconds"] = loop_start_seconds
             manifest["loopEndSeconds"] = loop_end_seconds
 
+        sample_attribution = {
+            "index": zone.sample.index,
+            "name": zone.sample.name,
+            "sampleRate": zone.sample.sample_rate,
+            "originalPitch": zone.sample.original_pitch,
+            "pitchCorrection": zone.sample.pitch_correction,
+            "start": zone.sample.start,
+            "end": zone.sample.end,
+            "startLoop": zone.sample.start_loop,
+            "endLoop": zone.sample.end_loop,
+            "sampleType": zone.sample.sample_type,
+            "sampleLink": zone.sample.sample_link,
+        }
+
+        resolved_attribution = {
+            "rootMidi": zone.root_midi,
+            "rootCents": zone.root_cents,
+            "keyLow": zone.key_low,
+            "keyHigh": zone.key_high,
+            "velocityLow": zone.velocity_low,
+            "velocityHigh": zone.velocity_high,
+            "fineTune": zone.fine_tune,
+            "coarseTune": zone.coarse_tune,
+            "sampleModes": zone.sample_modes,
+            "exclusiveClass": zone.exclusive_class,
+            "attenuationCentibels": zone.attenuation_cb,
+            "pan": zone.pan,
+            "ampEnvelope": amp_envelope_to_dict(zone.amp_envelope),
+        }
+
         regions.append(manifest)
         attributions.append(
             {
@@ -1114,34 +1146,8 @@ def build_pack(
                     "program": zone.preset,
                 },
                 "instrumentName": zone.instrument_name,
-                "sample": {
-                    "index": zone.sample.index,
-                    "name": zone.sample.name,
-                    "sampleRate": zone.sample.sample_rate,
-                    "originalPitch": zone.sample.original_pitch,
-                    "pitchCorrection": zone.sample.pitch_correction,
-                    "start": zone.sample.start,
-                    "end": zone.sample.end,
-                    "startLoop": zone.sample.start_loop,
-                    "endLoop": zone.sample.end_loop,
-                    "sampleType": zone.sample.sample_type,
-                    "sampleLink": zone.sample.sample_link,
-                },
-                "resolved": {
-                    "rootMidi": zone.root_midi,
-                    "rootCents": zone.root_cents,
-                    "keyLow": zone.key_low,
-                    "keyHigh": zone.key_high,
-                    "velocityLow": zone.velocity_low,
-                    "velocityHigh": zone.velocity_high,
-                    "fineTune": zone.fine_tune,
-                    "coarseTune": zone.coarse_tune,
-                    "sampleModes": zone.sample_modes,
-                    "exclusiveClass": zone.exclusive_class,
-                    "attenuationCentibels": zone.attenuation_cb,
-                    "pan": zone.pan,
-                    "ampEnvelope": amp_envelope_to_dict(zone.amp_envelope),
-                },
+                "sample": sample_attribution,
+                "resolved": resolved_attribution,
             }
         )
 

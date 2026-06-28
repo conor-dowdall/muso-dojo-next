@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { getPlaybackRate } from "@/audio/samplePackLibrary";
 import { samplePacks } from "@/audio/samplePacks.generated";
 
 describe("generated sample packs", () => {
@@ -38,5 +39,37 @@ describe("generated sample packs", () => {
       "percussion-low-woodblock",
       "percussion-shaker",
     ]);
+  });
+
+  it("applies SoundFont fine tune with the browser playback-rate sign", () => {
+    const nylonG = samplePacks["plucked-string"].regions.find(
+      (region) => region.id === "plucked-string-55",
+    );
+    const nylonE = samplePacks["plucked-string"].regions.find(
+      (region) => region.id === "plucked-string-76",
+    );
+
+    expect(nylonG).toMatchObject({
+      rootCents: 5489,
+      sourceSampleName: "Nylon G4",
+    });
+    expect(nylonE).toMatchObject({
+      rootCents: 7613,
+      sourceSampleName: "Nylon E6",
+    });
+    expect(
+      getPlaybackRate({
+        concertPitchHz: 440,
+        midiNote: 55,
+        region: nylonG!,
+      }),
+    ).toBeCloseTo(2 ** (11 / 1200), 5);
+    expect(
+      getPlaybackRate({
+        concertPitchHz: 440,
+        midiNote: 76,
+        region: nylonE!,
+      }),
+    ).toBeCloseTo(2 ** (-13 / 1200), 5);
   });
 });

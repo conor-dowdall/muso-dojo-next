@@ -992,7 +992,7 @@
           },
           "resolved": {
             "rootMidi": 40,
-            "rootCents": 3995,
+            "rootCents": 4005,
             "keyLow": 0,
             "keyHigh": 43,
             "velocityLow": 121,
@@ -1039,7 +1039,7 @@
           },
           "resolved": {
             "rootMidi": 45,
-            "rootCents": 4506,
+            "rootCents": 4494,
             "keyLow": 44,
             "keyHigh": 48,
             "velocityLow": 121,
@@ -1133,7 +1133,7 @@
           },
           "resolved": {
             "rootMidi": 55,
-            "rootCents": 5511,
+            "rootCents": 5489,
             "keyLow": 54,
             "keyHigh": 58,
             "velocityLow": 121,
@@ -1180,7 +1180,7 @@
           },
           "resolved": {
             "rootMidi": 59,
-            "rootCents": 5897,
+            "rootCents": 5903,
             "keyLow": 59,
             "keyHigh": 62,
             "velocityLow": 121,
@@ -1227,7 +1227,7 @@
           },
           "resolved": {
             "rootMidi": 64,
-            "rootCents": 6402,
+            "rootCents": 6398,
             "keyLow": 63,
             "keyHigh": 67,
             "velocityLow": 121,
@@ -1274,7 +1274,7 @@
           },
           "resolved": {
             "rootMidi": 69,
-            "rootCents": 6892,
+            "rootCents": 6908,
             "keyLow": 68,
             "keyHigh": 70,
             "velocityLow": 121,
@@ -1321,7 +1321,7 @@
           },
           "resolved": {
             "rootMidi": 71,
-            "rootCents": 7090,
+            "rootCents": 7110,
             "keyLow": 71,
             "keyHigh": 75,
             "velocityLow": 121,
@@ -1368,7 +1368,7 @@
           },
           "resolved": {
             "rootMidi": 76,
-            "rootCents": 7587,
+            "rootCents": 7613,
             "keyLow": 76,
             "keyHigh": 83,
             "velocityLow": 121,
@@ -1415,7 +1415,7 @@
           },
           "resolved": {
             "rootMidi": 84,
-            "rootCents": 8387,
+            "rootCents": 8413,
             "keyLow": 84,
             "keyHigh": 127,
             "velocityLow": 121,
@@ -2330,7 +2330,7 @@
           },
           "resolved": {
             "rootMidi": 36,
-            "rootCents": 3594,
+            "rootCents": 3606,
             "keyLow": 35,
             "keyHigh": 36,
             "velocityLow": 0,

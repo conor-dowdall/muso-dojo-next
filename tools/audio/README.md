@@ -63,6 +63,12 @@ The script converts SF2 sample-header loop points into sprite-buffer seconds
 after resampling, so the app does not need to understand SF2 global sample
 indexes.
 
+`pitchCorrection` comes from the raw SF2 sample header. Some soundfonts,
+including FluidR3, store all of those values as `0` and put useful tuning in
+zone-level `fineTune` or `coarseTune` generators instead. The generated
+`rootCents` field is the value used by the app, and includes those zone-level
+tuning generators with the sign adjusted for the browser playback-rate formula.
+
 Change `preferredDeliveryFormat` in the recipe and rebuild if the default
 delivery format needs to change. Keep `deliveryFormats` as `["wav", "ogg"]`
 while WAV reference files are useful for audio comparisons.
