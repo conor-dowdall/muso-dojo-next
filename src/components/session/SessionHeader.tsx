@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import {
-  ListMusic,
+  LibraryBig,
   Maximize2,
   Plus,
   Settings2,
@@ -135,8 +135,8 @@ export function SessionHeader({
       >
         <DisclosureListGroup>
           <DisclosureListAction
-            icon={<ListMusic />}
-            label="Sessions"
+            icon={<LibraryBig />}
+            label="Session Library"
             onClick={openSessionsDialog}
           />
           <DisclosureListAction
