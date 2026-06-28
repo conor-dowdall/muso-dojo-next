@@ -19,10 +19,6 @@ interface AudioPresetChoiceListProps {
   surface: AudioPresetSurface;
 }
 
-function formatAudioPresetOptionSubtitle(description: string | undefined) {
-  return description?.replace(/\.$/, "");
-}
-
 export function AudioPresetChoiceList({
   disabled,
   getChoiceAriaLabel,
@@ -42,7 +38,6 @@ export function AudioPresetChoiceList({
           label={preset.label}
           onClick={() => onChange(preset.id)}
           selected={preset.id === selectedPresetId}
-          subtitle={formatAudioPresetOptionSubtitle(preset.description)}
         />
       ))}
     </DisclosureList>

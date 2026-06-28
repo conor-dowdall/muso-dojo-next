@@ -290,7 +290,7 @@ export function DroneModule({
         showHeader={showHeader}
         style={droneFrameStyle}
       >
-        <div className={`${styles.moduleContent} ${controlStyles.content}`}>
+        <div className={controlStyles.content}>
           <div
             aria-label="Drone performance controls"
             className={controlStyles.groupRow}

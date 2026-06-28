@@ -1,21 +1,23 @@
 .surface {
+  --part-module-practice-radius: calc(var(--radius-control) + var(--space-0_5));
   --part-module-control-size: var(--space-11);
   --part-module-control-icon-size: var(--space-5);
+  --part-module-control-radius: var(--part-module-practice-radius);
   --part-module-control-gap: var(--space-1);
   --part-module-control-modifier-gap: var(--space-2);
   --part-module-control-group-gap: var(--space-3);
   --part-module-control-readout-height: var(--space-4);
   --part-module-body-background: var(--color-surface);
-  --part-module-surface-padding: var(--space-3);
+  --part-module-surface-padding: var(--space-4);
   --part-module-section-gap: var(--part-module-control-group-gap);
   --part-module-note-button-width: var(--space-16);
   --part-module-note-button-height: var(--space-14);
   --part-module-note-row-gap: var(--part-module-control-gap);
   --part-module-note-column-gap: var(--part-module-control-gap);
   --part-module-split-label-gap: var(--space-1);
-  --part-module-readout-height: calc(var(--space-12) + var(--space-1));
+  --part-module-readout-height: var(--space-16);
   --part-module-readout-max-width: calc(var(--space-80) + var(--space-8));
-  --part-module-body-radius: var(--radius-control);
+  --part-module-body-radius: var(--part-module-practice-radius);
   --part-module-min-readable-width: 0;
   --part-module-preferred-width: calc(var(--space-80) + var(--space-24));
   --part-module-labeled-control-height: calc(
@@ -24,8 +26,18 @@
   );
   --tactile-control-readout-gap: var(--part-module-control-gap);
   --tactile-control-readout-height: var(--part-module-control-readout-height);
+  --tactile-control-readout-radius: calc(
+    var(--part-module-control-radius) - var(--space-0_5)
+  );
 }
 
+/*
+ * Practice-module wrapping policy:
+ * - rows wrap whole control groups first;
+ * - normal button groups stay atomic so the user reads them as one selector;
+ * - unusually long selectors may opt into compactButtonGrid, which keeps the
+ *   full selector together while splitting it into tidy rows on narrow bodies.
+ */
 .surface .body {
   height: auto;
   min-height: 0;
@@ -50,6 +62,7 @@
 .button {
   --icon-button-size: var(--part-module-control-size);
   --button-icon-size: var(--part-module-control-icon-size);
+  --button-radius: var(--part-module-control-radius);
 
   flex: 0 0 auto;
 }
@@ -57,7 +70,25 @@
 .primaryButton {
   --icon-button-size: var(--part-module-labeled-control-height);
   --button-icon-size: var(--space-6);
-  --button-radius: calc(var(--radius-control) + var(--space-1));
+  --button-radius: var(--part-module-control-radius);
+}
+
+.controlDeck,
+.performanceControls {
+  display: flex;
+  min-inline-size: 0;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--part-module-section-gap);
+}
+
+.controlDeck {
+  inline-size: 100%;
+}
+
+.performanceControls {
+  inline-size: min(100%, calc(var(--space-80) + var(--space-16)));
 }
 
 .buttonGroup,
@@ -77,6 +108,10 @@
 
 .buttonGroup {
   gap: var(--part-module-control-gap);
+}
+
+.compactButtonGrid {
+  --part-module-compact-grid-columns: 3;
 }
 
 .modifierButtonGroup {
@@ -115,12 +150,12 @@
   padding-inline: var(--space-3);
   overflow: hidden;
   border: 0;
-  border-radius: var(--radius-control);
+  border-radius: var(--part-module-control-radius);
   background: var(--color-hardware-display-background-soft);
   color: var(--color-hardware-display-text-soft);
   font-family: var(--font-sans);
   font-weight: var(--font-semibold);
-  line-height: var(--leading-tightest);
+  line-height: var(--leading-tight);
   text-align: center;
 }
 
@@ -144,4 +179,29 @@
   align-self: start;
   padding-block-start: var(--part-module-split-label-gap);
   font-size: var(--text-xs);
+}
+
+@container (max-width: 34rem) {
+  .content {
+    --part-module-surface-padding: var(--space-3);
+    --part-module-note-button-width: calc(var(--space-12) + var(--space-1));
+    --part-module-note-button-height: var(--space-12);
+  }
+
+  .controlDeck {
+    --part-module-control-group-gap: var(--space-2);
+  }
+}
+
+@container (max-width: 19.25rem) {
+  .compactButtonGrid {
+    display: grid;
+    inline-size: fit-content;
+    max-inline-size: 100%;
+    grid-template-columns: repeat(
+      var(--part-module-compact-grid-columns),
+      var(--part-module-control-size)
+    );
+    justify-items: center;
+  }
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowUpDown, AudioWaveform, Drum } from "lucide-react";
+import { useEffect } from "react";
+import { AudioWaveform, Drum, Repeat, WavesArrowUp } from "lucide-react";
 import {
   audioPresets,
   ensureAudioReady,
@@ -17,6 +18,7 @@ import {
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { ObjectMenuDialog } from "@/components/ui/object-menu";
+import { SelectionPreviewLabel } from "@/components/ui/selection-preview";
 import {
   EXERCISE_MAX_OCTAVE_OFFSET,
   EXERCISE_MIN_OCTAVE_OFFSET,
@@ -46,6 +48,7 @@ interface PracticeBandOptionsDialogProps {
   config: ResolvedPracticeBandConfig;
   isOpen: boolean;
   onAudioPresetIdChange: (audioPresetId: AudioPresetId) => void;
+  onBackingNotesChange: (backingNotes: boolean) => void;
   onClose: () => void;
   onDrumsChange: (drums: boolean) => void;
   onOctaveOffsetChange: (octaveOffset: number) => void;
@@ -55,14 +58,35 @@ export function PracticeBandOptionsDialog({
   config,
   isOpen,
   onAudioPresetIdChange,
+  onBackingNotesChange,
   onClose,
   onDrumsChange,
   onOctaveOffsetChange,
 }: PracticeBandOptionsDialogProps) {
-  const { isOpen: isChoiceOpen, toggleChoice } =
-    useDisclosureList<PracticeBandMenuChoice>(null);
+  const {
+    closeAll,
+    isOpen: isChoiceOpen,
+    toggleChoice,
+  } = useDisclosureList<PracticeBandMenuChoice>(null);
   const preset = audioPresets[config.audioPresetId];
   const octaveLabel = formatPracticeBandOctave(config.octaveOffset);
+  const includedPreview = () => <SelectionPreviewLabel kind="included" />;
+
+  useEffect(() => {
+    if (!config.backingNotes) {
+      closeAll();
+    }
+  }, [closeAll, config.backingNotes]);
+
+  const handleBackingNotesChange = () => {
+    const nextBackingNotes = !config.backingNotes;
+
+    if (!nextBackingNotes) {
+      closeAll();
+    }
+
+    onBackingNotesChange(nextBackingNotes);
+  };
 
   return (
     <ObjectMenuDialog
@@ -79,14 +103,29 @@ export function PracticeBandOptionsDialog({
           }
           icon={<Drum />}
           label="Drums"
-          preview={config.drums ? "On" : "Off"}
+          preview={config.drums ? includedPreview() : undefined}
           selected={config.drums}
           selectionSemantics="visual"
           onClick={() => onDrumsChange(!config.drums)}
         />
 
+        <DisclosureListAction
+          aria-label={
+            config.backingNotes
+              ? "Mute Practice Band backing notes"
+              : "Use Practice Band backing notes"
+          }
+          icon={<Repeat />}
+          label="Backing Notes"
+          preview={config.backingNotes ? includedPreview() : undefined}
+          selected={config.backingNotes}
+          selectionSemantics="visual"
+          onClick={handleBackingNotesChange}
+        />
+
         <DisclosureListItem
           ariaLabel={`Backing sound. Current: ${preset.label}`}
+          disabled={!config.backingNotes}
           icon={<AudioWaveform />}
           isOpen={isChoiceOpen("sound")}
           label="Backing Sound"
@@ -108,10 +147,11 @@ export function PracticeBandOptionsDialog({
         </DisclosureListItem>
 
         <DisclosureListItem
-          ariaLabel={`Generated backing octave. Current: ${octaveLabel}`}
-          icon={<ArrowUpDown />}
+          ariaLabel={`Backing octave. Current: ${octaveLabel}`}
+          disabled={!config.backingNotes}
+          icon={<WavesArrowUp />}
           isOpen={isChoiceOpen("octave")}
-          label="Generated Octave"
+          label="Backing Octave"
           panelVariant="menu"
           preview={octaveLabel}
           onToggle={() => toggleChoice("octave")}
@@ -123,7 +163,7 @@ export function PracticeBandOptionsDialog({
               return (
                 <DisclosureListChoice
                   key={octaveOffset}
-                  aria-label={`Use ${label} for generated Practice Band backing`}
+                  aria-label={`Use ${label} for Practice Band backing octave`}
                   label={label}
                   selected={octaveOffset === config.octaveOffset}
                   onClick={() => onOctaveOffsetChange(octaveOffset)}

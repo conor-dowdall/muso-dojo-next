@@ -46,17 +46,20 @@ describe("session app store actions", () => {
 
     store.getState().updatePracticeBandSettings(sessionId, {
       audioPresetId: "piano",
+      backingNotes: false,
       drums: false,
       octaveOffset: 0,
     });
 
     expect(store.getState().sessions[sessionId]?.practiceBand).toEqual({
       audioPresetId: "piano",
+      backingNotes: false,
       drums: false,
       octaveOffset: 0,
     });
 
     store.getState().updatePracticeBandSettings(sessionId, {
+      backingNotes: true,
       drums: true,
     });
 

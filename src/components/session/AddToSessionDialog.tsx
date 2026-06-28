@@ -186,7 +186,7 @@ export function AddToSessionDialog({
   const canSubmit = moduleDraft.moduleRequests.length > 0;
   const effectiveReplaceSession = canReplaceSession && replaceSession;
   const actionLabel = effectiveReplaceSession
-    ? "Replace Session"
+    ? "Replace Parts"
     : selectedMode === "part"
       ? "Add Part"
       : "Add Progression";
@@ -390,9 +390,8 @@ export function AddToSessionDialog({
           {canReplaceSession ? (
             <DialogFooterActionGroup placement="secondary">
               <CheckOptionButton
-                label="Replace Current Session"
+                label="Replace Existing Parts"
                 selected={replaceSession}
-                subtitle="Clears current parts before adding"
                 onClick={() =>
                   setReplaceSession((currentValue) => !currentValue)
                 }

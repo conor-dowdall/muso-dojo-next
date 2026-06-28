@@ -29,6 +29,8 @@
 }
 
 .readout[data-prominence="title"] {
+  inline-size: 100%;
+  grid-template-columns: 11.5ch 2.25ch minmax(0, 1fr);
   font-size: var(--text-sm);
 }
 
@@ -76,4 +78,27 @@
 
 .readout[data-prominence="title"] .partCollection {
   font-size: var(--text-base);
+}
+
+@media (width < 24rem) {
+  .readout {
+    grid-template-columns:
+      minmax(6.2ch, max-content) minmax(2.25ch, max-content)
+      minmax(0, 1fr);
+    column-gap: var(--space-2);
+  }
+
+  .readout[data-prominence="title"] {
+    grid-template-columns: 6.2ch 2.25ch minmax(0, 1fr);
+  }
+
+  .partPosition {
+    grid-template-columns: 2ch 1.4ch 2ch;
+    min-inline-size: 6.2ch;
+    column-gap: 0.35ch;
+  }
+
+  .partLabel {
+    display: none;
+  }
 }

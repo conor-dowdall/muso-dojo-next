@@ -88,7 +88,12 @@ export function SessionHeader({
         primary={
           <div className={styles.identity}>
             {practiceBandTransport.isActive ? (
-              <Heading as="h1" className={styles.title} size="base">
+              <Heading
+                as="h1"
+                className={styles.title}
+                data-band-active="true"
+                size="base"
+              >
                 <PracticeBandReadout
                   prominence="title"
                   readout={practiceBandTransport.readout}
@@ -161,6 +166,9 @@ export function SessionHeader({
           isOpen={isPracticeBandOptionsOpen}
           onAudioPresetIdChange={(audioPresetId) =>
             updatePracticeBandSettings(activeSessionId, { audioPresetId })
+          }
+          onBackingNotesChange={(backingNotes) =>
+            updatePracticeBandSettings(activeSessionId, { backingNotes })
           }
           onClose={() => setIsPracticeBandOptionsOpen(false)}
           onDrumsChange={(drums) =>

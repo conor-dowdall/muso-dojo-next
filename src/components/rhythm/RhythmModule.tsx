@@ -342,10 +342,10 @@ export function RhythmModule({
           ) : undefined
         }
       >
-        <div className={`${styles.content} ${controlStyles.content}`}>
+        <div className={controlStyles.content}>
           <div
             aria-label="Rhythm controls"
-            className={styles.controlDeck}
+            className={controlStyles.controlDeck}
             role="group"
           >
             <div
@@ -522,7 +522,7 @@ export function RhythmModule({
 
                 <span
                   aria-label="Timekeeper rhythm"
-                  className={controlStyles.buttonGroup}
+                  className={`${controlStyles.buttonGroup} ${controlStyles.compactButtonGrid} ${styles.timekeeperRhythmControls}`}
                   role="group"
                 >
                   {timekeeperSubdivisionChoices.map((choice) => (

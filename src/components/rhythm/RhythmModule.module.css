@@ -2,27 +2,15 @@
   container: rhythm / inline-size;
 }
 
-.content {
-  align-items: center;
-}
-
-.controlDeck {
-  display: flex;
-  inline-size: 100%;
-  min-inline-size: 0;
-  flex: 0 0 auto;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--part-module-section-gap);
-}
-
 .recipeReadout {
   min-inline-size: var(--space-14);
 }
 
-.theoryReadout {
-  --part-module-readout-height: calc(var(--space-14) + var(--space-1));
+.timekeeperRhythmControls {
+  --part-module-compact-grid-columns: 3;
+}
 
+.theoryReadout {
   grid-template-rows: auto;
   align-content: center;
   row-gap: var(--space-1);
@@ -48,7 +36,8 @@
     transparent
   );
   font-size: var(--text-2xs);
-  font-weight: var(--font-semibold);
+  font-weight: var(--font-medium);
+  line-height: var(--leading-tight);
 }
 
 .groupingControl {
@@ -85,10 +74,4 @@
   font-weight: var(--font-bold);
   letter-spacing: 0;
   line-height: 1;
-}
-
-@container rhythm (max-width: 32rem) {
-  .controlDeck {
-    --part-module-control-group-gap: var(--space-2);
-  }
 }

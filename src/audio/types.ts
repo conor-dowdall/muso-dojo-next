@@ -33,7 +33,6 @@ export interface SampleEnvelopeConfig {
 export interface AudioPreset {
   availableOn: readonly AudioPresetSurface[];
   defaultDurationSeconds: number;
-  description?: string;
   envelope: SampleEnvelopeConfig;
   gain: number;
   id: AudioPresetId;

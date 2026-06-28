@@ -165,7 +165,7 @@ export function SessionManagementDialog({
 
   return (
     <>
-      <DialogHeader title="Sessions" onClose={onClose} />
+      <DialogHeader title="Session Library" onClose={onClose} />
       <DialogContent menuRhythm="standard">
         <section
           className={styles.sessionListSection}

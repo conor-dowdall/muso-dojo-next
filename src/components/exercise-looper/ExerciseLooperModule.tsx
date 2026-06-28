@@ -397,11 +397,11 @@ export function ExerciseLooperModule({
           ) : undefined
         }
       >
-        <div className={`${styles.moduleContent} ${controlStyles.content}`}>
-          <div className={styles.controlDeck}>
+        <div className={controlStyles.content}>
+          <div className={controlStyles.controlDeck}>
             <div
               aria-label="Looper performance controls"
-              className={styles.performanceControls}
+              className={controlStyles.performanceControls}
               role="group"
             >
               <div

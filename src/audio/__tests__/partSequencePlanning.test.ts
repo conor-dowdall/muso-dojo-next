@@ -137,6 +137,34 @@ describe("createPartSequencePlaybackPlan", () => {
     expect(plan.parts[0]?.rhythmRequest).toBeUndefined();
   });
 
+  it("mutes generated and explicit loopers when backing notes are muted globally", () => {
+    const plan = createPartSequencePlaybackPlan({
+      ...createSession([
+        createPart("empty-part", []),
+        createPart("looper-part", [
+          {
+            id: "exercise",
+            type: "exercise-looper",
+          },
+          {
+            id: "rhythm",
+            rhythm: DEFAULT_RHYTHM_SELECTION,
+            type: "rhythm",
+          },
+        ]),
+      ]),
+      practiceBand: { backingNotes: false },
+    });
+
+    expect(plan.parts[0]?.exerciseRequest).toBeUndefined();
+    expect(plan.parts[0]?.rhythmRequest?.id).toBe(
+      "part-sequence-drums:empty-part",
+    );
+    expect(plan.parts[1]?.durationBeats).toBe(4);
+    expect(plan.parts[1]?.exerciseRequest).toBeUndefined();
+    expect(plan.parts[1]?.rhythmRequest?.id).toBe("rhythm");
+  });
+
   it("uses the first looper and first rhythm by module order", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([
@@ -188,12 +216,13 @@ describe("createPartSequencePlaybackPlan", () => {
     expect(slowPlan.signature).not.toBe(fastPlan.signature);
   });
 
-  it("keeps the source signature stable when only drum mute changes", () => {
+  it("keeps the source signature stable when only Practice Band mutes change", () => {
     const session = createSession([createPart("part", [])]);
     const fullPlan = createPartSequencePlaybackPlan(session);
     const quietPlan = createPartSequencePlaybackPlan({
       ...session,
       practiceBand: {
+        backingNotes: false,
         drums: false,
       },
     });

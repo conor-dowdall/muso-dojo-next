@@ -1,6 +1,4 @@
 .partModuleFrame {
-  --part-module-body-radius: var(--instrument-body-radius, 0);
-
   position: relative;
   display: flex;
   flex-direction: column;
@@ -42,7 +40,10 @@
   max-width: 100%;
   overflow-x: hidden;
   overflow-y: hidden;
-  border-radius: var(--part-module-body-radius);
+  border-radius: var(
+    --part-module-body-radius,
+    var(--instrument-body-radius, 0)
+  );
   background: transparent;
   scrollbar-color: var(--color-border) transparent;
   scrollbar-width: thin;
@@ -83,7 +84,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: var(--part-module-body-radius);
+  border-radius: var(
+    --part-module-body-radius,
+    var(--instrument-body-radius, 0)
+  );
   contain: paint;
   content-visibility: auto;
   contain-intrinsic-size: auto

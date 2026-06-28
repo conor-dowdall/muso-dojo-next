@@ -9,7 +9,6 @@ import {
 function createSamplePreset({
   availableOn,
   defaultDurationSeconds,
-  description,
   envelope,
   gain,
   id,
@@ -17,7 +16,6 @@ function createSamplePreset({
 }: {
   availableOn: readonly AudioPresetSurface[];
   defaultDurationSeconds: number;
-  description: string;
   envelope: SampleEnvelopeConfig;
   gain: number;
   id: AudioPresetId;
@@ -26,7 +24,6 @@ function createSamplePreset({
   return {
     availableOn,
     defaultDurationSeconds,
-    description,
     envelope,
     gain,
     id,
@@ -39,7 +36,6 @@ export const audioPresets = {
   piano: createSamplePreset({
     availableOn: ["instrument", "exercise"],
     defaultDurationSeconds: 1.08,
-    description: "Clear sampled piano for previews and exercise playback.",
     envelope: {
       attackSeconds: 0.008,
       decaySeconds: 0.9,
@@ -53,7 +49,6 @@ export const audioPresets = {
   "plucked-string": createSamplePreset({
     availableOn: ["instrument", "exercise"],
     defaultDurationSeconds: 0.62,
-    description: "Sampled nylon pluck for fretted instruments and fast notes.",
     envelope: {
       attackSeconds: 0.003,
       decaySeconds: 0.44,
@@ -67,7 +62,6 @@ export const audioPresets = {
   "bowed-strings": createSamplePreset({
     availableOn: ["instrument", "drone", "exercise"],
     defaultDurationSeconds: 1.2,
-    description: "Looped sampled strings for drones and sustained tones.",
     envelope: {
       attackSeconds: 0.12,
       decaySeconds: 0.2,

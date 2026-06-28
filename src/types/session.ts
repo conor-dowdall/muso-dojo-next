@@ -43,6 +43,7 @@ export interface SessionMaterialCreationDefaults {
 
 export interface PracticeBandConfig {
   audioPresetId?: AudioPresetId;
+  backingNotes?: boolean;
   drums?: boolean;
   octaveOffset?: number;
 }

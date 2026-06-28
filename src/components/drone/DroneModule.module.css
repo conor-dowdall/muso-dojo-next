@@ -1,11 +1,3 @@
 .droneFrame {
   container: drone / inline-size;
 }
-
-@container drone (max-width: 34rem) {
-  .moduleContent {
-    --part-module-surface-padding: var(--space-2);
-    --part-module-note-button-width: calc(var(--space-12) + var(--space-1));
-    --part-module-note-button-height: var(--space-12);
-  }
-}

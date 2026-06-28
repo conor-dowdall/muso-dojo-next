@@ -1,24 +1,5 @@
 .frame {
-  --part-module-readout-height: calc(var(--space-12) + var(--space-1));
-
   container: exercise-looper / inline-size;
-}
-
-.controlDeck {
-  display: flex;
-  flex: 0 0 auto;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--part-module-section-gap);
-}
-
-.performanceControls {
-  display: flex;
-  inline-size: min(100%, calc(var(--space-80) + var(--space-16)));
-  flex: 0 0 auto;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--part-module-section-gap);
 }
 
 .pulseControls .pulseControlGroup {
@@ -229,12 +210,6 @@
 }
 
 @container exercise-looper (max-width: 34rem) {
-  .moduleContent {
-    --part-module-note-button-width: calc(var(--space-12) + var(--space-1));
-    --part-module-note-button-height: var(--space-12);
-    --part-module-surface-padding: var(--space-2);
-  }
-
   .patternControls {
     inline-size: 100%;
   }

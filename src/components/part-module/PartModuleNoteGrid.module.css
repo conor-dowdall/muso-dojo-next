@@ -48,7 +48,10 @@
   );
   --instrument-note-tile-label-inline-padding: var(--space-0_5);
 
-  border-radius: calc(var(--radius-control) + var(--space-0_5));
+  border-radius: var(
+    --part-module-control-radius,
+    calc(var(--radius-control) + var(--space-0_5))
+  );
 }
 
 .button[data-note-highlighted="true"] [data-emphasis] {

@@ -49,6 +49,7 @@ describe("normalizeSessionConfig", () => {
         parts: [],
         practiceBand: {
           audioPresetId: "piano",
+          backingNotes: false,
           drums: false,
           octaveOffset: 0,
         },
@@ -56,6 +57,7 @@ describe("normalizeSessionConfig", () => {
     ).toMatchObject({
       practiceBand: {
         audioPresetId: "piano",
+        backingNotes: false,
         drums: false,
         octaveOffset: 0,
       },
@@ -68,6 +70,7 @@ describe("normalizeSessionConfig", () => {
       parts: [],
       practiceBand: {
         audioPresetId: "plucked-string",
+        backingNotes: true,
         drums: true,
         octaveOffset: -1,
       },

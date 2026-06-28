@@ -117,6 +117,11 @@ function createExerciseRequestForPart({
   tempoBpm: number;
 }) {
   const resolvedPracticeBand = resolvePracticeBandConfig(practiceBand);
+
+  if (!resolvedPracticeBand.backingNotes) {
+    return undefined;
+  }
+
   const octaveOffset =
     module?.octaveOffset ??
     (module

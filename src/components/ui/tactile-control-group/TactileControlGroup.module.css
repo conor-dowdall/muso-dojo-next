@@ -13,6 +13,7 @@
 
 .controls {
   display: flex;
+  max-inline-size: 100%;
   min-inline-size: 0;
   align-items: center;
   justify-content: center;

@@ -1,13 +1,16 @@
 .actions {
   display: flex;
   flex: 0 0 auto;
+  max-inline-size: 100%;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: var(--control-header-cluster-gap);
+  gap: var(--control-header-wrap-gap) var(--control-header-cluster-gap);
 }
 
 .directionGroup {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: var(--control-header-peer-gap);
 }
