@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import {
+  Focus,
   LibraryBig,
-  Maximize2,
+  MonitorPlay,
+  PanelsTopLeft,
   Plus,
+  Rows3,
   Settings2,
   SlidersHorizontal,
+  View,
+  X,
 } from "lucide-react";
 import { Heading } from "@/components/ui/typography/Heading";
 import { IconButton } from "@/components/ui/buttons/IconButton";
@@ -18,7 +23,10 @@ import { Dialog } from "@/components/ui/dialog/Dialog";
 import { DojoSettingsDialog } from "@/components/dojo-settings/DojoSettingsDialog";
 import { useAppStore } from "@/stores/appStore";
 import {
+  DisclosureList,
   DisclosureListAction,
+  DisclosureListActionItem,
+  DisclosureListChoice,
   DisclosureListGroup,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
@@ -31,20 +39,43 @@ import {
   usePracticeBandTransport,
 } from "./PracticeBandTransport";
 import { PracticeBandOptionsDialog } from "./PracticeBandOptionsDialog";
+import {
+  requiresSessionParts,
+  sessionViewModeCopy,
+  sessionViewModes,
+  type SessionViewMode,
+} from "./sessionViewMode";
 import styles from "./SessionHeader.module.css";
 
 interface SessionHeaderProps {
   onOpenAddDialog: () => void;
   onOpenSessionsDialog: () => void;
-  onEnterPerformanceMode?: () => void;
+  onViewModeChange: (mode: SessionViewMode) => void;
+  onViewModeExit?: () => void;
+  variant?: "full" | "practice";
+  viewMode: SessionViewMode;
 }
 
+type SessionMenuSection = "view";
+
+const sessionViewModeIcons = {
+  session: <PanelsTopLeft />,
+  band: <Rows3 />,
+  "live-part": <MonitorPlay />,
+  focus: <Focus />,
+} as const satisfies Record<SessionViewMode, ReactNode>;
+
 export function SessionHeader({
-  onEnterPerformanceMode,
   onOpenAddDialog,
   onOpenSessionsDialog,
+  onViewModeChange,
+  onViewModeExit,
+  variant = "full",
+  viewMode,
 }: SessionHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [openMenuSection, setOpenMenuSection] =
+    useState<SessionMenuSection | null>(null);
   const [isPracticeBandOptionsOpen, setIsPracticeBandOptionsOpen] =
     useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
@@ -59,7 +90,13 @@ export function SessionHeader({
       (activeSessionId ? state.sessions[activeSessionId]?.name : null) ??
       "No Sessions Yet",
   );
+  const activeSessionPartCount = useAppStore((state) =>
+    activeSessionId ? (state.sessions[activeSessionId]?.parts.length ?? 0) : 0,
+  );
   const hasActiveSession = activeSessionId !== null;
+  const viewModeLabel = sessionViewModeCopy[viewMode].label;
+  const canUsePartViews = activeSessionPartCount > 0;
+  const isPracticeHeader = variant === "practice";
 
   const openSettingsDialog = () => {
     setIsMenuOpen(false);
@@ -68,6 +105,14 @@ export function SessionHeader({
   };
 
   const closeSettingsDialog = () => setIsSettingsDialogOpen(false);
+  const openSessionMenu = () => {
+    setOpenMenuSection(null);
+    setIsMenuOpen(true);
+  };
+  const openViewSection = () => {
+    setOpenMenuSection("view");
+    setIsMenuOpen(true);
+  };
   const openSessionsDialog = () => {
     setIsMenuOpen(false);
     onOpenSessionsDialog();
@@ -76,18 +121,38 @@ export function SessionHeader({
     setIsMenuOpen(false);
     setIsPracticeBandOptionsOpen(true);
   };
+  const selectViewMode = (nextViewMode: SessionViewMode) => {
+    setIsMenuOpen(false);
+    setOpenMenuSection(null);
+    onViewModeChange(nextViewMode);
+  };
+  const toggleMenuSection = (section: SessionMenuSection) => {
+    setOpenMenuSection((currentSection) =>
+      currentSection === section ? null : section,
+    );
+  };
 
   return (
     <>
       <ControlHeader
         className={styles.header}
+        data-variant={variant}
         onKeyDownCapture={practiceBandTransport.shortcuts.onKeyDownCapture}
         onPointerDownCapture={
           practiceBandTransport.shortcuts.onPointerDownCapture
         }
         primary={
           <div className={styles.identity}>
-            {practiceBandTransport.isActive ? (
+            {isPracticeHeader && practiceBandTransport.readout ? (
+              <PracticeBandReadout
+                prominence="title"
+                readout={practiceBandTransport.readout}
+              />
+            ) : isPracticeHeader ? (
+              <Heading as="h1" className={styles.title} size="base">
+                {viewModeLabel}
+              </Heading>
+            ) : practiceBandTransport.isActive ? (
               <Heading
                 as="h1"
                 className={styles.title}
@@ -108,27 +173,42 @@ export function SessionHeader({
         }
         actions={
           <ControlHeaderCluster aria-label="Session actions" role="group">
-            <IconButton
-              aria-label="Add to session"
-              disabled={!hasActiveSession}
-              icon={<Plus />}
-              size="sm"
-              variant="filled"
-              onClick={onOpenAddDialog}
-            />
+            {isPracticeHeader ? null : (
+              <IconButton
+                aria-label="Add to session"
+                disabled={!hasActiveSession}
+                icon={<Plus />}
+                size="sm"
+                variant="filled"
+                onClick={onOpenAddDialog}
+              />
+            )}
             <PracticeBandPlayButton transport={practiceBandTransport} />
             <IconButton
-              aria-label="Enter performance mode"
-              disabled={!hasActiveSession || !onEnterPerformanceMode}
-              icon={<Maximize2 />}
+              aria-label={`Session view. Current: ${viewModeLabel}`}
+              disabled={!hasActiveSession}
+              icon={sessionViewModeIcons[viewMode]}
+              selected={viewMode !== "session"}
               size="sm"
               shouldYield={false}
-              onClick={onEnterPerformanceMode}
+              onClick={openViewSection}
             />
-            <OverflowMenuButton
-              aria-label="Session menu"
-              onClick={() => setIsMenuOpen(true)}
-            />
+            {isPracticeHeader ? (
+              <IconButton
+                aria-label="Return to session view"
+                disabled={!onViewModeExit}
+                icon={<X />}
+                size="sm"
+                shouldYield={false}
+                variant="ghost"
+                onClick={onViewModeExit}
+              />
+            ) : (
+              <OverflowMenuButton
+                aria-label="Session menu"
+                onClick={openSessionMenu}
+              />
+            )}
           </ControlHeaderCluster>
         }
       />
@@ -138,6 +218,40 @@ export function SessionHeader({
         title="Session Menu"
         onClose={() => setIsMenuOpen(false)}
       >
+        <DisclosureListGroup>
+          <DisclosureListActionItem
+            ariaLabel={`Choose session view. Current: ${viewModeLabel}`}
+            icon={<View />}
+            isOpen={openMenuSection === "view"}
+            label="View"
+            panelVariant="menu"
+            preview={viewModeLabel}
+            selected={viewMode !== "session"}
+            onToggle={() => toggleMenuSection("view")}
+          >
+            <DisclosureList density="compact">
+              {sessionViewModes.map((mode) => {
+                const copy = sessionViewModeCopy[mode];
+                const disabled = requiresSessionParts(mode) && !canUsePartViews;
+
+                return (
+                  <DisclosureListChoice
+                    key={mode}
+                    aria-label={`Use ${copy.label} view`}
+                    disabled={disabled}
+                    icon={sessionViewModeIcons[mode]}
+                    label={copy.label}
+                    selected={mode === viewMode}
+                    selectedPreviewKind="current"
+                    subtitle={disabled ? "Add a Part first." : copy.subtitle}
+                    onClick={() => selectViewMode(mode)}
+                  />
+                );
+              })}
+            </DisclosureList>
+          </DisclosureListActionItem>
+        </DisclosureListGroup>
+
         <DisclosureListGroup>
           <DisclosureListAction
             icon={<LibraryBig />}

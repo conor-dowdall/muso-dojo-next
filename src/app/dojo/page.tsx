@@ -1,18 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import styles from "./page.module.css";
 import { AudioStatusViewport } from "@/components/audio/AudioStatusViewport";
-import { IconButton } from "@/components/ui/buttons/IconButton";
 import { Dialog } from "@/components/ui/dialog/Dialog";
 import { AddToSessionDialog } from "@/components/session/AddToSessionDialog";
 import { SessionHeader } from "@/components/session/SessionHeader";
 import { SessionLoader } from "@/components/session/SessionLoader";
 import { SessionManagementDialog } from "@/components/session/SessionManagementDialog";
 import { SessionView } from "@/components/session/SessionView";
-import { PracticeBandTransport } from "@/components/session/PracticeBandTransport";
+import {
+  requiresSessionParts,
+  type SessionViewMode,
+} from "@/components/session/sessionViewMode";
 import {
   createInstrumentCreationRangeContextFromSignature,
   createInstrumentCreationRangeContextSignature,
@@ -28,13 +29,13 @@ import { createChordProgressionParts } from "@/utils/music-part/createChordProgr
 import { createDefaultMusicPartConfig } from "@/utils/session/createSessionEntities";
 
 interface HydratedSessionProps {
-  isPerformanceMode: boolean;
-  onPerformanceModeChange: (isPerformanceMode: boolean) => void;
+  onSessionViewModeChange: (mode: SessionViewMode) => void;
+  sessionViewMode: SessionViewMode;
 }
 
 function HydratedSession({
-  isPerformanceMode,
-  onPerformanceModeChange,
+  onSessionViewModeChange,
+  sessionViewMode,
 }: HydratedSessionProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addDialogKey, setAddDialogKey] = useState(0);
@@ -61,6 +62,8 @@ function HydratedSession({
       ? (state.sessions[state.activeSessionId]?.parts.length ?? 0)
       : 0,
   );
+  const isPracticeViewMode =
+    sessionViewMode === "focus" || sessionViewMode === "live-part";
   const closeAddDialog = () => setIsAddDialogOpen(false);
   const instrumentCreationRangeContext =
     createInstrumentCreationRangeContextFromSignature(
@@ -77,12 +80,15 @@ function HydratedSession({
     setSessionDialogTempoId(tempoSessionId ?? null);
     setIsSessionDialogOpen(true);
   };
-  const enterPerformanceMode = () => {
-    setIsAddDialogOpen(false);
-    void ensureAudioReady({ feedback: "silent" });
-    onPerformanceModeChange(true);
+  const handleSessionViewModeChange = (nextViewMode: SessionViewMode) => {
+    if (nextViewMode === "focus" || nextViewMode === "live-part") {
+      setIsAddDialogOpen(false);
+      void ensureAudioReady({ feedback: "silent" });
+    }
+
+    onSessionViewModeChange(nextViewMode);
   };
-  const exitPerformanceMode = () => onPerformanceModeChange(false);
+  const exitPracticeViewMode = () => onSessionViewModeChange("session");
 
   useEffect(() => {
     if (!activeSessionId || !musoAudioEngine.isSupported()) {
@@ -130,10 +136,16 @@ function HydratedSession({
   }, [activeSessionId]);
 
   useEffect(() => {
-    if (!activeSessionId && isPerformanceMode) {
-      onPerformanceModeChange(false);
+    if (!activeSessionId && sessionViewMode !== "session") {
+      onSessionViewModeChange("session");
     }
-  }, [activeSessionId, isPerformanceMode, onPerformanceModeChange]);
+  }, [activeSessionId, onSessionViewModeChange, sessionViewMode]);
+
+  useEffect(() => {
+    if (activeSessionPartCount === 0 && requiresSessionParts(sessionViewMode)) {
+      onSessionViewModeChange("session");
+    }
+  }, [activeSessionPartCount, onSessionViewModeChange, sessionViewMode]);
 
   useEffect(() => {
     const snapshot = partSequenceCoordinator.getSnapshot();
@@ -158,19 +170,19 @@ function HydratedSession({
   }, []);
 
   useEffect(() => {
-    if (!isPerformanceMode) {
+    if (!isPracticeViewMode) {
       return;
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onPerformanceModeChange(false);
+        onSessionViewModeChange("session");
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isPerformanceMode, onPerformanceModeChange]);
+  }, [isPracticeViewMode, onSessionViewModeChange]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -186,38 +198,21 @@ function HydratedSession({
 
   return (
     <>
-      {isPerformanceMode ? (
-        <div className={styles.performanceModeHeader}>
-          {activeSessionId ? (
-            <PracticeBandTransport
-              isPerformanceMode
-              sessionId={activeSessionId}
-            />
-          ) : null}
-          <IconButton
-            aria-label="Exit performance mode"
-            className={styles.performanceModeExit}
-            icon={<X />}
-            size="sm"
-            variant="ghost"
-            shouldYield={false}
-            onClick={exitPerformanceMode}
-          />
-        </div>
-      ) : (
-        <div className={styles.sessionChrome}>
-          <SessionHeader
-            onEnterPerformanceMode={enterPerformanceMode}
-            onOpenAddDialog={openAddDialog}
-            onOpenSessionsDialog={() => openSessionDialog()}
-          />
-        </div>
-      )}
+      <div className={styles.sessionChrome}>
+        <SessionHeader
+          variant={isPracticeViewMode ? "practice" : "full"}
+          viewMode={sessionViewMode}
+          onOpenAddDialog={openAddDialog}
+          onOpenSessionsDialog={() => openSessionDialog()}
+          onViewModeChange={handleSessionViewModeChange}
+          onViewModeExit={isPracticeViewMode ? exitPracticeViewMode : undefined}
+        />
+      </div>
       {activeSessionId ? (
         <SessionView
-          isPerformanceMode={isPerformanceMode}
           sessionId={activeSessionId}
-          onOpenAddDialog={isPerformanceMode ? undefined : openAddDialog}
+          viewMode={sessionViewMode}
+          onOpenAddDialog={isPracticeViewMode ? undefined : openAddDialog}
           onOpenSessionTempo={openSessionDialog}
         />
       ) : null}
@@ -290,18 +285,22 @@ function SessionLoadingFallback() {
 
 export default function DojoSessionPage() {
   const hasHydrated = useHydrateAppStore();
-  const [isPerformanceMode, setIsPerformanceMode] = useState(false);
+  const [sessionViewMode, setSessionViewMode] =
+    useState<SessionViewMode>("session");
+  const isPracticeViewMode =
+    sessionViewMode === "focus" || sessionViewMode === "live-part";
 
   return (
     <main className={styles.main}>
       <div
         className={`${styles.container} ${hasHydrated ? styles.hydrated : ""}`}
-        data-performance-mode={isPerformanceMode ? true : undefined}
+        data-practice-view-mode={isPracticeViewMode ? true : undefined}
+        data-session-view-mode={sessionViewMode}
       >
         {hasHydrated ? (
           <HydratedSession
-            isPerformanceMode={isPerformanceMode}
-            onPerformanceModeChange={setIsPerformanceMode}
+            sessionViewMode={sessionViewMode}
+            onSessionViewModeChange={setSessionViewMode}
           />
         ) : (
           <SessionLoadingFallback />
