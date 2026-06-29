@@ -241,12 +241,12 @@ export function createPartSequencePlaybackPlan(
       practiceBand: session.practiceBand,
       tempoBpm,
     });
-    const durationBeats =
+    const barDurationBeats =
       getRhythmModuleDurationBeats(rhythmModule) ??
       DEFAULT_SILENT_PART_DURATION_BEATS;
 
     return {
-      durationBeats,
+      durationBeats: barDurationBeats,
       ...(exerciseRequest ? { exerciseRequest } : {}),
       index,
       partId: part.id,

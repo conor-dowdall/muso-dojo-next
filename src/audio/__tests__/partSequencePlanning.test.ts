@@ -83,6 +83,55 @@ describe("createPartSequencePlaybackPlan", () => {
     expect(plan.parts[0]?.rhythmRequest).toBeUndefined();
   });
 
+  it("uses the visible Rhythm module duration for shorter progression Parts", () => {
+    const plan = createPartSequencePlaybackPlan(
+      createSession([
+        createPart("half-bar", [
+          {
+            id: "rhythm",
+            rhythm: {
+              recipe: {
+                ...DEFAULT_RHYTHM_SELECTION.recipe,
+                beats: 2,
+              },
+              source: "recipe",
+            },
+            type: "rhythm",
+          },
+        ]),
+      ]),
+    );
+
+    expect(plan.parts[0]).toMatchObject({
+      durationBeats: 2,
+      partId: "half-bar",
+    });
+  });
+
+  it("uses the visible rhythm bar length when no explicit Practice Band duration is present", () => {
+    const plan = createPartSequencePlaybackPlan(
+      createSession([
+        createPart("whole-bar", [
+          {
+            id: "rhythm",
+            rhythm: {
+              recipe: {
+                ...DEFAULT_RHYTHM_SELECTION.recipe,
+                beats: 5,
+              },
+              source: "recipe",
+            },
+            type: "rhythm",
+          },
+        ]),
+      ]),
+    );
+
+    expect(plan.parts[0]).toMatchObject({
+      durationBeats: 5,
+    });
+  });
+
   it("adds a default looper and drums when a part has no playable module", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([createPart("part", [])]),

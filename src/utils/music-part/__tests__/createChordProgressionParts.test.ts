@@ -46,4 +46,68 @@ describe("createChordProgressionParts", () => {
       });
     });
   });
+
+  it("expands full progressions into a duration-aware timeline", () => {
+    const parts = createChordProgressionParts({
+      chordListMode: "full-song-order",
+      rootNote: "C",
+      progressionKey: "oneFourOneFiveSplitReturn",
+      moduleRequests: [{ type: "rhythm" }],
+    });
+
+    expect(parts).toHaveLength(9);
+    expect(parts.map((part) => part.rootNote)).toEqual([
+      "C",
+      "F",
+      "C",
+      "G",
+      "C",
+      "F",
+      "C",
+      "G",
+      "C",
+    ]);
+    expect(parts[6]).toMatchObject({
+      rootNote: "C",
+    });
+    expect(parts[6]?.modules[0]).toMatchObject({
+      rhythm: {
+        recipe: {
+          beats: 2,
+        },
+      },
+      type: "rhythm",
+    });
+    expect(parts[7]).toMatchObject({
+      rootNote: "G",
+    });
+    expect(parts[7]?.modules[0]).toMatchObject({
+      rhythm: {
+        recipe: {
+          beats: 2,
+        },
+      },
+      type: "rhythm",
+    });
+    expect(parts[8]?.modules[0]).toMatchObject({
+      rhythm: {
+        recipe: {
+          beats: 4,
+        },
+      },
+      type: "rhythm",
+    });
+  });
+
+  it("keeps unique-chord mode as a one-part-per-chord practice palette", () => {
+    const parts = createChordProgressionParts({
+      chordListMode: "each-chord-once",
+      rootNote: "C",
+      progressionKey: "oneFourOneFiveSplitReturn",
+      moduleRequests: [],
+    });
+
+    expect(parts.map((part) => part.rootNote)).toEqual(["C", "F", "G"]);
+    expect(parts.every((part) => part.modules.length === 0)).toBe(true);
+  });
 });

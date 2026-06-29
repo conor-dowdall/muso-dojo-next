@@ -55,6 +55,64 @@ function createPlan(): PartSequencePlaybackPlan {
   };
 }
 
+function createSplitBarPlan(): PartSequencePlaybackPlan {
+  return {
+    ...createPlan(),
+    parts: [
+      {
+        durationBeats: 2,
+        exerciseRequest: {
+          countInBeats: 0,
+          events: [
+            {
+              durationBeats: 1,
+              midi: 60,
+              offsetBeats: 0,
+              stepIndex: 0,
+            },
+          ],
+          id: "exercise-a",
+          metronomeEnabled: false,
+          presetId: "piano",
+          tempoBpm: 60,
+        },
+        index: 0,
+        partId: "part-a",
+        rhythmRequest: {
+          id: "rhythm-a",
+          pattern: createRhythmPattern(),
+          tempoBpm: 60,
+        },
+      },
+      {
+        durationBeats: 2,
+        exerciseRequest: {
+          countInBeats: 0,
+          events: [
+            {
+              durationBeats: 1,
+              midi: 67,
+              offsetBeats: 0,
+              stepIndex: 0,
+            },
+          ],
+          id: "exercise-b",
+          metronomeEnabled: false,
+          presetId: "piano",
+          tempoBpm: 60,
+        },
+        index: 1,
+        partId: "part-b",
+        rhythmRequest: {
+          id: "rhythm-b",
+          pattern: createRhythmPattern(),
+          tempoBpm: 60,
+        },
+      },
+    ],
+  };
+}
+
 function createDeferred<T>() {
   let resolve: (value: T) => void = () => undefined;
   const promise = new Promise<T>((nextResolve) => {
@@ -157,6 +215,32 @@ describe("PartSequenceCoordinator", () => {
         handoff: true,
         originTime: 16.08,
         rhythm: expect.objectContaining({ id: "rhythm-a" }),
+      }),
+    );
+  });
+
+  it("hands off split progression parts as ordinary visible rhythm parts", async () => {
+    const { coordinator, startPart } = createHarness();
+
+    await coordinator.start(createSplitBarPlan());
+
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        exercise: expect.objectContaining({ id: "exercise-a" }),
+        rhythm: expect.objectContaining({ id: "rhythm-a" }),
+        stopMissing: true,
+      }),
+    );
+
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        exercise: expect.objectContaining({ id: "exercise-b" }),
+        handoff: true,
+        originTime: 12.08,
+        rhythm: expect.objectContaining({ id: "rhythm-b" }),
+        stopMissing: true,
       }),
     );
   });

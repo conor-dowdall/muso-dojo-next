@@ -307,6 +307,14 @@ body {
     );
 }
 
+html {
+  /*
+   * Keep the viewport width stable when switching between short and tall
+   * session views. Dialog.tsx keeps a JS fallback for browsers without this.
+   */
+  scrollbar-gutter: stable;
+}
+
 *,
 *::before,
 *::after {

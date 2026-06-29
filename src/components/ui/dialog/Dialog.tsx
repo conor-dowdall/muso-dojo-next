@@ -13,6 +13,10 @@ let lockedDialogCount = 0;
 let previousBodyOverflow = "";
 let previousBodyPaddingInlineEnd = "";
 
+function supportsStableScrollbarGutter() {
+  return typeof CSS !== "undefined" && CSS.supports("scrollbar-gutter: stable");
+}
+
 function lockBodyScroll() {
   if (lockedDialogCount === 0) {
     const scrollbarWidth =
@@ -21,7 +25,7 @@ function lockBodyScroll() {
     previousBodyOverflow = document.body.style.overflow;
     previousBodyPaddingInlineEnd = document.body.style.paddingInlineEnd;
 
-    if (scrollbarWidth > 0) {
+    if (scrollbarWidth > 0 && !supportsStableScrollbarGutter()) {
       document.body.style.paddingInlineEnd = previousBodyPaddingInlineEnd
         ? `calc(${previousBodyPaddingInlineEnd} + ${scrollbarWidth}px)`
         : `${scrollbarWidth}px`;
