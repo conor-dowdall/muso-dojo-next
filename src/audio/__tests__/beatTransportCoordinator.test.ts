@@ -317,6 +317,53 @@ describe("BeatTransportCoordinator", () => {
     expect(rhythm.getSnapshot().owner).toBe("manual");
   });
 
+  it("ignores lifecycle cleanup for part-sequence owned playback", async () => {
+    const { exercise, rhythm, transport } = createHarness();
+    const manualControlListener = vi.fn();
+
+    transport.subscribeToManualControl(manualControlListener);
+
+    await transport.startPart({
+      exercise: createExerciseRequest("exercise"),
+      originTime: 24,
+      rhythm: createRhythmRequest("rhythm"),
+      source: "part-sequence",
+    });
+
+    transport.stopExercise("exercise", { source: "lifecycle" });
+    transport.stopRhythm("rhythm", { source: "lifecycle" });
+
+    expect(exercise.getSnapshot()).toMatchObject({
+      activeId: "exercise",
+      owner: "part-sequence",
+      playing: true,
+    });
+    expect(rhythm.getSnapshot()).toMatchObject({
+      activeId: "rhythm",
+      owner: "part-sequence",
+      playing: true,
+    });
+    expect(manualControlListener).not.toHaveBeenCalled();
+  });
+
+  it("allows lifecycle cleanup to stop manually owned module playback quietly", async () => {
+    const { exercise, rhythm, transport } = createHarness();
+    const manualControlListener = vi.fn();
+
+    transport.subscribeToManualControl(manualControlListener);
+
+    await transport.startExercise(createExerciseRequest("exercise"));
+    await transport.startRhythm(createRhythmRequest("rhythm"));
+    manualControlListener.mockClear();
+
+    transport.stopExercise("exercise", { source: "lifecycle" });
+    transport.stopRhythm("rhythm", { source: "lifecycle" });
+
+    expect(exercise.getSnapshot().playing).toBe(false);
+    expect(rhythm.getSnapshot().playing).toBe(false);
+    expect(manualControlListener).not.toHaveBeenCalled();
+  });
+
   it("stops a missing part family at the supplied origin", async () => {
     const { rhythm, rhythmCancelPlaybackGroup, setCurrentTime, transport } =
       createHarness();

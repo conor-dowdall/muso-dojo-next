@@ -1,10 +1,12 @@
 import {
   exercisePlaybackCoordinator,
+  getExercisePlaybackOwner,
   type ExercisePlaybackCoordinator,
   type ExercisePlaybackRequest,
   type ExercisePlaybackSnapshot,
 } from "./exercisePlaybackCoordinator";
 import {
+  getRhythmPlaybackOwner,
   rhythmPlaybackCoordinator,
   type RhythmPlaybackCoordinator,
   type RhythmPlaybackRequest,
@@ -18,7 +20,8 @@ import {
 const TRANSPORT_HANDOFF_LEAD_SECONDS = 0.08;
 const BEAT_GRID_EPSILON = 1e-6;
 
-export type BeatTransportStartSource = "manual" | "part-sequence";
+export type BeatTransportStartSource = PlaybackOwner;
+export type BeatTransportControlSource = BeatTransportStartSource | "lifecycle";
 
 export interface BeatTransportManualControlEvent {
   kind: "start" | "stop";
@@ -130,7 +133,7 @@ export class BeatTransportCoordinator {
 
   private notifyManualControl(
     event: Omit<BeatTransportManualControlEvent, "owner">,
-    source: BeatTransportStartSource = "manual",
+    source: BeatTransportControlSource = "manual",
   ) {
     if (source !== "manual") {
       return;
@@ -429,8 +432,20 @@ export class BeatTransportCoordinator {
 
   stopExercise(
     id?: string,
-    options: { source?: BeatTransportStartSource } = {},
+    options: { source?: BeatTransportControlSource } = {},
   ) {
+    if (options.source === "lifecycle") {
+      if (id === undefined) {
+        return;
+      }
+
+      const owner = getExercisePlaybackOwner(this.exercise.getSnapshot(), id);
+
+      if (owner === "part-sequence") {
+        return;
+      }
+    }
+
     this.notifyManualControl(
       { kind: "stop", target: "exercise" },
       options.source,
@@ -440,7 +455,22 @@ export class BeatTransportCoordinator {
     this.exercise.stop(id);
   }
 
-  stopRhythm(id?: string, options: { source?: BeatTransportStartSource } = {}) {
+  stopRhythm(
+    id?: string,
+    options: { source?: BeatTransportControlSource } = {},
+  ) {
+    if (options.source === "lifecycle") {
+      if (id === undefined) {
+        return;
+      }
+
+      const owner = getRhythmPlaybackOwner(this.rhythm.getSnapshot(), id);
+
+      if (owner === "part-sequence") {
+        return;
+      }
+    }
+
     this.notifyManualControl(
       { kind: "stop", target: "rhythm" },
       options.source,

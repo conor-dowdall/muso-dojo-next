@@ -88,6 +88,10 @@
   min-inline-size: 0;
 }
 
+.livePartHost {
+  min-inline-size: 0;
+}
+
 @container (width >= 42rem) {
   .bandGrid {
     --band-grid-min-column-size: 14rem;

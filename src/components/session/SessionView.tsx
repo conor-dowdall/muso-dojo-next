@@ -93,13 +93,25 @@ export function SessionView({
         />
       ) : viewMode === "live-part" && livePartId ? (
         <div className={styles.livePartView}>
-          <MusicPartView
-            sessionId={sessionId}
-            partId={livePartId}
-            partSequenceState={getPartSequenceState(livePartId)}
-            isPerformanceMode
-            onOpenSessionTempo={onOpenSessionTempo}
-          />
+          {parts.map((part) => {
+            const isLivePart = part.id === livePartId;
+
+            return (
+              <div
+                key={part.id}
+                className={styles.livePartHost}
+                hidden={!isLivePart}
+              >
+                <MusicPartView
+                  sessionId={sessionId}
+                  partId={part.id}
+                  partSequenceState={getPartSequenceState(part.id)}
+                  isPerformanceMode
+                  onOpenSessionTempo={onOpenSessionTempo}
+                />
+              </div>
+            );
+          })}
         </div>
       ) : (
         parts.map((part) => (

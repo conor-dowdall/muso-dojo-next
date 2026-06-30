@@ -262,7 +262,7 @@ export function useExerciseLooperPlayback({
   useEffect(
     () => () => {
       auditionController.dispose();
-      beatTransportCoordinator.stopExercise(id);
+      beatTransportCoordinator.stopExercise(id, { source: "lifecycle" });
     },
     [auditionController, id],
   );
