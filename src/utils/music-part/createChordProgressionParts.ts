@@ -20,11 +20,13 @@ import {
   type PartModuleType,
 } from "@/types/session";
 import { DEFAULT_PART_ROOT_NOTE } from "@/utils/session/sessionDefaults";
-import { RHYTHM_MAX_BEATS, RHYTHM_MIN_BEATS } from "@/data/rhythmPresets";
-import { DEFAULT_RHYTHM_SELECTION } from "@/utils/rhythm/rhythmConfig";
+import {
+  PART_DURATION_BEATS_PER_BAR,
+  getRepresentablePartDurationBeats,
+  getRhythmSelectionForPartDuration,
+} from "@/utils/music-part/partDuration";
 
 const BAR_DURATION_IN_BARS = 1;
-const BAR_DURATION_BEATS = 4;
 const DURATION_EPSILON = 0.000_001;
 const DURATION_PRECISION = 1_000_000;
 
@@ -49,6 +51,7 @@ interface DurationAwareChordProgression {
 }
 
 interface ProgressionPartReference {
+  durationInBars?: number;
   reference: ChordProgressionChordReference;
   rhythmBeatCount?: number;
 }
@@ -57,25 +60,12 @@ function normalizeSegmentDuration(durationInBars: number) {
   return Math.round(durationInBars * DURATION_PRECISION) / DURATION_PRECISION;
 }
 
-function toPracticeBandDurationBeats(durationInBars: number) {
-  return (
-    Math.round(durationInBars * BAR_DURATION_BEATS * DURATION_PRECISION) /
-    DURATION_PRECISION
-  );
-}
-
 function getRhythmBeatCountForSegment(durationInBars: number) {
   if (Math.abs(durationInBars - BAR_DURATION_IN_BARS) <= DURATION_EPSILON) {
     return undefined;
   }
 
-  const durationBeats = toPracticeBandDurationBeats(durationInBars);
-
-  return Number.isInteger(durationBeats) &&
-    durationBeats >= RHYTHM_MIN_BEATS &&
-    durationBeats <= RHYTHM_MAX_BEATS
-    ? durationBeats
-    : undefined;
+  return getRepresentablePartDurationBeats(durationInBars);
 }
 
 function getProgressionChordDurationInBars(
@@ -120,6 +110,7 @@ function createFullProgressionPartReferences(
 
       partReferences.push({
         reference,
+        ...(rhythmBeatCount !== undefined ? { durationInBars } : {}),
         ...(rhythmBeatCount !== undefined ? { rhythmBeatCount } : {}),
       });
 
@@ -154,13 +145,9 @@ function applyProgressionRhythmBeatCount(
 
   return {
     ...module,
-    rhythm: {
-      recipe: {
-        ...DEFAULT_RHYTHM_SELECTION.recipe,
-        beats: rhythmBeatCount,
-      },
-      source: "recipe",
-    },
+    rhythm: getRhythmSelectionForPartDuration(
+      rhythmBeatCount / PART_DURATION_BEATS_PER_BAR,
+    ),
   };
 }
 
@@ -185,6 +172,7 @@ function createPartFromReference<T extends PartModuleType>({
     id: partId,
     rootNote: partReference.reference.rootNote,
     noteCollectionKey: partReference.reference.noteCollectionKey,
+    durationInBars: partReference.durationInBars,
     modules: resolvedModules,
   });
 

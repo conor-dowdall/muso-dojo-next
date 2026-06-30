@@ -126,6 +126,17 @@
   --preview-swatch-height: var(--control-size-xs);
   --preview-swatch-radius: var(--radius-small);
 
+  --part-sequence-active-border: color-mix(
+    in srgb,
+    var(--color-accent) 56%,
+    var(--color-border)
+  );
+  --part-sequence-active-ring: color-mix(
+    in srgb,
+    var(--color-accent) 42%,
+    transparent
+  );
+
   --shadow-highlight-inset: inset 0 var(--space-px) 0
     var(--color-surface-highlight);
   --shadow-surface-elevated: 0 18px 54px rgb(0 0 0 / 0.16);

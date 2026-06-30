@@ -1,4 +1,5 @@
 import { createDefaultPartModuleConfigs } from "@/utils/session/createSessionEntities";
+import { getRhythmSelectionForPartDuration } from "@/utils/music-part/partDuration";
 import { clonePartModuleConfig } from "./cloneConfig";
 import {
   appendPartModules,
@@ -14,6 +15,24 @@ import {
   type AppStoreSet,
   type PartModuleActions,
 } from "./types";
+import { type MusicPartConfig, type PartModuleConfig } from "@/types/session";
+
+function applyPartDurationDefaults(
+  part: MusicPartConfig,
+  module: PartModuleConfig,
+): PartModuleConfig {
+  if (module.type !== "rhythm") {
+    return module;
+  }
+
+  return {
+    ...module,
+    rhythm: getRhythmSelectionForPartDuration(
+      part.durationInBars,
+      module.rhythm,
+    ),
+  };
+}
 
 export function createPartModuleActions(
   set: AppStoreSet,
@@ -34,7 +53,9 @@ export function createPartModuleActions(
         return [];
       }
 
-      const partModules = createDefaultPartModuleConfigs(requests);
+      const partModules = createDefaultPartModuleConfigs(requests).map(
+        (module) => applyPartDurationDefaults(part, module),
+      );
 
       set((state) =>
         updateSessionById(state, sessionId, (session) =>

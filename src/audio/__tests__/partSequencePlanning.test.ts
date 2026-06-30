@@ -108,6 +108,26 @@ describe("createPartSequencePlaybackPlan", () => {
     });
   });
 
+  it("uses authored Part duration for generated Practice Band drums", () => {
+    const plan = createPartSequencePlaybackPlan(
+      createSession([
+        {
+          ...createPart("half-bar", []),
+          durationInBars: 0.5,
+        },
+      ]),
+    );
+
+    expect(plan.parts[0]).toMatchObject({
+      durationBeats: 2,
+      partId: "half-bar",
+    });
+    expect(plan.parts[0]?.rhythmRequest?.pattern).toMatchObject({
+      cycleTicks: RHYTHM_PPQ * 2,
+      meter: { beats: 2, beatUnit: 4 },
+    });
+  });
+
   it("uses the visible rhythm bar length when no explicit Practice Band duration is present", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([

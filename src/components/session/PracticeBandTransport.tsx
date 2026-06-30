@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type CSSProperties,
   type ComponentPropsWithoutRef,
   useCallback,
   useEffect,
@@ -19,8 +20,7 @@ import { useAppStore } from "@/stores/appStore";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { useScopedTransportShortcuts } from "@/hooks/interaction/useScopedTransportShortcuts";
 import { type SessionConfig } from "@/types/session";
-import { normalizeRootNoteString } from "@musodojo/music-theory-data";
-import { getNoteCollectionDisplayName } from "@/utils/music-theory/getNoteCollectionDisplayName";
+import { getPartIdentity } from "@/utils/music-theory/partIdentity";
 import {
   resolvePracticeBandConfig,
   type ResolvedPracticeBandConfig,
@@ -28,11 +28,11 @@ import {
 import styles from "./PracticeBandTransport.module.css";
 
 export interface PracticeBandReadoutModel {
-  collectionName?: string;
   countLabel: string;
+  identityAccessibleLabel?: string;
+  identityLabel?: string;
   partCount: number;
   partNumber?: number;
-  rootNote?: string;
 }
 
 function formatPartCount(partCount: number) {
@@ -59,15 +59,14 @@ function createPartReadout({
     };
   }
 
-  const rootNote = normalizeRootNoteString(part.rootNote) || part.rootNote;
-  const collectionName = getNoteCollectionDisplayName(part.noteCollectionKey);
+  const identity = getPartIdentity(part);
 
   return {
-    collectionName,
     countLabel,
+    identityAccessibleLabel: identity.accessibleLabel,
+    identityLabel: identity.label,
     partCount,
     partNumber: activeIndex + 1,
-    rootNote,
   };
 }
 
@@ -122,9 +121,7 @@ export function usePracticeBandTransport(
   );
   const isActive =
     sessionId !== null && snapshot.playing && snapshot.sessionId === sessionId;
-  const displayIndex = isActive
-    ? (snapshot.pendingIndex ?? snapshot.activeIndex)
-    : undefined;
+  const displayIndex = isActive ? snapshot.activeIndex : undefined;
   const partCount = session?.parts.length ?? 0;
   const canPlay = sessionId !== null && partCount > 0 && plan !== undefined;
   const readout =
@@ -231,6 +228,12 @@ interface PracticeBandReadoutProps {
   readout: PracticeBandReadoutModel | null;
 }
 
+type PracticeBandReadoutStyle = CSSProperties & {
+  "--practice-band-compact-position-width": string;
+  "--practice-band-part-number-width": string;
+  "--practice-band-position-width": string;
+};
+
 function formatPartNumber(value: number, partCount: number) {
   return String(value).padStart(Math.max(2, String(partCount).length), "0");
 }
@@ -245,8 +248,8 @@ export function PracticeBandReadout({
 
   if (
     readout.partNumber === undefined ||
-    !readout.rootNote ||
-    !readout.collectionName
+    !readout.identityLabel ||
+    !readout.identityAccessibleLabel
   ) {
     return (
       <output
@@ -261,7 +264,13 @@ export function PracticeBandReadout({
 
   const partNumber = formatPartNumber(readout.partNumber, readout.partCount);
   const partCount = formatPartNumber(readout.partCount, readout.partCount);
-  const accessibleLabel = `Part ${readout.partNumber} of ${readout.partCount}. ${readout.rootNote} ${readout.collectionName}.`;
+  const accessibleLabel = `Part ${readout.partNumber} of ${readout.partCount}. ${readout.identityAccessibleLabel}.`;
+  const partNumberWidth = Math.max(2, String(readout.partCount).length);
+  const readoutStyle: PracticeBandReadoutStyle = {
+    "--practice-band-compact-position-width": `${partNumberWidth * 2 + 2.15}ch`,
+    "--practice-band-part-number-width": `${partNumberWidth}ch`,
+    "--practice-band-position-width": `${partNumberWidth * 2 + 5.7}ch`,
+  };
 
   return (
     <output
@@ -269,18 +278,18 @@ export function PracticeBandReadout({
       aria-live="polite"
       className={styles.readout}
       data-prominence={prominence}
+      style={readoutStyle}
     >
       <span aria-hidden="true" className={styles.partPosition}>
         <span className={styles.partLabel}>Part</span>
-        <span className={styles.partNumber}>{partNumber}</span>
-        <span className={styles.partOf}>of</span>
-        <span className={styles.partTotal}>{partCount}</span>
+        <span className={styles.partCounter}>
+          <span className={styles.partNumber}>{partNumber}</span>
+          <span className={styles.partOf}>of</span>
+          <span className={styles.partTotal}>{partCount}</span>
+        </span>
       </span>
-      <span aria-hidden="true" className={styles.partRoot}>
-        {readout.rootNote}
-      </span>
-      <span aria-hidden="true" className={styles.partCollection}>
-        {readout.collectionName}
+      <span aria-hidden="true" className={styles.partIdentity}>
+        {readout.identityLabel}
       </span>
     </output>
   );

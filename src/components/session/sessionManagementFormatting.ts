@@ -1,8 +1,5 @@
-import {
-  normalizeRootNoteString,
-  noteCollections,
-} from "@musodojo/music-theory-data";
 import { type MusicPartConfig, type SessionConfig } from "@/types/session";
+import { getPartIdentity } from "@/utils/music-theory/partIdentity";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 
 export type SessionManagementPartSummary = Pick<
@@ -32,19 +29,8 @@ function getSessionPartCountLabel(partCount: number) {
   return partCount === 1 ? "1 Part" : `${partCount} Parts`;
 }
 
-function getSignatureJoiner({
-  category,
-}: (typeof noteCollections)[keyof typeof noteCollections]) {
-  return category === "chord" ? "" : " ";
-}
-
 function getPartSignatureLabel(part: SessionManagementPartSummary) {
-  const rootNoteLabel = normalizeRootNoteString(part.rootNote) ?? part.rootNote;
-  const collection = noteCollections[part.noteCollectionKey];
-  const collectionName = collection.primaryName;
-  const joiner = getSignatureJoiner(collection);
-
-  return `${rootNoteLabel}${joiner}${collectionName}`;
+  return getPartIdentity(part).label;
 }
 
 export function getSessionSubtitle(parts: SessionManagementPartSummary[]) {

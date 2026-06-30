@@ -17,6 +17,10 @@ import {
 } from "@/utils/exercise-looper/exerciseSequence";
 import { resolvePracticeBandConfig } from "@/utils/practice-band/practiceBandConfig";
 import {
+  getRepresentablePartDurationBeats,
+  getRhythmSelectionForPartDuration,
+} from "@/utils/music-part/partDuration";
+import {
   isExerciseLooperPartModule,
   isRhythmPartModule,
 } from "@/utils/session/partModuleTypes";
@@ -176,7 +180,7 @@ function createRhythmRequestForPart({
   return {
     id: module?.id ?? `${PART_SEQUENCE_DEFAULT_RHYTHM_ID_PREFIX}:${part.id}`,
     pattern: getRhythmSelectionPattern(
-      module?.rhythm ?? DEFAULT_RHYTHM_SELECTION,
+      module?.rhythm ?? getRhythmSelectionForPartDuration(part.durationInBars),
     ),
     tempoBpm,
   } satisfies RhythmPlaybackRequest;
@@ -307,13 +311,19 @@ export function createPartSequencePlaybackPlan(
       practiceBand: session.practiceBand,
       tempoBpm,
     });
+    const rhythmSelection =
+      rhythmRequest === undefined
+        ? undefined
+        : (rhythmModule?.rhythm ??
+          getRhythmSelectionForPartDuration(part.durationInBars));
     const barDurationBeats =
       getRhythmModuleDurationBeats(rhythmModule) ??
+      getRepresentablePartDurationBeats(part.durationInBars) ??
       DEFAULT_SILENT_PART_DURATION_BEATS;
     const resetSignature = createPartResetSignature({
       durationBeats: barDurationBeats,
       exerciseRequest,
-      rhythm: rhythmModule?.rhythm,
+      rhythm: rhythmSelection,
       rhythmRequest,
     });
     const updateSignature = createPartUpdateSignature({

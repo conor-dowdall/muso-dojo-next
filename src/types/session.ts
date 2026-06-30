@@ -187,6 +187,7 @@ export type PartModuleCreationRequest<
 export interface MusicPartCreationRequest {
   rootNote?: string;
   noteCollectionKey?: NoteCollectionKey;
+  durationInBars?: number;
   moduleRequests?: PartModuleCreationRequest[];
 }
 
@@ -202,6 +203,11 @@ export interface MusicPartConfig {
   id: string;
   rootNote: string;
   noteCollectionKey: NoteCollectionKey;
+  /**
+   * Optional authored chart duration. Chord progression imports use this for
+   * fractional bars; ordinary Parts omit it and defer to Rhythm/default 4/4.
+   */
+  durationInBars?: number;
   showHeader?: boolean;
   /**
    * Part modules consume the shared part context. Practice modules such as

@@ -2,13 +2,12 @@
 
 import { useMemo, useSyncExternalStore } from "react";
 import { Plus } from "lucide-react";
-import { normalizeRootNoteString } from "@musodojo/music-theory-data";
 import { partSequenceCoordinator } from "@/audio";
 import { NoteColorProvider } from "@/components/note-colors/NoteColorProvider";
 import { Button } from "@/components/ui/buttons/Button";
 import { useAppStore } from "@/stores/appStore";
 import { type MusicPartConfig } from "@/types/session";
-import { getNoteCollectionDisplayName } from "@/utils/music-theory/getNoteCollectionDisplayName";
+import { getPartLeadSheetSummary } from "@/utils/music-part/partLeadSheet";
 import { MusicPartView } from "./MusicPartView";
 import { type SessionViewMode } from "./sessionViewMode";
 import styles from "./SessionView.module.css";
@@ -23,9 +22,11 @@ interface SessionViewProps {
 }
 
 interface SessionPartSummary {
-  collectionName: string;
+  accessibleLabel: string;
+  durationLabel?: string;
   id: string;
-  rootNote: string;
+  identityLabel: string;
+  meterLabel: string;
 }
 
 export function SessionView({
@@ -42,11 +43,19 @@ export function SessionView({
   );
   const parts = useMemo(
     (): SessionPartSummary[] =>
-      sessionParts.map((part) => ({
-        collectionName: getNoteCollectionDisplayName(part.noteCollectionKey),
-        id: part.id,
-        rootNote: normalizeRootNoteString(part.rootNote) || part.rootNote,
-      })),
+      sessionParts.map((part) => {
+        const summary = getPartLeadSheetSummary(part);
+
+        return {
+          accessibleLabel: summary.accessibleLabel,
+          ...(summary.durationLabel
+            ? { durationLabel: summary.durationLabel }
+            : {}),
+          id: summary.id,
+          identityLabel: summary.identityLabel,
+          meterLabel: summary.meterLabel,
+        };
+      }),
     [sessionParts],
   );
   const partSequenceSnapshot = useSyncExternalStore(
@@ -65,12 +74,13 @@ export function SessionView({
     : undefined;
   const livePartId = activePartId ?? parts[0]?.id;
   const chromeFreeMode = viewMode === "focus" || viewMode === "live-part";
+  const showPartsView = viewMode !== "band";
 
   const getPartSequenceState = (partId: string) =>
-    pendingPartId === partId
-      ? "pending"
-      : activePartId === partId
-        ? "active"
+    activePartId === partId
+      ? "active"
+      : pendingPartId === partId
+        ? "pending"
         : undefined;
 
   return (
@@ -91,40 +101,31 @@ export function SessionView({
           parts={parts}
           pendingPartId={pendingPartId}
         />
-      ) : viewMode === "live-part" && livePartId ? (
-        <div className={styles.livePartView}>
+      ) : showPartsView ? (
+        <div className={styles.partsView}>
           {parts.map((part) => {
-            const isLivePart = part.id === livePartId;
+            const isHiddenLivePart =
+              viewMode === "live-part" && part.id !== livePartId;
 
             return (
               <div
                 key={part.id}
-                className={styles.livePartHost}
-                hidden={!isLivePart}
+                className={styles.partHost}
+                hidden={isHiddenLivePart}
               >
                 <MusicPartView
                   sessionId={sessionId}
                   partId={part.id}
                   partSequenceState={getPartSequenceState(part.id)}
-                  isPerformanceMode
+                  isPerformanceMode={chromeFreeMode}
                   onOpenSessionTempo={onOpenSessionTempo}
+                  showReadOnlyIdentity={chromeFreeMode}
                 />
               </div>
             );
           })}
         </div>
-      ) : (
-        parts.map((part) => (
-          <MusicPartView
-            key={part.id}
-            sessionId={sessionId}
-            partId={part.id}
-            partSequenceState={getPartSequenceState(part.id)}
-            isPerformanceMode={chromeFreeMode}
-            onOpenSessionTempo={onOpenSessionTempo}
-          />
-        ))
-      )}
+      ) : null}
     </NoteColorProvider>
   );
 }
@@ -139,14 +140,14 @@ function BandSessionView({
   pendingPartId?: string;
 }) {
   return (
-    <section className={styles.bandView} aria-label="Practice Band Parts">
+    <section className={styles.bandView} aria-label="Chart View">
       <ol className={styles.bandGrid}>
         {parts.map((part, index) => {
           const state =
-            pendingPartId === part.id
-              ? "pending"
-              : activePartId === part.id
-                ? "active"
+            activePartId === part.id
+              ? "active"
+              : pendingPartId === part.id
+                ? "pending"
                 : undefined;
 
           return (
@@ -155,13 +156,24 @@ function BandSessionView({
               aria-current={state === "active" ? "step" : undefined}
               className={styles.bandPart}
               data-part-sequence-state={state}
+              aria-label={`Part ${index + 1}. ${part.accessibleLabel}.`}
             >
               <span className={styles.bandPartNumber}>
                 {String(index + 1).padStart(2, "0")}
               </span>
-              <span className={styles.bandPartRoot}>{part.rootNote}</span>
-              <span className={styles.bandPartCollection}>
-                {part.collectionName}
+              <span
+                className={styles.bandPartIdentity}
+                title={part.identityLabel}
+              >
+                {part.identityLabel}
+              </span>
+              <span className={styles.bandPartMeta}>
+                {part.durationLabel ? (
+                  <span className={styles.bandPartDetail}>
+                    {part.durationLabel}
+                  </span>
+                ) : null}
+                <span className={styles.bandPartMeter}>{part.meterLabel}</span>
               </span>
             </li>
           );

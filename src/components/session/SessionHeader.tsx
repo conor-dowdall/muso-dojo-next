@@ -2,8 +2,8 @@
 
 import { type ReactNode, useState } from "react";
 import {
-  Focus,
   LibraryBig,
+  Minimize2,
   MonitorPlay,
   PanelsTopLeft,
   Plus,
@@ -62,7 +62,7 @@ const sessionViewModeIcons = {
   session: <PanelsTopLeft />,
   band: <Rows3 />,
   "live-part": <MonitorPlay />,
-  focus: <Focus />,
+  focus: <Minimize2 />,
 } as const satisfies Record<SessionViewMode, ReactNode>;
 
 export function SessionHeader({
@@ -97,6 +97,10 @@ export function SessionHeader({
   const viewModeLabel = sessionViewModeCopy[viewMode].label;
   const canUsePartViews = activeSessionPartCount > 0;
   const isPracticeHeader = variant === "practice";
+  const titleText = isPracticeHeader ? viewModeLabel : sessionName;
+  const titleReadout = practiceBandTransport.isActive
+    ? practiceBandTransport.readout
+    : null;
 
   const openSettingsDialog = () => {
     setIsMenuOpen(false);
@@ -135,40 +139,32 @@ export function SessionHeader({
   return (
     <>
       <ControlHeader
+        actionsClassName={styles.headerActions}
         className={styles.header}
         data-variant={variant}
         onKeyDownCapture={practiceBandTransport.shortcuts.onKeyDownCapture}
         onPointerDownCapture={
           practiceBandTransport.shortcuts.onPointerDownCapture
         }
+        primaryClassName={styles.headerPrimary}
         primary={
           <div className={styles.identity}>
-            {isPracticeHeader && practiceBandTransport.readout ? (
-              <PracticeBandReadout
-                prominence="title"
-                readout={practiceBandTransport.readout}
-              />
-            ) : isPracticeHeader ? (
-              <Heading as="h1" className={styles.title} size="base">
-                {viewModeLabel}
-              </Heading>
-            ) : practiceBandTransport.isActive ? (
-              <Heading
-                as="h1"
-                className={styles.title}
-                data-band-active="true"
-                size="base"
-              >
+            <Heading
+              as="h1"
+              className={styles.title}
+              data-content={titleReadout ? "readout" : "text"}
+              size="base"
+              title={titleReadout ? undefined : titleText}
+            >
+              {titleReadout ? (
                 <PracticeBandReadout
                   prominence="title"
-                  readout={practiceBandTransport.readout}
+                  readout={titleReadout}
                 />
-              </Heading>
-            ) : (
-              <Heading as="h1" className={styles.title} size="base">
-                {sessionName}
-              </Heading>
-            )}
+              ) : (
+                <span className={styles.titleText}>{titleText}</span>
+              )}
+            </Heading>
           </div>
         }
         actions={
@@ -184,15 +180,17 @@ export function SessionHeader({
               />
             )}
             <PracticeBandPlayButton transport={practiceBandTransport} />
-            <IconButton
-              aria-label={`Session view. Current: ${viewModeLabel}`}
-              disabled={!hasActiveSession}
-              icon={sessionViewModeIcons[viewMode]}
-              selected={viewMode !== "session"}
-              size="sm"
-              shouldYield={false}
-              onClick={openViewSection}
-            />
+            {isPracticeHeader ? null : (
+              <IconButton
+                aria-label={`Session view. Current: ${viewModeLabel}`}
+                disabled={!hasActiveSession}
+                icon={sessionViewModeIcons[viewMode]}
+                selected={viewMode !== "session"}
+                size="sm"
+                shouldYield={false}
+                onClick={openViewSection}
+              />
+            )}
             {isPracticeHeader ? (
               <IconButton
                 aria-label="Return to session view"
@@ -243,7 +241,6 @@ export function SessionHeader({
                     label={copy.label}
                     selected={mode === viewMode}
                     selectedPreviewKind="current"
-                    subtitle={disabled ? "Add a Part first." : copy.subtitle}
                     onClick={() => selectViewMode(mode)}
                   />
                 );

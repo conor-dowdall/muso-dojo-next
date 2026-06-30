@@ -16,6 +16,7 @@ interface MusicPartViewProps {
   isPerformanceMode?: boolean;
   onOpenSessionTempo?: (sessionId: string) => void;
   partSequenceState?: "active" | "pending";
+  showReadOnlyIdentity?: boolean;
 }
 
 export function MusicPartView({
@@ -24,6 +25,7 @@ export function MusicPartView({
   isPerformanceMode = false,
   onOpenSessionTempo,
   partSequenceState,
+  showReadOnlyIdentity = false,
 }: MusicPartViewProps) {
   const partSettings = useAppStore(
     useShallow((state) => {
@@ -84,6 +86,7 @@ export function MusicPartView({
         setPartNoteCollectionKey(sessionId, partId, noteCollectionKey)
       }
       showHeader={isPerformanceMode ? false : partSettings.showHeader}
+      showReadOnlyIdentity={showReadOnlyIdentity}
       onAddPartModules={
         isPerformanceMode
           ? undefined

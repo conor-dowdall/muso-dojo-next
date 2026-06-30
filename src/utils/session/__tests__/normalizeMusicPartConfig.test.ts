@@ -13,4 +13,28 @@ describe("normalizeMusicPartConfig", () => {
 
     expect(part).not.toHaveProperty("layout");
   });
+
+  it("keeps only representable non-default Part durations", () => {
+    expect(
+      normalizeMusicPartConfig({
+        id: "half-bar",
+        rootNote: "C",
+        noteCollectionKey: "major",
+        durationInBars: 0.5,
+        modules: [],
+      }),
+    ).toMatchObject({
+      durationInBars: 0.5,
+    });
+
+    expect(
+      normalizeMusicPartConfig({
+        id: "awkward-fraction",
+        rootNote: "C",
+        noteCollectionKey: "major",
+        durationInBars: 0.33,
+        modules: [],
+      }),
+    ).not.toHaveProperty("durationInBars");
+  });
 });

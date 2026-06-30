@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { startTransition, useCallback, useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import styles from "./page.module.css";
 import { AudioStatusViewport } from "@/components/audio/AudioStatusViewport";
@@ -62,8 +62,7 @@ function HydratedSession({
       ? (state.sessions[state.activeSessionId]?.parts.length ?? 0)
       : 0,
   );
-  const isPracticeViewMode =
-    sessionViewMode === "focus" || sessionViewMode === "live-part";
+  const isPracticeViewMode = sessionViewMode !== "session";
   const closeAddDialog = () => setIsAddDialogOpen(false);
   const instrumentCreationRangeContext =
     createInstrumentCreationRangeContextFromSignature(
@@ -81,7 +80,7 @@ function HydratedSession({
     setIsSessionDialogOpen(true);
   };
   const handleSessionViewModeChange = (nextViewMode: SessionViewMode) => {
-    if (nextViewMode === "focus" || nextViewMode === "live-part") {
+    if (nextViewMode !== "session") {
       setIsAddDialogOpen(false);
       void ensureAudioReady({ feedback: "silent" });
     }
@@ -287,8 +286,10 @@ export default function DojoSessionPage() {
   const hasHydrated = useHydrateAppStore();
   const [sessionViewMode, setSessionViewMode] =
     useState<SessionViewMode>("session");
-  const isPracticeViewMode =
-    sessionViewMode === "focus" || sessionViewMode === "live-part";
+  const handleSessionViewModeChange = useCallback((mode: SessionViewMode) => {
+    startTransition(() => setSessionViewMode(mode));
+  }, []);
+  const isPracticeViewMode = sessionViewMode !== "session";
 
   return (
     <main className={styles.main}>
@@ -300,7 +301,7 @@ export default function DojoSessionPage() {
         {hasHydrated ? (
           <HydratedSession
             sessionViewMode={sessionViewMode}
-            onSessionViewModeChange={setSessionViewMode}
+            onSessionViewModeChange={handleSessionViewModeChange}
           />
         ) : (
           <SessionLoadingFallback />

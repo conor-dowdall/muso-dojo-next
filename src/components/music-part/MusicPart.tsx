@@ -14,6 +14,7 @@ import {
   useMusicPart,
   type MusicPartContextValue,
 } from "./MusicPartContext";
+import { MusicPartIdentity } from "./MusicPartIdentity";
 import { PartModuleCreationDialog } from "@/components/part-module-creation/PartModuleCreationDialog";
 import { Button } from "@/components/ui/buttons/Button";
 import { Dialog } from "@/components/ui/dialog/Dialog";
@@ -33,6 +34,7 @@ interface MusicPartProps {
   isPerformanceMode?: boolean;
   partSequenceState?: "active" | "pending";
   showHeader?: boolean;
+  showReadOnlyIdentity?: boolean;
   onAddPartModules?: AddPartModulesHandler;
   onClonePart?: () => void;
   onRemovePart?: () => void;
@@ -45,11 +47,13 @@ function MusicPartContent({
   showHeader,
   headerClassName,
   isPerformanceMode,
+  showReadOnlyIdentity,
 }: {
   children: ReactNode;
   showHeader: boolean;
   headerClassName?: string;
   isPerformanceMode?: boolean;
+  showReadOnlyIdentity?: boolean;
 }) {
   const musicPart = useMusicPart();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -70,6 +74,8 @@ function MusicPartContent({
           isPerformanceMode={isPerformanceMode}
           onOpenAddDialog={canAddPartModules ? openAddDialog : undefined}
         />
+      ) : showReadOnlyIdentity ? (
+        <MusicPartIdentity />
       ) : null}
       <div
         className={styles.content}
@@ -119,6 +125,7 @@ export function MusicPart({
   initialNoteCollectionKey = "major",
   onNoteCollectionKeyChange,
   showHeader = true,
+  showReadOnlyIdentity = false,
   onAddPartModules,
   onClonePart,
   onRemovePart,
@@ -167,6 +174,7 @@ export function MusicPart({
             headerClassName={headerClassName}
             isPerformanceMode={isPerformanceMode}
             showHeader={showHeader}
+            showReadOnlyIdentity={showReadOnlyIdentity}
           >
             {children}
           </MusicPartContent>

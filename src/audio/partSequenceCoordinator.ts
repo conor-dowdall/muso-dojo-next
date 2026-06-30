@@ -4,7 +4,7 @@ import {
 } from "./beatTransportCoordinator";
 import { type PartSequencePlaybackPlan } from "./partSequencePlanning";
 
-const PART_SEQUENCE_HANDOFF_LEAD_SECONDS = 0.18;
+const PART_SEQUENCE_HANDOFF_LEAD_SECONDS = 0.35;
 const PART_SEQUENCE_COMMIT_LEAD_SECONDS = 0.01;
 
 export interface PartSequenceSnapshot {

@@ -1,5 +1,6 @@
 import { DEFAULT_KEYBOARD_THEME } from "@/data/keyboard/themes";
 import { assertNever } from "@/utils/assertNever";
+import { getRhythmSelectionForPartDuration } from "@/utils/music-part/partDuration";
 import {
   type DronePartModuleConfig,
   type ExerciseLooperPartModuleConfig,
@@ -125,19 +126,37 @@ export function createDefaultPartModuleConfigs<T extends PartModuleType>(
   return requests.map((request) => createDefaultPartModuleConfig(request));
 }
 
+function applyPartDurationToDefaultModule(
+  module: PartModuleConfig,
+  durationInBars: number | undefined,
+): PartModuleConfig {
+  if (module.type !== "rhythm") {
+    return module;
+  }
+
+  return {
+    ...module,
+    rhythm: getRhythmSelectionForPartDuration(durationInBars, module.rhythm),
+  };
+}
+
 export function createDefaultMusicPartConfig<
   T extends PartModuleType = PartModuleType,
 >({
   id = createEntityId("part"),
   rootNote = DEFAULT_PART_ROOT_NOTE,
   noteCollectionKey = DEFAULT_PART_NOTE_COLLECTION_KEY,
+  durationInBars,
   moduleRequests = [],
 }: CreateMusicPartConfigOptions<T> = {}): MusicPartConfig {
   const part = normalizeMusicPartConfig({
     id,
     rootNote,
     noteCollectionKey,
-    modules: createDefaultPartModuleConfigs(moduleRequests),
+    durationInBars,
+    modules: createDefaultPartModuleConfigs(moduleRequests).map((module) =>
+      applyPartDurationToDefaultModule(module, durationInBars),
+    ),
   });
 
   if (!part) {

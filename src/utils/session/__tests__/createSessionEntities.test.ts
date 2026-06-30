@@ -72,4 +72,25 @@ describe("createSessionEntities", () => {
 
     expect(part.modules).toHaveLength(0);
   });
+
+  it("applies representable Part durations to default Rhythm modules", () => {
+    const part = createDefaultMusicPartConfig({
+      durationInBars: 0.5,
+      moduleRequests: [{ type: "rhythm" }],
+    });
+
+    expect(part).toMatchObject({
+      durationInBars: 0.5,
+      modules: [
+        {
+          rhythm: {
+            recipe: {
+              beats: 2,
+            },
+          },
+          type: "rhythm",
+        },
+      ],
+    });
+  });
 });

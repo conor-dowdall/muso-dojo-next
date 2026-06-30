@@ -151,6 +151,47 @@ describe("part module app store actions", () => {
     });
   });
 
+  it("applies Part duration defaults when adding a Rhythm module later", () => {
+    const store = createTestStore({
+      activeSessionId: sessionId,
+      dojoSettings: {},
+      sessions: {
+        [sessionId]: {
+          id: sessionId,
+          name: "Store Test Session",
+          lastModified: "2026-01-01T00:00:00.000Z",
+          parts: [
+            {
+              id: partId,
+              durationInBars: 0.5,
+              rootNote: "C",
+              noteCollectionKey: "major",
+              modules: [],
+            },
+          ],
+        },
+      },
+    });
+
+    const moduleId = store.getState().addPartModule(sessionId, partId, {
+      type: "rhythm",
+    });
+    const partModule = store
+      .getState()
+      .sessions[
+        sessionId
+      ]?.parts[0]?.modules.find((candidate) => candidate.id === moduleId);
+
+    expect(partModule).toMatchObject({
+      rhythm: {
+        recipe: {
+          beats: 2,
+        },
+      },
+      type: "rhythm",
+    });
+  });
+
   it("clones a drone module", () => {
     const store = createTestStore();
     const addedModuleId = store.getState().addPartModule(sessionId, partId, {

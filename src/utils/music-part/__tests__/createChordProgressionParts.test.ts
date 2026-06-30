@@ -68,6 +68,7 @@ describe("createChordProgressionParts", () => {
       "C",
     ]);
     expect(parts[6]).toMatchObject({
+      durationInBars: 0.5,
       rootNote: "C",
     });
     expect(parts[6]?.modules[0]).toMatchObject({
@@ -79,6 +80,7 @@ describe("createChordProgressionParts", () => {
       type: "rhythm",
     });
     expect(parts[7]).toMatchObject({
+      durationInBars: 0.5,
       rootNote: "G",
     });
     expect(parts[7]?.modules[0]).toMatchObject({
@@ -97,6 +99,7 @@ describe("createChordProgressionParts", () => {
       },
       type: "rhythm",
     });
+    expect(parts[8]).not.toHaveProperty("durationInBars");
   });
 
   it("keeps unique-chord mode as a one-part-per-chord practice palette", () => {

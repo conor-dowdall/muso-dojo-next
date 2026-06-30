@@ -2,36 +2,47 @@
   padding: var(--space-1);
 }
 
+.headerPrimary {
+  flex: 1 1 0;
+  overflow: hidden;
+}
+
+.headerActions {
+  flex: 0 0 auto;
+}
+
 .identity {
-  display: flex;
+  display: block;
+  inline-size: 100%;
   min-inline-size: 0;
-  max-inline-size: 100%;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-1) var(--space-3);
+  max-inline-size: min(100%, 46ch);
+  overflow: hidden;
 }
 
 .title {
   display: flex;
+  inline-size: 100%;
   min-block-size: var(--control-size-sm);
-  flex: 0 1 auto;
   min-inline-size: 0;
   max-inline-size: 100%;
   align-items: center;
-  overflow-wrap: anywhere;
+  overflow: hidden;
   color: var(--color-text);
 }
 
-.title[data-band-active="true"] {
-  inline-size: 34ch;
-  max-inline-size: 100%;
-  flex-basis: 34ch;
+.title[data-content="readout"] {
+  max-inline-size: min(100%, 46ch);
   overflow-wrap: normal;
 }
 
-@media (width < 24rem) {
-  .title[data-band-active="true"] {
-    inline-size: 21ch;
-    flex-basis: 21ch;
-  }
+.title > * {
+  min-inline-size: 0;
+}
+
+.titleText {
+  display: block;
+  max-inline-size: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
