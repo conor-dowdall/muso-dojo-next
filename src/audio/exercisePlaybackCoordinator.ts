@@ -11,6 +11,7 @@ import {
   type AudioPresetId,
   type PlaybackGroupHandle,
 } from "./types";
+import { type PlaybackOwner } from "./playbackOwnership";
 import { type ExerciseCountInBeats } from "@/types/session";
 
 const START_LOOKAHEAD_SECONDS = 0.08;
@@ -41,7 +42,9 @@ export interface ExercisePlaybackSnapshot {
   cycleDuration?: number;
   events: readonly ExercisePlaybackEvent[];
   originTime?: number;
+  owner?: PlaybackOwner;
   pendingId?: string;
+  pendingOwner?: PlaybackOwner;
   pendingOriginTime?: number;
   playing: boolean;
   secondsPerBeat?: number;
@@ -50,6 +53,7 @@ export interface ExercisePlaybackSnapshot {
 export interface ExercisePlaybackStartOptions {
   handoff?: boolean;
   originTime?: number;
+  owner?: PlaybackOwner;
 }
 
 interface ActiveExercisePlayback {
@@ -103,6 +107,7 @@ function withoutPendingStart(
 ): ExercisePlaybackSnapshot {
   const nextSnapshot = { ...snapshot };
   delete nextSnapshot.pendingId;
+  delete nextSnapshot.pendingOwner;
   delete nextSnapshot.pendingOriginTime;
   return nextSnapshot;
 }
@@ -114,6 +119,19 @@ export function isExercisePlaybackActive(
   return (
     snapshot.pendingId === id || (snapshot.playing && snapshot.activeId === id)
   );
+}
+
+export function getExercisePlaybackOwner(
+  snapshot: ExercisePlaybackSnapshot,
+  id: string,
+) {
+  if (snapshot.pendingId === id) {
+    return snapshot.pendingOwner;
+  }
+
+  return snapshot.playing && snapshot.activeId === id
+    ? snapshot.owner
+    : undefined;
 }
 
 export function exercisePlaybackRestartRequestsAreEqual(
@@ -168,6 +186,7 @@ export class ExercisePlaybackCoordinator {
   private pendingHandoff: PendingExerciseHandoff | undefined;
   private pendingStop: PendingExerciseStop | undefined;
   private pendingStartId: string | undefined;
+  private pendingStartOwner: PlaybackOwner | undefined;
   private pendingStartRequest: ExercisePlaybackRequest | undefined;
   private snapshot: ExercisePlaybackSnapshot = idleSnapshot;
   private startRevision = 0;
@@ -192,6 +211,7 @@ export class ExercisePlaybackCoordinator {
     }
     this.active = undefined;
     this.pendingStartId = undefined;
+    this.pendingStartOwner = undefined;
     this.pendingStartRequest = undefined;
     this.snapshot = idleSnapshot;
     this.startRevision += 1;
@@ -239,7 +259,13 @@ export class ExercisePlaybackCoordinator {
     active.metronomeScheduler?.stop();
     this.active = undefined;
     this.snapshot = this.pendingStartId
-      ? { ...idleSnapshot, pendingId: this.pendingStartId }
+      ? {
+          ...idleSnapshot,
+          pendingId: this.pendingStartId,
+          ...(this.pendingStartOwner
+            ? { pendingOwner: this.pendingStartOwner }
+            : {}),
+        }
       : idleSnapshot;
     this.emit();
   }
@@ -321,6 +347,7 @@ export class ExercisePlaybackCoordinator {
     this.active = pendingHandoff.playback;
     this.pendingHandoff = undefined;
     this.pendingStartId = undefined;
+    this.pendingStartOwner = undefined;
     this.pendingStartRequest = undefined;
     this.snapshot = pendingHandoff.snapshot;
     this.emit();
@@ -333,6 +360,7 @@ export class ExercisePlaybackCoordinator {
 
     this.cancelPendingHandoff();
     this.pendingStartId = undefined;
+    this.pendingStartOwner = undefined;
     this.pendingStartRequest = undefined;
     this.startRevision += 1;
     this.snapshot = withoutPendingStart(this.snapshot);
@@ -459,10 +487,12 @@ export class ExercisePlaybackCoordinator {
     this.cancelPendingHandoff();
     this.cancelPendingStopTimer();
     this.pendingStartId = request.id;
+    this.pendingStartOwner = options.owner ?? "manual";
     this.pendingStartRequest = request;
     this.snapshot = {
       ...this.snapshot,
       pendingId: request.id,
+      pendingOwner: options.owner ?? "manual",
       ...(options.originTime === undefined
         ? {}
         : { pendingOriginTime: options.originTime }),
@@ -478,6 +508,7 @@ export class ExercisePlaybackCoordinator {
     ) {
       if (revision === this.startRevision) {
         this.pendingStartId = undefined;
+        this.pendingStartOwner = undefined;
         this.pendingStartRequest = undefined;
         this.snapshot = withoutPendingStart(this.snapshot);
         this.emit();
@@ -489,6 +520,7 @@ export class ExercisePlaybackCoordinator {
 
     if (request.events.length === 0 || cycleDuration <= 0) {
       this.pendingStartId = undefined;
+      this.pendingStartOwner = undefined;
       this.pendingStartRequest = undefined;
       this.snapshot = withoutPendingStart(this.snapshot);
       this.emit();
@@ -556,6 +588,7 @@ export class ExercisePlaybackCoordinator {
       cycleDuration,
       events: request.events,
       originTime,
+      owner: options.owner ?? "manual",
       playing: true,
       secondsPerBeat,
     };
@@ -589,6 +622,7 @@ export class ExercisePlaybackCoordinator {
       this.snapshot = {
         ...previous.snapshot,
         pendingId: request.id,
+        pendingOwner: options.owner ?? "manual",
         pendingOriginTime: originTime,
       };
       this.emit();
@@ -597,6 +631,7 @@ export class ExercisePlaybackCoordinator {
 
     this.active = nextActive;
     this.pendingStartId = undefined;
+    this.pendingStartOwner = undefined;
     this.pendingStartRequest = undefined;
     this.snapshot = snapshot;
     this.emit();
@@ -667,11 +702,13 @@ export class ExercisePlaybackCoordinator {
     if (stopsPending) {
       this.cancelPendingHandoff();
       this.pendingStartId = undefined;
+      this.pendingStartOwner = undefined;
       this.pendingStartRequest = undefined;
       this.startRevision += 1;
     } else if (stopsActive && pendingHandoff) {
       this.cancelPendingHandoff();
       this.pendingStartId = undefined;
+      this.pendingStartOwner = undefined;
       this.pendingStartRequest = undefined;
       this.startRevision += 1;
     }
@@ -685,7 +722,13 @@ export class ExercisePlaybackCoordinator {
       if (options?.atTime === undefined) {
         this.active = undefined;
         this.snapshot = this.pendingStartId
-          ? { ...idleSnapshot, pendingId: this.pendingStartId }
+          ? {
+              ...idleSnapshot,
+              pendingId: this.pendingStartId,
+              ...(this.pendingStartOwner
+                ? { pendingOwner: this.pendingStartOwner }
+                : {}),
+            }
           : idleSnapshot;
       }
     } else if (stopsPending) {

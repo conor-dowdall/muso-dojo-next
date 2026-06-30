@@ -280,6 +280,60 @@ describe("createPartSequencePlaybackPlan", () => {
     expect(fullPlan.contentSignature).not.toBe(quietPlan.contentSignature);
   });
 
+  it("keeps the source signature stable when Part musical content changes", () => {
+    const originalPlan = createPartSequencePlaybackPlan(
+      createSession([createPart("part", [])]),
+    );
+    const changedPlan = createPartSequencePlaybackPlan(
+      createSession([
+        {
+          ...createPart("part", []),
+          noteCollectionKey: "minor",
+          rootNote: "D",
+        },
+      ]),
+    );
+
+    expect(originalPlan.sourceSignature).toBe(changedPlan.sourceSignature);
+    expect(originalPlan.contentSignature).not.toBe(
+      changedPlan.contentSignature,
+    );
+  });
+
+  it("treats Rhythm timekeeper edits as live updates rather than reset changes", () => {
+    const part = createPart("part", [
+      {
+        id: "rhythm",
+        rhythm: DEFAULT_RHYTHM_SELECTION,
+        type: "rhythm",
+      },
+    ]);
+    const basePlan = createPartSequencePlaybackPlan(createSession([part]));
+    const changedPlan = createPartSequencePlaybackPlan(
+      createSession([
+        createPart("part", [
+          {
+            id: "rhythm",
+            rhythm: {
+              recipe: {
+                ...DEFAULT_RHYTHM_SELECTION.recipe,
+                timekeeper: {
+                  ...DEFAULT_RHYTHM_SELECTION.recipe.timekeeper,
+                  sound: "ride",
+                },
+              },
+              source: "recipe",
+            },
+            type: "rhythm",
+          },
+        ]),
+      ]),
+    );
+
+    expect(basePlan.contentSignature).toBe(changedPlan.contentSignature);
+    expect(basePlan.updateSignature).not.toBe(changedPlan.updateSignature);
+  });
+
   it("uses Practice Band sound and octave for generated looper requests", () => {
     const plan = createPartSequencePlaybackPlan({
       ...createSession([createPart("part", [])]),

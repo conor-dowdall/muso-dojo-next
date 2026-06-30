@@ -235,6 +235,7 @@ describe("ExercisePlaybackCoordinator", () => {
     expect(coordinator.getSnapshot()).toEqual({
       events: [],
       pendingId: "second-looper",
+      pendingOwner: "manual",
       playing: false,
     });
     nextPrimeResult.resolve(true);

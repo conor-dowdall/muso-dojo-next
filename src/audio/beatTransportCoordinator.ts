@@ -10,11 +10,21 @@ import {
   type RhythmPlaybackRequest,
   type RhythmPlaybackSnapshot,
 } from "./rhythmPlaybackCoordinator";
+import {
+  getPlaybackOwnerForSource,
+  type PlaybackOwner,
+} from "./playbackOwnership";
 
 const TRANSPORT_HANDOFF_LEAD_SECONDS = 0.08;
 const BEAT_GRID_EPSILON = 1e-6;
 
 export type BeatTransportStartSource = "manual" | "part-sequence";
+
+export interface BeatTransportManualControlEvent {
+  kind: "start" | "stop";
+  owner: PlaybackOwner;
+  target: "exercise" | "rhythm";
+}
 
 interface BeatGrid {
   originTime: number;
@@ -105,7 +115,9 @@ function getStartedOriginTime({
 }
 
 export class BeatTransportCoordinator {
-  private manualStartListeners = new Set<() => void>();
+  private manualControlListeners = new Set<
+    (event: BeatTransportManualControlEvent) => void
+  >();
   private pendingCompanionStart:
     | { revision: number; target: "exercise" | "rhythm" }
     | undefined;
@@ -116,17 +128,34 @@ export class BeatTransportCoordinator {
     private readonly rhythm: RhythmPlaybackCoordinator = rhythmPlaybackCoordinator,
   ) {}
 
-  private notifyManualStart(source: BeatTransportStartSource = "manual") {
+  private notifyManualControl(
+    event: Omit<BeatTransportManualControlEvent, "owner">,
+    source: BeatTransportStartSource = "manual",
+  ) {
     if (source !== "manual") {
       return;
     }
 
-    this.manualStartListeners.forEach((listener) => listener());
+    const owner = getPlaybackOwnerForSource(source);
+
+    this.manualControlListeners.forEach((listener) =>
+      listener({ ...event, owner }),
+    );
   }
 
+  subscribeToManualControl = (
+    listener: (event: BeatTransportManualControlEvent) => void,
+  ) => {
+    this.manualControlListeners.add(listener);
+    return () => this.manualControlListeners.delete(listener);
+  };
+
   subscribeToManualStart = (listener: () => void) => {
-    this.manualStartListeners.add(listener);
-    return () => this.manualStartListeners.delete(listener);
+    return this.subscribeToManualControl((event) => {
+      if (event.kind === "start") {
+        listener();
+      }
+    });
   };
 
   getCurrentTime = () =>
@@ -165,7 +194,12 @@ export class BeatTransportCoordinator {
     request: ExercisePlaybackRequest,
     options: { source?: BeatTransportStartSource } = {},
   ) {
-    this.notifyManualStart(options.source);
+    const owner = getPlaybackOwnerForSource(options.source);
+
+    this.notifyManualControl(
+      { kind: "start", target: "exercise" },
+      options.source,
+    );
     const revision = ++this.revision;
     const exerciseSnapshot = this.exercise.getSnapshot();
     const currentTime = this.getCurrentTime();
@@ -190,6 +224,7 @@ export class BeatTransportCoordinator {
             handoff: exerciseSnapshot.playing,
             originTime: launchOriginTime,
           }),
+      owner,
     });
 
     if (!started || revision !== this.revision) {
@@ -214,6 +249,7 @@ export class BeatTransportCoordinator {
           handoff:
             request.countInBeats === 0 && this.rhythm.getSnapshot().playing,
           originTime,
+          owner,
         },
       );
       this.clearPendingCompanionStart(revision, "rhythm");
@@ -226,7 +262,12 @@ export class BeatTransportCoordinator {
     request: RhythmPlaybackRequest,
     options: { source?: BeatTransportStartSource } = {},
   ) {
-    this.notifyManualStart(options.source);
+    const owner = getPlaybackOwnerForSource(options.source);
+
+    this.notifyManualControl(
+      { kind: "start", target: "rhythm" },
+      options.source,
+    );
     const revision = ++this.revision;
     const rhythmSnapshot = this.rhythm.getSnapshot();
     const currentTime = this.getCurrentTime();
@@ -250,6 +291,7 @@ export class BeatTransportCoordinator {
             handoff: rhythmSnapshot.playing,
             originTime: launchOriginTime,
           }),
+      owner,
     });
 
     if (!started || revision !== this.revision) {
@@ -271,7 +313,7 @@ export class BeatTransportCoordinator {
           countInBeats: 0,
           tempoBpm: request.tempoBpm,
         },
-        { handoff: this.exercise.getSnapshot().playing, originTime },
+        { handoff: this.exercise.getSnapshot().playing, originTime, owner },
       );
       this.clearPendingCompanionStart(revision, "exercise");
     }
@@ -287,7 +329,9 @@ export class BeatTransportCoordinator {
     source = "manual",
     stopMissing = true,
   }: BeatTransportPartStartRequest) {
-    this.notifyManualStart(source);
+    const owner = getPlaybackOwnerForSource(source);
+
+    this.notifyManualControl({ kind: "start", target: "exercise" }, source);
     const revision = ++this.revision;
     const currentTime = this.getCurrentTime();
     const resolvedOriginTime =
@@ -317,7 +361,10 @@ export class BeatTransportCoordinator {
     }
 
     if (resolvedOriginTime === undefined && exercise && rhythm) {
-      const exerciseStarted = await this.exercise.start(exercise, { handoff });
+      const exerciseStarted = await this.exercise.start(exercise, {
+        handoff,
+        owner,
+      });
       const startedOriginTime =
         this.exercise.getSnapshot().originTime ??
         this.exercise.getSnapshot().pendingOriginTime;
@@ -327,6 +374,7 @@ export class BeatTransportCoordinator {
           : await this.rhythm.start(rhythm, {
               handoff,
               originTime: startedOriginTime,
+              owner,
             });
 
       if (revision !== this.revision) {
@@ -343,12 +391,14 @@ export class BeatTransportCoordinator {
       exercise
         ? this.exercise.start(exercise, {
             handoff,
+            owner,
             originTime: resolvedOriginTime,
           })
         : Promise.resolve(undefined),
       rhythm
         ? this.rhythm.start(rhythm, {
             handoff,
+            owner,
             originTime: resolvedOriginTime,
           })
         : Promise.resolve(undefined),
@@ -364,13 +414,37 @@ export class BeatTransportCoordinator {
     };
   }
 
-  stopExercise(id?: string) {
+  updatePartLive({
+    exercise,
+    rhythm,
+  }: Pick<BeatTransportPartStartRequest, "exercise" | "rhythm">) {
+    if (exercise) {
+      this.exercise.setMetronomeEnabled(exercise.id, exercise.metronomeEnabled);
+    }
+
+    if (rhythm) {
+      this.rhythm.setPattern(rhythm.id, rhythm.pattern);
+    }
+  }
+
+  stopExercise(
+    id?: string,
+    options: { source?: BeatTransportStartSource } = {},
+  ) {
+    this.notifyManualControl(
+      { kind: "stop", target: "exercise" },
+      options.source,
+    );
     this.revision += 1;
     this.cancelPendingCompanionStart("rhythm");
     this.exercise.stop(id);
   }
 
-  stopRhythm(id?: string) {
+  stopRhythm(id?: string, options: { source?: BeatTransportStartSource } = {}) {
+    this.notifyManualControl(
+      { kind: "stop", target: "rhythm" },
+      options.source,
+    );
     this.revision += 1;
     this.cancelPendingCompanionStart("exercise");
     this.rhythm.stop(id);

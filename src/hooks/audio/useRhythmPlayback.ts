@@ -5,6 +5,7 @@ import { useSyncExternalStore } from "react";
 import {
   beatTransportCoordinator,
   ensureAudioReady,
+  getRhythmPlaybackOwner,
   isRhythmPlaybackActive,
   rhythmPlaybackCoordinator,
 } from "@/audio";
@@ -51,6 +52,8 @@ export function useRhythmPlayback({
   const submittedRecipe = useRef(recipe);
   const isActive = isRhythmPlaybackActive(snapshot, id);
   const isPlaying = snapshot.playing && snapshot.activeId === id;
+  const playbackOwner = getRhythmPlaybackOwner(snapshot, id);
+  const isBandOwned = playbackOwner === "part-sequence";
   const start = useCallback(() => {
     void ensureAudioReady();
     submittedRequest.current = request;
@@ -81,7 +84,9 @@ export function useRhythmPlayback({
     ) {
       submittedRequest.current = request;
       submittedRecipe.current = recipe;
-      void beatTransportCoordinator.startRhythm(request);
+      if (!isBandOwned) {
+        void beatTransportCoordinator.startRhythm(request);
+      }
       return;
     }
 
@@ -91,7 +96,7 @@ export function useRhythmPlayback({
 
     submittedRequest.current = request;
     submittedRecipe.current = recipe;
-  }, [id, isActive, isPlaying, recipe, request]);
+  }, [id, isActive, isBandOwned, isPlaying, recipe, request]);
 
   return {
     isActive,

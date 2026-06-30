@@ -295,14 +295,26 @@ describe("BeatTransportCoordinator", () => {
     expect(result).toEqual({ originTime: 24, started: true });
     expect(exercise.getSnapshot()).toMatchObject({
       activeId: "exercise",
+      owner: "part-sequence",
       originTime: 24,
       playing: true,
     });
     expect(rhythm.getSnapshot()).toMatchObject({
       activeId: "rhythm",
+      owner: "part-sequence",
       originTime: 24,
       playing: true,
     });
+  });
+
+  it("marks manual starts as manually owned playback", async () => {
+    const { exercise, rhythm, transport } = createHarness();
+
+    await transport.startExercise(createExerciseRequest("exercise"));
+    await transport.startRhythm(createRhythmRequest("rhythm"));
+
+    expect(exercise.getSnapshot().owner).toBe("manual");
+    expect(rhythm.getSnapshot().owner).toBe("manual");
   });
 
   it("stops a missing part family at the supplied origin", async () => {

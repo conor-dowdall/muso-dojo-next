@@ -14,6 +14,7 @@ export interface PartSequenceSnapshot {
   cycleEndTime?: number;
   originTime?: number;
   partCount: number;
+  partResetSignatures?: readonly string[];
   pendingIndex?: number;
   pendingPartId?: string;
   playing: boolean;
@@ -21,6 +22,7 @@ export interface PartSequenceSnapshot {
   signature?: string;
   sourceSignature?: string;
   tempoBpm?: number;
+  updateSignature?: string;
 }
 
 export interface PartSequenceStopOptions {
@@ -50,8 +52,12 @@ export class PartSequenceCoordinator {
   constructor(
     private readonly transport: BeatTransportCoordinator = beatTransportCoordinator,
   ) {
-    this.transport.subscribeToManualStart(() => {
-      this.stop({ stopPlayback: false });
+    this.transport.subscribeToManualControl((event) => {
+      if (!this.snapshot.playing) {
+        return;
+      }
+
+      this.stop({ stopPlayback: event.kind === "stop" });
     });
   }
 
@@ -110,11 +116,13 @@ export class PartSequenceCoordinator {
       ...(cycleEndTime === undefined ? {} : { cycleEndTime }),
       ...(originTime === undefined ? {} : { originTime }),
       partCount: plan.parts.length,
+      partResetSignatures: plan.partResetSignatures,
       playing: true,
       sessionId: plan.sessionId,
       signature: plan.signature,
       sourceSignature: plan.sourceSignature,
       tempoBpm: plan.tempoBpm,
+      updateSignature: plan.updateSignature,
     };
     this.emit();
     this.scheduleNextPart({
@@ -191,6 +199,7 @@ export class PartSequenceCoordinator {
       ...this.snapshot,
       contentSignature: plan.contentSignature,
       partCount: plan.parts.length,
+      partResetSignatures: plan.partResetSignatures,
       pendingIndex: index,
       pendingPartId: part.partId,
       playing: true,
@@ -198,6 +207,7 @@ export class PartSequenceCoordinator {
       signature: plan.signature,
       sourceSignature: plan.sourceSignature,
       tempoBpm: plan.tempoBpm,
+      updateSignature: plan.updateSignature,
     };
     this.emit();
 
@@ -297,6 +307,65 @@ export class PartSequenceCoordinator {
       plan,
       revision,
     });
+  }
+
+  updatePlan(plan: PartSequencePlaybackPlan) {
+    const currentIndex = this.snapshot.activeIndex;
+    const originTime = this.snapshot.originTime;
+
+    if (
+      !this.snapshot.playing ||
+      currentIndex === undefined ||
+      originTime === undefined ||
+      plan.parts.length === 0
+    ) {
+      return false;
+    }
+
+    const part = plan.parts[currentIndex];
+
+    if (!part) {
+      this.stop({ stopPlayback: false });
+      return false;
+    }
+
+    this.clearTimer();
+    const revision = ++this.revision;
+    this.plan = plan;
+    this.transport.updatePartLive({
+      exercise: part.exerciseRequest,
+      rhythm: part.rhythmRequest,
+    });
+
+    const durationSeconds =
+      part.durationBeats * getSecondsPerBeat(plan.tempoBpm);
+    const cycleEndTime = originTime + durationSeconds;
+
+    this.snapshot = {
+      ...this.snapshot,
+      activeIndex: currentIndex,
+      activePartId: part.partId,
+      contentSignature: plan.contentSignature,
+      cycleEndTime,
+      originTime,
+      partCount: plan.parts.length,
+      partResetSignatures: plan.partResetSignatures,
+      playing: true,
+      sessionId: plan.sessionId,
+      signature: plan.signature,
+      sourceSignature: plan.sourceSignature,
+      tempoBpm: plan.tempoBpm,
+      updateSignature: plan.updateSignature,
+    };
+    this.emit();
+    this.scheduleNextPart({
+      durationSeconds,
+      index: currentIndex,
+      originTime,
+      plan,
+      revision,
+    });
+    return true;
   }
 
   stop({ stopPlayback = true }: PartSequenceStopOptions = {}) {

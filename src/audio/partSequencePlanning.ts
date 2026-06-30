@@ -1,5 +1,6 @@
 import {
   DEFAULT_RHYTHM_SELECTION,
+  getRhythmSelectionRecipe,
   getRhythmSelectionPattern,
 } from "@/utils/rhythm/rhythmConfig";
 import {
@@ -42,16 +43,20 @@ export interface PartSequenceStepPlan {
   exerciseRequest?: ExercisePlaybackRequest;
   index: number;
   partId: string;
+  resetSignature: string;
   rhythmRequest?: RhythmPlaybackRequest;
+  updateSignature: string;
 }
 
 export interface PartSequencePlaybackPlan {
   contentSignature: string;
+  partResetSignatures: readonly string[];
   parts: readonly PartSequenceStepPlan[];
   sessionId: string;
   signature: string;
   sourceSignature: string;
   tempoBpm: number;
+  updateSignature: string;
 }
 
 function getFirstExerciseLooperModule(part: MusicPartConfig) {
@@ -190,23 +195,88 @@ function getRhythmModuleDurationBeats(
   return cycleDuration > 0 ? cycleDuration : undefined;
 }
 
-function createPlanSignature(parts: readonly PartSequenceStepPlan[]) {
+function createExerciseResetSignature(
+  request: ExercisePlaybackRequest | undefined,
+) {
+  return request
+    ? {
+        events: request.events,
+        id: request.id,
+        presetId: request.presetId,
+      }
+    : undefined;
+}
+
+function createRhythmResetSignature(
+  rhythm: RhythmPartModuleConfig["rhythm"] | undefined,
+) {
+  const recipe = getRhythmSelectionRecipe(rhythm ?? DEFAULT_RHYTHM_SELECTION);
+
+  return {
+    beats: recipe.beats,
+    grouping: recipe.grouping,
+    groove: recipe.groove,
+  };
+}
+
+function createPartResetSignature({
+  durationBeats,
+  exerciseRequest,
+  rhythm,
+  rhythmRequest,
+}: {
+  durationBeats: number;
+  exerciseRequest: ExercisePlaybackRequest | undefined;
+  rhythm: RhythmPartModuleConfig["rhythm"] | undefined;
+  rhythmRequest: RhythmPlaybackRequest | undefined;
+}) {
+  return JSON.stringify({
+    durationBeats,
+    exercise: createExerciseResetSignature(exerciseRequest),
+    rhythm: rhythmRequest ? createRhythmResetSignature(rhythm) : undefined,
+  });
+}
+
+function createPartUpdateSignature({
+  durationBeats,
+  exerciseRequest,
+  rhythmRequest,
+}: {
+  durationBeats: number;
+  exerciseRequest: ExercisePlaybackRequest | undefined;
+  rhythmRequest: RhythmPlaybackRequest | undefined;
+}) {
+  return JSON.stringify({
+    durationBeats,
+    exercise: exerciseRequest
+      ? {
+          ...exerciseRequest,
+          tempoBpm: undefined,
+        }
+      : undefined,
+    rhythm: rhythmRequest
+      ? {
+          ...rhythmRequest,
+          tempoBpm: undefined,
+        }
+      : undefined,
+  });
+}
+
+function createContentSignature(parts: readonly PartSequenceStepPlan[]) {
   return JSON.stringify(
     parts.map((part) => ({
-      durationBeats: part.durationBeats,
-      exercise: part.exerciseRequest
-        ? {
-            ...part.exerciseRequest,
-            tempoBpm: undefined,
-          }
-        : undefined,
       partId: part.partId,
-      rhythm: part.rhythmRequest
-        ? {
-            ...part.rhythmRequest,
-            tempoBpm: undefined,
-          }
-        : undefined,
+      resetSignature: part.resetSignature,
+    })),
+  );
+}
+
+function createUpdateSignature(parts: readonly PartSequenceStepPlan[]) {
+  return JSON.stringify(
+    parts.map((part) => ({
+      partId: part.partId,
+      updateSignature: part.updateSignature,
     })),
   );
 }
@@ -214,11 +284,7 @@ function createPlanSignature(parts: readonly PartSequenceStepPlan[]) {
 function createSourceSignature(session: SessionConfig) {
   return JSON.stringify(
     session.parts.map((part) => ({
-      exercise: getFirstExerciseLooperModule(part) ?? undefined,
-      noteCollectionKey: part.noteCollectionKey,
       partId: part.id,
-      rhythm: getFirstRhythmModule(part) ?? undefined,
-      rootNote: part.rootNote,
     })),
   );
 }
@@ -244,24 +310,40 @@ export function createPartSequencePlaybackPlan(
     const barDurationBeats =
       getRhythmModuleDurationBeats(rhythmModule) ??
       DEFAULT_SILENT_PART_DURATION_BEATS;
+    const resetSignature = createPartResetSignature({
+      durationBeats: barDurationBeats,
+      exerciseRequest,
+      rhythm: rhythmModule?.rhythm,
+      rhythmRequest,
+    });
+    const updateSignature = createPartUpdateSignature({
+      durationBeats: barDurationBeats,
+      exerciseRequest,
+      rhythmRequest,
+    });
 
     return {
       durationBeats: barDurationBeats,
       ...(exerciseRequest ? { exerciseRequest } : {}),
       index,
       partId: part.id,
+      resetSignature,
       ...(rhythmRequest ? { rhythmRequest } : {}),
+      updateSignature,
     };
   });
-  const contentSignature = createPlanSignature(parts);
+  const contentSignature = createContentSignature(parts);
   const sourceSignature = createSourceSignature(session);
+  const updateSignature = createUpdateSignature(parts);
 
   return {
     contentSignature,
+    partResetSignatures: parts.map((part) => part.resetSignature),
     parts,
     sessionId: session.id,
     signature: `${tempoBpm}:${contentSignature}`,
     sourceSignature,
     tempoBpm,
+    updateSignature: `${tempoBpm}:${updateSignature}`,
   };
 }

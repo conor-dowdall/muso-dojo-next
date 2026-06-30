@@ -17,6 +17,7 @@ import {
   ensureAudioReady,
   exercisePlaybackRestartRequestsAreEqual,
   exercisePlaybackCoordinator,
+  getExercisePlaybackOwner,
   isExercisePlaybackActive,
   musoAudioEngine,
   type AudioPresetId,
@@ -123,6 +124,8 @@ export function useExerciseLooperPlayback({
   const isPending = snapshot.pendingId === id;
   const isPlaying = snapshot.playing && snapshot.activeId === id;
   const isActive = isExercisePlaybackActive(snapshot, id);
+  const playbackOwner = getExercisePlaybackOwner(snapshot, id);
+  const isBandOwned = playbackOwner === "part-sequence";
   const request = useMemo(
     () =>
       createExercisePlaybackRequest({
@@ -195,16 +198,18 @@ export function useExerciseLooperPlayback({
     }
 
     if (
-      !exercisePlaybackRestartRequestsAreEqual(
-        submittedRequest.current,
-        request,
-      )
+      exercisePlaybackRestartRequestsAreEqual(submittedRequest.current, request)
     ) {
-      setActiveStepIndex(undefined);
-      submittedRequest.current = request;
+      return;
+    }
+
+    setActiveStepIndex(undefined);
+    submittedRequest.current = request;
+
+    if (!isBandOwned) {
       void beatTransportCoordinator.startExercise(request);
     }
-  }, [isActive, request]);
+  }, [isActive, isBandOwned, request]);
 
   useLayoutEffect(() => {
     if (!isPlaying) {

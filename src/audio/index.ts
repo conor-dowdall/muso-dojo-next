@@ -38,6 +38,7 @@ export {
 } from "./beatTransportCoordinator";
 export {
   exercisePlaybackRestartRequestsAreEqual,
+  getExercisePlaybackOwner,
   exercisePlaybackCoordinator,
   isExercisePlaybackActive,
   type ExercisePlaybackEvent,
@@ -45,11 +46,13 @@ export {
   type ExercisePlaybackSnapshot,
 } from "./exercisePlaybackCoordinator";
 export {
+  getRhythmPlaybackOwner,
   isRhythmPlaybackActive,
   rhythmPlaybackCoordinator,
   type RhythmPlaybackRequest,
   type RhythmPlaybackSnapshot,
 } from "./rhythmPlaybackCoordinator";
+export { type PlaybackOwner } from "./playbackOwnership";
 export {
   ExerciseAuditionController,
   type ExerciseAuditionAudioEngine,

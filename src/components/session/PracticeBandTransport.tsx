@@ -12,6 +12,8 @@ import {
   createPartSequencePlaybackPlan,
   ensureAudioReady,
   partSequenceCoordinator,
+  type PartSequencePlaybackPlan,
+  type PartSequenceSnapshot,
 } from "@/audio";
 import { useAppStore } from "@/stores/appStore";
 import { IconButton } from "@/components/ui/buttons/IconButton";
@@ -67,6 +69,27 @@ function createPartReadout({
     partNumber: activeIndex + 1,
     rootNote,
   };
+}
+
+function currentPartNeedsRestart(
+  snapshot: PartSequenceSnapshot,
+  plan: PartSequencePlaybackPlan,
+) {
+  if (snapshot.pendingIndex !== undefined) {
+    return true;
+  }
+
+  const activeIndex = snapshot.activeIndex;
+
+  if (activeIndex === undefined) {
+    return true;
+  }
+
+  return (
+    snapshot.tempoBpm !== plan.tempoBpm ||
+    snapshot.partResetSignatures?.[activeIndex] !==
+      plan.partResetSignatures[activeIndex]
+  );
 }
 
 interface PracticeBandTransportState {
@@ -138,12 +161,16 @@ export function usePracticeBandTransport(
       return;
     }
 
-    if (
-      currentSnapshot.contentSignature !== plan.contentSignature ||
-      currentSnapshot.signature !== plan.signature
-    ) {
-      void partSequenceCoordinator.restartCurrentPart(plan);
+    if (currentSnapshot.updateSignature === plan.updateSignature) {
+      return;
     }
+
+    if (currentPartNeedsRestart(currentSnapshot, plan)) {
+      void partSequenceCoordinator.restartCurrentPart(plan);
+      return;
+    }
+
+    partSequenceCoordinator.updatePlan(plan);
   }, [plan, sessionId]);
 
   const togglePlayback = useCallback(() => {

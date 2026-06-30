@@ -11,6 +11,7 @@ import {
   type LookaheadSchedulerOptions,
 } from "./lookaheadScheduler";
 import { musoAudioEngine } from "./createWebAudioEngine";
+import { type PlaybackOwner } from "./playbackOwnership";
 import { type AudioEngine, type PlaybackGroupHandle } from "./types";
 
 const START_LOOKAHEAD_SECONDS = 0.08;
@@ -26,7 +27,9 @@ export interface RhythmPlaybackSnapshot {
   activeId?: string;
   cycleDuration?: number;
   originTime?: number;
+  owner?: PlaybackOwner;
   pendingId?: string;
+  pendingOwner?: PlaybackOwner;
   pendingOriginTime?: number;
   playing: boolean;
   tempoBpm?: number;
@@ -35,6 +38,7 @@ export interface RhythmPlaybackSnapshot {
 export interface RhythmPlaybackStartOptions {
   handoff?: boolean;
   originTime?: number;
+  owner?: PlaybackOwner;
 }
 
 interface RhythmSchedulerHit extends RhythmHit {
@@ -159,6 +163,7 @@ function withoutPendingStart(
 ): RhythmPlaybackSnapshot {
   const nextSnapshot = { ...snapshot };
   delete nextSnapshot.pendingId;
+  delete nextSnapshot.pendingOwner;
   delete nextSnapshot.pendingOriginTime;
   return nextSnapshot;
 }
@@ -172,12 +177,26 @@ export function isRhythmPlaybackActive(
   );
 }
 
+export function getRhythmPlaybackOwner(
+  snapshot: RhythmPlaybackSnapshot,
+  id: string,
+) {
+  if (snapshot.pendingId === id) {
+    return snapshot.pendingOwner;
+  }
+
+  return snapshot.playing && snapshot.activeId === id
+    ? snapshot.owner
+    : undefined;
+}
+
 export class RhythmPlaybackCoordinator {
   private active: ActiveRhythmPlayback | undefined;
   private listeners = new Set<() => void>();
   private pendingHandoff: PendingRhythmHandoff | undefined;
   private pendingStop: PendingRhythmStop | undefined;
   private pendingStartId: string | undefined;
+  private pendingStartOwner: PlaybackOwner | undefined;
   private pendingStartRequest: RhythmPlaybackRequest | undefined;
   private snapshot: RhythmPlaybackSnapshot = idleSnapshot;
   private startRevision = 0;
@@ -201,6 +220,7 @@ export class RhythmPlaybackCoordinator {
     }
     this.active = undefined;
     this.pendingStartId = undefined;
+    this.pendingStartOwner = undefined;
     this.pendingStartRequest = undefined;
     this.snapshot = idleSnapshot;
     this.startRevision += 1;
@@ -243,7 +263,13 @@ export class RhythmPlaybackCoordinator {
     active.scheduler.stop();
     this.active = undefined;
     this.snapshot = this.pendingStartId
-      ? { ...idleSnapshot, pendingId: this.pendingStartId }
+      ? {
+          ...idleSnapshot,
+          pendingId: this.pendingStartId,
+          ...(this.pendingStartOwner
+            ? { pendingOwner: this.pendingStartOwner }
+            : {}),
+        }
       : idleSnapshot;
     this.emit();
   }
@@ -317,6 +343,7 @@ export class RhythmPlaybackCoordinator {
     this.active = pendingHandoff.playback;
     this.pendingHandoff = undefined;
     this.pendingStartId = undefined;
+    this.pendingStartOwner = undefined;
     this.pendingStartRequest = undefined;
     this.snapshot = pendingHandoff.snapshot;
     this.emit();
@@ -329,6 +356,7 @@ export class RhythmPlaybackCoordinator {
 
     this.cancelPendingHandoff();
     this.pendingStartId = undefined;
+    this.pendingStartOwner = undefined;
     this.pendingStartRequest = undefined;
     this.startRevision += 1;
     this.snapshot = withoutPendingStart(this.snapshot);
@@ -367,6 +395,15 @@ export class RhythmPlaybackCoordinator {
       this.active &&
       rhythmPlaybackRestartRequestsAreEqual(this.active.request, request)
     ) {
+      const owner = options.owner ?? "manual";
+      if (this.active.snapshot.owner !== owner) {
+        this.active.snapshot = {
+          ...this.active.snapshot,
+          owner,
+        };
+        this.snapshot = this.active.snapshot;
+        this.emit();
+      }
       return true;
     }
 
@@ -374,10 +411,12 @@ export class RhythmPlaybackCoordinator {
     this.cancelPendingHandoff();
     this.cancelPendingStopTimer();
     this.pendingStartId = request.id;
+    this.pendingStartOwner = options.owner ?? "manual";
     this.pendingStartRequest = request;
     this.snapshot = {
       ...this.snapshot,
       pendingId: request.id,
+      pendingOwner: options.owner ?? "manual",
       ...(options.originTime === undefined
         ? {}
         : { pendingOriginTime: options.originTime }),
@@ -393,6 +432,7 @@ export class RhythmPlaybackCoordinator {
     ) {
       if (revision === this.startRevision) {
         this.pendingStartId = undefined;
+        this.pendingStartOwner = undefined;
         this.pendingStartRequest = undefined;
         this.snapshot = withoutPendingStart(this.snapshot);
         this.emit();
@@ -402,6 +442,7 @@ export class RhythmPlaybackCoordinator {
 
     if (!rhythmPatternCanPlay(request.pattern)) {
       this.pendingStartId = undefined;
+      this.pendingStartOwner = undefined;
       this.pendingStartRequest = undefined;
       this.snapshot = withoutPendingStart(this.snapshot);
       this.emit();
@@ -436,6 +477,7 @@ export class RhythmPlaybackCoordinator {
       activeId: request.id,
       cycleDuration,
       originTime,
+      owner: options.owner ?? "manual",
       playing: true,
       tempoBpm: normalizeTempo(request.tempoBpm),
     };
@@ -465,6 +507,7 @@ export class RhythmPlaybackCoordinator {
       this.snapshot = {
         ...previous.snapshot,
         pendingId: request.id,
+        pendingOwner: options.owner ?? "manual",
         pendingOriginTime: originTime,
       };
       this.emit();
@@ -473,6 +516,7 @@ export class RhythmPlaybackCoordinator {
 
     this.active = nextActive;
     this.pendingStartId = undefined;
+    this.pendingStartOwner = undefined;
     this.pendingStartRequest = undefined;
     this.snapshot = snapshot;
     this.emit();
@@ -546,11 +590,13 @@ export class RhythmPlaybackCoordinator {
     if (stopsPending) {
       this.cancelPendingHandoff();
       this.pendingStartId = undefined;
+      this.pendingStartOwner = undefined;
       this.pendingStartRequest = undefined;
       this.startRevision += 1;
     } else if (stopsActive && pendingHandoff) {
       this.cancelPendingHandoff();
       this.pendingStartId = undefined;
+      this.pendingStartOwner = undefined;
       this.pendingStartRequest = undefined;
       this.startRevision += 1;
     }
@@ -560,7 +606,13 @@ export class RhythmPlaybackCoordinator {
       if (options?.atTime === undefined) {
         this.active = undefined;
         this.snapshot = this.pendingStartId
-          ? { ...idleSnapshot, pendingId: this.pendingStartId }
+          ? {
+              ...idleSnapshot,
+              pendingId: this.pendingStartId,
+              ...(this.pendingStartOwner
+                ? { pendingOwner: this.pendingStartOwner }
+                : {}),
+            }
           : idleSnapshot;
       }
     } else if (stopsPending) {
