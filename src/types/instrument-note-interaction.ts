@@ -13,3 +13,7 @@ export interface InstrumentNoteInteractionTarget {
   midi: number;
   pitchClass: number;
 }
+
+export interface InstrumentNoteInteractionOptions {
+  moveFocus?: boolean;
+}

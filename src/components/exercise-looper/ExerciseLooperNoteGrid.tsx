@@ -3,7 +3,10 @@ import { InstrumentNote } from "@/components/instrument/InstrumentNote";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { InstrumentNoteTileLabel } from "@/components/instrument/InstrumentNoteTileLabel";
 import noteGridStyles from "@/components/part-module/PartModuleNoteGrid.module.css";
-import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
+import {
+  type InstrumentNoteInteractionOptions,
+  type InstrumentNoteInteractionTarget,
+} from "@/types/instrument";
 import { type NoteColorMode } from "@/types/note-colors";
 import {
   type ExercisePatternMode,
@@ -28,7 +31,10 @@ export function ExerciseLooperNoteGrid({
   activeCollectionPositions: ReadonlySet<number>;
   auditionActiveKeys: ReadonlySet<string>;
   focusedKey: string;
-  handleItemInteraction: (target: InstrumentNoteInteractionTarget) => void;
+  handleItemInteraction: (
+    target: InstrumentNoteInteractionTarget,
+    options?: InstrumentNoteInteractionOptions,
+  ) => void;
   handleKeyDown: (event: KeyboardEvent, key: string) => void;
   mode: ExercisePatternMode;
   noteColorMode: NoteColorMode;

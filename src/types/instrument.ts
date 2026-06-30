@@ -51,6 +51,7 @@ export type {
 export type {
   InstrumentNoteInteractionMode,
   InstrumentNoteInteractionModeSetter,
+  InstrumentNoteInteractionOptions,
   InstrumentNoteInteractionTarget,
 } from "./instrument-note-interaction";
 

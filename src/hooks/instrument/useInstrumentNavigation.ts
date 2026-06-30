@@ -5,7 +5,10 @@ import {
   useRef,
   type KeyboardEvent,
 } from "react";
-import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
+import {
+  type InstrumentNoteInteractionOptions,
+  type InstrumentNoteInteractionTarget,
+} from "@/types/instrument";
 import { createInstrumentNoteInteractionTarget } from "@/utils/instrument/createInstrumentNoteInteractionTarget";
 
 interface UseInstrumentNavigationParams {
@@ -56,8 +59,17 @@ export function useInstrumentNavigation<T extends HTMLElement>({
   }, []);
 
   const handleItemInteraction = useCallback(
-    (target: InstrumentNoteInteractionTarget) => {
+    (
+      target: InstrumentNoteInteractionTarget,
+      options?: InstrumentNoteInteractionOptions,
+    ) => {
       onInteractRef.current(target);
+
+      if (options?.moveFocus === false) {
+        setFocusedKey(target.key);
+        return;
+      }
+
       focusItem(target.key);
     },
     [focusItem],

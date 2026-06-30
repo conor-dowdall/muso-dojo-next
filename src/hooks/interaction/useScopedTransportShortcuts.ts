@@ -66,22 +66,6 @@ function isEditableShortcutTarget(target: EventTarget | null) {
     : false;
 }
 
-function blurFocusedShortcutTarget(root: HTMLElement | null) {
-  if (typeof document === "undefined" || typeof HTMLElement === "undefined") {
-    return;
-  }
-
-  const activeElement = document.activeElement;
-
-  if (
-    activeElement instanceof HTMLElement &&
-    root?.contains(activeElement) &&
-    !isEditableShortcutTarget(activeElement)
-  ) {
-    activeElement.blur();
-  }
-}
-
 function shouldIgnoreTransportShortcut(event: TransportKeyEvent) {
   return (
     event.defaultPrevented ||
@@ -127,11 +111,10 @@ export function useScopedTransportShortcuts({
   }, []);
 
   const stopFromShortcut = useCallback(
-    (event: TransportKeyEvent, root: HTMLElement | null) => {
+    (event: TransportKeyEvent) => {
       event.preventDefault();
       event.stopPropagation();
       onStopRef.current();
-      blurFocusedShortcutTarget(root);
       releaseShortcutScope();
     },
     [releaseShortcutScope],
@@ -145,7 +128,7 @@ export function useScopedTransportShortcuts({
         return;
       }
 
-      stopFromShortcut(event, event.currentTarget);
+      stopFromShortcut(event);
     },
     [claimShortcutScope, isActive, stopFromShortcut],
   );
@@ -171,7 +154,7 @@ export function useScopedTransportShortcuts({
         return;
       }
 
-      stopFromShortcut(event, scopeRoot.current);
+      stopFromShortcut(event);
     };
 
     const handleWindowPointerDown = () => {

@@ -1,6 +1,9 @@
 import { type CSSProperties, type KeyboardEvent } from "react";
 import { type ActiveNote } from "./instrument-active-note";
-import { type InstrumentNoteInteractionTarget } from "./instrument-note-interaction";
+import {
+  type InstrumentNoteInteractionOptions,
+  type InstrumentNoteInteractionTarget,
+} from "./instrument-note-interaction";
 import { type InstrumentNoteColor } from "./note-colors";
 
 export interface InstrumentNoteCellInfo {
@@ -23,5 +26,8 @@ export interface InstrumentNoteCellWrapperProps<
   isToggleButton: boolean;
   setItemRef: (key: string, el: HTMLElement | null) => void;
   handleKeyDown: (e: KeyboardEvent, key: string) => void;
-  onInteract: (target: InstrumentNoteInteractionTarget) => void;
+  onInteract: (
+    target: InstrumentNoteInteractionTarget,
+    options?: InstrumentNoteInteractionOptions,
+  ) => void;
 }
