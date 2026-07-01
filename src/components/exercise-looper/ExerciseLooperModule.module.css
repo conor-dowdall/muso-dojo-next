@@ -30,11 +30,32 @@
 }
 
 .tripletButtonLabel {
+  position: relative;
+  display: inline-grid;
+  inline-size: var(--button-icon-size, var(--part-module-control-icon-size));
+  block-size: var(--button-icon-size, var(--part-module-control-icon-size));
+  place-items: end center;
+  padding-block-end: 0.0625rem;
   font-size: var(--text-sm);
-  font-style: italic;
+  font-style: normal;
   font-variant-numeric: tabular-nums;
-  font-weight: var(--font-light);
+  font-weight: var(--font-bold);
   letter-spacing: 0;
+  line-height: var(--leading-none);
+}
+
+.tripletButtonLabel::before {
+  position: absolute;
+  inset-block-start: 0.0625rem;
+  inset-inline: 0.1875rem;
+  block-size: 0.25rem;
+  border-block-start: var(--border-width-base) solid currentColor;
+  border-inline: var(--border-width-base) solid currentColor;
+  border-block-end: 0;
+  border-start-start-radius: var(--space-px);
+  border-start-end-radius: var(--space-px);
+  content: "";
+  opacity: 0.82;
 }
 
 .modeConfiguration {
