@@ -13,7 +13,9 @@ import {
   type KeyboardModuleCreationDefault,
   type ModuleCreationDefaults,
   type ModuleCreationKind,
+  type RhythmModuleCreationDefault,
 } from "@/types/instrument-creation-defaults";
+import { DEFAULT_EXERCISE_OCTAVE_OFFSET } from "@/utils/exercise-looper/exerciseConfig";
 import { areRangesEqual } from "@/utils/range/numberRange";
 
 export const DEFAULT_MODULE_CREATION_KINDS = [
@@ -22,11 +24,19 @@ export const DEFAULT_MODULE_CREATION_KINDS = [
 
 export function createBuiltInDroneModuleCreationDefault(): DroneModuleCreationDefault {
   return {
+    octaveOffset: 0,
     wood: DEFAULT_WOOD_SURFACE_ID,
   };
 }
 
 export function createBuiltInExerciseLooperModuleCreationDefault(): ExerciseLooperModuleCreationDefault {
+  return {
+    octaveOffset: DEFAULT_EXERCISE_OCTAVE_OFFSET,
+    wood: DEFAULT_WOOD_SURFACE_ID,
+  };
+}
+
+export function createBuiltInRhythmModuleCreationDefault(): RhythmModuleCreationDefault {
   return {
     wood: DEFAULT_WOOD_SURFACE_ID,
   };
@@ -123,14 +133,27 @@ export function droneModuleCreationDefaultsAreEqual(
   right: DroneModuleCreationDefault,
 ) {
   return (
+    (left.octaveOffset ?? 0) === (right.octaveOffset ?? 0) &&
     (left.wood ?? DEFAULT_WOOD_SURFACE_ID) ===
-    (right.wood ?? DEFAULT_WOOD_SURFACE_ID)
+      (right.wood ?? DEFAULT_WOOD_SURFACE_ID)
   );
 }
 
 export function exerciseLooperModuleCreationDefaultsAreEqual(
   left: ExerciseLooperModuleCreationDefault,
   right: ExerciseLooperModuleCreationDefault,
+) {
+  return (
+    (left.octaveOffset ?? DEFAULT_EXERCISE_OCTAVE_OFFSET) ===
+      (right.octaveOffset ?? DEFAULT_EXERCISE_OCTAVE_OFFSET) &&
+    (left.wood ?? DEFAULT_WOOD_SURFACE_ID) ===
+      (right.wood ?? DEFAULT_WOOD_SURFACE_ID)
+  );
+}
+
+export function rhythmModuleCreationDefaultsAreEqual(
+  left: RhythmModuleCreationDefault,
+  right: RhythmModuleCreationDefault,
 ) {
   return (
     (left.wood ?? DEFAULT_WOOD_SURFACE_ID) ===
@@ -168,6 +191,14 @@ export function moduleCreationDefaultsAreEqual(
       right.exerciseLooper,
     )
   ) {
+    return false;
+  }
+
+  if (!left.rhythm || !right.rhythm) {
+    if (left.rhythm !== right.rhythm) {
+      return false;
+    }
+  } else if (!rhythmModuleCreationDefaultsAreEqual(left.rhythm, right.rhythm)) {
     return false;
   }
 

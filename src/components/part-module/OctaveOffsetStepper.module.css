@@ -1,0 +1,46 @@
+.stepper {
+  --octave-stepper-value-width: minmax(var(--space-20), 1fr);
+
+  display: grid;
+  min-inline-size: 0;
+  grid-template-columns:
+    var(--control-size-lg) var(--octave-stepper-value-width)
+    var(--control-size-lg);
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.value {
+  display: flex;
+  box-sizing: border-box;
+  min-block-size: var(--control-size-lg);
+  min-inline-size: 0;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-base) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-none);
+  text-align: center;
+}
+
+.adjustmentButton {
+  --button-icon-size: var(--icon-size-sm);
+}
+
+@container (width < 16rem) {
+  .stepper {
+    grid-template-columns: repeat(2, var(--control-size-lg));
+    justify-content: center;
+  }
+
+  .value {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+}

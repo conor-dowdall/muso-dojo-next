@@ -3,6 +3,10 @@ import {
   normalizeRhythmRecipe,
   normalizeRhythmSelection,
 } from "@/utils/rhythm/rhythmConfig";
+import {
+  DEFAULT_WOOD_SURFACE_ID,
+  normalizeWoodSurfaceId,
+} from "@/data/woodSurfaces";
 import { isRhythmPartModule } from "@/utils/session/partModuleTypes";
 import { resolveSettingValue } from "./settingValue";
 import {
@@ -61,6 +65,19 @@ export function createRhythmActions(
           source: "recipe",
         }),
       });
+    },
+    setRhythmWood: (sessionId, partId, moduleId, value) => {
+      const partModule = getRhythmModule(sessionId, partId, moduleId);
+      if (!partModule) return;
+
+      const current = partModule.wood ?? DEFAULT_WOOD_SURFACE_ID;
+      const next = normalizeWoodSurfaceId(resolveSettingValue(value, current));
+
+      if (next && next !== current) {
+        get().updateRhythmSettings(sessionId, partId, moduleId, {
+          wood: next,
+        });
+      }
     },
   };
 }

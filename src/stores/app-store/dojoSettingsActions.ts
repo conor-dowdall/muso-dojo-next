@@ -63,6 +63,7 @@ export function createDojoSettingsActions(
           : {}),
         ...(request.fretboard ? { fretboard: request.fretboard } : {}),
         ...(request.keyboard ? { keyboard: request.keyboard } : {}),
+        ...(request.rhythm ? { rhythm: request.rhythm } : {}),
       });
 
       if (

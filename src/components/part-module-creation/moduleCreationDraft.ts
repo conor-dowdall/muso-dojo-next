@@ -5,6 +5,7 @@ import {
   type KeyboardModuleCreationDefault,
   type ModuleCreationKind,
   type RememberModuleCreationRequest,
+  type RhythmModuleCreationDefault,
 } from "@/types/instrument-creation-defaults";
 import { type PartModuleCreationRequest } from "@/types/session";
 
@@ -15,6 +16,7 @@ export interface ModuleCreationListDraft {
   keyboard?: KeyboardModuleCreationDefault;
   moduleKinds: ModuleCreationKind[];
   moduleRequests: PartModuleCreationRequest[];
+  rhythm?: RhythmModuleCreationDefault;
 }
 
 export function createRememberModuleCreationRequest(
@@ -26,5 +28,6 @@ export function createRememberModuleCreationRequest(
     ...(draft.exerciseLooper ? { exerciseLooper: draft.exerciseLooper } : {}),
     ...(draft.fretboard ? { fretboard: draft.fretboard } : {}),
     ...(draft.keyboard ? { keyboard: draft.keyboard } : {}),
+    ...(draft.rhythm ? { rhythm: draft.rhythm } : {}),
   };
 }

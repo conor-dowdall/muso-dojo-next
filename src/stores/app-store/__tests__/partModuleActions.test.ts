@@ -55,6 +55,7 @@ describe("part module app store actions", () => {
     const addedModuleId = store.getState().addPartModule(sessionId, partId, {
       type: "drone",
       settings: {
+        octaveOffset: 1,
         wood: "ebony",
       },
     });
@@ -66,6 +67,7 @@ describe("part module app store actions", () => {
 
     expect(addedModule).toMatchObject({
       id: addedModuleId,
+      octaveOffset: 1,
       type: "drone",
       wood: "ebony",
     });
@@ -109,6 +111,9 @@ describe("part module app store actions", () => {
 
     const moduleId = store.getState().addPartModule(sessionId, partId, {
       type: "rhythm",
+      settings: {
+        wood: "ebony",
+      },
     });
 
     if (!moduleId) {
@@ -125,6 +130,7 @@ describe("part module app store actions", () => {
         subdivision: "eighth",
       },
     });
+    store.getState().setRhythmWood(sessionId, partId, moduleId, "maple");
 
     const partModule = store
       .getState()
@@ -148,6 +154,7 @@ describe("part module app store actions", () => {
         source: "recipe",
       },
       type: "rhythm",
+      wood: "maple",
     });
   });
 
@@ -302,7 +309,7 @@ describe("part module app store actions", () => {
     const store = createTestStore();
     const moduleId = store.getState().addPartModule(sessionId, partId, {
       type: "exercise-looper",
-      settings: { wood: "ebony" },
+      settings: { octaveOffset: 0, wood: "ebony" },
     });
 
     if (!moduleId) {
@@ -345,6 +352,7 @@ describe("part module app store actions", () => {
       end: { octave: 1, stepOffset: 2 },
       id: moduleId,
       metronomeEnabled: true,
+      octaveOffset: 0,
       pattern: {
         direction: "descending",
         extensionDegree: 7,

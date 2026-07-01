@@ -18,6 +18,15 @@ import {
   normalizeWoodSurfaceId,
 } from "@/data/woodSurfaces";
 import {
+  DRONE_MAX_OCTAVE_OFFSET,
+  DRONE_MIN_OCTAVE_OFFSET,
+} from "@/utils/drone/droneNotes";
+import {
+  DEFAULT_EXERCISE_OCTAVE_OFFSET,
+  EXERCISE_MAX_OCTAVE_OFFSET,
+  EXERCISE_MIN_OCTAVE_OFFSET,
+} from "@/utils/exercise-looper/exerciseConfig";
+import {
   type DroneModuleCreationDefault,
   type ExerciseLooperModuleCreationDefault,
   type FretboardCreationAppearanceSource,
@@ -27,12 +36,14 @@ import {
   type KeyboardModuleCreationDefault,
   type ModuleCreationDefaults,
   type ModuleCreationKind,
+  type RhythmModuleCreationDefault,
 } from "@/types/instrument-creation-defaults";
 import {
   createBuiltInDroneModuleCreationDefault,
   createBuiltInExerciseLooperModuleCreationDefault,
   createBuiltInFretboardModuleCreationDefault,
   createBuiltInKeyboardModuleCreationDefault,
+  createBuiltInRhythmModuleCreationDefault,
   DEFAULT_MODULE_CREATION_KINDS,
   droneModuleCreationDefaultsAreEqual,
   exerciseLooperModuleCreationDefaultsAreEqual,
@@ -40,6 +51,7 @@ import {
   keyboardModuleCreationDefaultsAreEqual,
   moduleCreationDefaultsAreEqual,
   moduleCreationKindsAreEqual,
+  rhythmModuleCreationDefaultsAreEqual,
 } from "@/utils/instrument-creation/moduleCreationDefaults";
 import { normalizeBoundedRange } from "@/utils/range/numberRange";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
@@ -58,6 +70,25 @@ const MIN_FRET_RANGE_SPAN = 2;
 const MIDI_MIN = 0;
 const MIDI_MAX = 127;
 const MIN_KEYBOARD_RANGE_SPAN = 11;
+
+function normalizeIntegerInRange({
+  fallback,
+  max,
+  min,
+  value,
+}: {
+  fallback: number;
+  max: number;
+  min: number;
+  value: unknown;
+}) {
+  return typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= min &&
+    value <= max
+    ? value
+    : fallback;
+}
 
 function normalizeStringInstrumentKey(
   value: unknown,
@@ -305,14 +336,26 @@ export function normalizeDroneModuleCreationDefault(
   }
 
   const wood = normalizeWoodSurfaceId(value.wood) ?? DEFAULT_WOOD_SURFACE_ID;
-  const defaultValue = { wood } satisfies DroneModuleCreationDefault;
+  const octaveOffset = normalizeIntegerInRange({
+    fallback: 0,
+    max: DRONE_MAX_OCTAVE_OFFSET,
+    min: DRONE_MIN_OCTAVE_OFFSET,
+    value: value.octaveOffset,
+  });
+  const defaultValue = {
+    octaveOffset,
+    wood,
+  } satisfies DroneModuleCreationDefault;
 
   return droneModuleCreationDefaultsAreEqual(
     defaultValue,
     createBuiltInDroneModuleCreationDefault(),
   )
     ? undefined
-    : defaultValue;
+    : {
+        ...(octaveOffset !== 0 ? { octaveOffset } : {}),
+        ...(wood !== DEFAULT_WOOD_SURFACE_ID ? { wood } : {}),
+      };
 }
 
 export function normalizeExerciseLooperModuleCreationDefault(
@@ -323,11 +366,43 @@ export function normalizeExerciseLooperModuleCreationDefault(
   }
 
   const wood = normalizeWoodSurfaceId(value.wood) ?? DEFAULT_WOOD_SURFACE_ID;
-  const defaultValue = { wood } satisfies ExerciseLooperModuleCreationDefault;
+  const octaveOffset = normalizeIntegerInRange({
+    fallback: DEFAULT_EXERCISE_OCTAVE_OFFSET,
+    max: EXERCISE_MAX_OCTAVE_OFFSET,
+    min: EXERCISE_MIN_OCTAVE_OFFSET,
+    value: value.octaveOffset,
+  });
+  const defaultValue = {
+    octaveOffset,
+    wood,
+  } satisfies ExerciseLooperModuleCreationDefault;
 
   return exerciseLooperModuleCreationDefaultsAreEqual(
     defaultValue,
     createBuiltInExerciseLooperModuleCreationDefault(),
+  )
+    ? undefined
+    : {
+        ...(octaveOffset !== DEFAULT_EXERCISE_OCTAVE_OFFSET
+          ? { octaveOffset }
+          : {}),
+        ...(wood !== DEFAULT_WOOD_SURFACE_ID ? { wood } : {}),
+      };
+}
+
+export function normalizeRhythmModuleCreationDefault(
+  value: unknown,
+): RhythmModuleCreationDefault | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const wood = normalizeWoodSurfaceId(value.wood) ?? DEFAULT_WOOD_SURFACE_ID;
+  const defaultValue = { wood } satisfies RhythmModuleCreationDefault;
+
+  return rhythmModuleCreationDefaultsAreEqual(
+    defaultValue,
+    createBuiltInRhythmModuleCreationDefault(),
   )
     ? undefined
     : defaultValue;
@@ -348,6 +423,7 @@ export function normalizeModuleCreationDefaults(
     ),
     fretboard: normalizeFretboardModuleCreationDefault(value.fretboard),
     keyboard: normalizeKeyboardModuleCreationDefault(value.keyboard),
+    rhythm: normalizeRhythmModuleCreationDefault(value.rhythm),
   } satisfies ModuleCreationDefaults;
   const normalizedDefaults = {
     ...(moduleCreationDefaults.moduleKinds
@@ -364,6 +440,9 @@ export function normalizeModuleCreationDefaults(
       : {}),
     ...(moduleCreationDefaults.keyboard
       ? { keyboard: moduleCreationDefaults.keyboard }
+      : {}),
+    ...(moduleCreationDefaults.rhythm
+      ? { rhythm: moduleCreationDefaults.rhythm }
       : {}),
   } satisfies ModuleCreationDefaults;
 

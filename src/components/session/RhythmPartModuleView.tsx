@@ -36,6 +36,7 @@ export function RhythmPartModuleView({
       clonePartModule: state.clonePartModule,
       removePartModule: state.removePartModule,
       setRhythmRecipe: state.setRhythmRecipe,
+      setRhythmWood: state.setRhythmWood,
     })),
   );
 
@@ -61,6 +62,9 @@ export function RhythmPartModuleView({
       }
       onRhythmRecipeChange={(value) =>
         actions.setRhythmRecipe(sessionId, partId, moduleId, value)
+      }
+      onWoodChange={(value) =>
+        actions.setRhythmWood(sessionId, partId, moduleId, value)
       }
     />
   );

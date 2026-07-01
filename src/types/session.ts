@@ -136,6 +136,7 @@ export interface ExerciseLooperPartModuleConfig extends PartModuleBaseConfig<"ex
 export interface RhythmPartModuleConfig extends PartModuleBaseConfig<"rhythm"> {
   rhythm: RhythmSelection;
   type: "rhythm";
+  wood?: WoodSurfaceId;
 }
 
 export interface PartModuleConfigByType {
@@ -157,13 +158,17 @@ export interface InstrumentPartModuleCreationConfig<
 
 export interface PartModuleCreationConfigByType {
   drone: {
+    octaveOffset?: number;
     wood?: WoodSurfaceId;
   };
   "exercise-looper": {
+    octaveOffset?: number;
     wood?: WoodSurfaceId;
   };
   instrument: InstrumentPartModuleCreationConfig;
-  rhythm: Record<string, never>;
+  rhythm: {
+    wood?: WoodSurfaceId;
+  };
 }
 
 export type PartModuleCreationConfig<

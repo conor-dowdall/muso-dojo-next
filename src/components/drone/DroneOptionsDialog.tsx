@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioWaveform, SwatchBook } from "lucide-react";
+import { AudioWaveform, SwatchBook, WavesArrowUp } from "lucide-react";
 import {
   audioPresets,
   ensureAudioReady,
@@ -17,20 +17,30 @@ import {
   ObjectManagementGroup,
   ObjectMenuDialog,
 } from "@/components/ui/object-menu";
+import { OctaveOffsetStepper } from "@/components/part-module/OctaveOffsetStepper";
 import { type SettingSetter } from "@/types/state";
 import { WoodSurfaceChoiceList } from "@/components/appearance/WoodSurfaceChoiceList";
 import { WoodSurfaceSwatch } from "@/components/instrument/InstrumentThemeSwatch";
 import { woodSurfaces, type WoodSurfaceId } from "@/data/woodSurfaces";
+import {
+  DRONE_MAX_OCTAVE_OFFSET,
+  DRONE_MIN_OCTAVE_OFFSET,
+  getDroneBaseOctave,
+} from "@/utils/drone/droneNotes";
 
-type DroneMenuChoice = "sound" | "appearance";
+type DroneMenuChoice = "sound" | "octave" | "appearance";
 
 interface DroneOptionsDialogProps {
   audioPresetId: AudioPresetId;
+  canShiftOctaveDown?: boolean;
+  canShiftOctaveUp?: boolean;
   isOpen: boolean;
   onAudioPresetIdChange: SettingSetter<AudioPresetId>;
   onClose: () => void;
+  onOctaveOffsetChange: SettingSetter<number>;
   onRemove?: () => void;
   onWoodChange: SettingSetter<WoodSurfaceId>;
+  octaveOffset: number;
   wood: WoodSurfaceId;
 }
 
@@ -44,13 +54,21 @@ function auditionAudioPreset(audioPresetId: AudioPresetId) {
   });
 }
 
+function formatDroneOctave(octaveOffset: number) {
+  return `Octave ${getDroneBaseOctave(octaveOffset)}`;
+}
+
 export function DroneOptionsDialog({
   audioPresetId,
+  canShiftOctaveDown,
+  canShiftOctaveUp,
   isOpen,
   onAudioPresetIdChange,
   onClose,
+  onOctaveOffsetChange,
   onRemove,
   onWoodChange,
+  octaveOffset,
   wood,
 }: DroneOptionsDialogProps) {
   const { isOpen: isChoiceOpen, toggleChoice } =
@@ -86,6 +104,27 @@ export function DroneOptionsDialog({
             onChange={handleAudioPresetChange}
             selectedPresetId={audioPresetId}
             surface="drone"
+          />
+        </DisclosureListItem>
+
+        <DisclosureListItem
+          ariaLabel={`Octave. Current: ${formatDroneOctave(octaveOffset)}`}
+          icon={<WavesArrowUp />}
+          isOpen={isChoiceOpen("octave")}
+          label="Octave"
+          onToggle={() => toggleChoice("octave")}
+          panelVariant="menu"
+          preview={formatDroneOctave(octaveOffset)}
+        >
+          <OctaveOffsetStepper
+            aria-label="Drone octave"
+            canDecrease={canShiftOctaveDown}
+            canIncrease={canShiftOctaveUp}
+            formatValue={formatDroneOctave}
+            max={DRONE_MAX_OCTAVE_OFFSET}
+            min={DRONE_MIN_OCTAVE_OFFSET}
+            value={octaveOffset}
+            onChange={onOctaveOffsetChange}
           />
         </DisclosureListItem>
 

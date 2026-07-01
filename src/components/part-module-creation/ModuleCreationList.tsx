@@ -14,6 +14,8 @@ import {
 import { FretboardInstrumentCreationPanel } from "@/components/instrument-creation/FretboardInstrumentCreationPanel";
 import { KeyboardInstrumentCreationPanel } from "@/components/instrument-creation/KeyboardInstrumentCreationPanel";
 import { DroneCreationPanel } from "@/components/drone/DroneCreationPanel";
+import { ExerciseLooperCreationPanel } from "@/components/exercise-looper/ExerciseLooperCreationPanel";
+import { RhythmCreationPanel } from "@/components/rhythm/RhythmCreationPanel";
 import {
   formatFretboardCreationSummary,
   formatKeyboardCreationSummary,
@@ -27,11 +29,17 @@ import {
   type ExerciseLooperModuleCreationDefault,
   type ModuleCreationDefaults,
   type ModuleCreationKind,
+  type RhythmModuleCreationDefault,
 } from "@/types/instrument-creation-defaults";
 import { DEFAULT_WOOD_SURFACE_ID, woodSurfaces } from "@/data/woodSurfaces";
 import { type PartModuleCreationRequest } from "@/types/session";
+import { assertNever } from "@/utils/assertNever";
+import { getDroneBaseOctave } from "@/utils/drone/droneNotes";
+import { DEFAULT_EXERCISE_OCTAVE_OFFSET } from "@/utils/exercise-looper/exerciseConfig";
+import { getExerciseBaseOctave } from "@/utils/exercise-looper/exerciseSequence";
 import { DEFAULT_MODULE_CREATION_KINDS } from "@/utils/instrument-creation/moduleCreationDefaults";
 import { areRangesEqual } from "@/utils/range/numberRange";
+import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import { type ModuleCreationListDraft } from "./moduleCreationDraft";
 
 export type { ModuleCreationListDraft } from "./moduleCreationDraft";
@@ -46,7 +54,8 @@ function hasCreationSettings(kind: ModuleCreationKind) {
     kind === "drone" ||
     kind === "exercise-looper" ||
     kind === "fretboard" ||
-    kind === "keyboard"
+    kind === "keyboard" ||
+    kind === "rhythm"
   );
 }
 
@@ -65,18 +74,82 @@ function includesKind(
   return moduleKinds.includes(kind);
 }
 
-function getModuleCreationRequest({
-  fretboardSelection,
-  keyboardSelection,
+function formatCreationOctave(octave: number) {
+  return `Octave ${octave}`;
+}
+
+function formatWoodAndOctaveSummary({
+  octaveLabel,
+  wood,
+}: {
+  octaveLabel: string;
+  wood: string;
+}) {
+  return `${octaveLabel}${DISPLAY_VALUE_SEPARATOR}${wood}`;
+}
+
+function getModuleCreationSummary({
   droneSelection,
   exerciseLooperSelection,
+  fretboardSelection,
+  keyboardSelection,
   kind,
+  rhythmSelection,
 }: {
   droneSelection: DroneModuleCreationDefault;
   exerciseLooperSelection: ExerciseLooperModuleCreationDefault;
   fretboardSelection: FretboardInstrumentSelection;
   keyboardSelection: KeyboardInstrumentSelection;
   kind: ModuleCreationKind;
+  rhythmSelection: RhythmModuleCreationDefault;
+}) {
+  switch (kind) {
+    case "drone":
+      return formatWoodAndOctaveSummary({
+        octaveLabel: formatCreationOctave(
+          getDroneBaseOctave(droneSelection.octaveOffset ?? 0),
+        ),
+        wood: woodSurfaces[droneSelection.wood ?? DEFAULT_WOOD_SURFACE_ID]
+          .title,
+      });
+    case "exercise-looper":
+      return formatWoodAndOctaveSummary({
+        octaveLabel: formatCreationOctave(
+          getExerciseBaseOctave(
+            exerciseLooperSelection.octaveOffset ??
+              DEFAULT_EXERCISE_OCTAVE_OFFSET,
+          ),
+        ),
+        wood: woodSurfaces[
+          exerciseLooperSelection.wood ?? DEFAULT_WOOD_SURFACE_ID
+        ].title,
+      });
+    case "fretboard":
+      return formatFretboardCreationSummary(fretboardSelection);
+    case "keyboard":
+      return formatKeyboardCreationSummary(keyboardSelection);
+    case "rhythm":
+      return woodSurfaces[rhythmSelection.wood ?? DEFAULT_WOOD_SURFACE_ID]
+        .title;
+    default:
+      return assertNever(kind, "Unsupported module creation kind");
+  }
+}
+
+function getModuleCreationRequest({
+  fretboardSelection,
+  keyboardSelection,
+  droneSelection,
+  exerciseLooperSelection,
+  kind,
+  rhythmSelection,
+}: {
+  droneSelection: DroneModuleCreationDefault;
+  exerciseLooperSelection: ExerciseLooperModuleCreationDefault;
+  fretboardSelection: FretboardInstrumentSelection;
+  keyboardSelection: KeyboardInstrumentSelection;
+  kind: ModuleCreationKind;
+  rhythmSelection: RhythmModuleCreationDefault;
 }): PartModuleCreationRequest {
   switch (kind) {
     case "drone":
@@ -102,7 +175,7 @@ function getModuleCreationRequest({
         ),
       };
     case "rhythm":
-      return { type: "rhythm" };
+      return { type: "rhythm", settings: rhythmSelection };
   }
 }
 
@@ -125,12 +198,20 @@ export function ModuleCreationList({
   );
   const [droneSelection, setDroneSelection] =
     useState<DroneModuleCreationDefault>(() => ({
+      octaveOffset: moduleCreationDefaults?.drone?.octaveOffset ?? 0,
       wood: moduleCreationDefaults?.drone?.wood ?? DEFAULT_WOOD_SURFACE_ID,
     }));
   const [exerciseLooperSelection, setExerciseLooperSelection] =
     useState<ExerciseLooperModuleCreationDefault>(() => ({
+      octaveOffset:
+        moduleCreationDefaults?.exerciseLooper?.octaveOffset ??
+        DEFAULT_EXERCISE_OCTAVE_OFFSET,
       wood:
         moduleCreationDefaults?.exerciseLooper?.wood ?? DEFAULT_WOOD_SURFACE_ID,
+    }));
+  const [rhythmSelection, setRhythmSelection] =
+    useState<RhythmModuleCreationDefault>(() => ({
+      wood: moduleCreationDefaults?.rhythm?.wood ?? DEFAULT_WOOD_SURFACE_ID,
     }));
   const [fretboardSelection, setFretboardSelection] =
     useState<FretboardInstrumentSelection>(
@@ -158,11 +239,15 @@ export function ModuleCreationList({
           fretboardSelection,
           keyboardSelection,
           kind,
+          rhythmSelection,
         }),
       ),
       ...(includesKind(moduleKinds, "drone") ? { drone: droneSelection } : {}),
       ...(includesKind(moduleKinds, "exercise-looper")
         ? { exerciseLooper: exerciseLooperSelection }
+        : {}),
+      ...(includesKind(moduleKinds, "rhythm")
+        ? { rhythm: rhythmSelection }
         : {}),
       ...(hasFretboard
         ? {
@@ -189,6 +274,7 @@ export function ModuleCreationList({
     hasKeyboard,
     keyboardSelection,
     moduleKinds,
+    rhythmSelection,
   ]);
 
   useEffect(() => {
@@ -251,18 +337,14 @@ export function ModuleCreationList({
         const selected = includesKind(moduleKinds, option.kind);
         const hasSettings = hasCreationSettings(option.kind);
         const isSettingsOpen = selected && openSettingsKind === option.kind;
-        const summary =
-          option.kind === "drone"
-            ? woodSurfaces[droneSelection.wood ?? DEFAULT_WOOD_SURFACE_ID].title
-            : option.kind === "exercise-looper"
-              ? woodSurfaces[
-                  exerciseLooperSelection.wood ?? DEFAULT_WOOD_SURFACE_ID
-                ].title
-              : option.kind === "fretboard"
-                ? formatFretboardCreationSummary(fretboardSelection)
-                : option.kind === "keyboard"
-                  ? formatKeyboardCreationSummary(keyboardSelection)
-                  : option.subtitle;
+        const summary = getModuleCreationSummary({
+          droneSelection,
+          exerciseLooperSelection,
+          fretboardSelection,
+          keyboardSelection,
+          kind: option.kind,
+          rhythmSelection,
+        });
 
         return (
           <SelectableActionRow
@@ -294,11 +376,16 @@ export function ModuleCreationList({
                     onChange={setDroneSelection}
                   />
                 ) : option.kind === "exercise-looper" ? (
-                  <DroneCreationPanel
-                    ariaLabel="Looper settings"
+                  <ExerciseLooperCreationPanel
                     closeSignal={closeSignal}
                     value={exerciseLooperSelection}
                     onChange={setExerciseLooperSelection}
+                  />
+                ) : option.kind === "rhythm" ? (
+                  <RhythmCreationPanel
+                    closeSignal={closeSignal}
+                    value={rhythmSelection}
+                    onChange={setRhythmSelection}
                   />
                 ) : option.kind === "fretboard" ? (
                   <FretboardInstrumentCreationPanel

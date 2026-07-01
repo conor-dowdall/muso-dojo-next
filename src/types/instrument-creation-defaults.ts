@@ -30,10 +30,16 @@ export interface KeyboardCreationDefault {
 }
 
 export interface DroneModuleCreationDefault {
+  octaveOffset?: number;
   wood?: WoodSurfaceId;
 }
 
 export interface ExerciseLooperModuleCreationDefault {
+  octaveOffset?: number;
+  wood?: WoodSurfaceId;
+}
+
+export interface RhythmModuleCreationDefault {
   wood?: WoodSurfaceId;
 }
 
@@ -66,6 +72,7 @@ export interface ModuleCreationDefaults {
   exerciseLooper?: ExerciseLooperModuleCreationDefault;
   fretboard?: FretboardModuleCreationDefault;
   keyboard?: KeyboardModuleCreationDefault;
+  rhythm?: RhythmModuleCreationDefault;
 }
 
 export interface RememberModuleCreationRequest {
@@ -74,4 +81,5 @@ export interface RememberModuleCreationRequest {
   exerciseLooper?: ExerciseLooperModuleCreationDefault;
   fretboard?: FretboardModuleCreationDefault;
   keyboard?: KeyboardModuleCreationDefault;
+  rhythm?: RhythmModuleCreationDefault;
 }

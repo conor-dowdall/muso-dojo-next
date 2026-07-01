@@ -323,6 +323,7 @@ export function ExerciseLooperModule({
       ? "No Count In"
       : `${playback.activeCountInBeats} Beat Count In`;
   const octaveReadout = `Octave ${getExerciseBaseOctave(octaveOffset)}`;
+  const soundPreviewMidiNote = sequence.steps[0]?.notes[0]?.midi;
   useEffect(() => {
     if (!exercisePatternsAreEqual(effectivePattern, pattern)) {
       onPatternChange?.(effectivePattern);
@@ -557,11 +558,17 @@ export function ExerciseLooperModule({
       {showHeader ? (
         <ExerciseLooperOptionsDialog
           audioPresetId={audioPresetId ?? getDefaultAudioPresetId("exercise")}
+          canShiftOctaveDown={canShiftDown}
+          canShiftOctaveUp={canShiftUp}
+          isPlaybackActive={playback.isActive}
           isOpen={isOptionsOpen}
+          octaveOffset={octaveOffset}
+          previewMidiNote={soundPreviewMidiNote}
           wood={wood}
           onAudioPresetIdChange={(value) => onAudioPresetIdChange?.(value)}
           onClone={onClone}
           onClose={() => setIsOptionsOpen(false)}
+          onOctaveOffsetChange={onOctaveOffsetChange}
           onRemove={onRemove}
           onWoodChange={(value) => onWoodChange?.(value)}
         />

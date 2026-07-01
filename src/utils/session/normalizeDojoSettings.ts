@@ -93,4 +93,5 @@ export {
   normalizeKeyboardCreationDefault,
   normalizeKeyboardModuleCreationDefault,
   normalizeModuleCreationDefaults,
+  normalizeRhythmModuleCreationDefault,
 } from "@/utils/session/normalizeModuleCreationDefaults";

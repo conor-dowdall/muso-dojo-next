@@ -376,7 +376,11 @@ describe("app store persistence", () => {
             moduleCreationDefaults: {
               moduleKinds: ["keyboard", "drone", "keyboard"],
               drone: {
+                octaveOffset: 1,
                 wood: "pauFerro",
+              },
+              exerciseLooper: {
+                octaveOffset: 0,
               },
               fretboard: {
                 instrument: "guitar",
@@ -397,6 +401,9 @@ describe("app store persistence", () => {
                   range: "keys61",
                 },
               },
+              rhythm: {
+                wood: "ebony",
+              },
             },
           },
         },
@@ -405,7 +412,11 @@ describe("app store persistence", () => {
     ).toEqual({
       moduleKinds: ["keyboard", "drone"],
       drone: {
+        octaveOffset: 1,
         wood: "pauFerro",
+      },
+      exerciseLooper: {
+        octaveOffset: 0,
       },
       fretboard: {
         instrument: "guitar",
@@ -425,6 +436,9 @@ describe("app store persistence", () => {
           source: "named",
           range: "keys61",
         },
+      },
+      rhythm: {
+        wood: "ebony",
       },
     });
   });

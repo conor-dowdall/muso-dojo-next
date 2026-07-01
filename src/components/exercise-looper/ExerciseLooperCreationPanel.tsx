@@ -15,36 +15,37 @@ import {
   woodSurfaces,
   type WoodSurfaceId,
 } from "@/data/woodSurfaces";
-import { type DroneModuleCreationDefault } from "@/types/instrument-creation-defaults";
+import { type ExerciseLooperModuleCreationDefault } from "@/types/instrument-creation-defaults";
 import {
-  DRONE_MAX_OCTAVE_OFFSET,
-  DRONE_MIN_OCTAVE_OFFSET,
-  getDroneBaseOctave,
-} from "@/utils/drone/droneNotes";
+  DEFAULT_EXERCISE_OCTAVE_OFFSET,
+  EXERCISE_MAX_OCTAVE_OFFSET,
+  EXERCISE_MIN_OCTAVE_OFFSET,
+} from "@/utils/exercise-looper/exerciseConfig";
+import { getExerciseBaseOctave } from "@/utils/exercise-looper/exerciseSequence";
 import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
 
-type DroneCreationChoice = "octave" | "appearance";
+type ExerciseLooperCreationChoice = "octave" | "appearance";
 
-interface DroneCreationPanelProps {
+interface ExerciseLooperCreationPanelProps {
   ariaLabel?: string;
   closeSignal?: number;
-  onChange: (value: DroneModuleCreationDefault) => void;
-  value: DroneModuleCreationDefault;
+  onChange: (value: ExerciseLooperModuleCreationDefault) => void;
+  value: ExerciseLooperModuleCreationDefault;
 }
 
-function formatDroneOctave(octaveOffset: number) {
-  return `Octave ${getDroneBaseOctave(octaveOffset)}`;
+function formatExerciseOctave(octaveOffset: number) {
+  return `Octave ${getExerciseBaseOctave(octaveOffset)}`;
 }
 
-export function DroneCreationPanel({
-  ariaLabel = "Drone settings",
+export function ExerciseLooperCreationPanel({
+  ariaLabel = "Looper settings",
   closeSignal,
   onChange,
   value,
-}: DroneCreationPanelProps) {
+}: ExerciseLooperCreationPanelProps) {
   const { closeAll, openChoice, toggleChoice } =
-    useDisclosureList<DroneCreationChoice>();
-  const octaveOffset = value.octaveOffset ?? 0;
+    useDisclosureList<ExerciseLooperCreationChoice>();
+  const octaveOffset = value.octaveOffset ?? DEFAULT_EXERCISE_OCTAVE_OFFSET;
   const wood = value.wood ?? DEFAULT_WOOD_SURFACE_ID;
 
   useEffect(() => {
@@ -63,19 +64,19 @@ export function DroneCreationPanel({
     <section className={styles.section} aria-label={ariaLabel}>
       <DisclosureList>
         <DisclosureListItem
-          ariaLabel={`Choose octave, ${formatDroneOctave(octaveOffset)} selected`}
+          ariaLabel={`Choose octave, ${formatExerciseOctave(octaveOffset)} selected`}
           icon={<WavesArrowUp />}
           isOpen={openChoice === "octave"}
           keepMounted
           label="Octave"
-          preview={formatDroneOctave(octaveOffset)}
+          preview={formatExerciseOctave(octaveOffset)}
           onToggle={() => toggleChoice("octave")}
         >
           <OctaveOffsetStepper
-            aria-label="Drone octave"
-            formatValue={formatDroneOctave}
-            max={DRONE_MAX_OCTAVE_OFFSET}
-            min={DRONE_MIN_OCTAVE_OFFSET}
+            aria-label="Looper octave"
+            formatValue={formatExerciseOctave}
+            max={EXERCISE_MAX_OCTAVE_OFFSET}
+            min={EXERCISE_MIN_OCTAVE_OFFSET}
             value={octaveOffset}
             onChange={handleOctaveOffsetChange}
           />

@@ -127,14 +127,18 @@ describe("dojo settings app store actions", () => {
     store.getState().rememberModuleCreation({
       moduleKinds: ["keyboard", "drone", "keyboard"],
       drone: {
+        octaveOffset: 1,
         wood: "ebony",
+      },
+      exerciseLooper: {
+        octaveOffset: 0,
       },
       keyboard: {
         theme: "studio",
       },
     });
     store.getState().rememberModuleCreation({
-      moduleKinds: ["fretboard", "drone"],
+      moduleKinds: ["fretboard", "drone", "rhythm"],
       fretboard: {
         instrument: "guitar",
         tuningKey: "guitarDropD",
@@ -142,16 +146,23 @@ describe("dojo settings app store actions", () => {
         appearanceSource: "custom",
         theme: "maple",
         inlayPreset: "dots",
+      },
+      rhythm: {
+        wood: "maple",
       },
     });
 
     expect(store.getState().dojoSettings.moduleCreationDefaults).toEqual({
-      moduleKinds: ["fretboard", "drone"],
+      moduleKinds: ["fretboard", "drone", "rhythm"],
       keyboard: {
         theme: "studio",
       },
       drone: {
+        octaveOffset: 1,
         wood: "ebony",
+      },
+      exerciseLooper: {
+        octaveOffset: 0,
       },
       fretboard: {
         instrument: "guitar",
@@ -160,6 +171,9 @@ describe("dojo settings app store actions", () => {
         appearanceSource: "custom",
         theme: "maple",
         inlayPreset: "dots",
+      },
+      rhythm: {
+        wood: "maple",
       },
     });
   });

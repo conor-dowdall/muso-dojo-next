@@ -47,6 +47,7 @@ function auditionPracticeBandSound(audioPresetId: AudioPresetId) {
 interface PracticeBandOptionsDialogProps {
   config: ResolvedPracticeBandConfig;
   isOpen: boolean;
+  previewSoundOnChange?: boolean;
   onAudioPresetIdChange: (audioPresetId: AudioPresetId) => void;
   onBackingNotesChange: (backingNotes: boolean) => void;
   onClose: () => void;
@@ -57,6 +58,7 @@ interface PracticeBandOptionsDialogProps {
 export function PracticeBandOptionsDialog({
   config,
   isOpen,
+  previewSoundOnChange = true,
   onAudioPresetIdChange,
   onBackingNotesChange,
   onClose,
@@ -141,7 +143,9 @@ export function PracticeBandOptionsDialog({
             surface="exercise"
             onChange={(nextPresetId) => {
               onAudioPresetIdChange(nextPresetId);
-              auditionPracticeBandSound(nextPresetId);
+              if (previewSoundOnChange) {
+                auditionPracticeBandSound(nextPresetId);
+              }
             }}
           />
         </DisclosureListItem>

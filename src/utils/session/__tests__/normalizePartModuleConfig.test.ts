@@ -258,4 +258,32 @@ describe("normalizePartModuleConfig", () => {
       type: "rhythm",
     });
   });
+
+  it("normalizes rhythm appearance", () => {
+    expect(
+      normalizePartModuleConfig({
+        id: "rhythm-1",
+        rhythm: {
+          source: "recipe",
+        },
+        type: "rhythm",
+        wood: "ebony",
+      }),
+    ).toMatchObject({
+      id: "rhythm-1",
+      type: "rhythm",
+      wood: "ebony",
+    });
+
+    expect(
+      normalizePartModuleConfig({
+        id: "rhythm-1",
+        rhythm: {
+          source: "recipe",
+        },
+        type: "rhythm",
+        wood: "rosewood",
+      }),
+    ).not.toHaveProperty("wood");
+  });
 });

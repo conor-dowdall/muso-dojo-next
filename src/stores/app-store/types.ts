@@ -302,6 +302,12 @@ export interface RhythmActions {
     moduleId: string,
     recipe: SettingValue<RhythmRecipe>,
   ) => void;
+  setRhythmWood: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    wood: SettingValue<WoodSurfaceId>,
+  ) => void;
 }
 
 // Action slices follow the product hierarchy: Dojo -> Session -> Part ->

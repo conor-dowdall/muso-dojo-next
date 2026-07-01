@@ -22,7 +22,11 @@ import {
   rhythmGrooveSupportsBeatCount,
   rhythmRecipeSupportsTimekeeperFeel,
 } from "@/data/rhythmPresets";
-import { woodSurfaces } from "@/data/woodSurfaces";
+import {
+  DEFAULT_WOOD_SURFACE_ID,
+  woodSurfaces,
+  type WoodSurfaceId,
+} from "@/data/woodSurfaces";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import {
   getRhythmSelectionRecipe,
@@ -147,10 +151,6 @@ const timekeeperSubdivisionChoices = [
   text: string;
 }[];
 
-const RHYTHM_FRAME_STYLE = {
-  "--part-module-body-background": woodSurfaces.rosewood.background,
-} as CSSProperties;
-
 function clampBeatCount(beats: number) {
   return Math.min(RHYTHM_MAX_BEATS, Math.max(RHYTHM_MIN_BEATS, beats));
 }
@@ -244,18 +244,22 @@ export function RhythmModule({
   onOpenSessionTempo,
   onRemove,
   onRhythmRecipeChange,
+  onWoodChange,
   rhythm,
   showHeader = true,
   tempoBpm = 80,
+  wood = DEFAULT_WOOD_SURFACE_ID,
 }: {
   moduleId: string;
   onClone?: () => void;
   onOpenSessionTempo?: () => void;
   onRemove?: () => void;
   onRhythmRecipeChange?: (value: RhythmRecipe) => void;
+  onWoodChange?: (value: WoodSurfaceId) => void;
   rhythm: RhythmSelection;
   showHeader?: boolean;
   tempoBpm?: number;
+  wood?: WoodSurfaceId;
 }) {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const playback = useRhythmPlayback({
@@ -328,7 +332,11 @@ export function RhythmModule({
         onKeyDownCapture={transportShortcuts.onKeyDownCapture}
         onPointerDownCapture={transportShortcuts.onPointerDownCapture}
         showHeader={showHeader}
-        style={RHYTHM_FRAME_STYLE}
+        style={
+          {
+            "--part-module-body-background": woodSurfaces[wood].background,
+          } as CSSProperties
+        }
         headerActions={
           showHeader ? (
             <PartModuleHeaderActions
@@ -589,9 +597,11 @@ export function RhythmModule({
       {showHeader ? (
         <RhythmOptionsDialog
           isOpen={isOptionsOpen}
+          wood={wood}
           onClone={onClone}
           onClose={() => setIsOptionsOpen(false)}
           onRemove={onRemove}
+          onWoodChange={onWoodChange}
         />
       ) : null}
     </>

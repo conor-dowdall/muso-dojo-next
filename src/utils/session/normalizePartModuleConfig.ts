@@ -58,6 +58,12 @@ function normalizeDroneWood(value: unknown) {
   return wood && wood !== DEFAULT_WOOD_SURFACE_ID ? wood : undefined;
 }
 
+function normalizeRhythmWood(value: unknown) {
+  const wood = normalizeWoodSurfaceId(value);
+
+  return wood && wood !== DEFAULT_WOOD_SURFACE_ID ? wood : undefined;
+}
+
 function normalizeOptionalDroneInteger({
   defaultValue,
   max,
@@ -203,10 +209,13 @@ export function normalizePartModuleConfig(
       } satisfies InstrumentPartModuleConfig;
     }
     case "rhythm": {
+      const wood = normalizeRhythmWood(value.wood);
+
       return {
         id: normalizeId(value.id, `module-${index + 1}`),
         rhythm: normalizeRhythmSelection(value.rhythm),
         type: value.type,
+        ...(wood ? { wood } : {}),
       } satisfies RhythmPartModuleConfig;
     }
     default:

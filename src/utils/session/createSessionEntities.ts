@@ -85,6 +85,9 @@ export function createDefaultPartModuleConfig<T extends PartModuleType>(
       return {
         id: createEntityId("module"),
         type: request.type,
+        ...(request.settings?.octaveOffset !== undefined
+          ? { octaveOffset: request.settings.octaveOffset }
+          : {}),
         ...(request.settings?.wood ? { wood: request.settings.wood } : {}),
       } satisfies DronePartModuleConfig;
     }
@@ -92,6 +95,9 @@ export function createDefaultPartModuleConfig<T extends PartModuleType>(
       return {
         id: createEntityId("module"),
         type: request.type,
+        ...(request.settings?.octaveOffset !== undefined
+          ? { octaveOffset: request.settings.octaveOffset }
+          : {}),
         ...(request.settings?.wood ? { wood: request.settings.wood } : {}),
       } satisfies ExerciseLooperPartModuleConfig;
     }
@@ -113,6 +119,7 @@ export function createDefaultPartModuleConfig<T extends PartModuleType>(
         id: createEntityId("module"),
         rhythm: DEFAULT_RHYTHM_SELECTION,
         type: request.type,
+        ...(request.settings?.wood ? { wood: request.settings.wood } : {}),
       } satisfies RhythmPartModuleConfig;
     }
     default:

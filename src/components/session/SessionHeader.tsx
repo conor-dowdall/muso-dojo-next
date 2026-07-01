@@ -275,6 +275,7 @@ export function SessionHeader({
         <PracticeBandOptionsDialog
           config={practiceBandTransport.resolvedConfig}
           isOpen={isPracticeBandOptionsOpen}
+          previewSoundOnChange={!practiceBandTransport.isActive}
           onAudioPresetIdChange={(audioPresetId) =>
             updatePracticeBandSettings(activeSessionId, { audioPresetId })
           }

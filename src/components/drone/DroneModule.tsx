@@ -393,12 +393,16 @@ export function DroneModule({
       {showHeader ? (
         <DroneOptionsDialog
           audioPresetId={audioPresetId}
-          wood={wood}
+          canShiftOctaveDown={canShiftOctaveDown}
+          canShiftOctaveUp={canShiftOctaveUp}
           isOpen={isOptionsOpen}
+          octaveOffset={octaveOffset}
+          wood={wood}
           onAudioPresetIdChange={setAudioPresetId}
-          onWoodChange={setWood}
           onClose={() => setIsOptionsOpen(false)}
+          onOctaveOffsetChange={setOctaveOffset}
           onRemove={onRemove}
+          onWoodChange={setWood}
         />
       ) : null}
     </>
