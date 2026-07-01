@@ -367,6 +367,12 @@ export function createWebAudioEngine(): AudioEngine {
         performanceTime: outputTimestamp?.performanceTime ?? getNow(),
       };
     },
+    hasActivePlayback: () =>
+      activeDrones.size > 0 ||
+      activeVoices.size > 0 ||
+      Array.from(playbackGroups.values()).some(
+        (group) => group.hits.size > 0 || group.voices.size > 0,
+      ),
     isSupported: () => getAudioContextConstructor() !== undefined,
     prime: async () => {
       const audioContext = await getReadyAudioContext();

@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import styles from "./page.module.css";
 import { AudioStatusViewport } from "@/components/audio/AudioStatusViewport";
@@ -24,6 +24,7 @@ import {
   partSequenceCoordinator,
   stopAllAudioPlayback,
 } from "@/audio";
+import { useDojoGlobalShortcuts } from "@/hooks/interaction/useDojoGlobalShortcuts";
 import { useAppStore, useHydrateAppStore } from "@/stores/appStore";
 import { createChordProgressionParts } from "@/utils/music-part/createChordProgressionParts";
 import { createDefaultMusicPartConfig } from "@/utils/session/createSessionEntities";
@@ -45,6 +46,9 @@ function HydratedSession({
     string | null
   >(null);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
+  const activeSession = useAppStore((state) =>
+    state.activeSessionId ? state.sessions[state.activeSessionId] : undefined,
+  );
   const instrumentCreationRangeContextSignature = useAppStore(
     useShallow((state) =>
       createInstrumentCreationRangeContextSignature(
@@ -57,11 +61,7 @@ function HydratedSession({
   const addPart = useAppStore((state) => state.addPart);
   const addParts = useAppStore((state) => state.addParts);
   const replaceParts = useAppStore((state) => state.replaceParts);
-  const activeSessionPartCount = useAppStore((state) =>
-    state.activeSessionId
-      ? (state.sessions[state.activeSessionId]?.parts.length ?? 0)
-      : 0,
-  );
+  const activeSessionPartCount = activeSession?.parts.length ?? 0;
   const isPracticeViewMode = sessionViewMode !== "session";
   const closeAddDialog = () => setIsAddDialogOpen(false);
   const instrumentCreationRangeContext =
@@ -88,6 +88,13 @@ function HydratedSession({
     onSessionViewModeChange(nextViewMode);
   };
   const exitPracticeViewMode = () => onSessionViewModeChange("session");
+
+  useDojoGlobalShortcuts({
+    activeSession,
+    dialogOpen: isAddDialogOpen || isSessionDialogOpen,
+    onExitViewMode: exitPracticeViewMode,
+    viewMode: sessionViewMode,
+  });
 
   useEffect(() => {
     if (!activeSessionId || !musoAudioEngine.isSupported()) {
@@ -156,32 +163,6 @@ function HydratedSession({
       partSequenceCoordinator.stop();
     }
   }, [activeSessionId]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        stopAllAudioPlayback();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  useEffect(() => {
-    if (!isPracticeViewMode) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onSessionViewModeChange("session");
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isPracticeViewMode, onSessionViewModeChange]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -287,7 +268,7 @@ export default function DojoSessionPage() {
   const [sessionViewMode, setSessionViewMode] =
     useState<SessionViewMode>("session");
   const handleSessionViewModeChange = useCallback((mode: SessionViewMode) => {
-    startTransition(() => setSessionViewMode(mode));
+    setSessionViewMode(mode);
   }, []);
   const isPracticeViewMode = sessionViewMode !== "session";
 

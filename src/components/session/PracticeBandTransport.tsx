@@ -211,7 +211,9 @@ export function PracticeBandPlayButton({
       aria-label={
         transport.isActive ? "Stop Practice Band" : "Play Practice Band"
       }
-      aria-keyshortcuts={transport.isActive ? "Space Escape" : undefined}
+      aria-keyshortcuts={
+        transport.isActive ? "Space Escape Shift+Space" : "Shift+Space"
+      }
       disabled={!transport.canPlay}
       icon={transport.isActive ? <Square /> : <Play />}
       selected={transport.isActive}

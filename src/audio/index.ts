@@ -1,5 +1,8 @@
 export { createWebAudioEngine, musoAudioEngine } from "./createWebAudioEngine";
-export { stopAllAudioPlayback } from "./stopAllAudioPlayback";
+export {
+  isAudioPlaybackActive,
+  stopAllAudioPlayback,
+} from "./stopAllAudioPlayback";
 export {
   audioReadiness,
   createAudioReadinessController,

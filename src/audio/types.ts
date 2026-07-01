@@ -89,6 +89,7 @@ export interface AudioEngine {
   createPlaybackGroup: () => PlaybackGroupHandle;
   getCurrentTime: () => number | undefined;
   getOutputClock: () => AudioClockSnapshot | undefined;
+  hasActivePlayback: () => boolean;
   isSupported: () => boolean;
   prime: () => Promise<boolean>;
   warm: () => Promise<boolean>;
