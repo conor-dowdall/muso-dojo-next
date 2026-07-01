@@ -7,6 +7,7 @@ import { type FretboardThemeName } from "@/data/fretboard/themes";
 import { type KeyboardRangeName } from "@/data/keyboard/ranges";
 import { type KeyboardThemeName } from "@/data/keyboard/themes";
 import { type WoodSurfaceId } from "@/data/woodSurfaces";
+import { type RhythmSelection } from "@/utils/rhythm/rhythmConfig";
 
 export type FretboardCreationAppearanceSource = "auto" | "custom";
 export type ModuleCreationKind =
@@ -40,6 +41,7 @@ export interface ExerciseLooperModuleCreationDefault {
 }
 
 export interface RhythmModuleCreationDefault {
+  rhythm?: RhythmSelection;
   wood?: WoodSurfaceId;
 }
 

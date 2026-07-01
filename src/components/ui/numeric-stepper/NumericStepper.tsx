@@ -2,13 +2,14 @@
 
 import { Minus, Plus } from "lucide-react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
-import styles from "./OctaveOffsetStepper.module.css";
+import fieldStyles from "@/components/ui/control-field/ControlField.module.css";
+import styles from "./NumericStepper.module.css";
 
-function clampOffset(value: number, min: number, max: number) {
+function clampValue(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-export function OctaveOffsetStepper({
+export function NumericStepper({
   "aria-label": ariaLabel,
   canDecrease,
   canIncrease,
@@ -42,10 +43,13 @@ export function OctaveOffsetStepper({
         icon={<Minus />}
         size="lg"
         shouldYield={false}
-        onClick={() => onChange(clampOffset(value - 1, min, max))}
+        onClick={() => onChange(clampValue(value - 1, min, max))}
       />
 
-      <output aria-live="polite" className={styles.value}>
+      <output
+        aria-live="polite"
+        className={`${fieldStyles.surface} ${fieldStyles.text} ${fieldStyles.numericText} ${styles.value}`}
+      >
         {valueLabel}
       </output>
 
@@ -56,7 +60,7 @@ export function OctaveOffsetStepper({
         icon={<Plus />}
         size="lg"
         shouldYield={false}
-        onClick={() => onChange(clampOffset(value + 1, min, max))}
+        onClick={() => onChange(clampValue(value + 1, min, max))}
       />
     </div>
   );

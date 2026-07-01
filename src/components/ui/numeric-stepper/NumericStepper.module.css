@@ -1,0 +1,31 @@
+.stepper {
+  --numeric-stepper-value-width: minmax(var(--space-20), 1fr);
+
+  display: grid;
+  min-inline-size: 0;
+  grid-template-columns:
+    var(--control-size-lg) var(--numeric-stepper-value-width)
+    var(--control-size-lg);
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.value {
+  min-inline-size: 0;
+}
+
+.adjustmentButton {
+  --button-icon-size: var(--icon-size-sm);
+}
+
+@container (width < 16rem) {
+  .stepper {
+    grid-template-columns: repeat(2, var(--control-size-lg));
+    justify-content: center;
+  }
+
+  .value {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+}

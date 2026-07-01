@@ -296,11 +296,12 @@ describe("rhythmConfig", () => {
           sampleId: "ride",
           velocity: 0.108,
         },
+        { atTicks: RHYTHM_PPQ, sampleId: "snare", velocity: 0.24 },
         { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.24 },
         { atTicks: RHYTHM_PPQ * 3, sampleId: "kick", velocity: 0.2 },
+        { atTicks: RHYTHM_PPQ * 3, sampleId: "snare", velocity: 0.28 },
       ]),
     );
-    expect(pattern.hits.some((hit) => hit.sampleId === "snare")).toBe(false);
     expect(pattern.hits).not.toEqual(
       expect.arrayContaining([
         {
@@ -331,9 +332,36 @@ describe("rhythmConfig", () => {
       expect.arrayContaining([
         { atTicks: 0, sampleId: "kick", velocity: 0.26 },
         { atTicks: RHYTHM_PPQ, sampleId: "kick", velocity: 0.2 },
+        { atTicks: RHYTHM_PPQ, sampleId: "snare", velocity: 0.24 },
         { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.24 },
         { atTicks: RHYTHM_PPQ * 3, sampleId: "kick", velocity: 0.2 },
         { atTicks: RHYTHM_PPQ * 4, sampleId: "kick", velocity: 0.2 },
+        { atTicks: RHYTHM_PPQ * 4, sampleId: "snare", velocity: 0.28 },
+      ]),
+    );
+  });
+
+  it("matches pulse and kit kick weight for swing without adding kit snares", () => {
+    const pattern = getRhythmSelectionPattern({
+      recipe: {
+        beats: 4,
+        groove: "pulse",
+        grouping: "auto",
+        timekeeper: {
+          feel: "swing",
+          sound: "ride",
+          subdivision: "eighth",
+        },
+      },
+      source: "recipe",
+    });
+
+    expect(pattern.hits).toEqual(
+      expect.arrayContaining([
+        { atTicks: 0, sampleId: "kick", velocity: 0.26 },
+        { atTicks: RHYTHM_PPQ, sampleId: "kick", velocity: 0.2 },
+        { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.24 },
+        { atTicks: RHYTHM_PPQ * 3, sampleId: "kick", velocity: 0.2 },
       ]),
     );
     expect(pattern.hits.some((hit) => hit.sampleId === "snare")).toBe(false);

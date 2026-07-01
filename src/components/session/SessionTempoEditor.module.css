@@ -22,21 +22,7 @@
 }
 
 .numberControl {
-  display: flex;
-  box-sizing: border-box;
-  min-block-size: var(--control-size-lg);
-  min-inline-size: 0;
-  align-items: center;
-  justify-content: center;
   gap: var(--space-1);
-  padding: var(--space-2) var(--space-3);
-  border: var(--border-width-base) solid var(--color-border);
-  border-radius: var(--radius-control);
-  background-color: var(--color-surface);
-}
-
-.numberControl:focus-within {
-  border-color: var(--color-accent);
 }
 
 .numberInput {
@@ -49,12 +35,6 @@
   border: 0;
   outline: 0;
   background: transparent;
-  color: var(--color-text);
-  font: inherit;
-  font-size: var(--text-lg);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--font-semibold);
-  line-height: var(--leading-none);
   text-align: end;
 }
 
@@ -64,24 +44,8 @@
   margin: 0;
 }
 
-.unit {
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  line-height: var(--leading-none);
-}
-
 .adjustmentButton {
   --button-icon-size: auto;
-
-  font-variant-numeric: tabular-nums;
-}
-
-.adjustmentLabel {
-  font-size: var(--text-sm);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--font-semibold);
-  letter-spacing: 0;
 }
 
 @container (width < 19rem) {

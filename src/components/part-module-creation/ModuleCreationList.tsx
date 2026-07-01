@@ -16,6 +16,7 @@ import { KeyboardInstrumentCreationPanel } from "@/components/instrument-creatio
 import { DroneCreationPanel } from "@/components/drone/DroneCreationPanel";
 import { ExerciseLooperCreationPanel } from "@/components/exercise-looper/ExerciseLooperCreationPanel";
 import { RhythmCreationPanel } from "@/components/rhythm/RhythmCreationPanel";
+import { getRhythmRecipeCreationSummary } from "@/components/rhythm/rhythmRecipeControls";
 import {
   formatFretboardCreationSummary,
   formatKeyboardCreationSummary,
@@ -39,6 +40,10 @@ import { DEFAULT_EXERCISE_OCTAVE_OFFSET } from "@/utils/exercise-looper/exercise
 import { getExerciseBaseOctave } from "@/utils/exercise-looper/exerciseSequence";
 import { DEFAULT_MODULE_CREATION_KINDS } from "@/utils/instrument-creation/moduleCreationDefaults";
 import { areRangesEqual } from "@/utils/range/numberRange";
+import {
+  DEFAULT_RHYTHM_SELECTION,
+  getRhythmSelectionRecipe,
+} from "@/utils/rhythm/rhythmConfig";
 import { type ModuleCreationListDraft } from "./moduleCreationDraft";
 
 export type { ModuleCreationListDraft } from "./moduleCreationDraft";
@@ -83,12 +88,14 @@ function getModuleCreationSummary({
   fretboardSelection,
   keyboardSelection,
   kind,
+  rhythmSelection,
 }: {
   droneSelection: DroneModuleCreationDefault;
   exerciseLooperSelection: ExerciseLooperModuleCreationDefault;
   fretboardSelection: FretboardInstrumentSelection;
   keyboardSelection: KeyboardInstrumentSelection;
   kind: ModuleCreationKind;
+  rhythmSelection: RhythmModuleCreationDefault;
 }) {
   switch (kind) {
     case "drone":
@@ -107,7 +114,11 @@ function getModuleCreationSummary({
     case "keyboard":
       return formatKeyboardCreationSummary(keyboardSelection);
     case "rhythm":
-      return undefined;
+      return getRhythmRecipeCreationSummary(
+        getRhythmSelectionRecipe(
+          rhythmSelection.rhythm ?? DEFAULT_RHYTHM_SELECTION,
+        ),
+      );
     default:
       return assertNever(kind, "Unsupported module creation kind");
   }
@@ -188,6 +199,8 @@ export function ModuleCreationList({
     }));
   const [rhythmSelection, setRhythmSelection] =
     useState<RhythmModuleCreationDefault>(() => ({
+      rhythm:
+        moduleCreationDefaults?.rhythm?.rhythm ?? DEFAULT_RHYTHM_SELECTION,
       wood: moduleCreationDefaults?.rhythm?.wood ?? DEFAULT_WOOD_SURFACE_ID,
     }));
   const [fretboardSelection, setFretboardSelection] =
@@ -320,6 +333,7 @@ export function ModuleCreationList({
           fretboardSelection,
           keyboardSelection,
           kind: option.kind,
+          rhythmSelection,
         });
 
         return (

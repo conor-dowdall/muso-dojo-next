@@ -113,4 +113,47 @@ describe("createChordProgressionParts", () => {
     expect(parts.map((part) => part.rootNote)).toEqual(["C", "F", "G"]);
     expect(parts.every((part) => part.modules.length === 0)).toBe(true);
   });
+
+  it("preserves custom Rhythm defaults when progression durations adjust beats", () => {
+    const parts = createChordProgressionParts({
+      chordListMode: "full-song-order",
+      rootNote: "C",
+      progressionKey: "oneFourOneFiveSplitReturn",
+      moduleRequests: [
+        {
+          type: "rhythm",
+          settings: {
+            rhythm: {
+              recipe: {
+                beats: 4,
+                groove: "kit",
+                grouping: "auto",
+                timekeeper: {
+                  feel: "swing",
+                  sound: "ride",
+                  subdivision: "eighth",
+                },
+              },
+              source: "recipe",
+            },
+          },
+        },
+      ],
+    });
+
+    expect(parts[6]?.modules[0]).toMatchObject({
+      rhythm: {
+        recipe: {
+          beats: 2,
+          groove: "kit",
+          timekeeper: {
+            feel: "swing",
+            sound: "ride",
+            subdivision: "eighth",
+          },
+        },
+      },
+      type: "rhythm",
+    });
+  });
 });

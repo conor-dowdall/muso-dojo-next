@@ -7,6 +7,11 @@ import { DEFAULT_CUSTOM_FRETBOARD_INLAY_PRESET } from "@/data/fretboard/inlayPre
 import { DEFAULT_KEYBOARD_THEME } from "@/data/keyboard/themes";
 import { DEFAULT_WOOD_SURFACE_ID } from "@/data/woodSurfaces";
 import {
+  DEFAULT_RHYTHM_SELECTION,
+  getRhythmSelectionRecipe,
+  type RhythmSelection,
+} from "@/utils/rhythm/rhythmConfig";
+import {
   type DroneModuleCreationDefault,
   type ExerciseLooperModuleCreationDefault,
   type FretboardModuleCreationDefault,
@@ -38,6 +43,7 @@ export function createBuiltInExerciseLooperModuleCreationDefault(): ExerciseLoop
 
 export function createBuiltInRhythmModuleCreationDefault(): RhythmModuleCreationDefault {
   return {
+    rhythm: DEFAULT_RHYTHM_SELECTION,
     wood: DEFAULT_WOOD_SURFACE_ID,
   };
 }
@@ -156,8 +162,33 @@ export function rhythmModuleCreationDefaultsAreEqual(
   right: RhythmModuleCreationDefault,
 ) {
   return (
+    rhythmSelectionsAreEqual(
+      left.rhythm ?? DEFAULT_RHYTHM_SELECTION,
+      right.rhythm ?? DEFAULT_RHYTHM_SELECTION,
+    ) &&
     (left.wood ?? DEFAULT_WOOD_SURFACE_ID) ===
-    (right.wood ?? DEFAULT_WOOD_SURFACE_ID)
+      (right.wood ?? DEFAULT_WOOD_SURFACE_ID)
+  );
+}
+
+export function rhythmSelectionsAreEqual(
+  left: RhythmSelection,
+  right: RhythmSelection,
+) {
+  if (left.source !== right.source) {
+    return false;
+  }
+
+  const leftRecipe = getRhythmSelectionRecipe(left);
+  const rightRecipe = getRhythmSelectionRecipe(right);
+
+  return (
+    leftRecipe.beats === rightRecipe.beats &&
+    leftRecipe.groove === rightRecipe.groove &&
+    leftRecipe.grouping === rightRecipe.grouping &&
+    leftRecipe.timekeeper.feel === rightRecipe.timekeeper.feel &&
+    leftRecipe.timekeeper.sound === rightRecipe.timekeeper.sound &&
+    leftRecipe.timekeeper.subdivision === rightRecipe.timekeeper.subdivision
   );
 }
 

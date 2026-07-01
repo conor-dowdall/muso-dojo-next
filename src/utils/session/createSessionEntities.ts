@@ -117,7 +117,7 @@ export function createDefaultPartModuleConfig<T extends PartModuleType>(
     case "rhythm": {
       return {
         id: createEntityId("module"),
-        rhythm: DEFAULT_RHYTHM_SELECTION,
+        rhythm: request.settings?.rhythm ?? DEFAULT_RHYTHM_SELECTION,
         type: request.type,
         ...(request.settings?.wood ? { wood: request.settings.wood } : {}),
       } satisfies RhythmPartModuleConfig;

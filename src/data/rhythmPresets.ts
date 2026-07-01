@@ -620,21 +620,52 @@ function getKitGroupSnareOffsets(group: number, isOnlyGroup: boolean) {
   return [group - 1];
 }
 
-function addSwingKitGrooveHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
-  const groupStarts = new Set(spec.groupStarts);
-  const getVelocity = (index: number) => {
-    if (index === 0) {
-      return 0.26;
-    }
+function getSwingKickVelocity(
+  beatCount: number,
+  groupStarts: Set<number>,
+  index: number,
+) {
+  if (beatCount === 1) {
+    return 0.26;
+  }
 
-    return groupStarts.has(index) ? 0.24 : 0.2;
-  };
+  if (index === 0) {
+    return 0.26;
+  }
+
+  return groupStarts.has(index) ? 0.24 : 0.2;
+}
+
+function addSwingKitGrooveHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
+  const addKick = (atTicks: number, velocity: number) =>
+    addHit(hits, spec.cycleTicks, atTicks, "kick", velocity);
+  const addSnare = (atTicks: number, velocity: number) =>
+    addHit(hits, spec.cycleTicks, atTicks, "snare", velocity);
+  const groupStarts = new Set(spec.groupStarts);
+  const snareTicks: number[] = [];
 
   Array.from({ length: spec.meter.beats }, (_, index) => index * Q).forEach(
     (atTicks, index) => {
-      addHit(hits, spec.cycleTicks, atTicks, "kick", getVelocity(index));
+      addKick(
+        atTicks,
+        getSwingKickVelocity(spec.meter.beats, groupStarts, index),
+      );
     },
   );
+
+  spec.groups.forEach((group, index) => {
+    const groupStart = spec.groupStarts[index];
+
+    getKitGroupSnareOffsets(group, spec.groups.length === 1).forEach(
+      (offset) => {
+        snareTicks.push((groupStart + offset) * Q);
+      },
+    );
+  });
+
+  snareTicks.forEach((atTicks, index) => {
+    addSnare(atTicks, index === snareTicks.length - 1 ? 0.28 : 0.24);
+  });
 }
 
 function addKitGrooveHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
@@ -684,6 +715,23 @@ function addPulseGrooveHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
   );
 }
 
+function addSwingPulseGrooveHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
+  const beatCount = spec.meter.beats;
+  const groupStarts = new Set(spec.groupStarts);
+
+  Array.from({ length: beatCount }, (_, index) => index * Q).forEach(
+    (atTicks, index) => {
+      addHit(
+        hits,
+        spec.cycleTicks,
+        atTicks,
+        "kick",
+        getSwingKickVelocity(beatCount, groupStarts, index),
+      );
+    },
+  );
+}
+
 function addBluegrassGrooveHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
   const beatCount = spec.meter.beats;
   const groupStarts = new Set(spec.groupStarts);
@@ -714,7 +762,11 @@ function addGrooveHits(
 ) {
   switch (recipe.groove) {
     case "pulse":
-      addPulseGrooveHits(hits, spec);
+      if (recipe.timekeeper.feel === "swing") {
+        addSwingPulseGrooveHits(hits, spec);
+      } else {
+        addPulseGrooveHits(hits, spec);
+      }
       break;
     case "kit":
       if (recipe.timekeeper.feel === "swing") {

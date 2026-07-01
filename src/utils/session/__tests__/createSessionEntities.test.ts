@@ -93,4 +93,85 @@ describe("createSessionEntities", () => {
       ],
     });
   });
+
+  it("uses custom rhythm creation defaults", () => {
+    const part = createDefaultMusicPartConfig({
+      moduleRequests: [
+        {
+          type: "rhythm",
+          settings: {
+            rhythm: {
+              recipe: {
+                beats: 4,
+                groove: "kit",
+                grouping: "auto",
+                timekeeper: {
+                  feel: "swing",
+                  sound: "ride",
+                  subdivision: "eighth",
+                },
+              },
+              source: "recipe",
+            },
+          },
+        },
+      ],
+    });
+
+    expect(part.modules[0]).toMatchObject({
+      rhythm: {
+        recipe: {
+          beats: 4,
+          groove: "kit",
+          timekeeper: {
+            feel: "swing",
+            sound: "ride",
+            subdivision: "eighth",
+          },
+        },
+      },
+      type: "rhythm",
+    });
+  });
+
+  it("applies representable Part durations without losing custom Rhythm feel", () => {
+    const part = createDefaultMusicPartConfig({
+      durationInBars: 0.5,
+      moduleRequests: [
+        {
+          type: "rhythm",
+          settings: {
+            rhythm: {
+              recipe: {
+                beats: 4,
+                groove: "kit",
+                grouping: "auto",
+                timekeeper: {
+                  feel: "shuffle",
+                  sound: "shaker",
+                  subdivision: "eighth",
+                },
+              },
+              source: "recipe",
+            },
+          },
+        },
+      ],
+    });
+
+    expect(part.modules[0]).toMatchObject({
+      rhythm: {
+        recipe: {
+          beats: 2,
+          groove: "kit",
+          timekeeper: {
+            feel: "shuffle",
+            sound: "shaker",
+            subdivision: "eighth",
+          },
+        },
+      },
+      type: "rhythm",
+    });
+  });
 });

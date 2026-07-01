@@ -147,6 +147,7 @@ function applyProgressionRhythmBeatCount(
     ...module,
     rhythm: getRhythmSelectionForPartDuration(
       rhythmBeatCount / PART_DURATION_BEATS_PER_BAR,
+      module.rhythm,
     ),
   };
 }

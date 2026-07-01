@@ -167,6 +167,7 @@ export interface PartModuleCreationConfigByType {
   };
   instrument: InstrumentPartModuleCreationConfig;
   rhythm: {
+    rhythm?: RhythmSelection;
     wood?: WoodSurfaceId;
   };
 }

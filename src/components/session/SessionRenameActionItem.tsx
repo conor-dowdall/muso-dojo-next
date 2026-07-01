@@ -3,6 +3,7 @@
 import { type SyntheticEvent, useEffect, useId, useRef, useState } from "react";
 import { Check, Pencil } from "lucide-react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
+import fieldStyles from "@/components/ui/control-field/ControlField.module.css";
 import { DisclosureListActionItem } from "@/components/ui/disclosure-list/DisclosureList";
 import { Text } from "@/components/ui/typography/Text";
 import {
@@ -163,7 +164,7 @@ export function SessionRenameActionItem({
               aria-describedby={renameMessage ? nameMessageId : undefined}
               aria-invalid={isNameEmpty || hasNameConflict}
               autoComplete="off"
-              className={styles.nameInput}
+              className={`${fieldStyles.surface} ${fieldStyles.text} ${styles.nameInput}`}
               id={nameInputId}
               ref={nameInputRef}
               spellCheck={false}

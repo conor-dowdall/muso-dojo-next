@@ -17,7 +17,7 @@ import {
   ObjectManagementGroup,
   ObjectMenuDialog,
 } from "@/components/ui/object-menu";
-import { OctaveOffsetStepper } from "@/components/part-module/OctaveOffsetStepper";
+import { NumericStepper } from "@/components/ui/numeric-stepper/NumericStepper";
 import { type SettingSetter } from "@/types/state";
 import { WoodSurfaceDisclosureItem } from "@/components/appearance/WoodSurfaceChoiceList";
 import { type WoodSurfaceId } from "@/data/woodSurfaces";
@@ -115,7 +115,7 @@ export function DroneOptionsDialog({
           panelVariant="menu"
           preview={formatDroneOctave(octaveOffset)}
         >
-          <OctaveOffsetStepper
+          <NumericStepper
             aria-label="Drone octave"
             canDecrease={canShiftOctaveDown}
             canIncrease={canShiftOctaveUp}

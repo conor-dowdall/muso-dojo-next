@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { WoodSurfaceDisclosureItem } from "@/components/appearance/WoodSurfaceChoiceList";
-import { OctaveOffsetStepper } from "@/components/part-module/OctaveOffsetStepper";
+import { NumericStepper } from "@/components/ui/numeric-stepper/NumericStepper";
 import {
   DisclosureList,
   DisclosureListItem,
@@ -67,7 +67,7 @@ export function DroneCreationPanel({
           preview={formatDroneOctave(octaveOffset)}
           onToggle={() => toggleChoice("octave")}
         >
-          <OctaveOffsetStepper
+          <NumericStepper
             aria-label="Drone octave"
             formatValue={formatDroneOctave}
             max={DRONE_MAX_OCTAVE_OFFSET}

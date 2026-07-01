@@ -9,7 +9,7 @@ import {
 } from "@/audio";
 import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
 import { WoodSurfaceDisclosureItem } from "@/components/appearance/WoodSurfaceChoiceList";
-import { OctaveOffsetStepper } from "@/components/part-module/OctaveOffsetStepper";
+import { NumericStepper } from "@/components/ui/numeric-stepper/NumericStepper";
 import {
   DisclosureListGroup,
   DisclosureListItem,
@@ -119,7 +119,7 @@ export function ExerciseLooperOptionsDialog({
           panelVariant="menu"
           onToggle={() => toggleChoice("octave")}
         >
-          <OctaveOffsetStepper
+          <NumericStepper
             aria-label="Looper octave"
             canDecrease={canShiftOctaveDown}
             canIncrease={canShiftOctaveUp}

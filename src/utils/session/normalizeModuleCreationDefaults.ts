@@ -52,8 +52,13 @@ import {
   moduleCreationDefaultsAreEqual,
   moduleCreationKindsAreEqual,
   rhythmModuleCreationDefaultsAreEqual,
+  rhythmSelectionsAreEqual,
 } from "@/utils/instrument-creation/moduleCreationDefaults";
 import { normalizeBoundedRange } from "@/utils/range/numberRange";
+import {
+  DEFAULT_RHYTHM_SELECTION,
+  normalizeRhythmSelection,
+} from "@/utils/rhythm/rhythmConfig";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 
 const MODULE_CREATION_KINDS = {
@@ -398,14 +403,20 @@ export function normalizeRhythmModuleCreationDefault(
   }
 
   const wood = normalizeWoodSurfaceId(value.wood) ?? DEFAULT_WOOD_SURFACE_ID;
-  const defaultValue = { wood } satisfies RhythmModuleCreationDefault;
+  const rhythm = normalizeRhythmSelection(value.rhythm);
+  const defaultValue = { rhythm, wood } satisfies RhythmModuleCreationDefault;
 
   return rhythmModuleCreationDefaultsAreEqual(
     defaultValue,
     createBuiltInRhythmModuleCreationDefault(),
   )
     ? undefined
-    : defaultValue;
+    : {
+        ...(!rhythmSelectionsAreEqual(rhythm, DEFAULT_RHYTHM_SELECTION)
+          ? { rhythm }
+          : {}),
+        ...(wood !== DEFAULT_WOOD_SURFACE_ID ? { wood } : {}),
+      };
 }
 
 export function normalizeModuleCreationDefaults(

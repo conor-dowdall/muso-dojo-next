@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
+import fieldStyles from "@/components/ui/control-field/ControlField.module.css";
 import { RangeSlider } from "@/components/ui/range-slider/RangeSlider";
 import styles from "./SessionTempoEditor.module.css";
 
@@ -117,10 +118,10 @@ export function SessionTempoEditor({
       <IconButton
         key={adjustment}
         aria-label={`${adjustment > 0 ? "Increase" : "Decrease"} tempo by ${Math.abs(adjustment)} bpm`}
-        className={styles.adjustmentButton}
+        className={`${fieldStyles.adjustmentButton} ${styles.adjustmentButton}`}
         disabled={nextTempo === tempoBpm}
         icon={
-          <span aria-hidden="true" className={styles.adjustmentLabel}>
+          <span aria-hidden="true" className={fieldStyles.adjustmentText}>
             {adjustmentLabel}
           </span>
         }
@@ -159,10 +160,10 @@ export function SessionTempoEditor({
         {lowerTempoAdjustments.map(renderAdjustmentButton)}
 
         <label className={styles.numberField}>
-          <span className={styles.numberControl}>
+          <span className={`${fieldStyles.surface} ${styles.numberControl}`}>
             <input
               aria-label="Exact session tempo in beats per minute"
-              className={styles.numberInput}
+              className={`${fieldStyles.text} ${fieldStyles.numericText} ${styles.numberInput}`}
               enterKeyHint="done"
               inputMode="numeric"
               max={MAX_TEMPO}
@@ -188,7 +189,7 @@ export function SessionTempoEditor({
               }}
               onKeyDown={handleNumberInputKeyDown}
             />
-            <span className={styles.unit} aria-hidden="true">
+            <span className={fieldStyles.unit} aria-hidden="true">
               bpm
             </span>
           </span>
