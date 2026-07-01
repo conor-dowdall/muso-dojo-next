@@ -31,7 +31,7 @@ import {
   type ModuleCreationKind,
   type RhythmModuleCreationDefault,
 } from "@/types/instrument-creation-defaults";
-import { DEFAULT_WOOD_SURFACE_ID, woodSurfaces } from "@/data/woodSurfaces";
+import { DEFAULT_WOOD_SURFACE_ID } from "@/data/woodSurfaces";
 import { type PartModuleCreationRequest } from "@/types/session";
 import { assertNever } from "@/utils/assertNever";
 import { getDroneBaseOctave } from "@/utils/drone/droneNotes";
@@ -39,7 +39,6 @@ import { DEFAULT_EXERCISE_OCTAVE_OFFSET } from "@/utils/exercise-looper/exercise
 import { getExerciseBaseOctave } from "@/utils/exercise-looper/exerciseSequence";
 import { DEFAULT_MODULE_CREATION_KINDS } from "@/utils/instrument-creation/moduleCreationDefaults";
 import { areRangesEqual } from "@/utils/range/numberRange";
-import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import { type ModuleCreationListDraft } from "./moduleCreationDraft";
 
 export type { ModuleCreationListDraft } from "./moduleCreationDraft";
@@ -78,59 +77,37 @@ function formatCreationOctave(octave: number) {
   return `Octave ${octave}`;
 }
 
-function formatWoodAndOctaveSummary({
-  octaveLabel,
-  wood,
-}: {
-  octaveLabel: string;
-  wood: string;
-}) {
-  return `${octaveLabel}${DISPLAY_VALUE_SEPARATOR}${wood}`;
-}
-
 function getModuleCreationSummary({
   droneSelection,
   exerciseLooperSelection,
   fretboardSelection,
   keyboardSelection,
   kind,
-  rhythmSelection,
 }: {
   droneSelection: DroneModuleCreationDefault;
   exerciseLooperSelection: ExerciseLooperModuleCreationDefault;
   fretboardSelection: FretboardInstrumentSelection;
   keyboardSelection: KeyboardInstrumentSelection;
   kind: ModuleCreationKind;
-  rhythmSelection: RhythmModuleCreationDefault;
 }) {
   switch (kind) {
     case "drone":
-      return formatWoodAndOctaveSummary({
-        octaveLabel: formatCreationOctave(
-          getDroneBaseOctave(droneSelection.octaveOffset ?? 0),
-        ),
-        wood: woodSurfaces[droneSelection.wood ?? DEFAULT_WOOD_SURFACE_ID]
-          .title,
-      });
+      return formatCreationOctave(
+        getDroneBaseOctave(droneSelection.octaveOffset ?? 0),
+      );
     case "exercise-looper":
-      return formatWoodAndOctaveSummary({
-        octaveLabel: formatCreationOctave(
-          getExerciseBaseOctave(
-            exerciseLooperSelection.octaveOffset ??
-              DEFAULT_EXERCISE_OCTAVE_OFFSET,
-          ),
+      return formatCreationOctave(
+        getExerciseBaseOctave(
+          exerciseLooperSelection.octaveOffset ??
+            DEFAULT_EXERCISE_OCTAVE_OFFSET,
         ),
-        wood: woodSurfaces[
-          exerciseLooperSelection.wood ?? DEFAULT_WOOD_SURFACE_ID
-        ].title,
-      });
+      );
     case "fretboard":
       return formatFretboardCreationSummary(fretboardSelection);
     case "keyboard":
       return formatKeyboardCreationSummary(keyboardSelection);
     case "rhythm":
-      return woodSurfaces[rhythmSelection.wood ?? DEFAULT_WOOD_SURFACE_ID]
-        .title;
+      return undefined;
     default:
       return assertNever(kind, "Unsupported module creation kind");
   }
@@ -343,7 +320,6 @@ export function ModuleCreationList({
           fretboardSelection,
           keyboardSelection,
           kind: option.kind,
-          rhythmSelection,
         });
 
         return (

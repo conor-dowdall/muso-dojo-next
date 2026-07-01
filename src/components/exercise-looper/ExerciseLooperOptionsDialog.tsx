@@ -8,8 +8,7 @@ import {
   type AudioPresetId,
 } from "@/audio";
 import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
-import { WoodSurfaceChoiceList } from "@/components/appearance/WoodSurfaceChoiceList";
-import { WoodSurfaceSwatch } from "@/components/instrument/InstrumentThemeSwatch";
+import { WoodSurfaceDisclosureItem } from "@/components/appearance/WoodSurfaceChoiceList";
 import { OctaveOffsetStepper } from "@/components/part-module/OctaveOffsetStepper";
 import {
   DisclosureListGroup,
@@ -20,14 +19,14 @@ import {
   ObjectManagementGroup,
   ObjectMenuDialog,
 } from "@/components/ui/object-menu";
-import { woodSurfaces, type WoodSurfaceId } from "@/data/woodSurfaces";
+import { type WoodSurfaceId } from "@/data/woodSurfaces";
 import {
   EXERCISE_MAX_OCTAVE_OFFSET,
   EXERCISE_MIN_OCTAVE_OFFSET,
 } from "@/utils/exercise-looper/exerciseConfig";
 import { getExerciseBaseOctave } from "@/utils/exercise-looper/exerciseSequence";
 
-type MenuChoice = "sound" | "octave" | "appearance";
+type MenuChoice = "sound" | "octave" | "wood";
 
 function auditionPlaybackSound(
   audioPresetId: AudioPresetId,
@@ -133,17 +132,13 @@ export function ExerciseLooperOptionsDialog({
           />
         </DisclosureListItem>
 
-        <DisclosureListItem
-          ariaLabel={`Appearance. Current: ${woodSurfaces[wood].title}`}
+        <WoodSurfaceDisclosureItem
           icon={<SwatchBook />}
-          isOpen={isChoiceOpen("appearance")}
-          label="Appearance"
-          preview={<WoodSurfaceSwatch surfaceId={wood} />}
-          panelVariant="menu"
-          onToggle={() => toggleChoice("appearance")}
-        >
-          <WoodSurfaceChoiceList value={wood} onChange={onWoodChange} />
-        </DisclosureListItem>
+          isOpen={isChoiceOpen("wood")}
+          surfaceId={wood}
+          onChange={onWoodChange}
+          onToggle={() => toggleChoice("wood")}
+        />
       </DisclosureListGroup>
 
       <ObjectManagementGroup

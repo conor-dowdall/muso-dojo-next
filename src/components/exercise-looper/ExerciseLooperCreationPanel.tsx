@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { SwatchBook, WavesArrowUp } from "lucide-react";
-import { WoodSurfaceChoiceList } from "@/components/appearance/WoodSurfaceChoiceList";
-import { WoodSurfaceSwatch } from "@/components/instrument/InstrumentThemeSwatch";
+import { WoodSurfaceDisclosureItem } from "@/components/appearance/WoodSurfaceChoiceList";
 import { OctaveOffsetStepper } from "@/components/part-module/OctaveOffsetStepper";
 import {
   DisclosureList,
@@ -12,7 +10,6 @@ import {
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
   DEFAULT_WOOD_SURFACE_ID,
-  woodSurfaces,
   type WoodSurfaceId,
 } from "@/data/woodSurfaces";
 import { type ExerciseLooperModuleCreationDefault } from "@/types/instrument-creation-defaults";
@@ -24,7 +21,7 @@ import {
 import { getExerciseBaseOctave } from "@/utils/exercise-looper/exerciseSequence";
 import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
 
-type ExerciseLooperCreationChoice = "octave" | "appearance";
+type ExerciseLooperCreationChoice = "octave" | "wood";
 
 interface ExerciseLooperCreationPanelProps {
   ariaLabel?: string;
@@ -65,7 +62,6 @@ export function ExerciseLooperCreationPanel({
       <DisclosureList>
         <DisclosureListItem
           ariaLabel={`Choose octave, ${formatExerciseOctave(octaveOffset)} selected`}
-          icon={<WavesArrowUp />}
           isOpen={openChoice === "octave"}
           keepMounted
           label="Octave"
@@ -82,17 +78,13 @@ export function ExerciseLooperCreationPanel({
           />
         </DisclosureListItem>
 
-        <DisclosureListItem
-          ariaLabel={`Choose appearance, ${woodSurfaces[wood].title} selected`}
-          icon={<SwatchBook />}
-          isOpen={openChoice === "appearance"}
+        <WoodSurfaceDisclosureItem
+          isOpen={openChoice === "wood"}
           keepMounted
-          label="Appearance"
-          preview={<WoodSurfaceSwatch surfaceId={wood} />}
-          onToggle={() => toggleChoice("appearance")}
-        >
-          <WoodSurfaceChoiceList value={wood} onChange={handleWoodChange} />
-        </DisclosureListItem>
+          surfaceId={wood}
+          onChange={handleWoodChange}
+          onToggle={() => toggleChoice("wood")}
+        />
       </DisclosureList>
     </section>
   );

@@ -1,11 +1,9 @@
 "use client";
 
 import { SwatchBook } from "lucide-react";
-import { WoodSurfaceChoiceList } from "@/components/appearance/WoodSurfaceChoiceList";
-import { WoodSurfaceSwatch } from "@/components/instrument/InstrumentThemeSwatch";
+import { WoodSurfaceDisclosureItem } from "@/components/appearance/WoodSurfaceChoiceList";
 import {
   DisclosureListGroup,
-  DisclosureListItem,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
@@ -14,11 +12,10 @@ import {
 } from "@/components/ui/object-menu";
 import {
   DEFAULT_WOOD_SURFACE_ID,
-  woodSurfaces,
   type WoodSurfaceId,
 } from "@/data/woodSurfaces";
 
-type MenuChoice = "appearance";
+type MenuChoice = "wood";
 
 export function RhythmOptionsDialog({
   isOpen,
@@ -41,20 +38,13 @@ export function RhythmOptionsDialog({
   return (
     <ObjectMenuDialog isOpen={isOpen} title="Rhythm Options" onClose={onClose}>
       <DisclosureListGroup>
-        <DisclosureListItem
-          ariaLabel={`Appearance. Current: ${woodSurfaces[wood].title}`}
+        <WoodSurfaceDisclosureItem
           icon={<SwatchBook />}
-          isOpen={isChoiceOpen("appearance")}
-          label="Appearance"
-          preview={<WoodSurfaceSwatch surfaceId={wood} />}
-          panelVariant="menu"
-          onToggle={() => toggleChoice("appearance")}
-        >
-          <WoodSurfaceChoiceList
-            value={wood}
-            onChange={(value) => onWoodChange?.(value)}
-          />
-        </DisclosureListItem>
+          isOpen={isChoiceOpen("wood")}
+          surfaceId={wood}
+          onChange={(value) => onWoodChange?.(value)}
+          onToggle={() => toggleChoice("wood")}
+        />
       </DisclosureListGroup>
 
       <ObjectManagementGroup

@@ -22,9 +22,12 @@ import {
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
+  WoodSurfaceChoiceList,
+  WoodSurfaceDisclosureItem,
+} from "@/components/appearance/WoodSurfaceChoiceList";
+import {
   FretboardInlayPresetSwatch,
   KeyboardThemeSwatch,
-  WoodSurfaceSwatch,
 } from "./InstrumentThemeSwatch";
 
 interface FretboardAppearanceEditorProps {
@@ -65,42 +68,19 @@ export function FretboardAppearanceEditor({
 
   return (
     <DisclosureList>
-      <DisclosureListItem
-        ariaLabel={`Choose wood, ${
-          theme ? fretboardThemes[theme].title : "Auto"
-        } selected`}
+      <WoodSurfaceDisclosureItem
+        currentLabel={theme ? fretboardThemes[theme].title : "Auto"}
         isOpen={openChoice === "wood"}
-        label="Wood"
         onToggle={() => toggleChoice("wood")}
-        panelVariant="menu"
-        preview={<WoodSurfaceSwatch surfaceId={effectiveTheme} />}
-        subtitle={theme ? fretboardThemes[theme].title : "Auto"}
+        surfaceId={effectiveTheme}
       >
-        <DisclosureList>
-          {allowAuto ? (
-            <DisclosureListChoice
-              label="Auto"
-              selected={theme === undefined}
-              onClick={() => onThemeChange(undefined)}
-            />
-          ) : null}
-          {Object.entries(fretboardThemes).map(
-            ([themeName, themeDefinition]) => (
-              <DisclosureListChoice
-                key={themeName}
-                label={themeDefinition.title}
-                preview={
-                  <WoodSurfaceSwatch
-                    surfaceId={themeName as FretboardThemeName}
-                  />
-                }
-                selected={themeName === theme}
-                onClick={() => onThemeChange(themeName as FretboardThemeName)}
-              />
-            ),
-          )}
-        </DisclosureList>
-      </DisclosureListItem>
+        <WoodSurfaceChoiceList
+          autoSelected={theme === undefined}
+          selectedSurfaceId={theme}
+          onChange={(surfaceId) => onThemeChange(surfaceId)}
+          onSelectAuto={allowAuto ? () => onThemeChange(undefined) : undefined}
+        />
+      </WoodSurfaceDisclosureItem>
 
       <DisclosureListItem
         ariaLabel={`Choose inlay, ${

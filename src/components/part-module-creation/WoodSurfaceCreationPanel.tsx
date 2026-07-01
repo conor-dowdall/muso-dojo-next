@@ -1,16 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { WoodSurfaceChoiceList } from "@/components/appearance/WoodSurfaceChoiceList";
-import { WoodSurfaceSwatch } from "@/components/instrument/InstrumentThemeSwatch";
+import { WoodSurfaceDisclosureItem } from "@/components/appearance/WoodSurfaceChoiceList";
 import {
   DisclosureList,
-  DisclosureListItem,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
   DEFAULT_WOOD_SURFACE_ID,
-  woodSurfaces,
   type WoodSurfaceId,
 } from "@/data/woodSurfaces";
 import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
@@ -36,8 +33,7 @@ export function WoodSurfaceCreationPanel<
   onChange,
   value,
 }: WoodSurfaceCreationPanelProps<TValue>) {
-  const { closeAll, openChoice, toggleChoice } =
-    useDisclosureList<"appearance">();
+  const { closeAll, openChoice, toggleChoice } = useDisclosureList<"wood">();
   const wood = value.wood ?? DEFAULT_WOOD_SURFACE_ID;
 
   useEffect(() => {
@@ -51,16 +47,13 @@ export function WoodSurfaceCreationPanel<
   return (
     <section className={styles.section} aria-label={ariaLabel}>
       <DisclosureList>
-        <DisclosureListItem
-          ariaLabel={`Choose appearance, ${woodSurfaces[wood].title} selected`}
-          isOpen={openChoice === "appearance"}
+        <WoodSurfaceDisclosureItem
+          isOpen={openChoice === "wood"}
           keepMounted
-          label="Appearance"
-          preview={<WoodSurfaceSwatch surfaceId={wood} />}
-          onToggle={() => toggleChoice("appearance")}
-        >
-          <WoodSurfaceChoiceList value={wood} onChange={handleWoodChange} />
-        </DisclosureListItem>
+          surfaceId={wood}
+          onChange={handleWoodChange}
+          onToggle={() => toggleChoice("wood")}
+        />
       </DisclosureList>
     </section>
   );

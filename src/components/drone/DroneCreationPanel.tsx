@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { SwatchBook, WavesArrowUp } from "lucide-react";
-import { WoodSurfaceChoiceList } from "@/components/appearance/WoodSurfaceChoiceList";
-import { WoodSurfaceSwatch } from "@/components/instrument/InstrumentThemeSwatch";
+import { WoodSurfaceDisclosureItem } from "@/components/appearance/WoodSurfaceChoiceList";
 import { OctaveOffsetStepper } from "@/components/part-module/OctaveOffsetStepper";
 import {
   DisclosureList,
@@ -12,7 +10,6 @@ import {
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
   DEFAULT_WOOD_SURFACE_ID,
-  woodSurfaces,
   type WoodSurfaceId,
 } from "@/data/woodSurfaces";
 import { type DroneModuleCreationDefault } from "@/types/instrument-creation-defaults";
@@ -23,7 +20,7 @@ import {
 } from "@/utils/drone/droneNotes";
 import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
 
-type DroneCreationChoice = "octave" | "appearance";
+type DroneCreationChoice = "octave" | "wood";
 
 interface DroneCreationPanelProps {
   ariaLabel?: string;
@@ -64,7 +61,6 @@ export function DroneCreationPanel({
       <DisclosureList>
         <DisclosureListItem
           ariaLabel={`Choose octave, ${formatDroneOctave(octaveOffset)} selected`}
-          icon={<WavesArrowUp />}
           isOpen={openChoice === "octave"}
           keepMounted
           label="Octave"
@@ -81,17 +77,13 @@ export function DroneCreationPanel({
           />
         </DisclosureListItem>
 
-        <DisclosureListItem
-          ariaLabel={`Choose appearance, ${woodSurfaces[wood].title} selected`}
-          icon={<SwatchBook />}
-          isOpen={openChoice === "appearance"}
+        <WoodSurfaceDisclosureItem
+          isOpen={openChoice === "wood"}
           keepMounted
-          label="Appearance"
-          preview={<WoodSurfaceSwatch surfaceId={wood} />}
-          onToggle={() => toggleChoice("appearance")}
-        >
-          <WoodSurfaceChoiceList value={wood} onChange={handleWoodChange} />
-        </DisclosureListItem>
+          surfaceId={wood}
+          onChange={handleWoodChange}
+          onToggle={() => toggleChoice("wood")}
+        />
       </DisclosureList>
     </section>
   );

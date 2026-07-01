@@ -19,16 +19,15 @@ import {
 } from "@/components/ui/object-menu";
 import { OctaveOffsetStepper } from "@/components/part-module/OctaveOffsetStepper";
 import { type SettingSetter } from "@/types/state";
-import { WoodSurfaceChoiceList } from "@/components/appearance/WoodSurfaceChoiceList";
-import { WoodSurfaceSwatch } from "@/components/instrument/InstrumentThemeSwatch";
-import { woodSurfaces, type WoodSurfaceId } from "@/data/woodSurfaces";
+import { WoodSurfaceDisclosureItem } from "@/components/appearance/WoodSurfaceChoiceList";
+import { type WoodSurfaceId } from "@/data/woodSurfaces";
 import {
   DRONE_MAX_OCTAVE_OFFSET,
   DRONE_MIN_OCTAVE_OFFSET,
   getDroneBaseOctave,
 } from "@/utils/drone/droneNotes";
 
-type DroneMenuChoice = "sound" | "octave" | "appearance";
+type DroneMenuChoice = "sound" | "octave" | "wood";
 
 interface DroneOptionsDialogProps {
   audioPresetId: AudioPresetId;
@@ -128,17 +127,13 @@ export function DroneOptionsDialog({
           />
         </DisclosureListItem>
 
-        <DisclosureListItem
-          ariaLabel={`Appearance. Current: ${woodSurfaces[wood].title}`}
+        <WoodSurfaceDisclosureItem
           icon={<SwatchBook />}
-          isOpen={isChoiceOpen("appearance")}
-          label="Appearance"
-          onToggle={() => toggleChoice("appearance")}
-          panelVariant="menu"
-          preview={<WoodSurfaceSwatch surfaceId={wood} />}
-        >
-          <WoodSurfaceChoiceList value={wood} onChange={onWoodChange} />
-        </DisclosureListItem>
+          isOpen={isChoiceOpen("wood")}
+          surfaceId={wood}
+          onChange={onWoodChange}
+          onToggle={() => toggleChoice("wood")}
+        />
       </DisclosureListGroup>
 
       <ObjectManagementGroup
