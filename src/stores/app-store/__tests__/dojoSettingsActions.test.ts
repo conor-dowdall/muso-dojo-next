@@ -237,7 +237,6 @@ describe("dojo settings app store actions", () => {
     expect(
       store.getState().dojoSettings.sessionMaterialCreationDefaults,
     ).toEqual({
-      chordListMode: "full-song-order",
       materialKind: "chord-progression",
       noteCollectionKey: "minor",
       progressionKey: "majorTwoFiveOne",
@@ -272,7 +271,7 @@ describe("dojo settings app store actions", () => {
       ...createStoreSnapshot(),
       dojoSettings: {
         sessionMaterialCreationDefaults: {
-          chordListMode: "full-song-order",
+          chordListMode: "each-chord-once",
           materialKind: "chord-progression",
           noteCollectionKey: "minor",
           progressionKey: "majorTwoFiveOne",
@@ -282,7 +281,7 @@ describe("dojo settings app store actions", () => {
     });
 
     store.getState().rememberSessionMaterialCreation({
-      chordListMode: "each-chord-once",
+      chordListMode: "full-song-order",
       materialKind: "part",
       noteCollectionKey: "major",
       progressionKey: "oneOneFiveFive",

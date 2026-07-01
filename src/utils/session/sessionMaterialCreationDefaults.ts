@@ -21,7 +21,7 @@ export const DEFAULT_SESSION_MATERIAL_CREATION_KIND =
 export const DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY =
   "oneOneFiveFive" satisfies ChordProgressionKey;
 export const DEFAULT_SESSION_MATERIAL_CREATION_CHORD_LIST_MODE =
-  "each-chord-once" satisfies ChordProgressionChordListMode;
+  "full-song-order" satisfies ChordProgressionChordListMode;
 
 const SESSION_MATERIAL_CREATION_KINDS = {
   "chord-progression": true,

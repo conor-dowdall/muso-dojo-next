@@ -102,14 +102,14 @@ const sessionAddOptions = [
 
 const chordListOptions = [
   {
-    id: "each-chord-once",
-    title: "Each Chord Once",
-    subtitle: "One Part per Unique Chord",
-  },
-  {
     id: "full-song-order",
     title: "Full Progression",
     subtitle: "Every Chord in Song Order",
+  },
+  {
+    id: "each-chord-once",
+    title: "Each Chord Once",
+    subtitle: "One Part per Unique Chord",
   },
 ] as const satisfies readonly {
   id: ChordProgressionChordListMode;
