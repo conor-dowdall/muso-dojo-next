@@ -183,6 +183,7 @@ function HydratedSession({
           variant={isPracticeViewMode ? "practice" : "full"}
           viewMode={sessionViewMode}
           onOpenAddDialog={openAddDialog}
+          onOpenSessionTempo={openSessionDialog}
           onOpenSessionsDialog={() => openSessionDialog()}
           onViewModeChange={handleSessionViewModeChange}
           onViewModeExit={isPracticeViewMode ? exitPracticeViewMode : undefined}

@@ -2,6 +2,7 @@
 
 import { type ReactNode, useState } from "react";
 import {
+  Gauge,
   LibraryBig,
   Minimize2,
   MonitorPlay,
@@ -49,6 +50,7 @@ import styles from "./SessionHeader.module.css";
 
 interface SessionHeaderProps {
   onOpenAddDialog: () => void;
+  onOpenSessionTempo: (sessionId: string) => void;
   onOpenSessionsDialog: () => void;
   onViewModeChange: (mode: SessionViewMode) => void;
   onViewModeExit?: () => void;
@@ -67,6 +69,7 @@ const sessionViewModeIcons = {
 
 export function SessionHeader({
   onOpenAddDialog,
+  onOpenSessionTempo,
   onOpenSessionsDialog,
   onViewModeChange,
   onViewModeExit,
@@ -89,6 +92,9 @@ export function SessionHeader({
     (state) =>
       (activeSessionId ? state.sessions[activeSessionId]?.name : null) ??
       "No Sessions Yet",
+  );
+  const activeSessionTempoBpm = useAppStore((state) =>
+    activeSessionId ? (state.sessions[activeSessionId]?.tempoBpm ?? 80) : 80,
   );
   const activeSessionPartCount = useAppStore((state) =>
     activeSessionId ? (state.sessions[activeSessionId]?.parts.length ?? 0) : 0,
@@ -120,6 +126,13 @@ export function SessionHeader({
   const openSessionsDialog = () => {
     setIsMenuOpen(false);
     onOpenSessionsDialog();
+  };
+  const openSessionTempo = () => {
+    if (!activeSessionId) {
+      return;
+    }
+
+    onOpenSessionTempo(activeSessionId);
   };
   const openPracticeBandOptions = () => {
     setIsMenuOpen(false);
@@ -180,6 +193,14 @@ export function SessionHeader({
               />
             )}
             <PracticeBandPlayButton transport={practiceBandTransport} />
+            <IconButton
+              aria-label={`Set session tempo. Current tempo: ${activeSessionTempoBpm} bpm`}
+              disabled={!hasActiveSession}
+              icon={<Gauge />}
+              size="sm"
+              shouldYield={false}
+              onClick={openSessionTempo}
+            />
             {isPracticeHeader ? null : (
               <IconButton
                 aria-label={`Session view. Current: ${viewModeLabel}`}
