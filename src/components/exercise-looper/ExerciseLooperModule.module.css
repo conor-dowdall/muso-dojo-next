@@ -13,12 +13,6 @@
   letter-spacing: 0;
 }
 
-.beatCount {
-  font-size: var(--text-sm);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--font-bold);
-}
-
 .patternControls {
   display: flex;
   inline-size: min(100%, calc(var(--space-80) + var(--space-8)));
@@ -31,17 +25,9 @@
 
 .tripletButtonLabel {
   position: relative;
-  display: inline-grid;
-  inline-size: var(--button-icon-size, var(--part-module-control-icon-size));
-  block-size: var(--button-icon-size, var(--part-module-control-icon-size));
   place-items: end center;
   padding-block-end: 0.0625rem;
-  font-size: var(--text-sm);
   font-style: normal;
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--font-bold);
-  letter-spacing: 0;
-  line-height: var(--leading-none);
 }
 
 .tripletButtonLabel::before {

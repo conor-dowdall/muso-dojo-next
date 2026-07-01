@@ -252,7 +252,7 @@ export function RhythmModule({
                       icon={
                         <span
                           aria-hidden="true"
-                          className={styles.groupingButtonLabel}
+                          className={controlStyles.controlDenseTextIconLabel}
                         >
                           {getRhythmGroupingChoiceLabel(recipe.beats, grouping)}
                         </span>
@@ -284,7 +284,7 @@ export function RhythmModule({
                     icon={
                       <span
                         aria-hidden="true"
-                        className={styles.grooveButtonLabel}
+                        className={controlStyles.controlTextIconLabel}
                       >
                         {choice.text}
                       </span>
@@ -326,7 +326,7 @@ export function RhythmModule({
                       icon={
                         <span
                           aria-hidden="true"
-                          className={styles.soundButtonLabel}
+                          className={controlStyles.controlTextIconLabel}
                         >
                           {choice.text}
                         </span>
@@ -356,7 +356,7 @@ export function RhythmModule({
                       icon={
                         <span
                           aria-hidden="true"
-                          className={styles.timekeeperRhythmButtonLabel}
+                          className={`${controlStyles.controlTextIconLabel} ${styles.timekeeperRhythmButtonLabel}`}
                         >
                           {choice.text}
                         </span>

@@ -442,7 +442,10 @@ export function ExerciseLooperModule({
                         playback.isActive ? "Restart" : "Play"
                       } exercise with a ${beatCount}-beat count-in`}
                       icon={
-                        <span aria-hidden="true" className={styles.beatCount}>
+                        <span
+                          aria-hidden="true"
+                          className={controlStyles.controlSymbolLabel}
+                        >
                           {beatCount}
                         </span>
                       }

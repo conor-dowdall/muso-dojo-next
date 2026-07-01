@@ -391,7 +391,10 @@ export function ExercisePatternControls({
                 : "Use triplet notes"
             }
             icon={
-              <span aria-hidden="true" className={styles.tripletButtonLabel}>
+              <span
+                aria-hidden="true"
+                className={`${controlStyles.controlSymbolLabel} ${styles.tripletButtonLabel}`}
+              >
                 3
               </span>
             }

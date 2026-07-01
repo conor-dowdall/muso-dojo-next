@@ -46,32 +46,6 @@
   );
 }
 
-.soundButtonLabel,
-.grooveButtonLabel,
-.groupingButtonLabel {
-  display: inline-flex;
-  min-inline-size: 2.6em;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-xs);
-  font-weight: var(--font-bold);
-  letter-spacing: 0;
-  line-height: 1;
-}
-
-.groupingButtonLabel {
-  min-inline-size: 0;
-  font-size: var(--text-2xs);
-}
-
 .timekeeperRhythmButtonLabel {
-  display: inline-flex;
-  min-inline-size: 1.35em;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-xs);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--font-bold);
-  letter-spacing: 0;
-  line-height: 1;
+  --part-module-text-icon-min-inline-size: 1.35em;
 }
