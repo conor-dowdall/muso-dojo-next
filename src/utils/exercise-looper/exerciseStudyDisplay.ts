@@ -27,6 +27,19 @@ function hasAnchorPosition(sequence: ExerciseSequence, position: number) {
   return sequence.notes.some((note) => note.collectionPosition === position);
 }
 
+export function resolveExerciseDisplayAnchorPosition(
+  sequence: ExerciseSequence,
+  collectionPosition: number,
+) {
+  if (hasAnchorPosition(sequence, collectionPosition)) {
+    return collectionPosition;
+  }
+
+  return sequence.steps.find((step) =>
+    step.notes.some((note) => note.collectionPosition === collectionPosition),
+  )?.notes[0]?.anchorPosition;
+}
+
 export function createExerciseStudyAnchorIdentity(
   sequence: ExerciseSequence,
   note: Pick<

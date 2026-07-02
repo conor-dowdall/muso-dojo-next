@@ -1,5 +1,4 @@
 import { type CSSProperties, type KeyboardEvent } from "react";
-import { InstrumentNote } from "@/components/instrument/InstrumentNote";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { InstrumentNoteTileLabel } from "@/components/instrument/InstrumentNoteTileLabel";
 import noteGridStyles from "@/components/part-module/PartModuleNoteGrid.module.css";
@@ -12,9 +11,9 @@ import {
   type ExercisePatternMode,
   type ExerciseSequence,
 } from "@/utils/exercise-looper/exerciseSequence";
+import { resolveExerciseDisplayAnchorPosition } from "@/utils/exercise-looper/exerciseStudyDisplay";
 import { formatSpelledMidiNote } from "@/utils/music-theory/midiNote";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
-import styles from "./ExerciseLooperModule.module.css";
 
 export function ExerciseLooperNoteGrid({
   activeCollectionPositions,
@@ -60,10 +59,15 @@ export function ExerciseLooperNoteGrid({
                 mode: noteColorMode,
                 rootNote,
               });
+              const auditionAnchorPosition =
+                resolveExerciseDisplayAnchorPosition(
+                  sequence,
+                  note.collectionPosition,
+                );
               const chordDescriptor =
-                mode === "extension"
+                mode === "extension" && auditionAnchorPosition !== undefined
                   ? sequence.chordDescriptorsByAnchorPosition.get(
-                      note.collectionPosition,
+                      auditionAnchorPosition,
                     )
                   : undefined;
               const spokenNoteLabel = formatSpelledMidiNote(
@@ -82,28 +86,6 @@ export function ExerciseLooperNoteGrid({
                   secondary={note.intervalLabel}
                 />
               );
-
-              if (!note.isAnchor) {
-                return (
-                  <div
-                    key={note.key}
-                    aria-hidden="true"
-                    className={`${noteGridStyles.button} ${styles.generatedNoteIndicator}`}
-                    data-note-highlighted={isHighlighted ? true : undefined}
-                    style={{ gridColumn: note.columnIndex + 1 }}
-                  >
-                    <InstrumentNote
-                      className={styles.generatedNote}
-                      largeSize="100%"
-                      note={{ emphasis: "large", midi: note.midi }}
-                      noteColor={noteColor}
-                      surface="embedded"
-                    >
-                      {label}
-                    </InstrumentNote>
-                  </div>
-                );
-              }
 
               return (
                 <InstrumentNoteCell

@@ -151,43 +151,6 @@
   font-size: var(--text-xs);
 }
 
-.generatedNoteIndicator {
-  display: grid;
-  place-items: center;
-  container-type: size;
-  pointer-events: none;
-}
-
-.generatedNote {
-  --instrument-note-tile-label-color: var(--note-label-color);
-  --instrument-note-tile-label-opacity: var(
-    --control-unavailable-content-opacity
-  );
-  --instrument-note-tile-label-transition-duration: var(--transition-fast);
-
-  background-color: color-mix(
-    in srgb,
-    var(--note-color) 22%,
-    var(--part-module-body-background) 78%
-  );
-  border-color: color-mix(
-    in srgb,
-    var(--note-color) 28%,
-    var(--interactive-surface-rest-border-color)
-  );
-}
-
-.generatedNoteIndicator[data-note-highlighted="true"] .generatedNote {
-  --instrument-note-tile-label-color: var(--note-label-color);
-  --instrument-note-tile-label-opacity: 1;
-  --instrument-note-tile-label-transition-duration: 0s;
-
-  background-color: var(--note-color);
-  border-color: var(--interactive-surface-focus-ring-color);
-  box-shadow: var(--interactive-surface-highlight-shadow);
-  transition-duration: 0s;
-}
-
 @container (max-width: 24rem) {
   .studyDisplayContent[data-dense="true"] .studyNotePair {
     min-inline-size: 0;
