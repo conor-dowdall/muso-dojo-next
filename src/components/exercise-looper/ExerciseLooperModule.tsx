@@ -235,8 +235,7 @@ export function ExerciseLooperModule({
           resolveExerciseDisplayAnchorPosition(
             sequence,
             note.collectionPosition,
-          ) ??
-          note.collectionPosition;
+          ) ?? note.collectionPosition;
         const exerciseNotes = getExerciseAnchorDisplayNotes(
           sequence,
           anchorPosition,
@@ -252,12 +251,7 @@ export function ExerciseLooperModule({
 
       playback.audition(target);
     },
-    [
-      effectivePattern.mode,
-      playback,
-      selectStudyAnchorForKey,
-      sequence,
-    ],
+    [effectivePattern.mode, playback, selectStudyAnchorForKey, sequence],
   );
   const {
     focusedKey,

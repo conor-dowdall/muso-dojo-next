@@ -35,7 +35,7 @@ describe("getDojoGlobalShortcutAction", () => {
     expect(
       getDojoGlobalShortcutAction(
         createKeyEvent(),
-        createContext({ audioPlaying: true, viewMode: "band" }),
+        createContext({ audioPlaying: true, viewMode: "chart" }),
       ),
     ).toBe("stop-audio");
   });
@@ -44,7 +44,7 @@ describe("getDojoGlobalShortcutAction", () => {
     expect(
       getDojoGlobalShortcutAction(
         createKeyEvent(),
-        createContext({ viewMode: "live-part" }),
+        createContext({ viewMode: "live" }),
       ),
     ).toBe("exit-view");
   });

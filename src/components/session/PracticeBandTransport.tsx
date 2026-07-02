@@ -296,32 +296,3 @@ export function PracticeBandReadout({
     </output>
   );
 }
-
-interface PracticeBandTransportProps {
-  isPerformanceMode?: boolean;
-  sessionId: string;
-}
-
-export function PracticeBandTransport({
-  isPerformanceMode = false,
-  sessionId,
-}: PracticeBandTransportProps) {
-  const transport = usePracticeBandTransport(sessionId);
-
-  if (!transport.canPlay) {
-    return null;
-  }
-
-  return (
-    <div
-      aria-label="Practice Band"
-      className={styles.transport}
-      data-performance-mode={isPerformanceMode ? true : undefined}
-      onKeyDownCapture={transport.shortcuts.onKeyDownCapture}
-      onPointerDownCapture={transport.shortcuts.onPointerDownCapture}
-    >
-      <PracticeBandReadout prominence="title" readout={transport.readout} />
-      <PracticeBandPlayButton transport={transport} />
-    </div>
-  );
-}

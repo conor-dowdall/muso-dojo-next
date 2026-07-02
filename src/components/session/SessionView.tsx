@@ -9,10 +9,17 @@ import { useAppStore } from "@/stores/appStore";
 import { type MusicPartConfig } from "@/types/session";
 import { getPartLeadSheetSummary } from "@/utils/music-part/partLeadSheet";
 import { MusicPartView } from "./MusicPartView";
-import { type SessionViewMode } from "./sessionViewMode";
+import {
+  showsOnlyLivePart,
+  showsSessionChart,
+  type SessionViewMode,
+  usesReadOnlyPartChrome,
+} from "./sessionViewMode";
 import styles from "./SessionView.module.css";
 
 const EMPTY_SESSION_PARTS: MusicPartConfig[] = [];
+const EMPTY_PART_IDS: string[] = [];
+const EMPTY_PART_SUMMARIES: SessionPartSummary[] = [];
 
 interface SessionViewProps {
   sessionId: string;
@@ -41,22 +48,31 @@ export function SessionView({
   const sessionParts = useAppStore(
     (state) => state.sessions[sessionId]?.parts ?? EMPTY_SESSION_PARTS,
   );
-  const parts = useMemo(
-    (): SessionPartSummary[] =>
-      sessionParts.map((part) => {
-        const summary = getPartLeadSheetSummary(part);
-
-        return {
-          accessibleLabel: summary.accessibleLabel,
-          ...(summary.durationLabel
-            ? { durationLabel: summary.durationLabel }
-            : {}),
-          id: summary.id,
-          identityLabel: summary.identityLabel,
-          meterLabel: summary.meterLabel,
-        };
-      }),
+  const partIds = useMemo(
+    () =>
+      sessionParts.length === 0
+        ? EMPTY_PART_IDS
+        : sessionParts.map((part) => part.id),
     [sessionParts],
+  );
+  const chartParts = useMemo(
+    (): SessionPartSummary[] =>
+      showsSessionChart(viewMode)
+        ? sessionParts.map((part) => {
+            const summary = getPartLeadSheetSummary(part);
+
+            return {
+              accessibleLabel: summary.accessibleLabel,
+              ...(summary.durationLabel
+                ? { durationLabel: summary.durationLabel }
+                : {}),
+              id: summary.id,
+              identityLabel: summary.identityLabel,
+              meterLabel: summary.meterLabel,
+            };
+          })
+        : EMPTY_PART_SUMMARIES,
+    [sessionParts, viewMode],
   );
   const partSequenceSnapshot = useSyncExternalStore(
     partSequenceCoordinator.subscribe,
@@ -72,9 +88,11 @@ export function SessionView({
   const pendingPartId = partSequenceIsActive
     ? partSequenceSnapshot.pendingPartId
     : undefined;
-  const livePartId = activePartId ?? parts[0]?.id;
-  const chromeFreeMode = viewMode === "focus" || viewMode === "live-part";
-  const showPartsView = viewMode !== "band";
+  const livePartId = activePartId ?? partIds[0];
+  const readOnlyPartChrome = usesReadOnlyPartChrome(viewMode);
+  const showChart = showsSessionChart(viewMode);
+  const showPartsView = !showChart;
+  const showOnlyLivePart = showsOnlyLivePart(viewMode);
 
   const getPartSequenceState = (partId: string) =>
     activePartId === partId
@@ -85,7 +103,7 @@ export function SessionView({
 
   return (
     <NoteColorProvider config={noteColorConfig}>
-      {parts.length === 0 && onOpenAddDialog ? (
+      {partIds.length === 0 && onOpenAddDialog ? (
         <div className={styles.emptySession}>
           <Button
             icon={<Plus />}
@@ -95,31 +113,30 @@ export function SessionView({
             onClick={onOpenAddDialog}
           />
         </div>
-      ) : viewMode === "band" ? (
+      ) : showChart ? (
         <BandSessionView
           activePartId={activePartId}
-          parts={parts}
+          parts={chartParts}
           pendingPartId={pendingPartId}
         />
       ) : showPartsView ? (
         <div className={styles.partsView}>
-          {parts.map((part) => {
-            const isHiddenLivePart =
-              viewMode === "live-part" && part.id !== livePartId;
+          {partIds.map((partId) => {
+            const isHiddenLivePart = showOnlyLivePart && partId !== livePartId;
 
             return (
               <div
-                key={part.id}
+                key={partId}
                 className={styles.partHost}
                 hidden={isHiddenLivePart}
               >
                 <MusicPartView
                   sessionId={sessionId}
-                  partId={part.id}
-                  partSequenceState={getPartSequenceState(part.id)}
-                  isPerformanceMode={chromeFreeMode}
+                  partId={partId}
+                  partSequenceState={getPartSequenceState(partId)}
+                  isPerformanceMode={readOnlyPartChrome}
                   onOpenSessionTempo={onOpenSessionTempo}
-                  showReadOnlyIdentity={chromeFreeMode}
+                  showReadOnlyIdentity={readOnlyPartChrome}
                 />
               </div>
             );

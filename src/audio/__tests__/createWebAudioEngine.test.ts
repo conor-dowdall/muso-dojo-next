@@ -633,18 +633,16 @@ describe("createWebAudioEngine", () => {
     expect(
       MockAudioContext.bufferSourceStopCalls.some((call) =>
         call.time
-          ? Math.abs(
-              call.time - (0.5 + AUDIO_STOP_RELEASE_SECONDS + 0.01),
-            ) < 0.000_001
+          ? Math.abs(call.time - (0.5 + AUDIO_STOP_RELEASE_SECONDS + 0.01)) <
+            0.000_001
           : false,
       ),
     ).toBe(true);
     expect(
       MockAudioContext.bufferSourceStopCalls.some((call) =>
         call.time
-          ? Math.abs(
-              call.time - (0.5 + DRONE_STOP_RELEASE_SECONDS + 0.01),
-            ) < 0.000_001
+          ? Math.abs(call.time - (0.5 + DRONE_STOP_RELEASE_SECONDS + 0.01)) <
+            0.000_001
           : false,
       ),
     ).toBe(true);

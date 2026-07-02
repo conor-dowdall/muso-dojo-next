@@ -41,8 +41,9 @@ import {
 } from "./PracticeBandTransport";
 import { PracticeBandOptionsDialog } from "./PracticeBandOptionsDialog";
 import {
+  isPracticeSessionViewMode,
   requiresSessionParts,
-  sessionViewModeCopy,
+  sessionViewModeConfig,
   sessionViewModes,
   type SessionViewMode,
 } from "./sessionViewMode";
@@ -54,7 +55,6 @@ interface SessionHeaderProps {
   onOpenSessionsDialog: () => void;
   onViewModeChange: (mode: SessionViewMode) => void;
   onViewModeExit?: () => void;
-  variant?: "full" | "practice";
   viewMode: SessionViewMode;
 }
 
@@ -62,9 +62,9 @@ type SessionMenuSection = "view";
 
 const sessionViewModeIcons = {
   session: <PanelsTopLeft />,
-  band: <Rows3 />,
-  "live-part": <MonitorPlay />,
-  focus: <Minimize2 />,
+  chart: <Rows3 />,
+  live: <MonitorPlay />,
+  clean: <Minimize2 />,
 } as const satisfies Record<SessionViewMode, ReactNode>;
 
 export function SessionHeader({
@@ -73,7 +73,6 @@ export function SessionHeader({
   onOpenSessionsDialog,
   onViewModeChange,
   onViewModeExit,
-  variant = "full",
   viewMode,
 }: SessionHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -100,9 +99,9 @@ export function SessionHeader({
     activeSessionId ? (state.sessions[activeSessionId]?.parts.length ?? 0) : 0,
   );
   const hasActiveSession = activeSessionId !== null;
-  const viewModeLabel = sessionViewModeCopy[viewMode].label;
+  const viewModeLabel = sessionViewModeConfig[viewMode].label;
   const canUsePartViews = activeSessionPartCount > 0;
-  const isPracticeHeader = variant === "practice";
+  const isPracticeHeader = isPracticeSessionViewMode(viewMode);
   const titleText = isPracticeHeader ? viewModeLabel : sessionName;
   const titleReadout = practiceBandTransport.isActive
     ? practiceBandTransport.readout
@@ -154,7 +153,6 @@ export function SessionHeader({
       <ControlHeader
         actionsClassName={styles.headerActions}
         className={styles.header}
-        data-variant={variant}
         onKeyDownCapture={practiceBandTransport.shortcuts.onKeyDownCapture}
         onPointerDownCapture={
           practiceBandTransport.shortcuts.onPointerDownCapture
@@ -206,7 +204,7 @@ export function SessionHeader({
                 aria-label={`Session view. Current: ${viewModeLabel}`}
                 disabled={!hasActiveSession}
                 icon={sessionViewModeIcons[viewMode]}
-                selected={viewMode !== "session"}
+                selected={isPracticeHeader}
                 size="sm"
                 shouldYield={false}
                 onClick={openViewSection}
@@ -245,12 +243,12 @@ export function SessionHeader({
             label="View"
             panelVariant="menu"
             preview={viewModeLabel}
-            selected={viewMode !== "session"}
+            selected={isPracticeHeader}
             onToggle={() => toggleMenuSection("view")}
           >
             <DisclosureList density="compact">
               {sessionViewModes.map((mode) => {
-                const copy = sessionViewModeCopy[mode];
+                const copy = sessionViewModeConfig[mode];
                 const disabled = requiresSessionParts(mode) && !canUsePartViews;
 
                 return (

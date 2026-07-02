@@ -11,6 +11,7 @@ import { SessionLoader } from "@/components/session/SessionLoader";
 import { SessionManagementDialog } from "@/components/session/SessionManagementDialog";
 import { SessionView } from "@/components/session/SessionView";
 import {
+  isPracticeSessionViewMode,
   requiresSessionParts,
   type SessionViewMode,
 } from "@/components/session/sessionViewMode";
@@ -62,7 +63,7 @@ function HydratedSession({
   const addParts = useAppStore((state) => state.addParts);
   const replaceParts = useAppStore((state) => state.replaceParts);
   const activeSessionPartCount = activeSession?.parts.length ?? 0;
-  const isPracticeViewMode = sessionViewMode !== "session";
+  const isPracticeViewMode = isPracticeSessionViewMode(sessionViewMode);
   const closeAddDialog = () => setIsAddDialogOpen(false);
   const instrumentCreationRangeContext =
     createInstrumentCreationRangeContextFromSignature(
@@ -142,7 +143,7 @@ function HydratedSession({
   }, [activeSessionId]);
 
   useEffect(() => {
-    if (!activeSessionId && sessionViewMode !== "session") {
+    if (!activeSessionId && isPracticeSessionViewMode(sessionViewMode)) {
       onSessionViewModeChange("session");
     }
   }, [activeSessionId, onSessionViewModeChange, sessionViewMode]);
@@ -180,7 +181,6 @@ function HydratedSession({
     <>
       <div className={styles.sessionChrome}>
         <SessionHeader
-          variant={isPracticeViewMode ? "practice" : "full"}
           viewMode={sessionViewMode}
           onOpenAddDialog={openAddDialog}
           onOpenSessionTempo={openSessionDialog}
@@ -271,7 +271,7 @@ export default function DojoSessionPage() {
   const handleSessionViewModeChange = useCallback((mode: SessionViewMode) => {
     setSessionViewMode(mode);
   }, []);
-  const isPracticeViewMode = sessionViewMode !== "session";
+  const isPracticeViewMode = isPracticeSessionViewMode(sessionViewMode);
 
   return (
     <main className={styles.main}>
