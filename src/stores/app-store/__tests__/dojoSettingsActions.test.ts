@@ -125,6 +125,7 @@ describe("dojo settings app store actions", () => {
     const store = createTestStore();
 
     store.getState().rememberModuleCreation({
+      context: "session",
       moduleKinds: ["keyboard", "drone", "keyboard"],
       drone: {
         octaveOffset: 1,
@@ -138,6 +139,7 @@ describe("dojo settings app store actions", () => {
       },
     });
     store.getState().rememberModuleCreation({
+      context: "part",
       moduleKinds: ["fretboard", "drone", "rhythm"],
       fretboard: {
         instrument: "guitar",
@@ -153,7 +155,10 @@ describe("dojo settings app store actions", () => {
     });
 
     expect(store.getState().dojoSettings.moduleCreationDefaults).toEqual({
-      moduleKinds: ["fretboard", "drone", "rhythm"],
+      moduleKindDefaults: {
+        session: ["keyboard", "drone"],
+        part: ["fretboard", "drone", "rhythm"],
+      },
       keyboard: {
         theme: "studio",
       },
@@ -183,7 +188,9 @@ describe("dojo settings app store actions", () => {
       ...createStoreSnapshot(),
       dojoSettings: {
         moduleCreationDefaults: {
-          moduleKinds: ["keyboard"],
+          moduleKindDefaults: {
+            session: ["keyboard"],
+          },
           keyboard: {
             theme: "studio",
           },
@@ -196,6 +203,7 @@ describe("dojo settings app store actions", () => {
     });
 
     store.getState().rememberModuleCreation({
+      context: "session",
       moduleKinds: ["keyboard"],
       keyboard: {
         theme: "studio",
@@ -211,12 +219,15 @@ describe("dojo settings app store actions", () => {
       ...createStoreSnapshot(),
       dojoSettings: {
         moduleCreationDefaults: {
-          moduleKinds: ["keyboard"],
+          moduleKindDefaults: {
+            session: ["keyboard"],
+          },
         },
       },
     });
 
     store.getState().rememberModuleCreation({
+      context: "session",
       moduleKinds: ["fretboard"],
     });
 

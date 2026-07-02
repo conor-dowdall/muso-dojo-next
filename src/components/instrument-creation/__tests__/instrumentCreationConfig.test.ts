@@ -53,7 +53,9 @@ describe("instrument creation responsive defaults", () => {
 
   it("applies remembered setup defaults without overriding responsive ranges", () => {
     const moduleCreationDefaults = {
-      moduleKinds: ["keyboard"],
+      moduleKindDefaults: {
+        session: ["keyboard"],
+      },
       keyboard: {
         theme: "studio",
       },

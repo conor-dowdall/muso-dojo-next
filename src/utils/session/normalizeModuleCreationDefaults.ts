@@ -44,6 +44,8 @@ import {
   createBuiltInFretboardModuleCreationDefault,
   createBuiltInKeyboardModuleCreationDefault,
   createBuiltInRhythmModuleCreationDefault,
+  DEFAULT_PART_MODULE_CREATION_KINDS,
+  DEFAULT_SESSION_MODULE_CREATION_KINDS,
   DEFAULT_MODULE_CREATION_KINDS,
   droneModuleCreationDefaultsAreEqual,
   exerciseLooperModuleCreationDefaultsAreEqual,
@@ -202,6 +204,7 @@ function normalizeModuleCreationKind(
 
 function normalizeModuleCreationKinds(
   value: unknown,
+  fallback: readonly ModuleCreationKind[] = DEFAULT_MODULE_CREATION_KINDS,
 ): ModuleCreationKind[] | undefined {
   if (!Array.isArray(value)) {
     return undefined;
@@ -221,12 +224,55 @@ function normalizeModuleCreationKinds(
 
   if (
     moduleKinds.length === 0 ||
-    moduleCreationKindsAreEqual(moduleKinds, DEFAULT_MODULE_CREATION_KINDS)
+    moduleCreationKindsAreEqual(moduleKinds, fallback, fallback)
   ) {
     return undefined;
   }
 
   return moduleKinds;
+}
+
+function normalizeModuleCreationKindDefaults(
+  value: unknown,
+): ModuleCreationDefaults["moduleKindDefaults"] {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const session = normalizeModuleCreationKinds(
+    value.session,
+    DEFAULT_SESSION_MODULE_CREATION_KINDS,
+  );
+  const part = normalizeModuleCreationKinds(
+    value.part,
+    DEFAULT_PART_MODULE_CREATION_KINDS,
+  );
+
+  const moduleKindDefaults = {
+    ...(session ? { session } : {}),
+    ...(part ? { part } : {}),
+  } satisfies ModuleCreationDefaults["moduleKindDefaults"];
+
+  return Object.keys(moduleKindDefaults).length === 0
+    ? undefined
+    : moduleKindDefaults;
+}
+
+function normalizeContextualModuleCreationKinds(
+  value: Record<string, unknown>,
+): ModuleCreationDefaults["moduleKindDefaults"] {
+  const legacySessionKinds = normalizeModuleCreationKinds(
+    value.moduleKinds,
+    DEFAULT_SESSION_MODULE_CREATION_KINDS,
+  );
+  const moduleKindDefaults = normalizeModuleCreationKindDefaults(
+    value.moduleKindDefaults,
+  );
+
+  return normalizeModuleCreationKindDefaults({
+    ...(legacySessionKinds ? { session: legacySessionKinds } : {}),
+    ...(moduleKindDefaults ?? {}),
+  });
 }
 
 function normalizeFretboardCreationRangeDefault(
@@ -427,7 +473,7 @@ export function normalizeModuleCreationDefaults(
   }
 
   const moduleCreationDefaults = {
-    moduleKinds: normalizeModuleCreationKinds(value.moduleKinds),
+    moduleKindDefaults: normalizeContextualModuleCreationKinds(value),
     drone: normalizeDroneModuleCreationDefault(value.drone),
     exerciseLooper: normalizeExerciseLooperModuleCreationDefault(
       value.exerciseLooper,
@@ -437,8 +483,8 @@ export function normalizeModuleCreationDefaults(
     rhythm: normalizeRhythmModuleCreationDefault(value.rhythm),
   } satisfies ModuleCreationDefaults;
   const normalizedDefaults = {
-    ...(moduleCreationDefaults.moduleKinds
-      ? { moduleKinds: moduleCreationDefaults.moduleKinds }
+    ...(moduleCreationDefaults.moduleKindDefaults
+      ? { moduleKindDefaults: moduleCreationDefaults.moduleKindDefaults }
       : {}),
     ...(moduleCreationDefaults.drone
       ? { drone: moduleCreationDefaults.drone }

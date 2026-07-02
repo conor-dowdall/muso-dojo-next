@@ -16,6 +16,10 @@ export type ModuleCreationKind =
   | "drone"
   | "exercise-looper"
   | "rhythm";
+export type ModuleCreationContext = "session" | "part";
+export type ModuleCreationKindDefaults = Partial<
+  Record<ModuleCreationContext, ModuleCreationKind[]>
+>;
 
 export interface FretboardCreationDefault {
   instrument: StringInstrumentKey;
@@ -69,7 +73,7 @@ export interface KeyboardModuleCreationDefault extends KeyboardCreationDefault {
 }
 
 export interface ModuleCreationDefaults {
-  moduleKinds?: ModuleCreationKind[];
+  moduleKindDefaults?: ModuleCreationKindDefaults;
   drone?: DroneModuleCreationDefault;
   exerciseLooper?: ExerciseLooperModuleCreationDefault;
   fretboard?: FretboardModuleCreationDefault;
@@ -78,6 +82,7 @@ export interface ModuleCreationDefaults {
 }
 
 export interface RememberModuleCreationRequest {
+  context: ModuleCreationContext;
   moduleKinds: ModuleCreationKind[];
   drone?: DroneModuleCreationDefault;
   exerciseLooper?: ExerciseLooperModuleCreationDefault;

@@ -3,6 +3,7 @@ import {
   type ExerciseLooperModuleCreationDefault,
   type FretboardModuleCreationDefault,
   type KeyboardModuleCreationDefault,
+  type ModuleCreationContext,
   type ModuleCreationKind,
   type RememberModuleCreationRequest,
   type RhythmModuleCreationDefault,
@@ -21,8 +22,10 @@ export interface ModuleCreationListDraft {
 
 export function createRememberModuleCreationRequest(
   draft: ModuleCreationListDraft,
+  context: ModuleCreationContext,
 ): RememberModuleCreationRequest {
   return {
+    context,
     moduleKinds: draft.moduleKinds,
     ...(draft.drone ? { drone: draft.drone } : {}),
     ...(draft.exerciseLooper ? { exerciseLooper: draft.exerciseLooper } : {}),

@@ -5,7 +5,6 @@ import { WoodSurfaceDisclosureItem } from "@/components/appearance/WoodSurfaceCh
 import { NumericStepper } from "@/components/ui/numeric-stepper/NumericStepper";
 import {
   DisclosureList,
-  DisclosureListAction,
   DisclosureListChoice,
   DisclosureListItem,
   useDisclosureList,
@@ -38,6 +37,7 @@ import {
   getRecipeWithTimekeeper,
   getRhythmBeatControlLabel,
   getRhythmGroupingControlLabel,
+  getRhythmStarterChoiceForRecipe,
   getRhythmStarterRecipe,
   getRhythmStarterSummary,
   isRhythmGrooveChoiceAvailable,
@@ -91,6 +91,8 @@ export function RhythmCreationPanel({
     ? "Off"
     : getRhythmTimekeeperOptionLabel("sound", recipe.timekeeper);
   const feelLabel = getRhythmTimekeeperRhythmReadoutLabel(recipe.timekeeper);
+  const selectedStarterChoice = getRhythmStarterChoiceForRecipe(recipe);
+  const starterLabel = selectedStarterChoice?.label ?? "Custom";
 
   useEffect(() => {
     closeAll();
@@ -150,19 +152,20 @@ export function RhythmCreationPanel({
     <section className={styles.section} aria-label={ariaLabel}>
       <DisclosureList>
         <DisclosureListItem
-          ariaLabel="Common rhythms. Choose a starter rhythm"
+          ariaLabel={`Start from rhythm. Current: ${starterLabel}`}
           isOpen={isChoiceOpen("starter")}
-          label="Common Rhythms"
+          label="Start From"
           panelVariant="menu"
-          preview="Starter"
+          preview={starterLabel}
           onToggle={() => toggleChoice("starter")}
         >
           <DisclosureList density="compact">
             {rhythmStarterChoices.map((choice) => (
-              <DisclosureListAction
+              <DisclosureListChoice
                 key={choice.id}
                 aria-label={`Start with ${choice.label}`}
                 label={choice.label}
+                selected={selectedStarterChoice?.id === choice.id}
                 subtitle={getRhythmStarterSummary(choice.id)}
                 onClick={() => {
                   updateRecipe(getRhythmStarterRecipe(choice.id));

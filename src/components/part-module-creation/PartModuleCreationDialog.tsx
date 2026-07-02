@@ -64,7 +64,7 @@ export function PartModuleCreationDialog({
     }
 
     onAddPartModules(draft.moduleRequests);
-    rememberModuleCreation(createRememberModuleCreationRequest(draft));
+    rememberModuleCreation(createRememberModuleCreationRequest(draft, "part"));
     onClose();
   };
 
@@ -74,6 +74,7 @@ export function PartModuleCreationDialog({
       <DialogContent layout="stack" menuRhythm="standard">
         <DialogContentSection ariaLabel="Modules">
           <ModuleCreationList
+            context="part"
             instrumentCreationRangeContext={instrumentCreationRangeContext}
             onDraftChange={setDraft}
           />

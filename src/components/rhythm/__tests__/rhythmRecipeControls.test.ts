@@ -6,6 +6,7 @@ import {
   getRecipeWithGroove,
   getRecipeWithTimekeeper,
   getRhythmRecipeCreationSummary,
+  getRhythmStarterChoiceForRecipe,
   getRhythmStarterRecipe,
   getRhythmStarterSummary,
   isRhythmGrooveChoiceAvailable,
@@ -71,6 +72,53 @@ describe("rhythmRecipeControls", () => {
         subdivision: "eighth",
       },
     });
+  });
+
+  it("resolves recipes back to their musical starter preset", () => {
+    const fourFour = getRhythmStarterRecipe("4-4");
+    const swing = getRhythmStarterRecipe("swing");
+    const shuffle = getRhythmStarterRecipe("shuffle");
+    const country = getRhythmStarterRecipe("country");
+
+    expect(getRhythmStarterChoiceForRecipe(fourFour)?.label).toBe("4/4");
+    expect(
+      getRhythmStarterChoiceForRecipe(
+        getRecipeWithTimekeeper(fourFour, { sound: "ride" }),
+      )?.label,
+    ).toBe("4/4");
+    expect(
+      getRhythmStarterChoiceForRecipe(
+        getRecipeWithTimekeeper(fourFour, { subdivision: "quintuplet" }),
+      )?.label,
+    ).toBe("4/4");
+    expect(
+      getRhythmStarterChoiceForRecipe(getRecipeWithGroove(fourFour, "pulse"))
+        ?.label,
+    ).toBe("4/4");
+    expect(getRhythmStarterChoiceForRecipe(swing)?.label).toBe("Swing");
+    expect(
+      getRhythmStarterChoiceForRecipe(
+        getRecipeWithTimekeeper(swing, { sound: "hat" }),
+      )?.label,
+    ).toBe("Swing");
+    expect(getRhythmStarterChoiceForRecipe(shuffle)?.label).toBe("Shuffle");
+    expect(getRhythmStarterChoiceForRecipe(country)?.label).toBe("Country");
+  });
+
+  it("uses the theory meter for compound starter recognition", () => {
+    const sixEight = getRhythmStarterRecipe("6-8");
+    const twelveEight = getRhythmStarterRecipe("12-8");
+
+    expect(
+      getRhythmStarterChoiceForRecipe(
+        getRecipeWithTimekeeper(sixEight, { sound: "ride" }),
+      )?.label,
+    ).toBe("6/8");
+    expect(
+      getRhythmStarterChoiceForRecipe(
+        getRecipeWithGroove(twelveEight, "pulse"),
+      )?.label,
+    ).toBe("12/8");
   });
 
   it("includes a country drive starter for 4/4 hi-hat practice", () => {

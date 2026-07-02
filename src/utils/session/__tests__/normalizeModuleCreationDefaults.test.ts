@@ -1,7 +1,49 @@
 import { describe, expect, it } from "vitest";
-import { normalizeRhythmModuleCreationDefault } from "@/utils/session/normalizeModuleCreationDefaults";
+import {
+  normalizeModuleCreationDefaults,
+  normalizeRhythmModuleCreationDefault,
+} from "@/utils/session/normalizeModuleCreationDefaults";
 
 describe("normalizeModuleCreationDefaults", () => {
+  it("keeps custom module kind selections by dialog context", () => {
+    expect(
+      normalizeModuleCreationDefaults({
+        moduleKindDefaults: {
+          session: ["keyboard", "keyboard"],
+          part: ["rhythm"],
+        },
+      }),
+    ).toStrictEqual({
+      moduleKindDefaults: {
+        session: ["keyboard"],
+        part: ["rhythm"],
+      },
+    });
+  });
+
+  it("drops built-in module kind selections by dialog context", () => {
+    expect(
+      normalizeModuleCreationDefaults({
+        moduleKindDefaults: {
+          session: ["fretboard"],
+          part: [],
+        },
+      }),
+    ).toBeUndefined();
+  });
+
+  it("migrates legacy module kind memory to the session context", () => {
+    expect(
+      normalizeModuleCreationDefaults({
+        moduleKinds: ["rhythm"],
+      }),
+    ).toStrictEqual({
+      moduleKindDefaults: {
+        session: ["rhythm"],
+      },
+    });
+  });
+
   it("drops built-in Rhythm creation defaults", () => {
     expect(
       normalizeRhythmModuleCreationDefault({

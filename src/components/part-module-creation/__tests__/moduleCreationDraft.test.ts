@@ -4,28 +4,32 @@ import { createRememberModuleCreationRequest } from "@/components/part-module-cr
 describe("createRememberModuleCreationRequest", () => {
   it("keeps every selected module creation default", () => {
     expect(
-      createRememberModuleCreationRequest({
-        drone: { wood: "ebony" },
-        exerciseLooper: { wood: "maple" },
-        fretboard: {
-          appearanceSource: "custom",
-          handedness: "right",
-          inlayPreset: "dots",
-          instrument: "guitar",
-          theme: "maple",
-          tuningKey: "guitarStandardE",
+      createRememberModuleCreationRequest(
+        {
+          drone: { wood: "ebony" },
+          exerciseLooper: { wood: "maple" },
+          fretboard: {
+            appearanceSource: "custom",
+            handedness: "right",
+            inlayPreset: "dots",
+            instrument: "guitar",
+            theme: "maple",
+            tuningKey: "guitarStandardE",
+          },
+          keyboard: { theme: "studio" },
+          moduleKinds: [
+            "drone",
+            "exercise-looper",
+            "fretboard",
+            "keyboard",
+            "rhythm",
+          ],
+          moduleRequests: [],
         },
-        keyboard: { theme: "studio" },
-        moduleKinds: [
-          "drone",
-          "exercise-looper",
-          "fretboard",
-          "keyboard",
-          "rhythm",
-        ],
-        moduleRequests: [],
-      }),
+        "part",
+      ),
     ).toStrictEqual({
+      context: "part",
       drone: { wood: "ebony" },
       exerciseLooper: { wood: "maple" },
       fretboard: {

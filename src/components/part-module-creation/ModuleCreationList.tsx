@@ -29,6 +29,7 @@ import {
   type DroneModuleCreationDefault,
   type ExerciseLooperModuleCreationDefault,
   type ModuleCreationDefaults,
+  type ModuleCreationContext,
   type ModuleCreationKind,
   type RhythmModuleCreationDefault,
 } from "@/types/instrument-creation-defaults";
@@ -38,7 +39,7 @@ import { assertNever } from "@/utils/assertNever";
 import { getDroneBaseOctave } from "@/utils/drone/droneNotes";
 import { DEFAULT_EXERCISE_OCTAVE_OFFSET } from "@/utils/exercise-looper/exerciseConfig";
 import { getExerciseBaseOctave } from "@/utils/exercise-looper/exerciseSequence";
-import { DEFAULT_MODULE_CREATION_KINDS } from "@/utils/instrument-creation/moduleCreationDefaults";
+import { getModuleCreationKindsForContext } from "@/utils/instrument-creation/moduleCreationDefaults";
 import { areRangesEqual } from "@/utils/range/numberRange";
 import {
   DEFAULT_RHYTHM_SELECTION,
@@ -49,6 +50,7 @@ import { type ModuleCreationListDraft } from "./moduleCreationDraft";
 export type { ModuleCreationListDraft } from "./moduleCreationDraft";
 
 interface ModuleCreationListProps {
+  context: ModuleCreationContext;
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
   onDraftChange: (draft: ModuleCreationListDraft) => void;
 }
@@ -65,10 +67,9 @@ function hasCreationSettings(kind: ModuleCreationKind) {
 
 function getInitialModuleKinds(
   moduleCreationDefaults: ModuleCreationDefaults | undefined,
+  context: ModuleCreationContext,
 ) {
-  return [
-    ...(moduleCreationDefaults?.moduleKinds ?? DEFAULT_MODULE_CREATION_KINDS),
-  ];
+  return getModuleCreationKindsForContext(moduleCreationDefaults, context);
 }
 
 function includesKind(
@@ -168,6 +169,7 @@ function getModuleCreationRequest({
 }
 
 export function ModuleCreationList({
+  context,
   instrumentCreationRangeContext,
   onDraftChange,
 }: ModuleCreationListProps) {
@@ -182,7 +184,7 @@ export function ModuleCreationList({
     ),
   );
   const [moduleKinds, setModuleKinds] = useState<ModuleCreationKind[]>(() =>
-    getInitialModuleKinds(moduleCreationDefaults),
+    getInitialModuleKinds(moduleCreationDefaults, context),
   );
   const [droneSelection, setDroneSelection] =
     useState<DroneModuleCreationDefault>(() => ({

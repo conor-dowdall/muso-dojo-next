@@ -56,7 +56,10 @@ export function createDojoSettingsActions(
     set((state) => {
       const moduleCreationDefaults = normalizeModuleCreationDefaults({
         ...state.dojoSettings.moduleCreationDefaults,
-        moduleKinds: request.moduleKinds,
+        moduleKindDefaults: {
+          ...state.dojoSettings.moduleCreationDefaults?.moduleKindDefaults,
+          [request.context]: request.moduleKinds,
+        },
         ...(request.drone ? { drone: request.drone } : {}),
         ...(request.exerciseLooper
           ? { exerciseLooper: request.exerciseLooper }

@@ -16,7 +16,9 @@ import {
   type ExerciseLooperModuleCreationDefault,
   type FretboardModuleCreationDefault,
   type KeyboardModuleCreationDefault,
+  type ModuleCreationContext,
   type ModuleCreationDefaults,
+  type ModuleCreationKindDefaults,
   type ModuleCreationKind,
   type RhythmModuleCreationDefault,
 } from "@/types/instrument-creation-defaults";
@@ -26,6 +28,15 @@ import { areRangesEqual } from "@/utils/range/numberRange";
 export const DEFAULT_MODULE_CREATION_KINDS = [
   "fretboard",
 ] as const satisfies readonly ModuleCreationKind[];
+export const DEFAULT_SESSION_MODULE_CREATION_KINDS =
+  DEFAULT_MODULE_CREATION_KINDS;
+export const DEFAULT_PART_MODULE_CREATION_KINDS =
+  [] as const satisfies readonly ModuleCreationKind[];
+
+const DEFAULT_MODULE_CREATION_KINDS_BY_CONTEXT = {
+  part: DEFAULT_PART_MODULE_CREATION_KINDS,
+  session: DEFAULT_SESSION_MODULE_CREATION_KINDS,
+} as const satisfies Record<ModuleCreationContext, readonly ModuleCreationKind[]>;
 
 export function createBuiltInDroneModuleCreationDefault(): DroneModuleCreationDefault {
   return {
@@ -70,13 +81,48 @@ export function createBuiltInKeyboardModuleCreationDefault(): KeyboardModuleCrea
 export function moduleCreationKindsAreEqual(
   left: readonly ModuleCreationKind[] | undefined,
   right: readonly ModuleCreationKind[] | undefined,
+  fallback: readonly ModuleCreationKind[] = DEFAULT_MODULE_CREATION_KINDS,
 ) {
-  const resolvedLeft = left ?? DEFAULT_MODULE_CREATION_KINDS;
-  const resolvedRight = right ?? DEFAULT_MODULE_CREATION_KINDS;
+  const resolvedLeft = left ?? fallback;
+  const resolvedRight = right ?? fallback;
 
   return (
     resolvedLeft.length === resolvedRight.length &&
     resolvedLeft.every((kind, index) => kind === resolvedRight[index])
+  );
+}
+
+export function getBuiltInModuleCreationKinds(
+  context: ModuleCreationContext,
+): readonly ModuleCreationKind[] {
+  return DEFAULT_MODULE_CREATION_KINDS_BY_CONTEXT[context];
+}
+
+export function getModuleCreationKindsForContext(
+  moduleCreationDefaults: ModuleCreationDefaults | undefined,
+  context: ModuleCreationContext,
+): ModuleCreationKind[] {
+  return [
+    ...(moduleCreationDefaults?.moduleKindDefaults?.[context] ??
+      getBuiltInModuleCreationKinds(context)),
+  ];
+}
+
+function moduleCreationKindDefaultsAreEqual(
+  left: ModuleCreationKindDefaults | undefined,
+  right: ModuleCreationKindDefaults | undefined,
+) {
+  return (
+    moduleCreationKindsAreEqual(
+      left?.session,
+      right?.session,
+      DEFAULT_SESSION_MODULE_CREATION_KINDS,
+    ) &&
+    moduleCreationKindsAreEqual(
+      left?.part,
+      right?.part,
+      DEFAULT_PART_MODULE_CREATION_KINDS,
+    )
   );
 }
 
@@ -200,7 +246,12 @@ export function moduleCreationDefaultsAreEqual(
     return left === right;
   }
 
-  if (!moduleCreationKindsAreEqual(left.moduleKinds, right.moduleKinds)) {
+  if (
+    !moduleCreationKindDefaultsAreEqual(
+      left.moduleKindDefaults,
+      right.moduleKindDefaults,
+    )
+  ) {
     return false;
   }
 

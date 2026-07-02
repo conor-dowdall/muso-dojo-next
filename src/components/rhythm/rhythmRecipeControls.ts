@@ -215,6 +215,45 @@ export function getRhythmStarterRecipe(starterId: RhythmStarterId) {
   return getCompatibleRecipe(rhythmStarterRecipes[starterId]);
 }
 
+function findRhythmStarterChoice(starterId: RhythmStarterId) {
+  return rhythmStarterChoices.find((choice) => choice.id === starterId);
+}
+
+export function getRhythmStarterChoiceForRecipe(recipe: RhythmRecipe) {
+  const normalizedRecipe = getCompatibleRecipe(recipe);
+  const theoryTitle = getRhythmTheoryReadout(normalizedRecipe).title;
+
+  if (theoryTitle === "6/8") {
+    return findRhythmStarterChoice("6-8");
+  }
+
+  if (theoryTitle === "12/8") {
+    return findRhythmStarterChoice("12-8");
+  }
+
+  if (theoryTitle === "4/4") {
+    if (normalizedRecipe.timekeeper.feel === "swing") {
+      return findRhythmStarterChoice("swing");
+    }
+
+    if (normalizedRecipe.timekeeper.feel === "shuffle") {
+      return findRhythmStarterChoice("shuffle");
+    }
+
+    if (normalizedRecipe.groove === "bluegrass") {
+      return findRhythmStarterChoice("country");
+    }
+
+    return findRhythmStarterChoice("4-4");
+  }
+
+  if (theoryTitle === "3/4") {
+    return findRhythmStarterChoice("3-4");
+  }
+
+  return undefined;
+}
+
 export function getRhythmStarterSummary(starterId: RhythmStarterId) {
   const recipe = getRhythmStarterRecipe(starterId);
 

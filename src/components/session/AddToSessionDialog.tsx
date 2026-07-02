@@ -209,7 +209,9 @@ export function AddToSessionDialog({
   };
 
   const rememberSessionModuleCreation = () => {
-    rememberModuleCreation(createRememberModuleCreationRequest(moduleDraft));
+    rememberModuleCreation(
+      createRememberModuleCreationRequest(moduleDraft, "session"),
+    );
   };
 
   const rememberSessionMaterial = () => {
@@ -380,6 +382,7 @@ export function AddToSessionDialog({
 
         <DialogContentSection ariaLabel="Start With">
           <ModuleCreationList
+            context="session"
             instrumentCreationRangeContext={instrumentCreationRangeContext}
             onDraftChange={setModuleDraft}
           />

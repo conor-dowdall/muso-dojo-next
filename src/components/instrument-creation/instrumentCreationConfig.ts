@@ -24,6 +24,7 @@ import {
   type ModuleCreationDefaults,
   type ModuleCreationKind,
 } from "@/types/instrument-creation-defaults";
+import { getModuleCreationKindsForContext } from "@/utils/instrument-creation/moduleCreationDefaults";
 
 export type KeyboardRangeSelection = KeyboardRangeName | "custom";
 export type InstrumentCreationViewportTier = "tiny" | "compact" | "regular";
@@ -189,7 +190,10 @@ export function createDefaultInstrumentSelections(
 export function getDefaultInstrumentType(
   moduleCreationDefaults: ModuleCreationDefaults | undefined,
 ): InstrumentType {
-  const moduleKinds = moduleCreationDefaults?.moduleKinds;
+  const moduleKinds = getModuleCreationKindsForContext(
+    moduleCreationDefaults,
+    "session",
+  );
   const firstInstrumentKind = moduleKinds?.find(isInstrumentModuleCreationKind);
 
   return firstInstrumentKind ?? "fretboard";

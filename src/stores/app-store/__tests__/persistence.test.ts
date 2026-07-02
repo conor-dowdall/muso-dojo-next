@@ -410,7 +410,9 @@ describe("app store persistence", () => {
         fallbackSnapshot,
       ).dojoSettings.moduleCreationDefaults,
     ).toEqual({
-      moduleKinds: ["keyboard", "drone"],
+      moduleKindDefaults: {
+        session: ["keyboard", "drone"],
+      },
       drone: {
         octaveOffset: 1,
         wood: "pauFerro",
