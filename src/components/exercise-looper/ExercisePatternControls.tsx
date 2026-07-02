@@ -7,13 +7,15 @@ import {
   CircleSmall,
   Merge,
   Minus,
-  Music,
-  Music3,
-  Music4,
   Plus,
   Spline,
   Split,
 } from "lucide-react";
+import {
+  MusicEighths,
+  MusicQuarter,
+  MusicSixteenths,
+} from "@/components/icons/musicNotationIcons";
 import { PartModuleControlButton } from "@/components/part-module/PartModuleControlButton";
 import controlStyles from "@/components/part-module/PartModuleControls.module.css";
 import { TactileControlGroup } from "@/components/ui/tactile-control-group/TactileControlGroup";
@@ -159,17 +161,17 @@ const notePlaybackChoices = [
 
 const noteValueChoices = [
   {
-    icon: <Music3 />,
+    icon: <MusicQuarter />,
     label: "Quarter notes",
     noteValue: "quarter",
   },
   {
-    icon: <Music />,
+    icon: <MusicEighths />,
     label: "Eighth notes",
     noteValue: "eighth",
   },
   {
-    icon: <Music4 />,
+    icon: <MusicSixteenths />,
     label: "Sixteenth notes",
     noteValue: "sixteenth",
   },
