@@ -1,4 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  AUDIO_STOP_RELEASE_SECONDS,
+  DRONE_STOP_RELEASE_SECONDS,
+  PERCUSSION_STOP_RELEASE_SECONDS,
+} from "@/audio/audioStopConfig";
 import { createWebAudioEngine } from "@/audio/createWebAudioEngine";
 import {
   clearSamplePackAssetCacheForTests,
@@ -552,7 +557,95 @@ describe("createWebAudioEngine", () => {
 
     expect(
       MockAudioContext.bufferSourceStopCalls.some(
-        (call) => call.time !== undefined && call.time <= 1.29,
+        (call) => call.time !== undefined && call.time <= 1.35,
+      ),
+    ).toBe(true);
+  });
+
+  it("uses a musical release when cancelling sample voices immediately", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    const group = engine.createPlaybackGroup();
+    MockAudioContext.lastInstance!.currentTime = 1;
+
+    const handle = engine.scheduleNote({
+      durationSeconds: 1,
+      group,
+      midiNote: 60,
+      startTime: 1,
+      use: "exercise",
+    });
+    MockAudioContext.lastInstance!.currentTime = 1.25;
+    engine.cancelPlaybackGroup(group);
+
+    expect(handle).toBeDefined();
+    expect(MockAudioContext.bufferSourceStopCalls.at(-1)?.time).toBeCloseTo(
+      1.25 + AUDIO_STOP_RELEASE_SECONDS + 0.01,
+    );
+  });
+
+  it("de-clicks percussion hits when grouped playback is cancelled", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    const group = engine.createPlaybackGroup();
+    MockAudioContext.lastInstance!.currentTime = 3;
+
+    expect(
+      engine.schedulePercussionHit({
+        group,
+        sampleId: "kick",
+        startTime: 3,
+      }),
+    ).toBe(true);
+
+    MockAudioContext.lastInstance!.currentTime = 3.05;
+    engine.cancelPlaybackGroup(group);
+
+    expect(MockAudioContext.bufferSourceStopCalls.at(-1)?.time).toBeCloseTo(
+      3.05 + PERCUSSION_STOP_RELEASE_SECONDS + 0.001,
+    );
+  });
+
+  it("uses the shared gentle stop policy for global all-stop", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    const voiceHandle = await engine.playNote({
+      durationSeconds: 1,
+      midiNote: 60,
+      use: "preview",
+    });
+    const droneHandle = await engine.createDrone({
+      notes: [{ id: "root", midiNote: 60 }],
+      presetId: "bowed-strings",
+      use: "drone",
+    });
+    MockAudioContext.lastInstance!.currentTime = 0.5;
+
+    engine.stopAll();
+
+    expect(voiceHandle).toBeDefined();
+    expect(droneHandle).toBeDefined();
+    expect(
+      MockAudioContext.bufferSourceStopCalls.some((call) =>
+        call.time
+          ? Math.abs(
+              call.time - (0.5 + AUDIO_STOP_RELEASE_SECONDS + 0.01),
+            ) < 0.000_001
+          : false,
+      ),
+    ).toBe(true);
+    expect(
+      MockAudioContext.bufferSourceStopCalls.some((call) =>
+        call.time
+          ? Math.abs(
+              call.time - (0.5 + DRONE_STOP_RELEASE_SECONDS + 0.01),
+            ) < 0.000_001
+          : false,
       ),
     ).toBe(true);
   });

@@ -10,6 +10,7 @@ import {
   regionHasLoop,
   type SamplePack,
 } from "./samplePackLibrary";
+import { DRONE_STOP_RELEASE_SECONDS } from "./audioStopConfig";
 import { type AudioPreset, type AudioUse } from "./types";
 
 const DEFAULT_AUDIO_USE = "preview" satisfies AudioUse;
@@ -17,7 +18,13 @@ const MIN_GAIN_VALUE = 0.0001;
 const MIN_ATTACK_SECONDS = 0.003;
 const MIN_RELEASE_SECONDS = 0.02;
 const MAX_ONE_SHOT_RELEASE_SECONDS = 0.35;
-export const DEFAULT_DRONE_RELEASE_SECONDS = 0.22;
+const AUDIO_USE_GAIN = {
+  drone: 0.62,
+  exercise: 0.86,
+  preview: 0.9,
+  tuning: 0.9,
+} as const satisfies Record<AudioUse, number>;
+export const DEFAULT_DRONE_RELEASE_SECONDS = DRONE_STOP_RELEASE_SECONDS;
 
 export interface ActiveSampleVoice {
   disconnect: () => void;
@@ -80,7 +87,7 @@ function getVoiceGain({
   use?: AudioUse;
   velocity?: number;
 }) {
-  const useGain = use === "drone" ? 0.78 : use === "exercise" ? 0.86 : 0.9;
+  const useGain = AUDIO_USE_GAIN[use];
 
   return clamp(velocity ?? 0.82, 0, 1) * preset.gain * regionGain * useGain;
 }

@@ -16,6 +16,8 @@ import { type AudioEngine, type PlaybackGroupHandle } from "./types";
 
 const START_LOOKAHEAD_SECONDS = 0.08;
 const HANDOFF_COMMIT_LEAD_SECONDS = AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS;
+const DEFAULT_RHYTHM_HIT_VELOCITY = 0.72;
+const RHYTHM_PLAYBACK_GAIN = 1.18;
 
 export interface RhythmPlaybackRequest {
   id: string;
@@ -156,6 +158,10 @@ function rhythmPatternCanPlay(pattern: RhythmPattern) {
     pattern.hits.length > 0 &&
     pattern.cycleTicks > 0
   );
+}
+
+function getRhythmPlaybackVelocity(velocity?: number) {
+  return (velocity ?? DEFAULT_RHYTHM_HIT_VELOCITY) * RHYTHM_PLAYBACK_GAIN;
 }
 
 function withoutPendingStart(
@@ -380,7 +386,7 @@ export class RhythmPlaybackCoordinator {
           group,
           sampleId: scheduledEvent.payload.sampleId,
           startTime,
-          velocity: scheduledEvent.payload.velocity,
+          velocity: getRhythmPlaybackVelocity(scheduledEvent.payload.velocity),
         });
       },
     });

@@ -6,11 +6,11 @@ import {
   getRegionEndSeconds,
   type LoadedSamplePack,
 } from "./samplePackLibrary";
+import { PERCUSSION_STOP_RELEASE_SECONDS } from "./audioStopConfig";
 import { type SamplePackId } from "./types";
 
 export const PERCUSSION_SAMPLE_PACK_ID = "percussion" satisfies SamplePackId;
 
-const HIT_CANCEL_FADE_OUT_SECONDS = 0.004;
 const PERCUSSION_TRIM_GAIN = 0.82;
 const MIN_GAIN_VALUE = 0.0001;
 
@@ -132,7 +132,7 @@ export function schedulePercussionHit({
         );
         const nextCancelStopTime = Math.min(
           stopTime,
-          cancelTime + HIT_CANCEL_FADE_OUT_SECONDS,
+          cancelTime + PERCUSSION_STOP_RELEASE_SECONDS,
         );
 
         if (cancelStartTime !== undefined && cancelTime >= cancelStartTime) {

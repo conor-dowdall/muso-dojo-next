@@ -32,18 +32,21 @@ function createRequest(pattern = createPattern("kick")): RhythmPlaybackRequest {
 function createHarness() {
   let currentTime = 10;
   let nextGroupId = 0;
+  const schedulerOptions: Parameters<RhythmSchedulerFactory>[0][] = [];
   const schedulers: Array<{
     start: ReturnType<typeof vi.fn>;
     stop: ReturnType<typeof vi.fn>;
   }> = [];
   const cancelPlaybackGroup = vi.fn();
-  const createScheduler: RhythmSchedulerFactory = () => {
+  const schedulePercussionHit = vi.fn();
+  const createScheduler: RhythmSchedulerFactory = (options) => {
     const scheduler = {
       isRunning: () => true,
       start: vi.fn(),
       stop: vi.fn(),
     };
 
+    schedulerOptions.push(options);
     schedulers.push(scheduler);
     return scheduler;
   };
@@ -52,7 +55,7 @@ function createHarness() {
     createPlaybackGroup: () => `group-${nextGroupId++}` as PlaybackGroupHandle,
     getCurrentTime: () => currentTime,
     prime: async () => true,
-    schedulePercussionHit: vi.fn(),
+    schedulePercussionHit,
     subscribeToStopAll: () => () => undefined,
   };
   const coordinator = new RhythmPlaybackCoordinator(
@@ -63,7 +66,9 @@ function createHarness() {
   return {
     cancelPlaybackGroup,
     coordinator,
+    schedulerOptions,
     schedulers,
+    schedulePercussionHit,
     setCurrentTime: (value: number) => {
       currentTime = value;
     },
@@ -110,6 +115,29 @@ describe("RhythmPlaybackCoordinator", () => {
     expect(coordinator.getSnapshot()).toMatchObject({
       originTime: 10.08,
       playing: true,
+    });
+  });
+
+  it("boosts rhythm hit playback without changing authored pattern data", async () => {
+    const { coordinator, schedulerOptions, schedulePercussionHit } =
+      createHarness();
+    const pattern: RhythmPattern = {
+      ...createPattern("kick"),
+      hits: [{ atTicks: 0, sampleId: "kick", velocity: 0.5 }],
+    };
+
+    await coordinator.start(createRequest(pattern));
+    const firstEvent = schedulerOptions[0]?.events[0];
+
+    expect(firstEvent).toBeDefined();
+    schedulerOptions[0]?.onSchedule(firstEvent!, 10.08, 0, 0);
+
+    expect(pattern.hits[0]?.velocity).toBe(0.5);
+    expect(schedulePercussionHit).toHaveBeenCalledWith({
+      group: "group-0",
+      sampleId: "kick",
+      startTime: 10.08,
+      velocity: 0.59,
     });
   });
 });

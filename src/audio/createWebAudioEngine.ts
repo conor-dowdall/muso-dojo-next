@@ -2,6 +2,10 @@ import {
   getAudioContextConstructor,
   getOfflineAudioContextConstructor,
 } from "./audioContext";
+import {
+  AUDIO_STOP_RELEASE_SECONDS,
+  DRONE_STOP_RELEASE_SECONDS,
+} from "./audioStopConfig";
 import { scheduleMetronomeClick } from "./metronome";
 import { PERCUSSION_SAMPLE_PACK_ID, schedulePercussionHit } from "./percussion";
 import { getDefaultAudioPresetId, resolveAudioPreset } from "./presets";
@@ -14,7 +18,6 @@ import {
 import {
   createDroneVoice,
   createSampleVoice,
-  DEFAULT_DRONE_RELEASE_SECONDS,
   stopDroneVoice,
   type ActiveDroneVoice,
   type ActiveSampleVoice,
@@ -36,7 +39,6 @@ import {
 } from "./types";
 
 const DEFAULT_AUDIO_USE = "preview" satisfies AudioUse;
-const GROUP_CANCEL_RELEASE_SECONDS = 0.03;
 
 interface PlaybackGroup {
   cancelAtTime?: number;
@@ -88,7 +90,7 @@ function getPresetForRequest({
 
 function stopDrone(
   drone: ActiveDrone,
-  releaseSeconds = DEFAULT_DRONE_RELEASE_SECONDS,
+  releaseSeconds = DRONE_STOP_RELEASE_SECONDS,
 ) {
   drone.notes.forEach((voice) =>
     stopDroneVoice(voice, drone.context, releaseSeconds),
@@ -199,7 +201,7 @@ export function createWebAudioEngine(): AudioEngine {
 
   const stopVoice = (
     handle: AudioVoiceHandle,
-    releaseSeconds = GROUP_CANCEL_RELEASE_SECONDS,
+    releaseSeconds = AUDIO_STOP_RELEASE_SECONDS,
     atTime?: number,
   ) => {
     activeVoices.get(handle)?.stop(releaseSeconds, atTime);
@@ -751,10 +753,17 @@ export function createWebAudioEngine(): AudioEngine {
     stopAll: () => {
       Array.from(playbackGroups.entries()).forEach(([groupHandle, group]) => {
         group.hits.forEach((hit) => hit.stop());
-        group.voices.forEach((voiceHandle) => stopVoice(voiceHandle, 0.02));
+        group.voices.forEach((voiceHandle) =>
+          stopVoice(voiceHandle, AUDIO_STOP_RELEASE_SECONDS),
+        );
         deletePlaybackGroup(groupHandle);
       });
-      activeDrones.forEach((drone) => stopDrone(drone, 0.05));
+      activeVoices.forEach((_voice, voiceHandle) =>
+        stopVoice(voiceHandle, AUDIO_STOP_RELEASE_SECONDS),
+      );
+      activeDrones.forEach((drone) =>
+        stopDrone(drone, DRONE_STOP_RELEASE_SECONDS),
+      );
       activeDrones.clear();
       stopAllListeners.forEach((listener) => listener());
     },

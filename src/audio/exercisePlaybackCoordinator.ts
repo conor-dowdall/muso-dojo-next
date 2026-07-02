@@ -6,6 +6,7 @@ import {
 } from "./lookaheadScheduler";
 import { AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS } from "./audioTimingConfig";
 import { musoAudioEngine } from "./createWebAudioEngine";
+import { AUDIO_STOP_RELEASE_SECONDS } from "./audioStopConfig";
 import {
   type AudioEngine,
   type AudioPresetId,
@@ -16,7 +17,6 @@ import { type ExerciseCountInBeats } from "@/types/session";
 
 const START_LOOKAHEAD_SECONDS = 0.08;
 const NOTE_GATE_RATIO = 0.9;
-const STOP_RELEASE_SECONDS = 0.08;
 const HANDOFF_COMMIT_LEAD_SECONDS = AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS;
 
 export interface ExercisePlaybackEvent {
@@ -340,7 +340,7 @@ export class ExercisePlaybackCoordinator {
     if (this.active) {
       this.stopActivePlayback(this.active, {
         atTime: pendingHandoff.snapshot.originTime,
-        releaseSeconds: STOP_RELEASE_SECONDS,
+        releaseSeconds: AUDIO_STOP_RELEASE_SECONDS,
       });
     }
 
@@ -717,7 +717,7 @@ export class ExercisePlaybackCoordinator {
       const active = this.active;
       this.stopActivePlayback(active, {
         atTime: options?.atTime,
-        releaseSeconds: options?.releaseSeconds ?? STOP_RELEASE_SECONDS,
+        releaseSeconds: options?.releaseSeconds ?? AUDIO_STOP_RELEASE_SECONDS,
       });
       if (options?.atTime === undefined) {
         this.active = undefined;
