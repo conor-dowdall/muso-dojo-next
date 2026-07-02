@@ -15,6 +15,10 @@ import {
   type ExerciseCountInBeats,
   type ExerciseSubdivision,
 } from "@/types/session";
+import {
+  beatSubdivisionIds,
+  getBeatSubdivisionStepBeats,
+} from "@/utils/music-theory/beatSubdivision";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 
 export { DEFAULT_EXERCISE_OCTAVE_OFFSET };
@@ -48,21 +52,13 @@ export const EXERCISE_INTERVAL_DEGREES = Array.from(
 );
 export const EXERCISE_EXTENSION_DEGREES = [5, 7, 9, 11, 13] as const;
 
-const subdivisions = {
-  quarter: true,
-  eighth: true,
-  "eighth-triplet": true,
-  sixteenth: true,
-  "sixteenth-triplet": true,
-} as const satisfies Record<ExerciseSubdivision, true>;
+const subdivisions = Object.fromEntries(
+  beatSubdivisionIds.map((id) => [id, true]),
+) as Record<ExerciseSubdivision, true>;
 
-export const exerciseSubdivisionBeats = {
-  quarter: 1,
-  eighth: 1 / 2,
-  "eighth-triplet": 1 / 3,
-  sixteenth: 1 / 4,
-  "sixteenth-triplet": 1 / 6,
-} as const satisfies Record<ExerciseSubdivision, number>;
+export const exerciseSubdivisionBeats = Object.fromEntries(
+  beatSubdivisionIds.map((id) => [id, getBeatSubdivisionStepBeats(id)]),
+) as Record<ExerciseSubdivision, number>;
 
 export function normalizeExerciseCountInBeats(
   value: unknown,

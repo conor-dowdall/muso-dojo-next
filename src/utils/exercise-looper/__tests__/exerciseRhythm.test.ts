@@ -1,47 +1,41 @@
 import { describe, expect, it } from "vitest";
 import {
-  getExerciseRhythmSelection,
-  getExerciseSubdivisionForRhythm,
+  exerciseSubdivisionChoices,
+  getExerciseSubdivisionAriaLabel,
+  getExerciseSubdivisionDensityLabel,
   getExerciseSubdivisionLabel,
+  getExerciseSubdivisionNoteLabel,
 } from "@/utils/exercise-looper/exerciseRhythm";
-import { type ExerciseSubdivision } from "@/types/session";
 
 describe("exercise rhythm controls", () => {
-  it.each([
-    ["quarter", "quarter", "straight"],
-    ["eighth", "eighth", "straight"],
-    ["eighth-triplet", "eighth", "triplet"],
-    ["sixteenth", "sixteenth", "straight"],
-    ["sixteenth-triplet", "sixteenth", "triplet"],
-  ] as const)(
-    "resolves %s into a note value and feel",
-    (subdivision, noteValue, feel) => {
-      expect(getExerciseRhythmSelection(subdivision)).toEqual({
-        feel,
-        noteValue,
-      });
-    },
-  );
+  it("offers subdivision densities from one through eight per beat", () => {
+    expect(exerciseSubdivisionChoices.map((choice) => choice.text)).toEqual([
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+    ]);
+    expect(exerciseSubdivisionChoices.map((choice) => choice.label)).toContain(
+      "Use 5 subdivisions per beat",
+    );
+  });
 
-  it.each([
-    ["quarter", "straight", "quarter"],
-    ["quarter", "triplet", "quarter"],
-    ["eighth", "straight", "eighth"],
-    ["eighth", "triplet", "eighth-triplet"],
-    ["sixteenth", "straight", "sixteenth"],
-    ["sixteenth", "triplet", "sixteenth-triplet"],
-  ] as const)(
-    "maps %s notes with %s feel to %s",
-    (noteValue, feel, subdivision) => {
-      expect(
-        getExerciseSubdivisionForRhythm({ feel, noteValue }),
-      ).toBe<ExerciseSubdivision>(subdivision);
-    },
-  );
-
-  it("provides concise Title Case display labels", () => {
+  it("labels densities and their musical note names", () => {
     expect(getExerciseSubdivisionLabel("eighth-triplet")).toBe(
       "Eighth-Note Triplets",
+    );
+    expect(getExerciseSubdivisionDensityLabel("eighth-triplet")).toBe(
+      "3 per Beat",
+    );
+    expect(getExerciseSubdivisionNoteLabel("eighth-triplet")).toBe(
+      "Eighth-Note Triplets",
+    );
+    expect(getExerciseSubdivisionAriaLabel("septuplet")).toBe(
+      "Septuplets, 7 per Beat",
     );
   });
 });

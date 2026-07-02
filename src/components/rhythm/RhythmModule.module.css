@@ -6,8 +6,30 @@
   min-inline-size: var(--space-14);
 }
 
-.timekeeperRhythmControls {
-  --part-module-compact-grid-columns: 3;
+.timekeeperRhythmSelector {
+  display: flex;
+  min-inline-size: 0;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--part-module-control-modifier-gap);
+  flex-wrap: wrap;
+}
+
+.timekeeperSubdivisionControls {
+  --part-module-compact-grid-columns: 4;
+
+  display: grid;
+  grid-template-columns: repeat(
+    var(--part-module-compact-grid-columns),
+    var(--part-module-control-size)
+  );
+  justify-items: center;
+}
+
+.timekeeperFeelControls {
+  display: grid;
+  grid-template-columns: var(--part-module-control-size);
+  justify-items: center;
 }
 
 .theoryReadout {

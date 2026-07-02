@@ -10,8 +10,10 @@ import {
   getRhythmStarterSummary,
   isRhythmGrooveChoiceAvailable,
   isRhythmTimekeeperSubdivisionChoiceAvailable,
+  rhythmTimekeeperFeelSubdivisionChoices,
   rhythmStarterChoices,
   rhythmTimekeeperSubdivisionChoices,
+  rhythmTimekeeperStraightSubdivisionChoices,
 } from "@/components/rhythm/rhythmRecipeControls";
 
 describe("rhythmRecipeControls", () => {
@@ -23,22 +25,22 @@ describe("rhythmRecipeControls", () => {
     });
   });
 
-  it("maps compound meter starters to counted beats with three-part feel", () => {
+  it("maps compound meter starters to counted beats with three-part subdivision", () => {
     const sixEight = getRhythmStarterRecipe("6-8");
     const twelveEight = getRhythmStarterRecipe("12-8");
 
     expect(sixEight).toMatchObject({
       beats: 2,
       timekeeper: {
-        feel: "triplet",
-        subdivision: "eighth",
+        feel: "straight",
+        subdivision: "eighth-triplet",
       },
     });
     expect(twelveEight).toMatchObject({
       beats: 4,
       timekeeper: {
-        feel: "triplet",
-        subdivision: "eighth",
+        feel: "straight",
+        subdivision: "eighth-triplet",
       },
     });
     expect(getRhythmTheoryReadout(sixEight).title).toBe("6/8");
@@ -150,5 +152,26 @@ describe("rhythmRecipeControls", () => {
         subdivision: "eighth",
       },
     });
+  });
+
+  it("offers straight subdivision densities from one through eight per beat", () => {
+    expect(
+      rhythmTimekeeperStraightSubdivisionChoices.map((choice) => choice.text),
+    ).toEqual(["1", "2", "3", "4", "5", "6", "7", "8"]);
+    expect(
+      rhythmTimekeeperStraightSubdivisionChoices.map((choice) => choice.label),
+    ).toContain("Use 5 subdivisions per beat");
+    expect(
+      rhythmTimekeeperFeelSubdivisionChoices.map((choice) => choice.text),
+    ).toEqual(["Sw", "Shf"]);
+    expect(
+      rhythmTimekeeperSubdivisionChoices.map((choice) => choice.text),
+    ).toEqual(
+      rhythmTimekeeperStraightSubdivisionChoices
+        .map((choice) => choice.text)
+        .concat(
+          rhythmTimekeeperFeelSubdivisionChoices.map((choice) => choice.text),
+        ),
+    );
   });
 });

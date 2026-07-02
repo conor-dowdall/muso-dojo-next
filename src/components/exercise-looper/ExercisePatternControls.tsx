@@ -11,21 +11,15 @@ import {
   Spline,
   Split,
 } from "lucide-react";
-import {
-  MusicEighths,
-  MusicQuarter,
-  MusicSixteenths,
-} from "@/components/icons/musicNotationIcons";
 import { PartModuleControlButton } from "@/components/part-module/PartModuleControlButton";
 import controlStyles from "@/components/part-module/PartModuleControls.module.css";
 import { TactileControlGroup } from "@/components/ui/tactile-control-group/TactileControlGroup";
 import { type ExerciseSubdivision } from "@/types/session";
 import { getExerciseDegreeOptions } from "@/utils/exercise-looper/exerciseConfig";
 import {
-  getExerciseRhythmSelection,
-  getExerciseSubdivisionForRhythm,
+  exerciseSubdivisionChoices,
+  getExerciseSubdivisionAriaLabel,
   getExerciseSubdivisionLabel,
-  type ExerciseNoteValue,
 } from "@/utils/exercise-looper/exerciseRhythm";
 import {
   getExerciseIntervalLabel,
@@ -159,28 +153,6 @@ const notePlaybackChoices = [
   playback: ExerciseNotePlayback;
 }[];
 
-const noteValueChoices = [
-  {
-    icon: <MusicQuarter />,
-    label: "Quarter notes",
-    noteValue: "quarter",
-  },
-  {
-    icon: <MusicEighths />,
-    label: "Eighth notes",
-    noteValue: "eighth",
-  },
-  {
-    icon: <MusicSixteenths />,
-    label: "Sixteenth notes",
-    noteValue: "sixteenth",
-  },
-] as const satisfies readonly {
-  icon: ReactNode;
-  label: string;
-  noteValue: ExerciseNoteValue;
-}[];
-
 export function ExercisePatternControls({
   onChange,
   onSubdivisionChange,
@@ -245,9 +217,8 @@ export function ExercisePatternControls({
     (pattern.mode === "extension" && !supportsTertianExercises);
   const noteDirectionUnavailable =
     pattern.notePlayback === "together" || fineTuneUnavailable;
-  const rhythm = getExerciseRhythmSelection(subdivision);
   const rhythmLabel = getExerciseSubdivisionLabel(subdivision);
-  const tripletUnavailable = rhythm.noteValue === "quarter";
+  const rhythmAriaLabel = getExerciseSubdivisionAriaLabel(subdivision);
 
   useEffect(() => {
     if (modeFeedbackVersion === 0) {
@@ -313,28 +284,6 @@ export function ExercisePatternControls({
     }
   };
 
-  const setNoteValue = (noteValue: ExerciseNoteValue) => {
-    onSubdivisionChange?.(
-      getExerciseSubdivisionForRhythm({
-        feel: rhythm.feel,
-        noteValue,
-      }),
-    );
-  };
-
-  const toggleTriplets = () => {
-    if (tripletUnavailable) {
-      return;
-    }
-
-    onSubdivisionChange?.(
-      getExerciseSubdivisionForRhythm({
-        feel: rhythm.feel === "triplet" ? "straight" : "triplet",
-        noteValue: rhythm.noteValue,
-      }),
-    );
-  };
-
   return (
     <div
       className={styles.patternControls}
@@ -342,7 +291,7 @@ export function ExercisePatternControls({
       aria-label="Exercise pattern"
     >
       <div
-        aria-label="Exercise direction and rhythm"
+        aria-label="Exercise direction"
         className={controlStyles.groupRow}
         role="group"
       >
@@ -363,47 +312,37 @@ export function ExercisePatternControls({
             />
           ))}
         </TactileControlGroup>
+      </div>
 
+      <div
+        aria-label="Exercise subdivision"
+        className={controlStyles.groupRow}
+        role="group"
+      >
         <TactileControlGroup
-          aria-label="Rhythm"
+          aria-label="Subdivision"
           className={controlStyles.controlGroup}
-          controlsClassName={controlStyles.modifierButtonGroup}
+          controlsClassName={`${controlStyles.buttonGroup} ${controlStyles.compactButtonGrid} ${styles.subdivisionControls}`}
           readout={rhythmLabel}
+          readoutAriaLabel={`Subdivision: ${rhythmAriaLabel}`}
         >
-          <span
-            aria-label="Note value"
-            className={controlStyles.buttonGroup}
-            role="group"
-          >
-            {noteValueChoices.map((choice) => (
-              <PartModuleControlButton
-                key={choice.noteValue}
-                aria-label={choice.label}
-                icon={choice.icon}
-                onPress={() => setNoteValue(choice.noteValue)}
-                selected={rhythm.noteValue === choice.noteValue}
-                unavailable={!onSubdivisionChange}
-              />
-            ))}
-          </span>
-          <PartModuleControlButton
-            aria-label={
-              rhythm.feel === "triplet"
-                ? "Use straight notes"
-                : "Use triplet notes"
-            }
-            icon={
-              <span
-                aria-hidden="true"
-                className={`${controlStyles.controlSymbolLabel} ${styles.tripletButtonLabel}`}
-              >
-                3
-              </span>
-            }
-            onPress={toggleTriplets}
-            selected={rhythm.feel === "triplet"}
-            unavailable={!onSubdivisionChange || tripletUnavailable}
-          />
+          {exerciseSubdivisionChoices.map((choice) => (
+            <PartModuleControlButton
+              key={choice.subdivision}
+              aria-label={`${choice.label}: ${choice.noteLabel}`}
+              icon={
+                <span
+                  aria-hidden="true"
+                  className={controlStyles.controlSymbolLabel}
+                >
+                  {choice.text}
+                </span>
+              }
+              onPress={() => onSubdivisionChange?.(choice.subdivision)}
+              selected={subdivision === choice.subdivision}
+              unavailable={!onSubdivisionChange}
+            />
+          ))}
         </TactileControlGroup>
       </div>
 

@@ -68,9 +68,9 @@ export function RhythmCreationPanel({
     toggleChoice,
   } = useDisclosureList<
     | "beats"
-    | "feel"
     | "foundation"
     | "starter"
+    | "subdivision"
     | "timekeeper"
     | "variation"
     | "wood"
@@ -98,7 +98,7 @@ export function RhythmCreationPanel({
 
   useEffect(() => {
     if (isTimekeeperOff) {
-      closeChoice("feel");
+      closeChoice("subdivision");
     }
   }, [closeChoice, isTimekeeperOff]);
 
@@ -278,13 +278,13 @@ export function RhythmCreationPanel({
         </DisclosureListItem>
 
         <DisclosureListItem
-          ariaLabel={`Feel. Current: ${feelLabel}`}
+          ariaLabel={`Subdivision. Current: ${feelLabel}`}
           disabled={isTimekeeperOff}
-          isOpen={isChoiceOpen("feel")}
-          label="Feel"
+          isOpen={isChoiceOpen("subdivision")}
+          label="Subdivision"
           panelVariant="menu"
           preview={feelLabel}
-          onToggle={() => toggleChoice("feel")}
+          onToggle={() => toggleChoice("subdivision")}
         >
           <DisclosureList density="compact">
             {rhythmTimekeeperSubdivisionChoices.map((choice) => {

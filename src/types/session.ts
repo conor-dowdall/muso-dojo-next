@@ -25,6 +25,7 @@ import {
   type CollectionRangeBoundary,
   type ExercisePattern,
 } from "@/utils/exercise-looper/exerciseSequence";
+import { type BeatSubdivisionId } from "@/utils/music-theory/beatSubdivision";
 import { type RhythmSelection } from "@/utils/rhythm/rhythmConfig";
 
 export type ChordProgressionChordListMode =
@@ -111,12 +112,7 @@ export interface DronePartModuleConfig extends PartModuleBaseConfig<"drone"> {
   wood?: WoodSurfaceId;
 }
 
-export type ExerciseSubdivision =
-  | "quarter"
-  | "eighth"
-  | "eighth-triplet"
-  | "sixteenth"
-  | "sixteenth-triplet";
+export type ExerciseSubdivision = BeatSubdivisionId;
 
 export type ExerciseCountInBeats = 0 | 2 | 3 | 4;
 

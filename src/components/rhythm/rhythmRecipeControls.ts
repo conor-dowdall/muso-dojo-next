@@ -20,6 +20,7 @@ import {
   type RhythmTimekeeperSound,
   type RhythmTimekeeperSubdivision,
 } from "@/utils/rhythm/rhythmConfig";
+import { beatSubdivisionOptions } from "@/utils/music-theory/beatSubdivision";
 
 export const rhythmTimekeeperSoundChoices = [
   {
@@ -70,31 +71,20 @@ export const rhythmGrooveChoices = [
   text: string;
 }[];
 
-export const rhythmTimekeeperSubdivisionChoices = [
-  {
-    label: "Use one subdivision per beat",
-    text: "1",
-    feel: "straight",
-    subdivision: "quarter",
-  },
-  {
-    label: "Use two subdivisions per beat",
-    text: "2",
-    feel: "straight",
-    subdivision: "eighth",
-  },
-  {
-    label: "Use three subdivisions per beat",
-    text: "3",
-    feel: "triplet",
-    subdivision: "eighth",
-  },
-  {
-    label: "Use four subdivisions per beat",
-    text: "4",
-    feel: "straight",
-    subdivision: "sixteenth",
-  },
+export const rhythmTimekeeperStraightSubdivisionChoices =
+  beatSubdivisionOptions.map((option) => ({
+    label: option.controlLabel,
+    text: String(option.countPerBeat),
+    feel: "straight" as const,
+    subdivision: option.id,
+  })) satisfies readonly {
+    feel: RhythmTimekeeperFeel;
+    label: string;
+    subdivision: RhythmTimekeeperSubdivision;
+    text: string;
+  }[];
+
+export const rhythmTimekeeperFeelSubdivisionChoices = [
   {
     label: "Use swing eighths timekeeper pattern",
     text: "Sw",
@@ -107,6 +97,16 @@ export const rhythmTimekeeperSubdivisionChoices = [
     feel: "shuffle",
     subdivision: "eighth",
   },
+] as const satisfies readonly {
+  feel: RhythmTimekeeperFeel;
+  label: string;
+  subdivision: RhythmTimekeeperSubdivision;
+  text: string;
+}[];
+
+export const rhythmTimekeeperSubdivisionChoices = [
+  ...rhythmTimekeeperStraightSubdivisionChoices,
+  ...rhythmTimekeeperFeelSubdivisionChoices,
 ] as const satisfies readonly {
   feel: RhythmTimekeeperFeel;
   label: string;
@@ -160,8 +160,8 @@ const rhythmStarterRecipes = {
     beats: 2,
     timekeeper: {
       ...DEFAULT_RHYTHM_RECIPE.timekeeper,
-      feel: "triplet",
-      subdivision: "eighth",
+      feel: "straight",
+      subdivision: "eighth-triplet",
     },
   },
   "12-8": {
@@ -169,8 +169,8 @@ const rhythmStarterRecipes = {
     beats: 4,
     timekeeper: {
       ...DEFAULT_RHYTHM_RECIPE.timekeeper,
-      feel: "triplet",
-      subdivision: "eighth",
+      feel: "straight",
+      subdivision: "eighth-triplet",
     },
   },
   shuffle: {

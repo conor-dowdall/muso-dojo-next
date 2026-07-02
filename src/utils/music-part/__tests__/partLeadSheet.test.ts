@@ -36,9 +36,9 @@ describe("getPartLeadSheetSummary", () => {
                 groove: "kit",
                 grouping: "auto",
                 timekeeper: {
-                  feel: "triplet",
+                  feel: "straight",
                   sound: "hat",
-                  subdivision: "eighth",
+                  subdivision: "eighth-triplet",
                 },
               },
               source: "recipe",

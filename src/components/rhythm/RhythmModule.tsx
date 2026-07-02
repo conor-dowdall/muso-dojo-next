@@ -44,8 +44,9 @@ import {
   isRhythmGrooveChoiceAvailable,
   isRhythmTimekeeperSubdivisionChoiceAvailable,
   rhythmGrooveChoices,
+  rhythmTimekeeperFeelSubdivisionChoices,
   rhythmTimekeeperSoundChoices,
-  rhythmTimekeeperSubdivisionChoices,
+  rhythmTimekeeperStraightSubdivisionChoices,
 } from "./rhythmRecipeControls";
 import { RhythmOptionsDialog } from "./RhythmOptionsDialog";
 import styles from "./RhythmModule.module.css";
@@ -346,41 +347,88 @@ export function RhythmModule({
 
                 <span
                   aria-label="Timekeeper rhythm"
-                  className={`${controlStyles.buttonGroup} ${controlStyles.compactButtonGrid} ${styles.timekeeperRhythmControls}`}
+                  className={styles.timekeeperRhythmSelector}
                   role="group"
                 >
-                  {rhythmTimekeeperSubdivisionChoices.map((choice) => (
-                    <PartModuleControlButton
-                      key={`${choice.subdivision}-${choice.feel}`}
-                      aria-label={choice.label}
-                      icon={
-                        <span
-                          aria-hidden="true"
-                          className={`${controlStyles.controlTextIconLabel} ${styles.timekeeperRhythmButtonLabel}`}
-                        >
-                          {choice.text}
-                        </span>
-                      }
-                      iconSizing="content"
-                      onPress={() =>
-                        updateTimekeeper({
-                          feel: choice.feel,
-                          subdivision: choice.subdivision,
-                        })
-                      }
-                      selected={
-                        recipe.timekeeper.feel === choice.feel &&
-                        recipe.timekeeper.subdivision === choice.subdivision
-                      }
-                      unavailable={
-                        !onRhythmRecipeChange ||
-                        !isRhythmTimekeeperSubdivisionChoiceAvailable(
-                          recipe,
-                          choice,
-                        )
-                      }
-                    />
-                  ))}
+                  <span
+                    aria-label="Timekeeper subdivisions"
+                    className={`${controlStyles.buttonGroup} ${controlStyles.compactButtonGrid} ${styles.timekeeperSubdivisionControls}`}
+                    role="group"
+                  >
+                    {rhythmTimekeeperStraightSubdivisionChoices.map(
+                      (choice) => (
+                        <PartModuleControlButton
+                          key={`${choice.subdivision}-${choice.feel}`}
+                          aria-label={choice.label}
+                          icon={
+                            <span
+                              aria-hidden="true"
+                              className={`${controlStyles.controlTextIconLabel} ${styles.timekeeperRhythmButtonLabel}`}
+                            >
+                              {choice.text}
+                            </span>
+                          }
+                          iconSizing="content"
+                          onPress={() =>
+                            updateTimekeeper({
+                              feel: choice.feel,
+                              subdivision: choice.subdivision,
+                            })
+                          }
+                          selected={
+                            recipe.timekeeper.feel === choice.feel &&
+                            recipe.timekeeper.subdivision === choice.subdivision
+                          }
+                          unavailable={
+                            !onRhythmRecipeChange ||
+                            !isRhythmTimekeeperSubdivisionChoiceAvailable(
+                              recipe,
+                              choice,
+                            )
+                          }
+                        />
+                      ),
+                    )}
+                  </span>
+
+                  <span
+                    aria-label="Timekeeper feels"
+                    className={`${controlStyles.buttonGroup} ${styles.timekeeperFeelControls}`}
+                    role="group"
+                  >
+                    {rhythmTimekeeperFeelSubdivisionChoices.map((choice) => (
+                      <PartModuleControlButton
+                        key={`${choice.subdivision}-${choice.feel}`}
+                        aria-label={choice.label}
+                        icon={
+                          <span
+                            aria-hidden="true"
+                            className={`${controlStyles.controlTextIconLabel} ${styles.timekeeperRhythmButtonLabel}`}
+                          >
+                            {choice.text}
+                          </span>
+                        }
+                        iconSizing="content"
+                        onPress={() =>
+                          updateTimekeeper({
+                            feel: choice.feel,
+                            subdivision: choice.subdivision,
+                          })
+                        }
+                        selected={
+                          recipe.timekeeper.feel === choice.feel &&
+                          recipe.timekeeper.subdivision === choice.subdivision
+                        }
+                        unavailable={
+                          !onRhythmRecipeChange ||
+                          !isRhythmTimekeeperSubdivisionChoiceAvailable(
+                            recipe,
+                            choice,
+                          )
+                        }
+                      />
+                    ))}
+                  </span>
                 </span>
               </TactileControlGroup>
             </div>

@@ -77,9 +77,28 @@ describe("rhythmConfig", () => {
       groove: "kit",
       grouping: "auto",
       timekeeper: {
-        feel: "triplet",
+        feel: "straight",
         sound: "hat",
-        subdivision: "eighth",
+        subdivision: "eighth-triplet",
+      },
+    });
+    expect(
+      normalizeRhythmRecipe({
+        beats: 5,
+        timekeeper: {
+          feel: "triplet",
+          sound: "hat",
+          subdivision: "sixteenth",
+        },
+      }),
+    ).toStrictEqual({
+      beats: 5,
+      groove: "kit",
+      grouping: "auto",
+      timekeeper: {
+        feel: "straight",
+        sound: "hat",
+        subdivision: "sixteenth-triplet",
       },
     });
     expect(
@@ -539,16 +558,16 @@ describe("rhythmConfig", () => {
     ]);
   });
 
-  it("generates triplet timekeeper hits without moving the groove lane", () => {
+  it("generates three-per-beat timekeeper hits without moving the groove lane", () => {
     const pattern = getRhythmSelectionPattern({
       recipe: {
         beats: 4,
         groove: "kit",
         grouping: "auto",
         timekeeper: {
-          feel: "triplet",
+          feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "eighth-triplet",
         },
       },
       source: "recipe",
@@ -563,6 +582,39 @@ describe("rhythmConfig", () => {
     );
   });
 
+  it("generates higher tuplet timekeeper densities inside each beat", () => {
+    const createHatTicks = (subdivision: "quintuplet" | "septuplet") => {
+      const pattern = getRhythmSelectionPattern({
+        recipe: {
+          beats: 1,
+          groove: "pulse",
+          grouping: "auto",
+          timekeeper: {
+            feel: "straight",
+            sound: "hat",
+            subdivision,
+          },
+        },
+        source: "recipe",
+      });
+
+      return pattern.hits
+        .filter((hit) => hit.sampleId === "closed-hat")
+        .map((hit) => hit.atTicks);
+    };
+
+    expect(createHatTicks("quintuplet")).toEqual([
+      0,
+      RHYTHM_PPQ / 5,
+      (RHYTHM_PPQ * 2) / 5,
+      (RHYTHM_PPQ * 3) / 5,
+      (RHYTHM_PPQ * 4) / 5,
+    ]);
+    expect(createHatTicks("septuplet")).toEqual(
+      Array.from({ length: 7 }, (_, index) => (RHYTHM_PPQ * index) / 7),
+    );
+  });
+
   it("resolves recognized rhythm settings into music-theory readouts", () => {
     const selection = normalizeRhythmSelection({
       recipe: {
@@ -570,9 +622,9 @@ describe("rhythmConfig", () => {
         groove: "kit",
         grouping: "auto",
         timekeeper: {
-          feel: "triplet",
+          feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "eighth-triplet",
         },
       },
       source: "recipe",
@@ -654,9 +706,9 @@ describe("rhythmConfig", () => {
         groove: "kit",
         grouping: "auto",
         timekeeper: {
-          feel: "triplet",
+          feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "eighth-triplet",
         },
       }),
     ).toStrictEqual({
@@ -684,9 +736,9 @@ describe("rhythmConfig", () => {
         groove: "kit",
         grouping: "auto",
         timekeeper: {
-          feel: "triplet",
+          feel: "straight",
           sound: "ride",
-          subdivision: "eighth",
+          subdivision: "eighth-triplet",
         },
       }),
     ).toStrictEqual({
@@ -701,15 +753,63 @@ describe("rhythmConfig", () => {
             groove: "kit",
             grouping: "auto",
             timekeeper: {
-              feel: "triplet",
+              feel: "straight",
               sound: "ride",
-              subdivision: "eighth",
+              subdivision: "eighth-triplet",
             },
           },
           source: "recipe",
         }),
       ),
     ).toBe("12/8 - Kit - Ride 3 per Beat Timekeeper");
+  });
+
+  it("keeps tuplets as subdivision details rather than new meter families", () => {
+    expect(
+      getRhythmTheoryReadout({
+        beats: 2,
+        groove: "kit",
+        grouping: "auto",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "quintuplet",
+        },
+      }),
+    ).toStrictEqual({
+      title: "2/4",
+      detail: "Simple Duple • Quintuplets",
+    });
+    expect(
+      getRhythmTheoryReadout({
+        beats: 3,
+        groove: "kit",
+        grouping: "auto",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "septuplet",
+        },
+      }),
+    ).toStrictEqual({
+      title: "3/4",
+      detail: "Simple Triple • Septuplets",
+    });
+    expect(
+      getRhythmTheoryReadout({
+        beats: 4,
+        groove: "kit",
+        grouping: "auto",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "thirty-second",
+        },
+      }),
+    ).toStrictEqual({
+      title: "4/4",
+      detail: "Simple Quadruple • Thirty-Second Notes",
+    });
   });
 
   it("groups odd beat counts into musical kick and snare anchors", () => {
@@ -1022,7 +1122,9 @@ describe("rhythmConfig", () => {
       { feel: "straight", sound: "hat", subdivision: "quarter" },
       { feel: "straight", sound: "hat", subdivision: "eighth" },
       { feel: "straight", sound: "hat", subdivision: "sixteenth" },
-      { feel: "triplet", sound: "ride", subdivision: "eighth" },
+      { feel: "straight", sound: "ride", subdivision: "eighth-triplet" },
+      { feel: "straight", sound: "ride", subdivision: "quintuplet" },
+      { feel: "straight", sound: "ride", subdivision: "septuplet" },
       { feel: "swing", sound: "ride", subdivision: "eighth" },
       { feel: "shuffle", sound: "shaker", subdivision: "eighth" },
     ] as const;
