@@ -16,23 +16,23 @@
   --color-text-muted: #a7acb6;
   --color-accent: #d4dae4;
   --color-danger: #f87171;
-  --color-page-gradient: rgb(212 218 228 / 0.09);
+  --color-page-gradient: rgb(148 163 184 / 0.075);
   --color-page-gradient-secondary: color-mix(
     in srgb,
     var(--color-page-gradient) 68%,
     transparent
   );
-  --color-page-background-lift: #262b35;
-  --color-page-background-shade: #000000;
+  --color-page-background-lift: #1c212a;
+  --color-page-background-shade: #020306;
   --color-page-background-start: color-mix(
     in srgb,
-    var(--color-base) 92%,
-    var(--color-page-background-lift) 8%
+    var(--color-base) 94%,
+    var(--color-page-background-lift) 6%
   );
   --color-page-background-end: color-mix(
     in srgb,
-    var(--color-base) 88%,
-    var(--color-page-background-shade) 12%
+    var(--color-base) 92%,
+    var(--color-page-background-shade) 8%
   );
   --color-surface: #14161b;
   --color-surface-hover: #20232a;
@@ -203,7 +203,7 @@
     --color-text-muted: #6f747d;
     --color-accent: #334155;
     --color-danger: #dc2626;
-    --color-page-gradient: rgb(51 65 85 / 0.08);
+    --color-page-gradient: rgb(51 65 85 / 0.06);
     --color-page-background-lift: #f7fbff;
     --color-page-background-shade: #e7ebf1;
     --color-surface: #f1f3f6;
@@ -225,7 +225,7 @@
   --color-text-muted: #6f747d;
   --color-accent: #334155;
   --color-danger: #dc2626;
-  --color-page-gradient: rgb(51 65 85 / 0.08);
+  --color-page-gradient: rgb(51 65 85 / 0.06);
   --color-page-background-lift: #f7fbff;
   --color-page-background-shade: #e7ebf1;
   --color-surface: #f1f3f6;
@@ -246,8 +246,8 @@
   --color-text-muted: #93b8c9;
   --color-accent: #5eead4;
   --color-danger: #fb7185;
-  --color-page-gradient: rgb(94 234 212 / 0.13);
-  --color-page-background-lift: #124962;
+  --color-page-gradient: rgb(94 234 212 / 0.1);
+  --color-page-background-lift: #0f3c52;
   --color-page-background-shade: #02070d;
   --color-surface: #0d1d2a;
   --color-surface-hover: #142f42;
@@ -268,8 +268,8 @@
   --color-text-muted: #baa8d5;
   --color-accent: #c084fc;
   --color-danger: #fb7185;
-  --color-page-gradient: rgb(192 132 252 / 0.14);
-  --color-page-background-lift: #3d2464;
+  --color-page-gradient: rgb(192 132 252 / 0.105);
+  --color-page-background-lift: #332052;
   --color-page-background-shade: #080511;
   --color-surface: #21162f;
   --color-surface-hover: #302147;
@@ -292,19 +292,19 @@ body {
   background-color: var(--color-base);
   background:
     radial-gradient(
-      ellipse at 50% -12rem,
+      ellipse 92rem 36rem at 50% -24rem,
       var(--color-page-gradient),
-      transparent 38rem
+      transparent 72%
     ),
     radial-gradient(
-      ellipse at 18% 100%,
+      ellipse 76rem 44rem at 14% 112%,
       var(--color-page-gradient-secondary),
-      transparent 34rem
+      transparent 76%
     ),
     linear-gradient(
-      135deg,
+      145deg,
       var(--color-page-background-start) 0%,
-      var(--color-base) 46%,
+      var(--color-base) 48%,
       var(--color-page-background-end) 100%
     );
 }

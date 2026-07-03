@@ -10,17 +10,27 @@
   --entry-text: #f7f8fb;
   --entry-muted-text: #a7acb6;
   --entry-accent: #d4dae4;
-  --entry-page-gradient: rgb(212 218 228 / 0.09);
+  --entry-page-gradient: rgb(148 163 184 / 0.075);
   --entry-page-gradient-secondary: color-mix(
     in srgb,
     var(--entry-page-gradient) 68%,
     transparent
   );
-  --entry-page-background-start: #0b0d12;
-  --entry-page-background-end: #050609;
-  --entry-card-background: rgb(255 255 255 / 0.035);
+  --entry-page-background-lift: #1c212a;
+  --entry-page-background-shade: #020306;
+  --entry-page-background-start: color-mix(
+    in srgb,
+    var(--entry-base) 94%,
+    var(--entry-page-background-lift) 6%
+  );
+  --entry-page-background-end: color-mix(
+    in srgb,
+    var(--entry-base) 92%,
+    var(--entry-page-background-shade) 8%
+  );
+  --entry-card-background: rgb(255 255 255 / 0.03);
   --entry-card-border: rgb(255 255 255 / 0.14);
-  --entry-card-highlight: rgb(255 255 255 / 0.1);
+  --entry-card-highlight: rgb(255 255 255 / 0.075);
 
   display: grid;
   min-block-size: 100dvb;
@@ -35,19 +45,19 @@
   color: var(--entry-text);
   background:
     radial-gradient(
-      ellipse at 50% -12rem,
+      ellipse 92rem 36rem at 50% -24rem,
       var(--entry-page-gradient),
-      transparent 38rem
+      transparent 72%
     ),
     radial-gradient(
-      ellipse at 18% 100%,
+      ellipse 76rem 44rem at 14% 112%,
       var(--entry-page-gradient-secondary),
-      transparent 34rem
+      transparent 76%
     ),
     linear-gradient(
-      135deg,
+      145deg,
       var(--entry-page-background-start) 0%,
-      var(--entry-base) 46%,
+      var(--entry-base) 48%,
       var(--entry-page-background-end) 100%
     );
 }

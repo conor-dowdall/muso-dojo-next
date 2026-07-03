@@ -38,10 +38,24 @@
 }
 
 .dialog {
-  --dialog-background: var(--color-surface);
-  --dialog-background-highlight: var(--color-surface-highlight);
+  --dialog-background: color-mix(
+    in srgb,
+    var(--color-base) 72%,
+    var(--color-surface)
+  );
+  --dialog-background-highlight: color-mix(
+    in srgb,
+    var(--color-surface-highlight) 36%,
+    transparent
+  );
   --dialog-backdrop: rgb(0 0 0 / 0.6);
   --dialog-border: var(--color-border);
+  --dialog-divider: var(--color-border-subtle);
+  --color-control-outline-background: color-mix(
+    in srgb,
+    var(--dialog-background) 82%,
+    var(--color-surface-hover)
+  );
   --dialog-width-compact: 20rem;
   --dialog-width-standard: 40rem;
   --dialog-width-wide: var(--content-max-inline-size);
@@ -63,9 +77,9 @@
     linear-gradient(
       180deg,
       var(--dialog-background-highlight),
-      var(--dialog-background)
+      transparent 11rem
     ),
-    var(--color-base);
+    var(--dialog-background);
   box-shadow: var(--shadow-highlight-inset), var(--shadow-dialog);
   color: var(--color-text);
 }
@@ -111,7 +125,7 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: var(--space-4);
-  border-bottom: var(--border-width-base) solid var(--color-border);
+  border-bottom: var(--border-width-base) solid var(--dialog-divider);
 }
 
 .dialogTitle {
@@ -183,7 +197,7 @@
   flex: 0 0 auto;
   min-inline-size: 0;
   padding: var(--space-4);
-  border-top: var(--border-width-base) solid var(--color-border);
+  border-top: var(--border-width-base) solid var(--dialog-divider);
   container-type: inline-size;
 }
 
