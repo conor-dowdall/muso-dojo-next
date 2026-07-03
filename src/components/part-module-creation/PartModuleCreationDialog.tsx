@@ -87,7 +87,6 @@ export function PartModuleCreationDialog({
               disabled={!canAddModules}
               label={addLabel}
               size="lg"
-              variant="filled"
               onClick={handleAddPartModule}
             />
           </DialogFooterActionGroup>

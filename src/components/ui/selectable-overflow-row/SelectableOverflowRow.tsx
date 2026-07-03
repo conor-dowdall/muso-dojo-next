@@ -136,7 +136,7 @@ export function SelectableActionRow({
             selected={actionSelected ?? isActionOpen}
             selectionSemantics="visual"
             size={actionSize}
-            variant={actionVariant ?? (isActionOpen ? "filled" : "outline")}
+            variant={actionVariant}
             onClick={onAction}
           />
         ) : (

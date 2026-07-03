@@ -253,11 +253,6 @@ export const InstrumentHeaderActions = ({
                     size="sm"
                     onClick={() => setNoteInteractionMode(mode.id)}
                     selected={effectiveNoteInteractionMode === mode.id}
-                    variant={
-                      effectiveNoteInteractionMode === mode.id
-                        ? "filled"
-                        : "outline"
-                    }
                   />
                 );
               })}
@@ -271,7 +266,6 @@ export const InstrumentHeaderActions = ({
                 size="sm"
                 onClick={toggleActiveNotesLock}
                 selected={activeNotesLocked}
-                variant={activeNotesLocked ? "filled" : "outline"}
               />
               <IconButton
                 aria-label={resetNotesLabel}
@@ -279,7 +273,6 @@ export const InstrumentHeaderActions = ({
                 size="sm"
                 onClick={onResetNotes}
                 disabled={!canResetNotes}
-                variant={canResetNotes ? "filled" : "ghost"}
               />
             </ControlHeaderCluster>
 

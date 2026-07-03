@@ -219,7 +219,6 @@ export function PracticeBandPlayButton({
       selected={transport.isActive}
       shouldYield={false}
       size="sm"
-      variant="filled"
       onClick={transport.togglePlayback}
     />
   );

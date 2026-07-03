@@ -186,7 +186,6 @@ export function SessionHeader({
                 disabled={!hasActiveSession}
                 icon={<Plus />}
                 size="sm"
-                variant="filled"
                 onClick={onOpenAddDialog}
               />
             )}
@@ -217,7 +216,6 @@ export function SessionHeader({
                 icon={<X />}
                 size="sm"
                 shouldYield={false}
-                variant="ghost"
                 onClick={onViewModeExit}
               />
             ) : (

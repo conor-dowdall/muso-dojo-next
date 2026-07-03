@@ -297,12 +297,7 @@ export function DialogDoneFooter({
         className={styles.dialogFooterActions}
         aria-label="Dialog actions"
       >
-        <Button
-          label={label}
-          size={buttonSize}
-          variant="filled"
-          onClick={onDone}
-        />
+        <Button label={label} size={buttonSize} onClick={onDone} />
       </section>
     </DialogFooter>
   );

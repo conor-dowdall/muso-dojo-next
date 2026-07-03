@@ -26,7 +26,7 @@ export type ButtonLayout = "inline" | "stacked" | "media" | "split";
 export type ButtonDensity = "compact" | "standard" | "spacious";
 export type ButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
 export type ButtonTone = "neutral" | "danger";
-export type ButtonVariant = "filled" | "outline" | "ghost";
+export type ButtonVariant = "outline" | "ghost";
 export type ButtonSelectionSemantics = "pressed" | "visual";
 
 const buttonTitleSizes = {

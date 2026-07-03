@@ -428,7 +428,6 @@ export function AddToSessionDialog({
               disabled={!canSubmit}
               label={actionLabel}
               size="lg"
-              variant="filled"
               onClick={handleSubmit}
             />
           </DialogFooterActionGroup>

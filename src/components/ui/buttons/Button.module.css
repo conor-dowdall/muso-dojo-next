@@ -110,13 +110,6 @@
   color: var(--color-danger);
 }
 
-.filled {
-  background-color: var(--button-background);
-  border: var(--border-width-base) solid var(--button-border-current-color);
-  box-shadow: inset 0 0 0 var(--button-border-extra-width)
-    var(--button-border-current-color);
-}
-
 .outline {
   background-color: var(--button-outline-background);
   border: var(--border-width-base) solid var(--button-border-current-color);
