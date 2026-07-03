@@ -37,4 +37,18 @@ describe("normalizeMusicPartConfig", () => {
       }),
     ).not.toHaveProperty("durationInBars");
   });
+
+  it("keeps exact simple fractional Part durations", () => {
+    expect(
+      normalizeMusicPartConfig({
+        id: "third-bar",
+        rootNote: "C",
+        noteCollectionKey: "major",
+        durationInBars: 1 / 3,
+        modules: [],
+      }),
+    ).toMatchObject({
+      durationInBars: 0.333333,
+    });
+  });
 });

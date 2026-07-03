@@ -6,21 +6,12 @@
   --music-part-padding: var(--space-4);
   --music-part-gap: var(--space-4);
   --music-part-content-gap: var(--space-4);
-  --music-part-border: var(--color-border);
-  --music-part-background: var(--color-surface);
-  --music-part-background-highlight: rgb(255 255 255 / 0.03);
 
-  border: var(--border-width-base) solid var(--music-part-border);
+  border: var(--border-width-base) solid transparent;
   border-radius: var(--radius-surface);
   padding: var(--music-part-padding);
-  background:
-    linear-gradient(
-      180deg,
-      var(--music-part-background-highlight),
-      var(--music-part-background)
-    ),
-    var(--color-surface);
-  box-shadow: var(--shadow-highlight-inset), var(--shadow-surface-elevated);
+  background: transparent;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: var(--music-part-gap);
@@ -38,10 +29,10 @@
 }
 
 .musicPart[data-part-sequence-state="active"] {
+  background: color-mix(in srgb, var(--color-accent) 6%, transparent);
   box-shadow:
     inset 0 0 0 var(--space-px) var(--part-sequence-active-ring),
-    var(--shadow-highlight-inset),
-    var(--shadow-surface-elevated);
+    var(--shadow-highlight-inset);
 }
 
 .musicPart[data-part-sequence-state="pending"] {

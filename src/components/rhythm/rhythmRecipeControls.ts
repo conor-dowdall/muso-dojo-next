@@ -149,6 +149,10 @@ export type RhythmStarterId = (typeof rhythmStarterChoices)[number]["id"];
 type RhythmTimekeeperSubdivisionChoice =
   (typeof rhythmTimekeeperSubdivisionChoices)[number];
 
+export interface RhythmBeatCountConstraint {
+  requiredBarDivision?: number;
+}
+
 const rhythmStarterRecipes = {
   "4-4": DEFAULT_RHYTHM_RECIPE,
   "3-4": {
@@ -207,12 +211,115 @@ function clampBeatCount(beats: number) {
   return Math.min(RHYTHM_MAX_BEATS, Math.max(RHYTHM_MIN_BEATS, beats));
 }
 
+function normalizeRequiredBarDivision(
+  constraint: RhythmBeatCountConstraint | undefined,
+) {
+  const requiredBarDivision = constraint?.requiredBarDivision;
+
+  return typeof requiredBarDivision === "number" &&
+    Number.isInteger(requiredBarDivision) &&
+    requiredBarDivision > 1
+    ? requiredBarDivision
+    : undefined;
+}
+
 function getCompatibleRecipe(recipe: RhythmRecipe) {
   return normalizeRhythmRecipe(recipe);
 }
 
+export function rhythmRecipesAreEqual(left: RhythmRecipe, right: RhythmRecipe) {
+  return (
+    left.beats === right.beats &&
+    left.groove === right.groove &&
+    left.grouping === right.grouping &&
+    left.timekeeper.feel === right.timekeeper.feel &&
+    left.timekeeper.sound === right.timekeeper.sound &&
+    left.timekeeper.subdivision === right.timekeeper.subdivision
+  );
+}
+
+export function getCompatibleRhythmBeatCounts(
+  constraint: RhythmBeatCountConstraint | undefined,
+) {
+  const requiredBarDivision = normalizeRequiredBarDivision(constraint);
+
+  return Array.from(
+    { length: RHYTHM_MAX_BEATS - RHYTHM_MIN_BEATS + 1 },
+    (_, index) => RHYTHM_MIN_BEATS + index,
+  ).filter(
+    (beats) =>
+      requiredBarDivision === undefined || beats % requiredBarDivision === 0,
+  );
+}
+
+export function isRhythmBeatCountCompatible(
+  beats: number,
+  constraint: RhythmBeatCountConstraint | undefined,
+) {
+  const requiredBarDivision = normalizeRequiredBarDivision(constraint);
+
+  return requiredBarDivision === undefined || beats % requiredBarDivision === 0;
+}
+
+function getNearestCompatibleRhythmBeatCount(
+  beats: number,
+  constraint: RhythmBeatCountConstraint | undefined,
+) {
+  if (isRhythmBeatCountCompatible(beats, constraint)) {
+    return clampBeatCount(beats);
+  }
+
+  const compatibleBeatCounts = getCompatibleRhythmBeatCounts(constraint);
+  const defaultBeatCount = DEFAULT_RHYTHM_RECIPE.beats;
+
+  if (compatibleBeatCounts.includes(defaultBeatCount)) {
+    return defaultBeatCount;
+  }
+
+  return (
+    compatibleBeatCounts.toSorted(
+      (left, right) =>
+        Math.abs(left - beats) - Math.abs(right - beats) || left - right,
+    )[0] ?? clampBeatCount(beats)
+  );
+}
+
+export function getAdjacentCompatibleRhythmBeatCount(
+  beats: number,
+  constraint: RhythmBeatCountConstraint | undefined,
+  direction: "next" | "previous",
+) {
+  const compatibleBeatCounts = getCompatibleRhythmBeatCounts(constraint);
+  const candidate =
+    direction === "next"
+      ? compatibleBeatCounts.find((beatCount) => beatCount > beats)
+      : compatibleBeatCounts.findLast((beatCount) => beatCount < beats);
+
+  return candidate ?? beats;
+}
+
+export function getRecipeWithBeatCountConstraint(
+  recipe: RhythmRecipe,
+  constraint: RhythmBeatCountConstraint | undefined,
+) {
+  return getRecipeWithBeatCount(
+    recipe,
+    getNearestCompatibleRhythmBeatCount(recipe.beats, constraint),
+  );
+}
+
 export function getRhythmStarterRecipe(starterId: RhythmStarterId) {
   return getCompatibleRecipe(rhythmStarterRecipes[starterId]);
+}
+
+export function isRhythmStarterChoiceAvailable(
+  starterId: RhythmStarterId,
+  constraint: RhythmBeatCountConstraint | undefined,
+) {
+  return isRhythmBeatCountCompatible(
+    getRhythmStarterRecipe(starterId).beats,
+    constraint,
+  );
 }
 
 function findRhythmStarterChoice(starterId: RhythmStarterId) {

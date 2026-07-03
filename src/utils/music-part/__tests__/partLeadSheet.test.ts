@@ -13,17 +13,28 @@ function createPart(patch: Partial<MusicPartConfig> = {}): MusicPartConfig {
 }
 
 describe("getPartLeadSheetSummary", () => {
-  it("shows a half-bar progression Part as 2/4 with a Half Bar note", () => {
-    expect(
-      getPartLeadSheetSummary(createPart({ durationInBars: 0.5 })),
-    ).toMatchObject({
-      durationLabel: "Half Bar",
+  it("shows a half-bar progression Part as a proportional 2/4 chart entry", () => {
+    const summary = getPartLeadSheetSummary(
+      createPart({ durationInBars: 0.5 }),
+    );
+
+    expect(summary).toMatchObject({
+      chartSpanUnits: 210,
       identityLabel: "CM",
+      isPartialBar: true,
       meterLabel: "2/4",
+    });
+    expect(summary).not.toHaveProperty("durationLabel");
+  });
+
+  it("uses a full chart span for ordinary Parts", () => {
+    expect(getPartLeadSheetSummary(createPart())).toMatchObject({
+      chartSpanUnits: 420,
+      isPartialBar: false,
     });
   });
 
-  it("drops the half-bar note when an explicit Rhythm changes the meter", () => {
+  it("uses an explicit Rhythm meter for a half-bar progression Part", () => {
     const summary = getPartLeadSheetSummary(
       createPart({
         durationInBars: 0.5,
@@ -52,6 +63,6 @@ describe("getPartLeadSheetSummary", () => {
     expect(summary).toMatchObject({
       meterLabel: "6/8",
     });
-    expect(summary.durationLabel).toBeUndefined();
+    expect(summary).not.toHaveProperty("durationLabel");
   });
 });

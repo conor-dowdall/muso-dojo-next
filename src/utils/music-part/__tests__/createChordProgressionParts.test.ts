@@ -156,4 +156,54 @@ describe("createChordProgressionParts", () => {
       type: "rhythm",
     });
   });
+
+  it("sizes split progression parts from the requested Rhythm bar length", () => {
+    const parts = createChordProgressionParts({
+      chordListMode: "full-song-order",
+      rootNote: "C",
+      progressionKey: "oneFourOneFiveSplitReturn",
+      moduleRequests: [
+        {
+          type: "rhythm",
+          settings: {
+            rhythm: {
+              recipe: {
+                beats: 6,
+                groove: "kit",
+                grouping: "auto",
+                timekeeper: {
+                  feel: "straight",
+                  sound: "hat",
+                  subdivision: "eighth",
+                },
+              },
+              source: "recipe",
+            },
+          },
+        },
+      ],
+    });
+
+    expect(parts[6]).toMatchObject({
+      durationInBars: 0.5,
+      modules: [
+        {
+          rhythm: {
+            recipe: {
+              beats: 3,
+            },
+          },
+          type: "rhythm",
+        },
+      ],
+    });
+    expect(parts[8]?.modules[0]).toMatchObject({
+      rhythm: {
+        recipe: {
+          beats: 6,
+        },
+      },
+      type: "rhythm",
+    });
+  });
 });

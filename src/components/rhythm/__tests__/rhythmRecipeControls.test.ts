@@ -3,13 +3,18 @@ import { getRhythmTheoryReadout } from "@/data/rhythmPresets";
 import { normalizeRhythmRecipe } from "@/utils/rhythm/rhythmConfig";
 import {
   getRecipeWithBeatCount,
+  getRecipeWithBeatCountConstraint,
   getRecipeWithGroove,
   getRecipeWithTimekeeper,
+  getAdjacentCompatibleRhythmBeatCount,
+  getCompatibleRhythmBeatCounts,
   getRhythmRecipeCreationSummary,
   getRhythmStarterChoiceForRecipe,
   getRhythmStarterRecipe,
   getRhythmStarterSummary,
+  isRhythmBeatCountCompatible,
   isRhythmGrooveChoiceAvailable,
+  isRhythmStarterChoiceAvailable,
   isRhythmTimekeeperSubdivisionChoiceAvailable,
   rhythmTimekeeperFeelSubdivisionChoices,
   rhythmStarterChoices,
@@ -115,9 +120,8 @@ describe("rhythmRecipeControls", () => {
       )?.label,
     ).toBe("6/8");
     expect(
-      getRhythmStarterChoiceForRecipe(
-        getRecipeWithGroove(twelveEight, "pulse"),
-      )?.label,
+      getRhythmStarterChoiceForRecipe(getRecipeWithGroove(twelveEight, "pulse"))
+        ?.label,
     ).toBe("12/8");
   });
 
@@ -221,5 +225,33 @@ describe("rhythmRecipeControls", () => {
           rhythmTimekeeperFeelSubdivisionChoices.map((choice) => choice.text),
         ),
     );
+  });
+
+  it("constrains beat counts for split-bar progression compatibility", () => {
+    const halfBarConstraint = { requiredBarDivision: 2 };
+    const fifthBarConstraint = { requiredBarDivision: 5 };
+    const threeFour = getRhythmStarterRecipe("3-4");
+
+    expect(getCompatibleRhythmBeatCounts(halfBarConstraint)).toEqual([
+      2, 4, 6, 8,
+    ]);
+    expect(getCompatibleRhythmBeatCounts(fifthBarConstraint)).toEqual([5]);
+    expect(isRhythmBeatCountCompatible(4, halfBarConstraint)).toBe(true);
+    expect(isRhythmBeatCountCompatible(3, halfBarConstraint)).toBe(false);
+    expect(isRhythmStarterChoiceAvailable("3-4", halfBarConstraint)).toBe(
+      false,
+    );
+    expect(isRhythmStarterChoiceAvailable("6-8", halfBarConstraint)).toBe(true);
+    expect(
+      getRecipeWithBeatCountConstraint(threeFour, halfBarConstraint),
+    ).toMatchObject({
+      beats: 4,
+    });
+    expect(
+      getAdjacentCompatibleRhythmBeatCount(4, halfBarConstraint, "previous"),
+    ).toBe(2);
+    expect(
+      getAdjacentCompatibleRhythmBeatCount(4, halfBarConstraint, "next"),
+    ).toBe(6);
   });
 });

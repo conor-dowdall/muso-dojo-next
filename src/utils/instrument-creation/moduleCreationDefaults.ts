@@ -36,7 +36,10 @@ export const DEFAULT_PART_MODULE_CREATION_KINDS =
 const DEFAULT_MODULE_CREATION_KINDS_BY_CONTEXT = {
   part: DEFAULT_PART_MODULE_CREATION_KINDS,
   session: DEFAULT_SESSION_MODULE_CREATION_KINDS,
-} as const satisfies Record<ModuleCreationContext, readonly ModuleCreationKind[]>;
+} as const satisfies Record<
+  ModuleCreationContext,
+  readonly ModuleCreationKind[]
+>;
 
 export function createBuiltInDroneModuleCreationDefault(): DroneModuleCreationDefault {
   return {

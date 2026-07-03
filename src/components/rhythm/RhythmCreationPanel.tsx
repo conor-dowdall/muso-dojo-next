@@ -40,8 +40,12 @@ import {
   getRhythmStarterChoiceForRecipe,
   getRhythmStarterRecipe,
   getRhythmStarterSummary,
+  getAdjacentCompatibleRhythmBeatCount,
+  getRecipeWithBeatCountConstraint,
   isRhythmGrooveChoiceAvailable,
+  isRhythmStarterChoiceAvailable,
   isRhythmTimekeeperSubdivisionChoiceAvailable,
+  type RhythmBeatCountConstraint,
   rhythmGrooveChoices,
   rhythmStarterChoices,
   rhythmTimekeeperSoundChoices,
@@ -50,6 +54,7 @@ import {
 
 interface RhythmCreationPanelProps {
   ariaLabel?: string;
+  beatCountConstraint?: RhythmBeatCountConstraint;
   closeSignal?: number;
   onChange: (value: RhythmModuleCreationDefault) => void;
   value: RhythmModuleCreationDefault;
@@ -57,6 +62,7 @@ interface RhythmCreationPanelProps {
 
 export function RhythmCreationPanel({
   ariaLabel = "Rhythm settings",
+  beatCountConstraint,
   closeSignal,
   onChange,
   value,
@@ -93,6 +99,31 @@ export function RhythmCreationPanel({
   const feelLabel = getRhythmTimekeeperRhythmReadoutLabel(recipe.timekeeper);
   const selectedStarterChoice = getRhythmStarterChoiceForRecipe(recipe);
   const starterLabel = selectedStarterChoice?.label ?? "Custom";
+  const previousBeatCount = getAdjacentCompatibleRhythmBeatCount(
+    recipe.beats,
+    beatCountConstraint,
+    "previous",
+  );
+  const nextBeatCount = getAdjacentCompatibleRhythmBeatCount(
+    recipe.beats,
+    beatCountConstraint,
+    "next",
+  );
+
+  const updateRecipe = (nextRecipe: RhythmRecipe) => {
+    const constrainedRecipe = getRecipeWithBeatCountConstraint(
+      nextRecipe,
+      beatCountConstraint,
+    );
+
+    onChange({
+      ...value,
+      rhythm: {
+        recipe: constrainedRecipe,
+        source: "recipe",
+      },
+    });
+  };
 
   useEffect(() => {
     closeAll();
@@ -109,16 +140,6 @@ export function RhythmCreationPanel({
       closeChoice("variation");
     }
   }, [closeChoice, hasGroupingChoices]);
-
-  const updateRecipe = (nextRecipe: RhythmRecipe) => {
-    onChange({
-      ...value,
-      rhythm: {
-        recipe: nextRecipe,
-        source: "recipe",
-      },
-    });
-  };
 
   const handleWoodChange = (nextWood: WoodSurfaceId) => {
     onChange({ ...value, wood: nextWood });
@@ -164,6 +185,12 @@ export function RhythmCreationPanel({
               <DisclosureListChoice
                 key={choice.id}
                 aria-label={`Start with ${choice.label}`}
+                disabled={
+                  !isRhythmStarterChoiceAvailable(
+                    choice.id,
+                    beatCountConstraint,
+                  )
+                }
                 label={choice.label}
                 selected={selectedStarterChoice?.id === choice.id}
                 subtitle={getRhythmStarterSummary(choice.id)}
@@ -190,9 +217,18 @@ export function RhythmCreationPanel({
             max={RHYTHM_MAX_BEATS}
             min={RHYTHM_MIN_BEATS}
             value={recipe.beats}
-            onChange={(beats) =>
-              updateRecipe(getRecipeWithBeatCount(recipe, beats))
-            }
+            canDecrease={previousBeatCount !== recipe.beats}
+            canIncrease={nextBeatCount !== recipe.beats}
+            onChange={(beats) => {
+              const nextBeats =
+                beats < recipe.beats
+                  ? previousBeatCount
+                  : beats > recipe.beats
+                    ? nextBeatCount
+                    : recipe.beats;
+
+              updateRecipe(getRecipeWithBeatCount(recipe, nextBeats));
+            }}
           />
         </DisclosureListItem>
 

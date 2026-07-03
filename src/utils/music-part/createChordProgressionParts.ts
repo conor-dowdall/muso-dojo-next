@@ -23,8 +23,12 @@ import { DEFAULT_PART_ROOT_NOTE } from "@/utils/session/sessionDefaults";
 import {
   PART_DURATION_BEATS_PER_BAR,
   getRepresentablePartDurationBeats,
-  getRhythmSelectionForPartDuration,
+  getRhythmSelectionForBeatCount,
 } from "@/utils/music-part/partDuration";
+import {
+  DEFAULT_RHYTHM_SELECTION,
+  getRhythmSelectionRecipe,
+} from "@/utils/rhythm/rhythmConfig";
 
 const BAR_DURATION_IN_BARS = 1;
 const DURATION_EPSILON = 0.000_001;
@@ -60,12 +64,15 @@ function normalizeSegmentDuration(durationInBars: number) {
   return Math.round(durationInBars * DURATION_PRECISION) / DURATION_PRECISION;
 }
 
-function getRhythmBeatCountForSegment(durationInBars: number) {
+function getRhythmBeatCountForSegmentWithBarBeats(
+  durationInBars: number,
+  beatsPerBar: number,
+) {
   if (Math.abs(durationInBars - BAR_DURATION_IN_BARS) <= DURATION_EPSILON) {
     return undefined;
   }
 
-  return getRepresentablePartDurationBeats(durationInBars);
+  return getRepresentablePartDurationBeats(durationInBars, beatsPerBar);
 }
 
 function getProgressionChordDurationInBars(
@@ -84,6 +91,7 @@ function getProgressionChordDurationInBars(
 function createFullProgressionPartReferences(
   rootNote: RootNote,
   progressionKey: ChordProgressionKey,
+  beatsPerBar = PART_DURATION_BEATS_PER_BAR,
 ): ProgressionPartReference[] {
   const progression = chordProgressions[progressionKey] as
     | DurationAwareChordProgression
@@ -106,7 +114,10 @@ function createFullProgressionPartReferences(
       const durationInBars = normalizeSegmentDuration(
         Math.min(remainingDuration, remainingBarDuration),
       );
-      const rhythmBeatCount = getRhythmBeatCountForSegment(durationInBars);
+      const rhythmBeatCount = getRhythmBeatCountForSegmentWithBarBeats(
+        durationInBars,
+        beatsPerBar,
+      );
 
       partReferences.push({
         reference,
@@ -145,11 +156,19 @@ function applyProgressionRhythmBeatCount(
 
   return {
     ...module,
-    rhythm: getRhythmSelectionForPartDuration(
-      rhythmBeatCount / PART_DURATION_BEATS_PER_BAR,
-      module.rhythm,
-    ),
+    rhythm: getRhythmSelectionForBeatCount(rhythmBeatCount, module.rhythm),
   };
+}
+
+function getRequestedRhythmBeatsPerBar(
+  moduleRequests: readonly PartModuleCreationRequest[],
+) {
+  const rhythmRequest = moduleRequests.find(
+    (request) => request.type === "rhythm",
+  );
+  const rhythm = rhythmRequest?.settings?.rhythm ?? DEFAULT_RHYTHM_SELECTION;
+
+  return getRhythmSelectionRecipe(rhythm).beats;
 }
 
 function createPartFromReference<T extends PartModuleType>({
@@ -194,9 +213,14 @@ export function createChordProgressionParts<
 }: CreateChordProgressionPartsOptions<T>): MusicPartConfig[] {
   const normalizedRootNote = (normalizeRootNoteString(rootNote) ??
     DEFAULT_PART_ROOT_NOTE) as RootNote;
+  const rhythmBeatsPerBar = getRequestedRhythmBeatsPerBar(moduleRequests);
   const references: readonly ProgressionPartReference[] =
     chordListMode === "full-song-order"
-      ? createFullProgressionPartReferences(normalizedRootNote, progressionKey)
+      ? createFullProgressionPartReferences(
+          normalizedRootNote,
+          progressionKey,
+          rhythmBeatsPerBar,
+        )
       : createUniqueProgressionPartReferences(
           normalizedRootNote,
           progressionKey,

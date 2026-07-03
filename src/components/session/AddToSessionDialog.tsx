@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import {
   normalizeRootNoteString,
   type ChordProgressionKey,
@@ -41,6 +41,7 @@ import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPi
 import { AddToSessionRootNoteItem } from "@/components/session/AddToSessionRootNoteItem";
 import { useAppStore } from "@/stores/appStore";
 import { getChordProgressionDisplayLabels } from "@/utils/music-theory/chordProgressions";
+import { getChordProgressionRhythmProfile } from "@/utils/music-theory/chordProgressionRhythm";
 import { getNoteCollectionDisplayName } from "@/utils/music-theory/getNoteCollectionDisplayName";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import localStyles from "./AddToSessionDialog.module.css";
@@ -183,6 +184,25 @@ export function AddToSessionDialog({
   const selectedChordListOption = getChordListOption(chordListMode);
   const selectedNoteCollectionName =
     getNoteCollectionDisplayName(noteCollectionKey);
+  const progressionRhythmProfile = useMemo(
+    () => getChordProgressionRhythmProfile(progressionKey),
+    [progressionKey],
+  );
+  const rhythmBeatCountConstraint = useMemo(
+    () =>
+      selectedMode === "chord-progression" &&
+      chordListMode === "full-song-order" &&
+      progressionRhythmProfile.requiredBarDivision > 1
+        ? {
+            requiredBarDivision: progressionRhythmProfile.requiredBarDivision,
+          }
+        : undefined,
+    [chordListMode, progressionRhythmProfile.requiredBarDivision, selectedMode],
+  );
+  const rhythmPreferredStarterId =
+    selectedMode === "chord-progression"
+      ? progressionRhythmProfile.preferredRhythmStarterId
+      : undefined;
   const canSubmit = moduleDraft.moduleRequests.length > 0;
   const effectiveReplaceSession = canReplaceSession && replaceSession;
   const actionLabel = effectiveReplaceSession
@@ -385,6 +405,8 @@ export function AddToSessionDialog({
             context="session"
             instrumentCreationRangeContext={instrumentCreationRangeContext}
             onDraftChange={setModuleDraft}
+            rhythmBeatCountConstraint={rhythmBeatCountConstraint}
+            rhythmPreferredStarterId={rhythmPreferredStarterId}
           />
         </DialogContentSection>
       </DialogContent>

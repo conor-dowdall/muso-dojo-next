@@ -20,6 +20,7 @@ import { useAppStore } from "@/stores/appStore";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { useScopedTransportShortcuts } from "@/hooks/interaction/useScopedTransportShortcuts";
 import { type SessionConfig } from "@/types/session";
+import { createPartBarTimeline } from "@/utils/music-part/partBarTimeline";
 import { getPartIdentity } from "@/utils/music-theory/partIdentity";
 import {
   resolvePracticeBandConfig,
@@ -28,34 +29,32 @@ import {
 import styles from "./PracticeBandTransport.module.css";
 
 export interface PracticeBandReadoutModel {
+  barAccessibleLabel?: string;
+  barNumberLabel?: string;
+  barTotalAccessibleLabel?: string;
+  barTotalLabel?: string;
   countLabel: string;
   identityAccessibleLabel?: string;
   identityLabel?: string;
-  partCount: number;
-  partNumber?: number;
-}
-
-function formatPartCount(partCount: number) {
-  return partCount === 1 ? "1 Part" : `${partCount} Parts`;
 }
 
 function createPartReadout({
   activeIndex,
-  partCount,
   session,
 }: {
   activeIndex: number | undefined;
-  partCount: number;
   session: SessionConfig;
 }): PracticeBandReadoutModel {
   const part =
     activeIndex === undefined ? undefined : session.parts[activeIndex];
-  const countLabel = formatPartCount(partCount);
+  const barTimeline = createPartBarTimeline(session.parts);
+  const barEntry =
+    activeIndex === undefined ? undefined : barTimeline.entries[activeIndex];
+  const countLabel = barTimeline.totalLabel;
 
-  if (activeIndex === undefined || !part) {
+  if (activeIndex === undefined || !part || !barEntry) {
     return {
       countLabel,
-      partCount,
     };
   }
 
@@ -63,10 +62,12 @@ function createPartReadout({
 
   return {
     countLabel,
+    barAccessibleLabel: barEntry.barAccessibleLabel,
+    barNumberLabel: barEntry.barNumberLabel,
+    barTotalAccessibleLabel: barEntry.barTotalAccessibleLabel,
+    barTotalLabel: barEntry.barTotalLabel,
     identityAccessibleLabel: identity.accessibleLabel,
     identityLabel: identity.label,
-    partCount,
-    partNumber: activeIndex + 1,
   };
 }
 
@@ -128,7 +129,6 @@ export function usePracticeBandTransport(
     session && isActive
       ? createPartReadout({
           activeIndex: displayIndex,
-          partCount,
           session,
         })
       : null;
@@ -236,10 +236,6 @@ type PracticeBandReadoutStyle = CSSProperties & {
   "--practice-band-position-width": string;
 };
 
-function formatPartNumber(value: number, partCount: number) {
-  return String(value).padStart(Math.max(2, String(partCount).length), "0");
-}
-
 export function PracticeBandReadout({
   prominence = "compact",
   readout,
@@ -249,7 +245,10 @@ export function PracticeBandReadout({
   }
 
   if (
-    readout.partNumber === undefined ||
+    readout.barAccessibleLabel === undefined ||
+    readout.barNumberLabel === undefined ||
+    readout.barTotalLabel === undefined ||
+    readout.barTotalAccessibleLabel === undefined ||
     !readout.identityLabel ||
     !readout.identityAccessibleLabel
   ) {
@@ -264,10 +263,11 @@ export function PracticeBandReadout({
     );
   }
 
-  const partNumber = formatPartNumber(readout.partNumber, readout.partCount);
-  const partCount = formatPartNumber(readout.partCount, readout.partCount);
-  const accessibleLabel = `Part ${readout.partNumber} of ${readout.partCount}. ${readout.identityAccessibleLabel}.`;
-  const partNumberWidth = Math.max(2, String(readout.partCount).length);
+  const accessibleLabel = `Bar ${readout.barAccessibleLabel} of ${readout.barTotalAccessibleLabel}. ${readout.identityAccessibleLabel}.`;
+  const partNumberWidth = Math.max(
+    readout.barNumberLabel.length,
+    readout.barTotalLabel.length,
+  );
   const readoutStyle: PracticeBandReadoutStyle = {
     "--practice-band-compact-position-width": `${partNumberWidth * 2 + 2.15}ch`,
     "--practice-band-part-number-width": `${partNumberWidth}ch`,
@@ -283,11 +283,11 @@ export function PracticeBandReadout({
       style={readoutStyle}
     >
       <span aria-hidden="true" className={styles.partPosition}>
-        <span className={styles.partLabel}>Part</span>
+        <span className={styles.partLabel}>Bar</span>
         <span className={styles.partCounter}>
-          <span className={styles.partNumber}>{partNumber}</span>
+          <span className={styles.partNumber}>{readout.barNumberLabel}</span>
           <span className={styles.partOf}>of</span>
-          <span className={styles.partTotal}>{partCount}</span>
+          <span className={styles.partTotal}>{readout.barTotalLabel}</span>
         </span>
       </span>
       <span aria-hidden="true" className={styles.partIdentity}>

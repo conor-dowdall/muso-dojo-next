@@ -16,7 +16,14 @@ import { KeyboardInstrumentCreationPanel } from "@/components/instrument-creatio
 import { DroneCreationPanel } from "@/components/drone/DroneCreationPanel";
 import { ExerciseLooperCreationPanel } from "@/components/exercise-looper/ExerciseLooperCreationPanel";
 import { RhythmCreationPanel } from "@/components/rhythm/RhythmCreationPanel";
-import { getRhythmRecipeCreationSummary } from "@/components/rhythm/rhythmRecipeControls";
+import {
+  getRecipeWithBeatCountConstraint,
+  getRhythmRecipeCreationSummary,
+  getRhythmStarterRecipe,
+  rhythmRecipesAreEqual,
+  type RhythmBeatCountConstraint,
+  type RhythmStarterId,
+} from "@/components/rhythm/rhythmRecipeControls";
 import {
   formatFretboardCreationSummary,
   formatKeyboardCreationSummary,
@@ -44,6 +51,7 @@ import { areRangesEqual } from "@/utils/range/numberRange";
 import {
   DEFAULT_RHYTHM_SELECTION,
   getRhythmSelectionRecipe,
+  type RhythmSelection,
 } from "@/utils/rhythm/rhythmConfig";
 import { type ModuleCreationListDraft } from "./moduleCreationDraft";
 
@@ -53,6 +61,8 @@ interface ModuleCreationListProps {
   context: ModuleCreationContext;
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
   onDraftChange: (draft: ModuleCreationListDraft) => void;
+  rhythmBeatCountConstraint?: RhythmBeatCountConstraint;
+  rhythmPreferredStarterId?: RhythmStarterId;
 }
 
 function hasCreationSettings(kind: ModuleCreationKind) {
@@ -168,10 +178,53 @@ function getModuleCreationRequest({
   }
 }
 
+function createRhythmSelectionFromRecipe(
+  recipe: ReturnType<typeof getRhythmSelectionRecipe>,
+): RhythmSelection {
+  return {
+    recipe,
+    source: "recipe",
+  };
+}
+
+function getRhythmModuleCreationDefault({
+  constraint,
+  forcePreferredStarter,
+  preferredStarterId,
+  value,
+}: {
+  constraint: RhythmBeatCountConstraint | undefined;
+  forcePreferredStarter: boolean;
+  preferredStarterId: RhythmStarterId | undefined;
+  value: RhythmModuleCreationDefault;
+}): RhythmModuleCreationDefault {
+  const currentRhythm = value.rhythm ?? DEFAULT_RHYTHM_SELECTION;
+  const baseRecipe =
+    forcePreferredStarter && preferredStarterId
+      ? getRhythmStarterRecipe(preferredStarterId)
+      : getRhythmSelectionRecipe(currentRhythm);
+  const constrainedRecipe = getRecipeWithBeatCountConstraint(
+    baseRecipe,
+    constraint,
+  );
+  const currentRecipe = getRhythmSelectionRecipe(currentRhythm);
+
+  if (rhythmRecipesAreEqual(currentRecipe, constrainedRecipe)) {
+    return value;
+  }
+
+  return {
+    ...value,
+    rhythm: createRhythmSelectionFromRecipe(constrainedRecipe),
+  };
+}
+
 export function ModuleCreationList({
   context,
   instrumentCreationRangeContext,
   onDraftChange,
+  rhythmBeatCountConstraint,
+  rhythmPreferredStarterId,
 }: ModuleCreationListProps) {
   const moduleCreationDefaults = useAppStore(
     (state) => state.dojoSettings.moduleCreationDefaults,
@@ -218,8 +271,25 @@ export function ModuleCreationList({
     fretboard: false,
     keyboard: false,
   });
+  const [rhythmWasEdited, setRhythmWasEdited] = useState(false);
   const hasFretboard = includesKind(moduleKinds, "fretboard");
   const hasKeyboard = includesKind(moduleKinds, "keyboard");
+  const effectiveRhythmSelection = useMemo(
+    () =>
+      getRhythmModuleCreationDefault({
+        constraint: rhythmBeatCountConstraint,
+        forcePreferredStarter:
+          !rhythmWasEdited && Boolean(rhythmPreferredStarterId),
+        preferredStarterId: rhythmPreferredStarterId,
+        value: rhythmSelection,
+      }),
+    [
+      rhythmBeatCountConstraint,
+      rhythmPreferredStarterId,
+      rhythmSelection,
+      rhythmWasEdited,
+    ],
+  );
 
   const draft = useMemo<ModuleCreationListDraft>(() => {
     return {
@@ -231,7 +301,7 @@ export function ModuleCreationList({
           fretboardSelection,
           keyboardSelection,
           kind,
-          rhythmSelection,
+          rhythmSelection: effectiveRhythmSelection,
         }),
       ),
       ...(includesKind(moduleKinds, "drone") ? { drone: droneSelection } : {}),
@@ -239,7 +309,7 @@ export function ModuleCreationList({
         ? { exerciseLooper: exerciseLooperSelection }
         : {}),
       ...(includesKind(moduleKinds, "rhythm")
-        ? { rhythm: rhythmSelection }
+        ? { rhythm: effectiveRhythmSelection }
         : {}),
       ...(hasFretboard
         ? {
@@ -258,6 +328,7 @@ export function ModuleCreationList({
     };
   }, [
     droneSelection,
+    effectiveRhythmSelection,
     exerciseLooperSelection,
     explicitRange.fretboard,
     explicitRange.keyboard,
@@ -266,7 +337,6 @@ export function ModuleCreationList({
     hasKeyboard,
     keyboardSelection,
     moduleKinds,
-    rhythmSelection,
   ]);
 
   useEffect(() => {
@@ -323,6 +393,20 @@ export function ModuleCreationList({
     setKeyboardSelection(nextSelection);
   };
 
+  const handleRhythmSelectionChange = (
+    nextSelection: RhythmModuleCreationDefault,
+  ) => {
+    setRhythmWasEdited(true);
+    setRhythmSelection(
+      getRhythmModuleCreationDefault({
+        constraint: rhythmBeatCountConstraint,
+        forcePreferredStarter: false,
+        preferredStarterId: rhythmPreferredStarterId,
+        value: nextSelection,
+      }),
+    );
+  };
+
   return (
     <DisclosureList>
       {MODULE_CREATION_OPTIONS.map((option) => {
@@ -335,7 +419,7 @@ export function ModuleCreationList({
           fretboardSelection,
           keyboardSelection,
           kind: option.kind,
-          rhythmSelection,
+          rhythmSelection: effectiveRhythmSelection,
         });
 
         return (
@@ -375,9 +459,10 @@ export function ModuleCreationList({
                   />
                 ) : option.kind === "rhythm" ? (
                   <RhythmCreationPanel
+                    beatCountConstraint={rhythmBeatCountConstraint}
                     closeSignal={closeSignal}
-                    value={rhythmSelection}
-                    onChange={setRhythmSelection}
+                    value={effectiveRhythmSelection}
+                    onChange={handleRhythmSelectionChange}
                   />
                 ) : option.kind === "fretboard" ? (
                   <FretboardInstrumentCreationPanel
