@@ -1,7 +1,7 @@
 .buttonGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-2);
+  gap: var(--dialog-menu-row-gap, var(--space-2));
 }
 
 .groupList {
@@ -9,19 +9,19 @@
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--dialog-menu-section-gap, var(--space-5));
 }
 
 .collectionSection {
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--dialog-menu-related-group-gap, var(--space-3));
 }
 
 .collectionSection + .collectionSection {
   padding-block-start: var(--space-4);
-  border-top: var(--border-width-base) solid var(--color-border);
+  border-top: var(--border-width-base) solid var(--color-border-subtle);
 }
 
 @container (width > 28rem) {

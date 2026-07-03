@@ -2,9 +2,9 @@
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--dialog-menu-panel-content-gap, var(--space-4));
 }
 
 .appearanceModeOptions {
-  --disclosure-list-row-gap: var(--space-2);
+  --disclosure-list-row-gap: var(--dialog-menu-row-gap, var(--space-2));
 }

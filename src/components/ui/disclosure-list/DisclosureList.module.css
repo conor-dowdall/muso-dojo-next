@@ -23,11 +23,6 @@
     --dialog-menu-related-group-gap,
     var(--space-3)
   );
-  --disclosure-list-default-indent-offset: var(
-    --dialog-menu-indent-offset,
-    var(--space-2)
-  );
-  --disclosure-list-default-indent: var(--dialog-menu-indent, var(--space-3));
   --disclosure-list-default-panel-block-padding: var(
     --dialog-menu-panel-block-padding,
     var(--space-3) var(--space-4)
@@ -48,7 +43,6 @@
     --dialog-menu-row-panel-gap,
     var(--space-0)
   );
-  --disclosure-list-panel-transition: 180ms var(--ease-out);
 
   display: flex;
   min-inline-size: 0;
@@ -112,14 +106,40 @@
 }
 
 .panel {
+  --disclosure-list-panel-fallback-indent-offset: var(
+    --dialog-menu-indent-offset,
+    var(--space-2)
+  );
+  --disclosure-list-panel-fallback-indent: var(
+    --dialog-menu-indent,
+    var(--space-3)
+  );
+  --disclosure-list-panel-fallback-block-padding: var(
+    --dialog-menu-panel-block-padding,
+    var(--space-3) var(--space-4)
+  );
+  --disclosure-list-panel-fallback-content-gap: var(
+    --dialog-menu-panel-content-gap,
+    var(--space-4)
+  );
+  --disclosure-list-panel-fallback-menu-block-padding: var(
+    --dialog-menu-submenu-panel-block-padding,
+    var(--space-3) var(--space-4)
+  );
+  --disclosure-list-panel-fallback-menu-content-gap: var(
+    --dialog-menu-submenu-panel-content-gap,
+    var(--dialog-menu-row-gap, var(--space-2))
+  );
+
   display: grid;
   min-inline-size: 0;
   grid-template-rows: 1fr;
   opacity: 1;
   overflow: hidden;
   transition:
-    grid-template-rows var(--disclosure-list-panel-transition),
-    opacity var(--disclosure-list-panel-transition);
+    grid-template-rows
+      var(--disclosure-list-panel-transition, 180ms var(--ease-out)),
+    opacity var(--disclosure-list-panel-transition, 180ms var(--ease-out));
 }
 
 .panel[data-state="closed"] {
@@ -136,28 +156,34 @@
     --disclosure-list-panel-gap,
     var(
       --disclosure-list-panel-content-gap,
-      var(--disclosure-list-default-panel-content-gap)
+      var(
+        --disclosure-list-default-panel-content-gap,
+        var(--disclosure-list-panel-fallback-content-gap)
+      )
     )
   );
   margin-inline-start: var(
     --disclosure-list-indent-offset,
-    var(--disclosure-list-default-indent-offset)
+    var(--disclosure-list-panel-fallback-indent-offset)
   );
   padding-block: var(
     --disclosure-list-panel-block-padding,
-    var(--disclosure-list-default-panel-block-padding)
+    var(
+      --disclosure-list-default-panel-block-padding,
+      var(--disclosure-list-panel-fallback-block-padding)
+    )
   );
   padding-inline-start: var(
     --disclosure-list-indent,
-    var(--disclosure-list-default-indent)
+    var(--disclosure-list-panel-fallback-indent)
   );
   padding-inline-end: 0;
   border-inline-start: var(--border-width-base) solid var(--color-border-subtle);
   animation: disclosure-list-panel-enter 220ms ease-out;
   overflow: hidden;
   transition:
-    border-color var(--disclosure-list-panel-transition),
-    padding-block var(--disclosure-list-panel-transition);
+    border-color var(--disclosure-list-panel-transition, 180ms var(--ease-out)),
+    padding-block var(--disclosure-list-panel-transition, 180ms var(--ease-out));
 }
 
 .panel[data-state="closed"] .panelInner {
@@ -169,11 +195,17 @@
 .panel[data-variant="menu"] .panelInner {
   --disclosure-list-panel-block-padding: var(
     --disclosure-list-menu-panel-block-padding,
-    var(--disclosure-list-default-menu-panel-block-padding)
+    var(
+      --disclosure-list-default-menu-panel-block-padding,
+      var(--disclosure-list-panel-fallback-menu-block-padding)
+    )
   );
   --disclosure-list-panel-content-gap: var(
     --disclosure-list-menu-panel-content-gap,
-    var(--disclosure-list-default-menu-panel-content-gap)
+    var(
+      --disclosure-list-default-menu-panel-content-gap,
+      var(--disclosure-list-panel-fallback-menu-content-gap)
+    )
   );
 }
 

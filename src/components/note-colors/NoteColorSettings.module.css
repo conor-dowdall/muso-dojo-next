@@ -7,18 +7,18 @@
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--dialog-menu-panel-content-gap, var(--space-4));
 }
 
 .noteColorOptions {
-  --disclosure-list-row-gap: var(--space-2);
+  --disclosure-list-row-gap: var(--dialog-menu-row-gap, var(--space-2));
 }
 
 .customColorPanel {
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--dialog-menu-related-group-gap, var(--space-3));
   padding: var(--space-3);
   border: var(--border-width-base) solid var(--color-border-subtle);
   border-radius: var(--radius-control);
@@ -28,13 +28,13 @@
 .noteColorModeControls {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-2);
+  gap: var(--dialog-menu-row-gap, var(--space-2));
 }
 
 .customColorGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2);
+  gap: var(--dialog-menu-row-gap, var(--space-2));
 }
 
 .customColorSwatchButton {
@@ -96,7 +96,7 @@
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--dialog-menu-row-gap, var(--space-2));
 }
 
 .customColorChoice {

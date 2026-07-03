@@ -281,7 +281,7 @@
 }
 
 .interactable:focus-visible {
-  outline: var(--border-width-base) solid var(--color-accent);
+  outline: var(--border-width-base) solid var(--color-focus-ring);
   outline-offset: var(--border-width-base);
 }
 

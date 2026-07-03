@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import {
   DialogContent,
+  DialogContentSection,
   DialogDoneFooter,
   DialogHeader,
 } from "@/components/ui/dialog/Dialog";
@@ -20,7 +21,6 @@ import {
   sessionSummaryMatchesSession,
   type SessionManagementSnapshot,
 } from "./sessionManagementFormatting";
-import styles from "./SessionManagementDialog.module.css";
 
 interface SessionManagementDialogProps {
   initialOpenTempoSessionId?: string;
@@ -167,10 +167,7 @@ export function SessionManagementDialog({
     <>
       <DialogHeader title="Session Library" onClose={onClose} />
       <DialogContent menuRhythm="standard">
-        <section
-          className={styles.sessionListSection}
-          aria-label="Session choices"
-        >
+        <DialogContentSection ariaLabel="Session choices">
           <DisclosureList grouped groupGap="section">
             <DisclosureListGroup>
               <DisclosureListAction
@@ -222,7 +219,7 @@ export function SessionManagementDialog({
               )}
             </DisclosureListGroup>
           </DisclosureList>
-        </section>
+        </DialogContentSection>
       </DialogContent>
       <DialogDoneFooter onDone={onClose} />
     </>

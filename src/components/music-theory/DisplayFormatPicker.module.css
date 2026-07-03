@@ -1,5 +1,5 @@
 .buttonGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
-  gap: var(--space-2);
+  gap: var(--dialog-menu-row-gap, var(--space-2));
 }
