@@ -6,24 +6,15 @@
   align-items: center;
   justify-content: center;
   padding-inline: var(--space-2);
-  border: var(--border-width-base) solid
-    color-mix(in srgb, var(--color-accent) 58%, var(--color-border));
+  border: var(--border-width-base) solid var(--color-accent);
   border-radius: var(--preview-swatch-radius);
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--color-accent) 34%, var(--color-surface)),
-      color-mix(
-        in srgb,
-        var(--color-accent) 14%,
-        var(--color-control-outline-background)
-      )
-    ),
-    var(--color-control-outline-background);
+  background: var(--color-surface-hover);
   color: var(--color-text);
   font-size: var(--text-2xs);
   font-weight: var(--font-semibold);
   line-height: var(--leading-none);
   text-transform: uppercase;
-  box-shadow: inset 0 var(--space-px) 0 var(--color-surface-highlight);
+  box-shadow:
+    inset 0 0 0 var(--space-px) var(--color-accent),
+    var(--shadow-highlight-inset);
 }

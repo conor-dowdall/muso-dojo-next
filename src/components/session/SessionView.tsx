@@ -148,7 +148,9 @@ export function SessionView({
                 <MusicPartView
                   sessionId={sessionId}
                   partId={partId}
-                  partSequenceState={getPartSequenceState(partId)}
+                  partSequenceState={
+                    showOnlyLivePart ? undefined : getPartSequenceState(partId)
+                  }
                   isPerformanceMode={readOnlyPartChrome}
                   onOpenSessionTempo={onOpenSessionTempo}
                   showReadOnlyIdentity={readOnlyPartChrome}
@@ -196,26 +198,20 @@ function BandSessionView({
               }
               aria-label={`Bar ${part.barAccessibleLabel} of ${part.barTotalAccessibleLabel}. ${part.accessibleLabel}.`}
             >
-              <span className={styles.bandPartNotation}>
-                <span className={styles.bandPartNumber}>{part.barLabel}</span>
-                <span
-                  className={styles.bandPartIdentity}
-                  title={part.identityLabel}
-                >
-                  {part.identityLabel}
-                </span>
-                <span
-                  className={styles.bandPartMeta}
-                  aria-hidden={part.isPartialBar ? true : undefined}
-                  data-chart-meta={part.isPartialBar ? "hidden" : undefined}
-                >
-                  {!part.isPartialBar ? (
-                    <span className={styles.bandPartMeter}>
-                      {part.meterLabel}
-                    </span>
-                  ) : null}
-                </span>
+              <span className={styles.bandPartNumber}>{part.barLabel}</span>
+              <span
+                className={styles.bandPartIdentity}
+                title={part.identityLabel}
+              >
+                {part.identityLabel}
               </span>
+              {!part.isPartialBar ? (
+                <span className={styles.bandPartMeta}>
+                  <span className={styles.bandPartMeter}>
+                    {part.meterLabel}
+                  </span>
+                </span>
+              ) : null}
             </li>
           );
         })}

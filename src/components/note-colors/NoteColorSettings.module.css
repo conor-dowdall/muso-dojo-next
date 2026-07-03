@@ -56,6 +56,7 @@
 .customColorSwatchButton[data-selected="true"] {
   border-color: var(--color-accent);
   background-color: var(--color-surface-hover);
+  box-shadow: inset 0 0 0 var(--space-px) var(--color-accent);
 }
 
 .customColorLabel {
