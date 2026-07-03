@@ -30,6 +30,19 @@
   --button-gap: var(--space-3);
 }
 
+.optionButton[data-option-presentation="list"]:disabled:not(
+    [data-selected="true"]
+  ) {
+  --button-border-current-color: var(--color-border-subtle);
+  --button-outline-background: color-mix(
+    in srgb,
+    var(--color-border-subtle) 18%,
+    var(--color-control-outline-background)
+  );
+
+  border-style: dashed;
+}
+
 .optionButton[data-option-density="compact"] {
   --option-button-media-size: var(--control-size-xl);
   --option-button-tile-size: var(--control-size-md);

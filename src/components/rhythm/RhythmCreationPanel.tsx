@@ -35,6 +35,7 @@ import {
   getRecipeWithGrouping,
   getRecipeWithGroove,
   getRecipeWithTimekeeper,
+  getCompatibleRhythmBeatCounts,
   getRhythmBeatControlLabel,
   getRhythmGroupingControlLabel,
   getRhythmStarterChoiceForRecipe,
@@ -109,6 +110,13 @@ export function RhythmCreationPanel({
     beatCountConstraint,
     "next",
   );
+  const compatibleBeatCounts = getCompatibleRhythmBeatCounts(
+    beatCountConstraint,
+  );
+  const beatsSubtitle =
+    compatibleBeatCounts.length < RHYTHM_MAX_BEATS - RHYTHM_MIN_BEATS + 1
+      ? `Available beats: ${compatibleBeatCounts.join(", ")}`
+      : undefined;
 
   const updateRecipe = (nextRecipe: RhythmRecipe) => {
     const constrainedRecipe = getRecipeWithBeatCountConstraint(
@@ -181,34 +189,49 @@ export function RhythmCreationPanel({
           onToggle={() => toggleChoice("starter")}
         >
           <DisclosureList density="compact">
-            {rhythmStarterChoices.map((choice) => (
-              <DisclosureListChoice
-                key={choice.id}
-                aria-label={`Start with ${choice.label}`}
-                disabled={
-                  !isRhythmStarterChoiceAvailable(
-                    choice.id,
-                    beatCountConstraint,
-                  )
-                }
-                label={choice.label}
-                selected={selectedStarterChoice?.id === choice.id}
-                subtitle={getRhythmStarterSummary(choice.id)}
-                onClick={() => {
-                  updateRecipe(getRhythmStarterRecipe(choice.id));
-                  closeChoice("starter");
-                }}
-              />
-            ))}
+            {rhythmStarterChoices.map((choice) => {
+              const isAvailable = isRhythmStarterChoiceAvailable(
+                choice.id,
+                beatCountConstraint,
+              );
+
+              return (
+                <DisclosureListChoice
+                  key={choice.id}
+                  aria-label={
+                    isAvailable
+                      ? `Start with ${choice.label}`
+                      : `Start with ${choice.label}. Not compatible with this progression`
+                  }
+                  disabled={!isAvailable}
+                  label={choice.label}
+                  selected={selectedStarterChoice?.id === choice.id}
+                  subtitle={
+                    isAvailable
+                      ? getRhythmStarterSummary(choice.id)
+                      : "Not compatible with this progression"
+                  }
+                  onClick={() => {
+                    updateRecipe(getRhythmStarterRecipe(choice.id));
+                    closeChoice("starter");
+                  }}
+                />
+              );
+            })}
           </DisclosureList>
         </DisclosureListItem>
 
         <DisclosureListItem
-          ariaLabel={`Beats. Current: ${beatLabel}`}
+          ariaLabel={
+            beatsSubtitle
+              ? `Beats. Current: ${beatLabel}. ${beatsSubtitle}`
+              : `Beats. Current: ${beatLabel}`
+          }
           isOpen={isChoiceOpen("beats")}
           label="Beats"
           panelVariant="menu"
           preview={beatLabel}
+          subtitle={beatsSubtitle}
           onToggle={() => toggleChoice("beats")}
         >
           <NumericStepper
