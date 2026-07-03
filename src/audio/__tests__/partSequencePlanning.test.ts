@@ -128,6 +128,23 @@ describe("createPartSequencePlaybackPlan", () => {
     });
   });
 
+  it("uses authored fractional Part durations even when Rhythm cannot represent them", () => {
+    const plan = createPartSequencePlaybackPlan(
+      createSession([
+        {
+          ...createPart("third-bar", []),
+          durationInBars: 1 / 3,
+        },
+      ]),
+    );
+
+    expect(plan.parts[0]?.durationBeats).toBeCloseTo(4 / 3);
+    expect(plan.parts[0]?.rhythmRequest?.pattern).toMatchObject({
+      cycleTicks: RHYTHM_PPQ * 4,
+      meter: { beats: 4, beatUnit: 4 },
+    });
+  });
+
   it("uses the visible rhythm bar length when no explicit Practice Band duration is present", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([

@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest";
+import {
+  chordProgressions,
+  type ChordProgressionKey,
+} from "@musodojo/music-theory-data";
 import { createChordProgressionParts } from "@/utils/music-part/createChordProgressionParts";
 
 describe("createChordProgressionParts", () => {
@@ -205,5 +209,60 @@ describe("createChordProgressionParts", () => {
       },
       type: "rhythm",
     });
+  });
+
+  it("stores fractional chart durations even when default Rhythm beats cannot represent them", () => {
+    const progressionKey = "thirdBarRegression" as ChordProgressionKey;
+    const mutableProgressions = chordProgressions as Record<string, unknown>;
+    const previousProgression = mutableProgressions[progressionKey];
+
+    mutableProgressions[progressionKey] = {
+      chords: [
+        {
+          degree: "1",
+          durationInBars: 1 / 3,
+          quality: "M",
+          romanSymbol: "I",
+        },
+        {
+          degree: "5",
+          durationInBars: 2 / 3,
+          quality: "M",
+          romanSymbol: "V",
+        },
+      ],
+    };
+
+    try {
+      const parts = createChordProgressionParts({
+        chordListMode: "full-song-order",
+        rootNote: "C",
+        progressionKey,
+        moduleRequests: [
+          {
+            type: "instrument",
+            settings: {
+              instrumentType: "fretboard",
+            },
+          },
+        ],
+      });
+
+      expect(parts).toHaveLength(2);
+      expect(parts[0]).toMatchObject({
+        rootNote: "C",
+      });
+      expect(parts[0]?.durationInBars).toBeCloseTo(1 / 3);
+      expect(parts[1]).toMatchObject({
+        rootNote: "G",
+      });
+      expect(parts[1]?.durationInBars).toBeCloseTo(2 / 3);
+    } finally {
+      if (previousProgression === undefined) {
+        delete mutableProgressions[progressionKey];
+      } else {
+        mutableProgressions[progressionKey] = previousProgression;
+      }
+    }
   });
 });

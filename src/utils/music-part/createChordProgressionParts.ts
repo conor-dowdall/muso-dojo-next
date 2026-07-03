@@ -121,7 +121,9 @@ function createFullProgressionPartReferences(
 
       partReferences.push({
         reference,
-        ...(rhythmBeatCount !== undefined ? { durationInBars } : {}),
+        ...(Math.abs(durationInBars - BAR_DURATION_IN_BARS) > DURATION_EPSILON
+          ? { durationInBars }
+          : {}),
         ...(rhythmBeatCount !== undefined ? { rhythmBeatCount } : {}),
       });
 

@@ -125,6 +125,17 @@ export function getPartDurationInBars(durationInBars: number | undefined) {
   return normalizePartDurationInBars(durationInBars) ?? 1;
 }
 
+export function getPartDurationBeats(
+  durationInBars: number | undefined,
+  beatsPerBar = PART_DURATION_BEATS_PER_BAR,
+) {
+  const normalizedDuration = normalizePartDurationInBars(durationInBars);
+
+  return normalizedDuration === undefined
+    ? undefined
+    : getDurationBeatCount(normalizedDuration, beatsPerBar);
+}
+
 export function getRhythmSelectionForPartDuration(
   durationInBars: number | undefined,
   selection: RhythmSelection = DEFAULT_RHYTHM_SELECTION,

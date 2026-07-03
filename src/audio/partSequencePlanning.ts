@@ -17,7 +17,7 @@ import {
 } from "@/utils/exercise-looper/exerciseSequence";
 import { resolvePracticeBandConfig } from "@/utils/practice-band/practiceBandConfig";
 import {
-  getRepresentablePartDurationBeats,
+  getPartDurationBeats,
   getRhythmSelectionForPartDuration,
 } from "@/utils/music-part/partDuration";
 import {
@@ -318,7 +318,7 @@ export function createPartSequencePlaybackPlan(
           getRhythmSelectionForPartDuration(part.durationInBars));
     const barDurationBeats =
       getRhythmModuleDurationBeats(rhythmModule) ??
-      getRepresentablePartDurationBeats(part.durationInBars) ??
+      getPartDurationBeats(part.durationInBars) ??
       DEFAULT_SILENT_PART_DURATION_BEATS;
     const resetSignature = createPartResetSignature({
       durationBeats: barDurationBeats,
