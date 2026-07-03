@@ -27,7 +27,7 @@
   font-weight: var(--font-bold);
   overflow: hidden;
   direction: ltr;
-  color: white;
+  color: var(--note-label-color);
 }
 
 .noteCell {

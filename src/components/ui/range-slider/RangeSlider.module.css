@@ -30,7 +30,7 @@
   --range-slider-thumb-size: calc(var(--control-size-xs) - var(--space-2_5));
   --range-slider-track-size: var(--space-1);
   --range-slider-track-shadow: inset 0 0 0 var(--space-px)
-    rgb(255 255 255 / 0.05);
+    var(--color-surface-highlight);
   --range-slider-thumb-shadow:
     inset 0 0 0 var(--border-width-medium) var(--range-slider-thumb-border),
     0 var(--space-px) var(--space-1) rgb(0 0 0 / 0.28);

@@ -6,7 +6,6 @@
   --button-label-gap: var(--space-1);
   --button-icon-size: var(--icon-size-base);
   --button-radius: var(--radius-control);
-  --button-background: var(--color-surface);
   --button-outline-background: var(--color-control-outline-background);
   --button-border-color: var(--color-border);
   --button-border-current-color: var(--button-border-color);
@@ -14,8 +13,16 @@
   --button-selected-background: var(--color-surface-hover);
   --button-selected-border-color: var(--color-accent);
   --button-unavailable-border-color: var(--color-border-subtle);
-  --button-danger-surface: rgb(248 113 113 / 0.14);
-  --button-danger-border: rgb(248 113 113 / 0.6);
+  --button-danger-surface: color-mix(
+    in srgb,
+    var(--color-danger) 14%,
+    transparent
+  );
+  --button-danger-border: color-mix(
+    in srgb,
+    var(--color-danger) 60%,
+    transparent
+  );
 
   appearance: none;
   box-sizing: border-box;

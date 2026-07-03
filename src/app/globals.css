@@ -46,26 +46,28 @@
   --color-focus-ring-contrast: rgb(0 0 0 / 0.82);
   --color-interactive-neutral: #454c56;
   --control-unavailable-content-opacity: 0.34;
-  --color-hardware-display-background: rgb(7 9 12 / 0.86);
+  /* Hardware displays intentionally stay dark across themes, like compact
+     instrument readout glass on top of wood rather than page chrome. */
+  --color-hardware-display-background: rgb(7 9 12 / 0.88);
   --color-hardware-display-background-soft: color-mix(
     in srgb,
-    var(--color-hardware-display-background) 60%,
-    #20232a
+    var(--color-hardware-display-background) 86%,
+    var(--color-interactive-neutral)
   );
   --color-hardware-display-background-unavailable: color-mix(
     in srgb,
-    var(--color-hardware-display-background) 58%,
-    #14161b
+    var(--color-hardware-display-background) 82%,
+    transparent
   );
-  --color-hardware-display-text: #f7f8fb;
+  --color-hardware-display-text: rgb(255 255 255 / 0.96);
   --color-hardware-display-text-soft: color-mix(
     in srgb,
-    var(--color-hardware-display-text) 90%,
-    #a7acb6
+    var(--color-hardware-display-text) 86%,
+    transparent
   );
   --color-hardware-display-text-unavailable: color-mix(
     in srgb,
-    var(--color-hardware-display-text) 48%,
+    var(--color-hardware-display-text) 42%,
     transparent
   );
 

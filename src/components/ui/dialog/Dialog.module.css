@@ -39,7 +39,7 @@
 
 .dialog {
   --dialog-background: var(--color-surface);
-  --dialog-background-highlight: rgb(255 255 255 / 0.03);
+  --dialog-background-highlight: var(--color-surface-highlight);
   --dialog-backdrop: rgb(0 0 0 / 0.6);
   --dialog-border: var(--color-border);
   --dialog-width-compact: 20rem;

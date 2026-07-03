@@ -1,8 +1,12 @@
 .tactileButton {
-  --tactile-hardware-base: #08090d;
-  --tactile-hardware-border: rgb(255 255 255 / 0.24);
-  --tactile-hardware-ring-light: rgb(255 255 255 / 0.82);
-  --tactile-hardware-ring-dark: rgb(0 0 0 / 0.62);
+  --tactile-hardware-base: var(--color-hardware-display-background);
+  --tactile-hardware-border: color-mix(
+    in srgb,
+    var(--color-hardware-display-text) 24%,
+    transparent
+  );
+  --tactile-hardware-ring-light: var(--color-hardware-display-text);
+  --tactile-hardware-ring-dark: var(--color-hardware-display-background);
   --tactile-rest-background: color-mix(
     in srgb,
     var(--color-interactive-neutral) 92%,
