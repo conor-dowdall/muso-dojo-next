@@ -110,9 +110,8 @@ export function RhythmCreationPanel({
     beatCountConstraint,
     "next",
   );
-  const compatibleBeatCounts = getCompatibleRhythmBeatCounts(
-    beatCountConstraint,
-  );
+  const compatibleBeatCounts =
+    getCompatibleRhythmBeatCounts(beatCountConstraint);
   const beatsSubtitle =
     compatibleBeatCounts.length < RHYTHM_MAX_BEATS - RHYTHM_MIN_BEATS + 1
       ? `Available beats: ${compatibleBeatCounts.join(", ")}`
