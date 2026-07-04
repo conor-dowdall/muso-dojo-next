@@ -8,7 +8,7 @@ import {
   useMemo,
   useSyncExternalStore,
 } from "react";
-import { Play, Square } from "lucide-react";
+import { ListVideo, Square } from "lucide-react";
 import {
   createPartSequencePlaybackPlan,
   ensureAudioReady,
@@ -215,7 +215,7 @@ export function PracticeBandPlayButton({
         transport.isActive ? "Space Escape Shift+Space" : "Shift+Space"
       }
       disabled={!transport.canPlay}
-      icon={transport.isActive ? <Square /> : <Play />}
+      icon={transport.isActive ? <Square /> : <ListVideo />}
       selected={transport.isActive}
       shouldYield={false}
       size="sm"
