@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   formatMidiNote,
-  formatSpelledMidiNote,
-  getMidiOctave,
+  formatNoteNameWithMidiOctave,
+  getScientificPitchOctaveForMidiNote,
 } from "@/utils/music-theory/midiNote";
 
 describe("midiNote", () => {
   it("uses scientific pitch octave numbering", () => {
-    expect(getMidiOctave(60)).toBe(4);
+    expect(getScientificPitchOctaveForMidiNote(60)).toBe(4);
     expect(formatMidiNote(60)).toBe("C4");
   });
 
@@ -17,7 +17,7 @@ describe("midiNote", () => {
   });
 
   it("preserves a collection-derived spelling", () => {
-    expect(formatSpelledMidiNote("E♯", 65)).toBe("E♯4");
-    expect(formatSpelledMidiNote("", 65)).toBe("");
+    expect(formatNoteNameWithMidiOctave("E♯", 65)).toBe("E♯4");
+    expect(formatNoteNameWithMidiOctave("", 65)).toBe("");
   });
 });

@@ -3,7 +3,6 @@
 import { type ReactNode, useMemo, useState } from "react";
 import {
   normalizeRootNoteString,
-  type ChordProgressionKey,
   type NoteCollectionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
@@ -40,6 +39,7 @@ import { ChordProgressionPicker } from "@/components/music-theory/ChordProgressi
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
 import { AddToSessionRootNoteItem } from "@/components/session/AddToSessionRootNoteItem";
 import { useAppStore } from "@/stores/appStore";
+import { type SelectableAppChordProgressionKey } from "@/utils/music-theory/appChordProgressions";
 import { getChordProgressionDisplayLabels } from "@/utils/music-theory/chordProgressions";
 import { getChordProgressionRhythmProfile } from "@/utils/music-theory/chordProgressionRhythm";
 import { getNoteCollectionDisplayName } from "@/utils/music-theory/getNoteCollectionDisplayName";
@@ -73,7 +73,7 @@ interface AddToSessionDialogProps {
   }) => void;
   onAddChordProgression: (settings: {
     rootNote: RootNote;
-    progressionKey: ChordProgressionKey;
+    progressionKey: SelectableAppChordProgressionKey;
     chordListMode: ChordProgressionChordListMode;
     moduleRequests: PartModuleCreationRequest[];
     replaceSession: boolean;
@@ -152,10 +152,13 @@ export function AddToSessionDialog({
       sessionMaterialCreationDefaults?.noteCollectionKey ??
       DEFAULT_PART_NOTE_COLLECTION_KEY,
   );
-  const [progressionKey, setProgressionKey] = useState<ChordProgressionKey>(
-    () =>
-      sessionMaterialCreationDefaults?.progressionKey ??
-      DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY,
+  const [progressionKey, setProgressionKey] =
+    useState<SelectableAppChordProgressionKey>(
+      () =>
+        sessionMaterialCreationDefaults?.progressionKey === "rhythmChanges"
+          ? "rhythmChangesA"
+          : (sessionMaterialCreationDefaults?.progressionKey ??
+            DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY),
   );
   const [chordListMode, setChordListMode] =
     useState<ChordProgressionChordListMode>(

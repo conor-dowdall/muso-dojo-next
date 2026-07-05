@@ -1,7 +1,7 @@
 import {
-  chordProgressions,
-  type ChordProgressionKey,
-} from "@musodojo/music-theory-data";
+  getAppChordProgression,
+  type AppChordProgressionKey,
+} from "@/utils/music-theory/appChordProgressions";
 import { RHYTHM_MAX_BEATS } from "@/data/rhythmPresets";
 
 const DURATION_EPSILON = 0.000_001;
@@ -120,11 +120,11 @@ export function getRequiredBarDivisionForDurations(
 }
 
 export function getChordProgressionRhythmProfile(
-  progressionKey: ChordProgressionKey,
+  progressionKey: AppChordProgressionKey,
 ): ChordProgressionRhythmProfile {
-  const progression = chordProgressions[
-    progressionKey
-  ] as RhythmAwareChordProgression;
+  const progression = getAppChordProgression(
+    progressionKey,
+  ) as RhythmAwareChordProgression;
   const totalBars = getProgressionTotalBars(progression);
   const requiredBarDivision = getRequiredBarDivisionForDurations(
     progression.chords.map((chord) => chord.durationInBars),

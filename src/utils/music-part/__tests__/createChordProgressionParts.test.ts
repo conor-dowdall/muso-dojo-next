@@ -211,6 +211,47 @@ describe("createChordProgressionParts", () => {
     });
   });
 
+  it("builds Rhythm Changes sections as separate progression options", () => {
+    const aSectionParts = createChordProgressionParts({
+      chordListMode: "full-song-order",
+      rootNote: "C",
+      progressionKey: "rhythmChangesA",
+      moduleRequests: [],
+    });
+    const bridgeParts = createChordProgressionParts({
+      chordListMode: "full-song-order",
+      rootNote: "C",
+      progressionKey: "rhythmChangesB",
+      moduleRequests: [],
+    });
+
+    expect(aSectionParts).toHaveLength(16);
+    expect(aSectionParts.slice(0, 4).map((part) => part.rootNote)).toEqual([
+      "C",
+      "A",
+      "D",
+      "G",
+    ]);
+    expect(
+      aSectionParts.every((part) => part.durationInBars === 0.5),
+    ).toBe(true);
+
+    expect(bridgeParts).toHaveLength(8);
+    expect(bridgeParts.map((part) => part.rootNote)).toEqual([
+      "E",
+      "E",
+      "A",
+      "A",
+      "D",
+      "D",
+      "G",
+      "G",
+    ]);
+    expect(bridgeParts.every((part) => part.durationInBars === undefined)).toBe(
+      true,
+    );
+  });
+
   it("stores fractional chart durations even when default Rhythm beats cannot represent them", () => {
     const progressionKey = "thirdBarRegression" as ChordProgressionKey;
     const mutableProgressions = chordProgressions as Record<string, unknown>;
@@ -219,16 +260,14 @@ describe("createChordProgressionParts", () => {
     mutableProgressions[progressionKey] = {
       chords: [
         {
+          chordCollectionKey: "major",
           degree: "1",
           durationInBars: 1 / 3,
-          quality: "M",
-          romanSymbol: "I",
         },
         {
+          chordCollectionKey: "major",
           degree: "5",
           durationInBars: 2 / 3,
-          quality: "M",
-          romanSymbol: "V",
         },
       ],
     };

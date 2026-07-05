@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { type NoteCollectionKey } from "@musodojo/music-theory-data";
+import {
+  formatNoteNameWithMidiOctave,
+  type NoteCollectionKey,
+} from "@musodojo/music-theory-data";
 import { Square, WavesArrowDown, WavesArrowUp } from "lucide-react";
 import { getDefaultAudioPresetId, type AudioPresetId } from "@/audio";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
@@ -33,7 +36,6 @@ import {
   getDroneBaseOctave,
   resolveDroneNotes,
 } from "@/utils/drone/droneNotes";
-import { formatSpelledMidiNote } from "@/utils/music-theory/midiNote";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
 import { getClosestNoteInColumn } from "@/utils/instrument/getClosestNoteInColumn";
 import { DroneOptionsDialog } from "./DroneOptionsDialog";
@@ -350,7 +352,7 @@ export function DroneModule({
                       rootNote: droneNotes.rootNote,
                     });
                     const isActive = isNoteActive(note);
-                    const noteLabel = formatSpelledMidiNote(
+                    const noteLabel = formatNoteNameWithMidiOctave(
                       note.label,
                       note.midi,
                     );

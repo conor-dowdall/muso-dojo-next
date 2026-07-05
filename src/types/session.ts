@@ -1,8 +1,8 @@
 import {
-  type ChordProgressionKey,
   type NoteCollectionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
+import { type AppChordProgressionKey } from "@/utils/music-theory/appChordProgressions";
 import { type AudioPresetId } from "@/audio/types";
 import { type FretboardThemeName } from "@/data/fretboard/themes";
 import { type FretboardInlayPresetName } from "@/data/fretboard/inlayPresets";
@@ -38,7 +38,7 @@ export interface SessionMaterialCreationDefaults {
   chordListMode?: ChordProgressionChordListMode;
   materialKind?: SessionMaterialCreationKind;
   noteCollectionKey?: NoteCollectionKey;
-  progressionKey?: ChordProgressionKey;
+  progressionKey?: AppChordProgressionKey;
   rootNote?: RootNote;
 }
 

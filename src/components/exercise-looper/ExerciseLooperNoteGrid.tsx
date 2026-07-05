@@ -1,4 +1,5 @@
 import { type CSSProperties, type KeyboardEvent } from "react";
+import { formatNoteNameWithMidiOctave } from "@musodojo/music-theory-data";
 import { InstrumentNoteCell } from "@/components/instrument/InstrumentNoteCell";
 import { InstrumentNoteTileLabel } from "@/components/instrument/InstrumentNoteTileLabel";
 import noteGridStyles from "@/components/part-module/PartModuleNoteGrid.module.css";
@@ -12,7 +13,6 @@ import {
   type ExerciseSequence,
 } from "@/utils/exercise-looper/exerciseSequence";
 import { resolveExerciseDisplayAnchorPosition } from "@/utils/exercise-looper/exerciseStudyDisplay";
-import { formatSpelledMidiNote } from "@/utils/music-theory/midiNote";
 import { resolveInstrumentNoteColor } from "@/utils/note-colors/resolveNoteColors";
 
 export function ExerciseLooperNoteGrid({
@@ -70,7 +70,7 @@ export function ExerciseLooperNoteGrid({
                       auditionAnchorPosition,
                     )
                   : undefined;
-              const spokenNoteLabel = formatSpelledMidiNote(
+              const spokenNoteLabel = formatNoteNameWithMidiOctave(
                 note.label,
                 note.midi,
               );

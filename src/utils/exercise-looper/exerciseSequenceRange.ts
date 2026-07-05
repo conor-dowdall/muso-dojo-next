@@ -1,5 +1,6 @@
 import {
   isValidNoteCollectionKey,
+  getScientificPitchOctaveForMidiNote,
   normalizeRootNoteString,
   noteCollections,
   rootNoteToIntegerMap,
@@ -12,7 +13,6 @@ import {
   DEFAULT_PART_NOTE_COLLECTION_KEY,
   DEFAULT_PART_ROOT_NOTE,
 } from "@/utils/session/sessionDefaults";
-import { getMidiOctave } from "@/utils/music-theory/midiNote";
 import { createPatternPositionGroups } from "./exercisePatternPositions";
 import {
   type CollectionRangeBoundary,
@@ -24,7 +24,9 @@ const BASE_ROOT_MIDI = 48;
 export const DEFAULT_EXERCISE_OCTAVE_OFFSET = -1;
 
 export function getExerciseBaseOctave(octaveOffset = 0) {
-  return getMidiOctave(BASE_ROOT_MIDI + octaveOffset * SEMITONES_PER_OCTAVE);
+  return getScientificPitchOctaveForMidiNote(
+    BASE_ROOT_MIDI + octaveOffset * SEMITONES_PER_OCTAVE,
+  );
 }
 
 export function resolveExerciseRootNote(value: unknown): RootNote {

@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  chordProgressionBarGroups,
-  type ChordProgressionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
 import {
@@ -12,40 +10,41 @@ import {
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { getChordProgressionDisplayLabels } from "@/utils/music-theory/chordProgressions";
+import {
+  selectableChordProgressionCategoryGroups,
+  type SelectableAppChordProgressionKey,
+} from "@/utils/music-theory/appChordProgressions";
 import styles from "./ChordProgressionPicker.module.css";
 
-type ProgressionBarGroupChoice = string;
+type ProgressionCategoryGroupChoice = string;
 
-interface ChordProgressionBarGroup {
-  totalBars: number;
-  progressionKeys: readonly ChordProgressionKey[];
+interface ChordProgressionCategoryGroup {
+  category: string;
+  name: string;
+  progressionKeys: readonly SelectableAppChordProgressionKey[];
 }
 
 interface ChordProgressionPickerProps {
   rootNote: RootNote;
-  value: ChordProgressionKey;
-  onChange: (progressionKey: ChordProgressionKey) => void;
+  value: SelectableAppChordProgressionKey;
+  onChange: (progressionKey: SelectableAppChordProgressionKey) => void;
 }
 
-const progressionBarGroups =
-  chordProgressionBarGroups as readonly ChordProgressionBarGroup[];
+const progressionCategoryGroups =
+  selectableChordProgressionCategoryGroups as readonly ChordProgressionCategoryGroup[];
 
-function getProgressionBarGroupChoice(totalBars: number) {
-  return `${totalBars}-bar-progressions`;
+function getProgressionCategoryGroupChoice(category: string) {
+  return `${category}-progressions`;
 }
 
-function getProgressionBarGroupChoiceForProgression(
-  progressionKey: ChordProgressionKey,
+function getProgressionCategoryGroupChoiceForProgression(
+  progressionKey: SelectableAppChordProgressionKey,
 ) {
-  const group = progressionBarGroups.find((candidateGroup) =>
+  const group = progressionCategoryGroups.find((candidateGroup) =>
     candidateGroup.progressionKeys.includes(progressionKey),
   );
 
-  return group ? getProgressionBarGroupChoice(group.totalBars) : null;
-}
-
-function getProgressionBarGroupTitle(totalBars: number) {
-  return `${totalBars}-Bar Progressions`;
+  return group ? getProgressionCategoryGroupChoice(group.category) : null;
 }
 
 export function ChordProgressionPicker({
@@ -53,29 +52,31 @@ export function ChordProgressionPicker({
   value,
   onChange,
 }: ChordProgressionPickerProps) {
-  const progressionBarGroupDisclosure =
-    useDisclosureList<ProgressionBarGroupChoice>(
-      getProgressionBarGroupChoiceForProgression(value),
+  const progressionCategoryGroupDisclosure =
+    useDisclosureList<ProgressionCategoryGroupChoice>(
+      getProgressionCategoryGroupChoiceForProgression(value),
     );
 
   return (
     <DisclosureList grouped groupGap="related">
-      {progressionBarGroups.map((group) => {
-        const groupChoice = getProgressionBarGroupChoice(group.totalBars);
-        const groupTitle = getProgressionBarGroupTitle(group.totalBars);
+      {progressionCategoryGroups.map((group) => {
+        const groupChoice = getProgressionCategoryGroupChoice(group.category);
+        const groupTitle = group.name;
         const groupContainsSelection = group.progressionKeys.includes(value);
 
         return (
           <DisclosureListItem
             key={groupChoice}
             ariaLabel={groupTitle}
-            isOpen={progressionBarGroupDisclosure.openChoice === groupChoice}
+            isOpen={
+              progressionCategoryGroupDisclosure.openChoice === groupChoice
+            }
             keepMounted
             label={groupTitle}
             panelVariant="menu"
             selected={groupContainsSelection}
             onToggle={() =>
-              progressionBarGroupDisclosure.toggleChoice(groupChoice)
+              progressionCategoryGroupDisclosure.toggleChoice(groupChoice)
             }
           >
             <DisclosureList>
@@ -94,7 +95,7 @@ export function ChordProgressionPicker({
                       </span>
                     }
                     onClick={() => {
-                      progressionBarGroupDisclosure.open(groupChoice);
+                      progressionCategoryGroupDisclosure.open(groupChoice);
                       onChange(candidateKey);
                     }}
                   />

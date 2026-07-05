@@ -1,12 +1,15 @@
 import {
-  chordProgressions,
   getChordProgressionChordChangeReferences,
   getChordProgressionUniqueChordReferences,
   normalizeRootNoteString,
   type ChordProgressionChordReference,
-  type ChordProgressionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
+import {
+  getAppChordProgression,
+  getAppChordProgressionInput,
+  type AppChordProgressionKey,
+} from "@/utils/music-theory/appChordProgressions";
 import {
   createDefaultPartModuleConfigs,
   createEntityId,
@@ -38,13 +41,13 @@ type CreateChordProgressionPartsOptions<
   T extends PartModuleType = PartModuleType,
 > = {
   rootNote: string;
-  progressionKey: ChordProgressionKey;
+  progressionKey: AppChordProgressionKey;
   chordListMode?: ChordProgressionChordListMode;
   moduleRequests: PartModuleCreationRequest<T>[];
 };
 
 function createProgressionPartId(
-  progressionKey: ChordProgressionKey,
+  progressionKey: AppChordProgressionKey,
   index: number,
 ) {
   return createEntityId(`part-${progressionKey}-${index + 1}`);
@@ -90,15 +93,16 @@ function getProgressionChordDurationInBars(
 
 function createFullProgressionPartReferences(
   rootNote: RootNote,
-  progressionKey: ChordProgressionKey,
+  progressionKey: AppChordProgressionKey,
   beatsPerBar = PART_DURATION_BEATS_PER_BAR,
 ): ProgressionPartReference[] {
-  const progression = chordProgressions[progressionKey] as
+  const progression = getAppChordProgression(progressionKey) as
     | DurationAwareChordProgression
     | undefined;
+  const progressionInput = getAppChordProgressionInput(progressionKey);
   const references = getChordProgressionChordChangeReferences(
     rootNote,
-    progressionKey,
+    progressionInput,
   );
   const partReferences: ProgressionPartReference[] = [];
   let currentBarPosition = 0;
@@ -141,11 +145,12 @@ function createFullProgressionPartReferences(
 
 function createUniqueProgressionPartReferences(
   rootNote: RootNote,
-  progressionKey: ChordProgressionKey,
+  progressionKey: AppChordProgressionKey,
 ): ProgressionPartReference[] {
-  return getChordProgressionUniqueChordReferences(rootNote, progressionKey).map(
-    (reference) => ({ reference }),
-  );
+  return getChordProgressionUniqueChordReferences(
+    rootNote,
+    getAppChordProgressionInput(progressionKey),
+  ).map((reference) => ({ reference }));
 }
 
 function applyProgressionRhythmBeatCount(

@@ -1,29 +1,28 @@
 import {
-  chordProgressions,
   getChordProgressionChordNames,
-  getRomanNumeralForScaleIndexAndChordQuality,
-  type ChordQuality,
-  type ChordProgressionKey,
+  getChordProgressionDisplayRomanSymbols,
   type RootNote,
 } from "@musodojo/music-theory-data";
+import {
+  getAppChordProgression,
+  getAppChordProgressionInput,
+  type AppChordProgressionKey,
+} from "@/utils/music-theory/appChordProgressions";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 
-interface ChordProgressionChord {
-  romanSymbol?: string;
-  degree: string;
-  quality: ChordQuality;
+interface DurationAwareChordProgressionChord {
   durationInBars: number;
 }
 
-interface ChordProgression {
+type ChordProgressionInput = Parameters<
+  typeof getChordProgressionChordNames
+>[1];
+type AppChordProgressionInput = ChordProgressionInput | AppChordProgressionKey;
+
+interface ChordProgressionDisplayMetadata {
   commonName?: string;
   primaryName?: string;
-  chords: readonly ChordProgressionChord[];
-}
-
-export interface ChordProgressionDisplaySummary {
-  chordNames: string[];
-  romanNames: string[];
+  chords: readonly DurationAwareChordProgressionChord[];
 }
 
 export interface ChordProgressionDisplayLabels {
@@ -32,45 +31,26 @@ export interface ChordProgressionDisplayLabels {
   titleLabel: string;
 }
 
-interface ChordProgressionDisplayMetadata {
-  commonName?: string;
-  primaryName?: string;
+export interface ChordProgressionDisplaySummary {
+  chordNames: string[];
+  romanNames: string[];
 }
 
 const BAR_LENGTH = 1;
 const DURATION_EPSILON = 0.000_001;
 
 function resolveChordProgression(
-  progressionOrKey: ChordProgression | ChordProgressionKey,
-) {
+  progressionOrKey: AppChordProgressionInput,
+): ChordProgressionDisplayMetadata | undefined {
   if (typeof progressionOrKey !== "string") {
-    return progressionOrKey;
+    return progressionOrKey as ChordProgressionDisplayMetadata;
   }
 
-  const progressionKey: ChordProgressionKey = progressionOrKey;
+  const progressionKey = progressionOrKey as AppChordProgressionKey;
 
-  return chordProgressions[progressionKey] as ChordProgression;
-}
-
-function getScaleIndexForDegree(degree: string) {
-  const parsedDegree = Number.parseInt(degree, 10);
-
-  return Number.isInteger(parsedDegree) && parsedDegree > 0
-    ? parsedDegree - 1
-    : undefined;
-}
-
-function getRomanNameForChord(chord: ChordProgressionChord) {
-  if (chord.romanSymbol) {
-    return chord.romanSymbol;
-  }
-
-  const scaleIndex = getScaleIndexForDegree(chord.degree);
-
-  return scaleIndex === undefined
-    ? chord.degree
-    : (getRomanNumeralForScaleIndexAndChordQuality(scaleIndex, chord.quality) ??
-        chord.degree);
+  return getAppChordProgression(
+    progressionKey,
+  ) as ChordProgressionDisplayMetadata;
 }
 
 function expandLabelsByBar(
@@ -108,7 +88,7 @@ function expandLabelsByBar(
 
 export function getChordProgressionDisplaySummary(
   rootNote: RootNote,
-  progressionOrKey: ChordProgression | ChordProgressionKey,
+  progressionOrKey: AppChordProgressionInput,
 ): ChordProgressionDisplaySummary {
   const progression = resolveChordProgression(progressionOrKey);
 
@@ -116,8 +96,14 @@ export function getChordProgressionDisplaySummary(
     return { chordNames: [], romanNames: [] };
   }
 
-  const chordNames = getChordProgressionChordNames(rootNote, progression);
-  const romanNames = progression.chords.map(getRomanNameForChord);
+  const progressionInput =
+    typeof progressionOrKey === "string"
+      ? getAppChordProgressionInput(
+          progressionOrKey as AppChordProgressionKey,
+        )
+      : progressionOrKey;
+  const chordNames = getChordProgressionChordNames(rootNote, progressionInput);
+  const romanNames = getChordProgressionDisplayRomanSymbols(progressionInput);
   const durationsInBars = progression.chords.map(
     (chord) => chord.durationInBars,
   );
@@ -130,12 +116,12 @@ export function getChordProgressionDisplaySummary(
 
 export function getChordProgressionDisplayLabels(
   rootNote: RootNote,
-  progressionKey: ChordProgressionKey,
+  progressionKey: AppChordProgressionKey,
 ): ChordProgressionDisplayLabels {
   const summary = getChordProgressionDisplaySummary(rootNote, progressionKey);
-  const progression = chordProgressions[
-    progressionKey
-  ] as ChordProgressionDisplayMetadata;
+  const progression = getAppChordProgression(
+    progressionKey,
+  ) as ChordProgressionDisplayMetadata;
   const romanLabel = summary.romanNames.join(DISPLAY_VALUE_SEPARATOR);
 
   return {

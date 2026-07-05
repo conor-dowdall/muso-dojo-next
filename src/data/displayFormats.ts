@@ -1,4 +1,9 @@
-import { conversions } from "@musodojo/music-theory-data";
+import {
+  conversions,
+  isRootAndNoteCollectionConversionAvailable,
+  normalizeRootNoteString,
+  type NoteCollectionKey,
+} from "@musodojo/music-theory-data";
 import { type SettingSetter } from "@/types/state";
 
 export const ROOT_AND_NOTE_DISPLAY_FORMAT_IDS = [
@@ -19,6 +24,17 @@ export type DisplayFormatId = RootAndNoteDisplayFormatId | "midi" | "none";
 
 export type DisplayFormatSetter = SettingSetter<DisplayFormatId>;
 
+const compactDisplayFormatExamples = {
+  "note-names": "C, D, E",
+  intervals: "1, 3, 5",
+  extensions: "1, 9, 13",
+  "compound-intervals": "1, 10, 12",
+  triads: "CM, Dm, Em",
+  "seventh-chords": "CM7, Dm7, G7",
+  "roman-triads": "I, ii, V",
+  "roman-seventh-chords": "IM7, iim7, V7",
+} as const satisfies Record<RootAndNoteDisplayFormatId, string>;
+
 const rootAndNoteDisplayFormatsById = new Map(
   Object.values(conversions.rootAndNoteCollection).map((conversion) => [
     conversion.id as RootAndNoteDisplayFormatId,
@@ -36,7 +52,7 @@ export const displayFormatOptions = [
     return {
       id,
       shortLabel: conversion.shortName,
-      example: conversion.example,
+      example: compactDisplayFormatExamples[id],
     };
   }),
   {
@@ -64,6 +80,41 @@ export function getRootAndNoteDisplayFormat(displayFormatId: DisplayFormatId) {
   }
 
   return rootAndNoteDisplayFormatsById.get(displayFormatId);
+}
+
+export function getDisplayFormatUnavailableReason(
+  displayFormatId: DisplayFormatId,
+  rootNote: string,
+  noteCollectionKey: NoteCollectionKey,
+) {
+  const conversion = getRootAndNoteDisplayFormat(displayFormatId);
+  const normalizedRootNote = normalizeRootNoteString(rootNote);
+
+  if (!conversion || !normalizedRootNote) {
+    return undefined;
+  }
+
+  return isRootAndNoteCollectionConversionAvailable(
+    conversion,
+    normalizedRootNote,
+    noteCollectionKey,
+  )
+    ? undefined
+    : "Unavailable";
+}
+
+export function isDisplayFormatAvailable(
+  displayFormatId: DisplayFormatId,
+  rootNote: string,
+  noteCollectionKey: NoteCollectionKey,
+) {
+  return (
+    getDisplayFormatUnavailableReason(
+      displayFormatId,
+      rootNote,
+      noteCollectionKey,
+    ) === undefined
+  );
 }
 
 export function getDisplayFormatLabel(

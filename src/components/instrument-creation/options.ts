@@ -4,6 +4,7 @@ import {
   stringInstrumentGroups,
   stringInstrumentTuningKeysByInstrument,
   stringInstruments,
+  formatMidiNote,
   type StringInstrumentKey,
   type StringInstrumentTuning,
   type StringInstrumentTuningKey,
@@ -19,9 +20,8 @@ import {
 } from "@/data/keyboard/ranges";
 import { keyboardThemes, type KeyboardThemeName } from "@/data/keyboard/themes";
 import { type InstrumentType } from "@/types/session";
-import { formatMidiNote } from "@/utils/music-theory/midiNote";
 
-export { formatMidiNote } from "@/utils/music-theory/midiNote";
+export { formatMidiNote } from "@musodojo/music-theory-data";
 
 export interface DialogOption<T extends string> {
   id: T;

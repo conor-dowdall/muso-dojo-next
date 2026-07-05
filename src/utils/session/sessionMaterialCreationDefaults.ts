@@ -1,8 +1,6 @@
 import {
-  isValidChordProgressionKey,
   isValidNoteCollectionKey,
   normalizeRootNoteString,
-  type ChordProgressionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
 import {
@@ -14,12 +12,16 @@ import {
   DEFAULT_PART_NOTE_COLLECTION_KEY,
   DEFAULT_PART_ROOT_NOTE,
 } from "@/utils/session/sessionDefaults";
+import {
+  isAppChordProgressionKey,
+  type AppChordProgressionKey,
+} from "@/utils/music-theory/appChordProgressions";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 
 export const DEFAULT_SESSION_MATERIAL_CREATION_KIND =
   "part" satisfies SessionMaterialCreationKind;
 export const DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY =
-  "oneOneFiveFive" satisfies ChordProgressionKey;
+  "oneOneFiveFive" satisfies AppChordProgressionKey;
 export const DEFAULT_SESSION_MATERIAL_CREATION_CHORD_LIST_MODE =
   "full-song-order" satisfies ChordProgressionChordListMode;
 
@@ -66,7 +68,7 @@ function normalizeSessionMaterialNoteCollectionKey(value: unknown) {
 }
 
 function normalizeSessionMaterialProgressionKey(value: unknown) {
-  return typeof value === "string" && isValidChordProgressionKey(value)
+  return typeof value === "string" && isAppChordProgressionKey(value)
     ? value
     : undefined;
 }
