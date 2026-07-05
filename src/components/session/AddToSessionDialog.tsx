@@ -39,7 +39,10 @@ import { ChordProgressionPicker } from "@/components/music-theory/ChordProgressi
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
 import { AddToSessionRootNoteItem } from "@/components/session/AddToSessionRootNoteItem";
 import { useAppStore } from "@/stores/appStore";
-import { type SelectableAppChordProgressionKey } from "@/utils/music-theory/appChordProgressions";
+import {
+  normalizeAppChordProgressionKey,
+  type SelectableAppChordProgressionKey,
+} from "@/utils/music-theory/appChordProgressions";
 import { getChordProgressionDisplayLabels } from "@/utils/music-theory/chordProgressions";
 import { getChordProgressionRhythmProfile } from "@/utils/music-theory/chordProgressionRhythm";
 import { getNoteCollectionDisplayName } from "@/utils/music-theory/getNoteCollectionDisplayName";
@@ -118,6 +121,16 @@ const chordListOptions = [
   subtitle: string;
 }[];
 
+function getInitialProgressionKey(
+  progressionKey: string | undefined,
+): SelectableAppChordProgressionKey {
+  return (
+    (progressionKey
+      ? normalizeAppChordProgressionKey(progressionKey)
+      : undefined) ?? DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY
+  );
+}
+
 const emptyModuleDraft = {
   moduleKinds: [],
   moduleRequests: [],
@@ -155,11 +168,10 @@ export function AddToSessionDialog({
   const [progressionKey, setProgressionKey] =
     useState<SelectableAppChordProgressionKey>(
       () =>
-        sessionMaterialCreationDefaults?.progressionKey === "rhythmChanges"
-          ? "rhythmChangesA"
-          : (sessionMaterialCreationDefaults?.progressionKey ??
-            DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY),
-  );
+        getInitialProgressionKey(
+          sessionMaterialCreationDefaults?.progressionKey,
+        ),
+    );
   const [chordListMode, setChordListMode] =
     useState<ChordProgressionChordListMode>(
       () =>

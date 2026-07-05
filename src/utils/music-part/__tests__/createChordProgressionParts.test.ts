@@ -221,7 +221,7 @@ describe("createChordProgressionParts", () => {
     const bridgeParts = createChordProgressionParts({
       chordListMode: "full-song-order",
       rootNote: "C",
-      progressionKey: "rhythmChangesB",
+      progressionKey: "rhythmChangesBridge",
       moduleRequests: [],
     });
 

@@ -13,7 +13,7 @@ import {
   DEFAULT_PART_ROOT_NOTE,
 } from "@/utils/session/sessionDefaults";
 import {
-  isAppChordProgressionKey,
+  normalizeAppChordProgressionKey,
   type AppChordProgressionKey,
 } from "@/utils/music-theory/appChordProgressions";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
@@ -68,8 +68,8 @@ function normalizeSessionMaterialNoteCollectionKey(value: unknown) {
 }
 
 function normalizeSessionMaterialProgressionKey(value: unknown) {
-  return typeof value === "string" && isAppChordProgressionKey(value)
-    ? value
+  return typeof value === "string"
+    ? normalizeAppChordProgressionKey(value)
     : undefined;
 }
 

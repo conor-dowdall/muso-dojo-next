@@ -24,17 +24,6 @@ export type DisplayFormatId = RootAndNoteDisplayFormatId | "midi" | "none";
 
 export type DisplayFormatSetter = SettingSetter<DisplayFormatId>;
 
-const compactDisplayFormatExamples = {
-  "note-names": "C, D, E",
-  intervals: "1, 3, 5",
-  extensions: "1, 9, 13",
-  "compound-intervals": "1, 10, 12",
-  triads: "CM, Dm, Em",
-  "seventh-chords": "CM7, Dm7, G7",
-  "roman-triads": "I, ii, V",
-  "roman-seventh-chords": "IM7, iim7, V7",
-} as const satisfies Record<RootAndNoteDisplayFormatId, string>;
-
 const rootAndNoteDisplayFormatsById = new Map(
   Object.values(conversions.rootAndNoteCollection).map((conversion) => [
     conversion.id as RootAndNoteDisplayFormatId,
@@ -52,7 +41,7 @@ export const displayFormatOptions = [
     return {
       id,
       shortLabel: conversion.shortName,
-      example: compactDisplayFormatExamples[id],
+      example: conversion.outputPreview,
     };
   }),
   {
