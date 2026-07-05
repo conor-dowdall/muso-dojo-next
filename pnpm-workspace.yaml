@@ -2,3 +2,5 @@ allowBuilds:
   esbuild: true
   sharp: true
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - '@musodojo/music-theory-data@33.0.0'
