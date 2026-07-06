@@ -106,15 +106,6 @@ function clampInteger(
   return Math.min(max, Math.max(min, Math.trunc(value)));
 }
 
-function resolveRowCount(value: unknown) {
-  return clampInteger(
-    value,
-    DRONE_MIN_OCTAVE_ROWS,
-    DRONE_MIN_OCTAVE_ROWS,
-    DRONE_MAX_OCTAVE_ROWS,
-  );
-}
-
 function resolveNoteCount(value: unknown, fallback: number, max: number) {
   return clampInteger(
     value,
@@ -152,19 +143,16 @@ export function resolveDroneNotes({
   noteCount,
   noteCollectionKey,
   octaveOffset,
-  rowCount,
   rootNote,
 }: {
   noteCount?: unknown;
   noteCollectionKey?: unknown;
   octaveOffset?: unknown;
-  rowCount?: unknown;
   rootNote?: unknown;
 }): ResolvedDroneNotes {
   const resolvedRootNote = resolveRootNote(rootNote);
   const resolvedNoteCollectionKey = resolveNoteCollectionKey(noteCollectionKey);
   const resolvedOctaveOffset = resolveOctaveOffset(octaveOffset);
-  const resolvedRowCount = resolveRowCount(rowCount);
   const collection = noteCollections[resolvedNoteCollectionKey];
   const toneSequence = getCollectionToneSequenceMetadata(
     resolvedNoteCollectionKey,
@@ -248,13 +236,9 @@ export function resolveDroneNotes({
   );
   const maxNoteCount =
     maxPlayableNoteCount < 0 ? candidates.length : maxPlayableNoteCount;
-  const legacyDefaultNoteCount = Math.min(
-    candidates.length,
-    toneSequence.tones.length * resolvedRowCount,
-  );
   const requestedNoteCount = resolveNoteCount(
     noteCount,
-    legacyDefaultNoteCount,
+    baseNotes.length,
     candidates.length,
   );
   const resolvedNoteCount = Math.min(requestedNoteCount, maxNoteCount);

@@ -32,7 +32,6 @@ import {
 import {
   DRONE_MAX_OCTAVE_OFFSET,
   DRONE_MIN_OCTAVE_OFFSET,
-  DRONE_MIN_OCTAVE_ROWS,
   getDroneBaseOctave,
   resolveDroneNotes,
 } from "@/utils/drone/droneNotes";
@@ -47,7 +46,6 @@ interface DroneModuleProps {
   noteCount?: number;
   noteCollectionKey?: NoteCollectionKey;
   octaveOffset?: number;
-  octaveRowCount?: number;
   onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
   onNoteCountChange?: SettingSetter<number>;
   onOctaveOffsetChange?: SettingSetter<number>;
@@ -64,7 +62,6 @@ export function DroneModule({
   noteCount: controlledNoteCount,
   noteCollectionKey,
   octaveOffset: controlledOctaveOffset,
-  octaveRowCount: controlledOctaveRowCount,
   onAudioPresetIdChange,
   onNoteCountChange,
   onOctaveOffsetChange,
@@ -92,7 +89,6 @@ export function DroneModule({
       controlledOctaveOffset !== undefined ||
       onOctaveOffsetChange !== undefined,
   });
-  const octaveRowCount = controlledOctaveRowCount ?? DRONE_MIN_OCTAVE_ROWS;
   const requestedNoteCount = controlledNoteCount ?? internalNoteCount;
   const [wood, setWood] = useControllableState<WoodSurfaceId>({
     value: controlledWood,
@@ -107,16 +103,9 @@ export function DroneModule({
         noteCount: requestedNoteCount,
         noteCollectionKey,
         octaveOffset,
-        rowCount: octaveRowCount,
         rootNote,
       }),
-    [
-      noteCollectionKey,
-      octaveOffset,
-      octaveRowCount,
-      requestedNoteCount,
-      rootNote,
-    ],
+    [noteCollectionKey, octaveOffset, requestedNoteCount, rootNote],
   );
   const noteKeys = useMemo(
     () => droneNotes.notes.map((note) => note.key),

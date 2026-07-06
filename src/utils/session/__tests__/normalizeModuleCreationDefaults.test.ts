@@ -32,18 +32,6 @@ describe("normalizeModuleCreationDefaults", () => {
     ).toBeUndefined();
   });
 
-  it("migrates legacy module kind memory to the session context", () => {
-    expect(
-      normalizeModuleCreationDefaults({
-        moduleKinds: ["rhythm"],
-      }),
-    ).toStrictEqual({
-      moduleKindDefaults: {
-        session: ["rhythm"],
-      },
-    });
-  });
-
   it("drops built-in Rhythm creation defaults", () => {
     expect(
       normalizeRhythmModuleCreationDefault({

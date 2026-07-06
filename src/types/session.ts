@@ -105,8 +105,6 @@ export interface DronePartModuleConfig extends PartModuleBaseConfig<"drone"> {
   audioPresetId?: AudioPresetId;
   noteCount?: number;
   octaveOffset?: number;
-  /** Legacy full-row range used until a note-level edit is made. */
-  octaveRowCount?: number;
   type: "drone";
   wood?: WoodSurfaceId;
 }

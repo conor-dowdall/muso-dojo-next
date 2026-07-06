@@ -122,28 +122,6 @@ describe("rhythmConfig", () => {
     });
   });
 
-  it("normalizes legacy off sound into the timekeeper rhythm", () => {
-    expect(
-      normalizeRhythmRecipe({
-        beats: 4,
-        timekeeper: {
-          feel: "straight",
-          sound: "off",
-          subdivision: "eighth",
-        },
-      }),
-    ).toStrictEqual({
-      beats: 4,
-      groove: "kit",
-      grouping: "auto",
-      timekeeper: {
-        feel: "off",
-        sound: "hat",
-        subdivision: "eighth",
-      },
-    });
-  });
-
   it("normalizes grouping against the beat count", () => {
     expect(
       normalizeRhythmRecipe({

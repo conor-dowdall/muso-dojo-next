@@ -83,28 +83,6 @@ describe("droneNotes", () => {
     ).toEqual([["1", "3", "5", "7"], ["8", "9", "10", "12", "14"], ["16"]]);
   });
 
-  it("preserves legacy row counts for finite compound voicings", () => {
-    const expanded = resolveDroneNotes({
-      noteCollectionKey: "major9",
-      rowCount: 2,
-      rootNote: "C",
-    });
-
-    expect(expanded.noteCount).toBe(10);
-    expect(expanded.notes.map((note) => note.intervalLabel)).toEqual([
-      "1",
-      "3",
-      "5",
-      "7",
-      "8",
-      "9",
-      "10",
-      "12",
-      "14",
-      "16",
-    ]);
-  });
-
   it("clamps oversized finite ranges to the available physical rows", () => {
     const expanded = resolveDroneNotes({
       noteCollectionKey: "major9",
@@ -120,8 +98,8 @@ describe("droneNotes", () => {
   it("adds octave rows with shifted interval labels", () => {
     const droneNotes = resolveDroneNotes({
       noteCollectionKey: "major",
+      noteCount: 6,
       rootNote: "C",
-      rowCount: 2,
     });
 
     expect(
@@ -309,9 +287,9 @@ describe("droneNotes", () => {
   it("marks added rows outside the musical surface range as unavailable", () => {
     const aboveRange = resolveDroneNotes({
       noteCollectionKey: "chromatic",
+      noteCount: 24,
       octaveOffset: DRONE_MAX_OCTAVE_OFFSET,
       rootNote: "C",
-      rowCount: 2,
     });
 
     expect(aboveRange.hasUnplayableNotes).toBe(true);
@@ -337,7 +315,7 @@ describe("droneNotes", () => {
   it("keeps octave range editing for ordinary collections", () => {
     const simpleChord = resolveDroneNotes({
       noteCollectionKey: "major",
-      rowCount: 2,
+      noteCount: 6,
       rootNote: "C",
     });
 

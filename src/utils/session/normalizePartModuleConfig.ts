@@ -12,10 +12,8 @@ import { isPartModuleType } from "@/utils/session/partModuleTypes";
 import { isRecord, normalizeId } from "@/utils/session/normalizationPrimitives";
 import {
   DRONE_MAX_OCTAVE_OFFSET,
-  DRONE_MAX_OCTAVE_ROWS,
   DRONE_MAX_NOTE_COUNT,
   DRONE_MIN_OCTAVE_OFFSET,
-  DRONE_MIN_OCTAVE_ROWS,
   DRONE_MIN_NOTE_COUNT,
 } from "@/utils/drone/droneNotes";
 import {
@@ -97,15 +95,6 @@ function normalizeDroneOctaveOffset(value: unknown) {
   });
 }
 
-function normalizeDroneOctaveRowCount(value: unknown) {
-  return normalizeOptionalDroneInteger({
-    defaultValue: DRONE_MIN_OCTAVE_ROWS,
-    max: DRONE_MAX_OCTAVE_ROWS,
-    min: DRONE_MIN_OCTAVE_ROWS,
-    value,
-  });
-}
-
 function normalizeDroneNoteCount(value: unknown) {
   if (
     typeof value !== "number" ||
@@ -132,10 +121,6 @@ export function normalizePartModuleConfig(
       const audioPresetId = normalizeDroneAudioPresetId(value.audioPresetId);
       const noteCount = normalizeDroneNoteCount(value.noteCount);
       const octaveOffset = normalizeDroneOctaveOffset(value.octaveOffset);
-      const octaveRowCount =
-        noteCount === undefined
-          ? normalizeDroneOctaveRowCount(value.octaveRowCount)
-          : undefined;
       const wood = normalizeDroneWood(value.wood);
 
       return {
@@ -143,7 +128,6 @@ export function normalizePartModuleConfig(
         ...(audioPresetId ? { audioPresetId } : {}),
         ...(noteCount !== undefined ? { noteCount } : {}),
         ...(octaveOffset !== undefined ? { octaveOffset } : {}),
-        ...(octaveRowCount !== undefined ? { octaveRowCount } : {}),
         type: value.type,
         ...(wood ? { wood } : {}),
       } satisfies DronePartModuleConfig;

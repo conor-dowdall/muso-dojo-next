@@ -123,7 +123,6 @@ export function createDroneActions(
         noteCollectionKey: part.noteCollectionKey,
         noteCount: partModule.noteCount,
         octaveOffset: partModule.octaveOffset,
-        rowCount: partModule.octaveRowCount,
         rootNote: part.rootNote,
       }).noteCount;
       const defaultNoteCount = resolveDroneNotes({
@@ -147,7 +146,6 @@ export function createDroneActions(
       get().updateDroneSettings(sessionId, partId, moduleId, {
         noteCount:
           nextNoteCount === defaultNoteCount ? undefined : nextNoteCount,
-        octaveRowCount: undefined,
       });
     },
     setDroneWood: (sessionId, partId, moduleId, wood) => {

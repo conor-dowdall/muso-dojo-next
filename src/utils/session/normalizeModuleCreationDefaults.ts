@@ -258,23 +258,6 @@ function normalizeModuleCreationKindDefaults(
     : moduleKindDefaults;
 }
 
-function normalizeContextualModuleCreationKinds(
-  value: Record<string, unknown>,
-): ModuleCreationDefaults["moduleKindDefaults"] {
-  const legacySessionKinds = normalizeModuleCreationKinds(
-    value.moduleKinds,
-    DEFAULT_SESSION_MODULE_CREATION_KINDS,
-  );
-  const moduleKindDefaults = normalizeModuleCreationKindDefaults(
-    value.moduleKindDefaults,
-  );
-
-  return normalizeModuleCreationKindDefaults({
-    ...(legacySessionKinds ? { session: legacySessionKinds } : {}),
-    ...(moduleKindDefaults ?? {}),
-  });
-}
-
 function normalizeFretboardCreationRangeDefault(
   value: unknown,
 ): FretboardModuleCreationDefault["range"] {
@@ -473,7 +456,9 @@ export function normalizeModuleCreationDefaults(
   }
 
   const moduleCreationDefaults = {
-    moduleKindDefaults: normalizeContextualModuleCreationKinds(value),
+    moduleKindDefaults: normalizeModuleCreationKindDefaults(
+      value.moduleKindDefaults,
+    ),
     drone: normalizeDroneModuleCreationDefault(value.drone),
     exerciseLooper: normalizeExerciseLooperModuleCreationDefault(
       value.exerciseLooper,

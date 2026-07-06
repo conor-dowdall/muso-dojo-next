@@ -165,18 +165,14 @@ function normalizeRhythmTimekeeperRecipe(
     value.feel,
     DEFAULT_RHYTHM_RECIPE.timekeeper.feel,
   );
-  const legacySoundOff = value.sound === "off";
-  const feel = legacySoundOff ? "off" : rawFeel;
 
   return getRhythmCanonicalTimekeeper({
-    feel,
-    sound: legacySoundOff
-      ? DEFAULT_RHYTHM_RECIPE.timekeeper.sound
-      : normalizeRecipeField(
-          rhythmTimekeeperSoundIds,
-          value.sound,
-          DEFAULT_RHYTHM_RECIPE.timekeeper.sound,
-        ),
+    feel: rawFeel,
+    sound: normalizeRecipeField(
+      rhythmTimekeeperSoundIds,
+      value.sound,
+      DEFAULT_RHYTHM_RECIPE.timekeeper.sound,
+    ),
     subdivision: rawSubdivision,
   });
 }

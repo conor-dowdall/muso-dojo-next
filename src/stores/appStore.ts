@@ -13,7 +13,7 @@ import {
   APP_STORE_STORAGE_KEY,
   type AppStorePersistedSnapshot,
   createDebouncedAppStoreStorage,
-  migrateAppStoreSnapshot,
+  normalizePersistedAppStoreSnapshot,
   partializeAppStoreSnapshot,
 } from "@/stores/app-store/persistence";
 import { createAppStoreActions } from "@/stores/app-store/actions";
@@ -41,12 +41,8 @@ export const useAppStore = create<AppStore>()(
         version: APP_STORE_VERSION,
         storage: createDebouncedAppStoreStorage(() => localStorage),
         partialize: partializeAppStoreSnapshot,
-        migrate: (persistedState, persistedVersion) =>
-          migrateAppStoreSnapshot(
-            persistedState,
-            persistedVersion,
-            initialSnapshot,
-          ),
+        migrate: (persistedState) =>
+          normalizePersistedAppStoreSnapshot(persistedState, initialSnapshot),
         merge: (persistedState, currentState) => ({
           ...currentState,
           ...normalizeAppStoreSnapshot(persistedState, initialSnapshot),

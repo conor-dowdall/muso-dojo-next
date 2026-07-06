@@ -112,17 +112,14 @@ export function normalizeExercisePattern(
     return undefined;
   }
 
-  const extensionDegree =
-    value.extensionDegree === 3 ? 5 : value.extensionDegree;
-
   if (
     (value.direction !== "ascending" &&
       value.direction !== "descending" &&
       value.direction !== "up-down") ||
-    typeof extensionDegree !== "number" ||
-    !Number.isInteger(extensionDegree) ||
+    typeof value.extensionDegree !== "number" ||
+    !Number.isInteger(value.extensionDegree) ||
     !EXERCISE_EXTENSION_DEGREES.includes(
-      extensionDegree as (typeof EXERCISE_EXTENSION_DEGREES)[number],
+      value.extensionDegree as (typeof EXERCISE_EXTENSION_DEGREES)[number],
     ) ||
     (value.extensionDirection !== undefined &&
       value.extensionDirection !== "ascending" &&
@@ -148,7 +145,7 @@ export function normalizeExercisePattern(
 
   return {
     direction: value.direction,
-    extensionDegree,
+    extensionDegree: value.extensionDegree,
     extensionDirection:
       value.extensionDirection ?? DEFAULT_EXERCISE_PATTERN.extensionDirection,
     intervalDegree: value.intervalDegree,

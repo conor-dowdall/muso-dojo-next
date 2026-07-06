@@ -11,7 +11,7 @@ import {
   APP_STORE_VERSION,
   type AppStorePersistedSnapshot,
   createDebouncedAppStoreStorage,
-  migrateAppStoreSnapshot,
+  normalizePersistedAppStoreSnapshot,
   partializeAppStoreSnapshot,
 } from "@/stores/app-store/persistence";
 import { type AppStore } from "@/stores/app-store/types";
@@ -125,12 +125,8 @@ function createPersistedTestStore(
         version: APP_STORE_VERSION,
         storage,
         partialize: partializeAppStoreSnapshot,
-        migrate: (persistedState, persistedVersion) =>
-          migrateAppStoreSnapshot(
-            persistedState,
-            persistedVersion,
-            fallbackSnapshot,
-          ),
+        migrate: (persistedState) =>
+          normalizePersistedAppStoreSnapshot(persistedState, fallbackSnapshot),
         merge: (persistedState, currentState) => ({
           ...currentState,
           ...normalizeAppStoreSnapshot(persistedState, fallbackSnapshot),
@@ -150,39 +146,50 @@ describe("app store persistence", () => {
     expect(APP_STORE_VERSION).toBe(3);
   });
 
-  it("normalizes unversioned persisted snapshots without resetting sessions", () => {
-    const migrated = migrateAppStoreSnapshot(
-      createPersistedSnapshot("persisted-session"),
-      0,
+  it("falls back when persisted state is not an object snapshot", () => {
+    expect(normalizeAppStoreSnapshot(null, fallbackSnapshot)).toBe(
       fallbackSnapshot,
     );
+    expect(normalizeAppStoreSnapshot([], fallbackSnapshot)).toBe(
+      fallbackSnapshot,
+    );
+    expect(normalizePersistedAppStoreSnapshot(null, fallbackSnapshot)).toBe(
+      fallbackSnapshot,
+    );
+  });
 
-    expect(migrated.activeSessionId).toBe("persisted-session");
-    expect(migrated.sessions["persisted-session"]?.name).toBe(
+  it("normalizes versioned persisted snapshots during hydration", async () => {
+    vi.useFakeTimers();
+    const stateStorage = new MemoryStateStorage();
+    const storage = createDebouncedAppStoreStorage(() => stateStorage, {
+      debounceMs: 100,
+      maxWaitMs: 300,
+    });
+    if (!storage) {
+      throw new Error("Expected test storage to be available");
+    }
+
+    stateStorage.items.set(
+      "store",
+      JSON.stringify({
+        state: createPersistedSnapshot("persisted-session"),
+        version: APP_STORE_VERSION - 1,
+      }),
+    );
+
+    const store = createPersistedTestStore(storage);
+    await store.persist.rehydrate();
+
+    expect(store.getState().activeSessionId).toBe("persisted-session");
+    expect(store.getState().sessions["persisted-session"]?.name).toBe(
       "Persisted Session",
     );
-  });
 
-  it("normalizes future-version persisted snapshots instead of throwing or resetting", () => {
-    const migrated = migrateAppStoreSnapshot(
-      createPersistedSnapshot("future-session"),
-      APP_STORE_VERSION + 10,
-      fallbackSnapshot,
-    );
-
-    expect(migrated.activeSessionId).toBe("future-session");
-    expect(migrated.sessions["future-session"]?.lastModified).toBe(
-      "2026-01-02T00:00:00.000Z",
-    );
-  });
-
-  it("falls back when persisted state is not an object snapshot", () => {
-    expect(migrateAppStoreSnapshot(null, 0, fallbackSnapshot)).toBe(
-      fallbackSnapshot,
-    );
-    expect(migrateAppStoreSnapshot([], 0, fallbackSnapshot)).toBe(
-      fallbackSnapshot,
-    );
+    vi.advanceTimersByTime(100);
+    expect(JSON.parse(stateStorage.items.get("store") ?? "null")).toEqual({
+      state: createPersistedSnapshot("persisted-session"),
+      version: APP_STORE_VERSION,
+    });
   });
 
   it("normalizes dojo settings while ignoring invalid settings", () => {
@@ -374,7 +381,9 @@ describe("app store persistence", () => {
           ...persistedState,
           dojoSettings: {
             moduleCreationDefaults: {
-              moduleKinds: ["keyboard", "drone", "keyboard"],
+              moduleKindDefaults: {
+                session: ["keyboard", "drone", "keyboard"],
+              },
               drone: {
                 octaveOffset: 1,
                 wood: "pauFerro",
@@ -499,7 +508,9 @@ describe("app store persistence", () => {
           ...persistedState,
           dojoSettings: {
             moduleCreationDefaults: {
-              moduleKinds: ["not-a-module"],
+              moduleKindDefaults: {
+                session: ["not-a-module"],
+              },
               fretboard: {
                 instrument: "not-an-instrument",
                 tuningKey: "guitarDropD",
@@ -513,7 +524,7 @@ describe("app store persistence", () => {
   });
 
   it("normalizes duplicate ids, invalid active notes, and missing active session ids", () => {
-    const migrated = migrateAppStoreSnapshot(
+    const normalized = normalizeAppStoreSnapshot(
       {
         activeSessionId: "missing-session",
         sessions: {
@@ -560,16 +571,15 @@ describe("app store persistence", () => {
           },
         },
       },
-      0,
       fallbackSnapshot,
     );
 
-    const session = migrated.sessions["session-a"];
+    const session = normalized.sessions["session-a"];
     if (!session) {
-      throw new Error("Expected migrated session to exist");
+      throw new Error("Expected normalized session to exist");
     }
 
-    expect(migrated.activeSessionId).toBe("session-a");
+    expect(normalized.activeSessionId).toBe("session-a");
     expect(session.parts.map((part) => part.id)).toEqual(["part", "part-copy"]);
     expect(session.parts[0]?.modules.map((module) => module.id)).toEqual([
       "module",
@@ -578,7 +588,7 @@ describe("app store persistence", () => {
 
     const firstModule = session.parts[0]?.modules[0];
     if (!firstModule || firstModule.type !== "instrument") {
-      throw new Error("Expected first migrated module to be an instrument");
+      throw new Error("Expected first normalized module to be an instrument");
     }
 
     expect(firstModule.instrument.activeNotes).toEqual({
@@ -588,14 +598,14 @@ describe("app store persistence", () => {
     expect(firstModule.instrument.activeNotesLockSourceKey).toBe(
       '["C","major","guitar"]',
     );
-    expectValidSnapshotInvariants(migrated);
-    expect(normalizeAppStoreSnapshot(migrated, fallbackSnapshot)).toEqual(
-      migrated,
+    expectValidSnapshotInvariants(normalized);
+    expect(normalizeAppStoreSnapshot(normalized, fallbackSnapshot)).toEqual(
+      normalized,
     );
   });
 
   it("normalizes locked instruments with no recoverable active notes to unlocked instruments", () => {
-    const migrated = migrateAppStoreSnapshot(
+    const normalized = normalizeAppStoreSnapshot(
       {
         activeSessionId: "session-a",
         sessions: {
@@ -626,19 +636,18 @@ describe("app store persistence", () => {
           },
         },
       },
-      0,
       fallbackSnapshot,
     );
-    const partModule = migrated.sessions["session-a"]?.parts[0]
+    const partModule = normalized.sessions["session-a"]?.parts[0]
       ?.modules[0] as InstrumentPartModuleConfig;
 
     expect(partModule.instrument).not.toHaveProperty("activeNotes");
     expect(partModule.instrument).not.toHaveProperty("activeNotesLocked");
-    expectValidSnapshotInvariants(migrated);
+    expectValidSnapshotInvariants(normalized);
   });
 
   it("normalizes locked instruments without a source key to unlocked custom notes", () => {
-    const migrated = migrateAppStoreSnapshot(
+    const normalized = normalizeAppStoreSnapshot(
       {
         activeSessionId: "session-a",
         sessions: {
@@ -669,10 +678,9 @@ describe("app store persistence", () => {
           },
         },
       },
-      0,
       fallbackSnapshot,
     );
-    const partModule = migrated.sessions["session-a"]?.parts[0]
+    const partModule = normalized.sessions["session-a"]?.parts[0]
       ?.modules[0] as InstrumentPartModuleConfig;
 
     expect(partModule.instrument.activeNotes).toEqual({
@@ -682,40 +690,7 @@ describe("app store persistence", () => {
     expect(partModule.instrument).not.toHaveProperty(
       "activeNotesLockSourceKey",
     );
-    expectValidSnapshotInvariants(migrated);
-  });
-
-  it("hydrates unversioned storage through Zustand persist and rewrites it at the current version", async () => {
-    vi.useFakeTimers();
-    const stateStorage = new MemoryStateStorage();
-    const storage = createDebouncedAppStoreStorage(() => stateStorage, {
-      debounceMs: 100,
-      maxWaitMs: 300,
-    });
-    if (!storage) {
-      throw new Error("Expected test storage to be available");
-    }
-
-    stateStorage.items.set(
-      "store",
-      JSON.stringify({
-        state: createPersistedSnapshot("legacy-session"),
-      }),
-    );
-
-    const store = createPersistedTestStore(storage);
-    await store.persist.rehydrate();
-
-    expect(store.getState().activeSessionId).toBe("legacy-session");
-    expect(store.getState().sessions["legacy-session"]?.name).toBe(
-      "Persisted Session",
-    );
-
-    vi.advanceTimersByTime(100);
-    expect(JSON.parse(stateStorage.items.get("store") ?? "null")).toEqual({
-      state: createPersistedSnapshot("legacy-session"),
-      version: APP_STORE_VERSION,
-    });
+    expectValidSnapshotInvariants(normalized);
   });
 
   it("defensively normalizes current-version storage during merge", async () => {

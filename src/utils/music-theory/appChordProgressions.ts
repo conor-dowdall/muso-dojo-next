@@ -5,16 +5,8 @@ import {
   type ChordProgressionKey,
 } from "@musodojo/music-theory-data";
 
-type LegacyAppChordProgressionKey = "rhythmChanges" | "rhythmChangesB";
-
-export type AppChordProgressionKey =
-  ChordProgressionKey | LegacyAppChordProgressionKey;
+export type AppChordProgressionKey = ChordProgressionKey;
 export type SelectableAppChordProgressionKey = ChordProgressionKey;
-
-const legacyChordProgressionAliases = {
-  rhythmChanges: "rhythmChangesA",
-  rhythmChangesB: "rhythmChangesBridge",
-} as const satisfies Record<LegacyAppChordProgressionKey, ChordProgressionKey>;
 
 export const appChordProgressions = chordProgressions;
 export const selectableChordProgressionCategoryGroups =
@@ -23,13 +15,7 @@ export const selectableChordProgressionCategoryGroups =
 export function normalizeAppChordProgressionKey(
   value: string,
 ): SelectableAppChordProgressionKey | undefined {
-  if (isValidChordProgressionKey(value)) {
-    return value;
-  }
-
-  return Object.hasOwn(legacyChordProgressionAliases, value)
-    ? legacyChordProgressionAliases[value as LegacyAppChordProgressionKey]
-    : undefined;
+  return isValidChordProgressionKey(value) ? value : undefined;
 }
 
 export function isAppChordProgressionKey(
@@ -41,14 +27,11 @@ export function isAppChordProgressionKey(
 function resolveAppChordProgressionKey(
   progressionKey: AppChordProgressionKey,
 ): SelectableAppChordProgressionKey {
-  const normalizedProgressionKey =
-    normalizeAppChordProgressionKey(progressionKey);
-
-  if (!normalizedProgressionKey) {
+  if (!isValidChordProgressionKey(progressionKey)) {
     throw new Error(`Unknown chord progression key: ${progressionKey}`);
   }
 
-  return normalizedProgressionKey;
+  return progressionKey;
 }
 
 export function getAppChordProgression(progressionKey: AppChordProgressionKey) {

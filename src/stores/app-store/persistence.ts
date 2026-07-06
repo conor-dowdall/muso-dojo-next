@@ -29,13 +29,10 @@ export function partializeAppStoreSnapshot(
   };
 }
 
-export function migrateAppStoreSnapshot(
+export function normalizePersistedAppStoreSnapshot(
   persistedState: unknown,
-  _persistedVersion: number,
   fallbackSnapshot: AppStoreSnapshot,
 ): AppStorePersistedSnapshot {
-  // Preserve recoverable user sessions across version changes; reset only when
-  // the persisted value cannot be normalized into a valid store snapshot.
   return normalizeAppStoreSnapshot(persistedState, fallbackSnapshot);
 }
 
@@ -48,10 +45,6 @@ function isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
   );
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 function parsePersistedValue(
   value: string | null,
 ): AppStorePersistedValue | null {
@@ -60,20 +53,7 @@ function parsePersistedValue(
   }
 
   try {
-    const persistedValue = JSON.parse(value) as unknown;
-
-    if (
-      isRecord(persistedValue) &&
-      "state" in persistedValue &&
-      typeof persistedValue.version !== "number"
-    ) {
-      return {
-        ...persistedValue,
-        version: 0,
-      } as AppStorePersistedValue;
-    }
-
-    return persistedValue as AppStorePersistedValue;
+    return JSON.parse(value) as AppStorePersistedValue;
   } catch {
     return null;
   }

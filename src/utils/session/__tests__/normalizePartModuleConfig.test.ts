@@ -20,7 +20,6 @@ describe("normalizePartModuleConfig", () => {
       id: "drone-1",
       noteCount: 11,
       octaveOffset: 4,
-      octaveRowCount: 3,
       type: "drone",
       wood: "maple",
     });
@@ -41,7 +40,6 @@ describe("normalizePartModuleConfig", () => {
         audioPresetId: "reference-tone",
         id: "drone-1",
         octaveOffset: 0,
-        octaveRowCount: 1,
         type: "drone",
         wood: "rosewood",
       }),
@@ -56,7 +54,6 @@ describe("normalizePartModuleConfig", () => {
         id: "drone-1",
         noteCount: 0,
         octaveOffset: 5,
-        octaveRowCount: 12,
         type: "drone",
         wood: "not-a-wood",
       }),
@@ -164,7 +161,7 @@ describe("normalizePartModuleConfig", () => {
     });
   });
 
-  it("preserves legacy exercise settings while migrating chord size", () => {
+  it("drops unsupported exercise pattern extension degrees", () => {
     expect(
       normalizePartModuleConfig({
         id: "looper-1",
@@ -179,16 +176,9 @@ describe("normalizePartModuleConfig", () => {
         },
         type: "exercise-looper",
       }),
-    ).toMatchObject({
-      pattern: {
-        direction: "descending",
-        extensionDegree: 5,
-        extensionDirection: "ascending",
-        intervalDegree: 4,
-        intervalDirection: "descending",
-        mode: "interval",
-        notePlayback: "together",
-      },
+    ).toStrictEqual({
+      id: "looper-1",
+      type: "exercise-looper",
     });
   });
 

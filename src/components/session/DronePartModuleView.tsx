@@ -35,7 +35,6 @@ export function DronePartModuleView({
             noteCount: drone.noteCount,
             noteCollectionKey: part.noteCollectionKey,
             octaveOffset: drone.octaveOffset,
-            octaveRowCount: drone.octaveRowCount,
             rootNote: part.rootNote,
             wood: drone.wood,
           }
@@ -63,7 +62,6 @@ export function DronePartModuleView({
       noteCount={model.noteCount}
       noteCollectionKey={model.noteCollectionKey}
       octaveOffset={model.octaveOffset}
-      octaveRowCount={model.octaveRowCount}
       rootNote={model.rootNote}
       wood={model.wood}
       showHeader={!isPerformanceMode}
