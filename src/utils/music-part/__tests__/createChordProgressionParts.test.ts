@@ -232,9 +232,9 @@ describe("createChordProgressionParts", () => {
       "D",
       "G",
     ]);
-    expect(
-      aSectionParts.every((part) => part.durationInBars === 0.5),
-    ).toBe(true);
+    expect(aSectionParts.every((part) => part.durationInBars === 0.5)).toBe(
+      true,
+    );
 
     expect(bridgeParts).toHaveLength(8);
     expect(bridgeParts.map((part) => part.rootNote)).toEqual([

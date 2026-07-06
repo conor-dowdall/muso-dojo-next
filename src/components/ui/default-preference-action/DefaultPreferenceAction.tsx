@@ -25,8 +25,7 @@ interface DefaultPreferenceActionFooterProps extends DefaultPreferenceActionBase
 }
 
 export type DefaultPreferenceActionProps =
-  | DefaultPreferenceActionRowProps
-  | DefaultPreferenceActionFooterProps;
+  DefaultPreferenceActionRowProps | DefaultPreferenceActionFooterProps;
 
 export function DefaultPreferenceAction(props: DefaultPreferenceActionProps) {
   const { ariaLabel, label } = getDefaultPreferenceActionCopy(props);

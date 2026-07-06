@@ -8,8 +8,7 @@ import {
 type LegacyAppChordProgressionKey = "rhythmChanges" | "rhythmChangesB";
 
 export type AppChordProgressionKey =
-  | ChordProgressionKey
-  | LegacyAppChordProgressionKey;
+  ChordProgressionKey | LegacyAppChordProgressionKey;
 export type SelectableAppChordProgressionKey = ChordProgressionKey;
 
 const legacyChordProgressionAliases = {

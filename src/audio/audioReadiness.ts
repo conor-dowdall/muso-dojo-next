@@ -2,10 +2,7 @@ import { musoAudioEngine } from "./createWebAudioEngine";
 import { type AudioEngine } from "./types";
 
 export type AudioReadinessStatus =
-  | "idle"
-  | "preparing"
-  | "ready"
-  | "unavailable";
+  "idle" | "preparing" | "ready" | "unavailable";
 
 export interface EnsureAudioReadyOptions {
   feedback?: "silent" | "visible";

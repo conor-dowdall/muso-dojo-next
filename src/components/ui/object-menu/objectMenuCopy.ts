@@ -1,10 +1,5 @@
 export type ManagedObjectKind =
-  | "session"
-  | "part"
-  | "instrument"
-  | "drone"
-  | "exercise looper"
-  | "rhythm";
+  "session" | "part" | "instrument" | "drone" | "exercise looper" | "rhythm";
 
 export type ObjectManagementActionKind = "duplicate" | "danger";
 

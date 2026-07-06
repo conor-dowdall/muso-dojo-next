@@ -52,11 +52,7 @@ export interface RhythmPattern {
 export type RhythmTimekeeperSound = "hat" | "ride" | "shaker";
 export type RhythmTimekeeperSubdivision = BeatSubdivisionId;
 export type RhythmTimekeeperFeel =
-  | "off"
-  | "straight"
-  | "triplet"
-  | "swing"
-  | "shuffle";
+  "off" | "straight" | "triplet" | "swing" | "shuffle";
 
 const rhythmBeatGroupsByGrouping = {
   "1+2": [1, 2],

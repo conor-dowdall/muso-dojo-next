@@ -1,8 +1,6 @@
 "use client";
 
-import {
-  type RootNote,
-} from "@musodojo/music-theory-data";
+import { type RootNote } from "@musodojo/music-theory-data";
 import {
   DisclosureList,
   DisclosureListChoice,

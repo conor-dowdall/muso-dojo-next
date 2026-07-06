@@ -98,9 +98,7 @@ export function getChordProgressionDisplaySummary(
 
   const progressionInput =
     typeof progressionOrKey === "string"
-      ? getAppChordProgressionInput(
-          progressionOrKey as AppChordProgressionKey,
-        )
+      ? getAppChordProgressionInput(progressionOrKey as AppChordProgressionKey)
       : progressionOrKey;
   const chordNames = getChordProgressionChordNames(rootNote, progressionInput);
   const romanNames = getChordProgressionDisplayRomanSymbols(progressionInput);

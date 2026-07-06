@@ -11,11 +11,7 @@ import { type RhythmSelection } from "@/utils/rhythm/rhythmConfig";
 
 export type FretboardCreationAppearanceSource = "auto" | "custom";
 export type ModuleCreationKind =
-  | "fretboard"
-  | "keyboard"
-  | "drone"
-  | "exercise-looper"
-  | "rhythm";
+  "fretboard" | "keyboard" | "drone" | "exercise-looper" | "rhythm";
 export type ModuleCreationContext = "session" | "part";
 export type ModuleCreationKindDefaults = Partial<
   Record<ModuleCreationContext, ModuleCreationKind[]>

@@ -122,8 +122,7 @@ export class BeatTransportCoordinator {
     (event: BeatTransportManualControlEvent) => void
   >();
   private pendingCompanionStart:
-    | { revision: number; target: "exercise" | "rhythm" }
-    | undefined;
+    { revision: number; target: "exercise" | "rhythm" } | undefined;
   private revision = 0;
 
   constructor(

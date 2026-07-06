@@ -29,8 +29,7 @@ import { type BeatSubdivisionId } from "@/utils/music-theory/beatSubdivision";
 import { type RhythmSelection } from "@/utils/rhythm/rhythmConfig";
 
 export type ChordProgressionChordListMode =
-  | "each-chord-once"
-  | "full-song-order";
+  "each-chord-once" | "full-song-order";
 
 export type SessionMaterialCreationKind = "part" | "chord-progression";
 

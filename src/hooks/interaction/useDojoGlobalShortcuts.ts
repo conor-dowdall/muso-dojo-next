@@ -25,9 +25,7 @@ const editableShortcutTargetSelector = [
 ].join(",");
 
 export type DojoGlobalShortcutAction =
-  | "exit-view"
-  | "stop-audio"
-  | "toggle-practice-band";
+  "exit-view" | "stop-audio" | "toggle-practice-band";
 
 interface DojoGlobalShortcutContext {
   audioPlaying: boolean;

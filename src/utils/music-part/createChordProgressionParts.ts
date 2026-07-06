@@ -97,8 +97,7 @@ function createFullProgressionPartReferences(
   beatsPerBar = PART_DURATION_BEATS_PER_BAR,
 ): ProgressionPartReference[] {
   const progression = getAppChordProgression(progressionKey) as
-    | DurationAwareChordProgression
-    | undefined;
+    DurationAwareChordProgression | undefined;
   const progressionInput = getAppChordProgressionInput(progressionKey);
   const references = getChordProgressionChordChangeReferences(
     rootNote,

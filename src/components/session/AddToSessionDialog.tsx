@@ -166,11 +166,8 @@ export function AddToSessionDialog({
       DEFAULT_PART_NOTE_COLLECTION_KEY,
   );
   const [progressionKey, setProgressionKey] =
-    useState<SelectableAppChordProgressionKey>(
-      () =>
-        getInitialProgressionKey(
-          sessionMaterialCreationDefaults?.progressionKey,
-        ),
+    useState<SelectableAppChordProgressionKey>(() =>
+      getInitialProgressionKey(sessionMaterialCreationDefaults?.progressionKey),
     );
   const [chordListMode, setChordListMode] =
     useState<ChordProgressionChordListMode>(

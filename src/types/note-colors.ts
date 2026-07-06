@@ -28,9 +28,7 @@ export interface CustomNoteColorConfig {
 }
 
 export type NoteColorConfig =
-  | ThemeNoteColorConfig
-  | PresetNoteColorConfig
-  | CustomNoteColorConfig;
+  ThemeNoteColorConfig | PresetNoteColorConfig | CustomNoteColorConfig;
 
 export interface InstrumentNoteColor {
   index: ChromaticIndex;

@@ -39,9 +39,9 @@ describe("part module app store actions", () => {
 
     const addedModule = store
       .getState()
-      .sessions[
-        sessionId
-      ]?.parts[0]?.modules.find((candidateModule) => candidateModule.id === addedModuleId);
+      .sessions[sessionId]?.parts[0]?.modules.find(
+        (candidateModule) => candidateModule.id === addedModuleId,
+      );
 
     expect(addedModule).toMatchObject({
       id: addedModuleId,
@@ -61,9 +61,9 @@ describe("part module app store actions", () => {
     });
     const addedModule = store
       .getState()
-      .sessions[
-        sessionId
-      ]?.parts[0]?.modules.find((candidateModule) => candidateModule.id === addedModuleId);
+      .sessions[sessionId]?.parts[0]?.modules.find(
+        (candidateModule) => candidateModule.id === addedModuleId,
+      );
 
     expect(addedModule).toMatchObject({
       id: addedModuleId,
@@ -134,9 +134,9 @@ describe("part module app store actions", () => {
 
     const partModule = store
       .getState()
-      .sessions[
-        sessionId
-      ]?.parts[0]?.modules.find((candidate) => candidate.id === moduleId);
+      .sessions[sessionId]?.parts[0]?.modules.find(
+        (candidate) => candidate.id === moduleId,
+      );
 
     expect(partModule).toStrictEqual({
       id: moduleId,
@@ -185,9 +185,9 @@ describe("part module app store actions", () => {
     });
     const partModule = store
       .getState()
-      .sessions[
-        sessionId
-      ]?.parts[0]?.modules.find((candidate) => candidate.id === moduleId);
+      .sessions[sessionId]?.parts[0]?.modules.find(
+        (candidate) => candidate.id === moduleId,
+      );
 
     expect(partModule).toMatchObject({
       rhythm: {
@@ -214,9 +214,9 @@ describe("part module app store actions", () => {
       .clonePartModule(sessionId, partId, addedModuleId);
     const clonedModule = store
       .getState()
-      .sessions[
-        sessionId
-      ]?.parts[0]?.modules.find((candidateModule) => candidateModule.id === clonedModuleId);
+      .sessions[sessionId]?.parts[0]?.modules.find(
+        (candidateModule) => candidateModule.id === clonedModuleId,
+      );
 
     expect(clonedModuleId).toEqual(expect.any(String));
     expect(clonedModuleId).not.toBe(addedModuleId);
@@ -251,9 +251,9 @@ describe("part module app store actions", () => {
 
     const updatedModule = store
       .getState()
-      .sessions[
-        sessionId
-      ]?.parts[0]?.modules.find((candidateModule) => candidateModule.id === addedModuleId);
+      .sessions[sessionId]?.parts[0]?.modules.find(
+        (candidateModule) => candidateModule.id === addedModuleId,
+      );
 
     expect(updatedModule).toMatchObject({
       audioPresetId: "plucked-string",
@@ -295,9 +295,9 @@ describe("part module app store actions", () => {
 
     const updatedModule = store
       .getState()
-      .sessions[
-        sessionId
-      ]?.parts[0]?.modules.find((candidateModule) => candidateModule.id === addedModuleId);
+      .sessions[sessionId]?.parts[0]?.modules.find(
+        (candidateModule) => candidateModule.id === addedModuleId,
+      );
 
     expect(updatedModule).toStrictEqual({
       id: addedModuleId,
@@ -342,9 +342,9 @@ describe("part module app store actions", () => {
 
     const partModule = store
       .getState()
-      .sessions[
-        sessionId
-      ]?.parts[0]?.modules.find((candidate) => candidate.id === moduleId);
+      .sessions[sessionId]?.parts[0]?.modules.find(
+        (candidate) => candidate.id === moduleId,
+      );
 
     expect(partModule).toMatchObject({
       audioPresetId: "piano",

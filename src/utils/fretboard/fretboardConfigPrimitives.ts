@@ -190,8 +190,7 @@ export function normalizeFretRange(
 
 export function normalizeIconRecord(
   icons:
-    | FretboardConfig["fretInlayImages"]
-    | FretboardConfig["fretLabelImages"],
+    FretboardConfig["fretInlayImages"] | FretboardConfig["fretLabelImages"],
 ) {
   if (!isFretboardConfigRecord(icons)) {
     return {};

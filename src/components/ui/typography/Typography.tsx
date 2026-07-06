@@ -7,11 +7,7 @@ import styles from "./Typography.module.css";
 
 export type TypographySize = "2xs" | "xs" | "sm" | "base" | "lg" | "xl" | "2xl";
 export type TypographyWeight =
-  | "light"
-  | "normal"
-  | "medium"
-  | "semibold"
-  | "bold";
+  "light" | "normal" | "medium" | "semibold" | "bold";
 export type TypographyVariant = "primary" | "muted" | "accent";
 export type TypographyLeading =
   | "none"

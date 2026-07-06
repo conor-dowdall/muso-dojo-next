@@ -50,11 +50,7 @@ import styles from "@/components/part-module-creation/PartModuleCreationDialog.m
 const MIN_FRET_RANGE_SPAN = 2;
 
 type FretboardChoice =
-  | "instrument"
-  | "tuning"
-  | "fretRange"
-  | "handedness"
-  | "appearance";
+  "instrument" | "tuning" | "fretRange" | "handedness" | "appearance";
 type AppearanceEditor = "custom";
 
 interface FretboardInstrumentCreationPanelProps {

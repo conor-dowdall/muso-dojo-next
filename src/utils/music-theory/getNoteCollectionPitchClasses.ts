@@ -4,6 +4,5 @@ export function getNoteCollectionPitchClasses(
   params: Parameters<typeof getUpstreamNoteCollectionPitchClasses>[0],
 ) {
   return getUpstreamNoteCollectionPitchClasses(params) as
-    | ReadonlySet<number>
-    | undefined;
+    ReadonlySet<number> | undefined;
 }
