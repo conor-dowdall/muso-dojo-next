@@ -1,9 +1,9 @@
 import {
+  getNoteCollectionDisplayName,
   normalizeRootNoteString,
   noteCollections,
   type NoteCollectionKey,
 } from "@musodojo/music-theory-data";
-import { getNoteCollectionDisplayName } from "./getNoteCollectionDisplayName";
 
 type NoteCollection = (typeof noteCollections)[NoteCollectionKey];
 

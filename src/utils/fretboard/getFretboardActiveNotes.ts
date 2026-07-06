@@ -1,7 +1,10 @@
-import { type NoteCollectionKey } from "@musodojo/music-theory-data";
+import {
+  getNoteCollectionPitchClasses,
+  normalizeChromaticIndex,
+  type NoteCollectionKey,
+} from "@musodojo/music-theory-data";
 import { type ActiveNotes } from "@/types/instrument-active-note";
 import { getNumFrets } from "@/utils/fretboard/fretboardGeometry";
-import { getNoteCollectionPitchClasses } from "@/utils/music-theory/getNoteCollectionPitchClasses";
 
 interface GetFretboardActiveNotesProps {
   rootNote: string;
@@ -41,7 +44,7 @@ export function getFretboardActiveNotes({
     for (let i = 0; i < numFrets; i++) {
       const fretNumber = startFret + i;
       const noteMidi = openStringMidi + fretNumber;
-      const noteInteger = noteMidi % 12;
+      const noteInteger = normalizeChromaticIndex(noteMidi);
 
       if (pitchClasses.has(noteInteger)) {
         const key = `${stringIndex}-${fretNumber}`;

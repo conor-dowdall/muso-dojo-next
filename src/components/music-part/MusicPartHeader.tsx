@@ -1,7 +1,10 @@
 "use client";
 
 import { useMusicPart } from "./MusicPartContext";
-import { normalizeRootNoteString } from "@musodojo/music-theory-data";
+import {
+  getNoteCollectionDisplayName,
+  normalizeRootNoteString,
+} from "@musodojo/music-theory-data";
 import { useState } from "react";
 import {
   Dialog,
@@ -13,7 +16,6 @@ import { IconButton } from "@/components/ui/buttons/IconButton";
 import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 import { RootNotePicker } from "@/components/music-theory/RootNotePicker";
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
-import { getNoteCollectionDisplayName } from "@/utils/music-theory/getNoteCollectionDisplayName";
 import styles from "./MusicPartHeader.module.css";
 import { Plus } from "lucide-react";
 import { Heading } from "@/components/ui/typography/Heading";

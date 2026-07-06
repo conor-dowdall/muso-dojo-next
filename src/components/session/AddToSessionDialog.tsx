@@ -2,6 +2,7 @@
 
 import { type ReactNode, useMemo, useState } from "react";
 import {
+  getNoteCollectionDisplayName,
   normalizeRootNoteString,
   type NoteCollectionKey,
   type RootNote,
@@ -45,7 +46,6 @@ import {
 } from "@/utils/music-theory/appChordProgressions";
 import { getChordProgressionDisplayLabels } from "@/utils/music-theory/chordProgressions";
 import { getChordProgressionRhythmProfile } from "@/utils/music-theory/chordProgressionRhythm";
-import { getNoteCollectionDisplayName } from "@/utils/music-theory/getNoteCollectionDisplayName";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import localStyles from "./AddToSessionDialog.module.css";
 import {

@@ -1,8 +1,9 @@
 # Music Theory Utility Notes
 
-This folder holds local helpers that sit close to `@musodojo/music-theory-data`.
-When a helper describes a stable musical concept rather than Muso Dojo UI state,
-prefer keeping it pure and covered by focused tests so it can move upstream.
+This folder holds app-specific helpers that sit close to
+`@musodojo/music-theory-data`. When a helper describes a stable musical concept
+rather than Muso Dojo UI state, prefer moving it upstream and importing the core
+package directly instead of keeping a local wrapper.
 
 ## Upstream Candidates
 
@@ -10,10 +11,6 @@ prefer keeping it pure and covered by focused tests so it can move upstream.
   - Formats a root plus note collection as a musician-facing identity.
   - Chord collections use compact chord-symbol spacing, for example `CM7`.
   - Scale and mode collections keep a readable space, for example `C Dorian`.
-
-- `midiNote.ts`
-  - Converts MIDI note numbers to octave numbers.
-  - Formats MIDI note labels such as `Bb3`.
 
 - `src/data/rhythmPresets.ts`
   - `getRhythmTheoryReadout()` derives meter labels and theory details such as

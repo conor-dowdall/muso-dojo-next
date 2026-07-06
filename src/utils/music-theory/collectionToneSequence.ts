@@ -1,12 +1,10 @@
 import {
-  noteCollections,
-  type NoteCollectionKey,
-} from "@musodojo/music-theory-data";
-import {
   DIATONIC_STEPS_PER_OCTAVE,
   getIntervalLabelDegree,
+  noteCollections,
   shiftIntervalLabelByOctaves,
-} from "./intervalLabel";
+  type NoteCollectionKey,
+} from "@musodojo/music-theory-data";
 
 const SEMITONES_PER_OCTAVE = 12;
 

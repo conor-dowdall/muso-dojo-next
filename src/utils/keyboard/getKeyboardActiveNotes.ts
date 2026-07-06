@@ -1,6 +1,9 @@
-import { type NoteCollectionKey } from "@musodojo/music-theory-data";
+import {
+  getNoteCollectionPitchClasses,
+  normalizeChromaticIndex,
+  type NoteCollectionKey,
+} from "@musodojo/music-theory-data";
 import { type ActiveNotes } from "@/types/instrument-active-note";
-import { getNoteCollectionPitchClasses } from "@/utils/music-theory/getNoteCollectionPitchClasses";
 
 interface GetKeyboardActiveNotesProps {
   rootNote: string;
@@ -37,7 +40,7 @@ export function getKeyboardActiveNotes({
   const [startMidi, endMidi] = midiRange;
 
   for (let midi = startMidi; midi <= endMidi; midi++) {
-    const noteInteger = ((midi % 12) + 12) % 12;
+    const noteInteger = normalizeChromaticIndex(midi);
     if (pitchClasses.has(noteInteger)) {
       const key = `${midi}`;
       activeNotes[key] = {
