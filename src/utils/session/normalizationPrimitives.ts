@@ -1,5 +1,5 @@
 import {
-  isValidNoteCollectionKey,
+  noteCollection,
   normalizeRootNoteString,
   type NoteCollectionKey,
 } from "@musodojo/music-theory-data";
@@ -82,7 +82,7 @@ export function normalizeNoteCollectionKey(
   value: unknown,
   fallback: NoteCollectionKey = DEFAULT_PART_NOTE_COLLECTION_KEY,
 ): NoteCollectionKey {
-  return typeof value === "string" && isValidNoteCollectionKey(value)
+  return typeof value === "string" && noteCollection.isValidKey(value)
     ? value
     : fallback;
 }
@@ -90,7 +90,7 @@ export function normalizeNoteCollectionKey(
 export function normalizeOptionalNoteCollectionKey(
   value: unknown,
 ): NoteCollectionKey | undefined {
-  return typeof value === "string" && isValidNoteCollectionKey(value)
+  return typeof value === "string" && noteCollection.isValidKey(value)
     ? value
     : undefined;
 }

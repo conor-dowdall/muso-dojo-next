@@ -1,6 +1,6 @@
 import {
-  getNoteNamesForRootAndNoteCollectionKey,
   noteCollections,
+  rootAndNoteCollection,
   type NoteCollectionKey,
 } from "@musodojo/music-theory-data";
 import { isPlayableMidiNote } from "@/audio/pitch";
@@ -252,7 +252,7 @@ export function createExerciseSequence({
   const toneSequence = getCollectionToneSequenceMetadata(resolvedCollectionKey);
   const collectionSize = toneSequence.tones.length;
   const resolvedEnd = end ?? { octave: 1, stepOffset: 0 };
-  const noteNames = getNoteNamesForRootAndNoteCollectionKey(
+  const noteNames = rootAndNoteCollection.getNoteNames(
     resolvedRootNote,
     resolvedCollectionKey,
     { filterOutOctave: true },

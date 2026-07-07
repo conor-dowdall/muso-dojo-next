@@ -1,17 +1,12 @@
 import {
   diatonicModes,
-  getCompoundIntervalsForRootAndNoteCollectionKey,
-  getExtensionsForNoteCollectionKey,
-  getExtensionsForRootAndNoteCollectionKey,
-  getIntervalsForRootAndNoteCollectionKey,
-  getNoteNamesForRootAndNoteCollectionKey,
-  getSeventhChordsForNoteCollectionKey,
-  getTriadsForNoteCollectionKey,
   harmonicMinorModes,
   melodicMinorModes,
+  noteCollection,
   noteCollections,
   noteNameToIntegerMap,
   normalizeRootNoteString,
+  rootAndNoteCollection,
   rootNotes,
   rootNoteToIntegerMap,
   type Interval,
@@ -54,9 +49,7 @@ const chordSuffixByIntervalSignature = new Map(
     collection.category === "chord"
       ? [
           [
-            getExtensionsForNoteCollectionKey(key as NoteCollectionKey).join(
-              " ",
-            ),
+            noteCollection.getExtensions(key as NoteCollectionKey).join(" "),
             collection.primaryName,
           ] as const,
         ]
@@ -112,7 +105,7 @@ function createScaleDegreeContexts({
   rootNote: RootNote;
 }) {
   const collectionSize = noteCollections[collectionKey].integers.length;
-  const rootNames = getNoteNamesForRootAndNoteCollectionKey(
+  const rootNames = rootAndNoteCollection.getNoteNames(
     rootNote,
     collectionKey,
     { filterOutOctave: true },
@@ -176,14 +169,12 @@ function getPackageIntervalForDegree({
   rootNote: RootNote;
 }) {
   if (degree <= 8) {
-    return getIntervalsForRootAndNoteCollectionKey(
-      rootNote,
-      relativeCollectionKey,
-      { filterOutOctave: false },
-    )[degree - 1];
+    return rootAndNoteCollection.getIntervals(rootNote, relativeCollectionKey, {
+      filterOutOctave: false,
+    })[degree - 1];
   }
 
-  return getCompoundIntervalsForRootAndNoteCollectionKey(
+  return rootAndNoteCollection.getCompoundIntervals(
     rootNote,
     relativeCollectionKey,
     { filterOutOctave: false },
@@ -202,13 +193,11 @@ function getChordName({
   rootName: NoteName;
 }) {
   if (extensionDegree === 5) {
-    const triad = getTriadsForNoteCollectionKey(relativeCollectionKey)[0];
+    const triad = noteCollection.getTriads(relativeCollectionKey)[0];
     return triad === undefined ? rootName : `${rootName}${triad}`;
   }
 
-  const seventh = getSeventhChordsForNoteCollectionKey(
-    relativeCollectionKey,
-  )[0];
+  const seventh = noteCollection.getSeventhChords(relativeCollectionKey)[0];
 
   if (extensionDegree === 7) {
     return seventh === undefined ? rootName : `${rootName}${seventh}`;
@@ -251,10 +240,9 @@ export function createChordDescriptorsByAnchorPosition({
 
   contexts.forEach(
     ({ anchorPosition, relativeCollectionKey, resolvedRoot, rootName }) => {
-      const intervals = getExtensionsForRootAndNoteCollectionKey(
-        resolvedRoot,
-        relativeCollectionKey,
-      ).slice(0, chordSize);
+      const intervals = rootAndNoteCollection
+        .getExtensions(resolvedRoot, relativeCollectionKey)
+        .slice(0, chordSize);
       const collectionPositions = createExtensionPositions(
         anchorPosition,
         extensionDegree,
@@ -364,8 +352,8 @@ export function supportsTertianExercises(noteCollectionKey: NoteCollectionKey) {
   return (
     supportsScaleDegreeExercises(noteCollectionKey) &&
     collection.integers.length === 7 &&
-    getTriadsForNoteCollectionKey(noteCollectionKey).every(
-      (quality) => quality !== undefined,
-    )
+    noteCollection
+      .getTriads(noteCollectionKey)
+      .every((quality) => quality !== undefined)
   );
 }

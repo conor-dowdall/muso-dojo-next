@@ -2,7 +2,7 @@
 
 import { useMusicPart } from "./MusicPartContext";
 import {
-  getNoteCollectionDisplayName,
+  noteCollection,
   normalizeRootNoteString,
 } from "@musodojo/music-theory-data";
 import { useState } from "react";
@@ -43,7 +43,7 @@ export function MusicPartHeader({
   const hasPartMenu =
     !isPerformanceMode && Boolean(musicPart.clonePart || musicPart.removePart);
   const rootNoteLabel = normalizeRootNoteString(rootNote) || rootNote;
-  const noteCollectionName = getNoteCollectionDisplayName(noteCollectionKey);
+  const noteCollectionName = noteCollection.getDisplayName(noteCollectionKey);
 
   return (
     <>

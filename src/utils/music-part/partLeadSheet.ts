@@ -1,6 +1,6 @@
+import { rootAndNoteCollection } from "@musodojo/music-theory-data";
 import { getRhythmTheoryReadout } from "@/data/rhythmPresets";
 import { type MusicPartConfig } from "@/types/session";
-import { getPartIdentity } from "@/utils/music-theory/partIdentity";
 import {
   getPartDurationChartUnits,
   getRhythmSelectionForPartDuration,
@@ -27,7 +27,7 @@ function getFirstRhythmModule(part: MusicPartConfig) {
 export function getPartLeadSheetSummary(
   part: MusicPartConfig,
 ): PartLeadSheetSummary {
-  const identity = getPartIdentity(part);
+  const identity = rootAndNoteCollection.getIdentity(part);
   const rhythmModule = getFirstRhythmModule(part);
   const rhythmSelection =
     rhythmModule?.rhythm ??

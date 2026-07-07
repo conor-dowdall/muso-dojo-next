@@ -1,8 +1,7 @@
 import { useOptionalMusicPart } from "@/components/music-part/MusicPartContext";
 import {
-  conversions,
-  isRootAndNoteCollectionConversionAvailable,
   normalizeRootNoteString,
+  rootAndNoteCollection,
   type NoteCollectionKey,
 } from "@musodojo/music-theory-data";
 import {
@@ -37,19 +36,21 @@ export function useEffectiveMusicSystem({
 
   const showMidiNumbers = activeDisplayFormatId === "midi";
 
-  const selectedConversion = getRootAndNoteDisplayFormat(activeDisplayFormatId);
-  const conversion =
-    selectedConversion &&
+  const selectedDisplayLayer = getRootAndNoteDisplayFormat(
+    activeDisplayFormatId,
+  );
+  const displayLayer =
+    selectedDisplayLayer &&
     normalizedRootNote !== undefined &&
-    isRootAndNoteCollectionConversionAvailable(
-      selectedConversion,
+    rootAndNoteCollection.isDisplayLayerAvailable(
+      selectedDisplayLayer,
       normalizedRootNote,
       effectiveNoteCollectionKey,
     )
-      ? selectedConversion
-      : conversions.rootAndNoteCollection.noteNames;
+      ? selectedDisplayLayer
+      : rootAndNoteCollection.displayLayers.noteNames;
 
-  const noteNames = conversion.get(
+  const noteNames = displayLayer.get(
     normalizedRootNote || "C",
     effectiveNoteCollectionKey,
     {
@@ -64,7 +65,7 @@ export function useEffectiveMusicSystem({
     activeDisplayFormatId,
     noteNames,
     showMidiNumbers,
-    conversionFn: conversion.get,
+    conversionFn: displayLayer.get,
     normalizedRootNote,
   };
 }

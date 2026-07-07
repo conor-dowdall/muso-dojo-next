@@ -1,5 +1,6 @@
 "use client";
 
+import { rootAndNoteCollection } from "@musodojo/music-theory-data";
 import {
   type CSSProperties,
   type ComponentPropsWithoutRef,
@@ -21,7 +22,6 @@ import { IconButton } from "@/components/ui/buttons/IconButton";
 import { useScopedTransportShortcuts } from "@/hooks/interaction/useScopedTransportShortcuts";
 import { type SessionConfig } from "@/types/session";
 import { createPartBarTimeline } from "@/utils/music-part/partBarTimeline";
-import { getPartIdentity } from "@/utils/music-theory/partIdentity";
 import {
   resolvePracticeBandConfig,
   type ResolvedPracticeBandConfig,
@@ -58,7 +58,7 @@ function createPartReadout({
     };
   }
 
-  const identity = getPartIdentity(part);
+  const identity = rootAndNoteCollection.getIdentity(part);
 
   return {
     countLabel,

@@ -1,7 +1,7 @@
 import {
+  chordProgression,
   chordProgressionCategoryGroups,
   chordProgressions,
-  isValidChordProgressionKey,
   type ChordProgressionKey,
 } from "@musodojo/music-theory-data";
 
@@ -15,7 +15,7 @@ export const selectableChordProgressionCategoryGroups =
 export function normalizeAppChordProgressionKey(
   value: string,
 ): SelectableAppChordProgressionKey | undefined {
-  return isValidChordProgressionKey(value) ? value : undefined;
+  return chordProgression.isValidKey(value) ? value : undefined;
 }
 
 export function isAppChordProgressionKey(
@@ -27,7 +27,7 @@ export function isAppChordProgressionKey(
 function resolveAppChordProgressionKey(
   progressionKey: AppChordProgressionKey,
 ): SelectableAppChordProgressionKey {
-  if (!isValidChordProgressionKey(progressionKey)) {
+  if (!chordProgression.isValidKey(progressionKey)) {
     throw new Error(`Unknown chord progression key: ${progressionKey}`);
   }
 

@@ -1,8 +1,4 @@
-import {
-  getChordProgressionChordNames,
-  getChordProgressionDisplayRomanSymbols,
-  type RootNote,
-} from "@musodojo/music-theory-data";
+import { chordProgression, type RootNote } from "@musodojo/music-theory-data";
 import {
   getAppChordProgression,
   getAppChordProgressionInput,
@@ -15,7 +11,7 @@ interface DurationAwareChordProgressionChord {
 }
 
 type ChordProgressionInput = Parameters<
-  typeof getChordProgressionChordNames
+  typeof chordProgression.getChordNames
 >[1];
 type AppChordProgressionInput = ChordProgressionInput | AppChordProgressionKey;
 
@@ -100,8 +96,8 @@ export function getChordProgressionDisplaySummary(
     typeof progressionOrKey === "string"
       ? getAppChordProgressionInput(progressionOrKey as AppChordProgressionKey)
       : progressionOrKey;
-  const chordNames = getChordProgressionChordNames(rootNote, progressionInput);
-  const romanNames = getChordProgressionDisplayRomanSymbols(progressionInput);
+  const chordNames = chordProgression.getChordNames(rootNote, progressionInput);
+  const romanNames = chordProgression.getRomanSymbols(progressionInput);
   const durationsInBars = progression.chords.map(
     (chord) => chord.durationInBars,
   );

@@ -1,6 +1,6 @@
 import {
-  getNoteCollectionPitchClasses,
   normalizeChromaticIndex,
+  rootAndNoteCollection,
   type NoteCollectionKey,
 } from "@musodojo/music-theory-data";
 import { type ActiveNotes } from "@/types/instrument-active-note";
@@ -31,7 +31,7 @@ export function getFretboardActiveNotes({
 
   const activeNotes: ActiveNotes = {};
 
-  const pitchClasses = getNoteCollectionPitchClasses({
+  const pitchClasses = rootAndNoteCollection.getPitchClasses({
     rootNote,
     noteCollectionKey,
   });

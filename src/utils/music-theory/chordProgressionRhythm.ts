@@ -1,5 +1,7 @@
+import { chordProgression } from "@musodojo/music-theory-data";
 import {
   getAppChordProgression,
+  getAppChordProgressionInput,
   type AppChordProgressionKey,
 } from "@/utils/music-theory/appChordProgressions";
 import { RHYTHM_MAX_BEATS } from "@/data/rhythmPresets";
@@ -60,13 +62,6 @@ function getSimpleFractionDenominator(
   return undefined;
 }
 
-function getProgressionTotalBars(progression: RhythmAwareChordProgression) {
-  return progression.chords.reduce(
-    (total, chord) => total + chord.durationInBars,
-    0,
-  );
-}
-
 function getProgressionSearchTerms(
   progression: RhythmAwareChordProgression,
   totalBars: number,
@@ -125,7 +120,9 @@ export function getChordProgressionRhythmProfile(
   const progression = getAppChordProgression(
     progressionKey,
   ) as RhythmAwareChordProgression;
-  const totalBars = getProgressionTotalBars(progression);
+  const totalBars = chordProgression.getTotalDurationInBars(
+    getAppChordProgressionInput(progressionKey),
+  );
   const requiredBarDivision = getRequiredBarDivisionForDurations(
     progression.chords.map((chord) => chord.durationInBars),
   );

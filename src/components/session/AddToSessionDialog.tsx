@@ -2,7 +2,7 @@
 
 import { type ReactNode, useMemo, useState } from "react";
 import {
-  getNoteCollectionDisplayName,
+  noteCollection,
   normalizeRootNoteString,
   type NoteCollectionKey,
   type RootNote,
@@ -195,7 +195,7 @@ export function AddToSessionDialog({
   } = getChordProgressionDisplayLabels(selectedRootNote, progressionKey);
   const selectedChordListOption = getChordListOption(chordListMode);
   const selectedNoteCollectionName =
-    getNoteCollectionDisplayName(noteCollectionKey);
+    noteCollection.getDisplayName(noteCollectionKey);
   const progressionRhythmProfile = useMemo(
     () => getChordProgressionRhythmProfile(progressionKey),
     [progressionKey],

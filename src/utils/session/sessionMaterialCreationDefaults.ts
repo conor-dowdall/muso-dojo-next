@@ -1,5 +1,5 @@
 import {
-  isValidNoteCollectionKey,
+  noteCollection,
   normalizeRootNoteString,
   type RootNote,
 } from "@musodojo/music-theory-data";
@@ -62,7 +62,7 @@ function normalizeSessionMaterialRootNote(
 }
 
 function normalizeSessionMaterialNoteCollectionKey(value: unknown) {
-  return typeof value === "string" && isValidNoteCollectionKey(value)
+  return typeof value === "string" && noteCollection.isValidKey(value)
     ? value
     : undefined;
 }

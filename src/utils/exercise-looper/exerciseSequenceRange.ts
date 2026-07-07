@@ -1,6 +1,6 @@
 import {
-  isValidNoteCollectionKey,
   getScientificPitchOctaveForMidiNote,
+  noteCollection,
   normalizeRootNoteString,
   noteCollections,
   rootNoteToIntegerMap,
@@ -38,7 +38,7 @@ export function resolveExerciseRootNote(value: unknown): RootNote {
 export function resolveExerciseCollectionKey(
   value: unknown,
 ): NoteCollectionKey {
-  return typeof value === "string" && isValidNoteCollectionKey(value)
+  return typeof value === "string" && noteCollection.isValidKey(value)
     ? value
     : DEFAULT_PART_NOTE_COLLECTION_KEY;
 }

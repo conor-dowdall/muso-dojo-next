@@ -7,11 +7,6 @@ package directly instead of keeping a local wrapper.
 
 ## Upstream Candidates
 
-- `partIdentity.ts`
-  - Formats a root plus note collection as a musician-facing identity.
-  - Chord collections use compact chord-symbol spacing, for example `CM7`.
-  - Scale and mode collections keep a readable space, for example `C Dorian`.
-
 - `src/data/rhythmPresets.ts`
   - `getRhythmTheoryReadout()` derives meter labels and theory details such as
     `4/4`, `6/8`, `Simple Quadruple`, and `Compound Duple`.
@@ -28,4 +23,5 @@ package directly instead of keeping a local wrapper.
 
 - `src/utils/music-part/partLeadSheet.ts`
   - Combines Part identity, editable Rhythm state, and imported duration
-    provenance into the app's Chart view display model.
+    provenance into the app's Chart view display model. Part identity itself
+    comes directly from `rootAndNoteCollection.getIdentity()`.

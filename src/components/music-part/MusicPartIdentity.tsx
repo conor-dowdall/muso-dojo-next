@@ -1,7 +1,7 @@
 "use client";
 
+import { rootAndNoteCollection } from "@musodojo/music-theory-data";
 import { type ComponentPropsWithoutRef } from "react";
-import { getPartIdentity } from "@/utils/music-theory/partIdentity";
 import { useMusicPart } from "./MusicPartContext";
 import styles from "./MusicPartIdentity.module.css";
 
@@ -24,7 +24,10 @@ export function MusicPartIdentity({
   ...props
 }: MusicPartIdentityProps) {
   const { noteCollectionKey, rootNote } = useMusicPart();
-  const identity = getPartIdentity({ noteCollectionKey, rootNote });
+  const identity = rootAndNoteCollection.getIdentity({
+    noteCollectionKey,
+    rootNote,
+  });
   const partLabel = partNumber === undefined ? undefined : `Part ${partNumber}`;
   const accessibleLabel = partLabel
     ? `${partLabel}. ${identity.accessibleLabel}.`

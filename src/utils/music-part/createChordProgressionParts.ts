@@ -1,6 +1,5 @@
 import {
-  getChordProgressionChordChangeReferences,
-  getChordProgressionUniqueChordReferences,
+  chordProgression,
   normalizeRootNoteString,
   type ChordProgressionChordReference,
   type RootNote,
@@ -99,7 +98,7 @@ function createFullProgressionPartReferences(
   const progression = getAppChordProgression(progressionKey) as
     DurationAwareChordProgression | undefined;
   const progressionInput = getAppChordProgressionInput(progressionKey);
-  const references = getChordProgressionChordChangeReferences(
+  const references = chordProgression.getChordChangeReferences(
     rootNote,
     progressionInput,
   );
@@ -146,10 +145,12 @@ function createUniqueProgressionPartReferences(
   rootNote: RootNote,
   progressionKey: AppChordProgressionKey,
 ): ProgressionPartReference[] {
-  return getChordProgressionUniqueChordReferences(
-    rootNote,
-    getAppChordProgressionInput(progressionKey),
-  ).map((reference) => ({ reference }));
+  return chordProgression
+    .getUniqueChordReferences(
+      rootNote,
+      getAppChordProgressionInput(progressionKey),
+    )
+    .map((reference) => ({ reference }));
 }
 
 function applyProgressionRhythmBeatCount(
@@ -197,7 +198,7 @@ function createPartFromReference<T extends PartModuleType>({
   const part = normalizeMusicPartConfig({
     id: partId,
     rootNote: partReference.reference.rootNote,
-    noteCollectionKey: partReference.reference.noteCollectionKey,
+    noteCollectionKey: partReference.reference.chordCollectionKey,
     durationInBars: partReference.durationInBars,
     modules: resolvedModules,
   });

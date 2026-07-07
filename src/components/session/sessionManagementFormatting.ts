@@ -1,5 +1,5 @@
+import { rootAndNoteCollection } from "@musodojo/music-theory-data";
 import { type MusicPartConfig, type SessionConfig } from "@/types/session";
-import { getPartIdentity } from "@/utils/music-theory/partIdentity";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 
 export type SessionManagementPartSummary = Pick<
@@ -30,7 +30,7 @@ function getSessionPartCountLabel(partCount: number) {
 }
 
 function getPartSignatureLabel(part: SessionManagementPartSummary) {
-  return getPartIdentity(part).label;
+  return rootAndNoteCollection.getIdentity(part).label;
 }
 
 export function getSessionSubtitle(parts: SessionManagementPartSummary[]) {

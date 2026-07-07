@@ -1,9 +1,9 @@
 import {
-  conversions,
-  isValidNoteCollectionKey,
   getScientificPitchOctaveForMidiNote,
+  noteCollection,
   normalizeRootNoteString,
   noteCollections,
+  rootAndNoteCollection,
   rootNoteToIntegerMap,
   type NoteCollectionKey,
   type RootNote,
@@ -82,7 +82,7 @@ export interface ResolvedDroneNotes {
 }
 
 function resolveNoteCollectionKey(value: unknown): NoteCollectionKey {
-  return typeof value === "string" && isValidNoteCollectionKey(value)
+  return typeof value === "string" && noteCollection.isValidKey(value)
     ? value
     : DEFAULT_PART_NOTE_COLLECTION_KEY;
 }
@@ -158,7 +158,7 @@ export function resolveDroneNotes({
     resolvedNoteCollectionKey,
   );
   const rootInteger = rootNoteToIntegerMap.get(resolvedRootNote) ?? 0;
-  const labels = conversions.rootAndNoteCollection.noteNames.get(
+  const labels = rootAndNoteCollection.displayLayers.noteNames.get(
     resolvedRootNote,
     resolvedNoteCollectionKey,
     {
