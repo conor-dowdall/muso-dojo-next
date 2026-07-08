@@ -1,14 +1,11 @@
 import {
   chordProgression,
+  chordProgressions,
   normalizeRootNoteString,
   type ChordProgressionChordReference,
+  type ChordProgressionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
-import {
-  getAppChordProgression,
-  getAppChordProgressionInput,
-  type AppChordProgressionKey,
-} from "@/utils/music-theory/appChordProgressions";
 import {
   createDefaultPartModuleConfigs,
   createEntityId,
@@ -40,13 +37,13 @@ type CreateChordProgressionPartsOptions<
   T extends PartModuleType = PartModuleType,
 > = {
   rootNote: string;
-  progressionKey: AppChordProgressionKey;
+  progressionKey: ChordProgressionKey;
   chordListMode?: ChordProgressionChordListMode;
   moduleRequests: PartModuleCreationRequest<T>[];
 };
 
 function createProgressionPartId(
-  progressionKey: AppChordProgressionKey,
+  progressionKey: ChordProgressionKey,
   index: number,
 ) {
   return createEntityId(`part-${progressionKey}-${index + 1}`);
@@ -92,15 +89,14 @@ function getProgressionChordDurationInBars(
 
 function createFullProgressionPartReferences(
   rootNote: RootNote,
-  progressionKey: AppChordProgressionKey,
+  progressionKey: ChordProgressionKey,
   beatsPerBar = PART_DURATION_BEATS_PER_BAR,
 ): ProgressionPartReference[] {
-  const progression = getAppChordProgression(progressionKey) as
+  const progression = chordProgressions[progressionKey] as
     DurationAwareChordProgression | undefined;
-  const progressionInput = getAppChordProgressionInput(progressionKey);
   const references = chordProgression.getChordChangeReferences(
     rootNote,
-    progressionInput,
+    progressionKey,
   );
   const partReferences: ProgressionPartReference[] = [];
   let currentBarPosition = 0;
@@ -143,13 +139,10 @@ function createFullProgressionPartReferences(
 
 function createUniqueProgressionPartReferences(
   rootNote: RootNote,
-  progressionKey: AppChordProgressionKey,
+  progressionKey: ChordProgressionKey,
 ): ProgressionPartReference[] {
   return chordProgression
-    .getUniqueChordReferences(
-      rootNote,
-      getAppChordProgressionInput(progressionKey),
-    )
+    .getUniqueChordReferences(rootNote, progressionKey)
     .map((reference) => ({ reference }));
 }
 

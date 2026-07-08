@@ -2,8 +2,10 @@
 
 import { type ReactNode, useMemo, useState } from "react";
 import {
+  chordProgression,
   noteCollection,
   normalizeRootNoteString,
+  type ChordProgressionKey,
   type NoteCollectionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
@@ -40,10 +42,6 @@ import { ChordProgressionPicker } from "@/components/music-theory/ChordProgressi
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
 import { AddToSessionRootNoteItem } from "@/components/session/AddToSessionRootNoteItem";
 import { useAppStore } from "@/stores/appStore";
-import {
-  normalizeAppChordProgressionKey,
-  type SelectableAppChordProgressionKey,
-} from "@/utils/music-theory/appChordProgressions";
 import { getChordProgressionDisplayLabels } from "@/utils/music-theory/chordProgressions";
 import { getChordProgressionRhythmProfile } from "@/utils/music-theory/chordProgressionRhythm";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
@@ -76,7 +74,7 @@ interface AddToSessionDialogProps {
   }) => void;
   onAddChordProgression: (settings: {
     rootNote: RootNote;
-    progressionKey: SelectableAppChordProgressionKey;
+    progressionKey: ChordProgressionKey;
     chordListMode: ChordProgressionChordListMode;
     moduleRequests: PartModuleCreationRequest[];
     replaceSession: boolean;
@@ -123,10 +121,10 @@ const chordListOptions = [
 
 function getInitialProgressionKey(
   progressionKey: string | undefined,
-): SelectableAppChordProgressionKey {
+): ChordProgressionKey {
   return (
-    (progressionKey
-      ? normalizeAppChordProgressionKey(progressionKey)
+    (progressionKey && chordProgression.isValidKey(progressionKey)
+      ? progressionKey
       : undefined) ?? DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY
   );
 }
@@ -165,10 +163,10 @@ export function AddToSessionDialog({
       sessionMaterialCreationDefaults?.noteCollectionKey ??
       DEFAULT_PART_NOTE_COLLECTION_KEY,
   );
-  const [progressionKey, setProgressionKey] =
-    useState<SelectableAppChordProgressionKey>(() =>
+  const [progressionKey, setProgressionKey] = useState<ChordProgressionKey>(
+    () =>
       getInitialProgressionKey(sessionMaterialCreationDefaults?.progressionKey),
-    );
+  );
   const [chordListMode, setChordListMode] =
     useState<ChordProgressionChordListMode>(
       () =>

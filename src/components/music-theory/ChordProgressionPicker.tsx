@@ -1,6 +1,10 @@
 "use client";
 
-import { type RootNote } from "@musodojo/music-theory-data";
+import {
+  chordProgressionCategoryGroups,
+  type ChordProgressionKey,
+  type RootNote,
+} from "@musodojo/music-theory-data";
 import {
   DisclosureList,
   DisclosureListChoice,
@@ -8,10 +12,6 @@ import {
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { getChordProgressionDisplayLabels } from "@/utils/music-theory/chordProgressions";
-import {
-  selectableChordProgressionCategoryGroups,
-  type SelectableAppChordProgressionKey,
-} from "@/utils/music-theory/appChordProgressions";
 import styles from "./ChordProgressionPicker.module.css";
 
 type ProgressionCategoryGroupChoice = string;
@@ -19,24 +19,24 @@ type ProgressionCategoryGroupChoice = string;
 interface ChordProgressionCategoryGroup {
   category: string;
   name: string;
-  progressionKeys: readonly SelectableAppChordProgressionKey[];
+  progressionKeys: readonly ChordProgressionKey[];
 }
 
 interface ChordProgressionPickerProps {
   rootNote: RootNote;
-  value: SelectableAppChordProgressionKey;
-  onChange: (progressionKey: SelectableAppChordProgressionKey) => void;
+  value: ChordProgressionKey;
+  onChange: (progressionKey: ChordProgressionKey) => void;
 }
 
 const progressionCategoryGroups =
-  selectableChordProgressionCategoryGroups as readonly ChordProgressionCategoryGroup[];
+  chordProgressionCategoryGroups as readonly ChordProgressionCategoryGroup[];
 
 function getProgressionCategoryGroupChoice(category: string) {
   return `${category}-progressions`;
 }
 
 function getProgressionCategoryGroupChoiceForProgression(
-  progressionKey: SelectableAppChordProgressionKey,
+  progressionKey: ChordProgressionKey,
 ) {
   const group = progressionCategoryGroups.find((candidateGroup) =>
     candidateGroup.progressionKeys.includes(progressionKey),

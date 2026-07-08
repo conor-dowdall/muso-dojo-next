@@ -21,17 +21,6 @@ Avoid adding thin wrappers over those facade methods. The deleted
 
 ## Current Files
 
-### `appChordProgressions.ts`
-
-Status: mostly an app catalog boundary.
-
-This currently aliases the package's built-in chord progressions and category
-groups, plus normalizes app-facing progression keys. Keep it if Muso Dojo wants
-an app-curated progression catalog, hidden package entries, custom entries, or a
-stable persistence boundary. If the app never customizes the package catalog,
-this can collapse and consumers can import `chordProgression`,
-`chordProgressions`, and `chordProgressionCategoryGroups` directly.
-
 ### `chordProgressions.ts`
 
 Status: app display composition with one upstream candidate.
@@ -132,5 +121,3 @@ source only the reusable subdivision facts from the package.
    rhythm package surface matures.
 3. Add duration-aware Roman-symbol/bar-label helpers to `chordProgression` if
    another caller needs the same grouping.
-4. Collapse `appChordProgressions.ts` only if Muso Dojo decides it does not need
-   an app-curated progression catalog boundary.
