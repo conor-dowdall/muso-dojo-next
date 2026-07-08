@@ -6,29 +6,26 @@ import {
 } from "@musodojo/music-theory-data";
 import { type SettingSetter } from "@/types/state";
 
-export const ROOT_AND_NOTE_DISPLAY_FORMAT_IDS = [
-  "note-names",
-  "intervals",
-  "extensions",
-  "compound-intervals",
-  "triads",
-  "seventh-chords",
-  "roman-triads",
-  "roman-seventh-chords",
-] as const satisfies readonly RootAndNoteCollectionDisplayLayer["id"][];
+const rootAndNoteDisplayFormats = Object.values(
+  rootAndNoteCollection.displayLayers,
+);
 
 export type RootAndNoteDisplayFormatId =
-  (typeof ROOT_AND_NOTE_DISPLAY_FORMAT_IDS)[number];
+  RootAndNoteCollectionDisplayLayer["id"];
 
 export type DisplayFormatId = RootAndNoteDisplayFormatId | "midi" | "none";
 
 export type DisplayFormatSetter = SettingSetter<DisplayFormatId>;
 
+export const ROOT_AND_NOTE_DISPLAY_FORMAT_IDS = rootAndNoteDisplayFormats.map(
+  (displayLayer) => displayLayer.id,
+) satisfies readonly RootAndNoteDisplayFormatId[];
+
 const rootAndNoteDisplayFormatsById = new Map<
   RootAndNoteDisplayFormatId,
   RootAndNoteCollectionDisplayLayer
 >(
-  Object.values(rootAndNoteCollection.displayLayers).map((displayLayer) => [
+  rootAndNoteDisplayFormats.map((displayLayer) => [
     displayLayer.id,
     displayLayer,
   ]),

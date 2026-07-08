@@ -2,6 +2,7 @@
 
 import {
   groupedNoteCollections,
+  noteCollection,
   noteCollectionGroupsMetadata,
   type NoteCollectionKey,
   type NoteCollectionGroupKey,
@@ -40,17 +41,23 @@ export function NoteCollectionPicker({
                 {groupMetadata.displayName}
               </Heading>
               <div className={styles.buttonGrid}>
-                {Object.entries(groupCollections).map(([key, collection]) => (
-                  <OptionButton
-                    key={key}
-                    density="compact"
-                    label={collection.primaryName}
-                    presentation="tile"
-                    selected={value === key}
-                    subtitle={collection.intervals.join(" ")}
-                    onClick={() => onChange(key as NoteCollectionKey)}
-                  />
-                ))}
+                {Object.keys(groupCollections).map((key) => {
+                  const collectionKey = key as NoteCollectionKey;
+
+                  return (
+                    <OptionButton
+                      key={collectionKey}
+                      density="compact"
+                      label={noteCollection.getDisplayName(collectionKey)}
+                      presentation="tile"
+                      selected={value === collectionKey}
+                      subtitle={noteCollection
+                        .getIntervals(collectionKey)
+                        .join(" ")}
+                      onClick={() => onChange(collectionKey)}
+                    />
+                  );
+                })}
               </div>
             </section>
           );

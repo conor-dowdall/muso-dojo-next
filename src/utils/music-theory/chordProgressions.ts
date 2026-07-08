@@ -96,14 +96,18 @@ export function getChordProgressionDisplaySummary(
     typeof progressionOrKey === "string"
       ? getAppChordProgressionInput(progressionOrKey as AppChordProgressionKey)
       : progressionOrKey;
-  const chordNames = chordProgression.getChordNames(rootNote, progressionInput);
+  const chordNames = chordProgression
+    .getChordReferencesByBar(rootNote, progressionInput)
+    .map((barReferences) =>
+      barReferences.map((reference) => reference.chordName).join(" "),
+    );
   const romanNames = chordProgression.getRomanSymbols(progressionInput);
   const durationsInBars = progression.chords.map(
     (chord) => chord.durationInBars,
   );
 
   return {
-    chordNames: expandLabelsByBar(chordNames, durationsInBars),
+    chordNames,
     romanNames: expandLabelsByBar(romanNames, durationsInBars),
   };
 }
