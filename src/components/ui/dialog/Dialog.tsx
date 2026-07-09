@@ -112,7 +112,10 @@ export function Dialog({
     <dialog
       ref={dialogRef}
       className={cx(styles.dialog, className)}
-      onClose={onClose}
+      onClose={(event) => {
+        event.stopPropagation();
+        onClose();
+      }}
       onClick={(e) => {
         if (e.target === dialogRef.current) {
           onClose();

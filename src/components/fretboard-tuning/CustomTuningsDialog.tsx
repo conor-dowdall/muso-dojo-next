@@ -4,7 +4,7 @@ import {
   formatMidiNote,
   type StringInstrumentKey,
 } from "@musodojo/music-theory-data";
-import { Plus, SlidersHorizontal, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   Dialog,
@@ -19,7 +19,6 @@ import {
   DisclosureListConfirmAction,
   DisclosureListGroup,
 } from "@/components/ui/disclosure-list/DisclosureList";
-import { InlineRenameActionItem } from "@/components/ui/inline-rename/InlineRenameActionItem";
 import { SelectableOverflowRow } from "@/components/ui/selectable-overflow-row";
 import { useAppStore } from "@/stores/appStore";
 import { type SavedFretboardTuning } from "@/types/custom-fretboard-tuning";
@@ -66,9 +65,9 @@ export function CustomTuningsDialog({
     (state) => state.removeCustomFretboardTuning,
   );
   const [isNewOpen, setIsNewOpen] = useState(false);
+  const [newEditorVersion, setNewEditorVersion] = useState(0);
   const [openTuningId, setOpenTuningId] = useState<string | null>(null);
   const [editTuningId, setEditTuningId] = useState<string | null>(null);
-  const [renameTuningId, setRenameTuningId] = useState<string | null>(null);
   const [deleteTuningId, setDeleteTuningId] = useState<string | null>(null);
   const tunings = useMemo(
     () =>
@@ -80,7 +79,6 @@ export function CustomTuningsDialog({
 
   const closeRowEditors = () => {
     setEditTuningId(null);
-    setRenameTuningId(null);
     setDeleteTuningId(null);
   };
 
@@ -104,6 +102,8 @@ export function CustomTuningsDialog({
 
     onSelect({ id, ...input });
     setIsNewOpen(false);
+    setNewEditorVersion((version) => version + 1);
+    onClose();
   };
 
   return (
@@ -122,7 +122,7 @@ export function CustomTuningsDialog({
                 onToggle={handleNewToggle}
               >
                 <CustomTuningEditor
-                  key={`${instrument}-${seedOpenMidiNotes.join("-")}`}
+                  key={`${instrument}-${newEditorVersion}-${seedOpenMidiNotes.join("-")}`}
                   initialOpenMidiNotes={seedOpenMidiNotes}
                   isNameAvailable={(name) =>
                     savedTuningNameIsAvailable(
@@ -163,6 +163,7 @@ export function CustomTuningsDialog({
                         setIsNewOpen(false);
                         setOpenTuningId(null);
                         closeRowEditors();
+                        onClose();
                       }}
                       onToggleActions={() => {
                         setOpenTuningId((current) =>
@@ -175,63 +176,45 @@ export function CustomTuningsDialog({
                       <DisclosureList grouped groupGap="section">
                         <DisclosureListGroup>
                           <DisclosureListActionItem
-                            ariaLabel={`Edit ${tuning.name} tuning`}
-                            icon={<SlidersHorizontal />}
+                            ariaLabel={`Edit ${tuning.name}`}
+                            icon={<Pencil />}
                             isOpen={editTuningId === tuning.id}
                             keepMounted
-                            label="Edit Tuning"
+                            label="Edit"
                             onToggle={() => {
                               setEditTuningId((current) =>
                                 current === tuning.id ? null : tuning.id,
                               );
-                              setRenameTuningId(null);
                               setDeleteTuningId(null);
                             }}
                           >
                             <CustomTuningEditor
-                              key={`${tuning.id}-${tuning.openMidiNotes.join("-")}`}
+                              key={`${tuning.id}-${tuning.name}-${tuning.openMidiNotes.join("-")}`}
+                              initialName={tuning.name}
                               initialOpenMidiNotes={tuning.openMidiNotes}
-                              onSave={(openMidiNotes) => {
+                              isNameAvailable={(name) =>
+                                savedTuningNameIsAvailable(
+                                  allTunings ?? [],
+                                  instrument,
+                                  name,
+                                  tuning.id,
+                                )
+                              }
+                              showNameField
+                              onSave={(openMidiNotes, name) => {
+                                if (!name) {
+                                  return;
+                                }
+
                                 updateTuning(tuning.id, {
                                   instrument,
-                                  name: tuning.name,
+                                  name,
                                   openMidiNotes,
                                 });
                                 setEditTuningId(null);
                               }}
                             />
                           </DisclosureListActionItem>
-
-                          <InlineRenameActionItem
-                            ariaLabel={`Rename tuning. Current name: ${tuning.name}`}
-                            fieldLabel="Tuning Name"
-                            isNameAvailable={(name) =>
-                              savedTuningNameIsAvailable(
-                                allTunings ?? [],
-                                instrument,
-                                name,
-                                tuning.id,
-                              )
-                            }
-                            isOpen={renameTuningId === tuning.id}
-                            shouldFocusInput
-                            value={tuning.name}
-                            onClose={() => setRenameTuningId(null)}
-                            onRename={(name) =>
-                              updateTuning(tuning.id, {
-                                instrument,
-                                name,
-                                openMidiNotes: tuning.openMidiNotes,
-                              })
-                            }
-                            onToggle={() => {
-                              setRenameTuningId((current) =>
-                                current === tuning.id ? null : tuning.id,
-                              );
-                              setEditTuningId(null);
-                              setDeleteTuningId(null);
-                            }}
-                          />
                         </DisclosureListGroup>
 
                         <DisclosureListGroup>
@@ -253,7 +236,6 @@ export function CustomTuningsDialog({
                             onRequestConfirm={() => {
                               setDeleteTuningId(tuning.id);
                               setEditTuningId(null);
-                              setRenameTuningId(null);
                             }}
                           />
                         </DisclosureListGroup>

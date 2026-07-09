@@ -157,6 +157,7 @@ export function FretboardInstrumentCreationPanel({
       tuning: conventionalToFretboardTuning(tuning.openMidiNotes),
       tuningName: tuning.name,
     });
+    closeChoice("tuning");
   };
   const handleFretRangeSelect = (fretRange: readonly [number, number]) => {
     onChange({ ...value, fretRange });
@@ -233,13 +234,7 @@ export function FretboardInstrumentCreationPanel({
         >
           <FretboardTuningChoices
             instrument={value.instrument}
-            tuning={value.tuning}
             tuningKey={value.tuningKey}
-            tuningName={value.tuningName}
-            onCustomSelect={(tuning) => {
-              handleCustomTuningSelect(tuning);
-              closeChoice("tuning");
-            }}
             onManage={() => setIsCustomTuningsOpen(true)}
             onNamedSelect={handleTuningSelect}
           />

@@ -1,8 +1,10 @@
 "use client";
 
 import { formatMidiNote } from "@musodojo/music-theory-data";
-import { useId, useState } from "react";
+import { Check } from "lucide-react";
+import { type FormEvent, useId, useState } from "react";
 import { Button } from "@/components/ui/buttons/Button";
+import { IconButton } from "@/components/ui/buttons/IconButton";
 import fieldStyles from "@/components/ui/control-field/ControlField.module.css";
 import { NumericStepper } from "@/components/ui/numeric-stepper/NumericStepper";
 import { Text } from "@/components/ui/typography/Text";
@@ -52,50 +54,34 @@ export function CustomTuningEditor({
   const [name, setName] = useState(initialName);
   const [openMidiNotes, setOpenMidiNotes] = useState([...initialOpenMidiNotes]);
   const normalizedName = normalizeCustomTuningName(name);
-  const nameIsAvailable =
-    normalizedName !== undefined && isNameAvailable(normalizedName);
-  const nameMessage =
-    normalizedName !== undefined && !nameIsAvailable
-      ? "That name is already in use."
-      : "";
+  const normalizedInitialName = normalizeCustomTuningName(initialName);
+  const hasNameConflict =
+    normalizedName !== undefined && !isNameAvailable(normalizedName);
+  const nameMessage = hasNameConflict ? "That name is already in use." : "";
   const notesChanged = !tuningNotesAreEqual(
     openMidiNotes,
     initialOpenMidiNotes,
   );
-  const canSave = showNameField ? nameIsAvailable : notesChanged;
+  const nameChanged = normalizedName !== normalizedInitialName;
+  const hasInitialName = normalizedInitialName !== undefined;
+  const canSave = showNameField
+    ? normalizedName !== undefined &&
+      !hasNameConflict &&
+      (!hasInitialName || nameChanged || notesChanged)
+    : notesChanged;
+
+  const handleSave = (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+
+    if (!canSave) {
+      return;
+    }
+
+    onSave(openMidiNotes, normalizedName);
+  };
 
   return (
     <div className={styles.editor}>
-      {showNameField ? (
-        <div className={styles.nameField}>
-          <label className={styles.nameLabel} htmlFor={nameInputId}>
-            Tuning Name
-          </label>
-          <input
-            aria-describedby={nameMessage ? nameMessageId : undefined}
-            aria-invalid={nameMessage ? true : undefined}
-            autoComplete="off"
-            className={`${fieldStyles.surface} ${fieldStyles.text} ${styles.nameInput}`}
-            id={nameInputId}
-            placeholder="Tuning Name"
-            spellCheck={false}
-            value={name}
-            onChange={(event) => setName(event.currentTarget.value)}
-          />
-          {nameMessage ? (
-            <Text
-              as="span"
-              className={styles.message}
-              id={nameMessageId}
-              size="xs"
-              variant="muted"
-            >
-              {nameMessage}
-            </Text>
-          ) : null}
-        </div>
-      ) : null}
-
       <div className={styles.countRow}>
         <Text
           as="span"
@@ -154,14 +140,56 @@ export function CustomTuningEditor({
         })}
       </div>
 
-      <DisclosureListPanelActions>
-        <Button
-          disabled={!canSave}
-          label="Save"
-          size="sm"
-          onClick={() => onSave(openMidiNotes, normalizedName)}
-        />
-      </DisclosureListPanelActions>
+      {showNameField ? (
+        <form className={styles.nameForm} onSubmit={handleSave}>
+          <div className={styles.nameField}>
+            <label className={styles.nameLabel} htmlFor={nameInputId}>
+              Tuning Name
+            </label>
+            <div className={styles.nameControl}>
+              <input
+                aria-describedby={nameMessage ? nameMessageId : undefined}
+                aria-invalid={hasNameConflict || undefined}
+                autoComplete="off"
+                className={`${fieldStyles.surface} ${fieldStyles.text} ${styles.nameInput}`}
+                id={nameInputId}
+                placeholder="Tuning Name"
+                spellCheck={false}
+                value={name}
+                onChange={(event) => setName(event.currentTarget.value)}
+              />
+              <IconButton
+                aria-label="Save tuning"
+                disabled={!canSave}
+                icon={<Check />}
+                shouldYield={false}
+                size="lg"
+                type="submit"
+              />
+            </div>
+            {nameMessage ? (
+              <Text
+                as="span"
+                className={styles.message}
+                id={nameMessageId}
+                size="xs"
+                variant="muted"
+              >
+                {nameMessage}
+              </Text>
+            ) : null}
+          </div>
+        </form>
+      ) : (
+        <DisclosureListPanelActions>
+          <Button
+            disabled={!canSave}
+            label="Save"
+            size="sm"
+            onClick={() => handleSave()}
+          />
+        </DisclosureListPanelActions>
+      )}
     </div>
   );
 }

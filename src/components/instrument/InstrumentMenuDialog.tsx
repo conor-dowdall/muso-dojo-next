@@ -176,8 +176,11 @@ export function InstrumentMenuDialog({
   onRemove,
 }: InstrumentMenuDialogProps) {
   const [isCustomTuningsOpen, setIsCustomTuningsOpen] = useState(false);
-  const { isOpen: isChoiceOpen, toggleChoice } =
-    useDisclosureList<InstrumentMenuChoice>(initialOpenChoice);
+  const {
+    closeChoice,
+    isOpen: isChoiceOpen,
+    toggleChoice,
+  } = useDisclosureList<InstrumentMenuChoice>(initialOpenChoice);
   const resolvedAudioPresetId = resolveInstrumentAudioPresetId(
     instrumentType,
     audioPresetId,
@@ -280,6 +283,7 @@ export function InstrumentMenuDialog({
       tuning: conventionalToFretboardTuning(tuning.openMidiNotes),
       tuningName: tuning.name,
     });
+    closeChoice("tuning");
   };
 
   return (
@@ -323,15 +327,7 @@ export function InstrumentMenuDialog({
             >
               <FretboardTuningChoices
                 instrument={fretboardTuning.instrument}
-                tuning={
-                  fretboardTuning.tuningKey ? undefined : fretboardTuning.tuning
-                }
                 tuningKey={fretboardTuning.tuningKey}
-                tuningName={fretboardTuning.tuningName}
-                onCustomSelect={(tuning) => {
-                  handleCustomTuningSelect(tuning);
-                  onClose();
-                }}
                 onManage={() => setIsCustomTuningsOpen(true)}
                 onNamedSelect={handleNamedTuningSelect}
               />
