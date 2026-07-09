@@ -62,6 +62,10 @@ import {
   normalizeRhythmSelection,
 } from "@/utils/rhythm/rhythmConfig";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
+import {
+  normalizeCustomTuningName,
+  normalizeCustomTuningNotes,
+} from "@/utils/fretboard/customFretboardTunings";
 
 const MODULE_CREATION_KINDS = {
   drone: true,
@@ -108,13 +112,13 @@ function normalizeStringInstrumentKey(
 function normalizeStringInstrumentTuningKey(
   value: unknown,
   instrument: StringInstrumentKey,
-): StringInstrumentTuningKey {
+): StringInstrumentTuningKey | undefined {
   const tuningKeys = stringInstrumentTuningKeysByInstrument[instrument];
 
   return typeof value === "string" &&
     tuningKeys.includes(value as StringInstrumentTuningKey)
     ? (value as StringInstrumentTuningKey)
-    : stringInstruments[instrument].defaultTuning;
+    : undefined;
 }
 
 function normalizeHandedness(value: unknown): "right" | "left" {
@@ -167,9 +171,20 @@ export function normalizeFretboardCreationDefault(
     normalizeFretboardThemeName(value.theme) ??
     getDefaultFretboardWoodThemeName(instrument);
 
+  const tuning = normalizeCustomTuningNotes(value.tuning);
+  const tuningKey = tuning
+    ? undefined
+    : (normalizeStringInstrumentTuningKey(value.tuningKey, instrument) ??
+      stringInstruments[instrument].defaultTuning);
+  const tuningName = tuning
+    ? normalizeCustomTuningName(value.tuningName)
+    : undefined;
+
   return {
     instrument,
-    tuningKey: normalizeStringInstrumentTuningKey(value.tuningKey, instrument),
+    ...(tuningKey ? { tuningKey } : {}),
+    ...(tuning ? { tuning } : {}),
+    ...(tuningName ? { tuningName } : {}),
     handedness: normalizeHandedness(value.handedness),
     appearanceSource: normalizeAppearanceSource(value.appearanceSource),
     theme,

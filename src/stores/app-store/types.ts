@@ -6,6 +6,7 @@ import { type WoodSurfaceId } from "@/data/woodSurfaces";
 import { type DisplayFormatId } from "@/data/displayFormats";
 import { type FretboardInlayPresetName } from "@/data/fretboard/inlayPresets";
 import { type RememberModuleCreationRequest } from "@/types/instrument-creation-defaults";
+import { type SavedFretboardTuningInput } from "@/types/custom-fretboard-tuning";
 import {
   type ActiveNotes,
   type ActiveNotesLockSnapshot,
@@ -69,6 +70,14 @@ export type RhythmSettingsPatch = Partial<
 export type PracticeBandSettingsPatch = Partial<PracticeBandConfig>;
 
 export interface DojoSettingsActions {
+  addCustomFretboardTuning: (
+    tuning: SavedFretboardTuningInput,
+  ) => string | undefined;
+  updateCustomFretboardTuning: (
+    tuningId: string,
+    tuning: SavedFretboardTuningInput,
+  ) => void;
+  removeCustomFretboardTuning: (tuningId: string) => void;
   setAppTheme: (theme: AppThemeChoice) => void;
   setNoteColorConfig: (noteColorConfig: NoteColorConfig) => void;
   rememberModuleCreation: (request: RememberModuleCreationRequest) => void;

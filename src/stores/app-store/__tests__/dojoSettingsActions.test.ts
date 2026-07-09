@@ -11,6 +11,70 @@ const musoDojoNoteColors = {
 } as const;
 
 describe("dojo settings app store actions", () => {
+  it("creates, edits, and deletes custom tunings without changing sessions", () => {
+    const store = createTestStore();
+    const existingSession = store.getState().sessions[sessionId];
+    const tuningId = store.getState().addCustomFretboardTuning({
+      instrument: "guitar",
+      name: "Open D",
+      openMidiNotes: [38, 45, 50, 54, 57, 62],
+    });
+
+    expect(tuningId).toMatch(/^tuning-/);
+    expect(store.getState().dojoSettings.customFretboardTunings).toEqual([
+      {
+        id: tuningId,
+        instrument: "guitar",
+        name: "Open D",
+        openMidiNotes: [38, 45, 50, 54, 57, 62],
+      },
+    ]);
+
+    store.getState().updateCustomFretboardTuning(tuningId ?? "", {
+      instrument: "guitar",
+      name: "Open D Major",
+      openMidiNotes: [38, 45, 50, 54, 57, 62],
+    });
+
+    expect(
+      store.getState().dojoSettings.customFretboardTunings?.[0]?.name,
+    ).toBe("Open D Major");
+    expect(store.getState().sessions[sessionId]).toBe(existingSession);
+
+    store.getState().removeCustomFretboardTuning(tuningId ?? "");
+
+    expect(
+      store.getState().dojoSettings.customFretboardTunings,
+    ).toBeUndefined();
+    expect(store.getState().sessions[sessionId]).toBe(existingSession);
+  });
+
+  it("rejects duplicate custom tuning names for the same instrument", () => {
+    const store = createTestStore();
+
+    expect(
+      store.getState().addCustomFretboardTuning({
+        instrument: "guitar",
+        name: "Open D",
+        openMidiNotes: [38, 45, 50, 54, 57, 62],
+      }),
+    ).toBeDefined();
+    expect(
+      store.getState().addCustomFretboardTuning({
+        instrument: "guitar",
+        name: " open d ",
+        openMidiNotes: [40, 45, 50, 55, 59, 64],
+      }),
+    ).toBeUndefined();
+    expect(
+      store.getState().addCustomFretboardTuning({
+        instrument: "ukulele",
+        name: "Open D",
+        openMidiNotes: [69, 62, 66, 71],
+      }),
+    ).toBeDefined();
+  });
+
   it("stores the selected app theme setting", () => {
     const store = createTestStore();
 

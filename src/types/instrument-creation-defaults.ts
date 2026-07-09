@@ -19,7 +19,9 @@ export type ModuleCreationKindDefaults = Partial<
 
 export interface FretboardCreationDefault {
   instrument: StringInstrumentKey;
-  tuningKey: StringInstrumentTuningKey;
+  tuningKey?: StringInstrumentTuningKey;
+  tuning?: readonly number[];
+  tuningName?: string;
   handedness: "right" | "left";
   appearanceSource: FretboardCreationAppearanceSource;
   theme: FretboardThemeName;

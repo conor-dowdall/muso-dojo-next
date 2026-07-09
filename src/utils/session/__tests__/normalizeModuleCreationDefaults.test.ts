@@ -53,6 +53,28 @@ describe("normalizeModuleCreationDefaults", () => {
     ).toBeUndefined();
   });
 
+  it("keeps a custom Fretboard tuning snapshot in creation defaults", () => {
+    expect(
+      normalizeModuleCreationDefaults({
+        fretboard: {
+          instrument: "ukulele",
+          tuning: [69, 64, 60, 67],
+          tuningName: "Low G",
+          handedness: "right",
+          appearanceSource: "auto",
+          theme: "rosewood",
+          inlayPreset: "dots",
+        },
+      }),
+    ).toMatchObject({
+      fretboard: {
+        instrument: "ukulele",
+        tuning: [69, 64, 60, 67],
+        tuningName: "Low G",
+      },
+    });
+  });
+
   it("keeps custom Rhythm recipe defaults without persisting default wood", () => {
     expect(
       normalizeRhythmModuleCreationDefault({

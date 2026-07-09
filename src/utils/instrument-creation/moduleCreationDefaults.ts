@@ -24,6 +24,7 @@ import {
 } from "@/types/instrument-creation-defaults";
 import { DEFAULT_EXERCISE_OCTAVE_OFFSET } from "@/utils/exercise-looper/exerciseConfig";
 import { areRangesEqual } from "@/utils/range/numberRange";
+import { tuningNotesAreEqual } from "@/utils/fretboard/customFretboardTunings";
 
 export const DEFAULT_MODULE_CREATION_KINDS = [
   "fretboard",
@@ -147,6 +148,10 @@ export function fretboardModuleCreationDefaultsAreEqual(
   return (
     left.instrument === right.instrument &&
     left.tuningKey === right.tuningKey &&
+    left.tuningName === right.tuningName &&
+    (left.tuning === undefined && right.tuning === undefined
+      ? true
+      : tuningNotesAreEqual(left.tuning, right.tuning)) &&
     left.handedness === right.handedness &&
     left.appearanceSource === right.appearanceSource &&
     left.theme === right.theme &&

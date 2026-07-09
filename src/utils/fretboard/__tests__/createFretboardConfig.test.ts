@@ -43,4 +43,19 @@ describe("createFretboardConfig", () => {
       }).fretRange,
     ).toEqual([12, 24]);
   });
+
+  it("preserves a named custom tuning snapshot", () => {
+    const config = createFretboardConfig(undefined, {
+      instrument: "ukulele",
+      tuning: [69, 64, 60, 67],
+      tuningName: "Low G",
+    });
+
+    expect(config).toMatchObject({
+      instrument: "ukulele",
+      tuning: [69, 64, 60, 67],
+      tuningName: "Low G",
+    });
+    expect(config.tuningKey).toBeUndefined();
+  });
 });

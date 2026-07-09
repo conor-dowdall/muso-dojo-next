@@ -6,6 +6,7 @@ import { normalizeNoteColorConfig } from "@/utils/note-colors/createNoteColorCon
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 import { normalizeModuleCreationDefaults } from "@/utils/session/normalizeModuleCreationDefaults";
 import { normalizeSessionMaterialCreationDefaults } from "@/utils/session/sessionMaterialCreationDefaults";
+import { normalizeSavedFretboardTunings } from "@/utils/fretboard/customFretboardTunings";
 
 function normalizedNoteColorConfig(value: NoteColorConfig | undefined) {
   return normalizeNoteColorConfig(value) ?? DEFAULT_NOTE_COLOR_CONFIG;
@@ -64,6 +65,9 @@ export function normalizeDojoSettings(value: unknown): DojoSettings {
   }
 
   const appTheme = normalizeAppThemePreference(value.appTheme);
+  const customFretboardTunings = normalizeSavedFretboardTunings(
+    value.customFretboardTunings,
+  );
   const noteColorConfig = normalizeNoteColorSetting(value.noteColorConfig);
   const moduleCreationDefaults = normalizeModuleCreationDefaults(
     value.moduleCreationDefaults,
@@ -75,6 +79,7 @@ export function normalizeDojoSettings(value: unknown): DojoSettings {
 
   return {
     ...(appTheme ? { appTheme } : {}),
+    ...(customFretboardTunings ? { customFretboardTunings } : {}),
     ...(noteColorConfig ? { noteColorConfig } : {}),
     ...(moduleCreationDefaults ? { moduleCreationDefaults } : {}),
     ...(sessionMaterialCreationDefaults

@@ -85,6 +85,7 @@ export function createFretboardConfig(
   delete styleConfig.instrument;
   delete styleConfig.tuningKey;
   delete styleConfig.tuning;
+  delete styleConfig.tuningName;
 
   if (
     isProportionalFretboardIcon(fretInlayImage) &&
@@ -107,6 +108,7 @@ export function createFretboardConfig(
     ...styleConfig,
     instrument: setup.instrument,
     ...(setup.tuningKey ? { tuningKey: setup.tuningKey } : {}),
+    ...(setup.tuningName ? { tuningName: setup.tuningName } : {}),
     tuning: setup.tuning,
     fretRange: normalizeFretRange(mergedConfig.fretRange),
     fretInlayImage,

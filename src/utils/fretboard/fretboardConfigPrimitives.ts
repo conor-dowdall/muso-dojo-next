@@ -15,14 +15,15 @@ import {
   type FretboardStringTexture,
   type ResolvedFretboardConfig,
 } from "@/types/fretboard";
+import { normalizeCustomTuningName } from "@/utils/fretboard/customFretboardTunings";
 
 type FretboardDefaultConfig = Required<
-  Omit<FretboardConfig, "instrument" | "tuningKey" | "tuning">
+  Omit<FretboardConfig, "instrument" | "tuningKey" | "tuning" | "tuningName">
 >;
 
 export type ResolvedFretboardSetup = Pick<
   ResolvedFretboardConfig,
-  "instrument" | "tuning" | "tuningKey"
+  "instrument" | "tuning" | "tuningKey" | "tuningName"
 >;
 
 export const DEFAULT_FRETBOARD_INSTRUMENT: StringInstrumentKey = "guitar";
@@ -158,6 +159,9 @@ export function resolveFretboardSetup(
   return {
     instrument,
     ...(tuningKey ? { tuningKey } : {}),
+    ...(!tuningKey && customTuning
+      ? { tuningName: normalizeCustomTuningName(config?.tuningName) }
+      : {}),
     tuning: tuningKey
       ? getTuningFromKey(tuningKey)
       : (customTuning ?? getTuningFromKey(getDefaultTuningKey(instrument))),

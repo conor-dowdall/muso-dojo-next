@@ -100,8 +100,15 @@ function getSetupOverrides(setup: ResolvedFretboardSetup): FretboardConfig {
     setupOverrides.tuningKey = setup.tuningKey;
   }
 
-  if (!setup.tuningKey && !areArraysEqual(setup.tuning, defaultTuning)) {
+  if (
+    !setup.tuningKey &&
+    (setup.tuningName || !areArraysEqual(setup.tuning, defaultTuning))
+  ) {
     setupOverrides.tuning = setup.tuning;
+  }
+
+  if (!setup.tuningKey && setup.tuningName) {
+    setupOverrides.tuningName = setup.tuningName;
   }
 
   return setupOverrides;
@@ -128,6 +135,7 @@ export function normalizeFretboardConfig(
       instrument: setup.instrument,
       ...(setup.tuningKey ? { tuningKey: setup.tuningKey } : {}),
       ...(!setup.tuningKey ? { tuning: setup.tuning } : {}),
+      ...(setup.tuningName ? { tuningName: setup.tuningName } : {}),
     },
     inlayPreset,
   );

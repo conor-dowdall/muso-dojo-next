@@ -44,7 +44,10 @@ function getFretboardSetupSummaryParts(
 ) {
   return [
     stringInstruments[selection.instrument].primaryName,
-    stringInstrumentTunings[selection.tuningKey].primaryName,
+    selection.tuningName ??
+      (selection.tuningKey
+        ? stringInstrumentTunings[selection.tuningKey].primaryName
+        : "Custom"),
     selection.handedness === "left" ? "Left Handed" : undefined,
   ].filter(Boolean);
 }

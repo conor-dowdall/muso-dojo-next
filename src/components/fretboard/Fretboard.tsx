@@ -16,8 +16,10 @@ export function Fretboard({
   children,
   inlayPreset,
   onInlayPresetChange,
+  onConfigChange,
   onThemeChange,
   theme,
+  config,
   audioPresetId,
   onAudioPresetIdChange,
   showHeader,
@@ -30,12 +32,19 @@ export function Fretboard({
   ...props
 }: FretboardProps) {
   return (
-    <FretboardProvider {...props} inlayPreset={inlayPreset} theme={theme}>
+    <FretboardProvider
+      {...props}
+      config={config}
+      inlayPreset={inlayPreset}
+      theme={theme}
+    >
       <FretboardInner
         inlayPreset={inlayPreset}
         onInlayPresetChange={onInlayPresetChange}
+        onConfigChange={onConfigChange}
         onThemeChange={onThemeChange}
         theme={theme}
+        config={config}
         audioPresetId={audioPresetId}
         onAudioPresetIdChange={onAudioPresetIdChange}
         showHeader={showHeader}
@@ -56,8 +65,10 @@ function FretboardInner({
   children,
   inlayPreset,
   onInlayPresetChange,
+  onConfigChange,
   onThemeChange,
   theme,
+  config,
   audioPresetId,
   onAudioPresetIdChange,
   showHeader,
@@ -72,8 +83,10 @@ function FretboardInner({
   | "children"
   | "inlayPreset"
   | "onInlayPresetChange"
+  | "onConfigChange"
   | "onThemeChange"
   | "theme"
+  | "config"
   | "audioPresetId"
   | "onAudioPresetIdChange"
   | "showHeader"
@@ -101,6 +114,18 @@ function FretboardInner({
                   onInlayPresetChange,
                   onThemeChange,
                   theme,
+                }
+              : undefined
+          }
+          fretboardTuning={
+            onConfigChange
+              ? {
+                  config,
+                  instrument: geometry.instrument,
+                  onConfigChange,
+                  tuning: geometry.tuning,
+                  tuningKey: geometry.tuningKey,
+                  tuningName: geometry.tuningName,
                 }
               : undefined
           }

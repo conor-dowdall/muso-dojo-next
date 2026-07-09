@@ -25,6 +25,7 @@ export interface FretboardConfig {
   instrument?: StringInstrumentKey;
   tuningKey?: StringInstrumentTuningKey;
   tuning?: readonly number[];
+  tuningName?: string;
   fretRange?: [number, number];
   leftHanded?: boolean;
 
@@ -80,10 +81,11 @@ export interface FretboardConfig {
 
 /** Runtime-only config after defaults, theme, and overrides are resolved. */
 export interface ResolvedFretboardConfig extends Required<
-  Omit<FretboardConfig, "instrument" | "tuningKey">
+  Omit<FretboardConfig, "instrument" | "tuningKey" | "tuningName">
 > {
   instrument: StringInstrumentKey;
   tuningKey?: StringInstrumentTuningKey;
+  tuningName?: string;
 }
 
 export interface FretboardNoteCellInfo extends InstrumentNoteCellInfo {
@@ -115,6 +117,7 @@ export interface FretboardProps extends InstrumentFrameProps {
     inlayPreset: FretboardInlayPresetName | undefined,
   ) => void;
   onThemeChange?: (theme: FretboardThemeName | undefined) => void;
+  onConfigChange?: (config: FretboardConfig) => void;
   theme?: FretboardThemeName;
   config?: FretboardConfig;
 }

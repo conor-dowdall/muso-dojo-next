@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   stringInstrumentTunings,
   stringInstruments,
@@ -38,13 +38,19 @@ import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import { BoundedRangeSliderGroup } from "@/components/ui/range-slider/BoundedRangeSliderGroup";
 import { FretboardInlayPresetSwatch } from "@/components/instrument/InstrumentThemeSwatch";
 import { FretboardAppearanceEditor } from "@/components/instrument/InstrumentAppearanceEditor";
+import { CustomTuningsDialog } from "@/components/fretboard-tuning/CustomTuningsDialog";
+import {
+  FretboardTuningChoices,
+  formatCustomOpenStringNotes,
+} from "@/components/fretboard-tuning/FretboardTuningChoices";
+import { type SavedFretboardTuning } from "@/types/custom-fretboard-tuning";
+import {
+  conventionalToFretboardTuning,
+  fretboardToConventionalTuning,
+} from "@/utils/fretboard/customFretboardTunings";
 import { type FretboardInstrumentSelection } from "./instrumentCreationConfig";
 import { formatFretRange } from "./instrumentCreationCopy";
-import {
-  formatOpenStringNotes,
-  fretboardInstrumentGroups,
-  getFretboardTuningGroups,
-} from "./options";
+import { formatOpenStringNotes, fretboardInstrumentGroups } from "./options";
 import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
 
 const MIN_FRET_RANGE_SPAN = 2;
@@ -66,6 +72,7 @@ export function FretboardInstrumentCreationPanel({
   onChange,
   onChoiceOpen,
 }: FretboardInstrumentCreationPanelProps) {
+  const [isCustomTuningsOpen, setIsCustomTuningsOpen] = useState(false);
   const { closeAll, closeChoice, openChoice, toggleChoice } =
     useDisclosureList<FretboardChoice>();
   const {
@@ -90,7 +97,25 @@ export function FretboardInstrumentCreationPanel({
     toggleChoice(choice);
   };
   const selectedInstrument = stringInstruments[value.instrument];
-  const selectedTuning = stringInstrumentTunings[value.tuningKey];
+  const selectedNamedTuning = value.tuningKey
+    ? stringInstrumentTunings[value.tuningKey]
+    : undefined;
+  const selectedOpenMidiNotes = value.tuning
+    ? fretboardToConventionalTuning(value.tuning)
+    : [
+        ...(
+          selectedNamedTuning ??
+          stringInstrumentTunings[selectedInstrument.defaultTuning]
+        ).openMidiNotes,
+      ];
+  const selectedTuningName =
+    value.tuningName ?? selectedNamedTuning?.primaryName ?? "Custom";
+  const selectedTuningNotes = value.tuning
+    ? formatCustomOpenStringNotes(selectedOpenMidiNotes)
+    : formatOpenStringNotes(
+        selectedNamedTuning ??
+          stringInstrumentTunings[selectedInstrument.defaultTuning],
+      );
   const defaultThemeName = getDefaultFretboardWoodThemeName(value.instrument);
   const effectiveThemeName = getEffectiveFretboardThemeName(value);
   const effectiveInlayPresetName = getEffectiveFretboardInlayPresetName(value);
@@ -100,19 +125,38 @@ export function FretboardInstrumentCreationPanel({
     value.instrument,
     defaultThemeName,
   );
-  const tuningGroups = getFretboardTuningGroups(value.instrument);
-
   const handleInstrumentSelect = (instrument: StringInstrumentKey) => {
+    const {
+      tuning: _tuning,
+      tuningName: _tuningName,
+      ...selectionWithoutCustomTuning
+    } = value;
+
     onChange({
-      ...value,
+      ...selectionWithoutCustomTuning,
       instrument,
       tuningKey: stringInstruments[instrument].defaultTuning,
     });
     closeChoice("instrument");
   };
   const handleTuningSelect = (tuningKey: StringInstrumentTuningKey) => {
-    onChange({ ...value, tuningKey });
+    const {
+      tuning: _tuning,
+      tuningName: _tuningName,
+      ...selectionWithoutCustomTuning
+    } = value;
+
+    onChange({ ...selectionWithoutCustomTuning, tuningKey });
     closeChoice("tuning");
+  };
+  const handleCustomTuningSelect = (tuning: SavedFretboardTuning) => {
+    const { tuningKey: _tuningKey, ...selectionWithoutNamedTuning } = value;
+
+    onChange({
+      ...selectionWithoutNamedTuning,
+      tuning: conventionalToFretboardTuning(tuning.openMidiNotes),
+      tuningName: tuning.name,
+    });
   };
   const handleFretRangeSelect = (fretRange: readonly [number, number]) => {
     onChange({ ...value, fretRange });
@@ -179,33 +223,26 @@ export function FretboardInstrumentCreationPanel({
         </DisclosureListItem>
 
         <DisclosureListItem
-          ariaLabel={`Choose tuning, ${selectedTuning.primaryName} selected`}
+          ariaLabel={`Choose tuning, ${selectedTuningName} selected`}
           isOpen={openChoice === "tuning"}
           keepMounted
           label="Tuning"
-          preview={selectedTuning.primaryName}
-          subtitle={formatOpenStringNotes(selectedTuning)}
+          preview={selectedTuningName}
+          subtitle={selectedTuningNotes}
           onToggle={() => handleToggleChoice("tuning")}
         >
-          <DisclosureList grouped>
-            {tuningGroups.map((group, index) => (
-              <DisclosureListGroup key={group.title ?? `tuning-group-${index}`}>
-                {group.tuningKeys.map((tuningKey) => {
-                  const tuning = stringInstrumentTunings[tuningKey];
-
-                  return (
-                    <DisclosureListChoice
-                      key={tuningKey}
-                      label={tuning.primaryName}
-                      subtitle={formatOpenStringNotes(tuning)}
-                      selected={value.tuningKey === tuningKey}
-                      onClick={() => handleTuningSelect(tuningKey)}
-                    />
-                  );
-                })}
-              </DisclosureListGroup>
-            ))}
-          </DisclosureList>
+          <FretboardTuningChoices
+            instrument={value.instrument}
+            tuning={value.tuning}
+            tuningKey={value.tuningKey}
+            tuningName={value.tuningName}
+            onCustomSelect={(tuning) => {
+              handleCustomTuningSelect(tuning);
+              closeChoice("tuning");
+            }}
+            onManage={() => setIsCustomTuningsOpen(true)}
+            onNamedSelect={handleTuningSelect}
+          />
         </DisclosureListItem>
 
         <DisclosureListItem
@@ -332,6 +369,22 @@ export function FretboardInstrumentCreationPanel({
           </div>
         </DisclosureListItem>
       </DisclosureList>
+
+      <CustomTuningsDialog
+        instrument={value.instrument}
+        isOpen={isCustomTuningsOpen}
+        seedOpenMidiNotes={selectedOpenMidiNotes}
+        selected={
+          value.tuning
+            ? {
+                name: value.tuningName,
+                openMidiNotes: selectedOpenMidiNotes,
+              }
+            : undefined
+        }
+        onClose={() => setIsCustomTuningsOpen(false)}
+        onSelect={handleCustomTuningSelect}
+      />
     </section>
   );
 }

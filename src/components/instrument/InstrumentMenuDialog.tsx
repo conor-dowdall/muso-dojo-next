@@ -1,7 +1,18 @@
 "use client";
 
-import { AudioWaveform, CaseSensitive, Ruler, SwatchBook } from "lucide-react";
-import { type StringInstrumentKey } from "@musodojo/music-theory-data";
+import {
+  AudioWaveform,
+  CaseSensitive,
+  ListMusic,
+  Ruler,
+  SwatchBook,
+} from "lucide-react";
+import {
+  stringInstrumentTunings,
+  type StringInstrumentKey,
+  type StringInstrumentTuningKey,
+} from "@musodojo/music-theory-data";
+import { useState } from "react";
 import {
   audioPresets,
   ensureAudioReady,
@@ -54,8 +65,21 @@ import {
 import { keyboardThemes, type KeyboardThemeName } from "@/data/keyboard/themes";
 import { DEFAULT_KEYBOARD_THEME } from "@/data/keyboard/themes";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
+import { type FretboardConfig } from "@/types/fretboard";
+import { type SavedFretboardTuning } from "@/types/custom-fretboard-tuning";
+import { CustomTuningsDialog } from "@/components/fretboard-tuning/CustomTuningsDialog";
+import {
+  FretboardTuningChoices,
+  formatCustomOpenStringNotes,
+} from "@/components/fretboard-tuning/FretboardTuningChoices";
+import {
+  conventionalToFretboardTuning,
+  fretboardToConventionalTuning,
+} from "@/utils/fretboard/customFretboardTunings";
+import { formatOpenStringNotes } from "@/components/instrument-creation/options";
 
-export type InstrumentMenuChoice = "appearance" | "sound" | "display" | "size";
+export type InstrumentMenuChoice =
+  "appearance" | "sound" | "display" | "size" | "tuning";
 
 export interface FretboardAppearanceSettings {
   handedness: "left" | "right";
@@ -66,6 +90,15 @@ export interface FretboardAppearanceSettings {
   ) => void;
   onThemeChange: (theme: FretboardThemeName | undefined) => void;
   theme?: FretboardThemeName;
+}
+
+export interface FretboardTuningSettings {
+  config?: FretboardConfig;
+  instrument: StringInstrumentKey;
+  onConfigChange: (config: FretboardConfig) => void;
+  tuning: readonly number[];
+  tuningKey?: StringInstrumentTuningKey;
+  tuningName?: string;
 }
 
 export interface KeyboardAppearanceSettings {
@@ -82,6 +115,7 @@ interface InstrumentMenuDialogProps {
   instrumentType: InstrumentType;
   isOpen: boolean;
   fretboardAppearance?: FretboardAppearanceSettings;
+  fretboardTuning?: FretboardTuningSettings;
   keyboardAppearance?: KeyboardAppearanceSettings;
   onAudioPresetIdChange?: SettingSetter<AudioPresetId>;
   onClone?: () => void;
@@ -132,6 +166,7 @@ export function InstrumentMenuDialog({
   instrumentType,
   isOpen,
   fretboardAppearance,
+  fretboardTuning,
   keyboardAppearance,
   onAudioPresetIdChange,
   onClone,
@@ -140,6 +175,7 @@ export function InstrumentMenuDialog({
   onInstrumentDisplaySizeChange,
   onRemove,
 }: InstrumentMenuDialogProps) {
+  const [isCustomTuningsOpen, setIsCustomTuningsOpen] = useState(false);
   const { isOpen: isChoiceOpen, toggleChoice } =
     useDisclosureList<InstrumentMenuChoice>(initialOpenChoice);
   const resolvedAudioPresetId = resolveInstrumentAudioPresetId(
@@ -170,6 +206,23 @@ export function InstrumentMenuDialog({
               : "Auto Inlay"
           }`
         : undefined;
+  const namedFretboardTuning = fretboardTuning?.tuningKey
+    ? stringInstrumentTunings[fretboardTuning.tuningKey]
+    : undefined;
+  const fretboardOpenMidiNotes = fretboardTuning
+    ? fretboardToConventionalTuning(fretboardTuning.tuning)
+    : undefined;
+  const fretboardTuningLabel =
+    fretboardTuning?.tuningName ??
+    namedFretboardTuning?.primaryName ??
+    "Custom";
+  const fretboardTuningNotes = fretboardOpenMidiNotes
+    ? fretboardTuning?.tuningName
+      ? formatCustomOpenStringNotes(fretboardOpenMidiNotes)
+      : namedFretboardTuning
+        ? formatOpenStringNotes(namedFretboardTuning)
+        : formatCustomOpenStringNotes(fretboardOpenMidiNotes)
+    : undefined;
 
   const handleAudioPresetChange = (nextAudioPresetId: AudioPresetId) => {
     onAudioPresetIdChange?.(nextAudioPresetId);
@@ -196,122 +249,205 @@ export function InstrumentMenuDialog({
     onClose();
   };
 
-  return (
-    <ObjectMenuDialog
-      isOpen={isOpen}
-      title="Instrument Options"
-      onClose={onClose}
-    >
-      <DisclosureListGroup>
-        <DisclosureListItem
-          ariaLabel={`Playback sound. Current: ${resolvedAudioPreset.label}`}
-          icon={<AudioWaveform />}
-          isOpen={isChoiceOpen("sound")}
-          label="Playback Sound"
-          onToggle={() => toggleChoice("sound")}
-          panelVariant="menu"
-          preview={resolvedAudioPreset.label}
-        >
-          <AudioPresetChoiceList
-            disabled={!onAudioPresetIdChange}
-            getChoiceAriaLabel={(preset) =>
-              `Use ${preset.label} playback sound`
-            }
-            onChange={handleAudioPresetChange}
-            selectedPresetId={resolvedAudioPresetId}
-            surface="instrument"
-          />
-        </DisclosureListItem>
+  const handleNamedTuningSelect = (tuningKey: StringInstrumentTuningKey) => {
+    if (!fretboardTuning) {
+      return;
+    }
 
-        {instrumentType === "keyboard" && keyboardAppearance ? (
+    const {
+      tuning: _tuning,
+      tuningName: _tuningName,
+      ...configWithoutCustomTuning
+    } = fretboardTuning.config ?? {};
+    fretboardTuning.onConfigChange({
+      ...configWithoutCustomTuning,
+      instrument: fretboardTuning.instrument,
+      tuningKey,
+    });
+    onClose();
+  };
+
+  const handleCustomTuningSelect = (tuning: SavedFretboardTuning) => {
+    if (!fretboardTuning) {
+      return;
+    }
+
+    const { tuningKey: _tuningKey, ...configWithoutNamedTuning } =
+      fretboardTuning.config ?? {};
+    fretboardTuning.onConfigChange({
+      ...configWithoutNamedTuning,
+      instrument: fretboardTuning.instrument,
+      tuning: conventionalToFretboardTuning(tuning.openMidiNotes),
+      tuningName: tuning.name,
+    });
+  };
+
+  return (
+    <>
+      <ObjectMenuDialog
+        isOpen={isOpen}
+        title="Instrument Options"
+        onClose={onClose}
+      >
+        <DisclosureListGroup>
           <DisclosureListItem
-            ariaLabel={`Appearance. Current: ${appearanceSummary}`}
-            icon={<SwatchBook />}
-            isOpen={isChoiceOpen("appearance")}
-            label="Appearance"
-            onToggle={() => toggleChoice("appearance")}
+            ariaLabel={`Playback sound. Current: ${resolvedAudioPreset.label}`}
+            icon={<AudioWaveform />}
+            isOpen={isChoiceOpen("sound")}
+            label="Playback Sound"
+            onToggle={() => toggleChoice("sound")}
             panelVariant="menu"
-            preview={<KeyboardThemeSwatch themeName={resolvedKeyboardTheme} />}
-            subtitle={appearanceSummary}
+            preview={resolvedAudioPreset.label}
           >
-            <KeyboardAppearanceEditor
-              theme={resolvedKeyboardTheme}
-              onThemeChange={keyboardAppearance.onThemeChange}
+            <AudioPresetChoiceList
+              disabled={!onAudioPresetIdChange}
+              getChoiceAriaLabel={(preset) =>
+                `Use ${preset.label} playback sound`
+              }
+              onChange={handleAudioPresetChange}
+              selectedPresetId={resolvedAudioPresetId}
+              surface="instrument"
             />
           </DisclosureListItem>
-        ) : null}
 
-        {instrumentType === "fretboard" &&
-        fretboardAppearance &&
-        resolvedFretboardTheme ? (
+          {fretboardTuning && fretboardOpenMidiNotes && fretboardTuningNotes ? (
+            <DisclosureListItem
+              ariaLabel={`Tuning. Current: ${fretboardTuningLabel}`}
+              icon={<ListMusic />}
+              isOpen={isChoiceOpen("tuning")}
+              label="Tuning"
+              onToggle={() => toggleChoice("tuning")}
+              panelVariant="menu"
+              preview={fretboardTuningLabel}
+              subtitle={fretboardTuningNotes}
+            >
+              <FretboardTuningChoices
+                instrument={fretboardTuning.instrument}
+                tuning={
+                  fretboardTuning.tuningKey ? undefined : fretboardTuning.tuning
+                }
+                tuningKey={fretboardTuning.tuningKey}
+                tuningName={fretboardTuning.tuningName}
+                onCustomSelect={(tuning) => {
+                  handleCustomTuningSelect(tuning);
+                  onClose();
+                }}
+                onManage={() => setIsCustomTuningsOpen(true)}
+                onNamedSelect={handleNamedTuningSelect}
+              />
+            </DisclosureListItem>
+          ) : null}
+
+          {instrumentType === "keyboard" && keyboardAppearance ? (
+            <DisclosureListItem
+              ariaLabel={`Appearance. Current: ${appearanceSummary}`}
+              icon={<SwatchBook />}
+              isOpen={isChoiceOpen("appearance")}
+              label="Appearance"
+              onToggle={() => toggleChoice("appearance")}
+              panelVariant="menu"
+              preview={
+                <KeyboardThemeSwatch themeName={resolvedKeyboardTheme} />
+              }
+              subtitle={appearanceSummary}
+            >
+              <KeyboardAppearanceEditor
+                theme={resolvedKeyboardTheme}
+                onThemeChange={keyboardAppearance.onThemeChange}
+              />
+            </DisclosureListItem>
+          ) : null}
+
+          {instrumentType === "fretboard" &&
+          fretboardAppearance &&
+          resolvedFretboardTheme ? (
+            <DisclosureListItem
+              ariaLabel={`Appearance. Current: ${appearanceSummary}`}
+              icon={<SwatchBook />}
+              isOpen={isChoiceOpen("appearance")}
+              label="Appearance"
+              onToggle={() => toggleChoice("appearance")}
+              panelVariant="menu"
+              preview={
+                <FretboardInlayPresetSwatch
+                  handedness={fretboardAppearance.handedness}
+                  instrument={fretboardAppearance.instrument}
+                  presetName={resolvedFretboardInlayPreset}
+                  themeName={resolvedFretboardTheme}
+                />
+              }
+              subtitle={appearanceSummary}
+            >
+              <FretboardAppearanceEditor {...fretboardAppearance} />
+            </DisclosureListItem>
+          ) : null}
+
           <DisclosureListItem
-            ariaLabel={`Appearance. Current: ${appearanceSummary}`}
-            icon={<SwatchBook />}
-            isOpen={isChoiceOpen("appearance")}
-            label="Appearance"
-            onToggle={() => toggleChoice("appearance")}
+            ariaLabel={`Note labels. Current: ${getDisplayFormatLabel(
+              displayFormatId,
+            )}`}
+            icon={<CaseSensitive />}
+            isOpen={isChoiceOpen("display")}
+            label="Note Labels"
+            onToggle={() => toggleChoice("display")}
             panelVariant="menu"
-            preview={
-              <FretboardInlayPresetSwatch
-                handedness={fretboardAppearance.handedness}
-                instrument={fretboardAppearance.instrument}
-                presetName={resolvedFretboardInlayPreset}
-                themeName={resolvedFretboardTheme}
-              />
-            }
-            subtitle={appearanceSummary}
+            preview={getDisplayFormatLabel(displayFormatId)}
           >
-            <FretboardAppearanceEditor {...fretboardAppearance} />
+            <DisplayFormatPicker
+              value={displayFormatId}
+              onChange={handleDisplayFormatChange}
+            />
           </DisclosureListItem>
-        ) : null}
 
-        <DisclosureListItem
-          ariaLabel={`Note labels. Current: ${getDisplayFormatLabel(
-            displayFormatId,
-          )}`}
-          icon={<CaseSensitive />}
-          isOpen={isChoiceOpen("display")}
-          label="Note Labels"
-          onToggle={() => toggleChoice("display")}
-          panelVariant="menu"
-          preview={getDisplayFormatLabel(displayFormatId)}
-        >
-          <DisplayFormatPicker
-            value={displayFormatId}
-            onChange={handleDisplayFormatChange}
-          />
-        </DisclosureListItem>
+          <DisclosureListItem
+            ariaLabel={`Instrument size. Current: ${
+              instrumentSizeLabels[instrumentSize]
+            }`}
+            icon={<Ruler />}
+            isOpen={isChoiceOpen("size")}
+            label="Instrument Size"
+            onToggle={() => toggleChoice("size")}
+            panelVariant="menu"
+            preview={instrumentSizeLabels[instrumentSize]}
+          >
+            <DisclosureList>
+              {instrumentSizeOptions.map((option) => (
+                <DisclosureListChoice
+                  key={option.id}
+                  disabled={!onInstrumentDisplaySizeChange}
+                  label={option.label}
+                  onClick={() => handleInstrumentDisplaySizeChange(option.id)}
+                  selected={option.id === instrumentSize}
+                />
+              ))}
+            </DisclosureList>
+          </DisclosureListItem>
+        </DisclosureListGroup>
 
-        <DisclosureListItem
-          ariaLabel={`Instrument size. Current: ${
-            instrumentSizeLabels[instrumentSize]
-          }`}
-          icon={<Ruler />}
-          isOpen={isChoiceOpen("size")}
-          label="Instrument Size"
-          onToggle={() => toggleChoice("size")}
-          panelVariant="menu"
-          preview={instrumentSizeLabels[instrumentSize]}
-        >
-          <DisclosureList>
-            {instrumentSizeOptions.map((option) => (
-              <DisclosureListChoice
-                key={option.id}
-                disabled={!onInstrumentDisplaySizeChange}
-                label={option.label}
-                onClick={() => handleInstrumentDisplaySizeChange(option.id)}
-                selected={option.id === instrumentSize}
-              />
-            ))}
-          </DisclosureList>
-        </DisclosureListItem>
-      </DisclosureListGroup>
+        <ObjectManagementGroup
+          kind="instrument"
+          onDanger={onRemove ? handleRemove : undefined}
+          onDuplicate={onClone ? handleClone : undefined}
+        />
+      </ObjectMenuDialog>
 
-      <ObjectManagementGroup
-        kind="instrument"
-        onDanger={onRemove ? handleRemove : undefined}
-        onDuplicate={onClone ? handleClone : undefined}
-      />
-    </ObjectMenuDialog>
+      {fretboardTuning && fretboardOpenMidiNotes ? (
+        <CustomTuningsDialog
+          instrument={fretboardTuning.instrument}
+          isOpen={isCustomTuningsOpen}
+          seedOpenMidiNotes={fretboardOpenMidiNotes}
+          selected={
+            fretboardTuning.tuningName
+              ? {
+                  name: fretboardTuning.tuningName,
+                  openMidiNotes: fretboardOpenMidiNotes,
+                }
+              : undefined
+          }
+          onClose={() => setIsCustomTuningsOpen(false)}
+          onSelect={handleCustomTuningSelect}
+        />
+      ) : null}
+    </>
   );
 }

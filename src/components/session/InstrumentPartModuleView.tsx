@@ -171,6 +171,9 @@ export function InstrumentPartModuleView({
           onThemeChange={(theme) =>
             updateInstrumentSettings(sessionId, partId, moduleId, { theme })
           }
+          onConfigChange={(config) =>
+            updateInstrumentSettings(sessionId, partId, moduleId, { config })
+          }
           theme={instrument.theme}
           config={instrument.config}
         >

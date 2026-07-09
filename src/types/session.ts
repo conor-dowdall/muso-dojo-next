@@ -20,6 +20,7 @@ import { type FretboardConfig } from "@/types/fretboard";
 import { type KeyboardConfig } from "@/types/keyboard";
 import { type DisplayFormatId } from "@/data/displayFormats";
 import { type AppThemeName } from "@/data/appThemes";
+import { type SavedFretboardTuning } from "@/types/custom-fretboard-tuning";
 import { type WoodSurfaceId } from "@/data/woodSurfaces";
 import {
   type CollectionRangeBoundary,
@@ -232,6 +233,7 @@ export interface SessionConfig {
  */
 export interface DojoSettings {
   appTheme?: AppThemeName;
+  customFretboardTunings?: SavedFretboardTuning[];
   noteColorConfig?: NoteColorConfig;
   moduleCreationDefaults?: ModuleCreationDefaults;
   sessionMaterialCreationDefaults?: SessionMaterialCreationDefaults;

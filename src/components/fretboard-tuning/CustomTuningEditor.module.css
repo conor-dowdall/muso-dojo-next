@@ -1,0 +1,73 @@
+.editor {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.nameField {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.nameLabel {
+  position: absolute;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  inline-size: var(--space-px);
+  block-size: var(--space-px);
+  margin: calc(var(--space-px) * -1);
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+}
+
+.nameInput {
+  appearance: none;
+  display: block;
+  inline-size: 100%;
+  text-align: start;
+}
+
+.nameInput:focus {
+  outline: none;
+}
+
+.nameInput[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.message {
+  padding-inline: var(--space-1);
+  color: var(--color-danger);
+}
+
+.countRow,
+.stringRow {
+  display: grid;
+  min-inline-size: 0;
+  grid-template-columns: minmax(var(--space-16), max-content) minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.stringList {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.rowLabel {
+  padding-inline-start: var(--space-1);
+}
+
+@container (width < 19rem) {
+  .countRow,
+  .stringRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+}

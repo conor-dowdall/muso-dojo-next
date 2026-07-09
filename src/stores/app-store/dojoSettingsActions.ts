@@ -18,6 +18,11 @@ import {
   type RememberSessionMaterialCreationRequest,
 } from "@/types/session";
 import { type RememberModuleCreationRequest } from "@/types/instrument-creation-defaults";
+import {
+  normalizeSavedFretboardTuningInput,
+  savedTuningNameIsAvailable,
+} from "@/utils/fretboard/customFretboardTunings";
+import { createEntityId } from "@/utils/session/createSessionEntities";
 
 function setOptionalDojoSetting<TKey extends keyof DojoSettings>(
   set: AppStoreSet,
@@ -130,6 +135,103 @@ export function createDojoSettingsActions(
   };
 
   return {
+    addCustomFretboardTuning: (tuningInput) => {
+      const tuning = normalizeSavedFretboardTuningInput(tuningInput);
+
+      if (!tuning) {
+        return undefined;
+      }
+
+      const id = createEntityId("tuning");
+      let wasAdded = false;
+
+      set((state) => {
+        const customFretboardTunings =
+          state.dojoSettings.customFretboardTunings ?? [];
+
+        if (
+          !savedTuningNameIsAvailable(
+            customFretboardTunings,
+            tuning.instrument,
+            tuning.name,
+          )
+        ) {
+          return state;
+        }
+
+        wasAdded = true;
+        return {
+          dojoSettings: {
+            ...state.dojoSettings,
+            customFretboardTunings: [
+              ...customFretboardTunings,
+              { id, ...tuning },
+            ],
+          },
+        };
+      });
+
+      return wasAdded ? id : undefined;
+    },
+    updateCustomFretboardTuning: (tuningId, tuningInput) => {
+      const tuning = normalizeSavedFretboardTuningInput(tuningInput);
+
+      if (!tuning) {
+        return;
+      }
+
+      set((state) => {
+        const customFretboardTunings =
+          state.dojoSettings.customFretboardTunings ?? [];
+        const tuningIndex = customFretboardTunings.findIndex(
+          (candidate) => candidate.id === tuningId,
+        );
+
+        if (
+          tuningIndex < 0 ||
+          !savedTuningNameIsAvailable(
+            customFretboardTunings,
+            tuning.instrument,
+            tuning.name,
+            tuningId,
+          )
+        ) {
+          return state;
+        }
+
+        const nextTunings = [...customFretboardTunings];
+        nextTunings[tuningIndex] = { id: tuningId, ...tuning };
+
+        return {
+          dojoSettings: {
+            ...state.dojoSettings,
+            customFretboardTunings: nextTunings,
+          },
+        };
+      });
+    },
+    removeCustomFretboardTuning: (tuningId) => {
+      set((state) => {
+        const customFretboardTunings =
+          state.dojoSettings.customFretboardTunings ?? [];
+        const nextTunings = customFretboardTunings.filter(
+          (tuning) => tuning.id !== tuningId,
+        );
+
+        if (nextTunings.length === customFretboardTunings.length) {
+          return state;
+        }
+
+        const dojoSettings = { ...state.dojoSettings };
+        if (nextTunings.length === 0) {
+          delete dojoSettings.customFretboardTunings;
+        } else {
+          dojoSettings.customFretboardTunings = nextTunings;
+        }
+
+        return { dojoSettings };
+      });
+    },
     setAppTheme: (themeChoice) => {
       const appTheme = normalizeAppThemePreference(themeChoice);
 

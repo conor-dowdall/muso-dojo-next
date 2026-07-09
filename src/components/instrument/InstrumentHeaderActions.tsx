@@ -40,6 +40,7 @@ import { DisplayFormatTriggerButton } from "@/components/music-theory/DisplayFor
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import {
   type FretboardAppearanceSettings,
+  type FretboardTuningSettings,
   InstrumentMenuDialog,
   type InstrumentMenuChoice,
   type KeyboardAppearanceSettings,
@@ -54,6 +55,7 @@ interface InstrumentHeaderActionsProps {
   audioPresetContext?: InstrumentAudioPresetContext;
   displayFormatId: DisplayFormatId;
   fretboardAppearance?: FretboardAppearanceSettings;
+  fretboardTuning?: FretboardTuningSettings;
   instrumentType: InstrumentType;
   keyboardAppearance?: KeyboardAppearanceSettings;
   identity?: ReactNode;
@@ -133,6 +135,7 @@ export const InstrumentHeaderActions = ({
   audioPresetContext,
   displayFormatId,
   fretboardAppearance,
+  fretboardTuning,
   instrumentType,
   keyboardAppearance,
   identity,
@@ -294,6 +297,7 @@ export const InstrumentHeaderActions = ({
         audioPresetContext={audioPresetContext}
         displayFormatId={displayFormatId}
         fretboardAppearance={fretboardAppearance}
+        fretboardTuning={fretboardTuning}
         initialOpenChoice={menuChoice}
         instrumentSize={instrumentSize}
         instrumentType={instrumentType}

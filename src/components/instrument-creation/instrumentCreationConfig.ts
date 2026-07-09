@@ -153,8 +153,18 @@ export function createDefaultFretboardInstrumentSelection(
 
   return {
     instrument: fretboardDefault?.instrument ?? "guitar",
-    tuningKey:
-      fretboardDefault?.tuningKey ?? stringInstruments.guitar.defaultTuning,
+    ...(fretboardDefault?.tuning
+      ? {
+          tuning: [...fretboardDefault.tuning],
+          ...(fretboardDefault.tuningName
+            ? { tuningName: fretboardDefault.tuningName }
+            : {}),
+        }
+      : {
+          tuningKey:
+            fretboardDefault?.tuningKey ??
+            stringInstruments.guitar.defaultTuning,
+        }),
     fretRange: [fretRange[0], fretRange[1]],
     handedness: fretboardDefault?.handedness ?? "right",
     appearanceSource: fretboardDefault?.appearanceSource ?? "auto",
@@ -235,7 +245,12 @@ export function getFretboardCreationDefault(
 ): FretboardCreationDefault {
   return {
     instrument: selection.instrument,
-    tuningKey: selection.tuningKey,
+    ...(selection.tuning
+      ? {
+          tuning: [...selection.tuning],
+          ...(selection.tuningName ? { tuningName: selection.tuningName } : {}),
+        }
+      : { tuningKey: selection.tuningKey }),
     handedness: selection.handedness,
     appearanceSource: selection.appearanceSource,
     theme: selection.theme,
@@ -295,6 +310,14 @@ export function instrumentCreationDefaultMatchesSelection(
   return (
     fretboardDefault.instrument === fretboardSelection.instrument &&
     fretboardDefault.tuningKey === fretboardSelection.tuningKey &&
+    fretboardDefault.tuningName === fretboardSelection.tuningName &&
+    (fretboardDefault.tuning === undefined &&
+    fretboardSelection.tuning === undefined
+      ? true
+      : fretboardDefault.tuning?.length === fretboardSelection.tuning?.length &&
+        fretboardDefault.tuning?.every(
+          (note, index) => note === fretboardSelection.tuning?.[index],
+        )) &&
     fretboardDefault.handedness === fretboardSelection.handedness &&
     fretboardDefault.appearanceSource === fretboardSelection.appearanceSource &&
     fretboardDefault.theme === fretboardSelection.theme &&
@@ -331,7 +354,14 @@ export function getFretboardInstrumentCreationConfig(
       : {}),
     config: {
       instrument: selection.instrument,
-      tuningKey: selection.tuningKey,
+      ...(selection.tuning
+        ? {
+            tuning: [...selection.tuning],
+            ...(selection.tuningName
+              ? { tuningName: selection.tuningName }
+              : {}),
+          }
+        : { tuningKey: selection.tuningKey }),
       fretRange: [...selection.fretRange],
       leftHanded: selection.handedness === "left",
     },
