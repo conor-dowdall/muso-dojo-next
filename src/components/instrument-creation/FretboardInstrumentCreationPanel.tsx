@@ -39,13 +39,11 @@ import { BoundedRangeSliderGroup } from "@/components/ui/range-slider/BoundedRan
 import { FretboardInlayPresetSwatch } from "@/components/instrument/InstrumentThemeSwatch";
 import { FretboardAppearanceEditor } from "@/components/instrument/InstrumentAppearanceEditor";
 import { CustomTuningsDialog } from "@/components/fretboard-tuning/CustomTuningsDialog";
-import {
-  FretboardTuningChoices,
-  formatCustomOpenStringNotes,
-} from "@/components/fretboard-tuning/FretboardTuningChoices";
+import { FretboardTuningChoices } from "@/components/fretboard-tuning/FretboardTuningChoices";
 import { type SavedFretboardTuning } from "@/types/custom-fretboard-tuning";
 import {
   conventionalToFretboardTuning,
+  formatCustomOpenStringNotes,
   fretboardToConventionalTuning,
 } from "@/utils/fretboard/customFretboardTunings";
 import { type FretboardInstrumentSelection } from "./instrumentCreationConfig";

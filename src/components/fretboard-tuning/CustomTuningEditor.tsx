@@ -42,6 +42,16 @@ function changeStringCount(notes: readonly number[], nextCount: number) {
   return nextNotes;
 }
 
+function getDisplayStrings(openMidiNotes: readonly number[]) {
+  return openMidiNotes
+    .map((midi, conventionalIndex) => ({
+      conventionalIndex,
+      midi,
+      stringNumber: openMidiNotes.length - conventionalIndex,
+    }))
+    .reverse();
+}
+
 export function CustomTuningEditor({
   initialName = "",
   initialOpenMidiNotes,
@@ -83,19 +93,10 @@ export function CustomTuningEditor({
   return (
     <div className={styles.editor}>
       <div className={styles.countRow}>
-        <Text
-          as="span"
-          className={styles.rowLabel}
-          size="sm"
-          variant="muted"
-          weight="medium"
-        >
-          Strings
-        </Text>
         <NumericStepper
           aria-label="String count"
           formatValue={(value) =>
-            `${value} ${value === 1 ? "String" : "Strings"}`
+            `${value} ${value === 1 ? "string" : "strings"}`
           }
           max={CUSTOM_TUNING_MAX_STRINGS}
           min={CUSTOM_TUNING_MIN_STRINGS}
@@ -106,38 +107,36 @@ export function CustomTuningEditor({
         />
       </div>
 
-      <div className={styles.stringList} role="group" aria-label="Open strings">
-        {openMidiNotes.map((midi, index) => {
-          const stringNumber = openMidiNotes.length - index;
-
-          return (
-            <div className={styles.stringRow} key={`${stringNumber}-${index}`}>
-              <Text
-                as="span"
-                className={styles.rowLabel}
-                size="sm"
-                variant="muted"
-                weight="medium"
-              >
-                String {stringNumber}
-              </Text>
-              <NumericStepper
-                aria-label={`String ${stringNumber} open note`}
-                formatValue={formatMidiNote}
-                max={CUSTOM_TUNING_MAX_MIDI}
-                min={CUSTOM_TUNING_MIN_MIDI}
-                value={midi}
-                onChange={(note) =>
-                  setOpenMidiNotes((currentNotes) =>
-                    currentNotes.map((currentNote, currentIndex) =>
-                      currentIndex === index ? note : currentNote,
-                    ),
-                  )
-                }
-              />
-            </div>
-          );
-        })}
+      <div
+        className={styles.stringList}
+        role="group"
+        aria-label="Open strings from top to bottom"
+      >
+        {getDisplayStrings(openMidiNotes).map(
+          ({ conventionalIndex, midi, stringNumber }) => {
+            return (
+              <div className={styles.stringRow} key={stringNumber}>
+                <span className={styles.stringNumber} aria-hidden="true">
+                  {stringNumber}
+                </span>
+                <NumericStepper
+                  aria-label={`String ${stringNumber} open note`}
+                  formatValue={formatMidiNote}
+                  max={CUSTOM_TUNING_MAX_MIDI}
+                  min={CUSTOM_TUNING_MIN_MIDI}
+                  value={midi}
+                  onChange={(note) =>
+                    setOpenMidiNotes((currentNotes) =>
+                      currentNotes.map((currentNote, currentIndex) =>
+                        currentIndex === conventionalIndex ? note : currentNote,
+                      ),
+                    )
+                  }
+                />
+              </div>
+            );
+          },
+        )}
       </div>
 
       {showNameField ? (

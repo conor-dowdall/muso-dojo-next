@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  formatMidiNote,
-  type StringInstrumentKey,
-} from "@musodojo/music-theory-data";
+import { type StringInstrumentKey } from "@musodojo/music-theory-data";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
@@ -23,6 +20,7 @@ import { SelectableOverflowRow } from "@/components/ui/selectable-overflow-row";
 import { useAppStore } from "@/stores/appStore";
 import { type SavedFretboardTuning } from "@/types/custom-fretboard-tuning";
 import {
+  formatCustomOpenStringNotes,
   savedTuningNameIsAvailable,
   tuningNotesAreEqual,
 } from "@/utils/fretboard/customFretboardTunings";
@@ -40,10 +38,6 @@ interface CustomTuningsDialogProps {
   onSelect: (tuning: SavedFretboardTuning) => void;
   seedOpenMidiNotes: readonly number[];
   selected?: SelectedCustomTuning;
-}
-
-function formatTuningNotes(openMidiNotes: readonly number[]) {
-  return openMidiNotes.map((note) => formatMidiNote(note)).join(" ");
 }
 
 export function CustomTuningsDialog({
@@ -157,7 +151,9 @@ export function CustomTuningsDialog({
                       selected={isSelected}
                       selectAriaLabel={`Use ${tuning.name} tuning`}
                       selectedAriaLabel={`Current tuning: ${tuning.name}`}
-                      subtitle={formatTuningNotes(tuning.openMidiNotes)}
+                      subtitle={formatCustomOpenStringNotes(
+                        tuning.openMidiNotes,
+                      )}
                       onSelect={() => {
                         onSelect(tuning);
                         setIsNewOpen(false);

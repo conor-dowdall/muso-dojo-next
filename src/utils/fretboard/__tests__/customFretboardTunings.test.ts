@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   conventionalToFretboardTuning,
+  formatCustomOpenStringNotes,
   fretboardToConventionalTuning,
   normalizeCustomTuningNotes,
   normalizeSavedFretboardTunings,
@@ -19,6 +20,13 @@ describe("customFretboardTunings", () => {
         conventionalToFretboardTuning(reentrantUkulele),
       ),
     ).toEqual(reentrantUkulele);
+  });
+
+  it("formats custom tuning summaries as flat note names without octaves", () => {
+    expect(formatCustomOpenStringNotes([40, 45, 50, 55, 59, 64])).toBe(
+      "E A D G B E",
+    );
+    expect(formatCustomOpenStringNotes([63, 66, 70])).toBe("E♭ G♭ B♭");
   });
 
   it("normalizes MIDI notes and limits custom tunings to twelve strings", () => {

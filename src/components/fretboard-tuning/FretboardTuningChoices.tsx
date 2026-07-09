@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  formatMidiNote,
   stringInstrumentTunings,
   type StringInstrumentKey,
   type StringInstrumentTuningKey,
@@ -23,10 +22,6 @@ interface FretboardTuningChoicesProps {
   onManage: () => void;
   onNamedSelect: (tuningKey: StringInstrumentTuningKey) => void;
   tuningKey?: StringInstrumentTuningKey;
-}
-
-export function formatCustomOpenStringNotes(openMidiNotes: readonly number[]) {
-  return openMidiNotes.map((note) => formatMidiNote(note)).join(" ");
 }
 
 export function FretboardTuningChoices({

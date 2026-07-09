@@ -1,4 +1,6 @@
 import {
+  normalizeChromaticIndex,
+  noteLabelCollections,
   stringInstruments,
   type StringInstrumentKey,
 } from "@musodojo/music-theory-data";
@@ -25,6 +27,17 @@ export function conventionalToFretboardTuning(
 
 export function fretboardToConventionalTuning(tuning: readonly number[]) {
   return [...tuning].reverse();
+}
+
+export function formatCustomOpenStringNotes(openMidiNotes: readonly number[]) {
+  return openMidiNotes
+    .map(
+      (note) =>
+        noteLabelCollections.noteNamesFlat.labels[
+          normalizeChromaticIndex(note)
+        ],
+    )
+    .join(" ");
 }
 
 export function normalizeCustomTuningNotes(

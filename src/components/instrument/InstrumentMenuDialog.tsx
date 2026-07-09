@@ -68,12 +68,10 @@ import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import { type FretboardConfig } from "@/types/fretboard";
 import { type SavedFretboardTuning } from "@/types/custom-fretboard-tuning";
 import { CustomTuningsDialog } from "@/components/fretboard-tuning/CustomTuningsDialog";
-import {
-  FretboardTuningChoices,
-  formatCustomOpenStringNotes,
-} from "@/components/fretboard-tuning/FretboardTuningChoices";
+import { FretboardTuningChoices } from "@/components/fretboard-tuning/FretboardTuningChoices";
 import {
   conventionalToFretboardTuning,
+  formatCustomOpenStringNotes,
   fretboardToConventionalTuning,
 } from "@/utils/fretboard/customFretboardTunings";
 import { formatOpenStringNotes } from "@/components/instrument-creation/options";
