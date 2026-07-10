@@ -373,4 +373,25 @@ describe("PartSequenceCoordinator", () => {
       playing: false,
     });
   });
+
+  it("stops partial playback when the current Part cannot start atomically", async () => {
+    vi.useFakeTimers();
+    const stopPartPlayback = vi.fn();
+    const transport = {
+      getCurrentTime: () => 10,
+      startPart: vi.fn(async () => ({ originTime: 10.08, started: false })),
+      stopPartPlayback,
+      subscribeToManualControl: () => () => undefined,
+      updatePartLive: vi.fn(),
+    } as unknown as BeatTransportCoordinator;
+    const coordinator = new PartSequenceCoordinator(transport);
+
+    await expect(coordinator.start(createPlan())).resolves.toBe(false);
+
+    expect(stopPartPlayback).toHaveBeenCalledOnce();
+    expect(coordinator.getSnapshot()).toEqual({
+      partCount: 0,
+      playing: false,
+    });
+  });
 });

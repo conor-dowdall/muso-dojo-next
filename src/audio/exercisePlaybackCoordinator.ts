@@ -330,6 +330,17 @@ export class ExercisePlaybackCoordinator {
     this.pendingHandoff = undefined;
   }
 
+  private armActivePlaybackEnd(active: ActiveExercisePlayback, atTime: number) {
+    const options = {
+      atTime,
+      releaseSeconds: AUDIO_STOP_RELEASE_SECONDS,
+    };
+
+    this.cancelGroup(active.countInGroup, options);
+    this.cancelGroup(active.metronomeGroup, options);
+    this.cancelGroup(active.noteGroup, options);
+  }
+
   private commitPendingHandoff(revision: number) {
     const pendingHandoff = this.pendingHandoff;
 
@@ -338,10 +349,8 @@ export class ExercisePlaybackCoordinator {
     }
 
     if (this.active) {
-      this.stopActivePlayback(this.active, {
-        atTime: pendingHandoff.snapshot.originTime,
-        releaseSeconds: AUDIO_STOP_RELEASE_SECONDS,
-      });
+      this.active.noteScheduler.stop();
+      this.active.metronomeScheduler?.stop();
     }
 
     this.active = pendingHandoff.playback;
@@ -605,6 +614,10 @@ export class ExercisePlaybackCoordinator {
     noteScheduler.start(originTime);
     metronomeScheduler?.start(originTime);
     if (shouldHandoff) {
+      // Arm the audible boundary while there is still ample audio-clock
+      // runway. The commit timer only updates coordinator state; a delayed
+      // main thread can no longer let the previous and next Parts overlap.
+      this.armActivePlaybackEnd(previous, originTime);
       const commitDelayMilliseconds = Math.max(
         0,
         (originTime - currentTime - HANDOFF_COMMIT_LEAD_SECONDS) * 1000,

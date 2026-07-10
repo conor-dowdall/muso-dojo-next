@@ -69,6 +69,46 @@ function getNextBeatOrigin({
   );
 }
 
+function getPartTempoBpm({
+  exercise,
+  rhythm,
+}: Pick<BeatTransportPartStartRequest, "exercise" | "rhythm">) {
+  return exercise?.tempoBpm ?? rhythm?.tempoBpm;
+}
+
+function getSafePartOrigin({
+  currentTime,
+  exercise,
+  handoff,
+  originTime,
+  rhythm,
+}: Pick<
+  BeatTransportPartStartRequest,
+  "exercise" | "handoff" | "originTime" | "rhythm"
+> & {
+  currentTime: number | undefined;
+}) {
+  if (originTime === undefined) {
+    return currentTime === undefined
+      ? undefined
+      : currentTime + TRANSPORT_HANDOFF_LEAD_SECONDS;
+  }
+
+  const tempoBpm = getPartTempoBpm({ exercise, rhythm });
+
+  if (!handoff || currentTime === undefined || tempoBpm === undefined) {
+    return originTime;
+  }
+
+  return getNextBeatOrigin({
+    currentTime,
+    grid: {
+      originTime,
+      secondsPerBeat: 60 / normalizeTempo(tempoBpm),
+    },
+  });
+}
+
 function getExerciseBeatGrid(
   snapshot: ExercisePlaybackSnapshot,
 ): BeatGrid | undefined {
@@ -336,11 +376,13 @@ export class BeatTransportCoordinator {
     this.notifyManualControl({ kind: "start", target: "exercise" }, source);
     const revision = ++this.revision;
     const currentTime = this.getCurrentTime();
-    const resolvedOriginTime =
-      originTime ??
-      (currentTime === undefined
-        ? undefined
-        : currentTime + TRANSPORT_HANDOFF_LEAD_SECONDS);
+    const resolvedOriginTime = getSafePartOrigin({
+      currentTime,
+      exercise,
+      handoff,
+      originTime,
+      rhythm,
+    });
 
     this.cancelPendingCompanionStart();
 

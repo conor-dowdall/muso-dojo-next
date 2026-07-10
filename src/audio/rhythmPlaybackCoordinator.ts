@@ -341,9 +341,6 @@ export class RhythmPlaybackCoordinator {
 
     if (this.active) {
       this.active.scheduler.stop();
-      this.audioEngine.cancelPlaybackGroup(this.active.group, {
-        atTime: pendingHandoff.snapshot.originTime,
-      });
     }
 
     this.active = pendingHandoff.playback;
@@ -496,6 +493,12 @@ export class RhythmPlaybackCoordinator {
     };
     scheduler.start(originTime);
     if (shouldHandoff) {
+      // Schedule the audible boundary on the audio clock now. The timer below
+      // is deliberately limited to state ownership and may run late on a busy
+      // or low-powered device without allowing both Parts to sound together.
+      this.audioEngine.cancelPlaybackGroup(previous.group, {
+        atTime: originTime,
+      });
       const commitDelayMilliseconds = Math.max(
         0,
         (originTime - currentTime - HANDOFF_COMMIT_LEAD_SECONDS) * 1000,

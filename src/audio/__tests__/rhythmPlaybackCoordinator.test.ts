@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   RHYTHM_PPQ,
   type PercussionSampleId,
@@ -76,6 +76,10 @@ function createHarness() {
 }
 
 describe("RhythmPlaybackCoordinator", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("restarts from a fresh origin when the tempo changes", async () => {
     const { cancelPlaybackGroup, coordinator, schedulers, setCurrentTime } =
       createHarness();
@@ -114,6 +118,35 @@ describe("RhythmPlaybackCoordinator", () => {
     expect(coordinator.getActiveRequest()?.pattern).toBe(nextPattern);
     expect(coordinator.getSnapshot()).toMatchObject({
       originTime: 10.08,
+      playing: true,
+    });
+  });
+
+  it("arms a handoff on the audio clock before the commit timer can be delayed", async () => {
+    vi.useFakeTimers();
+    const { cancelPlaybackGroup, coordinator, schedulers, setCurrentTime } =
+      createHarness();
+
+    await coordinator.start(createRequest(createPattern("kick")));
+    setCurrentTime(13.7);
+    await coordinator.start(createRequest(createPattern("snare")), {
+      handoff: true,
+      originTime: 14,
+    });
+
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
+      atTime: 14,
+    });
+    expect(schedulers[0]?.stop).not.toHaveBeenCalled();
+
+    setCurrentTime(14.1);
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(schedulers[0]?.stop).toHaveBeenCalledOnce();
+    expect(cancelPlaybackGroup).toHaveBeenCalledTimes(1);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeId: "rhythm",
+      originTime: 14,
       playing: true,
     });
   });

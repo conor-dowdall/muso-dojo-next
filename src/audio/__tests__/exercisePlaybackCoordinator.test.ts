@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ExercisePlaybackCoordinator,
   exercisePlaybackRestartRequestsAreEqual,
@@ -101,6 +101,10 @@ describe("exercisePlaybackRestartRequestsAreEqual", () => {
 });
 
 describe("ExercisePlaybackCoordinator", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("treats pending playback as active only for the matching looper", () => {
     const snapshot = {
       events: [],
@@ -157,6 +161,62 @@ describe("ExercisePlaybackCoordinator", () => {
     expect(coordinator.getSnapshot()).toMatchObject({
       activeId: "looper",
       originTime: 10.28,
+      playing: true,
+    });
+  });
+
+  it("arms a handoff on the audio clock before the commit timer can be delayed", async () => {
+    vi.useFakeTimers();
+    let currentTime = 10;
+    let nextGroupId = 0;
+    const cancelPlaybackGroup = vi.fn();
+    const schedulers: Array<{
+      start: ReturnType<typeof vi.fn>;
+      stop: ReturnType<typeof vi.fn>;
+    }> = [];
+    const coordinator = new ExercisePlaybackCoordinator(
+      {
+        cancelPlaybackGroup,
+        createPlaybackGroup: () =>
+          `group-${nextGroupId++}` as PlaybackGroupHandle,
+        getCurrentTime: () => currentTime,
+        prime: async () => true,
+        scheduleMetronomeClick: vi.fn(),
+        scheduleNote: vi.fn(),
+        subscribeToStopAll: () => () => undefined,
+      },
+      () => {
+        const scheduler = {
+          isRunning: () => true,
+          start: vi.fn(),
+          stop: vi.fn(),
+        };
+        schedulers.push(scheduler);
+        return scheduler;
+      },
+    );
+
+    await coordinator.start(createRequest("first-looper", 60));
+    currentTime = 13.7;
+    await coordinator.start(createRequest("next-looper", 62), {
+      handoff: true,
+      originTime: 14,
+    });
+
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
+      atTime: 14,
+      releaseSeconds: 0.08,
+    });
+    expect(schedulers[0]?.stop).not.toHaveBeenCalled();
+
+    currentTime = 14.1;
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(schedulers[0]?.stop).toHaveBeenCalledOnce();
+    expect(cancelPlaybackGroup).toHaveBeenCalledTimes(1);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeId: "next-looper",
+      originTime: 14,
       playing: true,
     });
   });

@@ -225,7 +225,7 @@ export class PartSequenceCoordinator {
     }
 
     if (!result.started) {
-      this.stop({ stopPlayback: false });
+      this.stop();
       return false;
     }
 

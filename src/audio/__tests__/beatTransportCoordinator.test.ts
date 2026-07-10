@@ -307,6 +307,39 @@ describe("BeatTransportCoordinator", () => {
     });
   });
 
+  it("moves a missed Part boundary to the next safe beat", async () => {
+    vi.useFakeTimers();
+    const { exercise, rhythm, setCurrentTime, transport } = createHarness();
+
+    await transport.startPart({
+      exercise: createExerciseRequest("exercise-a"),
+      originTime: 20.08,
+      rhythm: createRhythmRequest("rhythm-a"),
+      source: "part-sequence",
+    });
+    setCurrentTime(24.02);
+
+    const result = await transport.startPart({
+      exercise: createExerciseRequest("exercise-b"),
+      handoff: true,
+      originTime: 24,
+      rhythm: createRhythmRequest("rhythm-b"),
+      source: "part-sequence",
+    });
+
+    expect(result).toEqual({ originTime: 25, started: true });
+    expect(exercise.getSnapshot()).toMatchObject({
+      activeId: "exercise-a",
+      pendingId: "exercise-b",
+      pendingOriginTime: 25,
+    });
+    expect(rhythm.getSnapshot()).toMatchObject({
+      activeId: "rhythm-a",
+      pendingId: "rhythm-b",
+      pendingOriginTime: 25,
+    });
+  });
+
   it("marks manual starts as manually owned playback", async () => {
     const { exercise, rhythm, transport } = createHarness();
 
