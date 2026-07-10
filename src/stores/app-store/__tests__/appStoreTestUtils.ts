@@ -24,6 +24,7 @@ export function createStoreSnapshot(
   return {
     activeSessionId: sessionId,
     dojoSettings: {},
+    sessionWorkspaceViewMode: "session",
     sessions: {
       [sessionId]: {
         id: sessionId,

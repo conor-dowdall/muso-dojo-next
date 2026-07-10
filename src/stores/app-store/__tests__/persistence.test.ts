@@ -24,6 +24,7 @@ import {
   type InstrumentPartModuleConfig,
 } from "@/types/session";
 import { type NoteColorConfig } from "@/types/note-colors";
+import { sessionWorkspaceViewModes } from "@/types/session-view";
 
 const fallbackSnapshot = createAppStoreSnapshot({
   id: "fallback-session",
@@ -36,6 +37,7 @@ function createPersistedSnapshot(sessionId: string): AppStoreSnapshot {
   return {
     activeSessionId: sessionId,
     dojoSettings: {},
+    sessionWorkspaceViewMode: "session",
     sessions: {
       [sessionId]: {
         id: sessionId,
@@ -78,9 +80,17 @@ function createPersistedValue(
 
 function expectValidSnapshotInvariants(snapshot: AppStoreSnapshot) {
   expect(snapshot.dojoSettings).toEqual(expect.any(Object));
+  expect(sessionWorkspaceViewModes).toContain(
+    snapshot.sessionWorkspaceViewMode,
+  );
 
   if (snapshot.activeSessionId !== null) {
-    expect(snapshot.sessions[snapshot.activeSessionId]).toBeDefined();
+    const activeSession = snapshot.sessions[snapshot.activeSessionId];
+    expect(activeSession).toBeDefined();
+
+    if (snapshot.sessionWorkspaceViewMode !== "session") {
+      expect(activeSession?.parts.length).toBeGreaterThan(0);
+    }
   }
 
   Object.entries(snapshot.sessions).forEach(([sessionKey, session]) => {
@@ -143,7 +153,7 @@ describe("app store persistence", () => {
   });
 
   it("declares the current persisted store version", () => {
-    expect(APP_STORE_VERSION).toBe(3);
+    expect(APP_STORE_VERSION).toBe(5);
   });
 
   it("falls back when persisted state is not an object snapshot", () => {
@@ -273,6 +283,50 @@ describe("app store persistence", () => {
         fallbackSnapshot,
       ).dojoSettings,
     ).toEqual({});
+  });
+
+  it("normalizes the persisted workspace view against the active Session", () => {
+    const persistedState = createPersistedSnapshot("persisted-session");
+    persistedState.sessions["persisted-session"]?.parts.push({
+      id: "part-1",
+      rootNote: "C",
+      noteCollectionKey: "major",
+      modules: [],
+    });
+
+    expect(
+      normalizeAppStoreSnapshot(
+        { ...persistedState, sessionWorkspaceViewMode: "chart" },
+        fallbackSnapshot,
+      ).sessionWorkspaceViewMode,
+    ).toBe("chart");
+    expect(
+      normalizeAppStoreSnapshot(
+        { ...persistedState, sessionWorkspaceViewMode: "not-a-view" },
+        fallbackSnapshot,
+      ).sessionWorkspaceViewMode,
+    ).toBe("session");
+    expect(
+      normalizeAppStoreSnapshot(
+        { ...persistedState, sessionWorkspaceViewMode: "live" },
+        fallbackSnapshot,
+      ).sessionWorkspaceViewMode,
+    ).toBe("session");
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          sessionWorkspaceViewMode: "chart",
+          sessions: {
+            "persisted-session": {
+              ...persistedState.sessions["persisted-session"],
+              parts: [],
+            },
+          },
+        },
+        fallbackSnapshot,
+      ).sessionWorkspaceViewMode,
+    ).toBe("session");
   });
 
   it("normalizes valid custom dojo note colors", () => {

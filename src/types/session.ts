@@ -28,6 +28,7 @@ import {
 } from "@/utils/exercise-looper/exerciseSequence";
 import { type BeatSubdivisionId } from "@/utils/music-theory/beatSubdivision";
 import { type RhythmSelection } from "@/utils/rhythm/rhythmConfig";
+import { type SessionWorkspaceViewMode } from "@/types/session-view";
 
 export type ChordProgressionChordListMode =
   "each-chord-once" | "full-song-order";
@@ -242,5 +243,6 @@ export interface DojoSettings {
 export interface AppStoreSnapshot {
   activeSessionId: string | null;
   dojoSettings: DojoSettings;
+  sessionWorkspaceViewMode: SessionWorkspaceViewMode;
   sessions: Record<string, SessionConfig>;
 }

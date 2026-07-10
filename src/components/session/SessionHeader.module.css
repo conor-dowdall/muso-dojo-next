@@ -1,5 +1,30 @@
 .header {
+  position: relative;
   padding: var(--space-1);
+}
+
+.header::after {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: var(--space-1);
+  block-size: var(--space-px);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-accent),
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-position: -70% 0;
+  background-size: 40% 100%;
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+}
+
+.header[data-view-transition-pending="true"]::after {
+  animation: session-view-transition-progress 1.1s ease-in-out infinite;
+  opacity: 1;
 }
 
 .headerPrimary {
@@ -45,4 +70,18 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@keyframes session-view-transition-progress {
+  to {
+    background-position: 170% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header[data-view-transition-pending="true"]::after {
+    animation: none;
+    background-position: 0 0;
+    background-size: 100% 100%;
+  }
 }

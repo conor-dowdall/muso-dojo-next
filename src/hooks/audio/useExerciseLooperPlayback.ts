@@ -228,25 +228,17 @@ export function useExerciseLooperPlayback({
     let frameId = 0;
     let lastStepIndex: number | undefined | null = null;
 
-    const commitStepIndex = (syncToFrame: boolean) => {
+    const commitStepIndex = () => {
       const nextStepIndex = getCurrentPlaybackStepIndex(visualStepLeadSeconds);
 
       if (nextStepIndex !== lastStepIndex) {
         lastStepIndex = nextStepIndex;
-
-        if (syncToFrame) {
-          // Commit before this animation frame paints so the light does not trail
-          // the audible step by an additional browser frame.
-          flushSync(() => setActiveStepIndex(nextStepIndex));
-          return;
-        }
-
         setActiveStepIndex(nextStepIndex);
       }
     };
 
     const update = () => {
-      commitStepIndex(true);
+      commitStepIndex();
       frameId = window.requestAnimationFrame(update);
     };
 

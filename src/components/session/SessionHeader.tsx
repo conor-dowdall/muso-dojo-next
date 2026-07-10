@@ -41,7 +41,7 @@ import {
 } from "./PracticeBandTransport";
 import { PracticeBandOptionsDialog } from "./PracticeBandOptionsDialog";
 import {
-  isPracticeSessionViewMode,
+  isSessionFocusViewMode,
   requiresSessionParts,
   sessionViewModeConfig,
   sessionViewModes,
@@ -56,6 +56,7 @@ interface SessionHeaderProps {
   onViewModeChange: (mode: SessionViewMode) => void;
   onViewModeExit?: () => void;
   viewMode: SessionViewMode;
+  viewModeTransitionPending?: boolean;
 }
 
 type SessionMenuSection = "view";
@@ -74,6 +75,7 @@ export function SessionHeader({
   onViewModeChange,
   onViewModeExit,
   viewMode,
+  viewModeTransitionPending = false,
 }: SessionHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openMenuSection, setOpenMenuSection] =
@@ -101,8 +103,9 @@ export function SessionHeader({
   const hasActiveSession = activeSessionId !== null;
   const viewModeLabel = sessionViewModeConfig[viewMode].label;
   const canUsePartViews = activeSessionPartCount > 0;
-  const isPracticeHeader = isPracticeSessionViewMode(viewMode);
-  const titleText = isPracticeHeader ? viewModeLabel : sessionName;
+  const isFocusHeader = isSessionFocusViewMode(viewMode);
+  const isAlternateView = viewMode !== "session";
+  const titleText = isFocusHeader ? viewModeLabel : sessionName;
   const titleReadout = practiceBandTransport.isActive
     ? practiceBandTransport.readout
     : null;
@@ -140,6 +143,11 @@ export function SessionHeader({
   const selectViewMode = (nextViewMode: SessionViewMode) => {
     setIsMenuOpen(false);
     setOpenMenuSection(null);
+
+    if (nextViewMode === viewMode) {
+      return;
+    }
+
     onViewModeChange(nextViewMode);
   };
   const toggleMenuSection = (section: SessionMenuSection) => {
@@ -151,8 +159,12 @@ export function SessionHeader({
   return (
     <>
       <ControlHeader
+        aria-busy={viewModeTransitionPending}
         actionsClassName={styles.headerActions}
         className={styles.header}
+        data-view-transition-pending={
+          viewModeTransitionPending ? true : undefined
+        }
         onKeyDownCapture={practiceBandTransport.shortcuts.onKeyDownCapture}
         onPointerDownCapture={
           practiceBandTransport.shortcuts.onPointerDownCapture
@@ -180,10 +192,10 @@ export function SessionHeader({
         }
         actions={
           <ControlHeaderCluster aria-label="Session actions" role="group">
-            {isPracticeHeader ? null : (
+            {isFocusHeader ? null : (
               <IconButton
                 aria-label="Add to session"
-                disabled={!hasActiveSession}
+                disabled={!hasActiveSession || viewModeTransitionPending}
                 icon={<Plus />}
                 size="sm"
                 onClick={onOpenAddDialog}
@@ -198,32 +210,31 @@ export function SessionHeader({
               shouldYield={false}
               onClick={openSessionTempo}
             />
-            {isPracticeHeader ? null : (
+            <IconButton
+              aria-label={`Session view. Current: ${viewModeLabel}`}
+              disabled={!hasActiveSession || viewModeTransitionPending}
+              icon={<View />}
+              selected={isAlternateView}
+              size="sm"
+              shouldYield={false}
+              onClick={openViewSection}
+            />
+            <OverflowMenuButton
+              aria-label="Session menu"
+              disabled={viewModeTransitionPending}
+              onClick={openSessionMenu}
+            />
+            {isFocusHeader ? (
               <IconButton
-                aria-label={`Session view. Current: ${viewModeLabel}`}
-                disabled={!hasActiveSession}
-                icon={sessionViewModeIcons[viewMode]}
-                selected={isPracticeHeader}
-                size="sm"
-                shouldYield={false}
-                onClick={openViewSection}
-              />
-            )}
-            {isPracticeHeader ? (
-              <IconButton
-                aria-label="Return to session view"
-                disabled={!onViewModeExit}
+                aria-label="Close focus view"
+                aria-keyshortcuts="Escape"
+                disabled={!onViewModeExit || viewModeTransitionPending}
                 icon={<X />}
                 size="sm"
                 shouldYield={false}
                 onClick={onViewModeExit}
               />
-            ) : (
-              <OverflowMenuButton
-                aria-label="Session menu"
-                onClick={openSessionMenu}
-              />
-            )}
+            ) : null}
           </ControlHeaderCluster>
         }
       />
@@ -241,7 +252,7 @@ export function SessionHeader({
             label="View"
             panelVariant="menu"
             preview={viewModeLabel}
-            selected={isPracticeHeader}
+            selected={isAlternateView}
             onToggle={() => toggleMenuSection("view")}
           >
             <DisclosureList density="compact">

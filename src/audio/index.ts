@@ -13,7 +13,10 @@ export {
 } from "./audioReadiness";
 export {
   createLookaheadScheduler,
+  getLookaheadSchedulerDiagnostics,
+  resetLookaheadSchedulerDiagnostics,
   type LookaheadScheduler,
+  type LookaheadSchedulerDiagnostics,
   type LookaheadSchedulerEvent,
   type LookaheadSchedulerOptions,
 } from "./lookaheadScheduler";

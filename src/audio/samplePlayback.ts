@@ -127,6 +127,7 @@ export function createSampleVoice({
   buffer,
   concertPitchHz,
   context,
+  destination = context.destination,
   durationSeconds,
   midiNote,
   onEnded,
@@ -139,6 +140,7 @@ export function createSampleVoice({
   buffer: AudioBuffer;
   concertPitchHz?: number;
   context: AudioContext;
+  destination?: AudioNode;
   durationSeconds?: number;
   midiNote: number;
   onEnded: () => void;
@@ -252,7 +254,7 @@ export function createSampleVoice({
   gain.gain.linearRampToValueAtTime(MIN_GAIN_VALUE, releaseEndTime);
 
   source.connect(gain);
-  gain.connect(context.destination);
+  gain.connect(destination);
 
   const disconnect = () => {
     if (disconnected) {

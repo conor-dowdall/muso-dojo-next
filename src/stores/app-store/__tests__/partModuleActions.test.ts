@@ -162,6 +162,7 @@ describe("part module app store actions", () => {
     const store = createTestStore({
       activeSessionId: sessionId,
       dojoSettings: {},
+      sessionWorkspaceViewMode: "session",
       sessions: {
         [sessionId]: {
           id: sessionId,

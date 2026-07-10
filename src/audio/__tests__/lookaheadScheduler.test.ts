@@ -1,7 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
-import { createLookaheadScheduler } from "@/audio/lookaheadScheduler";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  createLookaheadScheduler,
+  getLookaheadSchedulerDiagnostics,
+  resetLookaheadSchedulerDiagnostics,
+} from "@/audio/lookaheadScheduler";
 
 describe("createLookaheadScheduler", () => {
+  afterEach(() => resetLookaheadSchedulerDiagnostics());
+
   it("schedules repeated events inside the lookahead horizon", () => {
     let currentTime = 10;
     const callbacks: Array<() => void> = [];
@@ -29,7 +35,7 @@ describe("createLookaheadScheduler", () => {
     expect(scheduled).toEqual([10.1, 10.6]);
   });
 
-  it("keeps a wider default runway for delayed main-thread ticks", () => {
+  it("keeps a half-second default runway for delayed main-thread ticks", () => {
     const scheduled: number[] = [];
     const scheduler = createLookaheadScheduler({
       events: [{ duration: 0.25, offset: 0, payload: true }],
@@ -39,9 +45,9 @@ describe("createLookaheadScheduler", () => {
       clearTimer: vi.fn(),
     });
 
-    scheduler.start(10.25);
+    scheduler.start(10.45);
 
-    expect(scheduled).toEqual([10.25]);
+    expect(scheduled).toEqual([10.45]);
   });
 
   it("skips missed events instead of scheduling a catch-up burst", () => {
@@ -73,5 +79,35 @@ describe("createLookaheadScheduler", () => {
     scheduler.start(1);
 
     expect(scheduled).toEqual([2.25]);
+  });
+
+  it("records delayed ticks and events that lost their safe runway", () => {
+    let currentTime = 1;
+    const callbacks: Array<() => void> = [];
+    const scheduler = createLookaheadScheduler({
+      events: [{ duration: 0.25, offset: 0, payload: true }],
+      getCurrentTime: () => currentTime,
+      horizonSeconds: 0.2,
+      minimumLeadSeconds: 0.04,
+      onSchedule: vi.fn(),
+      setTimer: (callback) => {
+        callbacks.push(callback);
+        return callback;
+      },
+      clearTimer: vi.fn(),
+    });
+
+    scheduler.start(1.1);
+    currentTime = 1.4;
+    callbacks.shift()?.();
+
+    const diagnostics = getLookaheadSchedulerDiagnostics();
+
+    expect(diagnostics).toMatchObject({
+      lateEventCount: 1,
+      schedulerStartCount: 1,
+    });
+    expect(diagnostics.maxLateEventSeconds).toBeCloseTo(0.09);
+    expect(diagnostics.maxTickIntervalSeconds).toBeCloseTo(0.4);
   });
 });

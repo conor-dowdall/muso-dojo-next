@@ -460,6 +460,24 @@ describe("createWebAudioEngine", () => {
     expect(listener).toHaveBeenCalledOnce();
   });
 
+  it("notifies a late subscriber without retaining completed voice handles", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    const handle = await engine.playNote({
+      durationSeconds: 0.2,
+      midiNote: 60,
+      use: "preview",
+    });
+    const listener = vi.fn();
+
+    MockAudioContext.bufferSources.at(-1)?.emitEnded();
+    engine.subscribeToVoiceEnd(handle!, listener);
+    await Promise.resolve();
+
+    expect(listener).toHaveBeenCalledOnce();
+  });
+
   it("keeps the metronome on buffer sources and cancels grouped playback", async () => {
     installMockAudioWindow();
 
@@ -497,6 +515,8 @@ describe("createWebAudioEngine", () => {
     await engine.prime();
     MockAudioContext.lastInstance!.currentTime = 1;
     const group = engine.createPlaybackGroup();
+    const groupGain = MockAudioContext.gainNodes.at(-1)!
+      .gain as unknown as MockAudioParam;
     const voiceHandle = engine.scheduleNote({
       durationSeconds: 1,
       group,
@@ -514,10 +534,16 @@ describe("createWebAudioEngine", () => {
     expect(voiceHandle).toBeDefined();
     expect(clickScheduled).toBe(true);
     expect(
-      MockAudioContext.bufferSourceStopCalls.some(
-        (call) => call.time !== undefined && call.time >= 1.5,
+      groupGain.events.some(
+        (event) =>
+          event.type === "ramp" && event.time === 1.5 && event.value === 0.0001,
       ),
     ).toBe(true);
+    expect(groupGain.events).toContainEqual({
+      time: 1.48,
+      type: "set",
+      value: 1,
+    });
     expect(
       engine.scheduleNote({
         durationSeconds: 1,
@@ -533,6 +559,47 @@ describe("createWebAudioEngine", () => {
         startTime: 1.6,
       }),
     ).toBe(false);
+  });
+
+  it("can clear a future group cancellation before its audio boundary", async () => {
+    vi.useFakeTimers();
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    MockAudioContext.lastInstance!.currentTime = 1;
+    const group = engine.createPlaybackGroup();
+    const groupGain = MockAudioContext.gainNodes.at(-1)!
+      .gain as unknown as MockAudioParam;
+
+    engine.cancelPlaybackGroup(group, { atTime: 1.5, releaseSeconds: 0.02 });
+    MockAudioContext.lastInstance!.currentTime = 1.25;
+
+    expect(engine.clearPlaybackGroupCancellation(group)).toBe(true);
+    expect(groupGain.events).toContainEqual({ time: 1.25, type: "cancel" });
+    expect(groupGain.events).toContainEqual({
+      time: 1.25,
+      type: "set",
+      value: 1,
+    });
+    expect(
+      engine.scheduleNote({
+        durationSeconds: 1,
+        group,
+        midiNote: 60,
+        startTime: 1.6,
+        use: "exercise",
+      }),
+    ).toBeDefined();
+
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(
+      engine.scheduleMetronomeClick({
+        group,
+        startTime: 2.5,
+      }),
+    ).toBe(true);
   });
 
   it("lets an immediate group cancellation preempt a scheduled future cancellation", async () => {

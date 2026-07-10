@@ -38,6 +38,7 @@ function createHarness() {
     stop: ReturnType<typeof vi.fn>;
   }> = [];
   const cancelPlaybackGroup = vi.fn();
+  const clearPlaybackGroupCancellation = vi.fn(() => true);
   const schedulePercussionHit = vi.fn();
   const createScheduler: RhythmSchedulerFactory = (options) => {
     const scheduler = {
@@ -52,6 +53,7 @@ function createHarness() {
   };
   const audioEngine: RhythmPlaybackAudioEngine = {
     cancelPlaybackGroup,
+    clearPlaybackGroupCancellation,
     createPlaybackGroup: () => `group-${nextGroupId++}` as PlaybackGroupHandle,
     getCurrentTime: () => currentTime,
     prime: async () => true,
@@ -65,6 +67,7 @@ function createHarness() {
 
   return {
     cancelPlaybackGroup,
+    clearPlaybackGroupCancellation,
     coordinator,
     schedulerOptions,
     schedulers,
@@ -149,6 +152,60 @@ describe("RhythmPlaybackCoordinator", () => {
       originTime: 14,
       playing: true,
     });
+  });
+
+  it("restores active group automation when a pending handoff is cancelled", async () => {
+    vi.useFakeTimers();
+    const {
+      cancelPlaybackGroup,
+      clearPlaybackGroupCancellation,
+      coordinator,
+      setCurrentTime,
+    } = createHarness();
+
+    await coordinator.start(createRequest(createPattern("kick")));
+    setCurrentTime(13.7);
+    await coordinator.start(createRequest(createPattern("snare")), {
+      handoff: true,
+      originTime: 14,
+    });
+    coordinator.cancelPendingStart();
+
+    expect(clearPlaybackGroupCancellation).toHaveBeenCalledWith("group-0");
+    expect(cancelPlaybackGroup).toHaveBeenLastCalledWith("group-1");
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeId: "rhythm",
+      playing: true,
+    });
+    expect(coordinator.getSnapshot().pendingId).toBeUndefined();
+  });
+
+  it("commits a handoff that already crossed its audio boundary", async () => {
+    vi.useFakeTimers();
+    const {
+      cancelPlaybackGroup,
+      clearPlaybackGroupCancellation,
+      coordinator,
+      setCurrentTime,
+    } = createHarness();
+
+    await coordinator.start(createRequest(createPattern("kick")));
+    setCurrentTime(13.7);
+    await coordinator.start(createRequest(createPattern("snare")), {
+      handoff: true,
+      originTime: 14,
+    });
+    setCurrentTime(14.1);
+    coordinator.cancelPendingStart();
+
+    expect(clearPlaybackGroupCancellation).not.toHaveBeenCalled();
+    expect(cancelPlaybackGroup).toHaveBeenCalledTimes(1);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeId: "rhythm",
+      originTime: 14,
+      playing: true,
+    });
+    expect(coordinator.getSnapshot().pendingId).toBeUndefined();
   });
 
   it("boosts rhythm hit playback without changing authored pattern data", async () => {

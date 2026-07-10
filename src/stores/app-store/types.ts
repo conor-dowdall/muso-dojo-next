@@ -16,6 +16,7 @@ import { type InstrumentNoteEmphasis } from "@/types/instrument-note-emphasis";
 import { type InstrumentSize } from "@/types/instrument-layout";
 import { type NoteColorConfig } from "@/types/note-colors";
 import { type SettingValue } from "@/types/state";
+import { type SessionWorkspaceViewMode } from "@/types/session-view";
 import {
   type AppStoreSnapshot,
   type DronePartModuleConfig,
@@ -84,6 +85,12 @@ export interface DojoSettingsActions {
   rememberSessionMaterialCreation: (
     request: RememberSessionMaterialCreationRequest,
   ) => void;
+}
+
+export interface WorkspaceActions {
+  setSessionWorkspaceViewMode: (
+    mode: SessionWorkspaceViewMode,
+  ) => SessionWorkspaceViewMode;
 }
 
 export interface SessionActions {
@@ -322,6 +329,7 @@ export interface RhythmActions {
 // Action slices follow the product hierarchy: Dojo -> Session -> Part ->
 // Module -> Instrument.
 export type AppStoreActions = DojoSettingsActions &
+  WorkspaceActions &
   SessionActions &
   PartActions &
   PartModuleActions &

@@ -375,6 +375,23 @@ export class BeatTransportCoordinator {
 
     this.notifyManualControl({ kind: "start", target: "exercise" }, source);
     const revision = ++this.revision;
+    const preparesFreshOrigin =
+      originTime === undefined &&
+      (exercise !== undefined || rhythm !== undefined);
+
+    this.cancelPendingCompanionStart();
+
+    if (preparesFreshOrigin) {
+      const prepared = await Promise.all([
+        exercise ? this.exercise.prepare() : Promise.resolve(true),
+        rhythm ? this.rhythm.prepare() : Promise.resolve(true),
+      ]);
+
+      if (revision !== this.revision || prepared.some((ready) => !ready)) {
+        return { originTime: undefined, started: false };
+      }
+    }
+
     const currentTime = this.getCurrentTime();
     const resolvedOriginTime = getSafePartOrigin({
       currentTime,
@@ -383,8 +400,6 @@ export class BeatTransportCoordinator {
       originTime,
       rhythm,
     });
-
-    this.cancelPendingCompanionStart();
 
     if (exercise) {
       this.exercise.cancelPendingStart();
@@ -408,6 +423,7 @@ export class BeatTransportCoordinator {
       const exerciseStarted = await this.exercise.start(exercise, {
         handoff,
         owner,
+        prepared: preparesFreshOrigin,
       });
       const startedOriginTime =
         this.exercise.getSnapshot().originTime ??
@@ -419,6 +435,7 @@ export class BeatTransportCoordinator {
               handoff,
               originTime: startedOriginTime,
               owner,
+              prepared: preparesFreshOrigin,
             });
 
       if (revision !== this.revision) {
@@ -437,6 +454,7 @@ export class BeatTransportCoordinator {
             handoff,
             owner,
             originTime: resolvedOriginTime,
+            prepared: preparesFreshOrigin,
           })
         : Promise.resolve(undefined),
       rhythm
@@ -444,6 +462,7 @@ export class BeatTransportCoordinator {
             handoff,
             owner,
             originTime: resolvedOriginTime,
+            prepared: preparesFreshOrigin,
           })
         : Promise.resolve(undefined),
     ]);

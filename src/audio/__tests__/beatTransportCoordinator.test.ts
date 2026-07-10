@@ -307,6 +307,42 @@ describe("BeatTransportCoordinator", () => {
     });
   });
 
+  it("chooses the initial shared Part origin after audio preparation", async () => {
+    const exerciseReady = createDeferred<boolean>();
+    const exercisePrime = vi.fn(() => exerciseReady.promise);
+    const rhythmPrime = vi.fn(async () => true);
+    const { exercise, rhythm, setCurrentTime, transport } = createHarness({
+      exercisePrime,
+      rhythmPrime,
+    });
+
+    const start = transport.startPart({
+      exercise: createExerciseRequest("exercise"),
+      rhythm: createRhythmRequest("rhythm"),
+      source: "part-sequence",
+    });
+
+    setCurrentTime(12);
+    exerciseReady.resolve(true);
+
+    await expect(start).resolves.toEqual({
+      originTime: 12.08,
+      started: true,
+    });
+    expect(exercise.getSnapshot()).toMatchObject({
+      activeId: "exercise",
+      originTime: 12.08,
+      playing: true,
+    });
+    expect(rhythm.getSnapshot()).toMatchObject({
+      activeId: "rhythm",
+      originTime: 12.08,
+      playing: true,
+    });
+    expect(exercisePrime).toHaveBeenCalledOnce();
+    expect(rhythmPrime).toHaveBeenCalledOnce();
+  });
+
   it("moves a missed Part boundary to the next safe beat", async () => {
     vi.useFakeTimers();
     const { exercise, rhythm, setCurrentTime, transport } = createHarness();

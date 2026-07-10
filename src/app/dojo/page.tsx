@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { useShallow } from "zustand/react/shallow";
 import styles from "./page.module.css";
 import { AudioStatusViewport } from "@/components/audio/AudioStatusViewport";
@@ -11,7 +11,8 @@ import { SessionLoader } from "@/components/session/SessionLoader";
 import { SessionManagementDialog } from "@/components/session/SessionManagementDialog";
 import { SessionView } from "@/components/session/SessionView";
 import {
-  isPracticeSessionViewMode,
+  isSessionFocusViewMode,
+  isSessionWorkspaceViewMode,
   requiresSessionParts,
   type SessionViewMode,
 } from "@/components/session/sessionViewMode";
@@ -33,11 +34,13 @@ import { createDefaultMusicPartConfig } from "@/utils/session/createSessionEntit
 interface HydratedSessionProps {
   onSessionViewModeChange: (mode: SessionViewMode) => void;
   sessionViewMode: SessionViewMode;
+  viewModeTransitionPending: boolean;
 }
 
 function HydratedSession({
   onSessionViewModeChange,
   sessionViewMode,
+  viewModeTransitionPending,
 }: HydratedSessionProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addDialogKey, setAddDialogKey] = useState(0);
@@ -63,7 +66,7 @@ function HydratedSession({
   const addParts = useAppStore((state) => state.addParts);
   const replaceParts = useAppStore((state) => state.replaceParts);
   const activeSessionPartCount = activeSession?.parts.length ?? 0;
-  const isPracticeViewMode = isPracticeSessionViewMode(sessionViewMode);
+  const isFocusViewMode = isSessionFocusViewMode(sessionViewMode);
   const closeAddDialog = () => setIsAddDialogOpen(false);
   const instrumentCreationRangeContext =
     createInstrumentCreationRangeContextFromSignature(
@@ -88,13 +91,16 @@ function HydratedSession({
 
     onSessionViewModeChange(nextViewMode);
   };
-  const exitPracticeViewMode = () => onSessionViewModeChange("session");
+  const exitFocusViewMode = useCallback(() => {
+    onSessionViewModeChange(
+      useAppStore.getState().sessionWorkspaceViewMode,
+    );
+  }, [onSessionViewModeChange]);
 
   useDojoGlobalShortcuts({
     activeSession,
     dialogOpen: isAddDialogOpen || isSessionDialogOpen,
-    onExitViewMode: exitPracticeViewMode,
-    viewMode: sessionViewMode,
+    onExitFocusMode: isFocusViewMode ? exitFocusViewMode : undefined,
   });
 
   useEffect(() => {
@@ -143,7 +149,7 @@ function HydratedSession({
   }, [activeSessionId]);
 
   useEffect(() => {
-    if (!activeSessionId && isPracticeSessionViewMode(sessionViewMode)) {
+    if (!activeSessionId && sessionViewMode !== "session") {
       onSessionViewModeChange("session");
     }
   }, [activeSessionId, onSessionViewModeChange, sessionViewMode]);
@@ -186,14 +192,15 @@ function HydratedSession({
           onOpenSessionTempo={openSessionDialog}
           onOpenSessionsDialog={() => openSessionDialog()}
           onViewModeChange={handleSessionViewModeChange}
-          onViewModeExit={isPracticeViewMode ? exitPracticeViewMode : undefined}
+          onViewModeExit={isFocusViewMode ? exitFocusViewMode : undefined}
+          viewModeTransitionPending={viewModeTransitionPending}
         />
       </div>
       {activeSessionId ? (
         <SessionView
           sessionId={activeSessionId}
           viewMode={sessionViewMode}
-          onOpenAddDialog={isPracticeViewMode ? undefined : openAddDialog}
+          onOpenAddDialog={isFocusViewMode ? undefined : openAddDialog}
           onOpenSessionTempo={openSessionDialog}
         />
       ) : null}
@@ -264,30 +271,58 @@ function SessionLoadingFallback() {
   return <SessionLoader />;
 }
 
-export default function DojoSessionPage() {
-  const hasHydrated = useHydrateAppStore();
-  const [sessionViewMode, setSessionViewMode] =
-    useState<SessionViewMode>("session");
-  const handleSessionViewModeChange = useCallback((mode: SessionViewMode) => {
-    setSessionViewMode(mode);
-  }, []);
-  const isPracticeViewMode = isPracticeSessionViewMode(sessionViewMode);
+function HydratedDojoSessionPage() {
+  const persistSessionWorkspaceViewMode = useAppStore(
+    (state) => state.setSessionWorkspaceViewMode,
+  );
+  const [sessionViewMode, setSessionViewMode] = useState<SessionViewMode>(
+    () => useAppStore.getState().sessionWorkspaceViewMode,
+  );
+  const [viewModeTransitionPending, startViewModeTransition] = useTransition();
+  const handleSessionViewModeChange = useCallback(
+    (mode: SessionViewMode) => {
+      const resolvedMode = isSessionWorkspaceViewMode(mode)
+        ? persistSessionWorkspaceViewMode(mode)
+        : mode;
+
+      // Session views can contain several complex instruments. Let React split
+      // that work across tasks so the main-thread audio lookahead can keep
+      // scheduling while the view changes. Only Session and Chart are persisted;
+      // Live and Clean return to that underlying workspace when closed.
+      startViewModeTransition(() => setSessionViewMode(resolvedMode));
+    },
+    [persistSessionWorkspaceViewMode],
+  );
+  const isFocusViewMode = isSessionFocusViewMode(sessionViewMode);
 
   return (
     <main className={styles.main}>
       <div
-        className={`${styles.container} ${hasHydrated ? styles.hydrated : ""}`}
-        data-practice-view-mode={isPracticeViewMode ? true : undefined}
+        className={`${styles.container} ${styles.hydrated}`}
+        data-session-focus-mode={isFocusViewMode ? true : undefined}
         data-session-view-mode={sessionViewMode}
       >
-        {hasHydrated ? (
-          <HydratedSession
-            sessionViewMode={sessionViewMode}
-            onSessionViewModeChange={handleSessionViewModeChange}
-          />
-        ) : (
-          <SessionLoadingFallback />
-        )}
+        <HydratedSession
+          sessionViewMode={sessionViewMode}
+          onSessionViewModeChange={handleSessionViewModeChange}
+          viewModeTransitionPending={viewModeTransitionPending}
+        />
+      </div>
+    </main>
+  );
+}
+
+export default function DojoSessionPage() {
+  const hasHydrated = useHydrateAppStore();
+
+  if (hasHydrated) {
+    return <HydratedDojoSessionPage />;
+  }
+
+  return (
+    <main className={styles.main}>
+      <div className={styles.container} data-session-view-mode="session">
+        <SessionLoadingFallback />
       </div>
     </main>
   );

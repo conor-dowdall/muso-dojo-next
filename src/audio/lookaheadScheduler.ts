@@ -32,6 +32,50 @@ export interface LookaheadScheduler {
   stop: () => void;
 }
 
+export interface LookaheadSchedulerDiagnostics {
+  lateEventCount: number;
+  maxLateEventSeconds: number;
+  maxTickIntervalSeconds: number;
+  revision: number;
+  schedulerStartCount: number;
+}
+
+const emptyDiagnostics: LookaheadSchedulerDiagnostics = {
+  lateEventCount: 0,
+  maxLateEventSeconds: 0,
+  maxTickIntervalSeconds: 0,
+  revision: 0,
+  schedulerStartCount: 0,
+};
+
+let diagnostics = emptyDiagnostics;
+
+function recordDiagnostics(
+  update: Partial<
+    Pick<
+      LookaheadSchedulerDiagnostics,
+      | "lateEventCount"
+      | "maxLateEventSeconds"
+      | "maxTickIntervalSeconds"
+      | "schedulerStartCount"
+    >
+  >,
+) {
+  diagnostics = {
+    ...diagnostics,
+    ...update,
+    revision: diagnostics.revision + 1,
+  };
+}
+
+export function getLookaheadSchedulerDiagnostics() {
+  return diagnostics;
+}
+
+export function resetLookaheadSchedulerDiagnostics() {
+  diagnostics = emptyDiagnostics;
+}
+
 function getCycleDuration<TPayload>(
   events: readonly LookaheadSchedulerEvent<TPayload>[],
 ) {
@@ -57,6 +101,7 @@ export function createLookaheadScheduler<TPayload>({
   let originTime = 0;
   let running = false;
   let timer: unknown;
+  let previousTickTime: number | undefined;
 
   const clearPendingTimer = () => {
     if (timer === undefined) {
@@ -90,6 +135,18 @@ export function createLookaheadScheduler<TPayload>({
       return;
     }
 
+    if (previousTickTime !== undefined) {
+      const tickInterval = currentTime - previousTickTime;
+
+      if (
+        Number.isFinite(tickInterval) &&
+        tickInterval > diagnostics.maxTickIntervalSeconds
+      ) {
+        recordDiagnostics({ maxTickIntervalSeconds: tickInterval });
+      }
+    }
+    previousTickTime = currentTime;
+
     const horizon = currentTime + Math.max(0, horizonSeconds);
     const earliestSafeStartTime = currentTime + Math.max(0, minimumLeadSeconds);
     const currentCycle = Math.max(
@@ -119,6 +176,14 @@ export function createLookaheadScheduler<TPayload>({
 
       if (eventStartTime >= earliestSafeStartTime) {
         onSchedule(event, eventStartTime, nextCycle, nextEventIndex);
+      } else {
+        recordDiagnostics({
+          lateEventCount: diagnostics.lateEventCount + 1,
+          maxLateEventSeconds: Math.max(
+            diagnostics.maxLateEventSeconds,
+            earliestSafeStartTime - eventStartTime,
+          ),
+        });
       }
 
       advanceCursor();
@@ -134,10 +199,14 @@ export function createLookaheadScheduler<TPayload>({
       originTime = startTime;
       nextCycle = 0;
       nextEventIndex = 0;
+      previousTickTime = undefined;
       running =
         Number.isFinite(startTime) && events.length > 0 && cycleDuration > 0;
 
       if (running) {
+        recordDiagnostics({
+          schedulerStartCount: diagnostics.schedulerStartCount + 1,
+        });
         tick();
       }
     },

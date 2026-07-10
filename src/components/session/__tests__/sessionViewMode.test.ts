@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  isPracticeSessionViewMode,
+  isSessionFocusViewMode,
+  isSessionWorkspaceViewMode,
   requiresSessionParts,
   sessionViewModes,
   showsOnlyLivePart,
@@ -17,8 +18,11 @@ describe("session view mode policy", () => {
 
   it("keeps view-mode presentation policy explicit", () => {
     expect(
-      sessionViewModes.filter((mode) => isPracticeSessionViewMode(mode)),
-    ).toEqual(["chart", "live", "clean"]);
+      sessionViewModes.filter((mode) => isSessionWorkspaceViewMode(mode)),
+    ).toEqual(["session", "chart"]);
+    expect(
+      sessionViewModes.filter((mode) => isSessionFocusViewMode(mode)),
+    ).toEqual(["live", "clean"]);
     expect(sessionViewModes.filter((mode) => showsSessionChart(mode))).toEqual([
       "chart",
     ]);

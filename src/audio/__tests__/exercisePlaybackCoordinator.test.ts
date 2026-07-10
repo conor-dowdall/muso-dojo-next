@@ -221,6 +221,92 @@ describe("ExercisePlaybackCoordinator", () => {
     });
   });
 
+  it("restores active group automation when a pending handoff is cancelled", async () => {
+    vi.useFakeTimers();
+    let currentTime = 10;
+    let nextGroupId = 0;
+    const cancelPlaybackGroup = vi.fn();
+    const clearPlaybackGroupCancellation = vi.fn(() => true);
+    const coordinator = new ExercisePlaybackCoordinator(
+      {
+        cancelPlaybackGroup,
+        clearPlaybackGroupCancellation,
+        createPlaybackGroup: () =>
+          `group-${nextGroupId++}` as PlaybackGroupHandle,
+        getCurrentTime: () => currentTime,
+        prime: async () => true,
+        scheduleMetronomeClick: vi.fn(),
+        scheduleNote: vi.fn(),
+        subscribeToStopAll: () => () => undefined,
+      },
+      () => ({
+        isRunning: () => true,
+        start: vi.fn(),
+        stop: vi.fn(),
+      }),
+    );
+
+    await coordinator.start(createRequest("first-looper", 60));
+    currentTime = 13.7;
+    await coordinator.start(createRequest("next-looper", 62), {
+      handoff: true,
+      originTime: 14,
+    });
+    coordinator.cancelPendingStart();
+
+    expect(clearPlaybackGroupCancellation).toHaveBeenCalledWith("group-0");
+    expect(cancelPlaybackGroup).toHaveBeenLastCalledWith("group-1", undefined);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeId: "first-looper",
+      playing: true,
+    });
+    expect(coordinator.getSnapshot().pendingId).toBeUndefined();
+  });
+
+  it("commits a handoff that already crossed its audio boundary", async () => {
+    vi.useFakeTimers();
+    let currentTime = 10;
+    let nextGroupId = 0;
+    const cancelPlaybackGroup = vi.fn();
+    const clearPlaybackGroupCancellation = vi.fn(() => true);
+    const coordinator = new ExercisePlaybackCoordinator(
+      {
+        cancelPlaybackGroup,
+        clearPlaybackGroupCancellation,
+        createPlaybackGroup: () =>
+          `group-${nextGroupId++}` as PlaybackGroupHandle,
+        getCurrentTime: () => currentTime,
+        prime: async () => true,
+        scheduleMetronomeClick: vi.fn(),
+        scheduleNote: vi.fn(),
+        subscribeToStopAll: () => () => undefined,
+      },
+      () => ({
+        isRunning: () => true,
+        start: vi.fn(),
+        stop: vi.fn(),
+      }),
+    );
+
+    await coordinator.start(createRequest("first-looper", 60));
+    currentTime = 13.7;
+    await coordinator.start(createRequest("next-looper", 62), {
+      handoff: true,
+      originTime: 14,
+    });
+    currentTime = 14.1;
+    coordinator.cancelPendingStart();
+
+    expect(clearPlaybackGroupCancellation).not.toHaveBeenCalled();
+    expect(cancelPlaybackGroup).toHaveBeenCalledTimes(1);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeId: "next-looper",
+      originTime: 14,
+      playing: true,
+    });
+    expect(coordinator.getSnapshot().pendingId).toBeUndefined();
+  });
+
   it("cancels a pending start when stopped during audio priming", async () => {
     const primeResult = createDeferred<boolean>();
     const createScheduler = vi.fn<ExerciseSchedulerFactory>();

@@ -41,6 +41,7 @@ export interface RhythmPlaybackStartOptions {
   handoff?: boolean;
   originTime?: number;
   owner?: PlaybackOwner;
+  prepared?: boolean;
 }
 
 interface RhythmSchedulerHit extends RhythmHit {
@@ -63,6 +64,7 @@ interface PendingRhythmHandoff {
 
 interface PendingRhythmStop {
   active: ActiveRhythmPlayback;
+  atTime: number;
   timer: ReturnType<typeof globalThis.setTimeout>;
 }
 
@@ -74,7 +76,8 @@ export type RhythmPlaybackAudioEngine = Pick<
   | "prime"
   | "schedulePercussionHit"
   | "subscribeToStopAll"
->;
+> &
+  Partial<Pick<AudioEngine, "clearPlaybackGroupCancellation">>;
 
 export type RhythmSchedulerFactory = (
   options: LookaheadSchedulerOptions<RhythmSchedulerHit>,
@@ -241,17 +244,30 @@ export class RhythmPlaybackCoordinator {
 
   getCurrentTime = () => this.audioEngine.getCurrentTime();
 
+  prepare = () => this.audioEngine.prime();
+
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   };
 
   private cancelPendingStopTimer() {
-    if (!this.pendingStop) {
+    const pendingStop = this.pendingStop;
+
+    if (!pendingStop) {
       return;
     }
 
-    globalThis.clearTimeout(this.pendingStop.timer);
+    const currentTime = this.audioEngine.getCurrentTime();
+
+    if (currentTime !== undefined && currentTime >= pendingStop.atTime) {
+      globalThis.clearTimeout(pendingStop.timer);
+      this.commitPendingStop(pendingStop.active);
+      return;
+    }
+
+    this.audioEngine.clearPlaybackGroupCancellation?.(pendingStop.active.group);
+    globalThis.clearTimeout(pendingStop.timer);
     this.pendingStop = undefined;
   }
 
@@ -299,6 +315,7 @@ export class RhythmPlaybackCoordinator {
 
     this.pendingStop = {
       active,
+      atTime: options.atTime,
       timer: globalThis.setTimeout(
         () => this.commitPendingStop(active),
         Math.max(0, (options.atTime - currentTime) * 1000),
@@ -323,12 +340,30 @@ export class RhythmPlaybackCoordinator {
   }
 
   private cancelPendingHandoff() {
-    if (!this.pendingHandoff) {
+    const pendingHandoff = this.pendingHandoff;
+
+    if (!pendingHandoff) {
       return;
     }
 
-    globalThis.clearTimeout(this.pendingHandoff.timer);
-    this.stopActivePlayback(this.pendingHandoff.playback);
+    const currentTime = this.audioEngine.getCurrentTime();
+    const originTime = pendingHandoff.snapshot.originTime;
+
+    if (
+      currentTime !== undefined &&
+      originTime !== undefined &&
+      currentTime >= originTime
+    ) {
+      globalThis.clearTimeout(pendingHandoff.timer);
+      this.commitPendingHandoff(pendingHandoff.revision);
+      return;
+    }
+
+    globalThis.clearTimeout(pendingHandoff.timer);
+    this.stopActivePlayback(pendingHandoff.playback);
+    if (this.active) {
+      this.audioEngine.clearPlaybackGroupCancellation?.(this.active.group);
+    }
     this.pendingHandoff = undefined;
   }
 
@@ -425,7 +460,8 @@ export class RhythmPlaybackCoordinator {
         : { pendingOriginTime: options.originTime }),
     };
     this.emit();
-    const prepared = await this.audioEngine.prime();
+    const prepared =
+      options.prepared === true ? true : await this.audioEngine.prime();
     const currentTime = this.audioEngine.getCurrentTime();
 
     if (

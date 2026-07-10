@@ -54,6 +54,7 @@ export interface ExercisePlaybackStartOptions {
   handoff?: boolean;
   originTime?: number;
   owner?: PlaybackOwner;
+  prepared?: boolean;
 }
 
 interface ActiveExercisePlayback {
@@ -75,6 +76,7 @@ interface PendingExerciseHandoff {
 
 interface PendingExerciseStop {
   active: ActiveExercisePlayback;
+  atTime: number;
   timer: ReturnType<typeof globalThis.setTimeout>;
 }
 
@@ -87,7 +89,8 @@ export type ExercisePlaybackAudioEngine = Pick<
   | "scheduleMetronomeClick"
   | "scheduleNote"
   | "subscribeToStopAll"
->;
+> &
+  Partial<Pick<AudioEngine, "clearPlaybackGroupCancellation">>;
 
 export type ExerciseSchedulerFactory = (
   options: LookaheadSchedulerOptions<ExercisePlaybackEvent>,
@@ -226,6 +229,8 @@ export class ExercisePlaybackCoordinator {
 
   getCurrentTime = () => this.audioEngine.getCurrentTime();
 
+  prepare = () => this.audioEngine.prime();
+
   private cancelGroup(
     group: PlaybackGroupHandle | undefined,
     options?: { atTime?: number; releaseSeconds?: number },
@@ -235,12 +240,35 @@ export class ExercisePlaybackCoordinator {
     }
   }
 
+  private clearGroupCancellation(group: PlaybackGroupHandle | undefined) {
+    if (group) {
+      this.audioEngine.clearPlaybackGroupCancellation?.(group);
+    }
+  }
+
+  private clearActivePlaybackEnd(active: ActiveExercisePlayback) {
+    this.clearGroupCancellation(active.countInGroup);
+    this.clearGroupCancellation(active.metronomeGroup);
+    this.clearGroupCancellation(active.noteGroup);
+  }
+
   private cancelPendingStopTimer() {
-    if (!this.pendingStop) {
+    const pendingStop = this.pendingStop;
+
+    if (!pendingStop) {
       return;
     }
 
-    globalThis.clearTimeout(this.pendingStop.timer);
+    const currentTime = this.audioEngine.getCurrentTime();
+
+    if (currentTime !== undefined && currentTime >= pendingStop.atTime) {
+      globalThis.clearTimeout(pendingStop.timer);
+      this.commitPendingStop(pendingStop.active);
+      return;
+    }
+
+    this.clearActivePlaybackEnd(pendingStop.active);
+    globalThis.clearTimeout(pendingStop.timer);
     this.pendingStop = undefined;
   }
 
@@ -293,6 +321,7 @@ export class ExercisePlaybackCoordinator {
 
     this.pendingStop = {
       active,
+      atTime: options.atTime,
       timer: globalThis.setTimeout(
         () => this.commitPendingStop(active),
         Math.max(0, (options.atTime - currentTime) * 1000),
@@ -321,12 +350,30 @@ export class ExercisePlaybackCoordinator {
   }
 
   private cancelPendingHandoff() {
-    if (!this.pendingHandoff) {
+    const pendingHandoff = this.pendingHandoff;
+
+    if (!pendingHandoff) {
       return;
     }
 
-    globalThis.clearTimeout(this.pendingHandoff.timer);
-    this.stopActivePlayback(this.pendingHandoff.playback);
+    const currentTime = this.audioEngine.getCurrentTime();
+    const originTime = pendingHandoff.snapshot.originTime;
+
+    if (
+      currentTime !== undefined &&
+      originTime !== undefined &&
+      currentTime >= originTime
+    ) {
+      globalThis.clearTimeout(pendingHandoff.timer);
+      this.commitPendingHandoff(pendingHandoff.revision);
+      return;
+    }
+
+    globalThis.clearTimeout(pendingHandoff.timer);
+    this.stopActivePlayback(pendingHandoff.playback);
+    if (this.active) {
+      this.clearActivePlaybackEnd(this.active);
+    }
     this.pendingHandoff = undefined;
   }
 
@@ -507,7 +554,8 @@ export class ExercisePlaybackCoordinator {
         : { pendingOriginTime: options.originTime }),
     };
     this.emit();
-    const prepared = await this.audioEngine.prime();
+    const prepared =
+      options.prepared === true ? true : await this.audioEngine.prime();
     const currentTime = this.audioEngine.getCurrentTime();
 
     if (

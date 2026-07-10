@@ -6,6 +6,10 @@ import {
   isRecord,
   normalizeString,
 } from "@/utils/session/normalizationPrimitives";
+import {
+  isSessionWorkspaceViewMode,
+  resolveAvailableSessionWorkspaceViewMode,
+} from "@/types/session-view";
 
 export function createAppStoreSnapshot(
   session: unknown,
@@ -21,6 +25,7 @@ export function createAppStoreSnapshot(
   return {
     activeSessionId: normalizedActiveSessionId,
     dojoSettings: {},
+    sessionWorkspaceViewMode: "session",
     sessions: {
       [normalizedSession.id]: normalizedSession,
     },
@@ -51,10 +56,23 @@ export function normalizeAppStoreSnapshot(
     requestedActiveSessionId && sessions[requestedActiveSessionId]
       ? requestedActiveSessionId
       : (firstSessionId ?? null);
+  const requestedSessionWorkspaceViewMode = isSessionWorkspaceViewMode(
+    value.sessionWorkspaceViewMode,
+  )
+    ? value.sessionWorkspaceViewMode
+    : "session";
+  const activeSessionPartCount = activeSessionId
+    ? (sessions[activeSessionId]?.parts.length ?? 0)
+    : 0;
+  const sessionWorkspaceViewMode = resolveAvailableSessionWorkspaceViewMode(
+    requestedSessionWorkspaceViewMode,
+    activeSessionPartCount,
+  );
 
   return {
     activeSessionId,
     dojoSettings: normalizeDojoSettings(value.dojoSettings),
+    sessionWorkspaceViewMode,
     sessions,
   };
 }

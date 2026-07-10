@@ -8,7 +8,6 @@ import {
   partSequenceCoordinator,
   stopAllAudioPlayback,
 } from "@/audio";
-import { type SessionViewMode } from "@/components/session/sessionViewMode";
 import { type SessionConfig } from "@/types/session";
 
 const editableShortcutTargetSelector = [
@@ -25,13 +24,15 @@ const editableShortcutTargetSelector = [
 ].join(",");
 
 export type DojoGlobalShortcutAction =
-  "exit-view" | "stop-audio" | "toggle-practice-band";
+  | "exit-focus-mode"
+  | "stop-audio"
+  | "toggle-practice-band";
 
 interface DojoGlobalShortcutContext {
   audioPlaying: boolean;
   canTogglePracticeBand: boolean;
   dialogOpen: boolean;
-  viewMode: SessionViewMode;
+  focusModeActive: boolean;
 }
 
 interface DojoGlobalShortcutEvent {
@@ -49,8 +50,7 @@ interface DojoGlobalShortcutEvent {
 interface UseDojoGlobalShortcutsOptions {
   activeSession?: SessionConfig;
   dialogOpen: boolean;
-  onExitViewMode: () => void;
-  viewMode: SessionViewMode;
+  onExitFocusMode?: () => void;
 }
 
 function isEditableShortcutTarget(target: EventTarget | null) {
@@ -88,9 +88,9 @@ export function getDojoGlobalShortcutAction(
   if (isEscapeKey(event)) {
     return context.audioPlaying
       ? "stop-audio"
-      : context.viewMode === "session"
-        ? undefined
-        : "exit-view";
+      : context.focusModeActive
+        ? "exit-focus-mode"
+        : undefined;
   }
 
   if (
@@ -126,16 +126,19 @@ function togglePracticeBand(session: SessionConfig) {
 export function useDojoGlobalShortcuts({
   activeSession,
   dialogOpen,
-  onExitViewMode,
-  viewMode,
+  onExitFocusMode,
 }: UseDojoGlobalShortcutsOptions) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const action = getDojoGlobalShortcutAction(event, {
         audioPlaying: isAudioPlaybackActive(),
         canTogglePracticeBand: (activeSession?.parts.length ?? 0) > 0,
-        dialogOpen,
-        viewMode,
+        focusModeActive: onExitFocusMode !== undefined,
+        // Header-owned dialogs are not represented in this hook's props.
+        // Let the topmost native dialog consume Escape before any global
+        // playback shortcut can act behind it.
+        dialogOpen:
+          dialogOpen || document.querySelector("dialog[open]") !== null,
       });
 
       if (!action) {
@@ -150,8 +153,8 @@ export function useDojoGlobalShortcuts({
         return;
       }
 
-      if (action === "exit-view") {
-        onExitViewMode();
+      if (action === "exit-focus-mode") {
+        onExitFocusMode?.();
         return;
       }
 
@@ -163,5 +166,5 @@ export function useDojoGlobalShortcuts({
     window.addEventListener("keydown", handleKeyDown, { capture: true });
     return () =>
       window.removeEventListener("keydown", handleKeyDown, { capture: true });
-  }, [activeSession, dialogOpen, onExitViewMode, viewMode]);
+  }, [activeSession, dialogOpen, onExitFocusMode]);
 }

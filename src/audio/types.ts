@@ -86,6 +86,7 @@ export interface AudioEngine {
     handle: PlaybackGroupHandle,
     options?: { atTime?: number; releaseSeconds?: number },
   ) => void;
+  clearPlaybackGroupCancellation: (handle: PlaybackGroupHandle) => boolean;
   createPlaybackGroup: () => PlaybackGroupHandle;
   getCurrentTime: () => number | undefined;
   getOutputClock: () => AudioClockSnapshot | undefined;

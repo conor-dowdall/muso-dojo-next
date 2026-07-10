@@ -25,34 +25,43 @@ function createContext(
     audioPlaying: false,
     canTogglePracticeBand: true,
     dialogOpen: false,
-    viewMode: "session",
+    focusModeActive: false,
     ...overrides,
   };
 }
 
 describe("getDojoGlobalShortcutAction", () => {
-  it("prioritizes stopping audio over exiting a view", () => {
+  it("stops active audio with Escape", () => {
     expect(
       getDojoGlobalShortcutAction(
         createKeyEvent(),
-        createContext({ audioPlaying: true, viewMode: "chart" }),
+        createContext({ audioPlaying: true }),
       ),
     ).toBe("stop-audio");
   });
 
-  it("exits practice views with Escape when audio is idle", () => {
-    expect(
-      getDojoGlobalShortcutAction(
-        createKeyEvent(),
-        createContext({ viewMode: "live" }),
-      ),
-    ).toBe("exit-view");
-  });
-
-  it("does nothing for Escape in the default session view when audio is idle", () => {
+  it("leaves Escape unclaimed when audio is idle", () => {
     expect(getDojoGlobalShortcutAction(createKeyEvent(), createContext())).toBe(
       undefined,
     );
+  });
+
+  it("exits a focus mode with Escape when audio is idle", () => {
+    expect(
+      getDojoGlobalShortcutAction(
+        createKeyEvent(),
+        createContext({ focusModeActive: true }),
+      ),
+    ).toBe("exit-focus-mode");
+  });
+
+  it("stops audio before exiting a focus mode", () => {
+    expect(
+      getDojoGlobalShortcutAction(
+        createKeyEvent(),
+        createContext({ audioPlaying: true, focusModeActive: true }),
+      ),
+    ).toBe("stop-audio");
   });
 
   it("toggles the Practice Band with Shift+Space", () => {

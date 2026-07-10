@@ -5,6 +5,7 @@ import {
 import {
   AUDIO_STOP_RELEASE_SECONDS,
   DRONE_STOP_RELEASE_SECONDS,
+  PERCUSSION_STOP_RELEASE_SECONDS,
 } from "./audioStopConfig";
 import { scheduleMetronomeClick } from "./metronome";
 import { PERCUSSION_SAMPLE_PACK_ID, schedulePercussionHit } from "./percussion";
@@ -39,11 +40,14 @@ import {
 } from "./types";
 
 const DEFAULT_AUDIO_USE = "preview" satisfies AudioUse;
+const MIN_PLAYBACK_GROUP_GAIN = 0.0001;
+const PLAYBACK_GROUP_CLEANUP_SECONDS = 0.25;
 
 interface PlaybackGroup {
   cancelAtTime?: number;
   cancelTimer?: ReturnType<typeof globalThis.setTimeout>;
   hits: Set<ScheduledHit>;
+  output?: GainNode;
   releaseSeconds?: number;
   voices: Set<AudioVoiceHandle>;
 }
@@ -103,7 +107,6 @@ export function createWebAudioEngine(): AudioEngine {
   const playbackGroups = new Map<PlaybackGroupHandle, PlaybackGroup>();
   const activeVoices = new Map<AudioVoiceHandle, ActiveVoice>();
   const voiceEndListeners = new Map<AudioVoiceHandle, Set<() => void>>();
-  const endedVoices = new Set<AudioVoiceHandle>();
   const activeDrones = new Map<DroneHandle, ActiveDrone>();
   const samplePackLoader = createSamplePackLoader();
   let context: AudioContext | undefined;
@@ -172,7 +175,6 @@ export function createWebAudioEngine(): AudioEngine {
   };
 
   const emitVoiceEnd = (handle: AudioVoiceHandle) => {
-    endedVoices.add(handle);
     const listeners = voiceEndListeners.get(handle);
 
     if (!listeners) {
@@ -216,7 +218,10 @@ export function createWebAudioEngine(): AudioEngine {
     group.cancelTimer = undefined;
   };
 
-  const deletePlaybackGroup = (handle: PlaybackGroupHandle) => {
+  const deletePlaybackGroup = (
+    handle: PlaybackGroupHandle,
+    disconnectDelaySeconds = 0,
+  ) => {
     const group = playbackGroups.get(handle);
 
     if (!group) {
@@ -225,6 +230,28 @@ export function createWebAudioEngine(): AudioEngine {
 
     clearPlaybackGroupCancelTimer(group);
     playbackGroups.delete(handle);
+    if (group.output) {
+      const output = group.output;
+
+      if (disconnectDelaySeconds > 0) {
+        globalThis.setTimeout(
+          () => output.disconnect(),
+          disconnectDelaySeconds * 1000,
+        );
+      } else {
+        output.disconnect();
+      }
+    }
+  };
+
+  const clearGroupGainAutomation = (group: PlaybackGroup) => {
+    if (!context || !group.output) {
+      return false;
+    }
+
+    group.output.gain.cancelScheduledValues(context.currentTime);
+    group.output.gain.setValueAtTime(1, context.currentTime);
+    return true;
   };
 
   const applyScheduledGroupCancelToVoice = (
@@ -282,6 +309,9 @@ export function createWebAudioEngine(): AudioEngine {
       buffer: loaded.buffer,
       concertPitchHz,
       context: audioContext,
+      destination: group
+        ? playbackGroups.get(group)?.output
+        : audioContext.destination,
       durationSeconds,
       midiNote,
       onEnded: () => finishVoice(handle),
@@ -330,28 +360,91 @@ export function createWebAudioEngine(): AudioEngine {
           group.cancelAtTime = cancelAtTime;
           group.releaseSeconds = releaseSeconds;
         }
-        group.hits.forEach((hit) => applyScheduledGroupCancelToHit(group, hit));
-        group.voices.forEach((voiceHandle) =>
-          applyScheduledGroupCancelToVoice(group, voiceHandle),
-        );
+        const resolvedReleaseSeconds =
+          group.releaseSeconds ?? PERCUSSION_STOP_RELEASE_SECONDS;
+
+        if (group.output) {
+          const releaseStartTime = Math.max(
+            context.currentTime,
+            group.cancelAtTime - resolvedReleaseSeconds,
+          );
+
+          group.output.gain.cancelScheduledValues(context.currentTime);
+          group.output.gain.setValueAtTime(1, context.currentTime);
+          group.output.gain.setValueAtTime(1, releaseStartTime);
+          group.output.gain.linearRampToValueAtTime(
+            MIN_PLAYBACK_GROUP_GAIN,
+            group.cancelAtTime,
+          );
+        } else {
+          group.hits.forEach((hit) =>
+            applyScheduledGroupCancelToHit(group, hit),
+          );
+          group.voices.forEach((voiceHandle) =>
+            applyScheduledGroupCancelToVoice(group, voiceHandle),
+          );
+        }
         clearPlaybackGroupCancelTimer(group);
         group.cancelTimer = globalThis.setTimeout(
-          () => deletePlaybackGroup(handle),
-          Math.max(0, (group.cancelAtTime - context.currentTime + 0.25) * 1000),
+          () => {
+            group.hits.forEach((hit) => hit.stop());
+            group.voices.forEach((voiceHandle) => stopVoice(voiceHandle, 0));
+            deletePlaybackGroup(handle);
+          },
+          Math.max(
+            0,
+            (group.cancelAtTime -
+              context.currentTime +
+              resolvedReleaseSeconds +
+              PLAYBACK_GROUP_CLEANUP_SECONDS) *
+              1000,
+          ),
         );
         return;
       }
 
+      clearGroupGainAutomation(group);
       group.hits.forEach((hit) => hit.stop());
       group.voices.forEach((voiceHandle) =>
         stopVoice(voiceHandle, releaseSeconds),
       );
-      deletePlaybackGroup(handle);
+      deletePlaybackGroup(
+        handle,
+        Math.max(
+          releaseSeconds ?? AUDIO_STOP_RELEASE_SECONDS,
+          PERCUSSION_STOP_RELEASE_SECONDS,
+        ) + PLAYBACK_GROUP_CLEANUP_SECONDS,
+      );
+    },
+    clearPlaybackGroupCancellation: (handle) => {
+      const group = playbackGroups.get(handle);
+
+      if (
+        !group ||
+        group.cancelAtTime === undefined ||
+        !context ||
+        group.cancelAtTime <= context.currentTime ||
+        !clearGroupGainAutomation(group)
+      ) {
+        return false;
+      }
+
+      clearPlaybackGroupCancelTimer(group);
+      delete group.cancelAtTime;
+      delete group.releaseSeconds;
+      return true;
     },
     createPlaybackGroup: () => {
       const handle = createPlaybackGroupHandle((nextGroupId += 1));
+      const output = context?.createGain();
+
+      if (context && output) {
+        output.gain.setValueAtTime(1, context.currentTime);
+        output.connect(context.destination);
+      }
       playbackGroups.set(handle, {
         hits: new Set(),
+        output,
         voices: new Set(),
       });
       return handle;
@@ -460,7 +553,7 @@ export function createWebAudioEngine(): AudioEngine {
       const hitRef: { current?: ScheduledHit } = {};
       const hit = schedulePercussionHit({
         context,
-        destination: context.destination,
+        destination: group.output ?? context.destination,
         loaded,
         onEnded: () => {
           if (hitRef.current) {
@@ -515,7 +608,7 @@ export function createWebAudioEngine(): AudioEngine {
       const hit = scheduleMetronomeClick({
         accent: request.accent ?? false,
         context,
-        destination: context.destination,
+        destination: group.output ?? context.destination,
         loaded,
         onEnded: () => {
           if (hitRef.current) {
@@ -579,7 +672,10 @@ export function createWebAudioEngine(): AudioEngine {
       };
     },
     subscribeToVoiceEnd: (handle: AudioVoiceHandle, listener: () => void) => {
-      if (endedVoices.has(handle)) {
+      // Handles are registered in activeVoices before they are returned. If a
+      // valid handle is absent here, its source ended before the subscriber
+      // could attach. This avoids retaining every completed handle forever.
+      if (!activeVoices.has(handle)) {
         queueMicrotask(listener);
         return () => undefined;
       }
@@ -752,11 +848,15 @@ export function createWebAudioEngine(): AudioEngine {
     },
     stopAll: () => {
       Array.from(playbackGroups.entries()).forEach(([groupHandle, group]) => {
+        clearGroupGainAutomation(group);
         group.hits.forEach((hit) => hit.stop());
         group.voices.forEach((voiceHandle) =>
           stopVoice(voiceHandle, AUDIO_STOP_RELEASE_SECONDS),
         );
-        deletePlaybackGroup(groupHandle);
+        deletePlaybackGroup(
+          groupHandle,
+          AUDIO_STOP_RELEASE_SECONDS + PLAYBACK_GROUP_CLEANUP_SECONDS,
+        );
       });
       activeVoices.forEach((_voice, voiceHandle) =>
         stopVoice(voiceHandle, AUDIO_STOP_RELEASE_SECONDS),
