@@ -2,6 +2,7 @@
 
 import { type ReactNode, useState } from "react";
 import {
+  CircleStop,
   Gauge,
   LibraryBig,
   Minimize2,
@@ -10,10 +11,11 @@ import {
   Plus,
   Rows3,
   Settings2,
-  SlidersHorizontal,
   View,
   X,
 } from "lucide-react";
+import { stopAllAudioPlayback } from "@/audio";
+import { useAudioPlaybackActive } from "@/hooks/audio/useAudioPlaybackActive";
 import { Heading } from "@/components/ui/typography/Heading";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import {
@@ -39,7 +41,6 @@ import {
   PracticeBandReadout,
   usePracticeBandTransport,
 } from "./PracticeBandTransport";
-import { PracticeBandOptionsDialog } from "./PracticeBandOptionsDialog";
 import {
   isSessionFocusViewMode,
   requiresSessionParts,
@@ -80,15 +81,11 @@ export function SessionHeader({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openMenuSection, setOpenMenuSection] =
     useState<SessionMenuSection | null>(null);
-  const [isPracticeBandOptionsOpen, setIsPracticeBandOptionsOpen] =
-    useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
   const [dialogKey, setDialogKey] = useState(0);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
-  const updatePracticeBandSettings = useAppStore(
-    (state) => state.updatePracticeBandSettings,
-  );
   const practiceBandTransport = usePracticeBandTransport(activeSessionId);
+  const audioPlaybackActive = useAudioPlaybackActive();
   const sessionName = useAppStore(
     (state) =>
       (activeSessionId ? state.sessions[activeSessionId]?.name : null) ??
@@ -135,10 +132,6 @@ export function SessionHeader({
     }
 
     onOpenSessionTempo(activeSessionId);
-  };
-  const openPracticeBandOptions = () => {
-    setIsMenuOpen(false);
-    setIsPracticeBandOptionsOpen(true);
   };
   const selectViewMode = (nextViewMode: SessionViewMode) => {
     setIsMenuOpen(false);
@@ -202,6 +195,15 @@ export function SessionHeader({
               />
             )}
             <PracticeBandPlayButton transport={practiceBandTransport} />
+            <IconButton
+              aria-label="Stop all audio"
+              aria-keyshortcuts="Escape"
+              disabled={!audioPlaybackActive}
+              icon={<CircleStop />}
+              size="sm"
+              shouldYield={false}
+              onClick={stopAllAudioPlayback}
+            />
             <IconButton
               aria-label={`Set session tempo. Current tempo: ${activeSessionTempoBpm} bpm`}
               disabled={!hasActiveSession}
@@ -285,12 +287,6 @@ export function SessionHeader({
             label="Session Library"
             onClick={openSessionsDialog}
           />
-          <DisclosureListAction
-            disabled={!practiceBandTransport.canPlay}
-            icon={<SlidersHorizontal />}
-            label="Practice Band Options"
-            onClick={openPracticeBandOptions}
-          />
         </DisclosureListGroup>
         <DisclosureListGroup>
           <DisclosureListAction
@@ -300,27 +296,6 @@ export function SessionHeader({
           />
         </DisclosureListGroup>
       </ObjectMenuDialog>
-
-      {activeSessionId ? (
-        <PracticeBandOptionsDialog
-          config={practiceBandTransport.resolvedConfig}
-          isOpen={isPracticeBandOptionsOpen}
-          previewSoundOnChange={!practiceBandTransport.isActive}
-          onAudioPresetIdChange={(audioPresetId) =>
-            updatePracticeBandSettings(activeSessionId, { audioPresetId })
-          }
-          onBackingNotesChange={(backingNotes) =>
-            updatePracticeBandSettings(activeSessionId, { backingNotes })
-          }
-          onClose={() => setIsPracticeBandOptionsOpen(false)}
-          onDrumsChange={(drums) =>
-            updatePracticeBandSettings(activeSessionId, { drums })
-          }
-          onOctaveOffsetChange={(octaveOffset) =>
-            updatePracticeBandSettings(activeSessionId, { octaveOffset })
-          }
-        />
-      ) : null}
 
       <Dialog
         isOpen={isSettingsDialogOpen}

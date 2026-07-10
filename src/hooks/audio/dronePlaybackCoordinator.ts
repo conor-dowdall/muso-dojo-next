@@ -3,7 +3,7 @@ interface DronePlaybackRegistration {
 }
 
 export class DronePlaybackCoordinator {
-  private activeId: string | undefined;
+  private activeIds = new Set<string>();
   private registrations = new Map<string, DronePlaybackRegistration>();
 
   register(id: string, registration: DronePlaybackRegistration) {
@@ -12,26 +12,21 @@ export class DronePlaybackCoordinator {
     return () => {
       this.registrations.delete(id);
 
-      if (this.activeId === id) {
-        this.activeId = undefined;
-      }
+      this.activeIds.delete(id);
     };
   }
 
   activate(id: string) {
-    const previousActiveId = this.activeId;
-
-    if (previousActiveId && previousActiveId !== id) {
-      this.registrations.get(previousActiveId)?.stopAll();
-    }
-
-    this.activeId = id;
+    this.activeIds.add(id);
   }
 
   clear(id: string) {
-    if (this.activeId === id) {
-      this.activeId = undefined;
-    }
+    this.activeIds.delete(id);
+  }
+
+  stopAll() {
+    this.activeIds.forEach((id) => this.registrations.get(id)?.stopAll());
+    this.activeIds.clear();
   }
 }
 

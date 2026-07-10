@@ -14,6 +14,7 @@ import {
   createPartSequencePlaybackPlan,
   ensureAudioReady,
   partSequenceCoordinator,
+  stopAllAudioPlayback,
   type PartSequencePlaybackPlan,
   type PartSequenceSnapshot,
 } from "@/audio";
@@ -22,10 +23,6 @@ import { IconButton } from "@/components/ui/buttons/IconButton";
 import { useScopedTransportShortcuts } from "@/hooks/interaction/useScopedTransportShortcuts";
 import { type SessionConfig } from "@/types/session";
 import { createPartBarTimeline } from "@/utils/music-part/partBarTimeline";
-import {
-  resolvePracticeBandConfig,
-  type ResolvedPracticeBandConfig,
-} from "@/utils/practice-band/practiceBandConfig";
 import styles from "./PracticeBandTransport.module.css";
 
 export interface PracticeBandReadoutModel {
@@ -96,7 +93,6 @@ interface PracticeBandTransportState {
   canPlay: boolean;
   isActive: boolean;
   readout: PracticeBandReadoutModel | null;
-  resolvedConfig: ResolvedPracticeBandConfig;
   shortcuts: ReturnType<typeof useScopedTransportShortcuts>;
   togglePlayback: () => void;
 }
@@ -111,10 +107,6 @@ export function usePracticeBandTransport(
     partSequenceCoordinator.subscribe,
     partSequenceCoordinator.getSnapshot,
     partSequenceCoordinator.getSnapshot,
-  );
-  const resolvedConfig = useMemo(
-    () => resolvePracticeBandConfig(session?.practiceBand),
-    [session?.practiceBand],
   );
   const plan = useMemo(
     () => (session ? createPartSequencePlaybackPlan(session) : undefined),
@@ -180,6 +172,7 @@ export function usePracticeBandTransport(
       return;
     }
 
+    stopAllAudioPlayback();
     void ensureAudioReady();
     void partSequenceCoordinator.start(plan);
   }, [canPlay, isActive, plan]);
@@ -188,7 +181,6 @@ export function usePracticeBandTransport(
     canPlay,
     isActive,
     readout,
-    resolvedConfig,
     shortcuts,
     togglePlayback,
   };

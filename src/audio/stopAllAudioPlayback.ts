@@ -11,9 +11,9 @@ export function isAudioPlaybackActive() {
   return (
     partSequenceSnapshot.playing ||
     exerciseSnapshot.playing ||
-    exerciseSnapshot.pendingId !== undefined ||
+    exerciseSnapshot.pendingIds.length > 0 ||
     rhythmSnapshot.playing ||
-    rhythmSnapshot.pendingId !== undefined ||
+    rhythmSnapshot.pendingIds.length > 0 ||
     musoAudioEngine.hasActivePlayback()
   );
 }

@@ -17,7 +17,7 @@ import {
   type PlaybackOwner,
 } from "./playbackOwnership";
 
-const TRANSPORT_HANDOFF_LEAD_SECONDS = 0.08;
+const TRANSPORT_START_LEAD_SECONDS = 0.08;
 const BEAT_GRID_EPSILON = 1e-6;
 
 export type BeatTransportStartSource = PlaybackOwner;
@@ -35,10 +35,10 @@ interface BeatGrid {
 }
 
 export interface BeatTransportPartStartRequest {
-  exercise?: ExercisePlaybackRequest;
+  exercises?: readonly ExercisePlaybackRequest[];
   handoff?: boolean;
   originTime?: number;
-  rhythm?: RhythmPlaybackRequest;
+  rhythms?: readonly RhythmPlaybackRequest[];
   source?: BeatTransportStartSource;
   stopMissing?: boolean;
 }
@@ -54,115 +54,58 @@ function getNextBeatOrigin({
   currentTime: number;
   grid: BeatGrid;
 }) {
-  const minimumStartTime = currentTime + TRANSPORT_HANDOFF_LEAD_SECONDS;
-
+  const minimumStartTime = currentTime + TRANSPORT_START_LEAD_SECONDS;
   if (minimumStartTime <= grid.originTime) {
     return grid.originTime;
   }
 
   const elapsedBeats =
     (minimumStartTime - grid.originTime) / grid.secondsPerBeat;
-
   return (
     grid.originTime +
     Math.ceil(elapsedBeats - BEAT_GRID_EPSILON) * grid.secondsPerBeat
   );
 }
 
-function getPartTempoBpm({
-  exercise,
-  rhythm,
-}: Pick<BeatTransportPartStartRequest, "exercise" | "rhythm">) {
-  return exercise?.tempoBpm ?? rhythm?.tempoBpm;
-}
-
-function getSafePartOrigin({
-  currentTime,
-  exercise,
-  handoff,
-  originTime,
-  rhythm,
-}: Pick<
-  BeatTransportPartStartRequest,
-  "exercise" | "handoff" | "originTime" | "rhythm"
-> & {
-  currentTime: number | undefined;
-}) {
-  if (originTime === undefined) {
-    return currentTime === undefined
-      ? undefined
-      : currentTime + TRANSPORT_HANDOFF_LEAD_SECONDS;
-  }
-
-  const tempoBpm = getPartTempoBpm({ exercise, rhythm });
-
-  if (!handoff || currentTime === undefined || tempoBpm === undefined) {
-    return originTime;
-  }
-
-  return getNextBeatOrigin({
-    currentTime,
-    grid: {
-      originTime,
-      secondsPerBeat: 60 / normalizeTempo(tempoBpm),
-    },
-  });
-}
-
-function getExerciseBeatGrid(
+function getManualExerciseGrid(
   snapshot: ExercisePlaybackSnapshot,
 ): BeatGrid | undefined {
-  if (
-    !snapshot.playing ||
-    snapshot.originTime === undefined ||
-    snapshot.secondsPerBeat === undefined
-  ) {
-    return undefined;
-  }
-
-  return {
-    originTime: snapshot.originTime,
-    secondsPerBeat: snapshot.secondsPerBeat,
-  };
+  const playback = Object.values(snapshot.playbacks).find(
+    (candidate) => candidate.owner === "manual",
+  );
+  return playback
+    ? {
+        originTime: playback.originTime,
+        secondsPerBeat: playback.secondsPerBeat,
+      }
+    : undefined;
 }
 
-function getRhythmBeatGrid(
+function getManualRhythmGrid(
   snapshot: RhythmPlaybackSnapshot,
 ): BeatGrid | undefined {
-  if (
-    !snapshot.playing ||
-    snapshot.originTime === undefined ||
-    snapshot.tempoBpm === undefined
-  ) {
-    return undefined;
-  }
-
-  return {
-    originTime: snapshot.originTime,
-    secondsPerBeat: 60 / normalizeTempo(snapshot.tempoBpm),
-  };
+  const playback = Object.values(snapshot.playbacks).find(
+    (candidate) => candidate.owner === "manual",
+  );
+  return playback
+    ? {
+        originTime: playback.originTime,
+        secondsPerBeat: 60 / normalizeTempo(playback.tempoBpm),
+      }
+    : undefined;
 }
 
-function getStartedOriginTime({
-  fallbackOriginTime,
-  pendingId,
-  snapshot,
-}: {
-  fallbackOriginTime?: number;
-  pendingId: string;
-  snapshot: ExercisePlaybackSnapshot | RhythmPlaybackSnapshot;
-}) {
-  return snapshot.pendingId === pendingId
-    ? snapshot.pendingOriginTime
-    : (snapshot.originTime ?? fallbackOriginTime);
+function getTempoBpm(
+  exercises: readonly ExercisePlaybackRequest[],
+  rhythms: readonly RhythmPlaybackRequest[],
+) {
+  return exercises[0]?.tempoBpm ?? rhythms[0]?.tempoBpm;
 }
 
 export class BeatTransportCoordinator {
   private manualControlListeners = new Set<
     (event: BeatTransportManualControlEvent) => void
   >();
-  private pendingCompanionStart:
-    { revision: number; target: "exercise" | "rhythm" } | undefined;
   private revision = 0;
 
   constructor(
@@ -179,7 +122,6 @@ export class BeatTransportCoordinator {
     }
 
     const owner = getPlaybackOwnerForSource(source);
-
     this.manualControlListeners.forEach((listener) =>
       listener({ ...event, owner }),
     );
@@ -192,315 +134,171 @@ export class BeatTransportCoordinator {
     return () => this.manualControlListeners.delete(listener);
   };
 
-  subscribeToManualStart = (listener: () => void) => {
-    return this.subscribeToManualControl((event) => {
+  subscribeToManualStart = (listener: () => void) =>
+    this.subscribeToManualControl((event) => {
       if (event.kind === "start") {
         listener();
       }
     });
-  };
 
   getCurrentTime = () =>
     this.exercise.getCurrentTime() ?? this.rhythm.getCurrentTime();
 
-  private cancelPendingCompanionStart(target?: "exercise" | "rhythm") {
-    if (
-      !this.pendingCompanionStart ||
-      (target && this.pendingCompanionStart.target !== target)
-    ) {
-      return;
-    }
-
-    if (this.pendingCompanionStart.target === "exercise") {
-      this.exercise.cancelPendingStart();
-    } else {
-      this.rhythm.cancelPendingStart();
-    }
-
-    this.pendingCompanionStart = undefined;
-  }
-
-  private clearPendingCompanionStart(
-    revision: number,
-    target: "exercise" | "rhythm",
-  ) {
-    if (
-      this.pendingCompanionStart?.revision === revision &&
-      this.pendingCompanionStart.target === target
-    ) {
-      this.pendingCompanionStart = undefined;
-    }
+  private getManualGrid() {
+    return (
+      getManualExerciseGrid(this.exercise.getSnapshot()) ??
+      getManualRhythmGrid(this.rhythm.getSnapshot())
+    );
   }
 
   async startExercise(
     request: ExercisePlaybackRequest,
     options: { source?: BeatTransportStartSource } = {},
   ) {
-    const owner = getPlaybackOwnerForSource(options.source);
-
     this.notifyManualControl(
       { kind: "start", target: "exercise" },
       options.source,
     );
-    const revision = ++this.revision;
-    const exerciseSnapshot = this.exercise.getSnapshot();
+    this.revision += 1;
     const currentTime = this.getCurrentTime();
-    const sameExerciseIsPlaying =
-      exerciseSnapshot.playing && exerciseSnapshot.activeId === request.id;
-    const launchGrid =
-      request.countInBeats === 0 && !sameExerciseIsPlaying
-        ? getExerciseBeatGrid(exerciseSnapshot)
+    const grid = request.countInBeats === 0 ? this.getManualGrid() : undefined;
+    const originTime =
+      currentTime !== undefined && grid
+        ? getNextBeatOrigin({ currentTime, grid })
         : undefined;
-    const launchOriginTime =
-      currentTime !== undefined && launchGrid
-        ? getNextBeatOrigin({ currentTime, grid: launchGrid })
-        : undefined;
-
-    this.cancelPendingCompanionStart();
-    this.rhythm.cancelPendingStart();
-
     const started = await this.exercise.start(request, {
-      ...(launchOriginTime === undefined
-        ? {}
-        : {
-            handoff: exerciseSnapshot.playing,
-            originTime: launchOriginTime,
-          }),
-      owner,
+      ...(originTime === undefined ? {} : { originTime }),
+      owner: getPlaybackOwnerForSource(options.source),
     });
 
-    if (!started || revision !== this.revision) {
-      return false;
-    }
-
-    const originTime = getStartedOriginTime({
-      fallbackOriginTime: launchOriginTime,
-      pendingId: request.id,
-      snapshot: this.exercise.getSnapshot(),
-    });
-    const rhythmRequest = this.rhythm.getActiveRequest();
-
-    if (originTime !== undefined && rhythmRequest) {
-      this.pendingCompanionStart = { revision, target: "rhythm" };
-      await this.rhythm.start(
-        {
-          ...rhythmRequest,
-          tempoBpm: request.tempoBpm,
-        },
-        {
-          handoff:
-            request.countInBeats === 0 && this.rhythm.getSnapshot().playing,
-          originTime,
-          owner,
-        },
-      );
-      this.clearPendingCompanionStart(revision, "rhythm");
-    }
-
-    return true;
+    return started;
   }
 
   async startRhythm(
     request: RhythmPlaybackRequest,
     options: { source?: BeatTransportStartSource } = {},
   ) {
-    const owner = getPlaybackOwnerForSource(options.source);
-
     this.notifyManualControl(
       { kind: "start", target: "rhythm" },
       options.source,
     );
-    const revision = ++this.revision;
-    const rhythmSnapshot = this.rhythm.getSnapshot();
+    this.revision += 1;
     const currentTime = this.getCurrentTime();
-    const sameRhythmIsPlaying =
-      rhythmSnapshot.playing && rhythmSnapshot.activeId === request.id;
-    const launchGrid = !sameRhythmIsPlaying
-      ? getRhythmBeatGrid(rhythmSnapshot)
-      : undefined;
-    const launchOriginTime =
-      currentTime !== undefined && launchGrid
-        ? getNextBeatOrigin({ currentTime, grid: launchGrid })
+    const grid = this.getManualGrid();
+    const originTime =
+      currentTime !== undefined && grid
+        ? getNextBeatOrigin({ currentTime, grid })
         : undefined;
-
-    this.cancelPendingCompanionStart();
-    this.exercise.cancelPendingStart();
-
     const started = await this.rhythm.start(request, {
-      ...(launchOriginTime === undefined
-        ? {}
-        : {
-            handoff: rhythmSnapshot.playing,
-            originTime: launchOriginTime,
-          }),
-      owner,
+      ...(originTime === undefined ? {} : { originTime }),
+      owner: getPlaybackOwnerForSource(options.source),
     });
 
-    if (!started || revision !== this.revision) {
-      return false;
-    }
-
-    const originTime = getStartedOriginTime({
-      fallbackOriginTime: launchOriginTime,
-      pendingId: request.id,
-      snapshot: this.rhythm.getSnapshot(),
-    });
-    const exerciseRequest = this.exercise.getActiveRequest();
-
-    if (originTime !== undefined && exerciseRequest) {
-      this.pendingCompanionStart = { revision, target: "exercise" };
-      await this.exercise.start(
-        {
-          ...exerciseRequest,
-          countInBeats: 0,
-          tempoBpm: request.tempoBpm,
-        },
-        { handoff: this.exercise.getSnapshot().playing, originTime, owner },
-      );
-      this.clearPendingCompanionStart(revision, "exercise");
-    }
-
-    return true;
+    return started;
   }
 
   async startPart({
-    exercise,
+    exercises = [],
     handoff = false,
     originTime,
-    rhythm,
+    rhythms = [],
     source = "manual",
     stopMissing = true,
   }: BeatTransportPartStartRequest) {
-    const owner = getPlaybackOwnerForSource(source);
-
     this.notifyManualControl({ kind: "start", target: "exercise" }, source);
     const revision = ++this.revision;
+    const owner = getPlaybackOwnerForSource(source);
     const preparesFreshOrigin =
-      originTime === undefined &&
-      (exercise !== undefined || rhythm !== undefined);
-
-    this.cancelPendingCompanionStart();
+      originTime === undefined && (exercises.length > 0 || rhythms.length > 0);
 
     if (preparesFreshOrigin) {
       const prepared = await Promise.all([
-        exercise ? this.exercise.prepare() : Promise.resolve(true),
-        rhythm ? this.rhythm.prepare() : Promise.resolve(true),
+        exercises.length > 0 ? this.exercise.prepare() : Promise.resolve(true),
+        rhythms.length > 0 ? this.rhythm.prepare() : Promise.resolve(true),
       ]);
-
       if (revision !== this.revision || prepared.some((ready) => !ready)) {
         return { originTime: undefined, started: false };
       }
     }
 
     const currentTime = this.getCurrentTime();
-    const resolvedOriginTime = getSafePartOrigin({
-      currentTime,
-      exercise,
-      handoff,
-      originTime,
-      rhythm,
-    });
-
-    if (exercise) {
-      this.exercise.cancelPendingStart();
-    } else if (stopMissing) {
-      this.exercise.cancelPendingStart();
-      this.exercise.stop(undefined, {
-        atTime: resolvedOriginTime,
-      });
-    }
-
-    if (rhythm) {
-      this.rhythm.cancelPendingStart();
-    } else if (stopMissing) {
-      this.rhythm.cancelPendingStart();
-      this.rhythm.stop(undefined, {
-        atTime: resolvedOriginTime,
-      });
-    }
-
-    if (resolvedOriginTime === undefined && exercise && rhythm) {
-      const exerciseStarted = await this.exercise.start(exercise, {
-        handoff,
-        owner,
-        prepared: preparesFreshOrigin,
-      });
-      const startedOriginTime =
-        this.exercise.getSnapshot().originTime ??
-        this.exercise.getSnapshot().pendingOriginTime;
-      const rhythmStarted =
-        startedOriginTime === undefined
-          ? false
-          : await this.rhythm.start(rhythm, {
-              handoff,
-              originTime: startedOriginTime,
-              owner,
-              prepared: preparesFreshOrigin,
-            });
-
-      if (revision !== this.revision) {
-        return { originTime: startedOriginTime, started: false };
-      }
-
-      return {
-        originTime: startedOriginTime,
-        started: exerciseStarted !== false && rhythmStarted !== false,
-      };
-    }
-
-    const [exerciseStarted, rhythmStarted] = await Promise.all([
-      exercise
-        ? this.exercise.start(exercise, {
-            handoff,
-            owner,
-            originTime: resolvedOriginTime,
-            prepared: preparesFreshOrigin,
+    const tempoBpm = getTempoBpm(exercises, rhythms);
+    const requestedOrigin =
+      originTime ??
+      (currentTime === undefined
+        ? undefined
+        : currentTime + TRANSPORT_START_LEAD_SECONDS);
+    const resolvedOriginTime =
+      handoff &&
+      currentTime !== undefined &&
+      requestedOrigin !== undefined &&
+      tempoBpm !== undefined
+        ? getNextBeatOrigin({
+            currentTime,
+            grid: {
+              originTime: requestedOrigin,
+              secondsPerBeat: 60 / normalizeTempo(tempoBpm),
+            },
           })
-        : Promise.resolve(undefined),
-      rhythm
-        ? this.rhythm.start(rhythm, {
-            handoff,
-            owner,
-            originTime: resolvedOriginTime,
-            prepared: preparesFreshOrigin,
-          })
-        : Promise.resolve(undefined),
+        : requestedOrigin;
+
+    if (stopMissing) {
+      this.exercise
+        .getActiveIds(owner)
+        .forEach((id) =>
+          this.exercise.stop(id, { atTime: resolvedOriginTime }),
+        );
+      this.rhythm
+        .getActiveIds(owner)
+        .forEach((id) => this.rhythm.stop(id, { atTime: resolvedOriginTime }));
+    }
+
+    const results = await Promise.all([
+      ...exercises.map((request) =>
+        this.exercise.start(request, {
+          handoff,
+          owner,
+          originTime: resolvedOriginTime,
+          prepared: preparesFreshOrigin,
+        }),
+      ),
+      ...rhythms.map((request) =>
+        this.rhythm.start(request, {
+          handoff,
+          owner,
+          originTime: resolvedOriginTime,
+          prepared: preparesFreshOrigin,
+        }),
+      ),
     ]);
-
-    if (revision !== this.revision) {
-      return { originTime: resolvedOriginTime, started: false };
-    }
 
     return {
       originTime: resolvedOriginTime,
-      started: exerciseStarted !== false && rhythmStarted !== false,
+      started:
+        revision === this.revision &&
+        results.length > 0 &&
+        results.every(Boolean),
     };
   }
 
   updatePartLive({
-    exercise,
-    rhythm,
-  }: Pick<BeatTransportPartStartRequest, "exercise" | "rhythm">) {
-    if (exercise) {
-      this.exercise.setMetronomeEnabled(exercise.id, exercise.metronomeEnabled);
-    }
-
-    if (rhythm) {
-      this.rhythm.setPattern(rhythm.id, rhythm.pattern);
-    }
+    exercises = [],
+    rhythms = [],
+  }: Pick<BeatTransportPartStartRequest, "exercises" | "rhythms">) {
+    exercises.forEach((request) =>
+      this.exercise.setMetronomeEnabled(request.id, request.metronomeEnabled),
+    );
+    rhythms.forEach((request) =>
+      this.rhythm.setPattern(request.id, request.pattern),
+    );
   }
 
   stopExercise(
     id?: string,
     options: { source?: BeatTransportControlSource } = {},
   ) {
-    if (options.source === "lifecycle") {
-      if (id === undefined) {
-        return;
-      }
-
+    if (options.source === "lifecycle" && id !== undefined) {
       const owner = getExercisePlaybackOwner(this.exercise.getSnapshot(), id);
-
       if (owner === "part-sequence") {
         return;
       }
@@ -511,7 +309,6 @@ export class BeatTransportCoordinator {
       options.source,
     );
     this.revision += 1;
-    this.cancelPendingCompanionStart("rhythm");
     this.exercise.stop(id);
   }
 
@@ -519,13 +316,8 @@ export class BeatTransportCoordinator {
     id?: string,
     options: { source?: BeatTransportControlSource } = {},
   ) {
-    if (options.source === "lifecycle") {
-      if (id === undefined) {
-        return;
-      }
-
+    if (options.source === "lifecycle" && id !== undefined) {
       const owner = getRhythmPlaybackOwner(this.rhythm.getSnapshot(), id);
-
       if (owner === "part-sequence") {
         return;
       }
@@ -536,15 +328,13 @@ export class BeatTransportCoordinator {
       options.source,
     );
     this.revision += 1;
-    this.cancelPendingCompanionStart("exercise");
     this.rhythm.stop(id);
   }
 
-  stopPartPlayback() {
+  stopPartPlayback(owner: PlaybackOwner = "part-sequence") {
     this.revision += 1;
-    this.cancelPendingCompanionStart();
-    this.exercise.stop();
-    this.rhythm.stop();
+    this.exercise.getActiveIds(owner).forEach((id) => this.exercise.stop(id));
+    this.rhythm.getActiveIds(owner).forEach((id) => this.rhythm.stop(id));
   }
 }
 

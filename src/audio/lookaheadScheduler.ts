@@ -50,6 +50,59 @@ const emptyDiagnostics: LookaheadSchedulerDiagnostics = {
 
 let diagnostics = emptyDiagnostics;
 
+interface SharedTimerEntry {
+  callback: () => void;
+  dueTime: number;
+}
+
+const sharedTimerEntries = new Map<object, SharedTimerEntry>();
+let sharedNativeTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
+
+function armSharedTimer() {
+  if (sharedNativeTimer !== undefined) {
+    globalThis.clearTimeout(sharedNativeTimer);
+  }
+
+  const nextDueTime = Math.min(
+    ...[...sharedTimerEntries.values()].map((entry) => entry.dueTime),
+  );
+  if (!Number.isFinite(nextDueTime)) {
+    sharedNativeTimer = undefined;
+    return;
+  }
+
+  sharedNativeTimer = globalThis.setTimeout(
+    () => {
+      sharedNativeTimer = undefined;
+      const now = Date.now();
+      const dueEntries = [...sharedTimerEntries].filter(
+        ([, entry]) => entry.dueTime <= now + 1,
+      );
+      dueEntries.forEach(([token]) => sharedTimerEntries.delete(token));
+      dueEntries.forEach(([, entry]) => entry.callback());
+      armSharedTimer();
+    },
+    Math.max(1, nextDueTime - Date.now()),
+  );
+}
+
+function setSharedTimer(callback: () => void, delayMilliseconds: number) {
+  const token = {};
+  sharedTimerEntries.set(token, {
+    callback,
+    dueTime: Date.now() + Math.max(1, delayMilliseconds),
+  });
+  armSharedTimer();
+  return token;
+}
+
+function clearSharedTimer(timer: unknown) {
+  if (typeof timer === "object" && timer !== null) {
+    sharedTimerEntries.delete(timer);
+    armSharedTimer();
+  }
+}
+
 function recordDiagnostics(
   update: Partial<
     Pick<
@@ -91,10 +144,12 @@ export function createLookaheadScheduler<TPayload>({
   horizonSeconds = AUDIO_SCHEDULER_HORIZON_SECONDS,
   minimumLeadSeconds = AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS,
   onSchedule,
-  setTimer = (callback, delay) => window.setTimeout(callback, delay),
-  clearTimer = (timer) => window.clearTimeout(timer as number),
+  setTimer,
+  clearTimer,
   tickMilliseconds = AUDIO_SCHEDULER_TICK_MILLISECONDS,
 }: LookaheadSchedulerOptions<TPayload>): LookaheadScheduler {
+  const scheduleTimer = setTimer ?? setSharedTimer;
+  const cancelTimer = clearTimer ?? clearSharedTimer;
   const cycleDuration = getCycleDuration(events);
   let nextCycle = 0;
   let nextEventIndex = 0;
@@ -108,7 +163,7 @@ export function createLookaheadScheduler<TPayload>({
       return;
     }
 
-    clearTimer(timer);
+    cancelTimer(timer);
     timer = undefined;
   };
 
@@ -189,7 +244,7 @@ export function createLookaheadScheduler<TPayload>({
       advanceCursor();
     }
 
-    timer = setTimer(tick, Math.max(1, tickMilliseconds));
+    timer = scheduleTimer(tick, Math.max(1, tickMilliseconds));
   };
 
   return {

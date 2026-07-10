@@ -36,4 +36,13 @@ describe("chordProgressionRhythm", () => {
       totalBars: 12,
     });
   });
+
+  it("uses exact Jazz and Blues categories instead of duration heuristics", () => {
+    expect(getChordProgressionRhythmProfile("majorTwoFiveOne")).toMatchObject({
+      preferredRhythmStarterId: "swing",
+    });
+    expect(getChordProgressionRhythmProfile("oneOneFiveFive")).toMatchObject({
+      preferredRhythmStarterId: "4-4",
+    });
+  });
 });

@@ -35,19 +35,14 @@ export type ChordProgressionChordListMode =
 
 export type SessionMaterialCreationKind = "part" | "chord-progression";
 
+export type AutomaticRhythmStyle = "standard" | "swing";
+
 export interface SessionMaterialCreationDefaults {
   chordListMode?: ChordProgressionChordListMode;
   materialKind?: SessionMaterialCreationKind;
   noteCollectionKey?: NoteCollectionKey;
   progressionKey?: ChordProgressionKey;
   rootNote?: RootNote;
-}
-
-export interface PracticeBandConfig {
-  audioPresetId?: AudioPresetId;
-  backingNotes?: boolean;
-  drums?: boolean;
-  octaveOffset?: number;
 }
 
 export type RememberSessionMaterialCreationRequest =
@@ -189,6 +184,8 @@ export interface MusicPartCreationRequest {
   rootNote?: string;
   noteCollectionKey?: NoteCollectionKey;
   durationInBars?: number;
+  lengthBeats?: number;
+  automaticRhythm?: AutomaticRhythmStyle;
   moduleRequests?: PartModuleCreationRequest[];
 }
 
@@ -204,9 +201,13 @@ export interface MusicPartConfig {
   id: string;
   rootNote: string;
   noteCollectionKey: NoteCollectionKey;
+  /** Practice Band dwell time for this Part on the Session beat grid. */
+  lengthBeats?: number;
+  /** Automatic drum feel used only when this Part has no Rhythm modules. */
+  automaticRhythm?: AutomaticRhythmStyle;
   /**
    * Optional authored chart duration. Chord progression imports use this for
-   * fractional bars; ordinary Parts omit it and defer to Rhythm/default 4/4.
+   * fractional bars. Part Length independently controls playback dwell time.
    */
   durationInBars?: number;
   showHeader?: boolean;
@@ -222,8 +223,6 @@ export interface SessionConfig {
   name: string;
   lastModified: string;
   parts: MusicPartConfig[];
-  /** Optional Practice Band settings. The transport itself is derived from Parts. */
-  practiceBand?: PracticeBandConfig;
   tempoBpm?: number;
 }
 

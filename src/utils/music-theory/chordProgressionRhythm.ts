@@ -61,38 +61,8 @@ function getSimpleFractionDenominator(
   return undefined;
 }
 
-function getProgressionSearchTerms(
-  progression: RhythmAwareChordProgression,
-  totalBars: number,
-) {
-  return [
-    progression.category,
-    progression.commonName,
-    progression.family,
-    progression.primaryName,
-    progression.style,
-    ...(progression.tags ?? []),
-    Number.isInteger(totalBars) ? `${totalBars}-bar` : undefined,
-  ]
-    .filter((term): term is string => Boolean(term))
-    .map((term) => term.toLocaleLowerCase());
-}
-
-function progressionPrefersSwing(
-  progression: RhythmAwareChordProgression,
-  totalBars: number,
-) {
-  const terms = getProgressionSearchTerms(progression, totalBars);
-
-  return (
-    Math.abs(totalBars - 12) <= DURATION_EPSILON ||
-    terms.some(
-      (term) =>
-        term.includes("blues") ||
-        term.includes("jazz") ||
-        term.includes("swing"),
-    )
-  );
+function progressionPrefersSwing(progression: RhythmAwareChordProgression) {
+  return progression.category === "jazz" || progression.category === "blues";
 }
 
 export function getRequiredBarDivisionForDurations(
@@ -126,7 +96,7 @@ export function getChordProgressionRhythmProfile(
 
   return {
     hasSplitBars: requiredBarDivision > 1,
-    preferredRhythmStarterId: progressionPrefersSwing(progression, totalBars)
+    preferredRhythmStarterId: progressionPrefersSwing(progression)
       ? "swing"
       : "4-4",
     requiredBarDivision,

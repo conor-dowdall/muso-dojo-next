@@ -8,11 +8,15 @@ import { type InstrumentCreationRangeContext } from "@/components/instrument-cre
 
 export interface MusicPartContextValue {
   partId: string;
+  lengthBeats: number;
   moduleCount: number;
   rootNote: string;
   noteCollectionKey: NoteCollectionKey;
   setRootNote: SettingSetter<string>;
   setNoteCollectionKey: SettingSetter<NoteCollectionKey>;
+  setLengthBeats?: SettingSetter<number>;
+  partPlaybackActive?: boolean;
+  togglePartPlayback?: () => void;
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
   addPartModules?: AddPartModulesHandler;
   clonePart?: () => void;

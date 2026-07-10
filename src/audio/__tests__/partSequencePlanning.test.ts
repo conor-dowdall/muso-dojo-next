@@ -6,13 +6,15 @@ import { type MusicPartConfig, type SessionConfig } from "@/types/session";
 
 function createPart(
   id: string,
-  modules: MusicPartConfig["modules"],
+  modules: MusicPartConfig["modules"] = [],
+  settings: Partial<Omit<MusicPartConfig, "id" | "modules">> = {},
 ): MusicPartConfig {
   return {
     id,
     modules,
     noteCollectionKey: "major",
     rootNote: "C",
+    ...settings,
   };
 }
 
@@ -27,326 +29,149 @@ function createSession(parts: MusicPartConfig[]): SessionConfig {
 }
 
 describe("createPartSequencePlaybackPlan", () => {
-  it("uses the first rhythm cycle before exercise duration", () => {
+  it("uses first-class Part Length independently of Rhythm loop length", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([
-        createPart("part", [
-          {
-            id: "exercise",
-            type: "exercise-looper",
-          },
-          {
-            id: "rhythm",
-            rhythm: DEFAULT_RHYTHM_SELECTION,
-            type: "rhythm",
-          },
-        ]),
-      ]),
-    );
-
-    expect(plan.parts[0]).toMatchObject({
-      durationBeats: 4,
-      partId: "part",
-    });
-    expect(plan.parts[0]?.rhythmRequest?.pattern.cycleTicks).toBe(
-      RHYTHM_PPQ * 4,
-    );
-    expect(plan.parts[0]?.exerciseRequest).toBeDefined();
-  });
-
-  it("uses the first rhythm cycle even when drums are muted", () => {
-    const plan = createPartSequencePlaybackPlan({
-      ...createSession([
-        createPart("part", [
-          {
-            id: "exercise",
-            type: "exercise-looper",
-          },
-          {
-            id: "rhythm",
-            rhythm: {
-              recipe: {
-                ...DEFAULT_RHYTHM_SELECTION.recipe,
-                beats: 6,
+        createPart(
+          "part",
+          [
+            {
+              id: "rhythm",
+              rhythm: {
+                recipe: { ...DEFAULT_RHYTHM_SELECTION.recipe, beats: 6 },
+                source: "recipe",
               },
-              source: "recipe",
+              type: "rhythm",
             },
-            type: "rhythm",
-          },
-        ]),
-      ]),
-      practiceBand: { drums: false },
-    });
-
-    expect(plan.parts[0]?.durationBeats).toBe(6);
-    expect(plan.parts[0]?.exerciseRequest?.id).toBe("exercise");
-    expect(plan.parts[0]?.rhythmRequest).toBeUndefined();
-  });
-
-  it("uses the visible Rhythm module duration for shorter progression Parts", () => {
-    const plan = createPartSequencePlaybackPlan(
-      createSession([
-        createPart("half-bar", [
-          {
-            id: "rhythm",
-            rhythm: {
-              recipe: {
-                ...DEFAULT_RHYTHM_SELECTION.recipe,
-                beats: 2,
-              },
-              source: "recipe",
-            },
-            type: "rhythm",
-          },
-        ]),
+          ],
+          { lengthBeats: 2 },
+        ),
       ]),
     );
 
-    expect(plan.parts[0]).toMatchObject({
-      durationBeats: 2,
-      partId: "half-bar",
-    });
-  });
-
-  it("uses authored Part duration for generated Practice Band drums", () => {
-    const plan = createPartSequencePlaybackPlan(
-      createSession([
-        {
-          ...createPart("half-bar", []),
-          durationInBars: 0.5,
-        },
-      ]),
+    expect(plan.parts[0]?.durationBeats).toBe(2);
+    expect(plan.parts[0]?.rhythmRequests[0]?.pattern.cycleTicks).toBe(
+      RHYTHM_PPQ * 6,
     );
-
-    expect(plan.parts[0]).toMatchObject({
-      durationBeats: 2,
-      partId: "half-bar",
-    });
-    expect(plan.parts[0]?.rhythmRequest?.pattern).toMatchObject({
-      cycleTicks: RHYTHM_PPQ * 2,
-      meter: { beats: 2, beatUnit: 4 },
-    });
   });
 
-  it("uses authored fractional Part durations even when Rhythm cannot represent them", () => {
+  it("honors authored fractional duration for an unnormalized legacy Part", () => {
     const plan = createPartSequencePlaybackPlan(
-      createSession([
-        {
-          ...createPart("third-bar", []),
-          durationInBars: 1 / 3,
-        },
-      ]),
+      createSession([createPart("third-bar", [], { durationInBars: 1 / 3 })]),
     );
 
     expect(plan.parts[0]?.durationBeats).toBeCloseTo(4 / 3);
-    expect(plan.parts[0]?.rhythmRequest?.pattern).toMatchObject({
-      cycleTicks: RHYTHM_PPQ * 4,
-      meter: { beats: 4, beatUnit: 4 },
-    });
   });
 
-  it("uses the visible rhythm bar length when no explicit Practice Band duration is present", () => {
+  it("adds stable automatic Looper and Rhythm fallbacks for an empty Part", () => {
+    const plan = createPartSequencePlaybackPlan(
+      createSession([createPart("part", [], { lengthBeats: 1 })]),
+    );
+
+    expect(plan.parts[0]).toMatchObject({
+      durationBeats: 1,
+      exerciseRequests: [
+        {
+          countInBeats: 0,
+          id: "part-sequence-looper:part",
+          metronomeEnabled: false,
+          presetId: "plucked-string",
+        },
+      ],
+      rhythmRequests: [{ id: "part-sequence-drums:part" }],
+    });
+    expect(plan.parts[0]?.rhythmRequests[0]?.pattern.cycleTicks).toBe(
+      RHYTHM_PPQ,
+    );
+  });
+
+  it("uses Swing for an automatic Jazz or Blues Part", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([
-        createPart("whole-bar", [
-          {
-            id: "rhythm",
-            rhythm: {
-              recipe: {
-                ...DEFAULT_RHYTHM_SELECTION.recipe,
-                beats: 5,
-              },
-              source: "recipe",
-            },
-            type: "rhythm",
-          },
-        ]),
+        createPart("swing-part", [], {
+          automaticRhythm: "swing",
+          lengthBeats: 4,
+        }),
       ]),
     );
 
-    expect(plan.parts[0]).toMatchObject({
-      durationBeats: 5,
+    expect(plan.parts[0]?.rhythmRequests[0]?.pattern.hits).toContainEqual({
+      atTicks: RHYTHM_PPQ + Math.round((RHYTHM_PPQ * 2) / 3),
+      sampleId: "ride",
+      velocity: 0.108,
     });
   });
 
-  it("adds a default looper and drums when a part has no playable module", () => {
-    const plan = createPartSequencePlaybackPlan(
-      createSession([createPart("part", [])]),
-    );
-
-    expect(plan.parts[0]).toMatchObject({
-      durationBeats: 4,
-      exerciseRequest: {
-        countInBeats: 0,
-        id: "part-sequence-looper:part",
-        metronomeEnabled: false,
-        presetId: "plucked-string",
-      },
-      index: 0,
-      partId: "part",
-      rhythmRequest: {
-        id: "part-sequence-drums:part",
-      },
-    });
-    expect(plan.parts[0]?.exerciseRequest?.events[0]?.midi).toBe(36);
-    expect(plan.parts[0]?.rhythmRequest?.pattern.cycleTicks).toBe(
-      RHYTHM_PPQ * 4,
-    );
-  });
-
-  it("keeps the default looper when drums are muted globally", () => {
-    const plan = createPartSequencePlaybackPlan({
-      ...createSession([
-        createPart("part", [
-          {
-            id: "exercise",
-            type: "exercise-looper",
-          },
-          {
-            id: "rhythm",
-            rhythm: DEFAULT_RHYTHM_SELECTION,
-            type: "rhythm",
-          },
-        ]),
-      ]),
-      practiceBand: { drums: false },
-    });
-
-    expect(plan.parts[0]).toMatchObject({
-      durationBeats: 4,
-      exerciseRequest: {
-        id: "exercise",
-      },
-      index: 0,
-      partId: "part",
-    });
-    expect(plan.parts[0]?.rhythmRequest).toBeUndefined();
-  });
-
-  it("mutes generated and explicit loopers when backing notes are muted globally", () => {
-    const plan = createPartSequencePlaybackPlan({
-      ...createSession([
-        createPart("empty-part", []),
-        createPart("looper-part", [
-          {
-            id: "exercise",
-            type: "exercise-looper",
-          },
-          {
-            id: "rhythm",
-            rhythm: DEFAULT_RHYTHM_SELECTION,
-            type: "rhythm",
-          },
-        ]),
-      ]),
-      practiceBand: { backingNotes: false },
-    });
-
-    expect(plan.parts[0]?.exerciseRequest).toBeUndefined();
-    expect(plan.parts[0]?.rhythmRequest?.id).toBe(
-      "part-sequence-drums:empty-part",
-    );
-    expect(plan.parts[1]?.durationBeats).toBe(4);
-    expect(plan.parts[1]?.exerciseRequest).toBeUndefined();
-    expect(plan.parts[1]?.rhythmRequest?.id).toBe("rhythm");
-  });
-
-  it("uses the first looper and first rhythm by module order", () => {
+  it("plays every explicit Looper and Rhythm and suppresses same-type fallbacks", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([
         createPart("part", [
-          {
-            id: "rhythm-a",
-            rhythm: DEFAULT_RHYTHM_SELECTION,
-            type: "rhythm",
-          },
-          {
-            id: "rhythm-b",
-            rhythm: DEFAULT_RHYTHM_SELECTION,
-            type: "rhythm",
-          },
-          {
-            id: "exercise-a",
-            type: "exercise-looper",
-          },
-          {
-            id: "exercise-b",
-            type: "exercise-looper",
-          },
+          { id: "exercise-a", type: "exercise-looper" },
+          { id: "rhythm-a", rhythm: DEFAULT_RHYTHM_SELECTION, type: "rhythm" },
+          { id: "exercise-b", type: "exercise-looper" },
+          { id: "rhythm-b", rhythm: DEFAULT_RHYTHM_SELECTION, type: "rhythm" },
+          { id: "drone", type: "drone" },
         ]),
       ]),
     );
 
-    expect(plan.parts[0]?.rhythmRequest?.id).toBe("rhythm-a");
-    expect(plan.parts[0]?.exerciseRequest?.id).toBe("exercise-a");
-  });
-
-  it("keeps content signature stable when only tempo changes", () => {
-    const part = createPart("part", [
-      {
-        id: "rhythm",
-        rhythm: DEFAULT_RHYTHM_SELECTION,
-        type: "rhythm",
-      },
+    expect(
+      plan.parts[0]?.exerciseRequests.map((request) => request.id),
+    ).toEqual(["exercise-a", "exercise-b"]);
+    expect(plan.parts[0]?.rhythmRequests.map((request) => request.id)).toEqual([
+      "rhythm-a",
+      "rhythm-b",
     ]);
-    const slowPlan = createPartSequencePlaybackPlan({
-      ...createSession([part]),
-      tempoBpm: 60,
-    });
-    const fastPlan = createPartSequencePlaybackPlan({
+  });
+
+  it("supplies only the missing automatic lane", () => {
+    const rhythmOnly = createPart("rhythm-only", [
+      { id: "rhythm", rhythm: DEFAULT_RHYTHM_SELECTION, type: "rhythm" },
+    ]);
+    const looperOnly = createPart("looper-only", [
+      { id: "exercise", type: "exercise-looper" },
+    ]);
+    const plan = createPartSequencePlaybackPlan(
+      createSession([rhythmOnly, looperOnly]),
+    );
+
+    expect(plan.parts[0]?.exerciseRequests[0]?.id).toBe(
+      "part-sequence-looper:rhythm-only",
+    );
+    expect(plan.parts[0]?.rhythmRequests[0]?.id).toBe("rhythm");
+    expect(plan.parts[1]?.exerciseRequests[0]?.id).toBe("exercise");
+    expect(plan.parts[1]?.rhythmRequests[0]?.id).toBe(
+      "part-sequence-drums:looper-only",
+    );
+  });
+
+  it("deduplicates the metronome across layered Loopers", () => {
+    const plan = createPartSequencePlaybackPlan(
+      createSession([
+        createPart("part", [
+          { id: "exercise-a", metronomeEnabled: true, type: "exercise-looper" },
+          { id: "exercise-b", metronomeEnabled: true, type: "exercise-looper" },
+        ]),
+      ]),
+    );
+
+    expect(
+      plan.parts[0]?.exerciseRequests.map(
+        (request) => request.metronomeEnabled,
+      ),
+    ).toEqual([true, false]);
+  });
+
+  it("keeps content signatures stable for tempo-only and live Rhythm edits", () => {
+    const part = createPart("part", [
+      { id: "rhythm", rhythm: DEFAULT_RHYTHM_SELECTION, type: "rhythm" },
+    ]);
+    const base = createPartSequencePlaybackPlan(createSession([part]));
+    const faster = createPartSequencePlaybackPlan({
       ...createSession([part]),
       tempoBpm: 140,
     });
-
-    expect(slowPlan.contentSignature).toBe(fastPlan.contentSignature);
-    expect(slowPlan.signature).not.toBe(fastPlan.signature);
-  });
-
-  it("keeps the source signature stable when only Practice Band mutes change", () => {
-    const session = createSession([createPart("part", [])]);
-    const fullPlan = createPartSequencePlaybackPlan(session);
-    const quietPlan = createPartSequencePlaybackPlan({
-      ...session,
-      practiceBand: {
-        backingNotes: false,
-        drums: false,
-      },
-    });
-
-    expect(fullPlan.sourceSignature).toBe(quietPlan.sourceSignature);
-    expect(fullPlan.contentSignature).not.toBe(quietPlan.contentSignature);
-  });
-
-  it("keeps the source signature stable when Part musical content changes", () => {
-    const originalPlan = createPartSequencePlaybackPlan(
-      createSession([createPart("part", [])]),
-    );
-    const changedPlan = createPartSequencePlaybackPlan(
-      createSession([
-        {
-          ...createPart("part", []),
-          noteCollectionKey: "minor",
-          rootNote: "D",
-        },
-      ]),
-    );
-
-    expect(originalPlan.sourceSignature).toBe(changedPlan.sourceSignature);
-    expect(originalPlan.contentSignature).not.toBe(
-      changedPlan.contentSignature,
-    );
-  });
-
-  it("treats Rhythm timekeeper edits as live updates rather than reset changes", () => {
-    const part = createPart("part", [
-      {
-        id: "rhythm",
-        rhythm: DEFAULT_RHYTHM_SELECTION,
-        type: "rhythm",
-      },
-    ]);
-    const basePlan = createPartSequencePlaybackPlan(createSession([part]));
-    const changedPlan = createPartSequencePlaybackPlan(
+    const edited = createPartSequencePlaybackPlan(
       createSession([
         createPart("part", [
           {
@@ -367,40 +192,9 @@ describe("createPartSequencePlaybackPlan", () => {
       ]),
     );
 
-    expect(basePlan.contentSignature).toBe(changedPlan.contentSignature);
-    expect(basePlan.updateSignature).not.toBe(changedPlan.updateSignature);
-  });
-
-  it("uses Practice Band sound and octave for generated looper requests", () => {
-    const plan = createPartSequencePlaybackPlan({
-      ...createSession([createPart("part", [])]),
-      practiceBand: {
-        audioPresetId: "piano",
-        octaveOffset: 0,
-      },
-    });
-
-    expect(plan.parts[0]?.exerciseRequest?.presetId).toBe("piano");
-    expect(plan.parts[0]?.exerciseRequest?.events[0]?.midi).toBe(48);
-  });
-
-  it("does not apply Practice Band sound or octave to explicit loopers", () => {
-    const plan = createPartSequencePlaybackPlan({
-      ...createSession([
-        createPart("part", [
-          {
-            id: "exercise",
-            type: "exercise-looper",
-          },
-        ]),
-      ]),
-      practiceBand: {
-        audioPresetId: "piano",
-        octaveOffset: 0,
-      },
-    });
-
-    expect(plan.parts[0]?.exerciseRequest?.presetId).toBe("plucked-string");
-    expect(plan.parts[0]?.exerciseRequest?.events[0]?.midi).toBe(36);
+    expect(base.contentSignature).toBe(faster.contentSignature);
+    expect(base.signature).not.toBe(faster.signature);
+    expect(base.contentSignature).toBe(edited.contentSignature);
+    expect(base.updateSignature).not.toBe(edited.updateSignature);
   });
 });

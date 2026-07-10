@@ -30,7 +30,6 @@ import {
   type MusicPartConfig,
   type PartModuleCreationRequest,
   type PartModuleType,
-  type PracticeBandConfig,
   type RememberSessionMaterialCreationRequest,
   type RhythmPartModuleConfig,
   type SessionConfig,
@@ -68,8 +67,6 @@ export type RhythmSettingsPatch = Partial<
   Omit<RhythmPartModuleConfig, "id" | "type">
 >;
 
-export type PracticeBandSettingsPatch = Partial<PracticeBandConfig>;
-
 export interface DojoSettingsActions {
   addCustomFretboardTuning: (
     tuning: SavedFretboardTuningInput,
@@ -100,10 +97,6 @@ export interface SessionActions {
   cloneSession: (sessionId: string) => string | undefined;
   removeSession: (sessionId: string) => void;
   renameSession: (sessionId: string, name: string) => void;
-  updatePracticeBandSettings: (
-    sessionId: string,
-    patch: PracticeBandSettingsPatch,
-  ) => void;
   setSessionTempoBpm: (sessionId: string, tempoBpm: number) => void;
 }
 
@@ -136,6 +129,11 @@ export interface PartActions {
     sessionId: string,
     partId: string,
     noteCollectionKey: SettingValue<NoteCollectionKey>,
+  ) => void;
+  setPartLengthBeats: (
+    sessionId: string,
+    partId: string,
+    lengthBeats: number,
   ) => void;
 }
 

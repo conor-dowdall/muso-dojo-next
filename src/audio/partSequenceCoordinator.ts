@@ -52,12 +52,12 @@ export class PartSequenceCoordinator {
   constructor(
     private readonly transport: BeatTransportCoordinator = beatTransportCoordinator,
   ) {
-    this.transport.subscribeToManualControl((event) => {
+    this.transport.subscribeToManualControl(() => {
       if (!this.snapshot.playing) {
         return;
       }
 
-      this.stop({ stopPlayback: event.kind === "stop" });
+      this.stop({ stopPlayback: true });
     });
   }
 
@@ -212,10 +212,10 @@ export class PartSequenceCoordinator {
     this.emit();
 
     const result = await this.transport.startPart({
-      exercise: part.exerciseRequest,
+      exercises: part.exerciseRequests,
       handoff,
       originTime,
-      rhythm: part.rhythmRequest,
+      rhythms: part.rhythmRequests,
       source: "part-sequence",
       stopMissing: true,
     });
@@ -333,8 +333,8 @@ export class PartSequenceCoordinator {
     const revision = ++this.revision;
     this.plan = plan;
     this.transport.updatePartLive({
-      exercise: part.exerciseRequest,
-      rhythm: part.rhythmRequest,
+      exercises: part.exerciseRequests,
+      rhythms: part.rhythmRequests,
     });
 
     const durationSeconds =

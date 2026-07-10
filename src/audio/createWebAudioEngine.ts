@@ -42,6 +42,7 @@ import {
 const DEFAULT_AUDIO_USE = "preview" satisfies AudioUse;
 const MIN_PLAYBACK_GROUP_GAIN = 0.0001;
 const PLAYBACK_GROUP_CLEANUP_SECONDS = 0.25;
+const MASTER_OUTPUT_GAIN = 0.82;
 
 interface PlaybackGroup {
   cancelAtTime?: number;
@@ -104,6 +105,7 @@ function stopDrone(
 
 export function createWebAudioEngine(): AudioEngine {
   const stopAllListeners = new Set<() => void>();
+  const playbackActivityListeners = new Set<() => void>();
   const playbackGroups = new Map<PlaybackGroupHandle, PlaybackGroup>();
   const activeVoices = new Map<AudioVoiceHandle, ActiveVoice>();
   const voiceEndListeners = new Map<AudioVoiceHandle, Set<() => void>>();
@@ -113,6 +115,53 @@ export function createWebAudioEngine(): AudioEngine {
   let nextGroupId = 0;
   let nextVoiceId = 0;
   let nextDroneId = 0;
+  let playbackActive = false;
+  let masterContext: AudioContext | undefined;
+  let masterInput: GainNode | undefined;
+
+  const hasActivePlayback = () =>
+    activeDrones.size > 0 ||
+    activeVoices.size > 0 ||
+    Array.from(playbackGroups.values()).some(
+      (group) => group.hits.size > 0 || group.voices.size > 0,
+    );
+
+  const emitPlaybackActivityIfChanged = () => {
+    const nextPlaybackActive = hasActivePlayback();
+    if (nextPlaybackActive === playbackActive) {
+      return;
+    }
+
+    playbackActive = nextPlaybackActive;
+    playbackActivityListeners.forEach((listener) => listener());
+  };
+
+  const getMasterInput = (audioContext: AudioContext): AudioNode => {
+    if (masterContext === audioContext && masterInput) {
+      return masterInput;
+    }
+
+    masterInput?.disconnect();
+    const input = audioContext.createGain();
+    input.gain.setValueAtTime(MASTER_OUTPUT_GAIN, audioContext.currentTime);
+    const compressor = audioContext.createDynamicsCompressor?.();
+
+    if (compressor) {
+      compressor.threshold.setValueAtTime(-3, audioContext.currentTime);
+      compressor.knee.setValueAtTime(0, audioContext.currentTime);
+      compressor.ratio.setValueAtTime(20, audioContext.currentTime);
+      compressor.attack.setValueAtTime(0.003, audioContext.currentTime);
+      compressor.release.setValueAtTime(0.12, audioContext.currentTime);
+      input.connect(compressor);
+      compressor.connect(audioContext.destination);
+    } else {
+      input.connect(audioContext.destination);
+    }
+
+    masterContext = audioContext;
+    masterInput = input;
+    return input;
+  };
 
   const getAudioContext = async ({ resume }: { resume: boolean }) => {
     const AudioContextConstructor = getAudioContextConstructor();
@@ -199,6 +248,7 @@ export function createWebAudioEngine(): AudioEngine {
 
     activeVoice.disconnect();
     emitVoiceEnd(handle);
+    emitPlaybackActivityIfChanged();
   };
 
   const stopVoice = (
@@ -230,6 +280,7 @@ export function createWebAudioEngine(): AudioEngine {
 
     clearPlaybackGroupCancelTimer(group);
     playbackGroups.delete(handle);
+    emitPlaybackActivityIfChanged();
     if (group.output) {
       const output = group.output;
 
@@ -311,7 +362,7 @@ export function createWebAudioEngine(): AudioEngine {
       context: audioContext,
       destination: group
         ? playbackGroups.get(group)?.output
-        : audioContext.destination,
+        : getMasterInput(audioContext),
       durationSeconds,
       midiNote,
       onEnded: () => finishVoice(handle),
@@ -333,6 +384,7 @@ export function createWebAudioEngine(): AudioEngine {
     if (group) {
       playbackGroups.get(group)?.voices.add(handle);
     }
+    emitPlaybackActivityIfChanged();
 
     return handle;
   };
@@ -436,11 +488,12 @@ export function createWebAudioEngine(): AudioEngine {
     },
     createPlaybackGroup: () => {
       const handle = createPlaybackGroupHandle((nextGroupId += 1));
+      const destination = context ? getMasterInput(context) : undefined;
       const output = context?.createGain();
 
-      if (context && output) {
+      if (context && output && destination) {
         output.gain.setValueAtTime(1, context.currentTime);
-        output.connect(context.destination);
+        output.connect(destination);
       }
       playbackGroups.set(handle, {
         hits: new Set(),
@@ -462,12 +515,7 @@ export function createWebAudioEngine(): AudioEngine {
         performanceTime: outputTimestamp?.performanceTime ?? getNow(),
       };
     },
-    hasActivePlayback: () =>
-      activeDrones.size > 0 ||
-      activeVoices.size > 0 ||
-      Array.from(playbackGroups.values()).some(
-        (group) => group.hits.size > 0 || group.voices.size > 0,
-      ),
+    hasActivePlayback,
     isSupported: () => getAudioContextConstructor() !== undefined,
     prime: async () => {
       const audioContext = await getReadyAudioContext();
@@ -558,6 +606,7 @@ export function createWebAudioEngine(): AudioEngine {
         onEnded: () => {
           if (hitRef.current) {
             group.hits.delete(hitRef.current);
+            emitPlaybackActivityIfChanged();
           }
         },
         sampleId: request.sampleId,
@@ -570,6 +619,7 @@ export function createWebAudioEngine(): AudioEngine {
 
       hitRef.current = hit;
       group.hits.add(hit);
+      emitPlaybackActivityIfChanged();
       applyScheduledGroupCancelToHit(group, hit);
       return true;
     },
@@ -613,6 +663,7 @@ export function createWebAudioEngine(): AudioEngine {
         onEnded: () => {
           if (hitRef.current) {
             group.hits.delete(hitRef.current);
+            emitPlaybackActivityIfChanged();
           }
         },
         startTime: request.startTime,
@@ -623,6 +674,7 @@ export function createWebAudioEngine(): AudioEngine {
 
       hitRef.current = hit;
       group.hits.add(hit);
+      emitPlaybackActivityIfChanged();
       applyScheduledGroupCancelToHit(group, hit);
       return true;
     },
@@ -670,6 +722,10 @@ export function createWebAudioEngine(): AudioEngine {
       return () => {
         stopAllListeners.delete(listener);
       };
+    },
+    subscribeToPlaybackActivity: (listener: () => void) => {
+      playbackActivityListeners.add(listener);
+      return () => playbackActivityListeners.delete(listener);
     },
     subscribeToVoiceEnd: (handle: AudioVoiceHandle, listener: () => void) => {
       // Handles are registered in activeVoices before they are returned. If a
@@ -727,6 +783,7 @@ export function createWebAudioEngine(): AudioEngine {
           buffer: loaded.buffer,
           concertPitchHz,
           context: audioContext,
+          destination: getMasterInput(audioContext),
           midiNote: note.midiNote,
           pack: loaded.pack,
           preset,
@@ -750,6 +807,7 @@ export function createWebAudioEngine(): AudioEngine {
         packId: preset.samplePackId,
         preset,
       });
+      emitPlaybackActivityIfChanged();
 
       return handle;
     },
@@ -762,6 +820,7 @@ export function createWebAudioEngine(): AudioEngine {
 
       stopDrone(drone);
       activeDrones.delete(handle);
+      emitPlaybackActivityIfChanged();
     },
     updateDrone: (handle: DroneHandle, request: DroneRequest) => {
       const drone = activeDrones.get(handle);
@@ -779,6 +838,7 @@ export function createWebAudioEngine(): AudioEngine {
       if (!loaded) {
         stopDrone(drone, 0.05);
         activeDrones.delete(handle);
+        emitPlaybackActivityIfChanged();
         return false;
       }
 
@@ -790,6 +850,7 @@ export function createWebAudioEngine(): AudioEngine {
       ) {
         stopDrone(drone, 0.05);
         activeDrones.delete(handle);
+        emitPlaybackActivityIfChanged();
         return false;
       }
 
@@ -825,6 +886,7 @@ export function createWebAudioEngine(): AudioEngine {
           buffer: loaded.buffer,
           concertPitchHz,
           context: drone.context,
+          destination: getMasterInput(drone.context),
           midiNote: note.midiNote,
           pack: loaded.pack,
           preset,
@@ -840,6 +902,7 @@ export function createWebAudioEngine(): AudioEngine {
 
       if (drone.notes.size === 0) {
         activeDrones.delete(handle);
+        emitPlaybackActivityIfChanged();
         return false;
       }
 
@@ -865,6 +928,7 @@ export function createWebAudioEngine(): AudioEngine {
         stopDrone(drone, DRONE_STOP_RELEASE_SECONDS),
       );
       activeDrones.clear();
+      emitPlaybackActivityIfChanged();
       stopAllListeners.forEach((listener) => listener());
     },
   };

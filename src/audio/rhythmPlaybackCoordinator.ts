@@ -3,7 +3,6 @@ import {
   type RhythmHit,
   type RhythmPattern,
 } from "@/data/rhythmPresets";
-import { AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS } from "./audioTimingConfig";
 import {
   createLookaheadScheduler,
   type LookaheadScheduler,
@@ -15,7 +14,6 @@ import { type PlaybackOwner } from "./playbackOwnership";
 import { type AudioEngine, type PlaybackGroupHandle } from "./types";
 
 const START_LOOKAHEAD_SECONDS = 0.08;
-const HANDOFF_COMMIT_LEAD_SECONDS = AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS;
 const DEFAULT_RHYTHM_HIT_VELOCITY = 0.72;
 const RHYTHM_PLAYBACK_GAIN = 1.18;
 
@@ -25,14 +23,26 @@ export interface RhythmPlaybackRequest {
   tempoBpm: number;
 }
 
+export interface RhythmPlaybackInstanceSnapshot {
+  activeId: string;
+  cycleDuration: number;
+  originTime: number;
+  owner: PlaybackOwner;
+  playing: true;
+  tempoBpm: number;
+}
+
 export interface RhythmPlaybackSnapshot {
   activeId?: string;
   cycleDuration?: number;
   originTime?: number;
   owner?: PlaybackOwner;
   pendingId?: string;
+  pendingIds: readonly string[];
+  pendingOwners?: Readonly<Record<string, PlaybackOwner>>;
   pendingOwner?: PlaybackOwner;
   pendingOriginTime?: number;
+  playbacks: Readonly<Record<string, RhythmPlaybackInstanceSnapshot>>;
   playing: boolean;
   tempoBpm?: number;
 }
@@ -52,20 +62,15 @@ interface ActiveRhythmPlayback {
   group: PlaybackGroupHandle;
   request: RhythmPlaybackRequest;
   scheduler: LookaheadScheduler;
-  snapshot: RhythmPlaybackSnapshot;
+  snapshot: RhythmPlaybackInstanceSnapshot;
+  stopTimer?: ReturnType<typeof globalThis.setTimeout>;
 }
 
-interface PendingRhythmHandoff {
-  playback: ActiveRhythmPlayback;
+interface PendingRhythmStart {
+  originTime?: number;
+  owner: PlaybackOwner;
+  request: RhythmPlaybackRequest;
   revision: number;
-  snapshot: RhythmPlaybackSnapshot;
-  timer: ReturnType<typeof globalThis.setTimeout>;
-}
-
-interface PendingRhythmStop {
-  active: ActiveRhythmPlayback;
-  atTime: number;
-  timer: ReturnType<typeof globalThis.setTimeout>;
 }
 
 export type RhythmPlaybackAudioEngine = Pick<
@@ -84,6 +89,8 @@ export type RhythmSchedulerFactory = (
 ) => LookaheadScheduler;
 
 const idleSnapshot: RhythmPlaybackSnapshot = {
+  pendingIds: [],
+  playbacks: {},
   playing: false,
 };
 
@@ -100,19 +107,15 @@ function getCycleDurationSeconds(
 
 function applySwing(atTicks: number, pattern: RhythmPattern) {
   const swing = pattern.swing;
-
   if (!swing) {
     return atTicks;
   }
 
   const pairTicks = swing.unitTicks * 2;
   const positionInPair = atTicks % pairTicks;
-
-  if (positionInPair !== swing.unitTicks) {
-    return atTicks;
-  }
-
-  return atTicks + pairTicks * swing.ratio - swing.unitTicks;
+  return positionInPair === swing.unitTicks
+    ? atTicks + pairTicks * swing.ratio - swing.unitTicks
+    : atTicks;
 }
 
 function toSchedulerEvents(
@@ -129,30 +132,14 @@ function toSchedulerEvents(
       return {
         duration: Math.max(0.001, cycleDurationSeconds - offset),
         offset,
-        payload: {
-          ...hit,
-          scheduledTicks,
-        },
+        payload: { ...hit, scheduledTicks },
       };
     })
-    .sort((left, right) => {
-      if (left.offset !== right.offset) {
-        return left.offset - right.offset;
-      }
-
-      return left.payload.sampleId.localeCompare(right.payload.sampleId);
-    });
-}
-
-function rhythmPlaybackRestartRequestsAreEqual(
-  left: RhythmPlaybackRequest,
-  right: RhythmPlaybackRequest,
-) {
-  return (
-    left.id === right.id &&
-    normalizeTempo(left.tempoBpm) === normalizeTempo(right.tempoBpm) &&
-    left.pattern === right.pattern
-  );
+    .sort((left, right) =>
+      left.offset !== right.offset
+        ? left.offset - right.offset
+        : left.payload.sampleId.localeCompare(right.payload.sampleId),
+    );
 }
 
 function rhythmPatternCanPlay(pattern: RhythmPattern) {
@@ -167,22 +154,12 @@ function getRhythmPlaybackVelocity(velocity?: number) {
   return (velocity ?? DEFAULT_RHYTHM_HIT_VELOCITY) * RHYTHM_PLAYBACK_GAIN;
 }
 
-function withoutPendingStart(
-  snapshot: RhythmPlaybackSnapshot,
-): RhythmPlaybackSnapshot {
-  const nextSnapshot = { ...snapshot };
-  delete nextSnapshot.pendingId;
-  delete nextSnapshot.pendingOwner;
-  delete nextSnapshot.pendingOriginTime;
-  return nextSnapshot;
-}
-
 export function isRhythmPlaybackActive(
   snapshot: RhythmPlaybackSnapshot,
   id: string,
 ) {
   return (
-    snapshot.pendingId === id || (snapshot.playing && snapshot.activeId === id)
+    snapshot.playbacks[id] !== undefined || snapshot.pendingIds.includes(id)
   );
 }
 
@@ -190,25 +167,20 @@ export function getRhythmPlaybackOwner(
   snapshot: RhythmPlaybackSnapshot,
   id: string,
 ) {
-  if (snapshot.pendingId === id) {
-    return snapshot.pendingOwner;
-  }
-
-  return snapshot.playing && snapshot.activeId === id
-    ? snapshot.owner
-    : undefined;
+  return (
+    snapshot.playbacks[id]?.owner ??
+    snapshot.pendingOwners?.[id] ??
+    (snapshot.pendingId === id ? snapshot.pendingOwner : undefined)
+  );
 }
 
 export class RhythmPlaybackCoordinator {
-  private active: ActiveRhythmPlayback | undefined;
+  private active = new Map<string, ActiveRhythmPlayback>();
   private listeners = new Set<() => void>();
-  private pendingHandoff: PendingRhythmHandoff | undefined;
-  private pendingStop: PendingRhythmStop | undefined;
-  private pendingStartId: string | undefined;
-  private pendingStartOwner: PlaybackOwner | undefined;
-  private pendingStartRequest: RhythmPlaybackRequest | undefined;
+  private pending = new Map<string, PendingRhythmStart>();
+  private revisions = new Map<string, number>();
   private snapshot: RhythmPlaybackSnapshot = idleSnapshot;
-  private startRevision = 0;
+  private latestId: string | undefined;
 
   constructor(
     private readonly audioEngine: RhythmPlaybackAudioEngine = musoAudioEngine,
@@ -217,30 +189,78 @@ export class RhythmPlaybackCoordinator {
     this.audioEngine.subscribeToStopAll(() => this.reset());
   }
 
+  private nextRevision(id: string) {
+    const revision = (this.revisions.get(id) ?? 0) + 1;
+    this.revisions.set(id, revision);
+    return revision;
+  }
+
+  private rebuildSnapshot() {
+    const playbacks = Object.fromEntries(
+      [...this.active].map(([id, playback]) => [id, playback.snapshot]),
+    );
+    const pendingEntries = [...this.pending.values()];
+    const latestActive = this.latestId
+      ? this.active.get(this.latestId)?.snapshot
+      : undefined;
+    const latestPending = this.latestId
+      ? this.pending.get(this.latestId)
+      : pendingEntries.at(-1);
+
+    this.snapshot = {
+      ...(latestActive ?? {}),
+      ...(latestPending
+        ? {
+            pendingId: latestPending.request.id,
+            pendingOwner: latestPending.owner,
+            ...(latestPending.originTime === undefined
+              ? {}
+              : { pendingOriginTime: latestPending.originTime }),
+          }
+        : {}),
+      pendingIds: pendingEntries.map((entry) => entry.request.id),
+      pendingOwners: Object.fromEntries(
+        pendingEntries.map((entry) => [entry.request.id, entry.owner]),
+      ),
+      playbacks,
+      playing: this.active.size > 0,
+    };
+  }
+
   private emit() {
+    this.rebuildSnapshot();
     this.listeners.forEach((listener) => listener());
   }
 
   private reset() {
-    this.cancelPendingHandoff();
-    this.cancelPendingStopTimer();
-    if (this.active) {
-      this.stopActivePlayback(this.active);
-    }
-    this.active = undefined;
-    this.pendingStartId = undefined;
-    this.pendingStartOwner = undefined;
-    this.pendingStartRequest = undefined;
-    this.snapshot = idleSnapshot;
-    this.startRevision += 1;
+    this.pending.clear();
+    this.active.forEach((playback) => {
+      playback.scheduler.stop();
+      if (playback.stopTimer) {
+        globalThis.clearTimeout(playback.stopTimer);
+      }
+    });
+    this.active.clear();
+    this.revisions.forEach((_revision, id) => this.nextRevision(id));
+    this.latestId = undefined;
     this.emit();
   }
 
   getSnapshot = () => this.snapshot;
 
-  getActiveRequest = () => this.active?.request;
+  getActiveRequest = (id?: string) =>
+    this.active.get(id ?? this.latestId ?? "")?.request;
 
-  getPendingRequest = () => this.pendingStartRequest;
+  getPendingRequest = (id?: string) =>
+    this.pending.get(id ?? this.latestId ?? "")?.request;
+
+  getActiveIds = (owner?: PlaybackOwner) =>
+    [...this.active]
+      .filter(
+        ([, playback]) =>
+          owner === undefined || playback.snapshot.owner === owner,
+      )
+      .map(([id]) => id);
 
   getCurrentTime = () => this.audioEngine.getCurrentTime();
 
@@ -251,154 +271,58 @@ export class RhythmPlaybackCoordinator {
     return () => this.listeners.delete(listener);
   };
 
-  private cancelPendingStopTimer() {
-    const pendingStop = this.pendingStop;
+  private finishPlayback(id: string, playback: ActiveRhythmPlayback) {
+    playback.scheduler.stop();
 
-    if (!pendingStop) {
+    if (this.active.get(id) !== playback) {
       return;
     }
 
-    const currentTime = this.audioEngine.getCurrentTime();
-
-    if (currentTime !== undefined && currentTime >= pendingStop.atTime) {
-      globalThis.clearTimeout(pendingStop.timer);
-      this.commitPendingStop(pendingStop.active);
-      return;
+    this.active.delete(id);
+    if (this.latestId === id) {
+      this.latestId = [...this.active.keys()].at(-1);
     }
-
-    this.audioEngine.clearPlaybackGroupCancellation?.(pendingStop.active.group);
-    globalThis.clearTimeout(pendingStop.timer);
-    this.pendingStop = undefined;
-  }
-
-  private commitPendingStop(active: ActiveRhythmPlayback) {
-    if (this.pendingStop?.active !== active) {
-      return;
-    }
-
-    this.pendingStop = undefined;
-
-    if (this.active !== active) {
-      return;
-    }
-
-    active.scheduler.stop();
-    this.active = undefined;
-    this.snapshot = this.pendingStartId
-      ? {
-          ...idleSnapshot,
-          pendingId: this.pendingStartId,
-          ...(this.pendingStartOwner
-            ? { pendingOwner: this.pendingStartOwner }
-            : {}),
-        }
-      : idleSnapshot;
     this.emit();
   }
 
-  private scheduleActivePlaybackStop(
-    active: ActiveRhythmPlayback,
-    options: { atTime: number },
+  private stopPlayback(
+    id: string,
+    playback: ActiveRhythmPlayback,
+    atTime?: number,
   ) {
-    const currentTime = this.audioEngine.getCurrentTime();
-
-    if (
-      currentTime === undefined ||
-      options.atTime <= currentTime + HANDOFF_COMMIT_LEAD_SECONDS
-    ) {
-      this.stopActivePlayback(active);
-      return;
+    if (playback.stopTimer) {
+      globalThis.clearTimeout(playback.stopTimer);
+      playback.stopTimer = undefined;
     }
 
-    this.cancelPendingStopTimer();
-    this.audioEngine.cancelPlaybackGroup(active.group, options);
+    if (atTime !== undefined) {
+      this.audioEngine.cancelPlaybackGroup(playback.group, { atTime });
+      const currentTime = this.audioEngine.getCurrentTime();
+      if (currentTime !== undefined && atTime > currentTime) {
+        playback.stopTimer = globalThis.setTimeout(
+          () => this.finishPlayback(id, playback),
+          Math.max(0, (atTime - currentTime) * 1000),
+        );
+        return;
+      }
+    }
 
-    this.pendingStop = {
-      active,
-      atTime: options.atTime,
-      timer: globalThis.setTimeout(
-        () => this.commitPendingStop(active),
-        Math.max(0, (options.atTime - currentTime) * 1000),
-      ),
-    };
+    this.audioEngine.cancelPlaybackGroup(playback.group);
+    this.finishPlayback(id, playback);
   }
 
-  private stopActivePlayback(
-    active: ActiveRhythmPlayback,
-    options?: { atTime?: number },
-  ) {
-    if (options?.atTime !== undefined) {
-      this.scheduleActivePlaybackStop(active, {
-        atTime: options.atTime,
-      });
-      return;
+  cancelPendingStart(id?: string) {
+    const ids = id === undefined ? [...this.pending.keys()] : [id];
+    let changed = false;
+    ids.forEach((pendingId) => {
+      if (this.pending.delete(pendingId)) {
+        this.nextRevision(pendingId);
+        changed = true;
+      }
+    });
+    if (changed) {
+      this.emit();
     }
-
-    this.cancelPendingStopTimer();
-    active.scheduler.stop();
-    this.audioEngine.cancelPlaybackGroup(active.group);
-  }
-
-  private cancelPendingHandoff() {
-    const pendingHandoff = this.pendingHandoff;
-
-    if (!pendingHandoff) {
-      return;
-    }
-
-    const currentTime = this.audioEngine.getCurrentTime();
-    const originTime = pendingHandoff.snapshot.originTime;
-
-    if (
-      currentTime !== undefined &&
-      originTime !== undefined &&
-      currentTime >= originTime
-    ) {
-      globalThis.clearTimeout(pendingHandoff.timer);
-      this.commitPendingHandoff(pendingHandoff.revision);
-      return;
-    }
-
-    globalThis.clearTimeout(pendingHandoff.timer);
-    this.stopActivePlayback(pendingHandoff.playback);
-    if (this.active) {
-      this.audioEngine.clearPlaybackGroupCancellation?.(this.active.group);
-    }
-    this.pendingHandoff = undefined;
-  }
-
-  private commitPendingHandoff(revision: number) {
-    const pendingHandoff = this.pendingHandoff;
-
-    if (!pendingHandoff || pendingHandoff.revision !== revision) {
-      return;
-    }
-
-    if (this.active) {
-      this.active.scheduler.stop();
-    }
-
-    this.active = pendingHandoff.playback;
-    this.pendingHandoff = undefined;
-    this.pendingStartId = undefined;
-    this.pendingStartOwner = undefined;
-    this.pendingStartRequest = undefined;
-    this.snapshot = pendingHandoff.snapshot;
-    this.emit();
-  }
-
-  cancelPendingStart() {
-    if (this.pendingStartId === undefined) {
-      return;
-    }
-
-    this.cancelPendingHandoff();
-    this.pendingStartId = undefined;
-    this.pendingStartOwner = undefined;
-    this.pendingStartRequest = undefined;
-    this.startRevision += 1;
-    this.snapshot = withoutPendingStart(this.snapshot);
-    this.emit();
   }
 
   private createHitScheduler({
@@ -428,38 +352,17 @@ export class RhythmPlaybackCoordinator {
     request: RhythmPlaybackRequest,
     options: RhythmPlaybackStartOptions = {},
   ) {
-    if (
-      options.originTime === undefined &&
-      this.active &&
-      rhythmPlaybackRestartRequestsAreEqual(this.active.request, request)
-    ) {
-      const owner = options.owner ?? "manual";
-      if (this.active.snapshot.owner !== owner) {
-        this.active.snapshot = {
-          ...this.active.snapshot,
-          owner,
-        };
-        this.snapshot = this.active.snapshot;
-        this.emit();
-      }
-      return true;
-    }
-
-    const revision = ++this.startRevision;
-    this.cancelPendingHandoff();
-    this.cancelPendingStopTimer();
-    this.pendingStartId = request.id;
-    this.pendingStartOwner = options.owner ?? "manual";
-    this.pendingStartRequest = request;
-    this.snapshot = {
-      ...this.snapshot,
-      pendingId: request.id,
-      pendingOwner: options.owner ?? "manual",
-      ...(options.originTime === undefined
-        ? {}
-        : { pendingOriginTime: options.originTime }),
-    };
+    const revision = this.nextRevision(request.id);
+    const owner = options.owner ?? "manual";
+    this.pending.set(request.id, {
+      originTime: options.originTime,
+      owner,
+      request,
+      revision,
+    });
+    this.latestId = request.id;
     this.emit();
+
     const prepared =
       options.prepared === true ? true : await this.audioEngine.prime();
     const currentTime = this.audioEngine.getCurrentTime();
@@ -467,23 +370,17 @@ export class RhythmPlaybackCoordinator {
     if (
       !prepared ||
       currentTime === undefined ||
-      revision !== this.startRevision
+      this.revisions.get(request.id) !== revision
     ) {
-      if (revision === this.startRevision) {
-        this.pendingStartId = undefined;
-        this.pendingStartOwner = undefined;
-        this.pendingStartRequest = undefined;
-        this.snapshot = withoutPendingStart(this.snapshot);
+      if (this.pending.get(request.id)?.revision === revision) {
+        this.pending.delete(request.id);
         this.emit();
       }
       return false;
     }
 
     if (!rhythmPatternCanPlay(request.pattern)) {
-      this.pendingStartId = undefined;
-      this.pendingStartOwner = undefined;
-      this.pendingStartRequest = undefined;
-      this.snapshot = withoutPendingStart(this.snapshot);
+      this.pending.delete(request.id);
       this.emit();
       return false;
     }
@@ -491,19 +388,13 @@ export class RhythmPlaybackCoordinator {
     const secondsPerBeat = 60 / normalizeTempo(request.tempoBpm);
     const originTime =
       options.originTime ?? currentTime + START_LOOKAHEAD_SECONDS;
-    const cycleDuration = getCycleDurationSeconds(
-      request.pattern,
-      secondsPerBeat,
-    );
-    const previous = this.active;
-
-    const shouldHandoff =
-      options.handoff === true &&
-      previous !== undefined &&
-      originTime > currentTime + HANDOFF_COMMIT_LEAD_SECONDS;
-
-    if (previous && !shouldHandoff) {
-      this.stopActivePlayback(previous);
+    const previous = this.active.get(request.id);
+    if (previous) {
+      this.stopPlayback(
+        request.id,
+        previous,
+        options.handoff && originTime > currentTime ? originTime : undefined,
+      );
     }
 
     const group = this.audioEngine.createPlaybackGroup();
@@ -512,159 +403,52 @@ export class RhythmPlaybackCoordinator {
       request,
       secondsPerBeat,
     });
-    const snapshot: RhythmPlaybackSnapshot = {
+    const snapshot: RhythmPlaybackInstanceSnapshot = {
       activeId: request.id,
-      cycleDuration,
+      cycleDuration: getCycleDurationSeconds(request.pattern, secondsPerBeat),
       originTime,
-      owner: options.owner ?? "manual",
+      owner,
       playing: true,
       tempoBpm: normalizeTempo(request.tempoBpm),
     };
-
-    const nextActive = {
+    const playback: ActiveRhythmPlayback = {
       group,
       request,
       scheduler,
       snapshot,
     };
+
     scheduler.start(originTime);
-    if (shouldHandoff) {
-      // Schedule the audible boundary on the audio clock now. The timer below
-      // is deliberately limited to state ownership and may run late on a busy
-      // or low-powered device without allowing both Parts to sound together.
-      this.audioEngine.cancelPlaybackGroup(previous.group, {
-        atTime: originTime,
-      });
-      const commitDelayMilliseconds = Math.max(
-        0,
-        (originTime - currentTime - HANDOFF_COMMIT_LEAD_SECONDS) * 1000,
-      );
-
-      this.pendingHandoff = {
-        playback: nextActive,
-        revision,
-        snapshot,
-        timer: globalThis.setTimeout(
-          () => this.commitPendingHandoff(revision),
-          commitDelayMilliseconds,
-        ),
-      };
-      this.snapshot = {
-        ...previous.snapshot,
-        pendingId: request.id,
-        pendingOwner: options.owner ?? "manual",
-        pendingOriginTime: originTime,
-      };
-      this.emit();
-      return true;
-    }
-
-    this.active = nextActive;
-    this.pendingStartId = undefined;
-    this.pendingStartOwner = undefined;
-    this.pendingStartRequest = undefined;
-    this.snapshot = snapshot;
-    this.emit();
-    return true;
-  }
-
-  setPattern(id: string, pattern: RhythmPattern) {
-    const active = this.active;
-
-    if (!active || active.snapshot.activeId !== id) {
-      return false;
-    }
-
-    if (active.request.pattern === pattern) {
-      return true;
-    }
-
-    if (!rhythmPatternCanPlay(pattern)) {
-      return false;
-    }
-
-    const { originTime } = active.snapshot;
-
-    if (originTime === undefined) {
-      return false;
-    }
-
-    const tempoBpm = normalizeTempo(active.request.tempoBpm);
-    const secondsPerBeat = 60 / tempoBpm;
-    const nextRequest = {
-      ...active.request,
-      pattern,
-      tempoBpm,
-    };
-    const nextGroup = this.audioEngine.createPlaybackGroup();
-    const nextScheduler = this.createHitScheduler({
-      group: nextGroup,
-      request: nextRequest,
-      secondsPerBeat,
-    });
-
-    active.scheduler.stop();
-    this.audioEngine.cancelPlaybackGroup(active.group);
-    active.group = nextGroup;
-    active.scheduler = nextScheduler;
-    active.request = nextRequest;
-    active.snapshot = {
-      ...active.snapshot,
-      cycleDuration: getCycleDurationSeconds(pattern, secondsPerBeat),
-      tempoBpm,
-    };
-    this.snapshot = active.snapshot;
-    nextScheduler.start(originTime);
+    this.pending.delete(request.id);
+    this.active.set(request.id, playback);
     this.emit();
     return true;
   }
 
   stop(id?: string, options?: { atTime?: number }) {
-    const pendingHandoff = this.pendingHandoff;
-    const stopsActive =
-      this.active !== undefined &&
-      (id === undefined || id === this.snapshot.activeId);
-    const stopsPending =
-      this.pendingStartId !== undefined &&
-      (id === undefined || id === this.pendingStartId);
-
-    if (!stopsActive && !stopsPending) {
-      return;
-    }
-
-    if (stopsPending) {
-      this.cancelPendingHandoff();
-      this.pendingStartId = undefined;
-      this.pendingStartOwner = undefined;
-      this.pendingStartRequest = undefined;
-      this.startRevision += 1;
-    } else if (stopsActive && pendingHandoff) {
-      this.cancelPendingHandoff();
-      this.pendingStartId = undefined;
-      this.pendingStartOwner = undefined;
-      this.pendingStartRequest = undefined;
-      this.startRevision += 1;
-    }
-
-    if (stopsActive && this.active) {
-      this.stopActivePlayback(this.active, options);
-      if (options?.atTime === undefined) {
-        this.active = undefined;
-        this.snapshot = this.pendingStartId
-          ? {
-              ...idleSnapshot,
-              pendingId: this.pendingStartId,
-              ...(this.pendingStartOwner
-                ? { pendingOwner: this.pendingStartOwner }
-                : {}),
-            }
-          : idleSnapshot;
+    const ids = id === undefined ? [...this.active.keys()] : [id];
+    this.cancelPendingStart(id);
+    ids.forEach((activeId) => {
+      const playback = this.active.get(activeId);
+      if (playback) {
+        this.stopPlayback(activeId, playback, options?.atTime);
       }
-    } else if (stopsPending) {
-      this.snapshot = withoutPendingStart(this.snapshot);
+    });
+  }
+
+  setPattern(id: string, pattern: RhythmPattern) {
+    const playback = this.active.get(id);
+    if (!playback || playback.request.pattern === pattern) {
+      return false;
     }
 
-    this.emit();
+    const request = { ...playback.request, pattern };
+    void this.start(request, {
+      handoff: true,
+      originTime: playback.snapshot.originTime,
+      owner: playback.snapshot.owner,
+    });
+    return true;
   }
 }
 

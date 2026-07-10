@@ -73,6 +73,7 @@ describe("createChordProgressionParts", () => {
     ]);
     expect(parts[6]).toMatchObject({
       durationInBars: 0.5,
+      lengthBeats: 2,
       rootNote: "C",
     });
     expect(parts[6]?.modules[0]).toMatchObject({
@@ -103,6 +104,7 @@ describe("createChordProgressionParts", () => {
       },
       type: "rhythm",
     });
+    expect(parts[8]?.lengthBeats).toBe(4);
     expect(parts[8]).not.toHaveProperty("durationInBars");
   });
 
@@ -235,6 +237,10 @@ describe("createChordProgressionParts", () => {
     expect(aSectionParts.every((part) => part.durationInBars === 0.5)).toBe(
       true,
     );
+    expect(aSectionParts.every((part) => part.lengthBeats === 2)).toBe(true);
+    expect(
+      aSectionParts.every((part) => part.automaticRhythm === "swing"),
+    ).toBe(true);
 
     expect(bridgeParts).toHaveLength(8);
     expect(bridgeParts.map((part) => part.rootNote)).toEqual([
@@ -248,6 +254,31 @@ describe("createChordProgressionParts", () => {
       "G",
     ]);
     expect(bridgeParts.every((part) => part.durationInBars === undefined)).toBe(
+      true,
+    );
+    expect(bridgeParts.every((part) => part.lengthBeats === 4)).toBe(true);
+  });
+
+  it("authors Swing for Jazz and Blues and Standard rhythm elsewhere", () => {
+    const jazz = createChordProgressionParts({
+      rootNote: "C",
+      progressionKey: "majorTwoFiveOne",
+      moduleRequests: [],
+    });
+    const blues = createChordProgressionParts({
+      rootNote: "C",
+      progressionKey: "twelveBarBlues",
+      moduleRequests: [],
+    });
+    const common = createChordProgressionParts({
+      rootNote: "C",
+      progressionKey: "oneOneFiveFive",
+      moduleRequests: [],
+    });
+
+    expect(jazz.every((part) => part.automaticRhythm === "swing")).toBe(true);
+    expect(blues.every((part) => part.automaticRhythm === "swing")).toBe(true);
+    expect(common.every((part) => part.automaticRhythm === "standard")).toBe(
       true,
     );
   });

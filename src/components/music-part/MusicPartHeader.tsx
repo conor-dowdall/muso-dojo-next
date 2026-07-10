@@ -17,7 +17,7 @@ import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 import { RootNotePicker } from "@/components/music-theory/RootNotePicker";
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
 import styles from "./MusicPartHeader.module.css";
-import { Plus } from "lucide-react";
+import { Play, Plus, Square } from "lucide-react";
 import { Heading } from "@/components/ui/typography/Heading";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { MusicPartMenuDialog } from "./MusicPartMenuDialog";
@@ -41,7 +41,10 @@ export function MusicPartHeader({
 
   const { rootNote, noteCollectionKey } = musicPart;
   const hasPartMenu =
-    !isPerformanceMode && Boolean(musicPart.clonePart || musicPart.removePart);
+    !isPerformanceMode &&
+    Boolean(
+      musicPart.setLengthBeats || musicPart.clonePart || musicPart.removePart,
+    );
   const rootNoteLabel = normalizeRootNoteString(rootNote) || rootNote;
   const noteCollectionName = noteCollection.getDisplayName(noteCollectionKey);
 
@@ -67,6 +70,17 @@ export function MusicPartHeader({
         }
         actions={
           <>
+            {musicPart.togglePartPlayback ? (
+              <IconButton
+                aria-label={
+                  musicPart.partPlaybackActive ? "Stop Part" : "Play Part"
+                }
+                icon={musicPart.partPlaybackActive ? <Square /> : <Play />}
+                selected={musicPart.partPlaybackActive}
+                size="sm"
+                onClick={musicPart.togglePartPlayback}
+              />
+            ) : null}
             {!isPerformanceMode &&
             musicPart.addPartModules &&
             onOpenAddDialog ? (

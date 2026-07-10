@@ -13,11 +13,13 @@ import {
 import { normalizeMusicPartConfig } from "@/utils/session/normalizeMusicPartConfig";
 import {
   type ChordProgressionChordListMode,
+  type AutomaticRhythmStyle,
   type MusicPartConfig,
   type PartModuleConfig,
   type PartModuleCreationRequest,
   type PartModuleType,
 } from "@/types/session";
+import { getChordProgressionRhythmProfile } from "@/utils/music-theory/chordProgressionRhythm";
 import { DEFAULT_PART_ROOT_NOTE } from "@/utils/session/sessionDefaults";
 import {
   PART_DURATION_BEATS_PER_BAR,
@@ -55,6 +57,7 @@ interface DurationAwareChordProgression {
 
 interface ProgressionPartReference {
   durationInBars?: number;
+  lengthBeats: number;
   reference: ChordProgressionChordReference;
   rhythmBeatCount?: number;
 }
@@ -119,6 +122,7 @@ function createFullProgressionPartReferences(
 
       partReferences.push({
         reference,
+        lengthBeats: normalizeSegmentDuration(durationInBars * beatsPerBar),
         ...(Math.abs(durationInBars - BAR_DURATION_IN_BARS) > DURATION_EPSILON
           ? { durationInBars }
           : {}),
@@ -140,10 +144,11 @@ function createFullProgressionPartReferences(
 function createUniqueProgressionPartReferences(
   rootNote: RootNote,
   progressionKey: ChordProgressionKey,
+  beatsPerBar: number,
 ): ProgressionPartReference[] {
   return chordProgression
     .getUniqueChordReferences(rootNote, progressionKey)
-    .map((reference) => ({ reference }));
+    .map((reference) => ({ lengthBeats: beatsPerBar, reference }));
 }
 
 function applyProgressionRhythmBeatCount(
@@ -175,10 +180,12 @@ function createPartFromReference<T extends PartModuleType>({
   moduleRequests,
   partId,
   partReference,
+  automaticRhythm,
 }: {
   moduleRequests: PartModuleCreationRequest<T>[];
   partId: string;
   partReference: ProgressionPartReference;
+  automaticRhythm: AutomaticRhythmStyle;
 }): MusicPartConfig {
   const modules = createDefaultPartModuleConfigs(moduleRequests);
   const rhythmBeatCount = partReference.rhythmBeatCount;
@@ -193,6 +200,8 @@ function createPartFromReference<T extends PartModuleType>({
     rootNote: partReference.reference.rootNote,
     noteCollectionKey: partReference.reference.chordCollectionKey,
     durationInBars: partReference.durationInBars,
+    lengthBeats: partReference.lengthBeats,
+    automaticRhythm,
     modules: resolvedModules,
   });
 
@@ -214,6 +223,11 @@ export function createChordProgressionParts<
   const normalizedRootNote = (normalizeRootNoteString(rootNote) ??
     DEFAULT_PART_ROOT_NOTE) as RootNote;
   const rhythmBeatsPerBar = getRequestedRhythmBeatsPerBar(moduleRequests);
+  const automaticRhythm =
+    getChordProgressionRhythmProfile(progressionKey)
+      .preferredRhythmStarterId === "swing"
+      ? "swing"
+      : "standard";
   const references: readonly ProgressionPartReference[] =
     chordListMode === "full-song-order"
       ? createFullProgressionPartReferences(
@@ -224,6 +238,7 @@ export function createChordProgressionParts<
       : createUniqueProgressionPartReferences(
           normalizedRootNote,
           progressionKey,
+          rhythmBeatsPerBar,
         );
 
   return references.map((partReference, index) =>
@@ -231,6 +246,7 @@ export function createChordProgressionParts<
       moduleRequests,
       partId: createProgressionPartId(progressionKey, index),
       partReference,
+      automaticRhythm,
     }),
   );
 }

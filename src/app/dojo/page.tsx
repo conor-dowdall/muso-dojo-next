@@ -27,6 +27,7 @@ import {
   stopAllAudioPlayback,
 } from "@/audio";
 import { useDojoGlobalShortcuts } from "@/hooks/interaction/useDojoGlobalShortcuts";
+import { useSessionPlaybackReconciliation } from "@/hooks/audio/useSessionPlaybackReconciliation";
 import { useAppStore, useHydrateAppStore } from "@/stores/appStore";
 import { createChordProgressionParts } from "@/utils/music-part/createChordProgressionParts";
 import { createDefaultMusicPartConfig } from "@/utils/session/createSessionEntities";
@@ -100,6 +101,7 @@ function HydratedSession({
     dialogOpen: isAddDialogOpen || isSessionDialogOpen,
     onExitFocusMode: isFocusViewMode ? exitFocusViewMode : undefined,
   });
+  useSessionPlaybackReconciliation(activeSession);
 
   useEffect(() => {
     if (!activeSessionId || !musoAudioEngine.isSupported()) {

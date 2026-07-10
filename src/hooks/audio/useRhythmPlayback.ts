@@ -51,7 +51,7 @@ export function useRhythmPlayback({
   const submittedRequest = useRef(request);
   const submittedRecipe = useRef(recipe);
   const isActive = isRhythmPlaybackActive(snapshot, id);
-  const isPlaying = snapshot.playing && snapshot.activeId === id;
+  const isPlaying = snapshot.playbacks[id] !== undefined;
   const playbackOwner = getRhythmPlaybackOwner(snapshot, id);
   const isBandOwned = playbackOwner === "part-sequence";
   const start = useCallback(() => {

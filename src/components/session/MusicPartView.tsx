@@ -7,6 +7,8 @@ import {
   createInstrumentCreationRangeContextSignature,
 } from "@/components/instrument-creation/instrumentCreationRangeContext";
 import { useAppStore } from "@/stores/appStore";
+import { getPartLengthBeats } from "@/utils/music-part/partLength";
+import { usePartPlayback } from "@/hooks/audio/usePartPlayback";
 import { PartModuleView } from "./PartModuleView";
 import { selectPart } from "./sessionSelectors";
 
@@ -35,6 +37,7 @@ export function MusicPartView({
         ? {
             rootNote: part.rootNote,
             noteCollectionKey: part.noteCollectionKey,
+            lengthBeats: part.lengthBeats,
             showHeader: part.showHeader,
           }
         : undefined;
@@ -52,6 +55,7 @@ export function MusicPartView({
   const setPartNoteCollectionKey = useAppStore(
     (state) => state.setPartNoteCollectionKey,
   );
+  const setPartLengthBeats = useAppStore((state) => state.setPartLengthBeats);
   const addPartModules = useAppStore((state) => state.addPartModules);
   const clonePart = useAppStore((state) => state.clonePart);
   const removePart = useAppStore((state) => state.removePart);
@@ -66,6 +70,7 @@ export function MusicPartView({
     createInstrumentCreationRangeContextFromSignature(
       instrumentCreationRangeContextSignature,
     );
+  const partPlayback = usePartPlayback(sessionId, partId);
 
   if (!partSettings) {
     return null;
@@ -78,6 +83,18 @@ export function MusicPartView({
       instrumentCreationRangeContext={instrumentCreationRangeContext}
       isPerformanceMode={isPerformanceMode}
       rootNote={partSettings.rootNote}
+      lengthBeats={partSettings.lengthBeats}
+      onLengthBeatsChange={(lengthBeats) =>
+        setPartLengthBeats(
+          sessionId,
+          partId,
+          typeof lengthBeats === "function"
+            ? lengthBeats(
+                getPartLengthBeats({ lengthBeats: partSettings.lengthBeats }),
+              )
+            : lengthBeats,
+        )
+      }
       onRootNoteChange={(rootNote) =>
         setPartRootNote(sessionId, partId, rootNote)
       }
@@ -87,6 +104,12 @@ export function MusicPartView({
       }
       showHeader={isPerformanceMode ? false : partSettings.showHeader}
       showReadOnlyIdentity={showReadOnlyIdentity}
+      partPlaybackActive={partPlayback.isActive}
+      onTogglePartPlayback={
+        isPerformanceMode || !partPlayback.canPlay
+          ? undefined
+          : partPlayback.toggle
+      }
       onAddPartModules={
         isPerformanceMode
           ? undefined

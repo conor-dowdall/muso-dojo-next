@@ -40,47 +40,4 @@ describe("session app store actions", () => {
       tempoBpm: 132,
     });
   });
-
-  it("updates persisted Practice Band settings without an enable step", () => {
-    const store = createTestStore();
-
-    store.getState().updatePracticeBandSettings(sessionId, {
-      audioPresetId: "piano",
-      backingNotes: false,
-      drums: false,
-      octaveOffset: 0,
-    });
-
-    expect(store.getState().sessions[sessionId]?.practiceBand).toEqual({
-      audioPresetId: "piano",
-      backingNotes: false,
-      drums: false,
-      octaveOffset: 0,
-    });
-
-    store.getState().updatePracticeBandSettings(sessionId, {
-      backingNotes: true,
-      drums: true,
-    });
-
-    expect(store.getState().sessions[sessionId]?.practiceBand).toEqual({
-      audioPresetId: "piano",
-      octaveOffset: 0,
-    });
-  });
-
-  it("removes Practice Band settings when they return to defaults", () => {
-    const store = createTestStore();
-
-    store.getState().updatePracticeBandSettings(sessionId, {
-      drums: false,
-    });
-    store.getState().updatePracticeBandSettings(sessionId, {
-      drums: true,
-    });
-
-    expect(store.getState().sessions[sessionId]).not.toHaveProperty(
-      "practiceBand",
-    );
-  });
 });

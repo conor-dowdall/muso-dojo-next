@@ -51,4 +51,84 @@ describe("normalizeMusicPartConfig", () => {
       durationInBars: 0.333333,
     });
   });
+
+  it("normalizes explicit one- and two-beat Part Lengths", () => {
+    expect(
+      normalizeMusicPartConfig({
+        id: "one-beat",
+        rootNote: "C",
+        noteCollectionKey: "major",
+        lengthBeats: 1,
+        modules: [],
+      }),
+    ).toMatchObject({ lengthBeats: 1 });
+    expect(
+      normalizeMusicPartConfig({
+        id: "two-beats",
+        rootNote: "C",
+        noteCollectionKey: "major",
+        lengthBeats: 2,
+        modules: [],
+      }),
+    ).toMatchObject({ lengthBeats: 2 });
+  });
+
+  it("migrates legacy authored duration and Rhythm-derived length once", () => {
+    expect(
+      normalizeMusicPartConfig({
+        id: "half-bar",
+        rootNote: "C",
+        noteCollectionKey: "major",
+        durationInBars: 0.5,
+        modules: [],
+      }),
+    ).toMatchObject({ lengthBeats: 2 });
+    expect(
+      normalizeMusicPartConfig({
+        id: "six-beat",
+        rootNote: "C",
+        noteCollectionKey: "major",
+        modules: [
+          {
+            id: "rhythm",
+            rhythm: {
+              recipe: {
+                beats: 6,
+                groove: "kit",
+                grouping: "auto",
+                timekeeper: {
+                  feel: "straight",
+                  sound: "hat",
+                  subdivision: "eighth",
+                },
+              },
+              source: "recipe",
+            },
+            type: "rhythm",
+          },
+        ],
+      }),
+    ).toMatchObject({ lengthBeats: 6 });
+  });
+
+  it("normalizes automatic rhythm style independently of modules", () => {
+    expect(
+      normalizeMusicPartConfig({
+        id: "swing",
+        rootNote: "C",
+        noteCollectionKey: "major",
+        automaticRhythm: "swing",
+        modules: [],
+      }),
+    ).toMatchObject({ automaticRhythm: "swing" });
+    expect(
+      normalizeMusicPartConfig({
+        id: "invalid",
+        rootNote: "C",
+        noteCollectionKey: "major",
+        automaticRhythm: "shuffle",
+        modules: [],
+      }),
+    ).toMatchObject({ automaticRhythm: "standard" });
+  });
 });

@@ -354,6 +354,7 @@ export function createDroneVoice({
   pack,
   preset,
   velocity,
+  destination = context.destination,
 }: {
   buffer: AudioBuffer;
   concertPitchHz: number;
@@ -362,6 +363,7 @@ export function createDroneVoice({
   pack: SamplePack;
   preset: AudioPreset;
   velocity?: number;
+  destination?: AudioNode;
 }) {
   if (!isPlayableMidiNote(midiNote)) {
     return undefined;
@@ -399,7 +401,7 @@ export function createDroneVoice({
   gain.gain.setValueAtTime(startGain, startTime);
   gain.gain.linearRampToValueAtTime(targetGain, startTime + attackSeconds);
   source.connect(gain);
-  gain.connect(context.destination);
+  gain.connect(destination);
   source.start(startTime, region.offsetSeconds);
   source.addEventListener(
     "ended",

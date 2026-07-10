@@ -25,36 +25,42 @@ function createPlan(): PartSequencePlaybackPlan {
     parts: [
       {
         durationBeats: 4,
+        exerciseRequests: [],
         index: 0,
         partId: "part-a",
         resetSignature: "part-a-reset",
-        rhythmRequest: {
-          id: "rhythm-a",
-          pattern: createRhythmPattern(),
-          tempoBpm: 60,
-        },
+        rhythmRequests: [
+          {
+            id: "rhythm-a",
+            pattern: createRhythmPattern(),
+            tempoBpm: 60,
+          },
+        ],
         updateSignature: "part-a-update",
       },
       {
         durationBeats: 2,
-        exerciseRequest: {
-          countInBeats: 0,
-          events: [
-            {
-              durationBeats: 1,
-              midi: 60,
-              offsetBeats: 0,
-              stepIndex: 0,
-            },
-          ],
-          id: "exercise-b",
-          metronomeEnabled: false,
-          presetId: "piano",
-          tempoBpm: 60,
-        },
+        exerciseRequests: [
+          {
+            countInBeats: 0,
+            events: [
+              {
+                durationBeats: 1,
+                midi: 60,
+                offsetBeats: 0,
+                stepIndex: 0,
+              },
+            ],
+            id: "exercise-b",
+            metronomeEnabled: false,
+            presetId: "piano",
+            tempoBpm: 60,
+          },
+        ],
         index: 1,
         partId: "part-b",
         resetSignature: "part-b-reset",
+        rhythmRequests: [],
         updateSignature: "part-b-update",
       },
     ],
@@ -71,56 +77,64 @@ function createSplitBarPlan(): PartSequencePlaybackPlan {
     parts: [
       {
         durationBeats: 2,
-        exerciseRequest: {
-          countInBeats: 0,
-          events: [
-            {
-              durationBeats: 1,
-              midi: 60,
-              offsetBeats: 0,
-              stepIndex: 0,
-            },
-          ],
-          id: "exercise-a",
-          metronomeEnabled: false,
-          presetId: "piano",
-          tempoBpm: 60,
-        },
+        exerciseRequests: [
+          {
+            countInBeats: 0,
+            events: [
+              {
+                durationBeats: 1,
+                midi: 60,
+                offsetBeats: 0,
+                stepIndex: 0,
+              },
+            ],
+            id: "exercise-a",
+            metronomeEnabled: false,
+            presetId: "piano",
+            tempoBpm: 60,
+          },
+        ],
         index: 0,
         partId: "part-a",
         resetSignature: "split-a-reset",
-        rhythmRequest: {
-          id: "rhythm-a",
-          pattern: createRhythmPattern(),
-          tempoBpm: 60,
-        },
+        rhythmRequests: [
+          {
+            id: "rhythm-a",
+            pattern: createRhythmPattern(),
+            tempoBpm: 60,
+          },
+        ],
         updateSignature: "split-a-update",
       },
       {
         durationBeats: 2,
-        exerciseRequest: {
-          countInBeats: 0,
-          events: [
-            {
-              durationBeats: 1,
-              midi: 67,
-              offsetBeats: 0,
-              stepIndex: 0,
-            },
-          ],
-          id: "exercise-b",
-          metronomeEnabled: false,
-          presetId: "piano",
-          tempoBpm: 60,
-        },
+        exerciseRequests: [
+          {
+            countInBeats: 0,
+            events: [
+              {
+                durationBeats: 1,
+                midi: 67,
+                offsetBeats: 0,
+                stepIndex: 0,
+              },
+            ],
+            id: "exercise-b",
+            metronomeEnabled: false,
+            presetId: "piano",
+            tempoBpm: 60,
+          },
+        ],
         index: 1,
         partId: "part-b",
         resetSignature: "split-b-reset",
-        rhythmRequest: {
-          id: "rhythm-b",
-          pattern: createRhythmPattern(),
-          tempoBpm: 60,
-        },
+        rhythmRequests: [
+          {
+            id: "rhythm-b",
+            pattern: createRhythmPattern(),
+            tempoBpm: 60,
+          },
+        ],
         updateSignature: "split-b-update",
       },
     ],
@@ -192,7 +206,7 @@ describe("PartSequenceCoordinator", () => {
     });
     expect(startPart).toHaveBeenCalledWith(
       expect.objectContaining({
-        rhythm: expect.objectContaining({ id: "rhythm-a" }),
+        rhythms: [expect.objectContaining({ id: "rhythm-a" })],
         source: "part-sequence",
       }),
     );
@@ -207,10 +221,10 @@ describe("PartSequenceCoordinator", () => {
     });
     expect(startPart).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        exercise: expect.objectContaining({ id: "exercise-b" }),
+        exercises: [expect.objectContaining({ id: "exercise-b" })],
         handoff: true,
         originTime: 14.08,
-        rhythm: undefined,
+        rhythms: [],
         stopMissing: true,
       }),
     );
@@ -236,7 +250,7 @@ describe("PartSequenceCoordinator", () => {
       expect.objectContaining({
         handoff: true,
         originTime: 16.08,
-        rhythm: expect.objectContaining({ id: "rhythm-a" }),
+        rhythms: [expect.objectContaining({ id: "rhythm-a" })],
       }),
     );
   });
@@ -248,8 +262,8 @@ describe("PartSequenceCoordinator", () => {
 
     expect(startPart).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        exercise: expect.objectContaining({ id: "exercise-a" }),
-        rhythm: expect.objectContaining({ id: "rhythm-a" }),
+        exercises: [expect.objectContaining({ id: "exercise-a" })],
+        rhythms: [expect.objectContaining({ id: "rhythm-a" })],
         stopMissing: true,
       }),
     );
@@ -258,16 +272,16 @@ describe("PartSequenceCoordinator", () => {
 
     expect(startPart).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        exercise: expect.objectContaining({ id: "exercise-b" }),
+        exercises: [expect.objectContaining({ id: "exercise-b" })],
         handoff: true,
         originTime: 12.08,
-        rhythm: expect.objectContaining({ id: "rhythm-b" }),
+        rhythms: [expect.objectContaining({ id: "rhythm-b" })],
         stopMissing: true,
       }),
     );
   });
 
-  it("stops sequence state without stopping playback when manual transport starts", async () => {
+  it("stops sequence state and band playback when manual transport starts", async () => {
     const { coordinator, manualStart, stopPartPlayback } = createHarness();
 
     await coordinator.start(createPlan());
@@ -278,7 +292,7 @@ describe("PartSequenceCoordinator", () => {
       partCount: 0,
       playing: false,
     });
-    expect(stopPartPlayback).not.toHaveBeenCalled();
+    expect(stopPartPlayback).toHaveBeenCalledOnce();
   });
 
   it("stops band playback when a manual module stop takes over", async () => {
@@ -315,11 +329,13 @@ describe("PartSequenceCoordinator", () => {
       parts: [
         {
           ...createPlan().parts[0]!,
-          rhythmRequest: {
-            id: "rhythm-a",
-            pattern: nextPattern,
-            tempoBpm: 60,
-          },
+          rhythmRequests: [
+            {
+              id: "rhythm-a",
+              pattern: nextPattern,
+              tempoBpm: 60,
+            },
+          ],
           updateSignature: "part-a-update-next",
         },
         createPlan().parts[1]!,
@@ -333,10 +349,12 @@ describe("PartSequenceCoordinator", () => {
     expect(startPart).toHaveBeenCalledOnce();
     expect(updatePartLive).toHaveBeenCalledWith(
       expect.objectContaining({
-        rhythm: expect.objectContaining({
-          id: "rhythm-a",
-          pattern: nextPattern,
-        }),
+        rhythms: [
+          expect.objectContaining({
+            id: "rhythm-a",
+            pattern: nextPattern,
+          }),
+        ],
       }),
     );
 

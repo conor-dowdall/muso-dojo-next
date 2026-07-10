@@ -53,13 +53,17 @@ function getCurrentOutputTime() {
     : Math.min(estimatedOutputTime, currentContextTime);
 }
 
-function getCurrentPlaybackStepIndex(visualStepLeadSeconds: number) {
+function getCurrentPlaybackStepIndex(
+  id: string,
+  visualStepLeadSeconds: number,
+) {
   const outputTime = getCurrentOutputTime();
 
   return outputTime === undefined
     ? undefined
     : exercisePlaybackCoordinator.getActiveStepIndex(
         outputTime + visualStepLeadSeconds,
+        id,
       );
 }
 
@@ -121,8 +125,9 @@ export function useExerciseLooperPlayback({
     auditionController.getSnapshot,
     auditionController.getSnapshot,
   );
-  const isPending = snapshot.pendingId === id;
-  const isPlaying = snapshot.playing && snapshot.activeId === id;
+  const isPending = snapshot.pendingIds.includes(id);
+  const playbackSnapshot = snapshot.playbacks[id];
+  const isPlaying = playbackSnapshot !== undefined;
   const isActive = isExercisePlaybackActive(snapshot, id);
   const playbackOwner = getExercisePlaybackOwner(snapshot, id);
   const isBandOwned = playbackOwner === "part-sequence";
@@ -229,7 +234,10 @@ export function useExerciseLooperPlayback({
     let lastStepIndex: number | undefined | null = null;
 
     const commitStepIndex = () => {
-      const nextStepIndex = getCurrentPlaybackStepIndex(visualStepLeadSeconds);
+      const nextStepIndex = getCurrentPlaybackStepIndex(
+        id,
+        visualStepLeadSeconds,
+      );
 
       if (nextStepIndex !== lastStepIndex) {
         lastStepIndex = nextStepIndex;
@@ -244,7 +252,7 @@ export function useExerciseLooperPlayback({
 
     frameId = window.requestAnimationFrame(update);
     return () => window.cancelAnimationFrame(frameId);
-  }, [isPlaying, visualStepLeadSeconds]);
+  }, [id, isPlaying, visualStepLeadSeconds]);
 
   useEffect(
     () => musoAudioEngine.subscribeToStopAll(() => auditionController.cancel()),
@@ -254,14 +262,13 @@ export function useExerciseLooperPlayback({
   useEffect(
     () => () => {
       auditionController.dispose();
-      beatTransportCoordinator.stopExercise(id, { source: "lifecycle" });
     },
-    [auditionController, id],
+    [auditionController],
   );
 
   const renderedActiveStepIndex =
     isPlaying && activeStepIndex === undefined
-      ? getCurrentPlaybackStepIndex(visualStepLeadSeconds)
+      ? getCurrentPlaybackStepIndex(id, visualStepLeadSeconds)
       : activeStepIndex;
   const activeStep =
     isPlaying && renderedActiveStepIndex !== undefined
@@ -274,11 +281,11 @@ export function useExerciseLooperPlayback({
   const activeCountInBeats =
     isPlaying &&
     renderedActiveStepIndex === undefined &&
-    snapshot.countInBeats !== undefined &&
-    snapshot.countInBeats > 0 &&
-    snapshot.originTime !== undefined &&
-    (countInOutputTime === undefined || countInOutputTime < snapshot.originTime)
-      ? snapshot.countInBeats
+    playbackSnapshot?.countInBeats !== undefined &&
+    playbackSnapshot.countInBeats > 0 &&
+    (countInOutputTime === undefined ||
+      countInOutputTime < playbackSnapshot.originTime)
+      ? playbackSnapshot.countInBeats
       : undefined;
   const activeCollectionPositions = useMemo(
     () =>

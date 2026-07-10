@@ -1,53 +1,36 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  RHYTHM_PPQ,
-  type PercussionSampleId,
-  type RhythmPattern,
-} from "@/data/rhythmPresets";
+import { describe, expect, it, vi } from "vitest";
 import { BeatTransportCoordinator } from "@/audio/beatTransportCoordinator";
 import {
   ExercisePlaybackCoordinator,
   type ExercisePlaybackAudioEngine,
   type ExercisePlaybackRequest,
-  type ExerciseSchedulerFactory,
 } from "@/audio/exercisePlaybackCoordinator";
 import {
   RhythmPlaybackCoordinator,
   type RhythmPlaybackAudioEngine,
   type RhythmPlaybackRequest,
-  type RhythmSchedulerFactory,
 } from "@/audio/rhythmPlaybackCoordinator";
+import { RHYTHM_PPQ, type RhythmPattern } from "@/data/rhythmPresets";
+import { type LookaheadScheduler } from "@/audio/lookaheadScheduler";
 import { type PlaybackGroupHandle } from "@/audio/types";
 
-function createDeferred<T>() {
-  let resolve: (value: T) => void = () => undefined;
-  const promise = new Promise<T>((nextResolve) => {
-    resolve = nextResolve;
-  });
-
-  return { promise, resolve };
+function createScheduler(): LookaheadScheduler {
+  return { isRunning: () => true, start: vi.fn(), stop: vi.fn() };
 }
 
-async function flushPromises(count = 5) {
-  for (let index = 0; index < count; index += 1) {
-    await Promise.resolve();
-  }
-}
-
-function createExerciseRequest(
-  id = "exercise",
-  countInBeats: ExercisePlaybackRequest["countInBeats"] = 0,
-): ExercisePlaybackRequest {
+function createPattern(): RhythmPattern {
   return {
-    countInBeats,
-    events: [
-      {
-        durationBeats: 1,
-        midi: 60,
-        offsetBeats: 0,
-        stepIndex: 0,
-      },
-    ],
+    cycleTicks: RHYTHM_PPQ * 4,
+    hits: [{ atTicks: 0, sampleId: "kick" }],
+    meter: { beats: 4, beatUnit: 4 },
+    ppq: RHYTHM_PPQ,
+  };
+}
+
+function createExerciseRequest(id: string): ExercisePlaybackRequest {
+  return {
+    countInBeats: 0,
+    events: [{ durationBeats: 1, midi: 60, offsetBeats: 0, stepIndex: 0 }],
     id,
     metronomeEnabled: false,
     presetId: "piano",
@@ -55,476 +38,163 @@ function createExerciseRequest(
   };
 }
 
-function createRhythmPattern(
-  sampleId: PercussionSampleId = "kick",
-): RhythmPattern {
-  return {
-    cycleTicks: RHYTHM_PPQ * 4,
-    hits: [{ atTicks: 0, sampleId }],
-    meter: { beats: 4, beatUnit: 4 },
-    ppq: RHYTHM_PPQ,
-  };
+function createRhythmRequest(id: string): RhythmPlaybackRequest {
+  return { id, pattern: createPattern(), tempoBpm: 60 };
 }
 
-function createRhythmRequest(id = "rhythm"): RhythmPlaybackRequest {
-  return {
-    id,
-    pattern: createRhythmPattern(),
-    tempoBpm: 60,
-  };
-}
-
-function createHarness({
-  exercisePrime = async () => true,
-  rhythmPrime = async () => true,
-}: {
-  exercisePrime?: ExercisePlaybackAudioEngine["prime"];
-  rhythmPrime?: RhythmPlaybackAudioEngine["prime"];
-} = {}) {
+function createHarness() {
   let currentTime = 10;
-  let nextGroupId = 0;
-  const exerciseCancelPlaybackGroup = vi.fn();
-  const rhythmCancelPlaybackGroup = vi.fn();
-  const createPlaybackGroup = () =>
-    `group-${nextGroupId++}` as PlaybackGroupHandle;
-  const createExerciseScheduler: ExerciseSchedulerFactory = () => ({
-    isRunning: () => true,
-    start: vi.fn(),
-    stop: vi.fn(),
-  });
-  const createRhythmScheduler: RhythmSchedulerFactory = () => ({
-    isRunning: () => true,
-    start: vi.fn(),
-    stop: vi.fn(),
-  });
+  let exerciseGroup = 0;
+  let rhythmGroup = 0;
+  const exerciseEngine: ExercisePlaybackAudioEngine = {
+    cancelPlaybackGroup: vi.fn(),
+    createPlaybackGroup: () =>
+      `exercise-${exerciseGroup++}` as PlaybackGroupHandle,
+    getCurrentTime: () => currentTime,
+    prime: async () => true,
+    scheduleMetronomeClick: vi.fn(() => true),
+    scheduleNote: vi.fn(),
+    subscribeToStopAll: () => () => undefined,
+  };
+  const rhythmEngine: RhythmPlaybackAudioEngine = {
+    cancelPlaybackGroup: vi.fn(),
+    createPlaybackGroup: () => `rhythm-${rhythmGroup++}` as PlaybackGroupHandle,
+    getCurrentTime: () => currentTime,
+    prime: async () => true,
+    schedulePercussionHit: vi.fn(() => true),
+    subscribeToStopAll: () => () => undefined,
+  };
   const exercise = new ExercisePlaybackCoordinator(
-    {
-      cancelPlaybackGroup: exerciseCancelPlaybackGroup,
-      createPlaybackGroup,
-      getCurrentTime: () => currentTime,
-      prime: exercisePrime,
-      scheduleMetronomeClick: vi.fn(),
-      scheduleNote: vi.fn(),
-      subscribeToStopAll: () => () => undefined,
-    },
-    createExerciseScheduler,
+    exerciseEngine,
+    createScheduler,
+    createScheduler,
   );
-  const rhythm = new RhythmPlaybackCoordinator(
-    {
-      cancelPlaybackGroup: rhythmCancelPlaybackGroup,
-      createPlaybackGroup,
-      getCurrentTime: () => currentTime,
-      prime: rhythmPrime,
-      schedulePercussionHit: vi.fn(),
-      subscribeToStopAll: () => () => undefined,
-    },
-    createRhythmScheduler,
-  );
+  const rhythm = new RhythmPlaybackCoordinator(rhythmEngine, createScheduler);
+  const transport = new BeatTransportCoordinator(exercise, rhythm);
 
   return {
     exercise,
-    exerciseCancelPlaybackGroup,
     rhythm,
-    rhythmCancelPlaybackGroup,
     setCurrentTime: (value: number) => {
       currentTime = value;
     },
-    transport: new BeatTransportCoordinator(exercise, rhythm),
+    transport,
   };
 }
 
 describe("BeatTransportCoordinator", () => {
-  afterEach(() => {
-    vi.useRealTimers();
+  it("starts local Looper and Rhythm layers without restarting companions", async () => {
+    const { exercise, rhythm, setCurrentTime, transport } = createHarness();
+    await transport.startRhythm(createRhythmRequest("rhythm"));
+    setCurrentTime(10.2);
+    await transport.startExercise(createExerciseRequest("exercise"));
+
+    expect(rhythm.getSnapshot().playbacks.rhythm?.originTime).toBe(10.08);
+    expect(exercise.getSnapshot().playbacks.exercise?.originTime).toBe(11.08);
   });
 
-  it("restarts active rhythm on the exercise downbeat", async () => {
-    vi.useFakeTimers();
+  it("quantizes additional local Rhythms while keeping both active", async () => {
     const { rhythm, setCurrentTime, transport } = createHarness();
+    await transport.startRhythm(createRhythmRequest("a"));
+    setCurrentTime(10.2);
+    await transport.startRhythm(createRhythmRequest("b"));
 
-    await rhythm.start(createRhythmRequest());
-    setCurrentTime(20);
-
-    await transport.startExercise(createExerciseRequest());
-
-    expect(rhythm.getSnapshot()).toMatchObject({
-      activeId: "rhythm",
-      originTime: 10.08,
-      pendingId: "rhythm",
-      pendingOriginTime: 20.08,
-      playing: true,
-    });
-
-    await vi.advanceTimersByTimeAsync(40);
-
-    expect(rhythm.getSnapshot()).toMatchObject({
-      activeId: "rhythm",
-      originTime: 20.08,
-      playing: true,
-    });
+    expect(rhythm.getSnapshot().playbacks.a?.originTime).toBe(10.08);
+    expect(rhythm.getSnapshot().playbacks.b?.originTime).toBe(11.08);
   });
 
-  it("aligns rhythm after an exercise count-in", async () => {
-    vi.useFakeTimers();
-    const { exercise, rhythm, setCurrentTime, transport } = createHarness();
-
-    await rhythm.start(createRhythmRequest());
-    setCurrentTime(20);
-
-    await transport.startExercise(createExerciseRequest("exercise", 2));
-
-    expect(exercise.getSnapshot()).toMatchObject({
-      countInBeats: 2,
-      countInStartTime: 20.08,
-      originTime: 22.08,
-      playing: true,
-    });
-    expect(rhythm.getSnapshot()).toMatchObject({
-      originTime: 22.08,
-      playing: true,
-    });
-    expect(rhythm.getSnapshot().pendingId).toBeUndefined();
-  });
-
-  it("syncs active rhythm with the exercise tempo when exercise restarts", async () => {
-    vi.useFakeTimers();
-    const { rhythm, setCurrentTime, transport } = createHarness();
-
-    await rhythm.start(createRhythmRequest());
-    setCurrentTime(20);
-
-    await transport.startExercise({
-      ...createExerciseRequest(),
-      tempoBpm: 120,
-    });
-
-    expect(rhythm.getSnapshot()).toMatchObject({
-      originTime: 10.08,
-      pendingId: "rhythm",
-      pendingOriginTime: 20.08,
-      playing: true,
-      tempoBpm: 60,
-    });
-    expect(rhythm.getPendingRequest()?.tempoBpm).toBe(120);
-
-    await vi.advanceTimersByTimeAsync(40);
-
-    expect(rhythm.getSnapshot()).toMatchObject({
-      originTime: 20.08,
-      playing: true,
-      tempoBpm: 120,
-    });
-    expect(rhythm.getActiveRequest()?.tempoBpm).toBe(120);
-  });
-
-  it("starting rhythm restarts active exercise on the rhythm downbeat", async () => {
-    vi.useFakeTimers();
-    const { exercise, rhythm, setCurrentTime, transport } = createHarness();
-
-    await exercise.start(createExerciseRequest("exercise"));
-    setCurrentTime(12);
-
-    await transport.startRhythm(createRhythmRequest());
-
-    expect(rhythm.getSnapshot()).toMatchObject({
-      originTime: 12.08,
-      playing: true,
-    });
-    expect(exercise.getSnapshot()).toMatchObject({
-      activeId: "exercise",
-      originTime: 10.08,
-      pendingId: "exercise",
-      pendingOriginTime: 12.08,
-      playing: true,
-    });
-
-    await vi.advanceTimersByTimeAsync(40);
-
-    expect(exercise.getSnapshot()).toMatchObject({
-      activeId: "exercise",
-      originTime: 12.08,
-      playing: true,
-    });
-  });
-
-  it("syncs active exercise with the rhythm tempo when rhythm restarts", async () => {
-    vi.useFakeTimers();
-    const { exercise, setCurrentTime, transport } = createHarness();
-
-    await exercise.start(createExerciseRequest("exercise"));
-    setCurrentTime(12);
-
-    await transport.startRhythm({
-      ...createRhythmRequest(),
-      tempoBpm: 120,
-    });
-
-    expect(exercise.getSnapshot()).toMatchObject({
-      activeId: "exercise",
-      originTime: 10.08,
-      pendingId: "exercise",
-      pendingOriginTime: 12.08,
-      playing: true,
-      secondsPerBeat: 1,
-    });
-
-    await vi.advanceTimersByTimeAsync(40);
-
-    expect(exercise.getSnapshot()).toMatchObject({
-      activeId: "exercise",
-      originTime: 12.08,
-      playing: true,
-      secondsPerBeat: 0.5,
-    });
-    expect(exercise.getSnapshot().countInBeats).toBeUndefined();
-    expect(exercise.getActiveRequest()?.tempoBpm).toBe(120);
-  });
-
-  it("starts explicit part exercise and rhythm requests on the same origin", async () => {
-    const { exercise, rhythm, setCurrentTime, transport } = createHarness();
-
-    setCurrentTime(20);
-
+  it("starts every Part layer on one explicit origin", async () => {
+    const { exercise, rhythm, transport } = createHarness();
     const result = await transport.startPart({
-      exercise: createExerciseRequest("exercise"),
+      exercises: [
+        createExerciseRequest("exercise-a"),
+        createExerciseRequest("exercise-b"),
+      ],
       originTime: 24,
-      rhythm: createRhythmRequest("rhythm"),
+      rhythms: [
+        createRhythmRequest("rhythm-a"),
+        createRhythmRequest("rhythm-b"),
+      ],
       source: "part-sequence",
     });
 
     expect(result).toEqual({ originTime: 24, started: true });
-    expect(exercise.getSnapshot()).toMatchObject({
-      activeId: "exercise",
-      owner: "part-sequence",
-      originTime: 24,
-      playing: true,
-    });
-    expect(rhythm.getSnapshot()).toMatchObject({
-      activeId: "rhythm",
-      owner: "part-sequence",
-      originTime: 24,
-      playing: true,
-    });
+    expect(
+      Object.values(exercise.getSnapshot().playbacks).map(
+        (playback) => playback.originTime,
+      ),
+    ).toEqual([24, 24]);
+    expect(
+      Object.values(rhythm.getSnapshot().playbacks).map(
+        (playback) => playback.originTime,
+      ),
+    ).toEqual([24, 24]);
   });
 
-  it("chooses the initial shared Part origin after audio preparation", async () => {
-    const exerciseReady = createDeferred<boolean>();
-    const exercisePrime = vi.fn(() => exerciseReady.promise);
-    const rhythmPrime = vi.fn(async () => true);
-    const { exercise, rhythm, setCurrentTime, transport } = createHarness({
-      exercisePrime,
-      rhythmPrime,
-    });
-
-    const start = transport.startPart({
-      exercise: createExerciseRequest("exercise"),
-      rhythm: createRhythmRequest("rhythm"),
-      source: "part-sequence",
-    });
-
-    setCurrentTime(12);
-    exerciseReady.resolve(true);
-
-    await expect(start).resolves.toEqual({
-      originTime: 12.08,
-      started: true,
-    });
-    expect(exercise.getSnapshot()).toMatchObject({
-      activeId: "exercise",
-      originTime: 12.08,
-      playing: true,
-    });
-    expect(rhythm.getSnapshot()).toMatchObject({
-      activeId: "rhythm",
-      originTime: 12.08,
-      playing: true,
-    });
-    expect(exercisePrime).toHaveBeenCalledOnce();
-    expect(rhythmPrime).toHaveBeenCalledOnce();
-  });
-
-  it("moves a missed Part boundary to the next safe beat", async () => {
-    vi.useFakeTimers();
+  it("chooses a shared origin only after both coordinators are prepared", async () => {
     const { exercise, rhythm, setCurrentTime, transport } = createHarness();
-
-    await transport.startPart({
-      exercise: createExerciseRequest("exercise-a"),
-      originTime: 20.08,
-      rhythm: createRhythmRequest("rhythm-a"),
-      source: "part-sequence",
-    });
-    setCurrentTime(24.02);
-
+    setCurrentTime(12);
     const result = await transport.startPart({
-      exercise: createExerciseRequest("exercise-b"),
-      handoff: true,
-      originTime: 24,
-      rhythm: createRhythmRequest("rhythm-b"),
+      exercises: [createExerciseRequest("exercise")],
+      rhythms: [createRhythmRequest("rhythm")],
       source: "part-sequence",
     });
 
-    expect(result).toEqual({ originTime: 25, started: true });
-    expect(exercise.getSnapshot()).toMatchObject({
-      activeId: "exercise-a",
-      pendingId: "exercise-b",
-      pendingOriginTime: 25,
-    });
-    expect(rhythm.getSnapshot()).toMatchObject({
-      activeId: "rhythm-a",
-      pendingId: "rhythm-b",
-      pendingOriginTime: 25,
-    });
+    expect(result.originTime).toBe(12.08);
+    expect(exercise.getSnapshot().playbacks.exercise?.originTime).toBe(12.08);
+    expect(rhythm.getSnapshot().playbacks.rhythm?.originTime).toBe(12.08);
   });
 
-  it("marks manual starts as manually owned playback", async () => {
-    const { exercise, rhythm, transport } = createHarness();
-
-    await transport.startExercise(createExerciseRequest("exercise"));
-    await transport.startRhythm(createRhythmRequest("rhythm"));
-
-    expect(exercise.getSnapshot().owner).toBe("manual");
-    expect(rhythm.getSnapshot().owner).toBe("manual");
-  });
-
-  it("ignores lifecycle cleanup for part-sequence owned playback", async () => {
-    const { exercise, rhythm, transport } = createHarness();
-    const manualControlListener = vi.fn();
-
-    transport.subscribeToManualControl(manualControlListener);
+  it("reports only manual controls to sequence listeners", async () => {
+    const { transport } = createHarness();
+    const listener = vi.fn();
+    transport.subscribeToManualControl(listener);
 
     await transport.startPart({
-      exercise: createExerciseRequest("exercise"),
-      originTime: 24,
-      rhythm: createRhythmRequest("rhythm"),
+      exercises: [createExerciseRequest("band")],
+      source: "part-sequence",
+    });
+    expect(listener).not.toHaveBeenCalled();
+
+    await transport.startExercise(createExerciseRequest("manual"));
+    expect(listener).toHaveBeenCalledWith({
+      kind: "start",
+      owner: "manual",
+      target: "exercise",
+    });
+  });
+
+  it("ignores lifecycle cleanup for band-owned layers", async () => {
+    const { exercise, rhythm, transport } = createHarness();
+    await transport.startPart({
+      exercises: [createExerciseRequest("exercise")],
+      rhythms: [createRhythmRequest("rhythm")],
       source: "part-sequence",
     });
 
     transport.stopExercise("exercise", { source: "lifecycle" });
     transport.stopRhythm("rhythm", { source: "lifecycle" });
 
-    expect(exercise.getSnapshot()).toMatchObject({
-      activeId: "exercise",
-      owner: "part-sequence",
-      playing: true,
-    });
-    expect(rhythm.getSnapshot()).toMatchObject({
-      activeId: "rhythm",
-      owner: "part-sequence",
-      playing: true,
-    });
-    expect(manualControlListener).not.toHaveBeenCalled();
+    expect(exercise.getSnapshot().playbacks.exercise).toBeDefined();
+    expect(rhythm.getSnapshot().playbacks.rhythm).toBeDefined();
   });
 
-  it("allows lifecycle cleanup to stop manually owned module playback quietly", async () => {
+  it("stops only band-owned layers when the Part transport stops", async () => {
     const { exercise, rhythm, transport } = createHarness();
-    const manualControlListener = vi.fn();
-
-    transport.subscribeToManualControl(manualControlListener);
-
-    await transport.startExercise(createExerciseRequest("exercise"));
-    await transport.startRhythm(createRhythmRequest("rhythm"));
-    manualControlListener.mockClear();
-
-    transport.stopExercise("exercise", { source: "lifecycle" });
-    transport.stopRhythm("rhythm", { source: "lifecycle" });
-
-    expect(exercise.getSnapshot().playing).toBe(false);
-    expect(rhythm.getSnapshot().playing).toBe(false);
-    expect(manualControlListener).not.toHaveBeenCalled();
-  });
-
-  it("stops a missing part family at the supplied origin", async () => {
-    const { rhythm, rhythmCancelPlaybackGroup, setCurrentTime, transport } =
-      createHarness();
-
-    await rhythm.start(createRhythmRequest("rhythm"));
-    setCurrentTime(20);
-
+    await transport.startExercise(createExerciseRequest("manual-exercise"));
+    await transport.startRhythm(createRhythmRequest("manual-rhythm"));
     await transport.startPart({
-      exercise: createExerciseRequest("exercise"),
-      originTime: 24,
+      exercises: [createExerciseRequest("band-exercise")],
+      rhythms: [createRhythmRequest("band-rhythm")],
       source: "part-sequence",
-      stopMissing: true,
+      stopMissing: false,
     });
 
-    expect(rhythmCancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
-      atTime: 24,
-    });
-    expect(rhythm.getSnapshot()).toMatchObject({
-      activeId: "rhythm",
-      playing: true,
-    });
-  });
+    transport.stopPartPlayback();
 
-  it("cancels stale pending starts before they can resync playback", async () => {
-    const exercisePrime = createDeferred<boolean>();
-    const { exercise, rhythm, setCurrentTime, transport } = createHarness({
-      exercisePrime: () => exercisePrime.promise,
-    });
-
-    const exerciseStart = transport.startExercise({
-      ...createExerciseRequest(),
-      tempoBpm: 120,
-    });
-
-    expect(exercise.getSnapshot()).toMatchObject({
-      pendingId: "exercise",
-      playing: false,
-    });
-
-    setCurrentTime(20);
-    await transport.startRhythm(createRhythmRequest());
-    exercisePrime.resolve(true);
-
-    await expect(exerciseStart).resolves.toBe(false);
-    expect(exercise.getSnapshot().playing).toBe(false);
-    expect(rhythm.getSnapshot()).toMatchObject({
-      activeId: "rhythm",
-      originTime: 20.08,
-      playing: true,
-    });
-  });
-
-  it("cancels a pending companion rhythm sync when exercise is stopped", async () => {
-    const rhythmPrime = createDeferred<boolean>();
-    const { exercise, rhythm, setCurrentTime, transport } = createHarness({
-      rhythmPrime: vi
-        .fn<RhythmPlaybackAudioEngine["prime"]>()
-        .mockResolvedValueOnce(true)
-        .mockReturnValueOnce(rhythmPrime.promise),
-    });
-
-    await rhythm.start(createRhythmRequest());
-    setCurrentTime(20);
-
-    const exerciseStart = transport.startExercise({
-      ...createExerciseRequest(),
-      tempoBpm: 120,
-    });
-
-    await flushPromises();
-
-    expect(exercise.getSnapshot()).toMatchObject({
-      activeId: "exercise",
-      playing: true,
-    });
-    expect(rhythm.getSnapshot()).toMatchObject({
-      activeId: "rhythm",
-      originTime: 10.08,
-      pendingId: "rhythm",
-      playing: true,
-    });
-
-    transport.stopExercise("exercise");
-    rhythmPrime.resolve(true);
-
-    await expect(exerciseStart).resolves.toBe(true);
-    expect(exercise.getSnapshot().playing).toBe(false);
-    expect(rhythm.getSnapshot()).toMatchObject({
-      activeId: "rhythm",
-      originTime: 10.08,
-      playing: true,
-    });
-    expect(rhythm.getSnapshot().pendingId).toBeUndefined();
+    expect(exercise.getSnapshot().playbacks["manual-exercise"]).toBeDefined();
+    expect(rhythm.getSnapshot().playbacks["manual-rhythm"]).toBeDefined();
+    expect(exercise.getSnapshot().playbacks["band-exercise"]).toBeUndefined();
+    expect(rhythm.getSnapshot().playbacks["band-rhythm"]).toBeUndefined();
   });
 });

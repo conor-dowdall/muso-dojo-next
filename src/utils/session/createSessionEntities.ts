@@ -2,6 +2,10 @@ import { DEFAULT_KEYBOARD_THEME } from "@/data/keyboard/themes";
 import { assertNever } from "@/utils/assertNever";
 import { getRhythmSelectionForPartDuration } from "@/utils/music-part/partDuration";
 import {
+  DEFAULT_PART_LENGTH_BEATS,
+  normalizePartLengthBeats,
+} from "@/utils/music-part/partLength";
+import {
   type DronePartModuleConfig,
   type ExerciseLooperPartModuleConfig,
   type InstrumentCreationConfig,
@@ -16,7 +20,11 @@ import {
   type RhythmPartModuleConfig,
   type SessionConfig,
 } from "@/types/session";
-import { DEFAULT_RHYTHM_SELECTION } from "@/utils/rhythm/rhythmConfig";
+import {
+  DEFAULT_RHYTHM_SELECTION,
+  getRhythmSelectionRecipe,
+} from "@/utils/rhythm/rhythmConfig";
+import { isRhythmPartModule } from "@/utils/session/partModuleTypes";
 import { normalizeInstrumentInstanceConfig } from "@/utils/session/normalizeInstrumentConfig";
 import { normalizeMusicPartConfig } from "@/utils/session/normalizeMusicPartConfig";
 import { normalizeSessionConfig } from "@/utils/session/normalizeSessionConfig";
@@ -154,16 +162,30 @@ export function createDefaultMusicPartConfig<
   rootNote = DEFAULT_PART_ROOT_NOTE,
   noteCollectionKey = DEFAULT_PART_NOTE_COLLECTION_KEY,
   durationInBars,
+  lengthBeats,
+  automaticRhythm = "standard",
   moduleRequests = [],
 }: CreateMusicPartConfigOptions<T> = {}): MusicPartConfig {
+  const modules = createDefaultPartModuleConfigs(moduleRequests).map((module) =>
+    applyPartDurationToDefaultModule(module, durationInBars),
+  );
+  const firstRhythm = modules.find(isRhythmPartModule);
+  const resolvedLengthBeats =
+    normalizePartLengthBeats(lengthBeats) ??
+    (durationInBars !== undefined
+      ? normalizePartLengthBeats(durationInBars * DEFAULT_PART_LENGTH_BEATS)
+      : undefined) ??
+    (firstRhythm
+      ? getRhythmSelectionRecipe(firstRhythm.rhythm).beats
+      : DEFAULT_PART_LENGTH_BEATS);
   const part = normalizeMusicPartConfig({
     id,
     rootNote,
     noteCollectionKey,
     durationInBars,
-    modules: createDefaultPartModuleConfigs(moduleRequests).map((module) =>
-      applyPartDurationToDefaultModule(module, durationInBars),
-    ),
+    lengthBeats: resolvedLengthBeats,
+    automaticRhythm,
+    modules,
   });
 
   if (!part) {

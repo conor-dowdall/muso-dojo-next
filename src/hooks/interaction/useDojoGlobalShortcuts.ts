@@ -117,6 +117,7 @@ function togglePracticeBand(session: SessionConfig) {
 
   const plan = createPartSequencePlaybackPlan(session);
 
+  stopAllAudioPlayback();
   void ensureAudioReady();
   void partSequenceCoordinator.start(plan);
 }

@@ -17,7 +17,6 @@ import { type ExerciseCountInBeats } from "@/types/session";
 
 const START_LOOKAHEAD_SECONDS = 0.08;
 const NOTE_GATE_RATIO = 0.9;
-const HANDOFF_COMMIT_LEAD_SECONDS = AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS;
 
 export interface ExercisePlaybackEvent {
   durationBeats: number;
@@ -35,6 +34,18 @@ export interface ExercisePlaybackRequest {
   tempoBpm: number;
 }
 
+export interface ExercisePlaybackInstanceSnapshot {
+  activeId: string;
+  countInBeats: ExerciseCountInBeats;
+  countInStartTime: number;
+  cycleDuration: number;
+  events: readonly ExercisePlaybackEvent[];
+  originTime: number;
+  owner: PlaybackOwner;
+  playing: true;
+  secondsPerBeat: number;
+}
+
 export interface ExercisePlaybackSnapshot {
   activeId?: string;
   countInBeats?: ExerciseCountInBeats;
@@ -44,8 +55,11 @@ export interface ExercisePlaybackSnapshot {
   originTime?: number;
   owner?: PlaybackOwner;
   pendingId?: string;
+  pendingIds: readonly string[];
+  pendingOwners?: Readonly<Record<string, PlaybackOwner>>;
   pendingOwner?: PlaybackOwner;
   pendingOriginTime?: number;
+  playbacks: Readonly<Record<string, ExercisePlaybackInstanceSnapshot>>;
   playing: boolean;
   secondsPerBeat?: number;
 }
@@ -64,20 +78,15 @@ interface ActiveExercisePlayback {
   noteGroup: PlaybackGroupHandle;
   noteScheduler: LookaheadScheduler;
   request: ExercisePlaybackRequest;
-  snapshot: ExercisePlaybackSnapshot;
+  snapshot: ExercisePlaybackInstanceSnapshot;
+  stopTimer?: ReturnType<typeof globalThis.setTimeout>;
 }
 
-interface PendingExerciseHandoff {
-  playback: ActiveExercisePlayback;
+interface PendingExerciseStart {
+  originTime?: number;
+  owner: PlaybackOwner;
+  request: ExercisePlaybackRequest;
   revision: number;
-  snapshot: ExercisePlaybackSnapshot;
-  timer: ReturnType<typeof globalThis.setTimeout>;
-}
-
-interface PendingExerciseStop {
-  active: ActiveExercisePlayback;
-  atTime: number;
-  timer: ReturnType<typeof globalThis.setTimeout>;
 }
 
 export type ExercisePlaybackAudioEngine = Pick<
@@ -102,25 +111,17 @@ export type ExerciseMetronomeSchedulerFactory = (
 
 const idleSnapshot: ExercisePlaybackSnapshot = {
   events: [],
+  pendingIds: [],
+  playbacks: {},
   playing: false,
 };
-
-function withoutPendingStart(
-  snapshot: ExercisePlaybackSnapshot,
-): ExercisePlaybackSnapshot {
-  const nextSnapshot = { ...snapshot };
-  delete nextSnapshot.pendingId;
-  delete nextSnapshot.pendingOwner;
-  delete nextSnapshot.pendingOriginTime;
-  return nextSnapshot;
-}
 
 export function isExercisePlaybackActive(
   snapshot: ExercisePlaybackSnapshot,
   id: string,
 ) {
   return (
-    snapshot.pendingId === id || (snapshot.playing && snapshot.activeId === id)
+    snapshot.playbacks[id] !== undefined || snapshot.pendingIds.includes(id)
   );
 }
 
@@ -128,13 +129,11 @@ export function getExercisePlaybackOwner(
   snapshot: ExercisePlaybackSnapshot,
   id: string,
 ) {
-  if (snapshot.pendingId === id) {
-    return snapshot.pendingOwner;
-  }
-
-  return snapshot.playing && snapshot.activeId === id
-    ? snapshot.owner
-    : undefined;
+  return (
+    snapshot.playbacks[id]?.owner ??
+    snapshot.pendingOwners?.[id] ??
+    (snapshot.pendingId === id ? snapshot.pendingOwner : undefined)
+  );
 }
 
 export function exercisePlaybackRestartRequestsAreEqual(
@@ -184,15 +183,12 @@ function toSchedulerEvents(
 }
 
 export class ExercisePlaybackCoordinator {
-  private active: ActiveExercisePlayback | undefined;
+  private active = new Map<string, ActiveExercisePlayback>();
   private listeners = new Set<() => void>();
-  private pendingHandoff: PendingExerciseHandoff | undefined;
-  private pendingStop: PendingExerciseStop | undefined;
-  private pendingStartId: string | undefined;
-  private pendingStartOwner: PlaybackOwner | undefined;
-  private pendingStartRequest: ExercisePlaybackRequest | undefined;
+  private pending = new Map<string, PendingExerciseStart>();
+  private revisions = new Map<string, number>();
   private snapshot: ExercisePlaybackSnapshot = idleSnapshot;
-  private startRevision = 0;
+  private latestId: string | undefined;
 
   constructor(
     private readonly audioEngine: ExercisePlaybackAudioEngine = musoAudioEngine,
@@ -202,34 +198,89 @@ export class ExercisePlaybackCoordinator {
     this.audioEngine.subscribeToStopAll(() => this.reset());
   }
 
+  private nextRevision(id: string) {
+    const revision = (this.revisions.get(id) ?? 0) + 1;
+    this.revisions.set(id, revision);
+    return revision;
+  }
+
+  private rebuildSnapshot() {
+    const playbacks = Object.fromEntries(
+      [...this.active].map(([id, playback]) => [id, playback.snapshot]),
+    );
+    const pendingEntries = [...this.pending.values()];
+    const latestActive = this.latestId
+      ? this.active.get(this.latestId)?.snapshot
+      : undefined;
+    const latestPending = this.latestId
+      ? this.pending.get(this.latestId)
+      : pendingEntries.at(-1);
+
+    this.snapshot = {
+      ...(latestActive ?? {}),
+      events: latestActive?.events ?? [],
+      ...(latestPending
+        ? {
+            pendingId: latestPending.request.id,
+            pendingOwner: latestPending.owner,
+            ...(latestPending.originTime === undefined
+              ? {}
+              : { pendingOriginTime: latestPending.originTime }),
+          }
+        : {}),
+      pendingIds: pendingEntries.map((entry) => entry.request.id),
+      pendingOwners: Object.fromEntries(
+        pendingEntries.map((entry) => [entry.request.id, entry.owner]),
+      ),
+      playbacks,
+      playing: this.active.size > 0,
+    };
+  }
+
   private emit() {
+    this.rebuildSnapshot();
     this.listeners.forEach((listener) => listener());
   }
 
   private reset() {
-    this.cancelPendingHandoff();
-    this.cancelPendingStopTimer();
-    if (this.active) {
-      this.stopActivePlayback(this.active);
-    }
-    this.active = undefined;
-    this.pendingStartId = undefined;
-    this.pendingStartOwner = undefined;
-    this.pendingStartRequest = undefined;
-    this.snapshot = idleSnapshot;
-    this.startRevision += 1;
+    this.pending.clear();
+    this.active.forEach((playback) => {
+      playback.noteScheduler.stop();
+      playback.metronomeScheduler?.stop();
+      if (playback.stopTimer) {
+        globalThis.clearTimeout(playback.stopTimer);
+      }
+    });
+    this.active.clear();
+    this.revisions.forEach((_revision, id) => this.nextRevision(id));
+    this.latestId = undefined;
     this.emit();
   }
 
   getSnapshot = () => this.snapshot;
 
-  getActiveRequest = () => this.active?.request;
+  getActiveRequest = (id?: string) =>
+    this.active.get(id ?? this.latestId ?? "")?.request;
 
-  getPendingRequest = () => this.pendingStartRequest;
+  getPendingRequest = (id?: string) =>
+    this.pending.get(id ?? this.latestId ?? "")?.request;
+
+  getActiveIds = (owner?: PlaybackOwner) =>
+    [...this.active]
+      .filter(
+        ([, playback]) =>
+          owner === undefined || playback.snapshot.owner === owner,
+      )
+      .map(([id]) => id);
 
   getCurrentTime = () => this.audioEngine.getCurrentTime();
 
   prepare = () => this.audioEngine.prime();
+
+  subscribe = (listener: () => void) => {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  };
 
   private cancelGroup(
     group: PlaybackGroupHandle | undefined,
@@ -240,187 +291,67 @@ export class ExercisePlaybackCoordinator {
     }
   }
 
-  private clearGroupCancellation(group: PlaybackGroupHandle | undefined) {
-    if (group) {
-      this.audioEngine.clearPlaybackGroupCancellation?.(group);
-    }
-  }
+  private finishPlayback(id: string, playback: ActiveExercisePlayback) {
+    playback.noteScheduler.stop();
+    playback.metronomeScheduler?.stop();
 
-  private clearActivePlaybackEnd(active: ActiveExercisePlayback) {
-    this.clearGroupCancellation(active.countInGroup);
-    this.clearGroupCancellation(active.metronomeGroup);
-    this.clearGroupCancellation(active.noteGroup);
-  }
-
-  private cancelPendingStopTimer() {
-    const pendingStop = this.pendingStop;
-
-    if (!pendingStop) {
+    if (this.active.get(id) !== playback) {
       return;
     }
 
-    const currentTime = this.audioEngine.getCurrentTime();
-
-    if (currentTime !== undefined && currentTime >= pendingStop.atTime) {
-      globalThis.clearTimeout(pendingStop.timer);
-      this.commitPendingStop(pendingStop.active);
-      return;
+    this.active.delete(id);
+    this.reconcileMetronome(playback.snapshot.owner);
+    if (this.latestId === id) {
+      this.latestId = [...this.active.keys()].at(-1);
     }
-
-    this.clearActivePlaybackEnd(pendingStop.active);
-    globalThis.clearTimeout(pendingStop.timer);
-    this.pendingStop = undefined;
-  }
-
-  private commitPendingStop(active: ActiveExercisePlayback) {
-    if (this.pendingStop?.active !== active) {
-      return;
-    }
-
-    this.pendingStop = undefined;
-
-    if (this.active !== active) {
-      return;
-    }
-
-    active.noteScheduler.stop();
-    active.metronomeScheduler?.stop();
-    this.active = undefined;
-    this.snapshot = this.pendingStartId
-      ? {
-          ...idleSnapshot,
-          pendingId: this.pendingStartId,
-          ...(this.pendingStartOwner
-            ? { pendingOwner: this.pendingStartOwner }
-            : {}),
-        }
-      : idleSnapshot;
     this.emit();
   }
 
-  private scheduleActivePlaybackStop(
-    active: ActiveExercisePlayback,
-    options: { atTime: number; releaseSeconds?: number },
-  ) {
-    const currentTime = this.audioEngine.getCurrentTime();
-
-    if (
-      currentTime === undefined ||
-      options.atTime <= currentTime + HANDOFF_COMMIT_LEAD_SECONDS
-    ) {
-      this.stopActivePlayback(active, {
-        releaseSeconds: options.releaseSeconds,
-      });
-      return;
-    }
-
-    this.cancelPendingStopTimer();
-    this.cancelGroup(active.countInGroup, options);
-    this.cancelGroup(active.metronomeGroup, options);
-    this.cancelGroup(active.noteGroup, options);
-
-    this.pendingStop = {
-      active,
-      atTime: options.atTime,
-      timer: globalThis.setTimeout(
-        () => this.commitPendingStop(active),
-        Math.max(0, (options.atTime - currentTime) * 1000),
-      ),
-    };
-  }
-
-  private stopActivePlayback(
-    active: ActiveExercisePlayback,
+  private stopPlayback(
+    id: string,
+    playback: ActiveExercisePlayback,
     options?: { atTime?: number; releaseSeconds?: number },
   ) {
+    if (playback.stopTimer) {
+      globalThis.clearTimeout(playback.stopTimer);
+      playback.stopTimer = undefined;
+    }
+
     if (options?.atTime !== undefined) {
-      this.scheduleActivePlaybackStop(active, {
-        atTime: options.atTime,
-        releaseSeconds: options.releaseSeconds,
-      });
-      return;
+      this.cancelGroup(playback.countInGroup, options);
+      this.cancelGroup(playback.metronomeGroup, options);
+      this.cancelGroup(playback.noteGroup, options);
+      const currentTime = this.audioEngine.getCurrentTime();
+
+      if (currentTime !== undefined && options.atTime > currentTime) {
+        playback.stopTimer = globalThis.setTimeout(
+          () => this.finishPlayback(id, playback),
+          Math.max(0, (options.atTime - currentTime) * 1000),
+        );
+        return;
+      }
     }
 
-    this.cancelPendingStopTimer();
-    active.noteScheduler.stop();
-    active.metronomeScheduler?.stop();
-    this.cancelGroup(active.countInGroup, options);
-    this.cancelGroup(active.metronomeGroup, options);
-    this.cancelGroup(active.noteGroup, options);
+    this.cancelGroup(playback.countInGroup, options);
+    this.cancelGroup(playback.metronomeGroup, options);
+    this.cancelGroup(playback.noteGroup, options);
+    this.finishPlayback(id, playback);
   }
 
-  private cancelPendingHandoff() {
-    const pendingHandoff = this.pendingHandoff;
+  cancelPendingStart(id?: string) {
+    const ids = id === undefined ? [...this.pending.keys()] : [id];
+    let changed = false;
 
-    if (!pendingHandoff) {
-      return;
+    ids.forEach((pendingId) => {
+      if (this.pending.delete(pendingId)) {
+        this.nextRevision(pendingId);
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      this.emit();
     }
-
-    const currentTime = this.audioEngine.getCurrentTime();
-    const originTime = pendingHandoff.snapshot.originTime;
-
-    if (
-      currentTime !== undefined &&
-      originTime !== undefined &&
-      currentTime >= originTime
-    ) {
-      globalThis.clearTimeout(pendingHandoff.timer);
-      this.commitPendingHandoff(pendingHandoff.revision);
-      return;
-    }
-
-    globalThis.clearTimeout(pendingHandoff.timer);
-    this.stopActivePlayback(pendingHandoff.playback);
-    if (this.active) {
-      this.clearActivePlaybackEnd(this.active);
-    }
-    this.pendingHandoff = undefined;
-  }
-
-  private armActivePlaybackEnd(active: ActiveExercisePlayback, atTime: number) {
-    const options = {
-      atTime,
-      releaseSeconds: AUDIO_STOP_RELEASE_SECONDS,
-    };
-
-    this.cancelGroup(active.countInGroup, options);
-    this.cancelGroup(active.metronomeGroup, options);
-    this.cancelGroup(active.noteGroup, options);
-  }
-
-  private commitPendingHandoff(revision: number) {
-    const pendingHandoff = this.pendingHandoff;
-
-    if (!pendingHandoff || pendingHandoff.revision !== revision) {
-      return;
-    }
-
-    if (this.active) {
-      this.active.noteScheduler.stop();
-      this.active.metronomeScheduler?.stop();
-    }
-
-    this.active = pendingHandoff.playback;
-    this.pendingHandoff = undefined;
-    this.pendingStartId = undefined;
-    this.pendingStartOwner = undefined;
-    this.pendingStartRequest = undefined;
-    this.snapshot = pendingHandoff.snapshot;
-    this.emit();
-  }
-
-  cancelPendingStart() {
-    if (this.pendingStartId === undefined) {
-      return;
-    }
-
-    this.cancelPendingHandoff();
-    this.pendingStartId = undefined;
-    this.pendingStartOwner = undefined;
-    this.pendingStartRequest = undefined;
-    this.startRevision += 1;
-    this.snapshot = withoutPendingStart(this.snapshot);
-    this.emit();
   }
 
   private createNoteScheduler({
@@ -449,7 +380,7 @@ export class ExercisePlaybackCoordinator {
     });
   }
 
-  private createMetronomeClickScheduler({
+  private createClickScheduler({
     group,
     secondsPerBeat,
   }: {
@@ -457,17 +388,9 @@ export class ExercisePlaybackCoordinator {
     secondsPerBeat: number;
   }) {
     return this.createMetronomeScheduler({
-      // A one-beat cycle keeps the click grid steady when an exercise loop
-      // has a fractional length, as triplet exercises often do.
-      events: [
-        {
-          duration: secondsPerBeat,
-          offset: 0,
-          payload: true,
-        },
-      ],
+      events: [{ duration: secondsPerBeat, offset: 0, payload: true }],
       getCurrentTime: this.audioEngine.getCurrentTime,
-      onSchedule: (_scheduledEvent, startTime) => {
+      onSchedule: (_event, startTime) => {
         this.audioEngine.scheduleMetronomeClick({
           accent: false,
           group,
@@ -477,23 +400,61 @@ export class ExercisePlaybackCoordinator {
     });
   }
 
+  private reconcileMetronome(owner: PlaybackOwner) {
+    const candidates = [...this.active.values()].filter(
+      (playback) =>
+        playback.snapshot.owner === owner && playback.request.metronomeEnabled,
+    );
+    const provider =
+      candidates.find((playback) => playback.metronomeScheduler) ??
+      candidates[0];
+
+    this.active.forEach((playback) => {
+      if (
+        playback.snapshot.owner !== owner ||
+        playback === provider ||
+        !playback.metronomeScheduler
+      ) {
+        return;
+      }
+
+      playback.metronomeScheduler.stop();
+      this.cancelGroup(playback.metronomeGroup);
+      delete playback.metronomeGroup;
+      delete playback.metronomeScheduler;
+    });
+
+    if (!provider || provider.metronomeScheduler) {
+      return;
+    }
+
+    const group = this.audioEngine.createPlaybackGroup();
+    const scheduler = this.createClickScheduler({
+      group,
+      secondsPerBeat: provider.snapshot.secondsPerBeat,
+    });
+    provider.metronomeGroup = group;
+    provider.metronomeScheduler = scheduler;
+    scheduler.start(provider.snapshot.originTime);
+  }
+
   private scheduleCountIn({
     countInBeats,
     countInStartTime,
     group,
     secondsPerBeat,
-    earliestStartTime = Number.NEGATIVE_INFINITY,
+    currentTime,
   }: {
     countInBeats: ExerciseCountInBeats;
     countInStartTime: number;
     group: PlaybackGroupHandle;
     secondsPerBeat: number;
-    earliestStartTime?: number;
+    currentTime: number;
   }) {
     for (let beatIndex = 0; beatIndex < countInBeats; beatIndex += 1) {
       const startTime = countInStartTime + beatIndex * secondsPerBeat;
 
-      if (startTime < earliestStartTime) {
+      if (startTime < currentTime + AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS) {
         continue;
       }
 
@@ -505,55 +466,39 @@ export class ExercisePlaybackCoordinator {
     }
   }
 
-  getActiveStepIndex(outputContextTime: number) {
-    const { cycleDuration, events, originTime, playing, secondsPerBeat } =
-      this.snapshot;
+  getActiveStepIndex(outputContextTime: number, id?: string) {
+    const playback = this.active.get(id ?? this.latestId ?? "")?.snapshot;
 
-    if (
-      !playing ||
-      originTime === undefined ||
-      cycleDuration === undefined ||
-      secondsPerBeat === undefined ||
-      events.length === 0 ||
-      outputContextTime < originTime
-    ) {
+    if (!playback || outputContextTime < playback.originTime) {
       return undefined;
     }
 
     const positionBeats =
-      ((outputContextTime - originTime) / secondsPerBeat) % cycleDuration;
+      ((outputContextTime - playback.originTime) / playback.secondsPerBeat) %
+      playback.cycleDuration;
 
-    return events.find(
+    return playback.events.find(
       (event) =>
         positionBeats >= event.offsetBeats &&
         positionBeats < event.offsetBeats + event.durationBeats,
     )?.stepIndex;
   }
 
-  subscribe = (listener: () => void) => {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  };
-
   async start(
     request: ExercisePlaybackRequest,
     options: ExercisePlaybackStartOptions = {},
   ) {
-    const revision = ++this.startRevision;
-    this.cancelPendingHandoff();
-    this.cancelPendingStopTimer();
-    this.pendingStartId = request.id;
-    this.pendingStartOwner = options.owner ?? "manual";
-    this.pendingStartRequest = request;
-    this.snapshot = {
-      ...this.snapshot,
-      pendingId: request.id,
-      pendingOwner: options.owner ?? "manual",
-      ...(options.originTime === undefined
-        ? {}
-        : { pendingOriginTime: options.originTime }),
-    };
+    const revision = this.nextRevision(request.id);
+    const owner = options.owner ?? "manual";
+    this.pending.set(request.id, {
+      originTime: options.originTime,
+      owner,
+      request,
+      revision,
+    });
+    this.latestId = request.id;
     this.emit();
+
     const prepared =
       options.prepared === true ? true : await this.audioEngine.prime();
     const currentTime = this.audioEngine.getCurrentTime();
@@ -561,25 +506,18 @@ export class ExercisePlaybackCoordinator {
     if (
       !prepared ||
       currentTime === undefined ||
-      revision !== this.startRevision
+      this.revisions.get(request.id) !== revision
     ) {
-      if (revision === this.startRevision) {
-        this.pendingStartId = undefined;
-        this.pendingStartOwner = undefined;
-        this.pendingStartRequest = undefined;
-        this.snapshot = withoutPendingStart(this.snapshot);
+      if (this.pending.get(request.id)?.revision === revision) {
+        this.pending.delete(request.id);
         this.emit();
       }
       return false;
     }
 
     const cycleDuration = getCycleDuration(request.events);
-
     if (request.events.length === 0 || cycleDuration <= 0) {
-      this.pendingStartId = undefined;
-      this.pendingStartOwner = undefined;
-      this.pendingStartRequest = undefined;
-      this.snapshot = withoutPendingStart(this.snapshot);
+      this.pending.delete(request.id);
       this.emit();
       return false;
     }
@@ -592,15 +530,15 @@ export class ExercisePlaybackCoordinator {
     const originTime =
       options.originTime ??
       countInStartTime + request.countInBeats * secondsPerBeat;
+    const previous = this.active.get(request.id);
 
-    const previous = this.active;
-    const shouldHandoff =
-      options.handoff === true &&
-      previous !== undefined &&
-      originTime > currentTime + HANDOFF_COMMIT_LEAD_SECONDS;
-
-    if (previous && !shouldHandoff) {
-      this.stopActivePlayback(previous);
+    if (previous) {
+      this.stopPlayback(request.id, previous, {
+        ...(options.handoff && originTime > currentTime
+          ? { atTime: originTime }
+          : {}),
+        releaseSeconds: AUDIO_STOP_RELEASE_SECONDS,
+      });
     }
 
     const countInGroup =
@@ -608,195 +546,67 @@ export class ExercisePlaybackCoordinator {
         ? this.audioEngine.createPlaybackGroup()
         : undefined;
     const noteGroup = this.audioEngine.createPlaybackGroup();
-    const metronomeGroup = request.metronomeEnabled
-      ? this.audioEngine.createPlaybackGroup()
-      : undefined;
-
-    if (countInGroup) {
-      this.scheduleCountIn({
-        countInBeats: request.countInBeats,
-        countInStartTime,
-        ...(options.originTime === undefined
-          ? {}
-          : {
-              earliestStartTime:
-                currentTime + AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS,
-            }),
-        group: countInGroup,
-        secondsPerBeat,
-      });
-    }
     const noteScheduler = this.createNoteScheduler({
       group: noteGroup,
       request,
       secondsPerBeat,
     });
-    const metronomeScheduler = metronomeGroup
-      ? this.createMetronomeClickScheduler({
-          group: metronomeGroup,
-          secondsPerBeat,
-        })
-      : undefined;
-    const snapshot: ExercisePlaybackSnapshot = {
+    const snapshot: ExercisePlaybackInstanceSnapshot = {
       activeId: request.id,
-      ...(request.countInBeats > 0
-        ? { countInBeats: request.countInBeats, countInStartTime }
-        : {}),
+      countInBeats: request.countInBeats,
+      countInStartTime,
       cycleDuration,
       events: request.events,
       originTime,
-      owner: options.owner ?? "manual",
+      owner,
       playing: true,
       secondsPerBeat,
     };
-
-    const nextActive = {
-      countInGroup,
-      metronomeGroup,
-      metronomeScheduler,
+    const playback: ActiveExercisePlayback = {
+      ...(countInGroup ? { countInGroup } : {}),
       noteGroup,
       noteScheduler,
       request,
       snapshot,
     };
-    noteScheduler.start(originTime);
-    metronomeScheduler?.start(originTime);
-    if (shouldHandoff) {
-      // Arm the audible boundary while there is still ample audio-clock
-      // runway. The commit timer only updates coordinator state; a delayed
-      // main thread can no longer let the previous and next Parts overlap.
-      this.armActivePlaybackEnd(previous, originTime);
-      const commitDelayMilliseconds = Math.max(
-        0,
-        (originTime - currentTime - HANDOFF_COMMIT_LEAD_SECONDS) * 1000,
-      );
 
-      this.pendingHandoff = {
-        playback: nextActive,
-        revision,
-        snapshot,
-        timer: globalThis.setTimeout(
-          () => this.commitPendingHandoff(revision),
-          commitDelayMilliseconds,
-        ),
-      };
-      this.snapshot = {
-        ...previous.snapshot,
-        pendingId: request.id,
-        pendingOwner: options.owner ?? "manual",
-        pendingOriginTime: originTime,
-      };
-      this.emit();
-      return true;
-    }
-
-    this.active = nextActive;
-    this.pendingStartId = undefined;
-    this.pendingStartOwner = undefined;
-    this.pendingStartRequest = undefined;
-    this.snapshot = snapshot;
-    this.emit();
-    return true;
-  }
-
-  setMetronomeEnabled(id: string, enabled: boolean) {
-    const active = this.active;
-
-    if (!active || active.snapshot.activeId !== id) {
-      return false;
-    }
-
-    const isEnabled = active.metronomeScheduler !== undefined;
-
-    if (isEnabled === enabled) {
-      return true;
-    }
-
-    active.metronomeScheduler?.stop();
-    this.cancelGroup(active.metronomeGroup);
-    active.metronomeScheduler = undefined;
-    active.metronomeGroup = undefined;
-
-    if (enabled) {
-      const { originTime, secondsPerBeat } = active.snapshot;
-
-      if (originTime === undefined || secondsPerBeat === undefined) {
-        return false;
-      }
-
-      const metronomeGroup = this.audioEngine.createPlaybackGroup();
-      const metronomeScheduler = this.createMetronomeClickScheduler({
-        group: metronomeGroup,
+    if (countInGroup) {
+      this.scheduleCountIn({
+        countInBeats: request.countInBeats,
+        countInStartTime,
+        currentTime,
+        group: countInGroup,
         secondsPerBeat,
       });
-
-      active.metronomeGroup = metronomeGroup;
-      active.metronomeScheduler = metronomeScheduler;
-      metronomeScheduler.start(originTime);
     }
-
-    active.request = {
-      ...active.request,
-      metronomeEnabled: enabled,
-    };
-    active.snapshot = {
-      ...active.snapshot,
-    };
-    this.snapshot = active.snapshot;
+    noteScheduler.start(originTime);
+    this.pending.delete(request.id);
+    this.active.set(request.id, playback);
+    this.reconcileMetronome(owner);
     this.emit();
     return true;
   }
 
   stop(id?: string, options?: { atTime?: number; releaseSeconds?: number }) {
-    const pendingHandoff = this.pendingHandoff;
-    const stopsActive =
-      this.active !== undefined &&
-      (id === undefined || id === this.snapshot.activeId);
-    const stopsPending =
-      this.pendingStartId !== undefined &&
-      (id === undefined || id === this.pendingStartId);
-
-    if (!stopsActive && !stopsPending) {
-      return;
-    }
-
-    if (stopsPending) {
-      this.cancelPendingHandoff();
-      this.pendingStartId = undefined;
-      this.pendingStartOwner = undefined;
-      this.pendingStartRequest = undefined;
-      this.startRevision += 1;
-    } else if (stopsActive && pendingHandoff) {
-      this.cancelPendingHandoff();
-      this.pendingStartId = undefined;
-      this.pendingStartOwner = undefined;
-      this.pendingStartRequest = undefined;
-      this.startRevision += 1;
-    }
-
-    if (stopsActive && this.active) {
-      const active = this.active;
-      this.stopActivePlayback(active, {
-        atTime: options?.atTime,
-        releaseSeconds: options?.releaseSeconds ?? AUDIO_STOP_RELEASE_SECONDS,
-      });
-      if (options?.atTime === undefined) {
-        this.active = undefined;
-        this.snapshot = this.pendingStartId
-          ? {
-              ...idleSnapshot,
-              pendingId: this.pendingStartId,
-              ...(this.pendingStartOwner
-                ? { pendingOwner: this.pendingStartOwner }
-                : {}),
-            }
-          : idleSnapshot;
+    const ids = id === undefined ? [...this.active.keys()] : [id];
+    this.cancelPendingStart(id);
+    ids.forEach((activeId) => {
+      const playback = this.active.get(activeId);
+      if (playback) {
+        this.stopPlayback(activeId, playback, options);
       }
-    } else if (stopsPending) {
-      this.snapshot = withoutPendingStart(this.snapshot);
+    });
+  }
+
+  setMetronomeEnabled(id: string, enabled: boolean) {
+    const playback = this.active.get(id);
+    if (!playback || playback.request.metronomeEnabled === enabled) {
+      return false;
     }
 
-    this.emit();
+    playback.request = { ...playback.request, metronomeEnabled: enabled };
+    this.reconcileMetronome(playback.snapshot.owner);
+    return true;
   }
 }
 

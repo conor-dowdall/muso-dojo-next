@@ -23,6 +23,10 @@ import { type MusicPartControlProps } from "@/types/music-part";
 import { type AddPartModulesHandler } from "@/types/session";
 import { useControllableState } from "@/hooks/useControllableState";
 import styles from "./MusicPart.module.css";
+import {
+  DEFAULT_PART_LENGTH_BEATS,
+  normalizePartLengthBeats,
+} from "@/utils/music-part/partLength";
 
 interface MusicPartProps {
   children: ReactNode;
@@ -38,6 +42,8 @@ interface MusicPartProps {
   onAddPartModules?: AddPartModulesHandler;
   onClonePart?: () => void;
   onRemovePart?: () => void;
+  partPlaybackActive?: boolean;
+  onTogglePartPlayback?: () => void;
 }
 
 type MusicPartComponentProps = MusicPartProps & MusicPartControlProps;
@@ -124,11 +130,16 @@ export function MusicPart({
   noteCollectionKey: controlledNoteCollectionKey,
   initialNoteCollectionKey = "major",
   onNoteCollectionKeyChange,
+  lengthBeats: controlledLengthBeats,
+  initialLengthBeats = DEFAULT_PART_LENGTH_BEATS,
+  onLengthBeatsChange,
   showHeader = true,
   showReadOnlyIdentity = false,
   onAddPartModules,
   onClonePart,
   onRemovePart,
+  partPlaybackActive,
+  onTogglePartPlayback,
 }: MusicPartComponentProps) {
   const autoId = useId();
   const partId = userPartId ?? autoId;
@@ -144,14 +155,24 @@ export function MusicPart({
     defaultValue: initialNoteCollectionKey,
     onChange: onNoteCollectionKeyChange,
   });
+  const [lengthBeats, setLengthBeats] = useControllableState({
+    value: controlledLengthBeats,
+    defaultValue:
+      normalizePartLengthBeats(initialLengthBeats) ?? DEFAULT_PART_LENGTH_BEATS,
+    onChange: onLengthBeatsChange,
+  });
 
   const contextValue: MusicPartContextValue = {
     partId,
+    lengthBeats,
     moduleCount,
     rootNote,
     noteCollectionKey,
     setRootNote,
     setNoteCollectionKey,
+    setLengthBeats,
+    partPlaybackActive,
+    togglePartPlayback: onTogglePartPlayback,
     instrumentCreationRangeContext,
     addPartModules: onAddPartModules,
     clonePart: onClonePart,

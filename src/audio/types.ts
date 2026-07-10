@@ -99,6 +99,7 @@ export interface AudioEngine {
   scheduleNote: (request: ScheduleNoteRequest) => AudioVoiceHandle | undefined;
   schedulePercussionHit: (request: SchedulePercussionHitRequest) => boolean;
   subscribeToStopAll: (listener: () => void) => () => void;
+  subscribeToPlaybackActivity: (listener: () => void) => () => void;
   subscribeToVoiceEnd: (
     handle: AudioVoiceHandle,
     listener: () => void,
