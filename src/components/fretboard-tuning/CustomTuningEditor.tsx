@@ -2,7 +2,7 @@
 
 import { formatMidiNote } from "@musodojo/music-theory-data";
 import { Check } from "lucide-react";
-import { type FormEvent, useId, useState } from "react";
+import { type SyntheticEvent, useId, useState } from "react";
 import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import fieldStyles from "@/components/ui/control-field/ControlField.module.css";
@@ -80,14 +80,17 @@ export function CustomTuningEditor({
       (!hasInitialName || nameChanged || notesChanged)
     : notesChanged;
 
-  const handleSave = (event?: FormEvent<HTMLFormElement>) => {
-    event?.preventDefault();
-
+  const save = () => {
     if (!canSave) {
       return;
     }
 
     onSave(openMidiNotes, normalizedName);
+  };
+
+  const handleSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    save();
   };
 
   return (
@@ -140,7 +143,7 @@ export function CustomTuningEditor({
       </div>
 
       {showNameField ? (
-        <form className={styles.nameForm} onSubmit={handleSave}>
+        <form className={styles.nameForm} onSubmit={handleSubmit}>
           <div className={styles.nameField}>
             <label className={styles.nameLabel} htmlFor={nameInputId}>
               Tuning Name
@@ -181,12 +184,7 @@ export function CustomTuningEditor({
         </form>
       ) : (
         <DisclosureListPanelActions>
-          <Button
-            disabled={!canSave}
-            label="Save"
-            size="sm"
-            onClick={() => handleSave()}
-          />
+          <Button disabled={!canSave} label="Save" size="sm" onClick={save} />
         </DisclosureListPanelActions>
       )}
     </div>

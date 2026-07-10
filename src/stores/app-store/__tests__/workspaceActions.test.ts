@@ -5,9 +5,7 @@ describe("workspace app store actions", () => {
   it("stores the selected available Session view", () => {
     const store = createTestStore();
 
-    expect(store.getState().setSessionWorkspaceViewMode("chart")).toBe(
-      "chart",
-    );
+    expect(store.getState().setSessionWorkspaceViewMode("chart")).toBe("chart");
     expect(store.getState().sessionWorkspaceViewMode).toBe("chart");
 
     expect(store.getState().setSessionWorkspaceViewMode("session")).toBe(

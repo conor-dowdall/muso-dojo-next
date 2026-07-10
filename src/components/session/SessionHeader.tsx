@@ -219,11 +219,13 @@ export function SessionHeader({
               shouldYield={false}
               onClick={openViewSection}
             />
-            <OverflowMenuButton
-              aria-label="Session menu"
-              disabled={viewModeTransitionPending}
-              onClick={openSessionMenu}
-            />
+            {isFocusHeader ? null : (
+              <OverflowMenuButton
+                aria-label="Session menu"
+                disabled={viewModeTransitionPending}
+                onClick={openSessionMenu}
+              />
+            )}
             {isFocusHeader ? (
               <IconButton
                 aria-label="Close focus view"

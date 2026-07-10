@@ -92,9 +92,7 @@ function HydratedSession({
     onSessionViewModeChange(nextViewMode);
   };
   const exitFocusViewMode = useCallback(() => {
-    onSessionViewModeChange(
-      useAppStore.getState().sessionWorkspaceViewMode,
-    );
+    onSessionViewModeChange(useAppStore.getState().sessionWorkspaceViewMode);
   }, [onSessionViewModeChange]);
 
   useDojoGlobalShortcuts({
