@@ -2,7 +2,6 @@
 
 import { type ReactNode, useState } from "react";
 import {
-  CircleStop,
   Gauge,
   LibraryBig,
   Minimize2,
@@ -14,8 +13,6 @@ import {
   View,
   X,
 } from "lucide-react";
-import { stopAllAudioPlayback } from "@/audio";
-import { useAudioPlaybackActive } from "@/hooks/audio/useAudioPlaybackActive";
 import { Heading } from "@/components/ui/typography/Heading";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import {
@@ -85,7 +82,6 @@ export function SessionHeader({
   const [dialogKey, setDialogKey] = useState(0);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
   const practiceBandTransport = usePracticeBandTransport(activeSessionId);
-  const audioPlaybackActive = useAudioPlaybackActive();
   const sessionName = useAppStore(
     (state) =>
       (activeSessionId ? state.sessions[activeSessionId]?.name : null) ??
@@ -195,15 +191,6 @@ export function SessionHeader({
               />
             )}
             <PracticeBandPlayButton transport={practiceBandTransport} />
-            <IconButton
-              aria-label="Stop all audio"
-              aria-keyshortcuts="Escape"
-              disabled={!audioPlaybackActive}
-              icon={<CircleStop />}
-              size="sm"
-              shouldYield={false}
-              onClick={stopAllAudioPlayback}
-            />
             <IconButton
               aria-label={`Set session tempo. Current tempo: ${activeSessionTempoBpm} bpm`}
               disabled={!hasActiveSession}

@@ -50,27 +50,24 @@ export function PartPlaybackDialog({
     <ObjectMenuDialog
       isOpen={isOpen}
       size="standard"
-      title="Practice Band"
+      title="Backing Band Options"
       onClose={onClose}
     >
       <DisclosureListGroup>
         <BandSourceDisclosure
-          automaticPreview="From this Part's notes"
           icon={<Repeat />}
           isOpen={isChoiceOpen("backingNotes")}
-          label="Backing Notes"
-          moduleNoun="Looper"
+          label="Notes"
           preview={backingNotesPreview}
           role="backingNotes"
           onChoose={chooseSource}
           onToggle={() => toggleChoice("backingNotes")}
         />
         <BandSourceDisclosure
-          automaticPreview={automaticRhythmPreview}
+          automaticSubtitle={automaticRhythmPreview}
           icon={<Drum />}
           isOpen={isChoiceOpen("rhythm")}
           label="Rhythm"
-          moduleNoun="Rhythm"
           preview={rhythmPreview}
           role="rhythm"
           onChoose={chooseSource}
@@ -106,21 +103,19 @@ function getSourcePreview(
 }
 
 function BandSourceDisclosure({
-  automaticPreview,
+  automaticSubtitle,
   icon,
   isOpen,
   label,
-  moduleNoun,
   onChoose,
   onToggle,
   preview,
   role,
 }: {
-  automaticPreview: string;
+  automaticSubtitle?: string;
   icon: ReactNode;
   isOpen: boolean;
   label: string;
-  moduleNoun: string;
   onChoose: (role: PartBandRole, source: PartBandSourceConfig) => void;
   onToggle: () => void;
   preview: string;
@@ -137,22 +132,20 @@ function BandSourceDisclosure({
       label={label}
       panelVariant="menu"
       preview={preview}
-      subtitle={`Choose one ${moduleNoun.toLowerCase()} for the band`}
       onToggle={onToggle}
     >
       <DisclosureList density="compact">
         <DisclosureListChoice
           label="Automatic"
-          preview={automaticPreview}
           selected={source.mode === "automatic"}
           selectedPreviewKind="current"
+          subtitle={automaticSubtitle}
           onClick={() => onChoose(role, { mode: "automatic" })}
         />
         <DisclosureListChoice
           label="Off"
           selected={source.mode === "off"}
           selectedPreviewKind="current"
-          subtitle={`No ${label.toLowerCase()} in the Practice Band`}
           onClick={() => onChoose(role, { mode: "off" })}
         />
         {part.bandModuleOptions[role].map((option) => {
@@ -165,9 +158,9 @@ function BandSourceDisclosure({
             <DisclosureListChoice
               key={option.id}
               label={option.label}
-              preview={option.detail}
               selected={sourceIsSelected(source, candidate)}
               selectedPreviewKind="current"
+              subtitle={option.detail}
               onClick={() => onChoose(role, candidate)}
             />
           );

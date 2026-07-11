@@ -201,7 +201,7 @@ export function PracticeBandPlayButton({
     <IconButton
       {...props}
       aria-label={
-        transport.isActive ? "Stop Practice Band" : "Play Practice Band"
+        transport.isActive ? "Stop Backing Band" : "Play Backing Band"
       }
       aria-keyshortcuts={
         transport.isActive ? "Space Escape Shift+Space" : "Shift+Space"

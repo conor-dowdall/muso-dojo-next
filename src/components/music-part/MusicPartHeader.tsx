@@ -82,7 +82,7 @@ export function MusicPartHeader({
             ) : null}
             {!isPerformanceMode ? (
               <IconButton
-                aria-label={`Practice Band settings. Current band length: ${formatPartLengthBeats(musicPart.effectiveLengthBeats)}`}
+                aria-label={`Backing Band options. Current Part length: ${formatPartLengthBeats(musicPart.effectiveLengthBeats)}`}
                 icon={<BoomBox />}
                 size="sm"
                 onClick={() => setIsPlaybackDialogOpen(true)}
