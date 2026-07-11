@@ -8,7 +8,6 @@ import {
 } from "@/components/instrument-creation/instrumentCreationRangeContext";
 import { useAppStore } from "@/stores/appStore";
 import {
-  formatPartLengthBeats,
   getAutomaticRhythmBeats,
   getPartLengthBeats,
 } from "@/utils/music-part/partLength";
@@ -17,6 +16,7 @@ import {
   getPartBandModules,
 } from "@/utils/music-part/partBand";
 import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
+import { getRhythmChoiceSummary } from "@/components/rhythm/rhythmRecipeControls";
 import { PartModuleView } from "./PartModuleView";
 import { selectPart } from "./sessionSelectors";
 
@@ -64,8 +64,8 @@ export function MusicPartView({
                   label: `Rhythm ${index + 1}`,
                   detail:
                     module.type === "rhythm"
-                      ? formatPartLengthBeats(
-                          getRhythmSelectionRecipe(module.rhythm).beats,
+                      ? getRhythmChoiceSummary(
+                          getRhythmSelectionRecipe(module.rhythm),
                         )
                       : undefined,
                 }),

@@ -10,7 +10,10 @@ import {
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { ObjectMenuDialog } from "@/components/ui/object-menu";
-import { formatPartLengthBeats } from "@/utils/music-part/partLength";
+import { getRhythmChoiceSummary } from "@/components/rhythm/rhythmRecipeControls";
+import { getAutomaticRhythmSelection } from "@/utils/rhythm/automaticRhythm";
+import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
+import { formatValueSummary } from "@/utils/valueSummary";
 import { type PartBandRole, type PartBandSourceConfig } from "@/types/session";
 import { useMusicPart } from "./MusicPartContext";
 
@@ -37,9 +40,20 @@ export function PartPlaybackDialog({
   const part = useMusicPart();
   const { isOpen: isChoiceOpen, toggleChoice } =
     useDisclosureList<PlaybackChoice>(null);
-  const automaticRhythmPreview = `${part.automaticRhythm.style === "swing" ? "Swing" : "Standard"} · ${formatPartLengthBeats(part.automaticLengthBeats)}`;
+  const automaticRhythmSummary = getRhythmChoiceSummary(
+    getRhythmSelectionRecipe(
+      getAutomaticRhythmSelection(
+        part.automaticRhythm.style,
+        part.automaticLengthBeats,
+      ),
+    ),
+  );
   const backingNotesPreview = getSourcePreview(part, "backingNotes");
-  const rhythmPreview = getSourcePreview(part, "rhythm");
+  const rhythmPreview = getSourcePreview(
+    part,
+    "rhythm",
+    automaticRhythmSummary,
+  );
 
   const chooseSource = (role: PartBandRole, source: PartBandSourceConfig) => {
     part.setBandSource?.(role, source);
@@ -64,7 +78,7 @@ export function PartPlaybackDialog({
           onToggle={() => toggleChoice("backingNotes")}
         />
         <BandSourceDisclosure
-          automaticSubtitle={automaticRhythmPreview}
+          automaticSubtitle={automaticRhythmSummary}
           icon={<Drum />}
           isOpen={isChoiceOpen("rhythm")}
           label="Rhythm"
@@ -81,11 +95,12 @@ export function PartPlaybackDialog({
 function getSourcePreview(
   part: ReturnType<typeof useMusicPart>,
   role: PartBandRole,
+  automaticRhythmSummary?: string,
 ) {
   const source = part.band[role];
   if (source.mode === "automatic") {
     return role === "rhythm"
-      ? `Automatic · ${part.automaticRhythm.style === "swing" ? "Swing" : "Standard"} · ${formatPartLengthBeats(part.automaticLengthBeats)}`
+      ? formatValueSummary(["Automatic", automaticRhythmSummary])
       : "Automatic";
   }
 
@@ -98,7 +113,7 @@ function getSourcePreview(
   );
 
   return option
-    ? [option.label, option.detail].filter(Boolean).join(" · ")
+    ? formatValueSummary([option.label, option.detail])
     : "Automatic";
 }
 

@@ -17,7 +17,7 @@ import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 import { RootNotePicker } from "@/components/music-theory/RootNotePicker";
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
 import styles from "./MusicPartHeader.module.css";
-import { BoomBox, Plus } from "lucide-react";
+import { Disc3, Plus } from "lucide-react";
 import { Heading } from "@/components/ui/typography/Heading";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { MusicPartMenuDialog } from "./MusicPartMenuDialog";
@@ -83,7 +83,7 @@ export function MusicPartHeader({
             {!isPerformanceMode ? (
               <IconButton
                 aria-label={`Backing Band options. Current Part length: ${formatPartLengthBeats(musicPart.effectiveLengthBeats)}`}
-                icon={<BoomBox />}
+                icon={<Disc3 />}
                 size="sm"
                 onClick={() => setIsPlaybackDialogOpen(true)}
               />

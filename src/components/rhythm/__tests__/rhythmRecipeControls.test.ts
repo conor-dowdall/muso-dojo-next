@@ -8,6 +8,7 @@ import {
   getRecipeWithTimekeeper,
   getAdjacentCompatibleRhythmBeatCount,
   getCompatibleRhythmBeatCounts,
+  getRhythmChoiceSummary,
   getRhythmRecipeCreationSummary,
   getRhythmStarterChoiceForRecipe,
   getRhythmStarterRecipe,
@@ -108,6 +109,19 @@ describe("rhythmRecipeControls", () => {
     ).toBe("Swing");
     expect(getRhythmStarterChoiceForRecipe(shuffle)?.label).toBe("Shuffle");
     expect(getRhythmStarterChoiceForRecipe(country)?.label).toBe("Country");
+  });
+
+  it("summarizes rhythm choices with their musical identity and meter", () => {
+    expect(getRhythmChoiceSummary(getRhythmStarterRecipe("4-4"))).toBe("4/4");
+    expect(getRhythmChoiceSummary(getRhythmStarterRecipe("swing"))).toBe(
+      "Swing • 4/4",
+    );
+    expect(getRhythmChoiceSummary(getRhythmStarterRecipe("shuffle"))).toBe(
+      "Shuffle • 4/4",
+    );
+    expect(getRhythmChoiceSummary(getRhythmStarterRecipe("country"))).toBe(
+      "Country • 4/4",
+    );
   });
 
   it("uses the theory meter for compound starter recognition", () => {

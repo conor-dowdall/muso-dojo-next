@@ -1,6 +1,6 @@
 "use client";
 
-import { BoomBox } from "lucide-react";
+import { Disc3 } from "lucide-react";
 import styles from "./PartModuleBandSource.module.css";
 
 export function PartModuleBandSourceIndicator() {
@@ -11,7 +11,7 @@ export function PartModuleBandSourceIndicator() {
       role="img"
       title="Backing Band source"
     >
-      <BoomBox aria-hidden="true" />
+      <Disc3 aria-hidden="true" />
     </span>
   );
 }

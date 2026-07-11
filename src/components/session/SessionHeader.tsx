@@ -3,14 +3,14 @@
 import { type ReactNode, useState } from "react";
 import {
   Gauge,
+  GalleryThumbnails,
   LibraryBig,
-  Minimize2,
   MonitorPlay,
+  PanelTop,
   PanelsTopLeft,
   Plus,
   Rows3,
   Settings2,
-  View,
   X,
 } from "lucide-react";
 import { Heading } from "@/components/ui/typography/Heading";
@@ -63,7 +63,7 @@ const sessionViewModeIcons = {
   session: <PanelsTopLeft />,
   chart: <Rows3 />,
   live: <MonitorPlay />,
-  clean: <Minimize2 />,
+  clean: <PanelTop />,
 } as const satisfies Record<SessionViewMode, ReactNode>;
 
 export function SessionHeader({
@@ -202,7 +202,7 @@ export function SessionHeader({
             <IconButton
               aria-label={`Session view. Current: ${viewModeLabel}`}
               disabled={!hasActiveSession || viewModeTransitionPending}
-              icon={<View />}
+              icon={<GalleryThumbnails />}
               selected={isAlternateView}
               size="sm"
               shouldYield={false}
@@ -238,7 +238,7 @@ export function SessionHeader({
         <DisclosureListGroup>
           <DisclosureListActionItem
             ariaLabel={`Choose session view. Current: ${viewModeLabel}`}
-            icon={<View />}
+            icon={<GalleryThumbnails />}
             isOpen={openMenuSection === "view"}
             label="View"
             panelVariant="menu"

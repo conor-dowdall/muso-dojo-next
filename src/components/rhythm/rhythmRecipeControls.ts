@@ -361,6 +361,16 @@ export function getRhythmStarterChoiceForRecipe(recipe: RhythmRecipe) {
   return undefined;
 }
 
+export function getRhythmChoiceSummary(recipe: RhythmRecipe) {
+  const meterLabel = getRhythmTheoryReadout(recipe).title;
+  const choiceLabel = getRhythmStarterChoiceForRecipe(recipe)?.label;
+
+  return formatValueSummary([
+    choiceLabel !== meterLabel ? choiceLabel : undefined,
+    meterLabel,
+  ]);
+}
+
 export function getRhythmStarterSummary(starterId: RhythmStarterId) {
   const recipe = getRhythmStarterRecipe(starterId);
 
