@@ -135,9 +135,6 @@ export function setPartBandSource(
   return {
     ...part,
     band: { ...band, [role]: normalizedSource },
-    ...(role === "rhythm" && normalizedSource.mode !== "module"
-      ? { lengthMode: "fixed" as const }
-      : {}),
   };
 }
 
@@ -159,6 +156,5 @@ export function reconcilePartBandAfterModuleRemoval(
   return {
     ...part,
     band: { backingNotes, rhythm },
-    ...(rhythm.mode !== "module" ? { lengthMode: "fixed" as const } : {}),
   };
 }

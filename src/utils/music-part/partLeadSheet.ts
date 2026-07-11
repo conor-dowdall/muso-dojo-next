@@ -20,7 +20,6 @@ export interface PartLeadSheetSummary {
   identityAccessibleLabel: string;
   identityLabel: string;
   isPartialBar: boolean;
-  lengthLabel: string;
   meterDetail: string;
   meterLabel: string;
 }
@@ -34,18 +33,14 @@ export function getPartLeadSheetSummary(
   const selectedRhythm = getPartBandModule(part, "rhythm");
   const rhythmSelection =
     (selectedRhythm?.type === "rhythm" ? selectedRhythm.rhythm : undefined) ??
-    getAutomaticRhythmSelection(part.automaticRhythm, lengthBeats);
+    getAutomaticRhythmSelection(part.automaticRhythm?.style, lengthBeats);
   const meterReadout = getRhythmTheoryReadout(
     getRhythmSelectionRecipe(rhythmSelection),
   );
   const automaticSwing =
-    rhythmSource.mode === "automatic" && part.automaticRhythm === "swing";
-  const meterLabel =
-    rhythmSource.mode === "off"
-      ? "Rhythm Off"
-      : automaticSwing
-        ? "Swing"
-        : meterReadout.title;
+    rhythmSource.mode === "automatic" &&
+    part.automaticRhythm?.style === "swing";
+  const meterLabel = meterReadout.title;
   const meterDetail = [
     rhythmSource.mode === "off"
       ? "No band rhythm"
@@ -66,7 +61,6 @@ export function getPartLeadSheetSummary(
     identityAccessibleLabel: identity.accessibleLabel,
     identityLabel: identity.label,
     isPartialBar: isPartialPartDuration(part.durationInBars),
-    lengthLabel: formatPartLengthBeats(lengthBeats),
     meterDetail,
     meterLabel,
   };

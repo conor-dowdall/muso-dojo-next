@@ -38,24 +38,28 @@ export function normalizeMusicPartConfig(
     durationInBars !== undefined
       ? durationInBars * DEFAULT_PART_LENGTH_BEATS
       : DEFAULT_PART_LENGTH_BEATS;
-  const lengthBeats =
+  const automaticRhythmValue = isRecord(value.automaticRhythm)
+    ? value.automaticRhythm
+    : undefined;
+  const automaticRhythmBeats =
+    normalizePartLengthBeats(automaticRhythmValue?.beats) ??
     normalizePartLengthBeats(value.lengthBeats) ??
     normalizePartLengthBeats(migratedLengthBeats) ??
     DEFAULT_PART_LENGTH_BEATS;
-  const automaticRhythm =
-    value.automaticRhythm === "swing" ? "swing" : "standard";
+  const automaticRhythm = {
+    beats: automaticRhythmBeats,
+    style:
+      value.automaticRhythm === "swing" ||
+      automaticRhythmValue?.style === "swing"
+        ? ("swing" as const)
+        : ("standard" as const),
+  };
   const band = normalizePartBandConfig(value.band, modules);
-  const lengthMode =
-    value.lengthMode === "rhythm" && band.rhythm.mode === "module"
-      ? "rhythm"
-      : "fixed";
 
   return {
     id: normalizeId(value.id, `part-${index + 1}`),
     rootNote: normalizeRootNote(value.rootNote),
     noteCollectionKey: normalizeNoteCollectionKey(value.noteCollectionKey),
-    lengthBeats,
-    lengthMode,
     band,
     automaticRhythm,
     ...(durationInBars !== undefined ? { durationInBars } : {}),

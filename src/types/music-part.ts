@@ -1,11 +1,10 @@
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { type SettingSetter } from "@/types/state";
 import {
-  type AutomaticRhythmStyle,
+  type AutomaticRhythmConfig,
   type PartBandConfig,
   type PartBandRole,
   type PartBandSourceConfig,
-  type PartLengthMode,
 } from "@/types/session";
 
 export interface PartBandModuleOption {
@@ -15,11 +14,9 @@ export interface PartBandModuleOption {
 }
 
 export interface MusicPartSettings {
-  lengthBeats?: number;
   effectiveLengthBeats?: number;
-  lengthMode?: PartLengthMode;
   band?: PartBandConfig;
-  automaticRhythm?: AutomaticRhythmStyle;
+  automaticRhythm?: AutomaticRhythmConfig;
   bandModuleOptions?: Record<PartBandRole, PartBandModuleOption[]>;
   rootNote?: string;
   noteCollectionKey?: NoteCollectionKey;
@@ -27,9 +24,7 @@ export interface MusicPartSettings {
 }
 
 export interface MusicPartControlProps extends MusicPartSettings {
-  initialLengthBeats?: number;
-  onLengthBeatsChange?: SettingSetter<number>;
-  onLengthModeChange?: (value: PartLengthMode) => void;
+  onAutomaticRhythmBeatsChange?: SettingSetter<number>;
   onBandSourceChange?: (
     role: PartBandRole,
     source: PartBandSourceConfig,

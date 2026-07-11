@@ -11,13 +11,13 @@ import {
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { ObjectMenuDialog } from "@/components/ui/object-menu";
 import {
+  AUTOMATIC_RHYTHM_BEAT_CHOICES,
   formatPartLengthBeats,
-  USER_PART_LENGTH_BEAT_CHOICES,
 } from "@/utils/music-part/partLength";
 import { type PartBandRole, type PartBandSourceConfig } from "@/types/session";
 import { useMusicPart } from "./MusicPartContext";
 
-type PlaybackChoice = "backingNotes" | "duration" | "rhythm";
+type PlaybackChoice = "automaticRhythm" | "backingNotes" | "rhythm";
 
 function sourceIsSelected(
   current: PartBandSourceConfig,
@@ -40,17 +40,7 @@ export function PartPlaybackDialog({
   const part = useMusicPart();
   const { isOpen: isChoiceOpen, toggleChoice } =
     useDisclosureList<PlaybackChoice>(null);
-  const rhythmSource = part.band.rhythm;
-  const selectedRhythmOption =
-    rhythmSource.mode === "module"
-      ? part.bandModuleOptions.rhythm.find(
-          (option) => option.id === rhythmSource.moduleId,
-        )
-      : undefined;
-  const durationPreview =
-    part.lengthMode === "rhythm"
-      ? `Rhythm · ${formatPartLengthBeats(part.effectiveLengthBeats)}`
-      : formatPartLengthBeats(part.effectiveLengthBeats);
+  const automaticRhythmPreview = `${part.automaticRhythm.style === "swing" ? "Swing" : "Standard"} · ${formatPartLengthBeats(part.automaticRhythm.beats)}`;
   const backingNotesPreview = getSourcePreview(part, "backingNotes");
   const rhythmPreview = getSourcePreview(part, "rhythm");
 
@@ -67,50 +57,6 @@ export function PartPlaybackDialog({
       onClose={onClose}
     >
       <DisclosureListGroup>
-        <DisclosureListItem
-          ariaLabel={`Part length. Current: ${durationPreview}`}
-          icon={<Timer />}
-          isOpen={isChoiceOpen("duration")}
-          label="Part Length"
-          panelVariant="menu"
-          preview={durationPreview}
-          subtitle="How long the band stays on this Part"
-          onToggle={() => toggleChoice("duration")}
-        >
-          <DisclosureList density="compact">
-            {selectedRhythmOption ? (
-              <DisclosureListChoice
-                label="Follow Band Rhythm"
-                preview={selectedRhythmOption.detail}
-                selected={part.lengthMode === "rhythm"}
-                selectedPreviewKind="current"
-                subtitle="Update automatically when its beat count changes"
-                onClick={() => {
-                  part.setLengthMode?.("rhythm");
-                  toggleChoice("duration");
-                }}
-              />
-            ) : null}
-            {USER_PART_LENGTH_BEAT_CHOICES.map((lengthBeats) => (
-              <DisclosureListChoice
-                key={lengthBeats}
-                label={formatPartLengthBeats(lengthBeats)}
-                selected={
-                  part.lengthMode === "fixed" &&
-                  part.lengthBeats === lengthBeats
-                }
-                selectedPreviewKind="current"
-                onClick={() => {
-                  part.setLengthBeats?.(lengthBeats);
-                  toggleChoice("duration");
-                }}
-              />
-            ))}
-          </DisclosureList>
-        </DisclosureListItem>
-      </DisclosureListGroup>
-
-      <DisclosureListGroup>
         <BandSourceDisclosure
           automaticPreview="From this Part's notes"
           icon={<Repeat />}
@@ -123,9 +69,7 @@ export function PartPlaybackDialog({
           onToggle={() => toggleChoice("backingNotes")}
         />
         <BandSourceDisclosure
-          automaticPreview={
-            part.automaticRhythm === "swing" ? "Swing" : "Standard"
-          }
+          automaticPreview={automaticRhythmPreview}
           icon={<Drum />}
           isOpen={isChoiceOpen("rhythm")}
           label="Rhythm"
@@ -135,6 +79,34 @@ export function PartPlaybackDialog({
           onChoose={chooseSource}
           onToggle={() => toggleChoice("rhythm")}
         />
+      </DisclosureListGroup>
+
+      <DisclosureListGroup>
+        <DisclosureListItem
+          ariaLabel={`Automatic rhythm. Current: ${automaticRhythmPreview}`}
+          icon={<Timer />}
+          isOpen={isChoiceOpen("automaticRhythm")}
+          label="Automatic Rhythm"
+          panelVariant="menu"
+          preview={automaticRhythmPreview}
+          subtitle="Fallback feel and beat length for this Part"
+          onToggle={() => toggleChoice("automaticRhythm")}
+        >
+          <DisclosureList density="compact">
+            {AUTOMATIC_RHYTHM_BEAT_CHOICES.map((lengthBeats) => (
+              <DisclosureListChoice
+                key={lengthBeats}
+                label={formatPartLengthBeats(lengthBeats)}
+                selected={part.automaticRhythm.beats === lengthBeats}
+                selectedPreviewKind="current"
+                onClick={() => {
+                  part.setAutomaticRhythmBeats?.(lengthBeats);
+                  toggleChoice("automaticRhythm");
+                }}
+              />
+            ))}
+          </DisclosureList>
+        </DisclosureListItem>
       </DisclosureListGroup>
     </ObjectMenuDialog>
   );
@@ -147,7 +119,7 @@ function getSourcePreview(
   const source = part.band[role];
   if (source.mode === "automatic") {
     return role === "rhythm"
-      ? `Automatic · ${part.automaticRhythm === "swing" ? "Swing" : "Standard"}`
+      ? `Automatic · ${part.automaticRhythm.style === "swing" ? "Swing" : "Standard"} · ${formatPartLengthBeats(part.automaticRhythm.beats)}`
       : "Automatic";
   }
 
@@ -155,10 +127,13 @@ function getSourcePreview(
     return "Off";
   }
 
-  return (
-    part.bandModuleOptions[role].find((option) => option.id === source.moduleId)
-      ?.label ?? "Automatic"
+  const option = part.bandModuleOptions[role].find(
+    (option) => option.id === source.moduleId,
   );
+
+  return option
+    ? [option.label, option.detail].filter(Boolean).join(" · ")
+    : "Automatic";
 }
 
 function BandSourceDisclosure({

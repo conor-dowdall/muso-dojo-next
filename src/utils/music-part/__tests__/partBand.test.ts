@@ -68,19 +68,17 @@ describe("Part band sources", () => {
     expect(isPartBandModule(part, "backingNotes", "looper-b")).toBe(true);
   });
 
-  it("returns to Automatic and fixed length when the selected Rhythm is removed", () => {
+  it("returns to Automatic when the selected Rhythm is removed", () => {
     const part = createPart({
       band: {
         backingNotes: { mode: "module", moduleId: "looper-a" },
         rhythm: { mode: "module", moduleId: "rhythm-b" },
       },
-      lengthMode: "rhythm",
     });
 
     expect(reconcilePartBandAfterModuleRemoval(part, "rhythm-b")).toMatchObject(
       {
         band: { rhythm: { mode: "automatic" } },
-        lengthMode: "fixed",
       },
     );
   });

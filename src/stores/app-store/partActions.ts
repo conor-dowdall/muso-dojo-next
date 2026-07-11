@@ -17,10 +17,7 @@ import {
 } from "./writeNormalization";
 import { type AppStoreGet, type AppStoreSet, type PartActions } from "./types";
 import { normalizePartLengthBeats } from "@/utils/music-part/partLength";
-import {
-  getPartBandModule,
-  setPartBandSource as applyPartBandSource,
-} from "@/utils/music-part/partBand";
+import { setPartBandSource as applyPartBandSource } from "@/utils/music-part/partBand";
 
 function resolveTargetSessionId(
   get: AppStoreGet,
@@ -188,33 +185,19 @@ export function createPartActions(
         noteCollectionKey: nextNoteCollectionKey,
       });
     },
-    setPartLengthBeats: (sessionId, partId, lengthBeats) => {
-      const normalizedLengthBeats = normalizePartLengthBeats(lengthBeats);
-
-      if (normalizedLengthBeats === undefined) {
-        return;
-      }
-
-      get().updatePartSettings(sessionId, partId, {
-        lengthBeats: normalizedLengthBeats,
-        lengthMode: "fixed",
-      });
-    },
-    setPartLengthMode: (sessionId, partId, lengthMode) => {
+    setPartAutomaticRhythmBeats: (sessionId, partId, beats) => {
+      const normalizedBeats = normalizePartLengthBeats(beats);
       const part = findPartById(get().sessions[sessionId], partId);
 
-      if (!part) {
+      if (normalizedBeats === undefined || !part) {
         return;
       }
 
-      const nextLengthMode =
-        lengthMode === "rhythm" &&
-        getPartBandModule(part, "rhythm")?.type === "rhythm"
-          ? "rhythm"
-          : "fixed";
-
       get().updatePartSettings(sessionId, partId, {
-        lengthMode: nextLengthMode,
+        automaticRhythm: {
+          beats: normalizedBeats,
+          style: part.automaticRhythm?.style ?? "standard",
+        },
       });
     },
     setPartBandSource: (sessionId, partId, role, source) => {
@@ -227,7 +210,6 @@ export function createPartActions(
       const nextPart = applyPartBandSource(part, role, source);
       get().updatePartSettings(sessionId, partId, {
         band: nextPart.band,
-        lengthMode: nextPart.lengthMode,
       });
     },
   };

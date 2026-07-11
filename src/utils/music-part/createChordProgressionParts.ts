@@ -200,8 +200,10 @@ function createPartFromReference<T extends PartModuleType>({
     rootNote: partReference.reference.rootNote,
     noteCollectionKey: partReference.reference.chordCollectionKey,
     durationInBars: partReference.durationInBars,
-    lengthBeats: partReference.lengthBeats,
-    automaticRhythm,
+    automaticRhythm: {
+      beats: partReference.lengthBeats,
+      style: automaticRhythm,
+    },
     modules: resolvedModules,
   });
 

@@ -30,22 +30,20 @@ describe("Part Length", () => {
           backingNotes: { mode: "automatic" },
           rhythm: { mode: "module", moduleId: "six" },
         },
-        lengthBeats: 2,
-        lengthMode: "rhythm",
+        automaticRhythm: { beats: 2, style: "standard" },
         modules,
       }),
     ).toBe(6);
   });
 
-  it("falls back to fixed length when no Rhythm module is selected", () => {
+  it("falls back to Automatic Rhythm beats when no module is selected", () => {
     expect(
       getPartLengthBeats({
         band: {
           backingNotes: { mode: "automatic" },
           rhythm: { mode: "automatic" },
         },
-        lengthBeats: 2,
-        lengthMode: "rhythm",
+        automaticRhythm: { beats: 2, style: "standard" },
         modules: [],
       }),
     ).toBe(2);

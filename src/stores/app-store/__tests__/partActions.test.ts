@@ -3,7 +3,7 @@ import { createTestStore, sessionId } from "./appStoreTestUtils";
 import { getPartLengthBeats } from "@/utils/music-part/partLength";
 
 describe("Part actions", () => {
-  it("sets Part Length independently of its Rhythm modules", () => {
+  it("uses Automatic Rhythm beats only when no module owns the band", () => {
     const store = createTestStore();
     const partId = store.getState().addPart(sessionId, {
       moduleRequests: [
@@ -30,33 +30,42 @@ describe("Part actions", () => {
 
     expect(partId).toBeDefined();
     expect(
-      store.getState().sessions[sessionId]?.parts.at(-1)?.lengthBeats,
-    ).toBe(4);
+      store.getState().sessions[sessionId]?.parts.at(-1)?.automaticRhythm,
+    ).toEqual({ beats: 4, style: "standard" });
 
-    store.getState().setPartLengthMode(sessionId, partId!, "rhythm");
     expect(
       getPartLengthBeats(
         store.getState().sessions[sessionId]?.parts.at(-1) ?? {},
       ),
     ).toBe(6);
 
-    store.getState().setPartLengthBeats(sessionId, partId!, 2);
+    store.getState().setPartAutomaticRhythmBeats(sessionId, partId!, 2);
 
     const part = store.getState().sessions[sessionId]?.parts.at(-1);
-    expect(part?.lengthBeats).toBe(2);
-    expect(part?.lengthMode).toBe("fixed");
+    expect(part?.automaticRhythm?.beats).toBe(2);
+    expect(getPartLengthBeats(part ?? {})).toBe(6);
     expect(part?.modules[0]).toMatchObject({
       rhythm: { recipe: { beats: 6 } },
     });
+
+    store.getState().setPartBandSource(sessionId, partId!, "rhythm", {
+      mode: "automatic",
+    });
+    expect(
+      getPartLengthBeats(
+        store.getState().sessions[sessionId]?.parts.at(-1) ?? {},
+      ),
+    ).toBe(2);
   });
 
-  it("ignores invalid Part Length values", () => {
+  it("ignores invalid Automatic Rhythm beat values", () => {
     const store = createTestStore();
     const partId = store.getState().addPart(sessionId);
-    store.getState().setPartLengthBeats(sessionId, partId!, 0);
+    store.getState().setPartAutomaticRhythmBeats(sessionId, partId!, 0);
 
     expect(
-      store.getState().sessions[sessionId]?.parts.at(-1)?.lengthBeats,
+      store.getState().sessions[sessionId]?.parts.at(-1)?.automaticRhythm
+        ?.beats,
     ).toBe(4);
   });
 

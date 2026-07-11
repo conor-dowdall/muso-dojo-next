@@ -31,7 +31,6 @@ import {
   type PartModuleCreationRequest,
   type PartBandRole,
   type PartBandSourceConfig,
-  type PartLengthMode,
   type PartModuleType,
   type RememberSessionMaterialCreationRequest,
   type RhythmPartModuleConfig,
@@ -133,15 +132,10 @@ export interface PartActions {
     partId: string,
     noteCollectionKey: SettingValue<NoteCollectionKey>,
   ) => void;
-  setPartLengthBeats: (
+  setPartAutomaticRhythmBeats: (
     sessionId: string,
     partId: string,
-    lengthBeats: number,
-  ) => void;
-  setPartLengthMode: (
-    sessionId: string,
-    partId: string,
-    lengthMode: PartLengthMode,
+    beats: number,
   ) => void;
   setPartBandSource: (
     sessionId: string,

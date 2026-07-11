@@ -17,7 +17,7 @@ import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 import { RootNotePicker } from "@/components/music-theory/RootNotePicker";
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
 import styles from "./MusicPartHeader.module.css";
-import { Plus, Timer } from "lucide-react";
+import { Plus, RadioTower } from "lucide-react";
 import { Heading } from "@/components/ui/typography/Heading";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { MusicPartMenuDialog } from "./MusicPartMenuDialog";
@@ -66,23 +66,18 @@ export function MusicPartHeader({
               size="sm"
               onClick={() => setDialogMode("collection")}
             />
-            {!isPerformanceMode ? (
-              <Button
-                aria-label={`Practice Band settings. Part length: ${formatPartLengthBeats(musicPart.effectiveLengthBeats)}`}
-                icon={<Timer />}
-                label={
-                  musicPart.lengthMode === "rhythm"
-                    ? `Rhythm · ${formatPartLengthBeats(musicPart.effectiveLengthBeats)}`
-                    : formatPartLengthBeats(musicPart.effectiveLengthBeats)
-                }
-                size="sm"
-                onClick={() => setIsPlaybackDialogOpen(true)}
-              />
-            ) : null}
           </Heading>
         }
         actions={
           <>
+            {!isPerformanceMode ? (
+              <IconButton
+                aria-label={`Practice Band settings. Current band length: ${formatPartLengthBeats(musicPart.effectiveLengthBeats)}`}
+                icon={<RadioTower />}
+                size="sm"
+                onClick={() => setIsPlaybackDialogOpen(true)}
+              />
+            ) : null}
             {!isPerformanceMode &&
             musicPart.addPartModules &&
             onOpenAddDialog ? (

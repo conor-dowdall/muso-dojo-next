@@ -38,7 +38,6 @@ interface SessionPartSummary {
   id: string;
   identityLabel: string;
   isPartialBar: boolean;
-  lengthLabel: string;
   meterLabel: string;
 }
 
@@ -86,7 +85,6 @@ export function SessionView({
         id: summary.id,
         identityLabel: summary.identityLabel,
         isPartialBar: summary.isPartialBar,
-        lengthLabel: summary.lengthLabel,
         meterLabel: summary.meterLabel,
       };
     });
@@ -208,9 +206,7 @@ function BandSessionView({
                 {part.identityLabel}
               </span>
               <span className={styles.bandPartMeta}>
-                <span className={styles.bandPartMeter}>
-                  {part.meterLabel} · {part.lengthLabel}
-                </span>
+                <span className={styles.bandPartMeter}>{part.meterLabel}</span>
               </span>
             </li>
           );

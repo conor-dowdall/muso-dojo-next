@@ -1,11 +1,14 @@
-import { type MusicPartConfig, type PartLengthMode } from "@/types/session";
+import {
+  type AutomaticRhythmConfig,
+  type MusicPartConfig,
+} from "@/types/session";
 import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
 import { getPartBandModule } from "./partBand";
 
 export const DEFAULT_PART_LENGTH_BEATS = 4;
 export const MIN_PART_LENGTH_BEATS = 0.125;
 export const MAX_PART_LENGTH_BEATS = 128;
-export const USER_PART_LENGTH_BEAT_CHOICES = [
+export const AUTOMATIC_RHYTHM_BEAT_CHOICES = [
   1, 2, 3, 4, 6, 8, 12, 16,
 ] as const;
 
@@ -28,10 +31,18 @@ export function normalizePartLengthBeats(value: unknown) {
   return roundPartLength(value);
 }
 
-export function getFixedPartLengthBeats(
-  part: Partial<Pick<MusicPartConfig, "durationInBars" | "lengthBeats">>,
-) {
+interface PartLengthInput {
+  automaticRhythm?: AutomaticRhythmConfig;
+  band?: MusicPartConfig["band"];
+  durationInBars?: number;
+  /** Legacy persisted field read only during normalization. */
+  lengthBeats?: number;
+  modules?: MusicPartConfig["modules"];
+}
+
+export function getAutomaticRhythmBeats(part: PartLengthInput) {
   return (
+    normalizePartLengthBeats(part.automaticRhythm?.beats) ??
     normalizePartLengthBeats(part.lengthBeats) ??
     normalizePartLengthBeats(
       part.durationInBars === undefined
@@ -42,15 +53,8 @@ export function getFixedPartLengthBeats(
   );
 }
 
-export function getPartLengthBeats(
-  part: Partial<
-    Pick<
-      MusicPartConfig,
-      "band" | "durationInBars" | "lengthBeats" | "lengthMode" | "modules"
-    >
-  >,
-) {
-  if (part.lengthMode === "rhythm" && part.modules) {
+export function getPartLengthBeats(part: PartLengthInput) {
+  if (part.modules) {
     const rhythm = getPartBandModule(
       {
         band: part.band,
@@ -64,18 +68,7 @@ export function getPartLengthBeats(
     }
   }
 
-  return getFixedPartLengthBeats(part);
-}
-
-export function getPartLengthMode(
-  part: Partial<MusicPartConfig>,
-): PartLengthMode {
-  return part.lengthMode === "rhythm" &&
-    part.modules &&
-    getPartBandModule({ band: part.band, modules: part.modules }, "rhythm")
-      ?.type === "rhythm"
-    ? "rhythm"
-    : "fixed";
+  return getAutomaticRhythmBeats(part);
 }
 
 export function formatPartLengthBeats(lengthBeats: number) {

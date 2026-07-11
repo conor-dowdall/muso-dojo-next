@@ -172,7 +172,7 @@ function createRhythmRequest({
   const lengthBeats = getPartLengthBeats(part);
   const selection =
     module?.rhythm ??
-    getAutomaticRhythmSelection(part.automaticRhythm, lengthBeats);
+    getAutomaticRhythmSelection(part.automaticRhythm?.style, lengthBeats);
 
   return {
     id: module?.id ?? `${PART_SEQUENCE_DEFAULT_RHYTHM_ID_PREFIX}:${part.id}`,

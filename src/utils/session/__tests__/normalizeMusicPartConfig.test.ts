@@ -52,7 +52,7 @@ describe("normalizeMusicPartConfig", () => {
     });
   });
 
-  it("normalizes explicit one- and two-beat Part Lengths", () => {
+  it("migrates explicit Part Lengths into Automatic Rhythm beats", () => {
     expect(
       normalizeMusicPartConfig({
         id: "one-beat",
@@ -61,7 +61,9 @@ describe("normalizeMusicPartConfig", () => {
         lengthBeats: 1,
         modules: [],
       }),
-    ).toMatchObject({ lengthBeats: 1 });
+    ).toMatchObject({
+      automaticRhythm: { beats: 1, style: "standard" },
+    });
     expect(
       normalizeMusicPartConfig({
         id: "two-beats",
@@ -70,7 +72,9 @@ describe("normalizeMusicPartConfig", () => {
         lengthBeats: 2,
         modules: [],
       }),
-    ).toMatchObject({ lengthBeats: 2 });
+    ).toMatchObject({
+      automaticRhythm: { beats: 2, style: "standard" },
+    });
   });
 
   it("migrates authored duration while keeping ordinary Parts at four beats", () => {
@@ -82,7 +86,9 @@ describe("normalizeMusicPartConfig", () => {
         durationInBars: 0.5,
         modules: [],
       }),
-    ).toMatchObject({ lengthBeats: 2 });
+    ).toMatchObject({
+      automaticRhythm: { beats: 2, style: "standard" },
+    });
     expect(
       normalizeMusicPartConfig({
         id: "six-beat",
@@ -110,8 +116,7 @@ describe("normalizeMusicPartConfig", () => {
       }),
     ).toMatchObject({
       band: { rhythm: { mode: "module", moduleId: "rhythm" } },
-      lengthBeats: 4,
-      lengthMode: "fixed",
+      automaticRhythm: { beats: 4, style: "standard" },
     });
   });
 
@@ -124,7 +129,9 @@ describe("normalizeMusicPartConfig", () => {
         automaticRhythm: "swing",
         modules: [],
       }),
-    ).toMatchObject({ automaticRhythm: "swing" });
+    ).toMatchObject({
+      automaticRhythm: { beats: 4, style: "swing" },
+    });
     expect(
       normalizeMusicPartConfig({
         id: "invalid",
@@ -133,6 +140,8 @@ describe("normalizeMusicPartConfig", () => {
         automaticRhythm: "shuffle",
         modules: [],
       }),
-    ).toMatchObject({ automaticRhythm: "standard" });
+    ).toMatchObject({
+      automaticRhythm: { beats: 4, style: "standard" },
+    });
   });
 });

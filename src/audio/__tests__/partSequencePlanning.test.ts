@@ -29,7 +29,7 @@ function createSession(parts: MusicPartConfig[]): SessionConfig {
 }
 
 describe("createPartSequencePlaybackPlan", () => {
-  it("uses first-class Part Length independently of Rhythm loop length", () => {
+  it("uses Automatic Rhythm beats when no module owns the band role", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([
         createPart(
@@ -44,18 +44,25 @@ describe("createPartSequencePlaybackPlan", () => {
               type: "rhythm",
             },
           ],
-          { lengthBeats: 2 },
+          {
+            automaticRhythm: { beats: 2, style: "standard" },
+            band: {
+              backingNotes: { mode: "automatic" },
+              rhythm: { mode: "automatic" },
+            },
+          },
         ),
       ]),
     );
 
     expect(plan.parts[0]?.durationBeats).toBe(2);
-    expect(plan.parts[0]?.rhythmRequests[0]?.pattern.cycleTicks).toBe(
-      RHYTHM_PPQ * 6,
-    );
+    expect(plan.parts[0]?.rhythmRequests[0]).toMatchObject({
+      id: "part-sequence-drums:part",
+      pattern: { cycleTicks: RHYTHM_PPQ * 2 },
+    });
   });
 
-  it("can explicitly follow the selected band Rhythm beat length", () => {
+  it("uses the selected band Rhythm beat length", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([
         createPart(
@@ -75,8 +82,7 @@ describe("createPartSequencePlaybackPlan", () => {
               backingNotes: { mode: "automatic" },
               rhythm: { mode: "module", moduleId: "rhythm" },
             },
-            lengthBeats: 2,
-            lengthMode: "rhythm",
+            automaticRhythm: { beats: 2, style: "standard" },
           },
         ),
       ]),
@@ -95,7 +101,11 @@ describe("createPartSequencePlaybackPlan", () => {
 
   it("adds stable automatic Looper and Rhythm fallbacks for an empty Part", () => {
     const plan = createPartSequencePlaybackPlan(
-      createSession([createPart("part", [], { lengthBeats: 1 })]),
+      createSession([
+        createPart("part", [], {
+          automaticRhythm: { beats: 1, style: "standard" },
+        }),
+      ]),
     );
 
     expect(plan.parts[0]).toMatchObject({
@@ -119,8 +129,7 @@ describe("createPartSequencePlaybackPlan", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([
         createPart("swing-part", [], {
-          automaticRhythm: "swing",
-          lengthBeats: 4,
+          automaticRhythm: { beats: 4, style: "swing" },
         }),
       ]),
     );

@@ -72,8 +72,8 @@ describe("createChordProgressionParts", () => {
       "C",
     ]);
     expect(parts[6]).toMatchObject({
+      automaticRhythm: { beats: 2, style: "standard" },
       durationInBars: 0.5,
-      lengthBeats: 2,
       rootNote: "C",
     });
     expect(parts[6]?.modules[0]).toMatchObject({
@@ -104,7 +104,7 @@ describe("createChordProgressionParts", () => {
       },
       type: "rhythm",
     });
-    expect(parts[8]?.lengthBeats).toBe(4);
+    expect(parts[8]?.automaticRhythm?.beats).toBe(4);
     expect(parts[8]).not.toHaveProperty("durationInBars");
   });
 
@@ -237,9 +237,11 @@ describe("createChordProgressionParts", () => {
     expect(aSectionParts.every((part) => part.durationInBars === 0.5)).toBe(
       true,
     );
-    expect(aSectionParts.every((part) => part.lengthBeats === 2)).toBe(true);
     expect(
-      aSectionParts.every((part) => part.automaticRhythm === "swing"),
+      aSectionParts.every((part) => part.automaticRhythm?.beats === 2),
+    ).toBe(true);
+    expect(
+      aSectionParts.every((part) => part.automaticRhythm?.style === "swing"),
     ).toBe(true);
 
     expect(bridgeParts).toHaveLength(8);
@@ -256,7 +258,9 @@ describe("createChordProgressionParts", () => {
     expect(bridgeParts.every((part) => part.durationInBars === undefined)).toBe(
       true,
     );
-    expect(bridgeParts.every((part) => part.lengthBeats === 4)).toBe(true);
+    expect(bridgeParts.every((part) => part.automaticRhythm?.beats === 4)).toBe(
+      true,
+    );
   });
 
   it("authors Swing for Jazz and Blues and Standard rhythm elsewhere", () => {
@@ -276,11 +280,15 @@ describe("createChordProgressionParts", () => {
       moduleRequests: [],
     });
 
-    expect(jazz.every((part) => part.automaticRhythm === "swing")).toBe(true);
-    expect(blues.every((part) => part.automaticRhythm === "swing")).toBe(true);
-    expect(common.every((part) => part.automaticRhythm === "standard")).toBe(
+    expect(jazz.every((part) => part.automaticRhythm?.style === "swing")).toBe(
       true,
     );
+    expect(blues.every((part) => part.automaticRhythm?.style === "swing")).toBe(
+      true,
+    );
+    expect(
+      common.every((part) => part.automaticRhythm?.style === "standard"),
+    ).toBe(true);
   });
 
   it("stores fractional chart durations even when default Rhythm beats cannot represent them", () => {

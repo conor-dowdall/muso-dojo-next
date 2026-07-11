@@ -9,9 +9,8 @@ import {
 import { useAppStore } from "@/stores/appStore";
 import {
   formatPartLengthBeats,
-  getFixedPartLengthBeats,
+  getAutomaticRhythmBeats,
   getPartLengthBeats,
-  getPartLengthMode,
 } from "@/utils/music-part/partLength";
 import {
   getPartBandConfig,
@@ -45,11 +44,12 @@ export function MusicPartView({
         ? {
             rootNote: part.rootNote,
             noteCollectionKey: part.noteCollectionKey,
-            lengthBeats: getFixedPartLengthBeats(part),
             effectiveLengthBeats: getPartLengthBeats(part),
-            lengthMode: getPartLengthMode(part),
             band: getPartBandConfig(part),
-            automaticRhythm: part.automaticRhythm ?? "standard",
+            automaticRhythm: part.automaticRhythm ?? {
+              beats: getAutomaticRhythmBeats(part),
+              style: "standard",
+            },
             bandModuleOptions: {
               backingNotes: getPartBandModules(
                 part.modules,
@@ -84,8 +84,9 @@ export function MusicPartView({
   const setPartNoteCollectionKey = useAppStore(
     (state) => state.setPartNoteCollectionKey,
   );
-  const setPartLengthBeats = useAppStore((state) => state.setPartLengthBeats);
-  const setPartLengthMode = useAppStore((state) => state.setPartLengthMode);
+  const setPartAutomaticRhythmBeats = useAppStore(
+    (state) => state.setPartAutomaticRhythmBeats,
+  );
   const setPartBandSource = useAppStore((state) => state.setPartBandSource);
   const addPartModules = useAppStore((state) => state.addPartModules);
   const clonePart = useAppStore((state) => state.clonePart);
@@ -109,27 +110,18 @@ export function MusicPartView({
       instrumentCreationRangeContext={instrumentCreationRangeContext}
       isPerformanceMode={isPerformanceMode}
       rootNote={partSettings.rootNote}
-      lengthBeats={partSettings.lengthBeats}
       effectiveLengthBeats={partSettings.effectiveLengthBeats}
-      lengthMode={partSettings.lengthMode}
       band={partSettings.band}
       automaticRhythm={partSettings.automaticRhythm}
       bandModuleOptions={partSettings.bandModuleOptions}
-      onLengthBeatsChange={(lengthBeats) =>
-        setPartLengthBeats(
+      onAutomaticRhythmBeatsChange={(beats) =>
+        setPartAutomaticRhythmBeats(
           sessionId,
           partId,
-          typeof lengthBeats === "function"
-            ? lengthBeats(
-                getFixedPartLengthBeats({
-                  lengthBeats: partSettings.lengthBeats,
-                }),
-              )
-            : lengthBeats,
+          typeof beats === "function"
+            ? beats(partSettings.automaticRhythm.beats)
+            : beats,
         )
-      }
-      onLengthModeChange={(lengthMode) =>
-        setPartLengthMode(sessionId, partId, lengthMode)
       }
       onBandSourceChange={(role, source) =>
         setPartBandSource(sessionId, partId, role, source)

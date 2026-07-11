@@ -37,7 +37,10 @@ export type SessionMaterialCreationKind = "part" | "chord-progression";
 
 export type AutomaticRhythmStyle = "standard" | "swing";
 
-export type PartLengthMode = "fixed" | "rhythm";
+export interface AutomaticRhythmConfig {
+  beats: number;
+  style: AutomaticRhythmStyle;
+}
 
 export type PartBandSourceConfig =
   | { mode: "automatic" }
@@ -198,10 +201,8 @@ export interface MusicPartCreationRequest {
   rootNote?: string;
   noteCollectionKey?: NoteCollectionKey;
   durationInBars?: number;
-  lengthBeats?: number;
-  lengthMode?: PartLengthMode;
   band?: PartBandConfig;
-  automaticRhythm?: AutomaticRhythmStyle;
+  automaticRhythm?: AutomaticRhythmConfig;
   moduleRequests?: PartModuleCreationRequest[];
 }
 
@@ -217,17 +218,13 @@ export interface MusicPartConfig {
   id: string;
   rootNote: string;
   noteCollectionKey: NoteCollectionKey;
-  /** Practice Band dwell time for this Part on the Session beat grid. */
-  lengthBeats?: number;
-  /** Whether dwell time is fixed or follows the selected band Rhythm. */
-  lengthMode?: PartLengthMode;
   /** Explicit source selection for each Practice Band role. */
   band?: PartBandConfig;
-  /** Automatic drum feel used only when this Part has no Rhythm modules. */
-  automaticRhythm?: AutomaticRhythmStyle;
+  /** Fallback feel and beat count used when no Rhythm module owns the band. */
+  automaticRhythm?: AutomaticRhythmConfig;
   /**
    * Optional authored chart duration. Chord progression imports use this for
-   * fractional bars. Part Length independently controls playback dwell time.
+   * fractional bars and initialize the Automatic Rhythm beat count from it.
    */
   durationInBars?: number;
   showHeader?: boolean;

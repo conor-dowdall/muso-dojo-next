@@ -158,30 +158,29 @@ export function createDefaultMusicPartConfig<
   rootNote = DEFAULT_PART_ROOT_NOTE,
   noteCollectionKey = DEFAULT_PART_NOTE_COLLECTION_KEY,
   durationInBars,
-  lengthBeats,
-  lengthMode = "fixed",
   band,
-  automaticRhythm = "standard",
+  automaticRhythm,
   moduleRequests = [],
 }: CreateMusicPartConfigOptions<T> = {}): MusicPartConfig {
   const modules = createDefaultPartModuleConfigs(moduleRequests).map((module) =>
     applyPartDurationToDefaultModule(module, durationInBars),
   );
-  const resolvedLengthBeats =
-    normalizePartLengthBeats(lengthBeats) ??
-    (durationInBars !== undefined
-      ? normalizePartLengthBeats(durationInBars * DEFAULT_PART_LENGTH_BEATS)
-      : undefined) ??
-    DEFAULT_PART_LENGTH_BEATS;
+  const resolvedAutomaticRhythm = {
+    beats:
+      normalizePartLengthBeats(automaticRhythm?.beats) ??
+      (durationInBars !== undefined
+        ? normalizePartLengthBeats(durationInBars * DEFAULT_PART_LENGTH_BEATS)
+        : undefined) ??
+      DEFAULT_PART_LENGTH_BEATS,
+    style: automaticRhythm?.style === "swing" ? "swing" : "standard",
+  } as const;
   const part = normalizeMusicPartConfig({
     id,
     rootNote,
     noteCollectionKey,
     durationInBars,
-    lengthBeats: resolvedLengthBeats,
-    lengthMode,
     band,
-    automaticRhythm,
+    automaticRhythm: resolvedAutomaticRhythm,
     modules,
   });
 

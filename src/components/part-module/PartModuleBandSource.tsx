@@ -5,9 +5,10 @@ import {
   DisclosureListChoice,
   DisclosureListGroup,
 } from "@/components/ui/disclosure-list/DisclosureList";
+import { SelectionPreviewLabel } from "@/components/ui/selection-preview";
 
 export function PartModuleBandBadge() {
-  return <span className="app-status-badge">Band</span>;
+  return <SelectionPreviewLabel kind="included">Band</SelectionPreviewLabel>;
 }
 
 export function PartModuleBandSourceChoice({

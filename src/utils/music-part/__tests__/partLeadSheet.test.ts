@@ -65,4 +65,20 @@ describe("getPartLeadSheetSummary", () => {
     });
     expect(summary).not.toHaveProperty("durationLabel");
   });
+
+  it("keeps Chart metadata to the time signature for Automatic Swing", () => {
+    const summary = getPartLeadSheetSummary(
+      createPart({
+        automaticRhythm: { beats: 4, style: "swing" },
+        band: {
+          backingNotes: { mode: "automatic" },
+          rhythm: { mode: "automatic" },
+        },
+      }),
+    );
+
+    expect(summary.meterLabel).toBe("4/4");
+    expect(summary).not.toHaveProperty("lengthLabel");
+    expect(summary.meterDetail).toContain("Swing automatic rhythm");
+  });
 });
