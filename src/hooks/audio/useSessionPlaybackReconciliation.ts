@@ -2,11 +2,14 @@
 
 import { useEffect, useMemo } from "react";
 import {
-  createPartSequencePlaybackPlan,
   exercisePlaybackCoordinator,
   rhythmPlaybackCoordinator,
 } from "@/audio";
 import { type SessionConfig } from "@/types/session";
+import {
+  isExerciseLooperPartModule,
+  isRhythmPartModule,
+} from "@/utils/session/partModuleTypes";
 
 export function useSessionPlaybackReconciliation(
   session: SessionConfig | undefined,
@@ -16,16 +19,17 @@ export function useSessionPlaybackReconciliation(
       return { exercise: new Set<string>(), rhythm: new Set<string>() };
     }
 
-    const plan = createPartSequencePlaybackPlan(session);
     return {
       exercise: new Set(
-        plan.parts.flatMap((part) =>
-          part.exerciseRequests.map((request) => request.id),
+        session.parts.flatMap((part) =>
+          part.modules
+            .filter(isExerciseLooperPartModule)
+            .map((module) => module.id),
         ),
       ),
       rhythm: new Set(
-        plan.parts.flatMap((part) =>
-          part.rhythmRequests.map((request) => request.id),
+        session.parts.flatMap((part) =>
+          part.modules.filter(isRhythmPartModule).map((module) => module.id),
         ),
       ),
     };

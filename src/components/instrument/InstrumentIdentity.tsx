@@ -1,11 +1,16 @@
+import { type ReactNode } from "react";
 import { Typography } from "@/components/ui/typography/Typography";
 import styles from "./InstrumentIdentity.module.css";
 
 interface InstrumentIdentityProps {
+  accessory?: ReactNode;
   label: string;
 }
 
-export function InstrumentIdentity({ label }: InstrumentIdentityProps) {
+export function InstrumentIdentity({
+  accessory,
+  label,
+}: InstrumentIdentityProps) {
   return (
     <span className={styles.identity}>
       <Typography
@@ -17,6 +22,7 @@ export function InstrumentIdentity({ label }: InstrumentIdentityProps) {
       >
         {label}
       </Typography>
+      {accessory}
     </span>
   );
 }

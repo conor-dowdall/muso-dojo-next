@@ -3,7 +3,8 @@
 import { useShallow } from "zustand/react/shallow";
 import { RhythmModule } from "@/components/rhythm/RhythmModule";
 import { useAppStore } from "@/stores/appStore";
-import { selectRhythmPartModule } from "./sessionSelectors";
+import { selectPart, selectRhythmPartModule } from "./sessionSelectors";
+import { isPartBandModule } from "@/utils/music-part/partBand";
 
 export function RhythmPartModuleView({
   isPerformanceMode = false,
@@ -21,11 +22,13 @@ export function RhythmPartModuleView({
   const model = useAppStore(
     useShallow((state) => {
       const session = state.sessions[sessionId];
+      const part = selectPart(state, sessionId, partId);
       const rhythm = selectRhythmPartModule(state, sessionId, partId, moduleId);
 
-      return session && rhythm
+      return session && part && rhythm
         ? {
             ...rhythm,
+            isBandSource: isPartBandModule(part, "rhythm", moduleId),
             tempoBpm: session.tempoBpm ?? 80,
           }
         : undefined;
@@ -37,6 +40,7 @@ export function RhythmPartModuleView({
       removePartModule: state.removePartModule,
       setRhythmRecipe: state.setRhythmRecipe,
       setRhythmWood: state.setRhythmWood,
+      setPartBandSource: state.setPartBandSource,
     })),
   );
 
@@ -59,6 +63,15 @@ export function RhythmPartModuleView({
         isPerformanceMode
           ? undefined
           : () => actions.removePartModule(sessionId, partId, moduleId)
+      }
+      onUseInBand={
+        isPerformanceMode
+          ? undefined
+          : () =>
+              actions.setPartBandSource(sessionId, partId, "rhythm", {
+                mode: "module",
+                moduleId,
+              })
       }
       onRhythmRecipeChange={(value) =>
         actions.setRhythmRecipe(sessionId, partId, moduleId, value)

@@ -7,6 +7,7 @@ import { PartModuleControlButton } from "@/components/part-module/PartModuleCont
 import controlStyles from "@/components/part-module/PartModuleControls.module.css";
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
 import { PartModuleHeaderActions } from "@/components/part-module/PartModuleHeaderActions";
+import { PartModuleBandBadge } from "@/components/part-module/PartModuleBandSource";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { TactileControlGroup } from "@/components/ui/tactile-control-group/TactileControlGroup";
 import { useRhythmPlayback } from "@/hooks/audio/useRhythmPlayback";
@@ -52,10 +53,12 @@ import { RhythmOptionsDialog } from "./RhythmOptionsDialog";
 import styles from "./RhythmModule.module.css";
 
 export function RhythmModule({
+  isBandSource = false,
   moduleId,
   onClone,
   onOpenSessionTempo,
   onRemove,
+  onUseInBand,
   onRhythmRecipeChange,
   onWoodChange,
   rhythm,
@@ -63,10 +66,12 @@ export function RhythmModule({
   tempoBpm = 80,
   wood = DEFAULT_WOOD_SURFACE_ID,
 }: {
+  isBandSource?: boolean;
   moduleId: string;
   onClone?: () => void;
   onOpenSessionTempo?: () => void;
   onRemove?: () => void;
+  onUseInBand?: () => void;
   onRhythmRecipeChange?: (value: RhythmRecipe) => void;
   onWoodChange?: (value: WoodSurfaceId) => void;
   rhythm: RhythmSelection;
@@ -141,7 +146,12 @@ export function RhythmModule({
       <PartModuleFrame
         bodyClassName={controlStyles.body}
         className={`${styles.frame} ${controlStyles.surface}`}
-        headerPrimary={<InstrumentIdentity label="Rhythm" />}
+        headerPrimary={
+          <InstrumentIdentity
+            accessory={isBandSource ? <PartModuleBandBadge /> : undefined}
+            label="Rhythm"
+          />
+        }
         onKeyDownCapture={transportShortcuts.onKeyDownCapture}
         onPointerDownCapture={transportShortcuts.onPointerDownCapture}
         showHeader={showHeader}
@@ -458,11 +468,13 @@ export function RhythmModule({
 
       {showHeader ? (
         <RhythmOptionsDialog
+          isBandSource={isBandSource}
           isOpen={isOptionsOpen}
           wood={wood}
           onClone={onClone}
           onClose={() => setIsOptionsOpen(false)}
           onRemove={onRemove}
+          onUseInBand={onUseInBand}
           onWoodChange={onWoodChange}
         />
       ) : null}

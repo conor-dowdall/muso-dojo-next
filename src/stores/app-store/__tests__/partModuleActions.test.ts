@@ -158,6 +158,45 @@ describe("part module app store actions", () => {
     });
   });
 
+  it("selects the first new Rhythm for the band without replacing it later", () => {
+    const store = createTestStore();
+    const firstId = store
+      .getState()
+      .addPartModule(sessionId, partId, { type: "rhythm" });
+    const secondId = store
+      .getState()
+      .addPartModule(sessionId, partId, { type: "rhythm" });
+
+    expect(firstId).toBeDefined();
+    expect(secondId).toBeDefined();
+    expect(
+      store.getState().sessions[sessionId]?.parts[0]?.band?.rhythm,
+    ).toEqual({ mode: "module", moduleId: firstId });
+
+    store.getState().setPartBandSource(sessionId, partId, "rhythm", {
+      mode: "module",
+      moduleId: secondId!,
+    });
+    expect(
+      store.getState().sessions[sessionId]?.parts[0]?.band?.rhythm,
+    ).toEqual({ mode: "module", moduleId: secondId });
+  });
+
+  it("returns to Automatic and fixed length when its band Rhythm is removed", () => {
+    const store = createTestStore();
+    const moduleId = store
+      .getState()
+      .addPartModule(sessionId, partId, { type: "rhythm" });
+
+    store.getState().setPartLengthMode(sessionId, partId, "rhythm");
+    store.getState().removePartModule(sessionId, partId, moduleId!);
+
+    expect(store.getState().sessions[sessionId]?.parts[0]).toMatchObject({
+      band: { rhythm: { mode: "automatic" } },
+      lengthMode: "fixed",
+    });
+  });
+
   it("applies Part duration defaults when adding a Rhythm module later", () => {
     const store = createTestStore({
       activeSessionId: sessionId,

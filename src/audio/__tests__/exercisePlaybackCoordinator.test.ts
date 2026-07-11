@@ -107,58 +107,76 @@ describe("ExercisePlaybackCoordinator", () => {
     expect(isExercisePlaybackActive(snapshot, "other")).toBe(false);
   });
 
-  it("keeps independently started Loopers active together", async () => {
-    const { coordinator, noteSchedulers } = createHarness();
+  it("retires the previous Looper when another starts", async () => {
+    vi.useFakeTimers();
+    const { cancelPlaybackGroup, coordinator, noteSchedulers } =
+      createHarness();
 
     await coordinator.start(createRequest("a"));
     await coordinator.start(createRequest("b"));
 
-    expect(Object.keys(coordinator.getSnapshot().playbacks)).toEqual([
-      "a",
-      "b",
-    ]);
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
+      atTime: 10.08,
+      releaseSeconds: 0.08,
+    });
     expect(noteSchedulers[0]?.stop).not.toHaveBeenCalled();
     expect(noteSchedulers[1]?.start).toHaveBeenCalledWith(10.08);
+
+    await vi.advanceTimersByTimeAsync(100);
+    expect(Object.keys(coordinator.getSnapshot().playbacks)).toEqual(["b"]);
+    expect(noteSchedulers[0]?.stop).toHaveBeenCalledOnce();
   });
 
-  it("stops only the requested Looper", async () => {
-    const { coordinator, noteSchedulers } = createHarness();
+  it("does not let a stale stop affect the current Looper", async () => {
+    vi.useFakeTimers();
+    const { coordinator } = createHarness();
     await coordinator.start(createRequest("a"));
     await coordinator.start(createRequest("b"));
+    await vi.advanceTimersByTimeAsync(100);
 
     coordinator.stop("a");
 
     expect(coordinator.getSnapshot().playbacks.a).toBeUndefined();
     expect(coordinator.getSnapshot().playbacks.b).toBeDefined();
-    expect(noteSchedulers[0]?.stop).toHaveBeenCalledOnce();
-    expect(noteSchedulers[1]?.stop).not.toHaveBeenCalled();
   });
 
-  it("restarts only the same Looper ID when its request changes", async () => {
-    const { cancelPlaybackGroup, coordinator, noteSchedulers } =
-      createHarness();
+  it("replaces the current request when the same Looper restarts", async () => {
+    vi.useFakeTimers();
+    const { cancelPlaybackGroup, coordinator } = createHarness();
     await coordinator.start(createRequest("a"));
-    await coordinator.start(createRequest("b"));
     await coordinator.start(createRequest("a", { presetId: "bowed-strings" }));
 
     expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
+      atTime: 10.08,
       releaseSeconds: 0.08,
     });
-    expect(noteSchedulers[0]?.stop).toHaveBeenCalledOnce();
-    expect(noteSchedulers[1]?.stop).not.toHaveBeenCalled();
     expect(coordinator.getActiveRequest("a")?.presetId).toBe("bowed-strings");
   });
 
-  it("cancels a pending start without affecting another active Looper", async () => {
+  it("stops the previous Looper when a replacement count-in begins", async () => {
+    const { cancelPlaybackGroup, coordinator } = createHarness();
+    await coordinator.start(createRequest("a"));
+    await coordinator.start(createRequest("b", { countInBeats: 4 }));
+
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
+      atTime: 10.08,
+      releaseSeconds: 0.08,
+    });
+    expect(coordinator.getSnapshot().playbacks.b?.originTime).toBe(14.08);
+  });
+
+  it("cancels a pending Looper when a newer Looper starts", async () => {
     const ready = createDeferred<boolean>();
     const { coordinator } = createHarness(() => ready.promise);
-    const pending = coordinator.start(createRequest("pending"));
+    const first = coordinator.start(createRequest("first"));
+    const second = coordinator.start(createRequest("second"));
 
-    coordinator.cancelPendingStart("pending");
     ready.resolve(true);
 
-    await expect(pending).resolves.toBe(false);
+    await expect(first).resolves.toBe(false);
+    await expect(second).resolves.toBe(true);
     expect(coordinator.getSnapshot().pendingIds).toEqual([]);
+    expect(coordinator.getSnapshot().playbacks.second).toBeDefined();
   });
 
   it("schedules a precise future stop on the audio clock", async () => {
@@ -176,13 +194,14 @@ describe("ExercisePlaybackCoordinator", () => {
     expect(coordinator.getSnapshot().playbacks.a).toBeUndefined();
   });
 
-  it("uses one metronome lane for multiple requesting Loopers", async () => {
+  it("hands the metronome lane to the replacement Looper", async () => {
+    vi.useFakeTimers();
     const { coordinator, metronomeSchedulers } = createHarness();
     await coordinator.start(createRequest("a", { metronomeEnabled: true }));
     await coordinator.start(createRequest("b", { metronomeEnabled: true }));
 
     expect(metronomeSchedulers).toHaveLength(1);
-    coordinator.stop("a");
+    await vi.advanceTimersByTimeAsync(100);
     expect(metronomeSchedulers).toHaveLength(2);
     expect(metronomeSchedulers[1]?.start).toHaveBeenCalledWith(10.08);
   });

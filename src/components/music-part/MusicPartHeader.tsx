@@ -17,10 +17,12 @@ import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 import { RootNotePicker } from "@/components/music-theory/RootNotePicker";
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
 import styles from "./MusicPartHeader.module.css";
-import { Play, Plus, Square } from "lucide-react";
+import { Plus, Timer } from "lucide-react";
 import { Heading } from "@/components/ui/typography/Heading";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { MusicPartMenuDialog } from "./MusicPartMenuDialog";
+import { PartPlaybackDialog } from "./PartPlaybackDialog";
+import { formatPartLengthBeats } from "@/utils/music-part/partLength";
 
 interface MusicPartHeaderProps {
   className?: string;
@@ -38,13 +40,11 @@ export function MusicPartHeader({
     null,
   );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isPlaybackDialogOpen, setIsPlaybackDialogOpen] = useState(false);
 
   const { rootNote, noteCollectionKey } = musicPart;
   const hasPartMenu =
-    !isPerformanceMode &&
-    Boolean(
-      musicPart.setLengthBeats || musicPart.clonePart || musicPart.removePart,
-    );
+    !isPerformanceMode && Boolean(musicPart.clonePart || musicPart.removePart);
   const rootNoteLabel = normalizeRootNoteString(rootNote) || rootNote;
   const noteCollectionName = noteCollection.getDisplayName(noteCollectionKey);
 
@@ -66,21 +66,23 @@ export function MusicPartHeader({
               size="sm"
               onClick={() => setDialogMode("collection")}
             />
+            {!isPerformanceMode ? (
+              <Button
+                aria-label={`Practice Band settings. Part length: ${formatPartLengthBeats(musicPart.effectiveLengthBeats)}`}
+                icon={<Timer />}
+                label={
+                  musicPart.lengthMode === "rhythm"
+                    ? `Rhythm · ${formatPartLengthBeats(musicPart.effectiveLengthBeats)}`
+                    : formatPartLengthBeats(musicPart.effectiveLengthBeats)
+                }
+                size="sm"
+                onClick={() => setIsPlaybackDialogOpen(true)}
+              />
+            ) : null}
           </Heading>
         }
         actions={
           <>
-            {musicPart.togglePartPlayback ? (
-              <IconButton
-                aria-label={
-                  musicPart.partPlaybackActive ? "Stop Part" : "Play Part"
-                }
-                icon={musicPart.partPlaybackActive ? <Square /> : <Play />}
-                selected={musicPart.partPlaybackActive}
-                size="sm"
-                onClick={musicPart.togglePartPlayback}
-              />
-            ) : null}
             {!isPerformanceMode &&
             musicPart.addPartModules &&
             onOpenAddDialog ? (
@@ -107,6 +109,11 @@ export function MusicPartHeader({
           onClose={() => setIsMenuOpen(false)}
         />
       ) : null}
+
+      <PartPlaybackDialog
+        isOpen={isPlaybackDialogOpen}
+        onClose={() => setIsPlaybackDialogOpen(false)}
+      />
 
       <Dialog
         isOpen={dialogMode !== null}

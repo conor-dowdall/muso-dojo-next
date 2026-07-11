@@ -22,6 +22,7 @@ import { NoteRangeHeaderActions } from "@/components/part-module/NoteRangeHeader
 import { PartModuleControlButton } from "@/components/part-module/PartModuleControlButton";
 import { PartModuleHeaderActions } from "@/components/part-module/PartModuleHeaderActions";
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
+import { PartModuleBandBadge } from "@/components/part-module/PartModuleBandSource";
 import controlStyles from "@/components/part-module/PartModuleControls.module.css";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { TactileControlGroup } from "@/components/ui/tactile-control-group/TactileControlGroup";
@@ -78,6 +79,7 @@ const countInChoices = [2, 3, 4] as const satisfies readonly Exclude<
 export function ExerciseLooperModule({
   audioPresetId,
   end,
+  isBandSource = false,
   moduleId,
   metronomeEnabled = DEFAULT_EXERCISE_METRONOME_ENABLED,
   noteCollectionKey,
@@ -90,6 +92,7 @@ export function ExerciseLooperModule({
   onPatternChange,
   onRemove,
   onOpenSessionTempo,
+  onUseInBand,
   onSubdivisionChange,
   onWoodChange,
   pattern = DEFAULT_EXERCISE_PATTERN,
@@ -102,6 +105,7 @@ export function ExerciseLooperModule({
 }: {
   audioPresetId?: AudioPresetId;
   end?: CollectionRangeBoundary;
+  isBandSource?: boolean;
   moduleId: string;
   metronomeEnabled?: boolean;
   noteCollectionKey: Parameters<
@@ -116,6 +120,7 @@ export function ExerciseLooperModule({
   onPatternChange?: (value: ExercisePattern) => void;
   onRemove?: () => void;
   onOpenSessionTempo?: () => void;
+  onUseInBand?: () => void;
   onSubdivisionChange?: (value: ExerciseSubdivision) => void;
   onWoodChange?: (value: WoodSurfaceId) => void;
   pattern?: ExercisePattern;
@@ -372,7 +377,12 @@ export function ExerciseLooperModule({
       <PartModuleFrame
         bodyClassName={controlStyles.body}
         className={`${styles.frame} ${controlStyles.surface}`}
-        headerPrimary={<InstrumentIdentity label="Looper" />}
+        headerPrimary={
+          <InstrumentIdentity
+            accessory={isBandSource ? <PartModuleBandBadge /> : undefined}
+            label="Looper"
+          />
+        }
         onKeyDownCapture={transportShortcuts.onKeyDownCapture}
         onPointerDownCapture={transportShortcuts.onPointerDownCapture}
         showHeader={showHeader}
@@ -583,6 +593,7 @@ export function ExerciseLooperModule({
           canShiftOctaveDown={canShiftDown}
           canShiftOctaveUp={canShiftUp}
           isPlaybackActive={playback.isActive}
+          isBandSource={isBandSource}
           isOpen={isOptionsOpen}
           octaveOffset={octaveOffset}
           previewMidiNote={soundPreviewMidiNote}
@@ -592,6 +603,7 @@ export function ExerciseLooperModule({
           onClose={() => setIsOptionsOpen(false)}
           onOctaveOffsetChange={onOctaveOffsetChange}
           onRemove={onRemove}
+          onUseInBand={onUseInBand}
           onWoodChange={(value) => onWoodChange?.(value)}
         />
       ) : null}

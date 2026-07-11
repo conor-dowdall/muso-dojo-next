@@ -29,6 +29,9 @@ import {
   type MusicPartCreationRequest,
   type MusicPartConfig,
   type PartModuleCreationRequest,
+  type PartBandRole,
+  type PartBandSourceConfig,
+  type PartLengthMode,
   type PartModuleType,
   type RememberSessionMaterialCreationRequest,
   type RhythmPartModuleConfig,
@@ -134,6 +137,17 @@ export interface PartActions {
     sessionId: string,
     partId: string,
     lengthBeats: number,
+  ) => void;
+  setPartLengthMode: (
+    sessionId: string,
+    partId: string,
+    lengthMode: PartLengthMode,
+  ) => void;
+  setPartBandSource: (
+    sessionId: string,
+    partId: string,
+    role: PartBandRole,
+    source: PartBandSourceConfig,
   ) => void;
 }
 

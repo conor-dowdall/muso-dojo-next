@@ -208,13 +208,20 @@ export class BeatTransportCoordinator {
     this.notifyManualControl({ kind: "start", target: "exercise" }, source);
     const revision = ++this.revision;
     const owner = getPlaybackOwnerForSource(source);
+    const selectedExercises = exercises.slice(0, 1);
+    const selectedRhythms = rhythms.slice(0, 1);
     const preparesFreshOrigin =
-      originTime === undefined && (exercises.length > 0 || rhythms.length > 0);
+      originTime === undefined &&
+      (selectedExercises.length > 0 || selectedRhythms.length > 0);
 
     if (preparesFreshOrigin) {
       const prepared = await Promise.all([
-        exercises.length > 0 ? this.exercise.prepare() : Promise.resolve(true),
-        rhythms.length > 0 ? this.rhythm.prepare() : Promise.resolve(true),
+        selectedExercises.length > 0
+          ? this.exercise.prepare()
+          : Promise.resolve(true),
+        selectedRhythms.length > 0
+          ? this.rhythm.prepare()
+          : Promise.resolve(true),
       ]);
       if (revision !== this.revision || prepared.some((ready) => !ready)) {
         return { originTime: undefined, started: false };
@@ -222,7 +229,7 @@ export class BeatTransportCoordinator {
     }
 
     const currentTime = this.getCurrentTime();
-    const tempoBpm = getTempoBpm(exercises, rhythms);
+    const tempoBpm = getTempoBpm(selectedExercises, selectedRhythms);
     const requestedOrigin =
       originTime ??
       (currentTime === undefined
@@ -254,7 +261,7 @@ export class BeatTransportCoordinator {
     }
 
     const results = await Promise.all([
-      ...exercises.map((request) =>
+      ...selectedExercises.map((request) =>
         this.exercise.start(request, {
           handoff,
           owner,
@@ -262,7 +269,7 @@ export class BeatTransportCoordinator {
           prepared: preparesFreshOrigin,
         }),
       ),
-      ...rhythms.map((request) =>
+      ...selectedRhythms.map((request) =>
         this.rhythm.start(request, {
           handoff,
           owner,
@@ -274,10 +281,7 @@ export class BeatTransportCoordinator {
 
     return {
       originTime: resolvedOriginTime,
-      started:
-        revision === this.revision &&
-        results.length > 0 &&
-        results.every(Boolean),
+      started: revision === this.revision && results.every(Boolean),
     };
   }
 
@@ -285,12 +289,14 @@ export class BeatTransportCoordinator {
     exercises = [],
     rhythms = [],
   }: Pick<BeatTransportPartStartRequest, "exercises" | "rhythms">) {
-    exercises.forEach((request) =>
-      this.exercise.setMetronomeEnabled(request.id, request.metronomeEnabled),
-    );
-    rhythms.forEach((request) =>
-      this.rhythm.setPattern(request.id, request.pattern),
-    );
+    const exercise = exercises[0];
+    const rhythm = rhythms[0];
+    if (exercise) {
+      this.exercise.setMetronomeEnabled(exercise.id, exercise.metronomeEnabled);
+    }
+    if (rhythm) {
+      this.rhythm.setPattern(rhythm.id, rhythm.pattern);
+    }
   }
 
   stopExercise(

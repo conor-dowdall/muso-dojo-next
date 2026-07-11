@@ -16,6 +16,12 @@ import {
   type PartModuleActions,
 } from "./types";
 import { type MusicPartConfig, type PartModuleConfig } from "@/types/session";
+import {
+  getPartBandModules,
+  getPartBandSource,
+  reconcilePartBandAfterModuleRemoval,
+  setPartBandSource,
+} from "@/utils/music-part/partBand";
 
 function applyPartDurationDefaults(
   part: MusicPartConfig,
@@ -32,6 +38,31 @@ function applyPartDurationDefaults(
       module.rhythm,
     ),
   };
+}
+
+function assignFirstNewBandSources(
+  part: MusicPartConfig,
+  modules: PartModuleConfig[],
+) {
+  let nextPart = appendPartModules(part, modules);
+
+  (["backingNotes", "rhythm"] as const).forEach((role) => {
+    const firstNewModule = getPartBandModules(modules, role)[0];
+    const hadRoleModule = getPartBandModules(part.modules, role).length > 0;
+
+    if (
+      firstNewModule &&
+      !hadRoleModule &&
+      getPartBandSource(part, role).mode === "automatic"
+    ) {
+      nextPart = setPartBandSource(nextPart, role, {
+        mode: "module",
+        moduleId: firstNewModule.id,
+      });
+    }
+  });
+
+  return nextPart;
 }
 
 export function createPartModuleActions(
@@ -59,9 +90,9 @@ export function createPartModuleActions(
 
       set((state) =>
         updateSessionById(state, sessionId, (session) =>
-          updatePartById(session, partId, (part) =>
-            appendPartModules(part, partModules),
-          ),
+          updatePartById(session, partId, (part) => {
+            return assignFirstNewBandSources(part, partModules);
+          }),
         ),
       );
 
@@ -95,7 +126,10 @@ export function createPartModuleActions(
       set((state) =>
         updateSessionById(state, sessionId, (session) =>
           updatePartById(session, partId, (part) =>
-            removePartModuleById(part, moduleId),
+            removePartModuleById(
+              reconcilePartBandAfterModuleRemoval(part, moduleId),
+              moduleId,
+            ),
           ),
         ),
       );

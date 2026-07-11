@@ -17,6 +17,12 @@ export class DronePlaybackCoordinator {
   }
 
   activate(id: string) {
+    this.activeIds.forEach((activeId) => {
+      if (activeId !== id) {
+        this.registrations.get(activeId)?.stopAll();
+        this.activeIds.delete(activeId);
+      }
+    });
     this.activeIds.add(id);
   }
 

@@ -352,6 +352,7 @@ export class RhythmPlaybackCoordinator {
     request: RhythmPlaybackRequest,
     options: RhythmPlaybackStartOptions = {},
   ) {
+    this.cancelPendingStart();
     const revision = this.nextRevision(request.id);
     const owner = options.owner ?? "manual";
     this.pending.set(request.id, {
@@ -388,14 +389,13 @@ export class RhythmPlaybackCoordinator {
     const secondsPerBeat = 60 / normalizeTempo(request.tempoBpm);
     const originTime =
       options.originTime ?? currentTime + START_LOOKAHEAD_SECONDS;
-    const previous = this.active.get(request.id);
-    if (previous) {
+    this.active.forEach((playback, id) =>
       this.stopPlayback(
-        request.id,
-        previous,
-        options.handoff && originTime > currentTime ? originTime : undefined,
-      );
-    }
+        id,
+        playback,
+        originTime > currentTime ? originTime : undefined,
+      ),
+    );
 
     const group = this.audioEngine.createPlaybackGroup();
     const scheduler = this.createHitScheduler({

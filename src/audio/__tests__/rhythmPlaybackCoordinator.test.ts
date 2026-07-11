@@ -69,35 +69,38 @@ function createHarness() {
 describe("RhythmPlaybackCoordinator", () => {
   afterEach(() => vi.useRealTimers());
 
-  it("keeps independently started Rhythms active together", async () => {
-    const { coordinator, schedulers } = createHarness();
+  it("retires the previous Rhythm when another starts", async () => {
+    vi.useFakeTimers();
+    const { cancelPlaybackGroup, coordinator, schedulers } = createHarness();
     await coordinator.start(createRequest("a"));
     await coordinator.start(createRequest("b"));
 
-    expect(Object.keys(coordinator.getSnapshot().playbacks)).toEqual([
-      "a",
-      "b",
-    ]);
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
+      atTime: 10.08,
+    });
     expect(schedulers[0]?.stop).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(100);
+    expect(Object.keys(coordinator.getSnapshot().playbacks)).toEqual(["b"]);
+    expect(schedulers[0]?.stop).toHaveBeenCalledOnce();
   });
 
-  it("stops only the requested Rhythm", async () => {
-    const { coordinator, schedulers } = createHarness();
+  it("does not let a stale stop affect the current Rhythm", async () => {
+    vi.useFakeTimers();
+    const { coordinator } = createHarness();
     await coordinator.start(createRequest("a"));
     await coordinator.start(createRequest("b"));
+    await vi.advanceTimersByTimeAsync(100);
 
     coordinator.stop("a");
 
     expect(coordinator.getSnapshot().playbacks.a).toBeUndefined();
     expect(coordinator.getSnapshot().playbacks.b).toBeDefined();
-    expect(schedulers[0]?.stop).toHaveBeenCalledOnce();
-    expect(schedulers[1]?.stop).not.toHaveBeenCalled();
   });
 
-  it("restarts only the same ID when its pattern changes", async () => {
-    const { cancelPlaybackGroup, coordinator, schedulers } = createHarness();
+  it("restarts the current Rhythm when its pattern changes", async () => {
+    const { cancelPlaybackGroup, coordinator } = createHarness();
     await coordinator.start(createRequest("a"));
-    await coordinator.start(createRequest("b"));
 
     expect(coordinator.setPattern("a", createPattern("snare"))).toBe(true);
     await Promise.resolve();
@@ -105,14 +108,12 @@ describe("RhythmPlaybackCoordinator", () => {
     expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
       atTime: 10.08,
     });
-    expect(schedulers[1]?.stop).not.toHaveBeenCalled();
   });
 
-  it("schedules a future stop without affecting another Rhythm", async () => {
+  it("schedules a future stop on the audio clock", async () => {
     vi.useFakeTimers();
     const { cancelPlaybackGroup, coordinator, schedulers } = createHarness();
     await coordinator.start(createRequest("a"));
-    await coordinator.start(createRequest("b"));
 
     coordinator.stop("a", { atTime: 12 });
     expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", { atTime: 12 });
@@ -120,7 +121,7 @@ describe("RhythmPlaybackCoordinator", () => {
 
     await vi.advanceTimersByTimeAsync(2_000);
     expect(schedulers[0]?.stop).toHaveBeenCalledOnce();
-    expect(coordinator.getSnapshot().playbacks.b).toBeDefined();
+    expect(coordinator.getSnapshot().playbacks.a).toBeUndefined();
   });
 
   it("resets all Rhythms when the engine stops all audio", async () => {

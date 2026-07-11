@@ -1,14 +1,23 @@
 "use client";
 
-import { useShallow } from "zustand/react/shallow";
+import { useMemo } from "react";
 import { MusicPart } from "@/components/music-part/MusicPart";
 import {
   createInstrumentCreationRangeContextFromSignature,
   createInstrumentCreationRangeContextSignature,
 } from "@/components/instrument-creation/instrumentCreationRangeContext";
 import { useAppStore } from "@/stores/appStore";
-import { getPartLengthBeats } from "@/utils/music-part/partLength";
-import { usePartPlayback } from "@/hooks/audio/usePartPlayback";
+import {
+  formatPartLengthBeats,
+  getFixedPartLengthBeats,
+  getPartLengthBeats,
+  getPartLengthMode,
+} from "@/utils/music-part/partLength";
+import {
+  getPartBandConfig,
+  getPartBandModules,
+} from "@/utils/music-part/partBand";
+import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
 import { PartModuleView } from "./PartModuleView";
 import { selectPart } from "./sessionSelectors";
 
@@ -29,49 +38,66 @@ export function MusicPartView({
   partSequenceState,
   showReadOnlyIdentity = false,
 }: MusicPartViewProps) {
-  const partSettings = useAppStore(
-    useShallow((state) => {
-      const part = selectPart(state, sessionId, partId);
-
-      return part
+  const part = useAppStore((state) => selectPart(state, sessionId, partId));
+  const partSettings = useMemo(
+    () =>
+      part
         ? {
             rootNote: part.rootNote,
             noteCollectionKey: part.noteCollectionKey,
-            lengthBeats: part.lengthBeats,
+            lengthBeats: getFixedPartLengthBeats(part),
+            effectiveLengthBeats: getPartLengthBeats(part),
+            lengthMode: getPartLengthMode(part),
+            band: getPartBandConfig(part),
+            automaticRhythm: part.automaticRhythm ?? "standard",
+            bandModuleOptions: {
+              backingNotes: getPartBandModules(
+                part.modules,
+                "backingNotes",
+              ).map((module, index) => ({
+                id: module.id,
+                label: `Looper ${index + 1}`,
+              })),
+              rhythm: getPartBandModules(part.modules, "rhythm").map(
+                (module, index) => ({
+                  id: module.id,
+                  label: `Rhythm ${index + 1}`,
+                  detail:
+                    module.type === "rhythm"
+                      ? formatPartLengthBeats(
+                          getRhythmSelectionRecipe(module.rhythm).beats,
+                        )
+                      : undefined,
+                }),
+              ),
+            },
             showHeader: part.showHeader,
           }
-        : undefined;
-    }),
+        : undefined,
+    [part],
   );
-  const moduleIds = useAppStore(
-    useShallow(
-      (state) =>
-        selectPart(state, sessionId, partId)?.modules.map(
-          (module) => module.id,
-        ) ?? [],
-    ),
+  const moduleIds = useMemo(
+    () => part?.modules.map((module) => module.id) ?? [],
+    [part],
   );
   const setPartRootNote = useAppStore((state) => state.setPartRootNote);
   const setPartNoteCollectionKey = useAppStore(
     (state) => state.setPartNoteCollectionKey,
   );
   const setPartLengthBeats = useAppStore((state) => state.setPartLengthBeats);
+  const setPartLengthMode = useAppStore((state) => state.setPartLengthMode);
+  const setPartBandSource = useAppStore((state) => state.setPartBandSource);
   const addPartModules = useAppStore((state) => state.addPartModules);
   const clonePart = useAppStore((state) => state.clonePart);
   const removePart = useAppStore((state) => state.removePart);
-  const instrumentCreationRangeContextSignature = useAppStore(
-    useShallow((state) => {
-      const part = selectPart(state, sessionId, partId);
-
-      return createInstrumentCreationRangeContextSignature(part ? [part] : []);
-    }),
+  const instrumentCreationRangeContextSignature = useMemo(
+    () => createInstrumentCreationRangeContextSignature(part ? [part] : []),
+    [part],
   );
   const instrumentCreationRangeContext =
     createInstrumentCreationRangeContextFromSignature(
       instrumentCreationRangeContextSignature,
     );
-  const partPlayback = usePartPlayback(sessionId, partId);
-
   if (!partSettings) {
     return null;
   }
@@ -84,16 +110,29 @@ export function MusicPartView({
       isPerformanceMode={isPerformanceMode}
       rootNote={partSettings.rootNote}
       lengthBeats={partSettings.lengthBeats}
+      effectiveLengthBeats={partSettings.effectiveLengthBeats}
+      lengthMode={partSettings.lengthMode}
+      band={partSettings.band}
+      automaticRhythm={partSettings.automaticRhythm}
+      bandModuleOptions={partSettings.bandModuleOptions}
       onLengthBeatsChange={(lengthBeats) =>
         setPartLengthBeats(
           sessionId,
           partId,
           typeof lengthBeats === "function"
             ? lengthBeats(
-                getPartLengthBeats({ lengthBeats: partSettings.lengthBeats }),
+                getFixedPartLengthBeats({
+                  lengthBeats: partSettings.lengthBeats,
+                }),
               )
             : lengthBeats,
         )
+      }
+      onLengthModeChange={(lengthMode) =>
+        setPartLengthMode(sessionId, partId, lengthMode)
+      }
+      onBandSourceChange={(role, source) =>
+        setPartBandSource(sessionId, partId, role, source)
       }
       onRootNoteChange={(rootNote) =>
         setPartRootNote(sessionId, partId, rootNote)
@@ -104,12 +143,6 @@ export function MusicPartView({
       }
       showHeader={isPerformanceMode ? false : partSettings.showHeader}
       showReadOnlyIdentity={showReadOnlyIdentity}
-      partPlaybackActive={partPlayback.isActive}
-      onTogglePartPlayback={
-        isPerformanceMode || !partPlayback.canPlay
-          ? undefined
-          : partPlayback.toggle
-      }
       onAddPartModules={
         isPerformanceMode
           ? undefined

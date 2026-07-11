@@ -10,6 +10,7 @@ import {
 } from "./writeNormalization";
 import {
   type MusicPartConfig,
+  type PartBandSourceConfig,
   type PartModuleConfig,
   type SessionConfig,
 } from "@/types/session";
@@ -42,11 +43,28 @@ export function cloneMusicPartConfig(
     existingModuleIds.push(clone.id);
     return clone;
   });
+  const moduleIdMap = new Map(
+    part.modules.map((module, index) => [module.id, clonedModules[index]?.id]),
+  );
+  const cloneBandSource = (source: PartBandSourceConfig) =>
+    source.mode === "module" && moduleIdMap.get(source.moduleId)
+      ? {
+          mode: "module" as const,
+          moduleId: moduleIdMap.get(source.moduleId) as string,
+        }
+      : source;
+  const clonedBand = part.band
+    ? {
+        backingNotes: cloneBandSource(part.band.backingNotes),
+        rhythm: cloneBandSource(part.band.rhythm),
+      }
+    : undefined;
 
   return normalizeMusicPartForWrite({
     ...cloneSerializableConfig(part),
     id: createCopyId(part.id, existingPartIds),
     modules: clonedModules,
+    ...(clonedBand ? { band: clonedBand } : {}),
   });
 }
 

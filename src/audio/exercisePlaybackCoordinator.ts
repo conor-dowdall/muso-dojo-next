@@ -488,6 +488,7 @@ export class ExercisePlaybackCoordinator {
     request: ExercisePlaybackRequest,
     options: ExercisePlaybackStartOptions = {},
   ) {
+    this.cancelPendingStart();
     const revision = this.nextRevision(request.id);
     const owner = options.owner ?? "manual";
     this.pending.set(request.id, {
@@ -530,16 +531,14 @@ export class ExercisePlaybackCoordinator {
     const originTime =
       options.originTime ??
       countInStartTime + request.countInBeats * secondsPerBeat;
-    const previous = this.active.get(request.id);
-
-    if (previous) {
-      this.stopPlayback(request.id, previous, {
-        ...(options.handoff && originTime > currentTime
-          ? { atTime: originTime }
-          : {}),
+    const replacementTime =
+      request.countInBeats > 0 ? countInStartTime : originTime;
+    this.active.forEach((playback, id) => {
+      this.stopPlayback(id, playback, {
+        ...(replacementTime > currentTime ? { atTime: replacementTime } : {}),
         releaseSeconds: AUDIO_STOP_RELEASE_SECONDS,
       });
-    }
+    });
 
     const countInGroup =
       request.countInBeats > 0

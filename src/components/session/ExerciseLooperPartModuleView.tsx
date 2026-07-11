@@ -4,6 +4,7 @@ import { useShallow } from "zustand/react/shallow";
 import { ExerciseLooperModule } from "@/components/exercise-looper/ExerciseLooperModule";
 import { useAppStore } from "@/stores/appStore";
 import { selectExerciseLooperPartModule, selectPart } from "./sessionSelectors";
+import { isPartBandModule } from "@/utils/music-part/partBand";
 
 export function ExerciseLooperPartModuleView({
   isPerformanceMode = false,
@@ -31,6 +32,7 @@ export function ExerciseLooperPartModuleView({
       return session && part && looper
         ? {
             ...looper,
+            isBandSource: isPartBandModule(part, "backingNotes", moduleId),
             noteCollectionKey: part.noteCollectionKey,
             rootNote: part.rootNote,
             tempoBpm: session.tempoBpm ?? 80,
@@ -50,6 +52,7 @@ export function ExerciseLooperPartModuleView({
       setExerciseLooperPattern: state.setExerciseLooperPattern,
       setExerciseLooperSubdivision: state.setExerciseLooperSubdivision,
       setExerciseLooperWood: state.setExerciseLooperWood,
+      setPartBandSource: state.setPartBandSource,
     })),
   );
 
@@ -111,6 +114,15 @@ export function ExerciseLooperPartModuleView({
       }
       onOpenSessionTempo={
         onOpenSessionTempo ? () => onOpenSessionTempo(sessionId) : undefined
+      }
+      onUseInBand={
+        isPerformanceMode
+          ? undefined
+          : () =>
+              actions.setPartBandSource(sessionId, partId, "backingNotes", {
+                mode: "module",
+                moduleId,
+              })
       }
       onWoodChange={
         isPerformanceMode

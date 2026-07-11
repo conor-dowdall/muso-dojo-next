@@ -3,20 +3,33 @@
 import { createContext, type ReactNode, use } from "react";
 import { type NoteCollectionKey } from "@musodojo/music-theory-data";
 import { type SettingSetter } from "@/types/state";
-import { type AddPartModulesHandler } from "@/types/session";
+import {
+  type AddPartModulesHandler,
+  type AutomaticRhythmStyle,
+  type PartBandConfig,
+  type PartBandRole,
+  type PartBandSourceConfig,
+  type PartLengthMode,
+} from "@/types/session";
 import { type InstrumentCreationRangeContext } from "@/components/instrument-creation/instrumentCreationConfig";
+import { type PartBandModuleOption } from "@/types/music-part";
 
 export interface MusicPartContextValue {
   partId: string;
   lengthBeats: number;
+  effectiveLengthBeats: number;
+  lengthMode: PartLengthMode;
+  band: PartBandConfig;
+  automaticRhythm: AutomaticRhythmStyle;
+  bandModuleOptions: Record<PartBandRole, PartBandModuleOption[]>;
   moduleCount: number;
   rootNote: string;
   noteCollectionKey: NoteCollectionKey;
   setRootNote: SettingSetter<string>;
   setNoteCollectionKey: SettingSetter<NoteCollectionKey>;
   setLengthBeats?: SettingSetter<number>;
-  partPlaybackActive?: boolean;
-  togglePartPlayback?: () => void;
+  setLengthMode?: (value: PartLengthMode) => void;
+  setBandSource?: (role: PartBandRole, source: PartBandSourceConfig) => void;
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
   addPartModules?: AddPartModulesHandler;
   clonePart?: () => void;

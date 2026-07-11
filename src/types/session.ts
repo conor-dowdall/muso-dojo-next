@@ -37,6 +37,20 @@ export type SessionMaterialCreationKind = "part" | "chord-progression";
 
 export type AutomaticRhythmStyle = "standard" | "swing";
 
+export type PartLengthMode = "fixed" | "rhythm";
+
+export type PartBandSourceConfig =
+  | { mode: "automatic" }
+  | { mode: "off" }
+  | { mode: "module"; moduleId: string };
+
+export interface PartBandConfig {
+  backingNotes: PartBandSourceConfig;
+  rhythm: PartBandSourceConfig;
+}
+
+export type PartBandRole = keyof PartBandConfig;
+
 export interface SessionMaterialCreationDefaults {
   chordListMode?: ChordProgressionChordListMode;
   materialKind?: SessionMaterialCreationKind;
@@ -185,6 +199,8 @@ export interface MusicPartCreationRequest {
   noteCollectionKey?: NoteCollectionKey;
   durationInBars?: number;
   lengthBeats?: number;
+  lengthMode?: PartLengthMode;
+  band?: PartBandConfig;
   automaticRhythm?: AutomaticRhythmStyle;
   moduleRequests?: PartModuleCreationRequest[];
 }
@@ -203,6 +219,10 @@ export interface MusicPartConfig {
   noteCollectionKey: NoteCollectionKey;
   /** Practice Band dwell time for this Part on the Session beat grid. */
   lengthBeats?: number;
+  /** Whether dwell time is fixed or follows the selected band Rhythm. */
+  lengthMode?: PartLengthMode;
+  /** Explicit source selection for each Practice Band role. */
+  band?: PartBandConfig;
   /** Automatic drum feel used only when this Part has no Rhythm modules. */
   automaticRhythm?: AutomaticRhythmStyle;
   /**

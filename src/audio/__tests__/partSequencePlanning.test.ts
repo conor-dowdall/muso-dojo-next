@@ -55,6 +55,36 @@ describe("createPartSequencePlaybackPlan", () => {
     );
   });
 
+  it("can explicitly follow the selected band Rhythm beat length", () => {
+    const plan = createPartSequencePlaybackPlan(
+      createSession([
+        createPart(
+          "part",
+          [
+            {
+              id: "rhythm",
+              rhythm: {
+                recipe: { ...DEFAULT_RHYTHM_SELECTION.recipe, beats: 6 },
+                source: "recipe",
+              },
+              type: "rhythm",
+            },
+          ],
+          {
+            band: {
+              backingNotes: { mode: "automatic" },
+              rhythm: { mode: "module", moduleId: "rhythm" },
+            },
+            lengthBeats: 2,
+            lengthMode: "rhythm",
+          },
+        ),
+      ]),
+    );
+
+    expect(plan.parts[0]?.durationBeats).toBe(6);
+  });
+
   it("honors authored fractional duration for an unnormalized legacy Part", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([createPart("third-bar", [], { durationInBars: 1 / 3 })]),
@@ -102,24 +132,40 @@ describe("createPartSequencePlaybackPlan", () => {
     });
   });
 
-  it("plays every explicit Looper and Rhythm and suppresses same-type fallbacks", () => {
+  it("plays only the explicitly selected Looper and Rhythm", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([
-        createPart("part", [
-          { id: "exercise-a", type: "exercise-looper" },
-          { id: "rhythm-a", rhythm: DEFAULT_RHYTHM_SELECTION, type: "rhythm" },
-          { id: "exercise-b", type: "exercise-looper" },
-          { id: "rhythm-b", rhythm: DEFAULT_RHYTHM_SELECTION, type: "rhythm" },
-          { id: "drone", type: "drone" },
-        ]),
+        createPart(
+          "part",
+          [
+            { id: "exercise-a", type: "exercise-looper" },
+            {
+              id: "rhythm-a",
+              rhythm: DEFAULT_RHYTHM_SELECTION,
+              type: "rhythm",
+            },
+            { id: "exercise-b", type: "exercise-looper" },
+            {
+              id: "rhythm-b",
+              rhythm: DEFAULT_RHYTHM_SELECTION,
+              type: "rhythm",
+            },
+            { id: "drone", type: "drone" },
+          ],
+          {
+            band: {
+              backingNotes: { mode: "module", moduleId: "exercise-b" },
+              rhythm: { mode: "module", moduleId: "rhythm-b" },
+            },
+          },
+        ),
       ]),
     );
 
     expect(
       plan.parts[0]?.exerciseRequests.map((request) => request.id),
-    ).toEqual(["exercise-a", "exercise-b"]);
+    ).toEqual(["exercise-b"]);
     expect(plan.parts[0]?.rhythmRequests.map((request) => request.id)).toEqual([
-      "rhythm-a",
       "rhythm-b",
     ]);
   });
@@ -145,13 +191,30 @@ describe("createPartSequencePlaybackPlan", () => {
     );
   });
 
-  it("deduplicates the metronome across layered Loopers", () => {
+  it("uses the metronome setting from only the selected Looper", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([
-        createPart("part", [
-          { id: "exercise-a", metronomeEnabled: true, type: "exercise-looper" },
-          { id: "exercise-b", metronomeEnabled: true, type: "exercise-looper" },
-        ]),
+        createPart(
+          "part",
+          [
+            {
+              id: "exercise-a",
+              metronomeEnabled: true,
+              type: "exercise-looper",
+            },
+            {
+              id: "exercise-b",
+              metronomeEnabled: true,
+              type: "exercise-looper",
+            },
+          ],
+          {
+            band: {
+              backingNotes: { mode: "module", moduleId: "exercise-b" },
+              rhythm: { mode: "automatic" },
+            },
+          },
+        ),
       ]),
     );
 
@@ -159,7 +222,23 @@ describe("createPartSequencePlaybackPlan", () => {
       plan.parts[0]?.exerciseRequests.map(
         (request) => request.metronomeEnabled,
       ),
-    ).toEqual([true, false]);
+    ).toEqual([true]);
+  });
+
+  it("supports intentionally muting either automatic band role", () => {
+    const plan = createPartSequencePlaybackPlan(
+      createSession([
+        createPart("silent", [], {
+          band: {
+            backingNotes: { mode: "off" },
+            rhythm: { mode: "off" },
+          },
+        }),
+      ]),
+    );
+
+    expect(plan.parts[0]?.exerciseRequests).toEqual([]);
+    expect(plan.parts[0]?.rhythmRequests).toEqual([]);
   });
 
   it("keeps content signatures stable for tempo-only and live Rhythm edits", () => {

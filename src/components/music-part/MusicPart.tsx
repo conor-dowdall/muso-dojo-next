@@ -20,7 +20,10 @@ import { Button } from "@/components/ui/buttons/Button";
 import { Dialog } from "@/components/ui/dialog/Dialog";
 import { type InstrumentCreationRangeContext } from "@/components/instrument-creation/instrumentCreationConfig";
 import { type MusicPartControlProps } from "@/types/music-part";
-import { type AddPartModulesHandler } from "@/types/session";
+import {
+  type AddPartModulesHandler,
+  type PartBandConfig,
+} from "@/types/session";
 import { useControllableState } from "@/hooks/useControllableState";
 import styles from "./MusicPart.module.css";
 import {
@@ -42,8 +45,6 @@ interface MusicPartProps {
   onAddPartModules?: AddPartModulesHandler;
   onClonePart?: () => void;
   onRemovePart?: () => void;
-  partPlaybackActive?: boolean;
-  onTogglePartPlayback?: () => void;
 }
 
 type MusicPartComponentProps = MusicPartProps & MusicPartControlProps;
@@ -131,15 +132,23 @@ export function MusicPart({
   initialNoteCollectionKey = "major",
   onNoteCollectionKeyChange,
   lengthBeats: controlledLengthBeats,
+  effectiveLengthBeats,
+  lengthMode = "fixed",
+  band = {
+    backingNotes: { mode: "automatic" },
+    rhythm: { mode: "automatic" },
+  } satisfies PartBandConfig,
+  automaticRhythm = "standard",
+  bandModuleOptions = { backingNotes: [], rhythm: [] },
   initialLengthBeats = DEFAULT_PART_LENGTH_BEATS,
   onLengthBeatsChange,
+  onLengthModeChange,
+  onBandSourceChange,
   showHeader = true,
   showReadOnlyIdentity = false,
   onAddPartModules,
   onClonePart,
   onRemovePart,
-  partPlaybackActive,
-  onTogglePartPlayback,
 }: MusicPartComponentProps) {
   const autoId = useId();
   const partId = userPartId ?? autoId;
@@ -165,14 +174,19 @@ export function MusicPart({
   const contextValue: MusicPartContextValue = {
     partId,
     lengthBeats,
+    effectiveLengthBeats: effectiveLengthBeats ?? lengthBeats,
+    lengthMode,
+    band,
+    automaticRhythm,
+    bandModuleOptions,
     moduleCount,
     rootNote,
     noteCollectionKey,
     setRootNote,
     setNoteCollectionKey,
     setLengthBeats,
-    partPlaybackActive,
-    togglePartPlayback: onTogglePartPlayback,
+    setLengthMode: onLengthModeChange,
+    setBandSource: onBandSourceChange,
     instrumentCreationRangeContext,
     addPartModules: onAddPartModules,
     clonePart: onClonePart,

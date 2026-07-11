@@ -5,6 +5,7 @@ import {
   ensureAudioReady,
   getDefaultAudioPresetId,
   musoAudioEngine,
+  partSequenceCoordinator,
   type AudioPresetId,
   type DroneHandle,
   type DroneRequest,
@@ -132,6 +133,7 @@ export function useDroneNotePlayback({
       const startsNote = !activeNoteIds.includes(noteId);
 
       if (startsNote) {
+        partSequenceCoordinator.stop();
         void ensureAudioReady();
         dronePlaybackCoordinator.activate(id);
       }

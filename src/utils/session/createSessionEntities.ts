@@ -20,11 +20,7 @@ import {
   type RhythmPartModuleConfig,
   type SessionConfig,
 } from "@/types/session";
-import {
-  DEFAULT_RHYTHM_SELECTION,
-  getRhythmSelectionRecipe,
-} from "@/utils/rhythm/rhythmConfig";
-import { isRhythmPartModule } from "@/utils/session/partModuleTypes";
+import { DEFAULT_RHYTHM_SELECTION } from "@/utils/rhythm/rhythmConfig";
 import { normalizeInstrumentInstanceConfig } from "@/utils/session/normalizeInstrumentConfig";
 import { normalizeMusicPartConfig } from "@/utils/session/normalizeMusicPartConfig";
 import { normalizeSessionConfig } from "@/utils/session/normalizeSessionConfig";
@@ -163,27 +159,28 @@ export function createDefaultMusicPartConfig<
   noteCollectionKey = DEFAULT_PART_NOTE_COLLECTION_KEY,
   durationInBars,
   lengthBeats,
+  lengthMode = "fixed",
+  band,
   automaticRhythm = "standard",
   moduleRequests = [],
 }: CreateMusicPartConfigOptions<T> = {}): MusicPartConfig {
   const modules = createDefaultPartModuleConfigs(moduleRequests).map((module) =>
     applyPartDurationToDefaultModule(module, durationInBars),
   );
-  const firstRhythm = modules.find(isRhythmPartModule);
   const resolvedLengthBeats =
     normalizePartLengthBeats(lengthBeats) ??
     (durationInBars !== undefined
       ? normalizePartLengthBeats(durationInBars * DEFAULT_PART_LENGTH_BEATS)
       : undefined) ??
-    (firstRhythm
-      ? getRhythmSelectionRecipe(firstRhythm.rhythm).beats
-      : DEFAULT_PART_LENGTH_BEATS);
+    DEFAULT_PART_LENGTH_BEATS;
   const part = normalizeMusicPartConfig({
     id,
     rootNote,
     noteCollectionKey,
     durationInBars,
     lengthBeats: resolvedLengthBeats,
+    lengthMode,
+    band,
     automaticRhythm,
     modules,
   });

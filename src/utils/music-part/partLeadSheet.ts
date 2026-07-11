@@ -11,7 +11,7 @@ import {
 } from "@/utils/music-part/partLength";
 import { getAutomaticRhythmSelection } from "@/utils/rhythm/automaticRhythm";
 import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
-import { isRhythmPartModule } from "@/utils/session/partModuleTypes";
+import { getPartBandModule, getPartBandSource } from "./partBand";
 
 export interface PartLeadSheetSummary {
   accessibleLabel: string;
@@ -29,26 +29,27 @@ export function getPartLeadSheetSummary(
   part: MusicPartConfig,
 ): PartLeadSheetSummary {
   const identity = rootAndNoteCollection.getIdentity(part);
-  const rhythmModules = part.modules.filter(isRhythmPartModule);
   const lengthBeats = getPartLengthBeats(part);
+  const rhythmSource = getPartBandSource(part, "rhythm");
+  const selectedRhythm = getPartBandModule(part, "rhythm");
   const rhythmSelection =
-    rhythmModules[0]?.rhythm ??
+    (selectedRhythm?.type === "rhythm" ? selectedRhythm.rhythm : undefined) ??
     getAutomaticRhythmSelection(part.automaticRhythm, lengthBeats);
   const meterReadout = getRhythmTheoryReadout(
     getRhythmSelectionRecipe(rhythmSelection),
   );
-  const layeredRhythm = rhythmModules.length > 1;
   const automaticSwing =
-    rhythmModules.length === 0 && part.automaticRhythm === "swing";
-  const meterLabel = layeredRhythm
-    ? `${rhythmModules.length} Rhythms`
-    : automaticSwing
-      ? "Swing"
-      : meterReadout.title;
+    rhythmSource.mode === "automatic" && part.automaticRhythm === "swing";
+  const meterLabel =
+    rhythmSource.mode === "off"
+      ? "Rhythm Off"
+      : automaticSwing
+        ? "Swing"
+        : meterReadout.title;
   const meterDetail = [
-    layeredRhythm
-      ? "Layered rhythms"
-      : rhythmModules.length === 0
+    rhythmSource.mode === "off"
+      ? "No band rhythm"
+      : rhythmSource.mode === "automatic"
         ? `${automaticSwing ? "Swing" : "Standard"} automatic rhythm`
         : meterReadout.detail,
     formatPartLengthBeats(lengthBeats),

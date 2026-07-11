@@ -25,6 +25,7 @@ import {
   EXERCISE_MIN_OCTAVE_OFFSET,
 } from "@/utils/exercise-looper/exerciseConfig";
 import { getExerciseBaseOctave } from "@/utils/exercise-looper/exerciseSequence";
+import { PartModuleBandSourceChoice } from "@/components/part-module/PartModuleBandSource";
 
 type MenuChoice = "sound" | "octave" | "wood";
 
@@ -52,6 +53,7 @@ export function ExerciseLooperOptionsDialog({
   audioPresetId,
   canShiftOctaveDown,
   canShiftOctaveUp,
+  isBandSource = false,
   isPlaybackActive = false,
   isOpen,
   onAudioPresetIdChange,
@@ -59,6 +61,7 @@ export function ExerciseLooperOptionsDialog({
   onClose,
   onOctaveOffsetChange,
   onRemove,
+  onUseInBand,
   onWoodChange,
   octaveOffset,
   previewMidiNote,
@@ -67,6 +70,7 @@ export function ExerciseLooperOptionsDialog({
   audioPresetId: AudioPresetId;
   canShiftOctaveDown: boolean;
   canShiftOctaveUp: boolean;
+  isBandSource?: boolean;
   isPlaybackActive?: boolean;
   isOpen: boolean;
   onAudioPresetIdChange: (value: AudioPresetId) => void;
@@ -74,6 +78,7 @@ export function ExerciseLooperOptionsDialog({
   onClose: () => void;
   onOctaveOffsetChange?: (value: number) => void;
   onRemove?: () => void;
+  onUseInBand?: () => void;
   onWoodChange: (value: WoodSurfaceId) => void;
   octaveOffset: number;
   previewMidiNote?: number;
@@ -85,6 +90,11 @@ export function ExerciseLooperOptionsDialog({
 
   return (
     <ObjectMenuDialog isOpen={isOpen} title="Looper Options" onClose={onClose}>
+      <PartModuleBandSourceChoice
+        isBandSource={isBandSource}
+        roleLabel="backing notes"
+        onUseInBand={onUseInBand}
+      />
       <DisclosureListGroup>
         <DisclosureListItem
           ariaLabel={`Playback sound. Current: ${preset.label}`}

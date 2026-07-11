@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { BeatTransportCoordinator } from "@/audio/beatTransportCoordinator";
 import {
   ExercisePlaybackCoordinator,
@@ -83,6 +83,8 @@ function createHarness() {
 }
 
 describe("BeatTransportCoordinator", () => {
+  afterEach(() => vi.useRealTimers());
+
   it("starts local Looper and Rhythm layers without restarting companions", async () => {
     const { exercise, rhythm, setCurrentTime, transport } = createHarness();
     await transport.startRhythm(createRhythmRequest("rhythm"));
@@ -93,7 +95,8 @@ describe("BeatTransportCoordinator", () => {
     expect(exercise.getSnapshot().playbacks.exercise?.originTime).toBe(11.08);
   });
 
-  it("quantizes additional local Rhythms while keeping both active", async () => {
+  it("quantizes a replacement Rhythm and retires the previous one", async () => {
+    vi.useFakeTimers();
     const { rhythm, setCurrentTime, transport } = createHarness();
     await transport.startRhythm(createRhythmRequest("a"));
     setCurrentTime(10.2);
@@ -101,9 +104,13 @@ describe("BeatTransportCoordinator", () => {
 
     expect(rhythm.getSnapshot().playbacks.a?.originTime).toBe(10.08);
     expect(rhythm.getSnapshot().playbacks.b?.originTime).toBe(11.08);
+
+    await vi.advanceTimersByTimeAsync(900);
+    expect(rhythm.getSnapshot().playbacks.a).toBeUndefined();
+    expect(rhythm.getSnapshot().playbacks.b).toBeDefined();
   });
 
-  it("starts every Part layer on one explicit origin", async () => {
+  it("enforces one Part request per role on one explicit origin", async () => {
     const { exercise, rhythm, transport } = createHarness();
     const result = await transport.startPart({
       exercises: [
@@ -123,12 +130,12 @@ describe("BeatTransportCoordinator", () => {
       Object.values(exercise.getSnapshot().playbacks).map(
         (playback) => playback.originTime,
       ),
-    ).toEqual([24, 24]);
+    ).toEqual([24]);
     expect(
       Object.values(rhythm.getSnapshot().playbacks).map(
         (playback) => playback.originTime,
       ),
-    ).toEqual([24, 24]);
+    ).toEqual([24]);
   });
 
   it("chooses a shared origin only after both coordinators are prepared", async () => {
@@ -179,7 +186,8 @@ describe("BeatTransportCoordinator", () => {
     expect(rhythm.getSnapshot().playbacks.rhythm).toBeDefined();
   });
 
-  it("stops only band-owned layers when the Part transport stops", async () => {
+  it("replaces local layers when the Part transport takes ownership", async () => {
+    vi.useFakeTimers();
     const { exercise, rhythm, transport } = createHarness();
     await transport.startExercise(createExerciseRequest("manual-exercise"));
     await transport.startRhythm(createRhythmRequest("manual-rhythm"));
@@ -190,10 +198,15 @@ describe("BeatTransportCoordinator", () => {
       stopMissing: false,
     });
 
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(exercise.getSnapshot().playbacks["manual-exercise"]).toBeUndefined();
+    expect(rhythm.getSnapshot().playbacks["manual-rhythm"]).toBeUndefined();
+    expect(exercise.getSnapshot().playbacks["band-exercise"]).toBeDefined();
+    expect(rhythm.getSnapshot().playbacks["band-rhythm"]).toBeDefined();
+
     transport.stopPartPlayback();
 
-    expect(exercise.getSnapshot().playbacks["manual-exercise"]).toBeDefined();
-    expect(rhythm.getSnapshot().playbacks["manual-rhythm"]).toBeDefined();
     expect(exercise.getSnapshot().playbacks["band-exercise"]).toBeUndefined();
     expect(rhythm.getSnapshot().playbacks["band-rhythm"]).toBeUndefined();
   });

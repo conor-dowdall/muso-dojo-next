@@ -73,7 +73,7 @@ describe("normalizeMusicPartConfig", () => {
     ).toMatchObject({ lengthBeats: 2 });
   });
 
-  it("migrates legacy authored duration and Rhythm-derived length once", () => {
+  it("migrates authored duration while keeping ordinary Parts at four beats", () => {
     expect(
       normalizeMusicPartConfig({
         id: "half-bar",
@@ -108,7 +108,11 @@ describe("normalizeMusicPartConfig", () => {
           },
         ],
       }),
-    ).toMatchObject({ lengthBeats: 6 });
+    ).toMatchObject({
+      band: { rhythm: { mode: "module", moduleId: "rhythm" } },
+      lengthBeats: 4,
+      lengthMode: "fixed",
+    });
   });
 
   it("normalizes automatic rhythm style independently of modules", () => {

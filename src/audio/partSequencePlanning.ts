@@ -11,12 +11,12 @@ import {
   type ExercisePattern,
 } from "@/utils/exercise-looper/exerciseSequence";
 import { getPartLengthBeats } from "@/utils/music-part/partLength";
+import {
+  getPartBandModule,
+  getPartBandSource,
+} from "@/utils/music-part/partBand";
 import { getAutomaticRhythmSelection } from "@/utils/rhythm/automaticRhythm";
 import { getRhythmSelectionPattern } from "@/utils/rhythm/rhythmConfig";
-import {
-  isExerciseLooperPartModule,
-  isRhythmPartModule,
-} from "@/utils/session/partModuleTypes";
 import {
   type ExerciseLooperPartModuleConfig,
   type MusicPartConfig,
@@ -132,8 +132,14 @@ function createExerciseRequestsForPart(
   part: MusicPartConfig,
   tempoBpm: number,
 ) {
-  const modules = part.modules.filter(isExerciseLooperPartModule);
-  if (modules.length === 0) {
+  const source = getPartBandSource(part, "backingNotes");
+
+  if (source.mode === "off") {
+    return [];
+  }
+
+  const selectedModule = getPartBandModule(part, "backingNotes");
+  if (!selectedModule || selectedModule.type !== "exercise-looper") {
     const request = createExerciseRequest({
       metronomeEnabled: DEFAULT_EXERCISE_METRONOME_ENABLED,
       module: undefined,
@@ -143,20 +149,15 @@ function createExerciseRequestsForPart(
     return request ? [request] : [];
   }
 
-  const metronomeModuleId = modules.find(
-    (module) => module.metronomeEnabled ?? DEFAULT_EXERCISE_METRONOME_ENABLED,
-  )?.id;
+  const request = createExerciseRequest({
+    metronomeEnabled:
+      selectedModule.metronomeEnabled ?? DEFAULT_EXERCISE_METRONOME_ENABLED,
+    module: selectedModule,
+    part,
+    tempoBpm,
+  });
 
-  return modules
-    .map((module) =>
-      createExerciseRequest({
-        metronomeEnabled: module.id === metronomeModuleId,
-        module,
-        part,
-        tempoBpm,
-      }),
-    )
-    .filter((request): request is ExercisePlaybackRequest => Boolean(request));
+  return request ? [request] : [];
 }
 
 function createRhythmRequest({
@@ -181,10 +182,20 @@ function createRhythmRequest({
 }
 
 function createRhythmRequestsForPart(part: MusicPartConfig, tempoBpm: number) {
-  const modules = part.modules.filter(isRhythmPartModule);
-  return modules.length > 0
-    ? modules.map((module) => createRhythmRequest({ module, part, tempoBpm }))
-    : [createRhythmRequest({ module: undefined, part, tempoBpm })];
+  const source = getPartBandSource(part, "rhythm");
+  if (source.mode === "off") {
+    return [];
+  }
+
+  const selectedModule = getPartBandModule(part, "rhythm");
+
+  return [
+    createRhythmRequest({
+      module: selectedModule?.type === "rhythm" ? selectedModule : undefined,
+      part,
+      tempoBpm,
+    }),
+  ];
 }
 
 function createExerciseResetSignature(request: ExercisePlaybackRequest) {

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { DronePlaybackCoordinator } from "@/hooks/audio/dronePlaybackCoordinator";
 
 describe("DronePlaybackCoordinator", () => {
-  it("allows multiple drone modules to remain active", () => {
+  it("stops the previous Drone when another activates", () => {
     const coordinator = new DronePlaybackCoordinator();
     const stopFirst = vi.fn();
     const stopSecond = vi.fn();
@@ -15,7 +15,7 @@ describe("DronePlaybackCoordinator", () => {
     coordinator.activate("second");
     coordinator.activate("second");
 
-    expect(stopFirst).not.toHaveBeenCalled();
+    expect(stopFirst).toHaveBeenCalledOnce();
     expect(stopSecond).not.toHaveBeenCalled();
   });
 

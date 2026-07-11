@@ -1,6 +1,7 @@
 .identity {
   display: inline-flex;
   align-items: center;
+  gap: var(--space-2);
   inline-size: fit-content;
   max-inline-size: 100%;
   min-block-size: var(--control-size-xs);
