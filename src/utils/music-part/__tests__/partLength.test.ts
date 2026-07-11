@@ -30,22 +30,24 @@ describe("Part Length", () => {
           backingNotes: { mode: "automatic" },
           rhythm: { mode: "module", moduleId: "six" },
         },
-        automaticRhythm: { beats: 2, style: "standard" },
         modules,
       }),
     ).toBe(6);
   });
 
-  it("falls back to Automatic Rhythm beats when no module is selected", () => {
+  it("uses four beats for Automatic Rhythm when no authored duration exists", () => {
     expect(
       getPartLengthBeats({
         band: {
           backingNotes: { mode: "automatic" },
           rhythm: { mode: "automatic" },
         },
-        automaticRhythm: { beats: 2, style: "standard" },
         modules: [],
       }),
-    ).toBe(2);
+    ).toBe(4);
+  });
+
+  it("preserves an authored fractional duration for Automatic Rhythm", () => {
+    expect(getPartLengthBeats({ durationInBars: 0.5 })).toBe(2);
   });
 });

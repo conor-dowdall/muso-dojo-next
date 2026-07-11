@@ -38,7 +38,6 @@ export type SessionMaterialCreationKind = "part" | "chord-progression";
 export type AutomaticRhythmStyle = "standard" | "swing";
 
 export interface AutomaticRhythmConfig {
-  beats: number;
   style: AutomaticRhythmStyle;
 }
 
@@ -220,11 +219,11 @@ export interface MusicPartConfig {
   noteCollectionKey: NoteCollectionKey;
   /** Explicit source selection for each Practice Band role. */
   band?: PartBandConfig;
-  /** Fallback feel and beat count used when no Rhythm module owns the band. */
+  /** Fallback feel used when no Rhythm module owns the band. */
   automaticRhythm?: AutomaticRhythmConfig;
   /**
-   * Optional authored chart duration. Chord progression imports use this for
-   * fractional bars and initialize the Automatic Rhythm beat count from it.
+   * Optional authored chart duration. It determines Automatic Rhythm length;
+   * ordinary Parts without an authored duration use four beats.
    */
   durationInBars?: number;
   showHeader?: boolean;

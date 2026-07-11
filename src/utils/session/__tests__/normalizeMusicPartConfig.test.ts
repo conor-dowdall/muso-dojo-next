@@ -52,7 +52,7 @@ describe("normalizeMusicPartConfig", () => {
     });
   });
 
-  it("migrates explicit Part Lengths into Automatic Rhythm beats", () => {
+  it("drops obsolete explicit Part Length settings", () => {
     expect(
       normalizeMusicPartConfig({
         id: "one-beat",
@@ -61,20 +61,7 @@ describe("normalizeMusicPartConfig", () => {
         lengthBeats: 1,
         modules: [],
       }),
-    ).toMatchObject({
-      automaticRhythm: { beats: 1, style: "standard" },
-    });
-    expect(
-      normalizeMusicPartConfig({
-        id: "two-beats",
-        rootNote: "C",
-        noteCollectionKey: "major",
-        lengthBeats: 2,
-        modules: [],
-      }),
-    ).toMatchObject({
-      automaticRhythm: { beats: 2, style: "standard" },
-    });
+    ).not.toHaveProperty("lengthBeats");
   });
 
   it("migrates authored duration while keeping ordinary Parts at four beats", () => {
@@ -87,7 +74,7 @@ describe("normalizeMusicPartConfig", () => {
         modules: [],
       }),
     ).toMatchObject({
-      automaticRhythm: { beats: 2, style: "standard" },
+      automaticRhythm: { style: "standard" },
     });
     expect(
       normalizeMusicPartConfig({
@@ -116,7 +103,7 @@ describe("normalizeMusicPartConfig", () => {
       }),
     ).toMatchObject({
       band: { rhythm: { mode: "module", moduleId: "rhythm" } },
-      automaticRhythm: { beats: 4, style: "standard" },
+      automaticRhythm: { style: "standard" },
     });
   });
 
@@ -130,7 +117,7 @@ describe("normalizeMusicPartConfig", () => {
         modules: [],
       }),
     ).toMatchObject({
-      automaticRhythm: { beats: 4, style: "swing" },
+      automaticRhythm: { style: "swing" },
     });
     expect(
       normalizeMusicPartConfig({
@@ -141,7 +128,7 @@ describe("normalizeMusicPartConfig", () => {
         modules: [],
       }),
     ).toMatchObject({
-      automaticRhythm: { beats: 4, style: "standard" },
+      automaticRhythm: { style: "standard" },
     });
   });
 });

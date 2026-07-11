@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { Drum, Repeat, Timer } from "lucide-react";
+import { Drum, Repeat } from "lucide-react";
 import {
   DisclosureList,
   DisclosureListChoice,
@@ -10,14 +10,11 @@ import {
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { ObjectMenuDialog } from "@/components/ui/object-menu";
-import {
-  AUTOMATIC_RHYTHM_BEAT_CHOICES,
-  formatPartLengthBeats,
-} from "@/utils/music-part/partLength";
+import { formatPartLengthBeats } from "@/utils/music-part/partLength";
 import { type PartBandRole, type PartBandSourceConfig } from "@/types/session";
 import { useMusicPart } from "./MusicPartContext";
 
-type PlaybackChoice = "automaticRhythm" | "backingNotes" | "rhythm";
+type PlaybackChoice = "backingNotes" | "rhythm";
 
 function sourceIsSelected(
   current: PartBandSourceConfig,
@@ -40,7 +37,7 @@ export function PartPlaybackDialog({
   const part = useMusicPart();
   const { isOpen: isChoiceOpen, toggleChoice } =
     useDisclosureList<PlaybackChoice>(null);
-  const automaticRhythmPreview = `${part.automaticRhythm.style === "swing" ? "Swing" : "Standard"} · ${formatPartLengthBeats(part.automaticRhythm.beats)}`;
+  const automaticRhythmPreview = `${part.automaticRhythm.style === "swing" ? "Swing" : "Standard"} · ${formatPartLengthBeats(part.automaticLengthBeats)}`;
   const backingNotesPreview = getSourcePreview(part, "backingNotes");
   const rhythmPreview = getSourcePreview(part, "rhythm");
 
@@ -52,8 +49,8 @@ export function PartPlaybackDialog({
   return (
     <ObjectMenuDialog
       isOpen={isOpen}
-      size="compact"
-      title="Practice Band for Part"
+      size="standard"
+      title="Practice Band"
       onClose={onClose}
     >
       <DisclosureListGroup>
@@ -80,34 +77,6 @@ export function PartPlaybackDialog({
           onToggle={() => toggleChoice("rhythm")}
         />
       </DisclosureListGroup>
-
-      <DisclosureListGroup>
-        <DisclosureListItem
-          ariaLabel={`Automatic rhythm. Current: ${automaticRhythmPreview}`}
-          icon={<Timer />}
-          isOpen={isChoiceOpen("automaticRhythm")}
-          label="Automatic Rhythm"
-          panelVariant="menu"
-          preview={automaticRhythmPreview}
-          subtitle="Fallback feel and beat length for this Part"
-          onToggle={() => toggleChoice("automaticRhythm")}
-        >
-          <DisclosureList density="compact">
-            {AUTOMATIC_RHYTHM_BEAT_CHOICES.map((lengthBeats) => (
-              <DisclosureListChoice
-                key={lengthBeats}
-                label={formatPartLengthBeats(lengthBeats)}
-                selected={part.automaticRhythm.beats === lengthBeats}
-                selectedPreviewKind="current"
-                onClick={() => {
-                  part.setAutomaticRhythmBeats?.(lengthBeats);
-                  toggleChoice("automaticRhythm");
-                }}
-              />
-            ))}
-          </DisclosureList>
-        </DisclosureListItem>
-      </DisclosureListGroup>
     </ObjectMenuDialog>
   );
 }
@@ -119,7 +88,7 @@ function getSourcePreview(
   const source = part.band[role];
   if (source.mode === "automatic") {
     return role === "rhythm"
-      ? `Automatic · ${part.automaticRhythm.style === "swing" ? "Swing" : "Standard"} · ${formatPartLengthBeats(part.automaticRhythm.beats)}`
+      ? `Automatic · ${part.automaticRhythm.style === "swing" ? "Swing" : "Standard"} · ${formatPartLengthBeats(part.automaticLengthBeats)}`
       : "Automatic";
   }
 

@@ -131,17 +131,16 @@ export function MusicPart({
   noteCollectionKey: controlledNoteCollectionKey,
   initialNoteCollectionKey = "major",
   onNoteCollectionKeyChange,
+  automaticLengthBeats = DEFAULT_PART_LENGTH_BEATS,
   effectiveLengthBeats,
   band = {
     backingNotes: { mode: "automatic" },
     rhythm: { mode: "automatic" },
   } satisfies PartBandConfig,
   automaticRhythm = {
-    beats: DEFAULT_PART_LENGTH_BEATS,
     style: "standard",
   },
   bandModuleOptions = { backingNotes: [], rhythm: [] },
-  onAutomaticRhythmBeatsChange,
   onBandSourceChange,
   showHeader = true,
   showReadOnlyIdentity = false,
@@ -165,10 +164,10 @@ export function MusicPart({
   });
   const contextValue: MusicPartContextValue = {
     partId,
-    effectiveLengthBeats:
-      effectiveLengthBeats ??
-      normalizePartLengthBeats(automaticRhythm.beats) ??
+    automaticLengthBeats:
+      normalizePartLengthBeats(automaticLengthBeats) ??
       DEFAULT_PART_LENGTH_BEATS,
+    effectiveLengthBeats: effectiveLengthBeats ?? DEFAULT_PART_LENGTH_BEATS,
     band,
     automaticRhythm,
     bandModuleOptions,
@@ -177,7 +176,6 @@ export function MusicPart({
     noteCollectionKey,
     setRootNote,
     setNoteCollectionKey,
-    setAutomaticRhythmBeats: onAutomaticRhythmBeatsChange,
     setBandSource: onBandSourceChange,
     instrumentCreationRangeContext,
     addPartModules: onAddPartModules,

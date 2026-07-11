@@ -132,11 +132,6 @@ export interface PartActions {
     partId: string,
     noteCollectionKey: SettingValue<NoteCollectionKey>,
   ) => void;
-  setPartAutomaticRhythmBeats: (
-    sessionId: string,
-    partId: string,
-    beats: number,
-  ) => void;
   setPartBandSource: (
     sessionId: string,
     partId: string,

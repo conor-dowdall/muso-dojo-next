@@ -44,10 +44,10 @@ export function MusicPartView({
         ? {
             rootNote: part.rootNote,
             noteCollectionKey: part.noteCollectionKey,
+            automaticLengthBeats: getAutomaticRhythmBeats(part),
             effectiveLengthBeats: getPartLengthBeats(part),
             band: getPartBandConfig(part),
             automaticRhythm: part.automaticRhythm ?? {
-              beats: getAutomaticRhythmBeats(part),
               style: "standard",
             },
             bandModuleOptions: {
@@ -84,9 +84,6 @@ export function MusicPartView({
   const setPartNoteCollectionKey = useAppStore(
     (state) => state.setPartNoteCollectionKey,
   );
-  const setPartAutomaticRhythmBeats = useAppStore(
-    (state) => state.setPartAutomaticRhythmBeats,
-  );
   const setPartBandSource = useAppStore((state) => state.setPartBandSource);
   const addPartModules = useAppStore((state) => state.addPartModules);
   const clonePart = useAppStore((state) => state.clonePart);
@@ -110,19 +107,11 @@ export function MusicPartView({
       instrumentCreationRangeContext={instrumentCreationRangeContext}
       isPerformanceMode={isPerformanceMode}
       rootNote={partSettings.rootNote}
+      automaticLengthBeats={partSettings.automaticLengthBeats}
       effectiveLengthBeats={partSettings.effectiveLengthBeats}
       band={partSettings.band}
       automaticRhythm={partSettings.automaticRhythm}
       bandModuleOptions={partSettings.bandModuleOptions}
-      onAutomaticRhythmBeatsChange={(beats) =>
-        setPartAutomaticRhythmBeats(
-          sessionId,
-          partId,
-          typeof beats === "function"
-            ? beats(partSettings.automaticRhythm.beats)
-            : beats,
-        )
-      }
       onBandSourceChange={(role, source) =>
         setPartBandSource(sessionId, partId, role, source)
       }

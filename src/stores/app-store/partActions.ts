@@ -16,7 +16,6 @@ import {
   normalizeSessionForWrite,
 } from "./writeNormalization";
 import { type AppStoreGet, type AppStoreSet, type PartActions } from "./types";
-import { normalizePartLengthBeats } from "@/utils/music-part/partLength";
 import { setPartBandSource as applyPartBandSource } from "@/utils/music-part/partBand";
 
 function resolveTargetSessionId(
@@ -183,21 +182,6 @@ export function createPartActions(
 
       get().updatePartSettings(sessionId, partId, {
         noteCollectionKey: nextNoteCollectionKey,
-      });
-    },
-    setPartAutomaticRhythmBeats: (sessionId, partId, beats) => {
-      const normalizedBeats = normalizePartLengthBeats(beats);
-      const part = findPartById(get().sessions[sessionId], partId);
-
-      if (normalizedBeats === undefined || !part) {
-        return;
-      }
-
-      get().updatePartSettings(sessionId, partId, {
-        automaticRhythm: {
-          beats: normalizedBeats,
-          style: part.automaticRhythm?.style ?? "standard",
-        },
       });
     },
     setPartBandSource: (sessionId, partId, role, source) => {

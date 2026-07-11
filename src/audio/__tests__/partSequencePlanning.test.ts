@@ -45,11 +45,12 @@ describe("createPartSequencePlaybackPlan", () => {
             },
           ],
           {
-            automaticRhythm: { beats: 2, style: "standard" },
+            automaticRhythm: { style: "standard" },
             band: {
               backingNotes: { mode: "automatic" },
               rhythm: { mode: "automatic" },
             },
+            durationInBars: 0.5,
           },
         ),
       ]),
@@ -82,7 +83,7 @@ describe("createPartSequencePlaybackPlan", () => {
               backingNotes: { mode: "automatic" },
               rhythm: { mode: "module", moduleId: "rhythm" },
             },
-            automaticRhythm: { beats: 2, style: "standard" },
+            automaticRhythm: { style: "standard" },
           },
         ),
       ]),
@@ -103,7 +104,8 @@ describe("createPartSequencePlaybackPlan", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([
         createPart("part", [], {
-          automaticRhythm: { beats: 1, style: "standard" },
+          automaticRhythm: { style: "standard" },
+          durationInBars: 0.25,
         }),
       ]),
     );
@@ -129,7 +131,7 @@ describe("createPartSequencePlaybackPlan", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([
         createPart("swing-part", [], {
-          automaticRhythm: { beats: 4, style: "swing" },
+          automaticRhythm: { style: "swing" },
         }),
       ]),
     );

@@ -14,6 +14,7 @@ export interface PartBandModuleOption {
 }
 
 export interface MusicPartSettings {
+  automaticLengthBeats?: number;
   effectiveLengthBeats?: number;
   band?: PartBandConfig;
   automaticRhythm?: AutomaticRhythmConfig;
@@ -24,7 +25,6 @@ export interface MusicPartSettings {
 }
 
 export interface MusicPartControlProps extends MusicPartSettings {
-  onAutomaticRhythmBeatsChange?: SettingSetter<number>;
   onBandSourceChange?: (
     role: PartBandRole,
     source: PartBandSourceConfig,

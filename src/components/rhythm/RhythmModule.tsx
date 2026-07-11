@@ -7,7 +7,7 @@ import { PartModuleControlButton } from "@/components/part-module/PartModuleCont
 import controlStyles from "@/components/part-module/PartModuleControls.module.css";
 import { PartModuleFrame } from "@/components/part-module/PartModuleFrame";
 import { PartModuleHeaderActions } from "@/components/part-module/PartModuleHeaderActions";
-import { PartModuleBandBadge } from "@/components/part-module/PartModuleBandSource";
+import { PartModuleBandSourceIndicator } from "@/components/part-module/PartModuleBandSource";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { TactileControlGroup } from "@/components/ui/tactile-control-group/TactileControlGroup";
 import { useRhythmPlayback } from "@/hooks/audio/useRhythmPlayback";
@@ -58,7 +58,6 @@ export function RhythmModule({
   onClone,
   onOpenSessionTempo,
   onRemove,
-  onUseInBand,
   onRhythmRecipeChange,
   onWoodChange,
   rhythm,
@@ -71,7 +70,6 @@ export function RhythmModule({
   onClone?: () => void;
   onOpenSessionTempo?: () => void;
   onRemove?: () => void;
-  onUseInBand?: () => void;
   onRhythmRecipeChange?: (value: RhythmRecipe) => void;
   onWoodChange?: (value: WoodSurfaceId) => void;
   rhythm: RhythmSelection;
@@ -148,7 +146,9 @@ export function RhythmModule({
         className={`${styles.frame} ${controlStyles.surface}`}
         headerPrimary={
           <InstrumentIdentity
-            accessory={isBandSource ? <PartModuleBandBadge /> : undefined}
+            accessory={
+              isBandSource ? <PartModuleBandSourceIndicator /> : undefined
+            }
             label="Rhythm"
           />
         }
@@ -468,13 +468,11 @@ export function RhythmModule({
 
       {showHeader ? (
         <RhythmOptionsDialog
-          isBandSource={isBandSource}
           isOpen={isOptionsOpen}
           wood={wood}
           onClone={onClone}
           onClose={() => setIsOptionsOpen(false)}
           onRemove={onRemove}
-          onUseInBand={onUseInBand}
           onWoodChange={onWoodChange}
         />
       ) : null}

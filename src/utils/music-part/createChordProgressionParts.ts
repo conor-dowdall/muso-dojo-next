@@ -57,7 +57,6 @@ interface DurationAwareChordProgression {
 
 interface ProgressionPartReference {
   durationInBars?: number;
-  lengthBeats: number;
   reference: ChordProgressionChordReference;
   rhythmBeatCount?: number;
 }
@@ -122,7 +121,6 @@ function createFullProgressionPartReferences(
 
       partReferences.push({
         reference,
-        lengthBeats: normalizeSegmentDuration(durationInBars * beatsPerBar),
         ...(Math.abs(durationInBars - BAR_DURATION_IN_BARS) > DURATION_EPSILON
           ? { durationInBars }
           : {}),
@@ -144,11 +142,10 @@ function createFullProgressionPartReferences(
 function createUniqueProgressionPartReferences(
   rootNote: RootNote,
   progressionKey: ChordProgressionKey,
-  beatsPerBar: number,
 ): ProgressionPartReference[] {
   return chordProgression
     .getUniqueChordReferences(rootNote, progressionKey)
-    .map((reference) => ({ lengthBeats: beatsPerBar, reference }));
+    .map((reference) => ({ reference }));
 }
 
 function applyProgressionRhythmBeatCount(
@@ -201,7 +198,6 @@ function createPartFromReference<T extends PartModuleType>({
     noteCollectionKey: partReference.reference.chordCollectionKey,
     durationInBars: partReference.durationInBars,
     automaticRhythm: {
-      beats: partReference.lengthBeats,
       style: automaticRhythm,
     },
     modules: resolvedModules,
@@ -240,7 +236,6 @@ export function createChordProgressionParts<
       : createUniqueProgressionPartReferences(
           normalizedRootNote,
           progressionKey,
-          rhythmBeatsPerBar,
         );
 
   return references.map((partReference, index) =>

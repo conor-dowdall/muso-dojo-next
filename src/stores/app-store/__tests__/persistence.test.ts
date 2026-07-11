@@ -153,7 +153,7 @@ describe("app store persistence", () => {
   });
 
   it("declares the current persisted store version", () => {
-    expect(APP_STORE_VERSION).toBe(8);
+    expect(APP_STORE_VERSION).toBe(9);
   });
 
   it("falls back when persisted state is not an object snapshot", () => {

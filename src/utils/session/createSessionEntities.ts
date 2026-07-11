@@ -2,10 +2,6 @@ import { DEFAULT_KEYBOARD_THEME } from "@/data/keyboard/themes";
 import { assertNever } from "@/utils/assertNever";
 import { getRhythmSelectionForPartDuration } from "@/utils/music-part/partDuration";
 import {
-  DEFAULT_PART_LENGTH_BEATS,
-  normalizePartLengthBeats,
-} from "@/utils/music-part/partLength";
-import {
   type DronePartModuleConfig,
   type ExerciseLooperPartModuleConfig,
   type InstrumentCreationConfig,
@@ -166,12 +162,6 @@ export function createDefaultMusicPartConfig<
     applyPartDurationToDefaultModule(module, durationInBars),
   );
   const resolvedAutomaticRhythm = {
-    beats:
-      normalizePartLengthBeats(automaticRhythm?.beats) ??
-      (durationInBars !== undefined
-        ? normalizePartLengthBeats(durationInBars * DEFAULT_PART_LENGTH_BEATS)
-        : undefined) ??
-      DEFAULT_PART_LENGTH_BEATS,
     style: automaticRhythm?.style === "swing" ? "swing" : "standard",
   } as const;
   const part = normalizeMusicPartConfig({

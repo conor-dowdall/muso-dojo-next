@@ -40,7 +40,6 @@ export function RhythmPartModuleView({
       removePartModule: state.removePartModule,
       setRhythmRecipe: state.setRhythmRecipe,
       setRhythmWood: state.setRhythmWood,
-      setPartBandSource: state.setPartBandSource,
     })),
   );
 
@@ -63,15 +62,6 @@ export function RhythmPartModuleView({
         isPerformanceMode
           ? undefined
           : () => actions.removePartModule(sessionId, partId, moduleId)
-      }
-      onUseInBand={
-        isPerformanceMode
-          ? undefined
-          : () =>
-              actions.setPartBandSource(sessionId, partId, "rhythm", {
-                mode: "module",
-                moduleId,
-              })
       }
       onRhythmRecipeChange={(value) =>
         actions.setRhythmRecipe(sessionId, partId, moduleId, value)

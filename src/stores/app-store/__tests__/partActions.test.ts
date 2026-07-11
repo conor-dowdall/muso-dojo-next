@@ -3,7 +3,7 @@ import { createTestStore, sessionId } from "./appStoreTestUtils";
 import { getPartLengthBeats } from "@/utils/music-part/partLength";
 
 describe("Part actions", () => {
-  it("uses Automatic Rhythm beats only when no module owns the band", () => {
+  it("uses a selected Rhythm module for length and four beats for Automatic", () => {
     const store = createTestStore();
     const partId = store.getState().addPart(sessionId, {
       moduleRequests: [
@@ -31,7 +31,7 @@ describe("Part actions", () => {
     expect(partId).toBeDefined();
     expect(
       store.getState().sessions[sessionId]?.parts.at(-1)?.automaticRhythm,
-    ).toEqual({ beats: 4, style: "standard" });
+    ).toEqual({ style: "standard" });
 
     expect(
       getPartLengthBeats(
@@ -39,10 +39,7 @@ describe("Part actions", () => {
       ),
     ).toBe(6);
 
-    store.getState().setPartAutomaticRhythmBeats(sessionId, partId!, 2);
-
     const part = store.getState().sessions[sessionId]?.parts.at(-1);
-    expect(part?.automaticRhythm?.beats).toBe(2);
     expect(getPartLengthBeats(part ?? {})).toBe(6);
     expect(part?.modules[0]).toMatchObject({
       rhythm: { recipe: { beats: 6 } },
@@ -55,17 +52,6 @@ describe("Part actions", () => {
       getPartLengthBeats(
         store.getState().sessions[sessionId]?.parts.at(-1) ?? {},
       ),
-    ).toBe(2);
-  });
-
-  it("ignores invalid Automatic Rhythm beat values", () => {
-    const store = createTestStore();
-    const partId = store.getState().addPart(sessionId);
-    store.getState().setPartAutomaticRhythmBeats(sessionId, partId!, 0);
-
-    expect(
-      store.getState().sessions[sessionId]?.parts.at(-1)?.automaticRhythm
-        ?.beats,
     ).toBe(4);
   });
 

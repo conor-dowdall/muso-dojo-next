@@ -15,6 +15,7 @@ import { type PartBandModuleOption } from "@/types/music-part";
 
 export interface MusicPartContextValue {
   partId: string;
+  automaticLengthBeats: number;
   effectiveLengthBeats: number;
   band: PartBandConfig;
   automaticRhythm: AutomaticRhythmConfig;
@@ -24,7 +25,6 @@ export interface MusicPartContextValue {
   noteCollectionKey: NoteCollectionKey;
   setRootNote: SettingSetter<string>;
   setNoteCollectionKey: SettingSetter<NoteCollectionKey>;
-  setAutomaticRhythmBeats?: SettingSetter<number>;
   setBandSource?: (role: PartBandRole, source: PartBandSourceConfig) => void;
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
   addPartModules?: AddPartModulesHandler;

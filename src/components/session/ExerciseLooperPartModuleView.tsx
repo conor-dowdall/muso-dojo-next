@@ -52,7 +52,6 @@ export function ExerciseLooperPartModuleView({
       setExerciseLooperPattern: state.setExerciseLooperPattern,
       setExerciseLooperSubdivision: state.setExerciseLooperSubdivision,
       setExerciseLooperWood: state.setExerciseLooperWood,
-      setPartBandSource: state.setPartBandSource,
     })),
   );
 
@@ -114,15 +113,6 @@ export function ExerciseLooperPartModuleView({
       }
       onOpenSessionTempo={
         onOpenSessionTempo ? () => onOpenSessionTempo(sessionId) : undefined
-      }
-      onUseInBand={
-        isPerformanceMode
-          ? undefined
-          : () =>
-              actions.setPartBandSource(sessionId, partId, "backingNotes", {
-                mode: "module",
-                moduleId,
-              })
       }
       onWoodChange={
         isPerformanceMode

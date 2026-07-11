@@ -69,7 +69,7 @@ describe("getPartLeadSheetSummary", () => {
   it("keeps Chart metadata to the time signature for Automatic Swing", () => {
     const summary = getPartLeadSheetSummary(
       createPart({
-        automaticRhythm: { beats: 4, style: "swing" },
+        automaticRhythm: { style: "swing" },
         band: {
           backingNotes: { mode: "automatic" },
           rhythm: { mode: "automatic" },

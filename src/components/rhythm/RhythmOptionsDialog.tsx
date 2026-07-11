@@ -14,26 +14,20 @@ import {
   DEFAULT_WOOD_SURFACE_ID,
   type WoodSurfaceId,
 } from "@/data/woodSurfaces";
-import { PartModuleBandSourceChoice } from "@/components/part-module/PartModuleBandSource";
-
 type MenuChoice = "wood";
 
 export function RhythmOptionsDialog({
-  isBandSource = false,
   isOpen,
   onClone,
   onClose,
   onRemove,
-  onUseInBand,
   onWoodChange,
   wood = DEFAULT_WOOD_SURFACE_ID,
 }: {
-  isBandSource?: boolean;
   isOpen: boolean;
   onClone?: () => void;
   onClose: () => void;
   onRemove?: () => void;
-  onUseInBand?: () => void;
   onWoodChange?: (value: WoodSurfaceId) => void;
   wood?: WoodSurfaceId;
 }) {
@@ -42,11 +36,6 @@ export function RhythmOptionsDialog({
 
   return (
     <ObjectMenuDialog isOpen={isOpen} title="Rhythm Options" onClose={onClose}>
-      <PartModuleBandSourceChoice
-        isBandSource={isBandSource}
-        roleLabel="rhythm"
-        onUseInBand={onUseInBand}
-      />
       <DisclosureListGroup>
         <WoodSurfaceDisclosureItem
           icon={<SwatchBook />}

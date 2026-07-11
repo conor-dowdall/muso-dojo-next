@@ -1,0 +1,13 @@
+.indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent);
+  opacity: 0.72;
+}
+
+.indicator svg {
+  inline-size: 0.8125rem;
+  block-size: 0.8125rem;
+  stroke-width: 1.75;
+}

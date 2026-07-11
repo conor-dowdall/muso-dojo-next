@@ -17,7 +17,7 @@ import { ControlHeader } from "@/components/ui/control-header/ControlHeader";
 import { RootNotePicker } from "@/components/music-theory/RootNotePicker";
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
 import styles from "./MusicPartHeader.module.css";
-import { Plus, RadioTower } from "lucide-react";
+import { BoomBox, Plus } from "lucide-react";
 import { Heading } from "@/components/ui/typography/Heading";
 import { OverflowMenuButton } from "@/components/ui/object-menu";
 import { MusicPartMenuDialog } from "./MusicPartMenuDialog";
@@ -70,14 +70,6 @@ export function MusicPartHeader({
         }
         actions={
           <>
-            {!isPerformanceMode ? (
-              <IconButton
-                aria-label={`Practice Band settings. Current band length: ${formatPartLengthBeats(musicPart.effectiveLengthBeats)}`}
-                icon={<RadioTower />}
-                size="sm"
-                onClick={() => setIsPlaybackDialogOpen(true)}
-              />
-            ) : null}
             {!isPerformanceMode &&
             musicPart.addPartModules &&
             onOpenAddDialog ? (
@@ -86,6 +78,14 @@ export function MusicPartHeader({
                 icon={<Plus />}
                 size="sm"
                 onClick={onOpenAddDialog}
+              />
+            ) : null}
+            {!isPerformanceMode ? (
+              <IconButton
+                aria-label={`Practice Band settings. Current band length: ${formatPartLengthBeats(musicPart.effectiveLengthBeats)}`}
+                icon={<BoomBox />}
+                size="sm"
+                onClick={() => setIsPlaybackDialogOpen(true)}
               />
             ) : null}
             {hasPartMenu ? (

@@ -1,9 +1,5 @@
 import { type MusicPartConfig, type PartModuleConfig } from "@/types/session";
 import { normalizePartDurationInBars } from "@/utils/music-part/partDuration";
-import {
-  DEFAULT_PART_LENGTH_BEATS,
-  normalizePartLengthBeats,
-} from "@/utils/music-part/partLength";
 import { normalizePartBandConfig } from "@/utils/music-part/partBand";
 import { normalizePartModuleConfig } from "@/utils/session/normalizePartModuleConfig";
 import {
@@ -34,20 +30,10 @@ export function normalizeMusicPartConfig(
   );
   const showHeader = normalizeOptionalBoolean(value.showHeader, true);
   const durationInBars = normalizePartDurationInBars(value.durationInBars);
-  const migratedLengthBeats =
-    durationInBars !== undefined
-      ? durationInBars * DEFAULT_PART_LENGTH_BEATS
-      : DEFAULT_PART_LENGTH_BEATS;
   const automaticRhythmValue = isRecord(value.automaticRhythm)
     ? value.automaticRhythm
     : undefined;
-  const automaticRhythmBeats =
-    normalizePartLengthBeats(automaticRhythmValue?.beats) ??
-    normalizePartLengthBeats(value.lengthBeats) ??
-    normalizePartLengthBeats(migratedLengthBeats) ??
-    DEFAULT_PART_LENGTH_BEATS;
   const automaticRhythm = {
-    beats: automaticRhythmBeats,
     style:
       value.automaticRhythm === "swing" ||
       automaticRhythmValue?.style === "swing"

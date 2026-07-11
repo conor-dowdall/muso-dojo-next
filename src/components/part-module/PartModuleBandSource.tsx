@@ -1,40 +1,17 @@
 "use client";
 
-import { RadioTower } from "lucide-react";
-import {
-  DisclosureListChoice,
-  DisclosureListGroup,
-} from "@/components/ui/disclosure-list/DisclosureList";
-import { SelectionPreviewLabel } from "@/components/ui/selection-preview";
+import { BoomBox } from "lucide-react";
+import styles from "./PartModuleBandSource.module.css";
 
-export function PartModuleBandBadge() {
-  return <SelectionPreviewLabel kind="included">Band</SelectionPreviewLabel>;
-}
-
-export function PartModuleBandSourceChoice({
-  isBandSource,
-  onUseInBand,
-  roleLabel,
-}: {
-  isBandSource: boolean;
-  onUseInBand?: () => void;
-  roleLabel: string;
-}) {
-  if (!onUseInBand) {
-    return null;
-  }
-
+export function PartModuleBandSourceIndicator() {
   return (
-    <DisclosureListGroup>
-      <DisclosureListChoice
-        aria-label={`Use this module as the Practice Band ${roleLabel}`}
-        icon={<RadioTower />}
-        label="Use in Practice Band"
-        selected={isBandSource}
-        selectedPreviewKind="current"
-        subtitle={`Use this module for ${roleLabel}`}
-        onClick={onUseInBand}
-      />
-    </DisclosureListGroup>
+    <span
+      aria-label="Practice Band source"
+      className={styles.indicator}
+      role="img"
+      title="Practice Band source"
+    >
+      <BoomBox aria-hidden="true" />
+    </span>
   );
 }

@@ -4,6 +4,7 @@ import {
   type ChordProgressionKey,
 } from "@musodojo/music-theory-data";
 import { createChordProgressionParts } from "@/utils/music-part/createChordProgressionParts";
+import { getAutomaticRhythmBeats } from "@/utils/music-part/partLength";
 
 describe("createChordProgressionParts", () => {
   it("copies the requested module set to every progression part", () => {
@@ -72,7 +73,7 @@ describe("createChordProgressionParts", () => {
       "C",
     ]);
     expect(parts[6]).toMatchObject({
-      automaticRhythm: { beats: 2, style: "standard" },
+      automaticRhythm: { style: "standard" },
       durationInBars: 0.5,
       rootNote: "C",
     });
@@ -104,7 +105,7 @@ describe("createChordProgressionParts", () => {
       },
       type: "rhythm",
     });
-    expect(parts[8]?.automaticRhythm?.beats).toBe(4);
+    expect(getAutomaticRhythmBeats(parts[8] ?? {})).toBe(4);
     expect(parts[8]).not.toHaveProperty("durationInBars");
   });
 
@@ -238,7 +239,7 @@ describe("createChordProgressionParts", () => {
       true,
     );
     expect(
-      aSectionParts.every((part) => part.automaticRhythm?.beats === 2),
+      aSectionParts.every((part) => getAutomaticRhythmBeats(part) === 2),
     ).toBe(true);
     expect(
       aSectionParts.every((part) => part.automaticRhythm?.style === "swing"),
@@ -258,9 +259,9 @@ describe("createChordProgressionParts", () => {
     expect(bridgeParts.every((part) => part.durationInBars === undefined)).toBe(
       true,
     );
-    expect(bridgeParts.every((part) => part.automaticRhythm?.beats === 4)).toBe(
-      true,
-    );
+    expect(
+      bridgeParts.every((part) => getAutomaticRhythmBeats(part) === 4),
+    ).toBe(true);
   });
 
   it("authors Swing for Jazz and Blues and Standard rhythm elsewhere", () => {
