@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createRememberModuleCreationRequest } from "@/components/part-module-creation/moduleCreationDraft";
 
 describe("createRememberModuleCreationRequest", () => {
-  it("keeps every selected module creation default", () => {
+  it("remembers backing module settings without remembering inclusion", () => {
     expect(
       createRememberModuleCreationRequest(
         {
@@ -41,13 +41,7 @@ describe("createRememberModuleCreationRequest", () => {
         tuningKey: "guitarStandardE",
       },
       keyboard: { theme: "studio" },
-      moduleKinds: [
-        "drone",
-        "exercise-looper",
-        "fretboard",
-        "keyboard",
-        "rhythm",
-      ],
+      moduleKinds: ["drone", "fretboard", "keyboard"],
     });
   });
 });

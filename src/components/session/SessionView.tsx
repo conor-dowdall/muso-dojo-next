@@ -9,6 +9,7 @@ import { useAppStore } from "@/stores/appStore";
 import { type MusicPartConfig } from "@/types/session";
 import { createPartBarTimeline } from "@/utils/music-part/partBarTimeline";
 import { getPartLeadSheetSummary } from "@/utils/music-part/partLeadSheet";
+import { getSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 import { MusicPartView } from "./MusicPartView";
 import {
   showsOnlyLivePart,
@@ -53,6 +54,13 @@ export function SessionView({
   const sessionParts = useAppStore(
     (state) => state.sessions[sessionId]?.parts ?? EMPTY_SESSION_PARTS,
   );
+  const storedBackingBand = useAppStore(
+    (state) => state.sessions[sessionId]?.backingBand,
+  );
+  const backingBand = useMemo(
+    () => getSessionBackingBandConfig(storedBackingBand),
+    [storedBackingBand],
+  );
   const partIds = useMemo(
     () =>
       sessionParts.length === 0
@@ -74,7 +82,7 @@ export function SessionView({
         throw new Error("Missing chart bar timeline entry");
       }
 
-      const summary = getPartLeadSheetSummary(part);
+      const summary = getPartLeadSheetSummary(part, backingBand);
 
       return {
         accessibleLabel: summary.accessibleLabel,
@@ -88,7 +96,7 @@ export function SessionView({
         meterLabel: summary.meterLabel,
       };
     });
-  }, [sessionParts, viewMode]);
+  }, [backingBand, sessionParts, viewMode]);
   const partSequenceSnapshot = useSyncExternalStore(
     partSequenceCoordinator.subscribe,
     partSequenceCoordinator.getSnapshot,

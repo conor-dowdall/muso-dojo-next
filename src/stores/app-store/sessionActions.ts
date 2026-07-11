@@ -11,6 +11,7 @@ import {
   type AppStoreSet,
   type SessionActions,
 } from "./types";
+import { normalizeSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 
 export function createSessionActions(
   set: AppStoreSet,
@@ -140,6 +141,19 @@ export function createSessionActions(
         updateSessionById(state, sessionId, (session) => ({
           ...session,
           tempoBpm,
+        })),
+      );
+    },
+    setSessionBackingBand: (sessionId, backingBand) => {
+      if (!get().sessions[sessionId]) {
+        return;
+      }
+
+      const normalized = normalizeSessionBackingBandConfig(backingBand);
+      set((state) =>
+        updateSessionById(state, sessionId, (session) => ({
+          ...session,
+          backingBand: normalized,
         })),
       );
     },

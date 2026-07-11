@@ -8,6 +8,7 @@ import { type KeyboardRangeName } from "@/data/keyboard/ranges";
 import { type KeyboardThemeName } from "@/data/keyboard/themes";
 import { type WoodSurfaceId } from "@/data/woodSurfaces";
 import { type RhythmSelection } from "@/utils/rhythm/rhythmConfig";
+import { type AudioPresetId } from "@/audio/types";
 
 export type FretboardCreationAppearanceSource = "auto" | "custom";
 export type ModuleCreationKind =
@@ -38,6 +39,7 @@ export interface DroneModuleCreationDefault {
 }
 
 export interface ExerciseLooperModuleCreationDefault {
+  audioPresetId?: AudioPresetId;
   octaveOffset?: number;
   wood?: WoodSurfaceId;
 }

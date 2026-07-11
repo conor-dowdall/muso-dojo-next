@@ -42,13 +42,26 @@ export interface AutomaticRhythmConfig {
 }
 
 export type PartBandSourceConfig =
-  | { mode: "automatic" }
-  | { mode: "off" }
-  | { mode: "module"; moduleId: string };
+  { mode: "session" } | { mode: "off" } | { mode: "module"; moduleId: string };
 
 export interface PartBandConfig {
   backingNotes: PartBandSourceConfig;
   rhythm: PartBandSourceConfig;
+}
+
+export type SessionBackingBandRhythmMode = "automatic" | "custom" | "off";
+
+export interface SessionBackingBandConfig {
+  countInBeats: number;
+  looper: {
+    audioPresetId: AudioPresetId;
+    enabled: boolean;
+    octaveOffset: number;
+  };
+  rhythm: {
+    mode: SessionBackingBandRhythmMode;
+    selection: RhythmSelection;
+  };
 }
 
 export type PartBandRole = keyof PartBandConfig;
@@ -168,6 +181,7 @@ export interface PartModuleCreationConfigByType {
     wood?: WoodSurfaceId;
   };
   "exercise-looper": {
+    audioPresetId?: AudioPresetId;
     octaveOffset?: number;
     wood?: WoodSurfaceId;
   };
@@ -235,6 +249,7 @@ export interface MusicPartConfig {
 }
 
 export interface SessionConfig {
+  backingBand?: SessionBackingBandConfig;
   id: string;
   name: string;
   lastModified: string;

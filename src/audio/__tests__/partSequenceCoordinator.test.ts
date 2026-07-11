@@ -15,7 +15,9 @@ function createRhythmPattern(): RhythmPattern {
 
 function createPlan(): PartSequencePlaybackPlan {
   return {
+    countIn: { durationBeats: 0, pulses: 0 },
     contentSignature: "content",
+    mode: "session",
     partResetSignatures: ["part-a-reset", "part-b-reset"],
     sessionId: "session",
     signature: "60:content",
@@ -206,6 +208,7 @@ describe("PartSequenceCoordinator", () => {
     });
     expect(startPart).toHaveBeenCalledWith(
       expect.objectContaining({
+        countIn: { durationBeats: 0, pulses: 0 },
         rhythms: [expect.objectContaining({ id: "rhythm-a" })],
         source: "part-sequence",
       }),
@@ -221,6 +224,7 @@ describe("PartSequenceCoordinator", () => {
     });
     expect(startPart).toHaveBeenLastCalledWith(
       expect.objectContaining({
+        countIn: undefined,
         exercises: [expect.objectContaining({ id: "exercise-b" })],
         handoff: true,
         originTime: 14.08,

@@ -30,10 +30,12 @@ import {
   DEFAULT_PART_LENGTH_BEATS,
   normalizePartLengthBeats,
 } from "@/utils/music-part/partLength";
+import { createDefaultSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 
 interface MusicPartProps {
   children: ReactNode;
   partId?: string;
+  sessionId?: string;
   className?: string;
   headerClassName?: string;
   accentColor?: string;
@@ -119,6 +121,7 @@ function MusicPartContent({
 export function MusicPart({
   children,
   partId: userPartId,
+  sessionId,
   className = "",
   headerClassName,
   accentColor,
@@ -134,14 +137,15 @@ export function MusicPart({
   automaticLengthBeats = DEFAULT_PART_LENGTH_BEATS,
   effectiveLengthBeats,
   band = {
-    backingNotes: { mode: "automatic" },
-    rhythm: { mode: "automatic" },
+    backingNotes: { mode: "session" },
+    rhythm: { mode: "session" },
   } satisfies PartBandConfig,
   automaticRhythm = {
     style: "standard",
   },
   bandModuleOptions = { backingNotes: [], rhythm: [] },
   onBandSourceChange,
+  sessionBackingBand = createDefaultSessionBackingBandConfig(),
   showHeader = true,
   showReadOnlyIdentity = false,
   onAddPartModules,
@@ -163,6 +167,7 @@ export function MusicPart({
     onChange: onNoteCollectionKeyChange,
   });
   const contextValue: MusicPartContextValue = {
+    sessionId,
     partId,
     automaticLengthBeats:
       normalizePartLengthBeats(automaticLengthBeats) ??
@@ -181,6 +186,7 @@ export function MusicPart({
     addPartModules: onAddPartModules,
     clonePart: onClonePart,
     removePart: onRemovePart,
+    sessionBackingBand,
   };
 
   return (

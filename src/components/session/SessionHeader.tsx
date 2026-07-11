@@ -4,6 +4,7 @@ import { type ReactNode, useState } from "react";
 import {
   Gauge,
   GalleryThumbnails,
+  Disc3,
   LibraryBig,
   MonitorPlay,
   PanelTop,
@@ -46,6 +47,7 @@ import {
   type SessionViewMode,
 } from "./sessionViewMode";
 import styles from "./SessionHeader.module.css";
+import { SessionBackingBandDialog } from "./SessionBackingBandDialog";
 
 interface SessionHeaderProps {
   onOpenAddDialog: () => void;
@@ -79,6 +81,7 @@ export function SessionHeader({
   const [openMenuSection, setOpenMenuSection] =
     useState<SessionMenuSection | null>(null);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
+  const [isBackingBandDialogOpen, setIsBackingBandDialogOpen] = useState(false);
   const [dialogKey, setDialogKey] = useState(0);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
   const practiceBandTransport = usePracticeBandTransport(activeSessionId);
@@ -192,6 +195,14 @@ export function SessionHeader({
             )}
             <PracticeBandPlayButton transport={practiceBandTransport} />
             <IconButton
+              aria-label="Session Backing Band"
+              disabled={!hasActiveSession}
+              icon={<Disc3 />}
+              size="sm"
+              shouldYield={false}
+              onClick={() => setIsBackingBandDialogOpen(true)}
+            />
+            <IconButton
               aria-label={`Set session tempo. Current tempo: ${activeSessionTempoBpm} bpm`}
               disabled={!hasActiveSession}
               icon={<Gauge />}
@@ -291,6 +302,13 @@ export function SessionHeader({
       >
         <DojoSettingsDialog key={dialogKey} onClose={closeSettingsDialog} />
       </Dialog>
+      {activeSessionId ? (
+        <SessionBackingBandDialog
+          isOpen={isBackingBandDialogOpen}
+          sessionId={activeSessionId}
+          onClose={() => setIsBackingBandDialogOpen(false)}
+        />
+      ) : null}
     </>
   );
 }

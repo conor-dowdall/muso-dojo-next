@@ -458,7 +458,7 @@ export function ExerciseLooperModule({
                 </TactileControlGroup>
 
                 <TactileControlGroup
-                  aria-label="Count-in"
+                  aria-label="Count In"
                   className={controlStyles.controlGroup}
                   controlsClassName={controlStyles.buttonGroup}
                   readout={countInReadout}

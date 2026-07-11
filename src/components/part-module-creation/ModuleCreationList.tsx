@@ -45,6 +45,9 @@ import { type PartModuleCreationRequest } from "@/types/session";
 import { assertNever } from "@/utils/assertNever";
 import { getDroneBaseOctave } from "@/utils/drone/droneNotes";
 import { DEFAULT_EXERCISE_OCTAVE_OFFSET } from "@/utils/exercise-looper/exerciseConfig";
+import { audioPresets, getDefaultAudioPresetId } from "@/audio";
+import { formatValueSummary } from "@/utils/valueSummary";
+import { PartModuleBandSourceIndicator } from "@/components/part-module/PartModuleBandSource";
 import { getExerciseBaseOctave } from "@/utils/exercise-looper/exerciseSequence";
 import { getModuleCreationKindsForContext } from "@/utils/instrument-creation/moduleCreationDefaults";
 import { areRangesEqual } from "@/utils/range/numberRange";
@@ -114,12 +117,18 @@ function getModuleCreationSummary({
         getDroneBaseOctave(droneSelection.octaveOffset ?? 0),
       );
     case "exercise-looper":
-      return formatCreationOctave(
-        getExerciseBaseOctave(
-          exerciseLooperSelection.octaveOffset ??
-            DEFAULT_EXERCISE_OCTAVE_OFFSET,
+      return formatValueSummary([
+        audioPresets[
+          exerciseLooperSelection.audioPresetId ??
+            getDefaultAudioPresetId("exercise")
+        ].label,
+        formatCreationOctave(
+          getExerciseBaseOctave(
+            exerciseLooperSelection.octaveOffset ??
+              DEFAULT_EXERCISE_OCTAVE_OFFSET,
+          ),
         ),
-      );
+      ]);
     case "fretboard":
       return formatFretboardCreationSummary(fretboardSelection);
     case "keyboard":
@@ -246,6 +255,9 @@ export function ModuleCreationList({
     }));
   const [exerciseLooperSelection, setExerciseLooperSelection] =
     useState<ExerciseLooperModuleCreationDefault>(() => ({
+      audioPresetId:
+        moduleCreationDefaults?.exerciseLooper?.audioPresetId ??
+        getDefaultAudioPresetId("exercise"),
       octaveOffset:
         moduleCreationDefaults?.exerciseLooper?.octaveOffset ??
         DEFAULT_EXERCISE_OCTAVE_OFFSET,
@@ -411,6 +423,9 @@ export function ModuleCreationList({
     <DisclosureList>
       {MODULE_CREATION_OPTIONS.map((option) => {
         const selected = includesKind(moduleKinds, option.kind);
+        const isBackingBandSource =
+          selected &&
+          (option.kind === "exercise-looper" || option.kind === "rhythm");
         const hasSettings = hasCreationSettings(option.kind);
         const isSettingsOpen = selected && openSettingsKind === option.kind;
         const summary = getModuleCreationSummary({
@@ -431,13 +446,21 @@ export function ModuleCreationList({
             icon={option.icon}
             isActionOpen={isSettingsOpen}
             keepPanelMounted={hasSettings}
-            label={option.label}
+            label={
+              <>
+                {option.label}
+                {isBackingBandSource ? <PartModuleBandSourceIndicator /> : null}
+              </>
+            }
             selected={selected}
             selectedAriaLabel={`Remove ${option.label} module`}
             selectedPreviewKind="included"
             selectedSelectBehavior="enabled"
             selectAriaLabel={`Add ${option.label} module`}
-            subtitle={summary}
+            subtitle={formatValueSummary([
+              summary,
+              isBackingBandSource ? "Backing Band source" : undefined,
+            ])}
             onAction={
               hasSettings ? () => toggleSettingsKind(option.kind) : undefined
             }

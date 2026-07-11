@@ -25,6 +25,7 @@ import {
 } from "@/types/session";
 import { type NoteColorConfig } from "@/types/note-colors";
 import { sessionWorkspaceViewModes } from "@/types/session-view";
+import { createDefaultSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 
 const fallbackSnapshot = createAppStoreSnapshot({
   id: "fallback-session",
@@ -40,6 +41,7 @@ function createPersistedSnapshot(sessionId: string): AppStoreSnapshot {
     sessionWorkspaceViewMode: "session",
     sessions: {
       [sessionId]: {
+        backingBand: createDefaultSessionBackingBandConfig(),
         id: sessionId,
         name: "Persisted Session",
         lastModified: "2026-01-02T00:00:00.000Z",
@@ -153,7 +155,7 @@ describe("app store persistence", () => {
   });
 
   it("declares the current persisted store version", () => {
-    expect(APP_STORE_VERSION).toBe(9);
+    expect(APP_STORE_VERSION).toBe(11);
   });
 
   it("falls back when persisted state is not an object snapshot", () => {

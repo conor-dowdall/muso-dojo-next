@@ -16,6 +16,8 @@ import {
   getPlaybackOwnerForSource,
   type PlaybackOwner,
 } from "./playbackOwnership";
+import { musoAudioEngine } from "./createWebAudioEngine";
+import { type PlaybackGroupHandle } from "./types";
 
 const TRANSPORT_START_LEAD_SECONDS = 0.08;
 const BEAT_GRID_EPSILON = 1e-6;
@@ -35,12 +37,30 @@ interface BeatGrid {
 }
 
 export interface BeatTransportPartStartRequest {
+  countIn?: BeatTransportCountIn;
   exercises?: readonly ExercisePlaybackRequest[];
   handoff?: boolean;
   originTime?: number;
   rhythms?: readonly RhythmPlaybackRequest[];
   source?: BeatTransportStartSource;
   stopMissing?: boolean;
+  tempoBpm?: number;
+}
+
+export interface BeatTransportCountIn {
+  durationBeats: number;
+  pulses: number;
+}
+
+export interface CountInPlaybackAudioEngine {
+  cancelPlaybackGroup: (group: PlaybackGroupHandle) => void;
+  createPlaybackGroup: () => PlaybackGroupHandle;
+  prime: () => Promise<boolean>;
+  scheduleMetronomeClick: (request: {
+    accent?: boolean;
+    group: PlaybackGroupHandle;
+    startTime: number;
+  }) => boolean;
 }
 
 function normalizeTempo(tempoBpm: number) {
@@ -103,6 +123,7 @@ function getTempoBpm(
 }
 
 export class BeatTransportCoordinator {
+  private countInGroup: PlaybackGroupHandle | undefined;
   private manualControlListeners = new Set<
     (event: BeatTransportManualControlEvent) => void
   >();
@@ -111,7 +132,42 @@ export class BeatTransportCoordinator {
   constructor(
     private readonly exercise: ExercisePlaybackCoordinator = exercisePlaybackCoordinator,
     private readonly rhythm: RhythmPlaybackCoordinator = rhythmPlaybackCoordinator,
+    private readonly countInAudio: CountInPlaybackAudioEngine = musoAudioEngine,
   ) {}
+
+  private stopCountIn() {
+    if (!this.countInGroup) {
+      return;
+    }
+
+    this.countInAudio.cancelPlaybackGroup(this.countInGroup);
+    this.countInGroup = undefined;
+  }
+
+  private scheduleCountIn({
+    countIn,
+    originTime,
+    secondsPerBeat,
+  }: {
+    countIn: BeatTransportCountIn;
+    originTime: number;
+    secondsPerBeat: number;
+  }) {
+    this.stopCountIn();
+    const group = this.countInAudio.createPlaybackGroup();
+    const startTime = originTime - countIn.durationBeats * secondsPerBeat;
+    const pulseSeconds =
+      (countIn.durationBeats * secondsPerBeat) / countIn.pulses;
+    this.countInGroup = group;
+
+    for (let pulse = 0; pulse < countIn.pulses; pulse += 1) {
+      this.countInAudio.scheduleMetronomeClick({
+        accent: pulse === 0,
+        group,
+        startTime: startTime + pulse * pulseSeconds,
+      });
+    }
+  }
 
   private notifyManualControl(
     event: Omit<BeatTransportManualControlEvent, "owner">,
@@ -198,21 +254,32 @@ export class BeatTransportCoordinator {
   }
 
   async startPart({
+    countIn,
     exercises = [],
     handoff = false,
     originTime,
     rhythms = [],
     source = "manual",
     stopMissing = true,
+    tempoBpm: requestedTempoBpm,
   }: BeatTransportPartStartRequest) {
     this.notifyManualControl({ kind: "start", target: "exercise" }, source);
     const revision = ++this.revision;
     const owner = getPlaybackOwnerForSource(source);
     const selectedExercises = exercises.slice(0, 1);
     const selectedRhythms = rhythms.slice(0, 1);
+    const resolvedCountIn =
+      handoff || !countIn || countIn.durationBeats <= 0 || countIn.pulses <= 0
+        ? undefined
+        : {
+            durationBeats: countIn.durationBeats,
+            pulses: Math.round(countIn.pulses),
+          };
     const preparesFreshOrigin =
       originTime === undefined &&
-      (selectedExercises.length > 0 || selectedRhythms.length > 0);
+      (selectedExercises.length > 0 ||
+        selectedRhythms.length > 0 ||
+        resolvedCountIn !== undefined);
 
     if (preparesFreshOrigin) {
       const prepared = await Promise.all([
@@ -222,6 +289,7 @@ export class BeatTransportCoordinator {
         selectedRhythms.length > 0
           ? this.rhythm.prepare()
           : Promise.resolve(true),
+        resolvedCountIn ? this.countInAudio.prime() : Promise.resolve(true),
       ]);
       if (revision !== this.revision || prepared.some((ready) => !ready)) {
         return { originTime: undefined, started: false };
@@ -229,12 +297,16 @@ export class BeatTransportCoordinator {
     }
 
     const currentTime = this.getCurrentTime();
-    const tempoBpm = getTempoBpm(selectedExercises, selectedRhythms);
+    const tempoBpm =
+      getTempoBpm(selectedExercises, selectedRhythms) ?? requestedTempoBpm;
+    const secondsPerBeat = tempoBpm ? 60 / normalizeTempo(tempoBpm) : undefined;
     const requestedOrigin =
       originTime ??
       (currentTime === undefined
         ? undefined
-        : currentTime + TRANSPORT_START_LEAD_SECONDS);
+        : currentTime +
+          TRANSPORT_START_LEAD_SECONDS +
+          (resolvedCountIn?.durationBeats ?? 0) * (secondsPerBeat ?? 0));
     const resolvedOriginTime =
       handoff &&
       currentTime !== undefined &&
@@ -248,6 +320,20 @@ export class BeatTransportCoordinator {
             },
           })
         : requestedOrigin;
+
+    if (
+      resolvedCountIn &&
+      resolvedOriginTime !== undefined &&
+      secondsPerBeat !== undefined
+    ) {
+      this.scheduleCountIn({
+        countIn: resolvedCountIn,
+        originTime: resolvedOriginTime,
+        secondsPerBeat,
+      });
+    } else if (!handoff) {
+      this.stopCountIn();
+    }
 
     if (stopMissing) {
       this.exercise
@@ -339,6 +425,7 @@ export class BeatTransportCoordinator {
 
   stopPartPlayback(owner: PlaybackOwner = "part-sequence") {
     this.revision += 1;
+    this.stopCountIn();
     this.exercise.getActiveIds(owner).forEach((id) => this.exercise.stop(id));
     this.rhythm.getActiveIds(owner).forEach((id) => this.rhythm.stop(id));
   }

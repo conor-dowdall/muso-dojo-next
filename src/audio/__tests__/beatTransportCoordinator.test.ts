@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { BeatTransportCoordinator } from "@/audio/beatTransportCoordinator";
+import {
+  BeatTransportCoordinator,
+  type CountInPlaybackAudioEngine,
+} from "@/audio/beatTransportCoordinator";
 import {
   ExercisePlaybackCoordinator,
   type ExercisePlaybackAudioEngine,
@@ -64,16 +67,27 @@ function createHarness() {
     schedulePercussionHit: vi.fn(() => true),
     subscribeToStopAll: () => () => undefined,
   };
+  const countInAudio: CountInPlaybackAudioEngine = {
+    cancelPlaybackGroup: vi.fn(),
+    createPlaybackGroup: () => "count-in" as PlaybackGroupHandle,
+    prime: async () => true,
+    scheduleMetronomeClick: vi.fn(() => true),
+  };
   const exercise = new ExercisePlaybackCoordinator(
     exerciseEngine,
     createScheduler,
     createScheduler,
   );
   const rhythm = new RhythmPlaybackCoordinator(rhythmEngine, createScheduler);
-  const transport = new BeatTransportCoordinator(exercise, rhythm);
+  const transport = new BeatTransportCoordinator(
+    exercise,
+    rhythm,
+    countInAudio,
+  );
 
   return {
     exercise,
+    countInAudio,
     rhythm,
     setCurrentTime: (value: number) => {
       currentTime = value;
@@ -150,6 +164,67 @@ describe("BeatTransportCoordinator", () => {
     expect(result.originTime).toBe(12.08);
     expect(exercise.getSnapshot().playbacks.exercise?.originTime).toBe(12.08);
     expect(rhythm.getSnapshot().playbacks.rhythm?.originTime).toBe(12.08);
+  });
+
+  it("schedules one count-in bar before the shared downbeat", async () => {
+    const { countInAudio, exercise, rhythm, transport } = createHarness();
+    const result = await transport.startPart({
+      countIn: { durationBeats: 4, pulses: 4 },
+      exercises: [createExerciseRequest("exercise")],
+      rhythms: [createRhythmRequest("rhythm")],
+      source: "part-sequence",
+    });
+
+    expect(result.originTime).toBe(14.08);
+    expect(exercise.getSnapshot().playbacks.exercise?.originTime).toBe(14.08);
+    expect(rhythm.getSnapshot().playbacks.rhythm?.originTime).toBe(14.08);
+    expect(countInAudio.scheduleMetronomeClick).toHaveBeenCalledTimes(4);
+    expect(countInAudio.scheduleMetronomeClick).toHaveBeenNthCalledWith(1, {
+      accent: true,
+      group: "count-in",
+      startTime: 10.08,
+    });
+    expect(countInAudio.scheduleMetronomeClick).toHaveBeenNthCalledWith(4, {
+      accent: false,
+      group: "count-in",
+      startTime: 13.08,
+    });
+
+    transport.stopPartPlayback();
+    expect(countInAudio.cancelPlaybackGroup).toHaveBeenCalledWith("count-in");
+  });
+
+  it("uses compound-meter pulses across the full bar duration", async () => {
+    const { countInAudio, transport } = createHarness();
+    const result = await transport.startPart({
+      countIn: { durationBeats: 3, pulses: 2 },
+      rhythms: [createRhythmRequest("rhythm")],
+      source: "part-sequence",
+    });
+
+    expect(result.originTime).toBe(13.08);
+    expect(countInAudio.scheduleMetronomeClick).toHaveBeenNthCalledWith(1, {
+      accent: true,
+      group: "count-in",
+      startTime: 10.08,
+    });
+    expect(countInAudio.scheduleMetronomeClick).toHaveBeenNthCalledWith(2, {
+      accent: false,
+      group: "count-in",
+      startTime: 11.58,
+    });
+  });
+
+  it("plays the count-in even when both backing lanes are silent", async () => {
+    const { countInAudio, transport } = createHarness();
+    const result = await transport.startPart({
+      countIn: { durationBeats: 4, pulses: 4 },
+      source: "part-sequence",
+      tempoBpm: 60,
+    });
+
+    expect(result).toEqual({ originTime: 14.08, started: true });
+    expect(countInAudio.scheduleMetronomeClick).toHaveBeenCalledTimes(4);
   });
 
   it("reports only manual controls to sequence listeners", async () => {

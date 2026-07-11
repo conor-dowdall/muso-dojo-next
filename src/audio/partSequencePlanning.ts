@@ -22,13 +22,16 @@ import {
   type MusicPartConfig,
   type RhythmPartModuleConfig,
   type SessionConfig,
+  type SessionBackingBandConfig,
 } from "@/types/session";
+import { getSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 import {
   createExercisePlaybackRequest,
   getExercisePlaybackCycleDurationBeats,
 } from "./exercisePlaybackRequest";
 import { type ExercisePlaybackRequest } from "./exercisePlaybackCoordinator";
 import { type RhythmPlaybackRequest } from "./rhythmPlaybackCoordinator";
+import { type BeatTransportCountIn } from "./beatTransportCoordinator";
 
 const PART_SEQUENCE_DEFAULT_EXERCISE_ID_PREFIX = "part-sequence-looper";
 const PART_SEQUENCE_DEFAULT_RHYTHM_ID_PREFIX = "part-sequence-drums";
@@ -44,7 +47,9 @@ export interface PartSequenceStepPlan {
 }
 
 export interface PartSequencePlaybackPlan {
+  countIn: BeatTransportCountIn;
   contentSignature: string;
+  mode: "session" | "part-loop";
   partResetSignatures: readonly string[];
   parts: readonly PartSequenceStepPlan[];
   sessionId: string;
@@ -52,6 +57,11 @@ export interface PartSequencePlaybackPlan {
   sourceSignature: string;
   tempoBpm: number;
   updateSignature: string;
+}
+
+export interface PartSequencePlaybackPlanOptions {
+  mode?: "session" | "part-loop";
+  partId?: string;
 }
 
 function getEffectiveExercisePattern({
@@ -95,11 +105,13 @@ function getEffectiveExercisePattern({
 }
 
 function createExerciseRequest({
+  automaticLooper,
   metronomeEnabled,
   module,
   part,
   tempoBpm,
 }: {
+  automaticLooper?: SessionBackingBandConfig["looper"];
   metronomeEnabled: boolean;
   module: ExerciseLooperPartModuleConfig | undefined;
   part: MusicPartConfig;
@@ -108,13 +120,13 @@ function createExerciseRequest({
   const sequence = getEffectiveExercisePattern({
     end: module?.end,
     noteCollectionKey: part.noteCollectionKey,
-    octaveOffset: module?.octaveOffset,
+    octaveOffset: module?.octaveOffset ?? automaticLooper?.octaveOffset,
     pattern: module?.pattern ?? DEFAULT_EXERCISE_PATTERN,
     rootNote: part.rootNote,
     start: module?.start,
   });
   const request = createExercisePlaybackRequest({
-    audioPresetId: module?.audioPresetId,
+    audioPresetId: module?.audioPresetId ?? automaticLooper?.audioPresetId,
     countInBeats: 0,
     id: module?.id ?? `${PART_SEQUENCE_DEFAULT_EXERCISE_ID_PREFIX}:${part.id}`,
     metronomeEnabled,
@@ -131,16 +143,21 @@ function createExerciseRequest({
 function createExerciseRequestsForPart(
   part: MusicPartConfig,
   tempoBpm: number,
+  backingBand: SessionBackingBandConfig,
 ) {
   const source = getPartBandSource(part, "backingNotes");
 
-  if (source.mode === "off") {
+  if (
+    source.mode === "off" ||
+    (source.mode === "session" && !backingBand.looper.enabled)
+  ) {
     return [];
   }
 
   const selectedModule = getPartBandModule(part, "backingNotes");
   if (!selectedModule || selectedModule.type !== "exercise-looper") {
     const request = createExerciseRequest({
+      automaticLooper: backingBand.looper,
       metronomeEnabled: DEFAULT_EXERCISE_METRONOME_ENABLED,
       module: undefined,
       part,
@@ -161,18 +178,22 @@ function createExerciseRequestsForPart(
 }
 
 function createRhythmRequest({
+  backingBand,
   module,
   part,
   tempoBpm,
 }: {
+  backingBand: SessionBackingBandConfig;
   module: RhythmPartModuleConfig | undefined;
   part: MusicPartConfig;
   tempoBpm: number;
 }): RhythmPlaybackRequest {
-  const lengthBeats = getPartLengthBeats(part);
+  const lengthBeats = getPartLengthBeats(part, backingBand);
   const selection =
     module?.rhythm ??
-    getAutomaticRhythmSelection(part.automaticRhythm?.style, lengthBeats);
+    (backingBand.rhythm.mode === "custom"
+      ? backingBand.rhythm.selection
+      : getAutomaticRhythmSelection(part.automaticRhythm?.style, lengthBeats));
 
   return {
     id: module?.id ?? `${PART_SEQUENCE_DEFAULT_RHYTHM_ID_PREFIX}:${part.id}`,
@@ -181,9 +202,16 @@ function createRhythmRequest({
   };
 }
 
-function createRhythmRequestsForPart(part: MusicPartConfig, tempoBpm: number) {
+function createRhythmRequestsForPart(
+  part: MusicPartConfig,
+  tempoBpm: number,
+  backingBand: SessionBackingBandConfig,
+) {
   const source = getPartBandSource(part, "rhythm");
-  if (source.mode === "off") {
+  if (
+    source.mode === "off" ||
+    (source.mode === "session" && backingBand.rhythm.mode === "off")
+  ) {
     return [];
   }
 
@@ -191,11 +219,26 @@ function createRhythmRequestsForPart(part: MusicPartConfig, tempoBpm: number) {
 
   return [
     createRhythmRequest({
+      backingBand,
       module: selectedModule?.type === "rhythm" ? selectedModule : undefined,
       part,
       tempoBpm,
     }),
   ];
+}
+
+function getPartCountIn(
+  part: MusicPartConfig | undefined,
+  backingBand: SessionBackingBandConfig,
+) {
+  if (!part || backingBand.countInBeats === 0) {
+    return { durationBeats: 0, pulses: 0 };
+  }
+
+  return {
+    durationBeats: backingBand.countInBeats,
+    pulses: backingBand.countInBeats,
+  };
 }
 
 function createExerciseResetSignature(request: ExercisePlaybackRequest) {
@@ -268,18 +311,44 @@ function createUpdateSignature(parts: readonly PartSequenceStepPlan[]) {
   );
 }
 
-function createSourceSignature(session: SessionConfig) {
-  return JSON.stringify(session.parts.map((part) => ({ partId: part.id })));
+function createSourceSignature(
+  session: SessionConfig,
+  mode: PartSequencePlaybackPlan["mode"],
+  parts: readonly PartSequenceStepPlan[],
+) {
+  return JSON.stringify({
+    mode,
+    sessionId: session.id,
+    parts: parts.map((part) => ({ partId: part.partId })),
+  });
 }
 
 export function createPartSequencePlaybackPlan(
   session: SessionConfig,
+  options: PartSequencePlaybackPlanOptions = {},
 ): PartSequencePlaybackPlan {
   const tempoBpm = session.tempoBpm ?? 80;
-  const parts = session.parts.map((part, index): PartSequenceStepPlan => {
-    const durationBeats = getPartLengthBeats(part);
-    const exerciseRequests = createExerciseRequestsForPart(part, tempoBpm);
-    const rhythmRequests = createRhythmRequestsForPart(part, tempoBpm);
+  const backingBand = getSessionBackingBandConfig(session.backingBand);
+  const mode = options.mode ?? "session";
+  const selectedParts =
+    mode === "part-loop"
+      ? session.parts.filter((part) => part.id === options.partId)
+      : session.parts;
+  const parts = selectedParts.map((part): PartSequenceStepPlan => {
+    const index = session.parts.findIndex(
+      (candidate) => candidate.id === part.id,
+    );
+    const durationBeats = getPartLengthBeats(part, backingBand);
+    const exerciseRequests = createExerciseRequestsForPart(
+      part,
+      tempoBpm,
+      backingBand,
+    );
+    const rhythmRequests = createRhythmRequestsForPart(
+      part,
+      tempoBpm,
+      backingBand,
+    );
     const signatureInput = {
       durationBeats,
       exerciseRequests,
@@ -295,11 +364,13 @@ export function createPartSequencePlaybackPlan(
     };
   });
   const contentSignature = createContentSignature(parts);
-  const sourceSignature = createSourceSignature(session);
+  const sourceSignature = createSourceSignature(session, mode, parts);
   const updateSignature = createUpdateSignature(parts);
 
   return {
+    countIn: getPartCountIn(selectedParts[0], backingBand),
     contentSignature,
+    mode,
     partResetSignatures: parts.map((part) => part.resetSignature),
     parts,
     sessionId: session.id,

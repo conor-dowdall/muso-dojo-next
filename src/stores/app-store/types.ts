@@ -35,6 +35,7 @@ import {
   type RememberSessionMaterialCreationRequest,
   type RhythmPartModuleConfig,
   type SessionConfig,
+  type SessionBackingBandConfig,
 } from "@/types/session";
 import { type RhythmRecipe } from "@/utils/rhythm/rhythmConfig";
 import {
@@ -100,6 +101,10 @@ export interface SessionActions {
   removeSession: (sessionId: string) => void;
   renameSession: (sessionId: string, name: string) => void;
   setSessionTempoBpm: (sessionId: string, tempoBpm: number) => void;
+  setSessionBackingBand: (
+    sessionId: string,
+    backingBand: SessionBackingBandConfig,
+  ) => void;
 }
 
 export interface PartActions {

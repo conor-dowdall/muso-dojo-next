@@ -32,11 +32,11 @@ describe("Part band sources", () => {
     });
   });
 
-  it("preserves explicit Automatic choices when modules exist", () => {
+  it("preserves explicit Session choices when modules exist", () => {
     const part = createPart({
       band: {
-        backingNotes: { mode: "automatic" },
-        rhythm: { mode: "automatic" },
+        backingNotes: { mode: "session" },
+        rhythm: { mode: "session" },
       },
     });
 
@@ -53,8 +53,8 @@ describe("Part band sources", () => {
         createPart().modules,
       ),
     ).toEqual({
-      backingNotes: { mode: "automatic" },
-      rhythm: { mode: "automatic" },
+      backingNotes: { mode: "session" },
+      rhythm: { mode: "session" },
     });
   });
 
@@ -68,7 +68,7 @@ describe("Part band sources", () => {
     expect(isPartBandModule(part, "backingNotes", "looper-b")).toBe(true);
   });
 
-  it("returns to Automatic when the selected Rhythm is removed", () => {
+  it("returns to Session Default when the selected Rhythm is removed", () => {
     const part = createPart({
       band: {
         backingNotes: { mode: "module", moduleId: "looper-a" },
@@ -78,7 +78,7 @@ describe("Part band sources", () => {
 
     expect(reconcilePartBandAfterModuleRemoval(part, "rhythm-b")).toMatchObject(
       {
-        band: { rhythm: { mode: "automatic" } },
+        band: { rhythm: { mode: "session" } },
       },
     );
   });

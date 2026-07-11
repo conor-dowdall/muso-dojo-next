@@ -73,6 +73,23 @@ describe("createSessionEntities", () => {
     expect(part.modules).toHaveLength(0);
   });
 
+  it("creates a Looper with its configured playback sound", () => {
+    const part = createDefaultMusicPartConfig({
+      moduleRequests: [
+        {
+          type: "exercise-looper",
+          settings: { audioPresetId: "piano", octaveOffset: 1 },
+        },
+      ],
+    });
+
+    expect(part.modules[0]).toMatchObject({
+      audioPresetId: "piano",
+      octaveOffset: 1,
+      type: "exercise-looper",
+    });
+  });
+
   it("applies representable Part durations to default Rhythm modules", () => {
     const part = createDefaultMusicPartConfig({
       durationInBars: 0.5,

@@ -11,6 +11,7 @@ import {
   FALLBACK_LAST_MODIFIED,
   FALLBACK_SESSION_ID,
 } from "@/utils/session/sessionDefaults";
+import { normalizeSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 
 export function normalizeSessionConfig(value: unknown): SessionConfig {
   const input = isRecord(value) ? value : {};
@@ -21,6 +22,7 @@ export function normalizeSessionConfig(value: unknown): SessionConfig {
     : [];
 
   return {
+    backingBand: normalizeSessionBackingBandConfig(input.backingBand),
     id: normalizeId(input.id, FALLBACK_SESSION_ID),
     name: normalizeString(input.name) ?? DEFAULT_SESSION_NAME,
     lastModified: normalizeString(input.lastModified) ?? FALLBACK_LAST_MODIFIED,

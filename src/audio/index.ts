@@ -28,6 +28,7 @@ export {
 export {
   createPartSequencePlaybackPlan,
   type PartSequencePlaybackPlan,
+  type PartSequencePlaybackPlanOptions,
   type PartSequenceStepPlan,
 } from "./partSequencePlanning";
 export {
@@ -39,6 +40,7 @@ export {
 export {
   beatTransportCoordinator,
   BeatTransportCoordinator,
+  type BeatTransportCountIn,
   type BeatTransportPartStartRequest,
   type BeatTransportStartSource,
 } from "./beatTransportCoordinator";

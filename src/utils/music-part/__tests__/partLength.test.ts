@@ -27,7 +27,7 @@ describe("Part Length", () => {
     expect(
       getPartLengthBeats({
         band: {
-          backingNotes: { mode: "automatic" },
+          backingNotes: { mode: "session" },
           rhythm: { mode: "module", moduleId: "six" },
         },
         modules,
@@ -39,8 +39,8 @@ describe("Part Length", () => {
     expect(
       getPartLengthBeats({
         band: {
-          backingNotes: { mode: "automatic" },
-          rhythm: { mode: "automatic" },
+          backingNotes: { mode: "session" },
+          rhythm: { mode: "session" },
         },
         modules: [],
       }),

@@ -182,7 +182,7 @@ describe("part module app store actions", () => {
     ).toEqual({ mode: "module", moduleId: secondId });
   });
 
-  it("returns to Automatic length when its band Rhythm is removed", () => {
+  it("returns to Session length when its band Rhythm is removed", () => {
     const store = createTestStore();
     const moduleId = store
       .getState()
@@ -191,7 +191,7 @@ describe("part module app store actions", () => {
     store.getState().removePartModule(sessionId, partId, moduleId!);
 
     expect(store.getState().sessions[sessionId]?.parts[0]).toMatchObject({
-      band: { rhythm: { mode: "automatic" } },
+      band: { rhythm: { mode: "session" } },
     });
   });
 

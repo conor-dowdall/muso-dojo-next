@@ -2,6 +2,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  margin-inline-start: var(--space-1);
   color: var(--color-accent);
   opacity: 0.72;
 }

@@ -1,18 +1,10 @@
 "use client";
 
-import { AudioWaveform, SwatchBook, WavesArrowUp } from "lucide-react";
-import {
-  audioPresets,
-  ensureAudioReady,
-  musoAudioEngine,
-  type AudioPresetId,
-} from "@/audio";
-import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
+import { SwatchBook } from "lucide-react";
+import { type AudioPresetId } from "@/audio";
 import { WoodSurfaceDisclosureItem } from "@/components/appearance/WoodSurfaceChoiceList";
-import { NumericStepper } from "@/components/ui/numeric-stepper/NumericStepper";
 import {
   DisclosureListGroup,
-  DisclosureListItem,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
@@ -21,31 +13,10 @@ import {
 } from "@/components/ui/object-menu";
 import { type WoodSurfaceId } from "@/data/woodSurfaces";
 import {
-  EXERCISE_MAX_OCTAVE_OFFSET,
-  EXERCISE_MIN_OCTAVE_OFFSET,
-} from "@/utils/exercise-looper/exerciseConfig";
-import { getExerciseBaseOctave } from "@/utils/exercise-looper/exerciseSequence";
+  ExerciseOctaveDisclosure,
+  ExercisePlaybackSoundDisclosure,
+} from "./ExerciseVoiceDisclosureItems";
 type MenuChoice = "sound" | "octave" | "wood";
-
-function auditionPlaybackSound(
-  audioPresetId: AudioPresetId,
-  midiNote: number | undefined,
-) {
-  if (midiNote === undefined) {
-    return;
-  }
-
-  void ensureAudioReady();
-  void musoAudioEngine.playNote({
-    midiNote,
-    presetId: audioPresetId,
-    use: "exercise",
-  });
-}
-
-function formatExerciseOctave(octaveOffset: number) {
-  return `Octave ${getExerciseBaseOctave(octaveOffset)}`;
-}
 
 export function ExerciseLooperOptionsDialog({
   audioPresetId,
@@ -80,56 +51,27 @@ export function ExerciseLooperOptionsDialog({
 }) {
   const { isOpen: isChoiceOpen, toggleChoice } =
     useDisclosureList<MenuChoice>(null);
-  const preset = audioPresets[audioPresetId];
-
   return (
     <ObjectMenuDialog isOpen={isOpen} title="Looper Options" onClose={onClose}>
       <DisclosureListGroup>
-        <DisclosureListItem
-          ariaLabel={`Playback sound. Current: ${preset.label}`}
-          icon={<AudioWaveform />}
+        <ExercisePlaybackSoundDisclosure
+          audioPresetId={audioPresetId}
           isOpen={isChoiceOpen("sound")}
-          label="Playback Sound"
-          preview={preset.label}
-          panelVariant="menu"
+          isPlaybackActive={isPlaybackActive}
+          previewMidiNote={previewMidiNote}
+          onChange={onAudioPresetIdChange}
           onToggle={() => toggleChoice("sound")}
-        >
-          <AudioPresetChoiceList
-            getChoiceAriaLabel={(choice) =>
-              `Use ${choice.label} playback sound`
-            }
-            selectedPresetId={audioPresetId}
-            surface="exercise"
-            onChange={(nextPresetId) => {
-              onAudioPresetIdChange(nextPresetId);
-              if (!isPlaybackActive) {
-                auditionPlaybackSound(nextPresetId, previewMidiNote);
-              }
-            }}
-          />
-        </DisclosureListItem>
+        />
 
-        <DisclosureListItem
-          ariaLabel={`Octave. Current: ${formatExerciseOctave(octaveOffset)}`}
-          icon={<WavesArrowUp />}
+        <ExerciseOctaveDisclosure
+          canDecrease={canShiftOctaveDown}
+          canIncrease={canShiftOctaveUp}
+          disabled={!onOctaveOffsetChange}
           isOpen={isChoiceOpen("octave")}
-          label="Octave"
-          preview={formatExerciseOctave(octaveOffset)}
-          panelVariant="menu"
+          octaveOffset={octaveOffset}
+          onChange={(value) => onOctaveOffsetChange?.(value)}
           onToggle={() => toggleChoice("octave")}
-        >
-          <NumericStepper
-            aria-label="Looper octave"
-            canDecrease={canShiftOctaveDown}
-            canIncrease={canShiftOctaveUp}
-            disabled={!onOctaveOffsetChange}
-            formatValue={formatExerciseOctave}
-            max={EXERCISE_MAX_OCTAVE_OFFSET}
-            min={EXERCISE_MIN_OCTAVE_OFFSET}
-            value={octaveOffset}
-            onChange={(value) => onOctaveOffsetChange?.(value)}
-          />
-        </DisclosureListItem>
+        />
 
         <WoodSurfaceDisclosureItem
           icon={<SwatchBook />}

@@ -19,6 +19,7 @@ import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
 import { getRhythmChoiceSummary } from "@/components/rhythm/rhythmRecipeControls";
 import { PartModuleView } from "./PartModuleView";
 import { selectPart } from "./sessionSelectors";
+import { getSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 
 interface MusicPartViewProps {
   sessionId: string;
@@ -38,6 +39,13 @@ export function MusicPartView({
   showReadOnlyIdentity = false,
 }: MusicPartViewProps) {
   const part = useAppStore((state) => selectPart(state, sessionId, partId));
+  const storedSessionBackingBand = useAppStore(
+    (state) => state.sessions[sessionId]?.backingBand,
+  );
+  const sessionBackingBand = useMemo(
+    () => getSessionBackingBandConfig(storedSessionBackingBand),
+    [storedSessionBackingBand],
+  );
   const partSettings = useMemo(
     () =>
       part
@@ -45,7 +53,7 @@ export function MusicPartView({
             rootNote: part.rootNote,
             noteCollectionKey: part.noteCollectionKey,
             automaticLengthBeats: getAutomaticRhythmBeats(part),
-            effectiveLengthBeats: getPartLengthBeats(part),
+            effectiveLengthBeats: getPartLengthBeats(part, sessionBackingBand),
             band: getPartBandConfig(part),
             automaticRhythm: part.automaticRhythm ?? {
               style: "standard",
@@ -74,7 +82,7 @@ export function MusicPartView({
             showHeader: part.showHeader,
           }
         : undefined,
-    [part],
+    [part, sessionBackingBand],
   );
   const moduleIds = useMemo(
     () => part?.modules.map((module) => module.id) ?? [],
@@ -102,6 +110,7 @@ export function MusicPartView({
 
   return (
     <MusicPart
+      sessionId={sessionId}
       partId={partId}
       partSequenceState={partSequenceState}
       instrumentCreationRangeContext={instrumentCreationRangeContext}
@@ -112,6 +121,7 @@ export function MusicPartView({
       band={partSettings.band}
       automaticRhythm={partSettings.automaticRhythm}
       bandModuleOptions={partSettings.bandModuleOptions}
+      sessionBackingBand={sessionBackingBand}
       onBandSourceChange={(role, source) =>
         setPartBandSource(sessionId, partId, role, source)
       }

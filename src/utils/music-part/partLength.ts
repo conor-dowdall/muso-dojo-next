@@ -1,6 +1,7 @@
 import { type MusicPartConfig } from "@/types/session";
 import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
-import { getPartBandModule } from "./partBand";
+import { getPartBandModule, getPartBandSource } from "./partBand";
+import { type SessionBackingBandConfig } from "@/types/session";
 
 export const DEFAULT_PART_LENGTH_BEATS = 4;
 export const MIN_PART_LENGTH_BEATS = 0.125;
@@ -40,7 +41,10 @@ export function getAutomaticRhythmBeats(part: PartLengthInput) {
   );
 }
 
-export function getPartLengthBeats(part: PartLengthInput) {
+export function getPartLengthBeats(
+  part: PartLengthInput,
+  backingBand?: SessionBackingBandConfig,
+) {
   if (part.modules) {
     const rhythm = getPartBandModule(
       {
@@ -52,6 +56,14 @@ export function getPartLengthBeats(part: PartLengthInput) {
 
     if (rhythm?.type === "rhythm") {
       return getRhythmSelectionRecipe(rhythm.rhythm).beats;
+    }
+
+    if (
+      backingBand?.rhythm.mode === "custom" &&
+      getPartBandSource({ band: part.band, modules: part.modules }, "rhythm")
+        .mode === "session"
+    ) {
+      return getRhythmSelectionRecipe(backingBand.rhythm.selection).beats;
     }
   }
 

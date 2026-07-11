@@ -53,7 +53,7 @@ function assignFirstNewBandSources(
     if (
       firstNewModule &&
       !hadRoleModule &&
-      getPartBandSource(part, role).mode === "automatic"
+      getPartBandSource(part, role).mode === "session"
     ) {
       nextPart = setPartBandSource(nextPart, role, {
         mode: "module",

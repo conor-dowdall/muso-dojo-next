@@ -9,11 +9,13 @@ import {
   type PartBandConfig,
   type PartBandRole,
   type PartBandSourceConfig,
+  type SessionBackingBandConfig,
 } from "@/types/session";
 import { type InstrumentCreationRangeContext } from "@/components/instrument-creation/instrumentCreationConfig";
 import { type PartBandModuleOption } from "@/types/music-part";
 
 export interface MusicPartContextValue {
+  sessionId?: string;
   partId: string;
   automaticLengthBeats: number;
   effectiveLengthBeats: number;
@@ -30,6 +32,7 @@ export interface MusicPartContextValue {
   addPartModules?: AddPartModulesHandler;
   clonePart?: () => void;
   removePart?: () => void;
+  sessionBackingBand: SessionBackingBandConfig;
 }
 
 const MusicPartContext = createContext<MusicPartContextValue | null>(null);

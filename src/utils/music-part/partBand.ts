@@ -6,8 +6,8 @@ import {
   type PartModuleConfig,
 } from "@/types/session";
 
-export const AUTOMATIC_PART_BAND_SOURCE = {
-  mode: "automatic",
+export const SESSION_PART_BAND_SOURCE = {
+  mode: "session",
 } as const satisfies PartBandSourceConfig;
 
 export const OFF_PART_BAND_SOURCE = {
@@ -39,7 +39,7 @@ function getDefaultPartBandSource(
 
   return firstModule
     ? { mode: "module", moduleId: firstModule.id }
-    : AUTOMATIC_PART_BAND_SOURCE;
+    : SESSION_PART_BAND_SOURCE;
 }
 
 function normalizePartBandSource(
@@ -48,7 +48,7 @@ function normalizePartBandSource(
   role: PartBandRole,
 ): PartBandSourceConfig {
   if (!isRecord(value)) {
-    return AUTOMATIC_PART_BAND_SOURCE;
+    return SESSION_PART_BAND_SOURCE;
   }
 
   if (value.mode === "off") {
@@ -65,7 +65,7 @@ function normalizePartBandSource(
     return { mode: "module", moduleId: value.moduleId };
   }
 
-  return AUTOMATIC_PART_BAND_SOURCE;
+  return SESSION_PART_BAND_SOURCE;
 }
 
 export function normalizePartBandConfig(
@@ -146,11 +146,11 @@ export function reconcilePartBandAfterModuleRemoval(
   const backingNotes =
     band.backingNotes.mode === "module" &&
     band.backingNotes.moduleId === moduleId
-      ? AUTOMATIC_PART_BAND_SOURCE
+      ? SESSION_PART_BAND_SOURCE
       : band.backingNotes;
   const rhythm =
     band.rhythm.mode === "module" && band.rhythm.moduleId === moduleId
-      ? AUTOMATIC_PART_BAND_SOURCE
+      ? SESSION_PART_BAND_SOURCE
       : band.rhythm;
 
   return {

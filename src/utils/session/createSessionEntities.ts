@@ -28,6 +28,7 @@ import {
   FALLBACK_LAST_MODIFIED,
   FALLBACK_SESSION_ID,
 } from "@/utils/session/sessionDefaults";
+import { createDefaultSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 
 interface CreateMusicPartConfigOptions<
   T extends PartModuleType = PartModuleType,
@@ -95,6 +96,9 @@ export function createDefaultPartModuleConfig<T extends PartModuleType>(
       return {
         id: createEntityId("module"),
         type: request.type,
+        ...(request.settings?.audioPresetId
+          ? { audioPresetId: request.settings.audioPresetId }
+          : {}),
         ...(request.settings?.octaveOffset !== undefined
           ? { octaveOffset: request.settings.octaveOffset }
           : {}),
@@ -187,6 +191,7 @@ export function createDefaultSessionConfig({
   lastModified = new Date().toISOString(),
 }: CreateSessionConfigOptions = {}): SessionConfig {
   return normalizeSessionConfig({
+    backingBand: createDefaultSessionBackingBandConfig(),
     id,
     name,
     lastModified,

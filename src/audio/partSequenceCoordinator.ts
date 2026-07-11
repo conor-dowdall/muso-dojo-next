@@ -18,6 +18,7 @@ export interface PartSequenceSnapshot {
   pendingIndex?: number;
   pendingPartId?: string;
   playing: boolean;
+  mode?: PartSequencePlaybackPlan["mode"];
   sessionId?: string;
   signature?: string;
   sourceSignature?: string;
@@ -118,6 +119,7 @@ export class PartSequenceCoordinator {
       partCount: plan.parts.length,
       partResetSignatures: plan.partResetSignatures,
       playing: true,
+      mode: plan.mode,
       sessionId: plan.sessionId,
       signature: plan.signature,
       sourceSignature: plan.sourceSignature,
@@ -203,6 +205,7 @@ export class PartSequenceCoordinator {
       pendingIndex: index,
       pendingPartId: part.partId,
       playing: true,
+      mode: plan.mode,
       sessionId: plan.sessionId,
       signature: plan.signature,
       sourceSignature: plan.sourceSignature,
@@ -212,12 +215,14 @@ export class PartSequenceCoordinator {
     this.emit();
 
     const result = await this.transport.startPart({
+      countIn: handoff ? undefined : plan.countIn,
       exercises: part.exerciseRequests,
       handoff,
       originTime,
       rhythms: part.rhythmRequests,
       source: "part-sequence",
       stopMissing: true,
+      tempoBpm: plan.tempoBpm,
     });
 
     if (revision !== this.revision || this.plan !== plan) {
@@ -289,11 +294,12 @@ export class PartSequenceCoordinator {
   async restartCurrentPart(plan: PartSequencePlaybackPlan) {
     const currentIndex = this.snapshot.activeIndex;
 
-    if (
-      !this.snapshot.playing ||
-      currentIndex === undefined ||
-      plan.parts.length === 0
-    ) {
+    if (!this.snapshot.playing || plan.parts.length === 0) {
+      return this.start(plan);
+    }
+
+    if (currentIndex === undefined) {
+      this.stop();
       return this.start(plan);
     }
 
@@ -351,6 +357,7 @@ export class PartSequenceCoordinator {
       partCount: plan.parts.length,
       partResetSignatures: plan.partResetSignatures,
       playing: true,
+      mode: plan.mode,
       sessionId: plan.sessionId,
       signature: plan.signature,
       sourceSignature: plan.sourceSignature,

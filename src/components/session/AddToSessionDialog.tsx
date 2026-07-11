@@ -410,7 +410,11 @@ export function AddToSessionDialog({
           </DisclosureList>
         </DialogContentSection>
 
-        <DialogContentSection ariaLabel="Start With">
+        <DialogContentSection
+          ariaLabel={
+            selectedMode === "part" ? "Modules" : "Modules in Each Part"
+          }
+        >
           <ModuleCreationList
             context="session"
             instrumentCreationRangeContext={instrumentCreationRangeContext}

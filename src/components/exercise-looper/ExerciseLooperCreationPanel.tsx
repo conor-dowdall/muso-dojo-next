@@ -2,10 +2,8 @@
 
 import { useEffect } from "react";
 import { WoodSurfaceDisclosureItem } from "@/components/appearance/WoodSurfaceChoiceList";
-import { NumericStepper } from "@/components/ui/numeric-stepper/NumericStepper";
 import {
   DisclosureList,
-  DisclosureListItem,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
@@ -13,25 +11,21 @@ import {
   type WoodSurfaceId,
 } from "@/data/woodSurfaces";
 import { type ExerciseLooperModuleCreationDefault } from "@/types/instrument-creation-defaults";
+import { DEFAULT_EXERCISE_OCTAVE_OFFSET } from "@/utils/exercise-looper/exerciseConfig";
+import { getDefaultAudioPresetId } from "@/audio";
 import {
-  DEFAULT_EXERCISE_OCTAVE_OFFSET,
-  EXERCISE_MAX_OCTAVE_OFFSET,
-  EXERCISE_MIN_OCTAVE_OFFSET,
-} from "@/utils/exercise-looper/exerciseConfig";
-import { getExerciseBaseOctave } from "@/utils/exercise-looper/exerciseSequence";
+  ExerciseOctaveDisclosure,
+  ExercisePlaybackSoundDisclosure,
+} from "./ExerciseVoiceDisclosureItems";
 import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
 
-type ExerciseLooperCreationChoice = "octave" | "wood";
+type ExerciseLooperCreationChoice = "octave" | "sound" | "wood";
 
 interface ExerciseLooperCreationPanelProps {
   ariaLabel?: string;
   closeSignal?: number;
   onChange: (value: ExerciseLooperModuleCreationDefault) => void;
   value: ExerciseLooperModuleCreationDefault;
-}
-
-function formatExerciseOctave(octaveOffset: number) {
-  return `Octave ${getExerciseBaseOctave(octaveOffset)}`;
 }
 
 export function ExerciseLooperCreationPanel({
@@ -43,6 +37,8 @@ export function ExerciseLooperCreationPanel({
   const { closeAll, openChoice, toggleChoice } =
     useDisclosureList<ExerciseLooperCreationChoice>();
   const octaveOffset = value.octaveOffset ?? DEFAULT_EXERCISE_OCTAVE_OFFSET;
+  const audioPresetId =
+    value.audioPresetId ?? getDefaultAudioPresetId("exercise");
   const wood = value.wood ?? DEFAULT_WOOD_SURFACE_ID;
 
   useEffect(() => {
@@ -60,23 +56,25 @@ export function ExerciseLooperCreationPanel({
   return (
     <section className={styles.section} aria-label={ariaLabel}>
       <DisclosureList>
-        <DisclosureListItem
-          ariaLabel={`Choose octave, ${formatExerciseOctave(octaveOffset)} selected`}
+        <ExercisePlaybackSoundDisclosure
+          audioPresetId={audioPresetId}
+          isOpen={openChoice === "sound"}
+          keepMounted
+          showIcon={false}
+          onChange={(nextAudioPresetId) =>
+            onChange({ ...value, audioPresetId: nextAudioPresetId })
+          }
+          onToggle={() => toggleChoice("sound")}
+        />
+
+        <ExerciseOctaveDisclosure
           isOpen={openChoice === "octave"}
           keepMounted
-          label="Octave"
-          preview={formatExerciseOctave(octaveOffset)}
+          octaveOffset={octaveOffset}
+          showIcon={false}
+          onChange={handleOctaveOffsetChange}
           onToggle={() => toggleChoice("octave")}
-        >
-          <NumericStepper
-            aria-label="Looper octave"
-            formatValue={formatExerciseOctave}
-            max={EXERCISE_MAX_OCTAVE_OFFSET}
-            min={EXERCISE_MIN_OCTAVE_OFFSET}
-            value={octaveOffset}
-            onChange={handleOctaveOffsetChange}
-          />
-        </DisclosureListItem>
+        />
 
         <WoodSurfaceDisclosureItem
           isOpen={openChoice === "wood"}

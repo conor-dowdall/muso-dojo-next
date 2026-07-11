@@ -14,6 +14,7 @@ interface ObjectMenuDialogProps {
   children: ReactNode;
   contentClassName?: string;
   isOpen: boolean;
+  footer?: ReactNode;
   listClassName?: string;
   onClose: () => void;
   size?: DialogSize;
@@ -24,6 +25,7 @@ export function ObjectMenuDialog({
   children,
   contentClassName,
   isOpen,
+  footer,
   listClassName,
   onClose,
   size = "standard",
@@ -37,7 +39,7 @@ export function ObjectMenuDialog({
           {children}
         </DisclosureList>
       </DialogContent>
-      <DialogDoneFooter onDone={onClose} />
+      {footer ?? <DialogDoneFooter onDone={onClose} />}
     </Dialog>
   );
 }

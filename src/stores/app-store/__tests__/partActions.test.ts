@@ -46,7 +46,7 @@ describe("Part actions", () => {
     });
 
     store.getState().setPartBandSource(sessionId, partId!, "rhythm", {
-      mode: "automatic",
+      mode: "session",
     });
     expect(
       getPartLengthBeats(

@@ -23,6 +23,7 @@ import {
   type RhythmModuleCreationDefault,
 } from "@/types/instrument-creation-defaults";
 import { DEFAULT_EXERCISE_OCTAVE_OFFSET } from "@/utils/exercise-looper/exerciseConfig";
+import { getDefaultAudioPresetId } from "@/audio/presets";
 import { areRangesEqual } from "@/utils/range/numberRange";
 import { tuningNotesAreEqual } from "@/utils/fretboard/customFretboardTunings";
 
@@ -51,6 +52,7 @@ export function createBuiltInDroneModuleCreationDefault(): DroneModuleCreationDe
 
 export function createBuiltInExerciseLooperModuleCreationDefault(): ExerciseLooperModuleCreationDefault {
   return {
+    audioPresetId: getDefaultAudioPresetId("exercise"),
     octaveOffset: DEFAULT_EXERCISE_OCTAVE_OFFSET,
     wood: DEFAULT_WOOD_SURFACE_ID,
   };
@@ -204,6 +206,8 @@ export function exerciseLooperModuleCreationDefaultsAreEqual(
   right: ExerciseLooperModuleCreationDefault,
 ) {
   return (
+    (left.audioPresetId ?? getDefaultAudioPresetId("exercise")) ===
+      (right.audioPresetId ?? getDefaultAudioPresetId("exercise")) &&
     (left.octaveOffset ?? DEFAULT_EXERCISE_OCTAVE_OFFSET) ===
       (right.octaveOffset ?? DEFAULT_EXERCISE_OCTAVE_OFFSET) &&
     (left.wood ?? DEFAULT_WOOD_SURFACE_ID) ===

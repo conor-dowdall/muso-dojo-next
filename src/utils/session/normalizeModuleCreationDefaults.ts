@@ -26,6 +26,7 @@ import {
   EXERCISE_MAX_OCTAVE_OFFSET,
   EXERCISE_MIN_OCTAVE_OFFSET,
 } from "@/utils/exercise-looper/exerciseConfig";
+import { getDefaultAudioPresetId, isAudioPresetId } from "@/audio/presets";
 import {
   type DroneModuleCreationDefault,
   type ExerciseLooperModuleCreationDefault,
@@ -415,6 +416,9 @@ export function normalizeExerciseLooperModuleCreationDefault(
   }
 
   const wood = normalizeWoodSurfaceId(value.wood) ?? DEFAULT_WOOD_SURFACE_ID;
+  const audioPresetId = isAudioPresetId(value.audioPresetId)
+    ? value.audioPresetId
+    : getDefaultAudioPresetId("exercise");
   const octaveOffset = normalizeIntegerInRange({
     fallback: DEFAULT_EXERCISE_OCTAVE_OFFSET,
     max: EXERCISE_MAX_OCTAVE_OFFSET,
@@ -422,6 +426,7 @@ export function normalizeExerciseLooperModuleCreationDefault(
     value: value.octaveOffset,
   });
   const defaultValue = {
+    audioPresetId,
     octaveOffset,
     wood,
   } satisfies ExerciseLooperModuleCreationDefault;
@@ -432,6 +437,9 @@ export function normalizeExerciseLooperModuleCreationDefault(
   )
     ? undefined
     : {
+        ...(audioPresetId !== getDefaultAudioPresetId("exercise")
+          ? { audioPresetId }
+          : {}),
         ...(octaveOffset !== DEFAULT_EXERCISE_OCTAVE_OFFSET
           ? { octaveOffset }
           : {}),

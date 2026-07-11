@@ -36,20 +36,22 @@ export interface PracticeBandReadoutModel {
 }
 
 function createPartReadout({
-  activeIndex,
+  activePartId,
   session,
 }: {
-  activeIndex: number | undefined;
+  activePartId: string | undefined;
   session: SessionConfig;
 }): PracticeBandReadoutModel {
-  const part =
-    activeIndex === undefined ? undefined : session.parts[activeIndex];
+  const activeIndex = session.parts.findIndex(
+    (part) => part.id === activePartId,
+  );
+  const part = activeIndex < 0 ? undefined : session.parts[activeIndex];
   const barTimeline = createPartBarTimeline(session.parts);
   const barEntry =
-    activeIndex === undefined ? undefined : barTimeline.entries[activeIndex];
+    activeIndex < 0 ? undefined : barTimeline.entries[activeIndex];
   const countLabel = barTimeline.totalLabel;
 
-  if (activeIndex === undefined || !part || !barEntry) {
+  if (!part || !barEntry) {
     return {
       countLabel,
     };
@@ -89,7 +91,7 @@ function currentPartNeedsRestart(
   );
 }
 
-interface PracticeBandTransportState {
+export interface PracticeBandTransportState {
   canPlay: boolean;
   isActive: boolean;
   readout: PracticeBandReadoutModel | null;
@@ -108,19 +110,36 @@ export function usePracticeBandTransport(
     partSequenceCoordinator.getSnapshot,
     partSequenceCoordinator.getSnapshot,
   );
-  const plan = useMemo(
-    () => (session ? createPartSequencePlaybackPlan(session) : undefined),
-    [session],
-  );
+  const plan = useMemo(() => {
+    if (!session) {
+      return undefined;
+    }
+
+    return snapshot.playing &&
+      snapshot.sessionId === sessionId &&
+      snapshot.mode === "part-loop"
+      ? createPartSequencePlaybackPlan(session, {
+          mode: "part-loop",
+          partId: snapshot.activePartId ?? snapshot.pendingPartId,
+        })
+      : createPartSequencePlaybackPlan(session);
+  }, [
+    session,
+    sessionId,
+    snapshot.activePartId,
+    snapshot.mode,
+    snapshot.pendingPartId,
+    snapshot.playing,
+    snapshot.sessionId,
+  ]);
   const isActive =
     sessionId !== null && snapshot.playing && snapshot.sessionId === sessionId;
-  const displayIndex = isActive ? snapshot.activeIndex : undefined;
   const partCount = session?.parts.length ?? 0;
   const canPlay = sessionId !== null && partCount > 0 && plan !== undefined;
   const readout =
     session && isActive
       ? createPartReadout({
-          activeIndex: displayIndex,
+          activePartId: snapshot.activePartId,
           session,
         })
       : null;
@@ -184,6 +203,54 @@ export function usePracticeBandTransport(
     shortcuts,
     togglePlayback,
   };
+}
+
+export function usePartBandLoopTransport(
+  sessionId: string | undefined,
+  partId: string,
+) {
+  const session = useAppStore((state) =>
+    sessionId ? state.sessions[sessionId] : undefined,
+  );
+  const snapshot = useSyncExternalStore(
+    partSequenceCoordinator.subscribe,
+    partSequenceCoordinator.getSnapshot,
+    partSequenceCoordinator.getSnapshot,
+  );
+  const plan = useMemo(
+    () =>
+      session
+        ? createPartSequencePlaybackPlan(session, {
+            mode: "part-loop",
+            partId,
+          })
+        : undefined,
+    [partId, session],
+  );
+  const isActive =
+    Boolean(sessionId) &&
+    snapshot.playing &&
+    snapshot.sessionId === sessionId &&
+    snapshot.mode === "part-loop" &&
+    (snapshot.activePartId === partId || snapshot.pendingPartId === partId);
+  const canPlay = Boolean(plan?.parts.length);
+
+  const togglePlayback = useCallback(() => {
+    if (isActive) {
+      partSequenceCoordinator.stop();
+      return;
+    }
+
+    if (!plan || !canPlay) {
+      return;
+    }
+
+    stopAllAudioPlayback();
+    void ensureAudioReady();
+    void partSequenceCoordinator.start(plan);
+  }, [canPlay, isActive, plan]);
+
+  return { canPlay, isActive, togglePlayback };
 }
 
 interface PracticeBandPlayButtonProps extends Omit<

@@ -47,8 +47,8 @@ describe("createPartSequencePlaybackPlan", () => {
           {
             automaticRhythm: { style: "standard" },
             band: {
-              backingNotes: { mode: "automatic" },
-              rhythm: { mode: "automatic" },
+              backingNotes: { mode: "session" },
+              rhythm: { mode: "session" },
             },
             durationInBars: 0.5,
           },
@@ -80,7 +80,7 @@ describe("createPartSequencePlaybackPlan", () => {
           ],
           {
             band: {
-              backingNotes: { mode: "automatic" },
+              backingNotes: { mode: "session" },
               rhythm: { mode: "module", moduleId: "rhythm" },
             },
             automaticRhythm: { style: "standard" },
@@ -140,6 +140,121 @@ describe("createPartSequencePlaybackPlan", () => {
       atTicks: RHYTHM_PPQ + Math.round((RHYTHM_PPQ * 2) / 3),
       sampleId: "ride",
       velocity: 0.108,
+    });
+  });
+
+  it("applies Session Notes and Rhythm defaults to inherited lanes", () => {
+    const session = createSession([
+      createPart("part", [], {
+        automaticRhythm: { style: "standard" },
+      }),
+    ]);
+    session.backingBand = {
+      countInBeats: 4,
+      looper: {
+        audioPresetId: "piano",
+        enabled: true,
+        octaveOffset: 1,
+      },
+      rhythm: {
+        mode: "custom",
+        selection: {
+          recipe: {
+            ...DEFAULT_RHYTHM_SELECTION.recipe,
+            timekeeper: {
+              feel: "swing",
+              sound: "ride",
+              subdivision: "eighth",
+            },
+          },
+          source: "recipe",
+        },
+      },
+    };
+    const plan = createPartSequencePlaybackPlan(session);
+
+    expect(plan.countIn).toEqual({ durationBeats: 4, pulses: 4 });
+    expect(plan.parts[0]?.exerciseRequests[0]?.presetId).toBe("piano");
+    expect(plan.parts[0]?.exerciseRequests[0]?.events[0]?.midi).toBe(60);
+    expect(plan.parts[0]?.rhythmRequests[0]?.pattern.hits).toContainEqual({
+      atTicks: RHYTHM_PPQ + Math.round((RHYTHM_PPQ * 2) / 3),
+      sampleId: "ride",
+      velocity: 0.108,
+    });
+  });
+
+  it("mutes inherited lanes without muting a local module override", () => {
+    const localRhythm = {
+      id: "rhythm",
+      rhythm: DEFAULT_RHYTHM_SELECTION,
+      type: "rhythm" as const,
+    };
+    const session = createSession([
+      createPart("inherited"),
+      createPart("local", [localRhythm], {
+        band: {
+          backingNotes: { mode: "session" },
+          rhythm: { mode: "module", moduleId: "rhythm" },
+        },
+      }),
+    ]);
+    session.backingBand = {
+      countInBeats: 0,
+      looper: {
+        audioPresetId: "plucked-string",
+        enabled: false,
+        octaveOffset: 0,
+      },
+      rhythm: { mode: "off", selection: DEFAULT_RHYTHM_SELECTION },
+    };
+    const plan = createPartSequencePlaybackPlan(session);
+
+    expect(plan.countIn).toEqual({ durationBeats: 0, pulses: 0 });
+    expect(plan.parts[0]?.exerciseRequests).toEqual([]);
+    expect(plan.parts[0]?.rhythmRequests).toEqual([]);
+    expect(plan.parts[1]?.exerciseRequests).toEqual([]);
+    expect(plan.parts[1]?.rhythmRequests[0]?.id).toBe("rhythm");
+  });
+
+  it("creates a one-Part loop plan while preserving its Session index", () => {
+    const plan = createPartSequencePlaybackPlan(
+      createSession([createPart("first"), createPart("second")]),
+      { mode: "part-loop", partId: "second" },
+    );
+
+    expect(plan.mode).toBe("part-loop");
+    expect(plan.parts).toHaveLength(1);
+    expect(plan.parts[0]).toMatchObject({ index: 1, partId: "second" });
+  });
+
+  it("uses a custom Session Rhythm recipe and length for inherited Parts", () => {
+    const session = createSession([
+      createPart("five-four", [], {
+        automaticRhythm: { style: "swing" },
+      }),
+    ]);
+    session.backingBand = {
+      countInBeats: 3,
+      looper: {
+        audioPresetId: "plucked-string",
+        enabled: true,
+        octaveOffset: -1,
+      },
+      rhythm: {
+        mode: "custom",
+        selection: {
+          recipe: { ...DEFAULT_RHYTHM_SELECTION.recipe, beats: 5 },
+          source: "recipe",
+        },
+      },
+    };
+    const plan = createPartSequencePlaybackPlan(session);
+
+    expect(plan.countIn).toEqual({ durationBeats: 3, pulses: 3 });
+    expect(plan.parts[0]?.durationBeats).toBe(5);
+    expect(plan.parts[0]?.rhythmRequests[0]?.pattern).toMatchObject({
+      cycleTicks: RHYTHM_PPQ * 5,
+      meter: { beats: 5, beatUnit: 4 },
     });
   });
 
@@ -222,7 +337,7 @@ describe("createPartSequencePlaybackPlan", () => {
           {
             band: {
               backingNotes: { mode: "module", moduleId: "exercise-b" },
-              rhythm: { mode: "automatic" },
+              rhythm: { mode: "session" },
             },
           },
         ),

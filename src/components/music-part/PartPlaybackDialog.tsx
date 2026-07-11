@@ -10,7 +10,19 @@ import {
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { ObjectMenuDialog } from "@/components/ui/object-menu";
-import { getRhythmChoiceSummary } from "@/components/rhythm/rhythmRecipeControls";
+import {
+  DialogFooter,
+  DialogFooterActionBar,
+  DialogFooterActionGroup,
+} from "@/components/ui/dialog/Dialog";
+import { Button } from "@/components/ui/buttons/Button";
+import { audioPresets } from "@/audio";
+import { formatExerciseOctave } from "@/components/exercise-looper/ExerciseVoiceDisclosureItems";
+import { usePartBandLoopTransport } from "@/components/session/PracticeBandTransport";
+import {
+  getRhythmChoiceSummary,
+  getRhythmRecipeCreationSummary,
+} from "@/components/rhythm/rhythmRecipeControls";
 import { getAutomaticRhythmSelection } from "@/utils/rhythm/automaticRhythm";
 import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
 import { formatValueSummary } from "@/utils/valueSummary";
@@ -38,6 +50,7 @@ export function PartPlaybackDialog({
   onClose: () => void;
 }) {
   const part = useMusicPart();
+  const loopTransport = usePartBandLoopTransport(part.sessionId, part.partId);
   const { isOpen: isChoiceOpen, toggleChoice } =
     useDisclosureList<PlaybackChoice>(null);
   const automaticRhythmSummary = getRhythmChoiceSummary(
@@ -48,12 +61,22 @@ export function PartPlaybackDialog({
       ),
     ),
   );
+  const sessionLooperSummary = part.sessionBackingBand.looper.enabled
+    ? formatValueSummary([
+        audioPresets[part.sessionBackingBand.looper.audioPresetId].label,
+        formatExerciseOctave(part.sessionBackingBand.looper.octaveOffset),
+      ])
+    : "Off";
+  const sessionRhythmSummary =
+    part.sessionBackingBand.rhythm.mode === "off"
+      ? "Off"
+      : part.sessionBackingBand.rhythm.mode === "custom"
+        ? getRhythmRecipeCreationSummary(
+            getRhythmSelectionRecipe(part.sessionBackingBand.rhythm.selection),
+          )
+        : automaticRhythmSummary;
   const backingNotesPreview = getSourcePreview(part, "backingNotes");
-  const rhythmPreview = getSourcePreview(
-    part,
-    "rhythm",
-    automaticRhythmSummary,
-  );
+  const rhythmPreview = getSourcePreview(part, "rhythm", sessionRhythmSummary);
 
   const chooseSource = (role: PartBandRole, source: PartBandSourceConfig) => {
     part.setBandSource?.(role, source);
@@ -62,28 +85,47 @@ export function PartPlaybackDialog({
 
   return (
     <ObjectMenuDialog
+      footer={
+        <DialogFooter>
+          <DialogFooterActionBar ariaLabel="Backing Band actions">
+            <DialogFooterActionGroup placement="secondary">
+              <Button
+                disabled={!loopTransport.canPlay}
+                label={loopTransport.isActive ? "Stop" : "Loop This Part"}
+                selected={loopTransport.isActive}
+                size="lg"
+                onClick={loopTransport.togglePlayback}
+              />
+            </DialogFooterActionGroup>
+            <DialogFooterActionGroup placement="primary">
+              <Button label="Done" size="lg" onClick={onClose} />
+            </DialogFooterActionGroup>
+          </DialogFooterActionBar>
+        </DialogFooter>
+      }
       isOpen={isOpen}
       size="standard"
-      title="Backing Band Options"
+      title="Backing Band for Part"
       onClose={onClose}
     >
       <DisclosureListGroup>
         <BandSourceDisclosure
           icon={<Repeat />}
           isOpen={isChoiceOpen("backingNotes")}
-          label="Notes"
+          label="Looper"
           preview={backingNotesPreview}
           role="backingNotes"
+          sessionSubtitle={sessionLooperSummary}
           onChoose={chooseSource}
           onToggle={() => toggleChoice("backingNotes")}
         />
         <BandSourceDisclosure
-          automaticSubtitle={automaticRhythmSummary}
           icon={<Drum />}
           isOpen={isChoiceOpen("rhythm")}
           label="Rhythm"
           preview={rhythmPreview}
           role="rhythm"
+          sessionSubtitle={sessionRhythmSummary}
           onChoose={chooseSource}
           onToggle={() => toggleChoice("rhythm")}
         />
@@ -95,13 +137,23 @@ export function PartPlaybackDialog({
 function getSourcePreview(
   part: ReturnType<typeof useMusicPart>,
   role: PartBandRole,
-  automaticRhythmSummary?: string,
+  sessionRhythmSummary?: string,
 ) {
   const source = part.band[role];
-  if (source.mode === "automatic") {
-    return role === "rhythm"
-      ? formatValueSummary(["Automatic", automaticRhythmSummary])
-      : "Automatic";
+  if (source.mode === "session") {
+    if (role === "backingNotes") {
+      return part.sessionBackingBand.looper.enabled
+        ? formatValueSummary([
+            "Session Default",
+            audioPresets[part.sessionBackingBand.looper.audioPresetId].label,
+            formatExerciseOctave(part.sessionBackingBand.looper.octaveOffset),
+          ])
+        : formatValueSummary(["Session Default", "Off"]);
+    }
+
+    return part.sessionBackingBand.rhythm.mode !== "off"
+      ? formatValueSummary(["Session Default", sessionRhythmSummary])
+      : formatValueSummary(["Session Default", "Off"]);
   }
 
   if (source.mode === "off") {
@@ -118,7 +170,6 @@ function getSourcePreview(
 }
 
 function BandSourceDisclosure({
-  automaticSubtitle,
   icon,
   isOpen,
   label,
@@ -126,8 +177,8 @@ function BandSourceDisclosure({
   onToggle,
   preview,
   role,
+  sessionSubtitle,
 }: {
-  automaticSubtitle?: string;
   icon: ReactNode;
   isOpen: boolean;
   label: string;
@@ -135,6 +186,7 @@ function BandSourceDisclosure({
   onToggle: () => void;
   preview: string;
   role: PartBandRole;
+  sessionSubtitle?: string;
 }) {
   const part = useMusicPart();
   const source = part.band[role];
@@ -151,11 +203,11 @@ function BandSourceDisclosure({
     >
       <DisclosureList density="compact">
         <DisclosureListChoice
-          label="Automatic"
-          selected={source.mode === "automatic"}
+          label="Session Default"
+          selected={source.mode === "session"}
           selectedPreviewKind="current"
-          subtitle={automaticSubtitle}
-          onClick={() => onChoose(role, { mode: "automatic" })}
+          subtitle={sessionSubtitle}
+          onClick={() => onChoose(role, { mode: "session" })}
         />
         <DisclosureListChoice
           label="Off"

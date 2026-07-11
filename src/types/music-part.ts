@@ -5,6 +5,7 @@ import {
   type PartBandConfig,
   type PartBandRole,
   type PartBandSourceConfig,
+  type SessionBackingBandConfig,
 } from "@/types/session";
 
 export interface PartBandModuleOption {
@@ -22,6 +23,7 @@ export interface MusicPartSettings {
   rootNote?: string;
   noteCollectionKey?: NoteCollectionKey;
   showHeader?: boolean;
+  sessionBackingBand?: SessionBackingBandConfig;
 }
 
 export interface MusicPartControlProps extends MusicPartSettings {

@@ -66,19 +66,19 @@ describe("getPartLeadSheetSummary", () => {
     expect(summary).not.toHaveProperty("durationLabel");
   });
 
-  it("keeps Chart metadata to the time signature for Automatic Swing", () => {
+  it("keeps Chart metadata to the time signature for Session Swing", () => {
     const summary = getPartLeadSheetSummary(
       createPart({
         automaticRhythm: { style: "swing" },
         band: {
-          backingNotes: { mode: "automatic" },
-          rhythm: { mode: "automatic" },
+          backingNotes: { mode: "session" },
+          rhythm: { mode: "session" },
         },
       }),
     );
 
     expect(summary.meterLabel).toBe("4/4");
     expect(summary).not.toHaveProperty("lengthLabel");
-    expect(summary.meterDetail).toContain("Swing automatic rhythm");
+    expect(summary.meterDetail).toContain("Swing Session rhythm");
   });
 });

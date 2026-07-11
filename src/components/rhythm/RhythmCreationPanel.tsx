@@ -59,6 +59,7 @@ interface RhythmCreationPanelProps {
   closeSignal?: number;
   onChange: (value: RhythmModuleCreationDefault) => void;
   value: RhythmModuleCreationDefault;
+  showWood?: boolean;
 }
 
 export function RhythmCreationPanel({
@@ -66,6 +67,7 @@ export function RhythmCreationPanel({
   beatCountConstraint,
   closeSignal,
   onChange,
+  showWood = true,
   value,
 }: RhythmCreationPanelProps) {
   const {
@@ -384,13 +386,15 @@ export function RhythmCreationPanel({
           </DisclosureList>
         </DisclosureListItem>
 
-        <WoodSurfaceDisclosureItem
-          isOpen={isChoiceOpen("wood")}
-          keepMounted
-          surfaceId={wood}
-          onChange={handleWoodChange}
-          onToggle={() => toggleChoice("wood")}
-        />
+        {showWood ? (
+          <WoodSurfaceDisclosureItem
+            isOpen={isChoiceOpen("wood")}
+            keepMounted
+            surfaceId={wood}
+            onChange={handleWoodChange}
+            onToggle={() => toggleChoice("wood")}
+          />
+        ) : null}
       </DisclosureList>
     </section>
   );
