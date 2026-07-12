@@ -31,6 +31,7 @@ export interface SampleEnvelopeConfig {
 }
 
 export interface AudioPreset {
+  attackSecondsByUse?: Partial<Record<AudioUse, number>>;
   availableOn: readonly AudioPresetSurface[];
   defaultDurationSeconds: number;
   envelope: SampleEnvelopeConfig;

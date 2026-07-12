@@ -80,6 +80,7 @@ interface ActiveExercisePlayback {
   request: ExercisePlaybackRequest;
   snapshot: ExercisePlaybackInstanceSnapshot;
   stopTimer?: ReturnType<typeof globalThis.setTimeout>;
+  visualPredecessor?: ExercisePlaybackInstanceSnapshot;
 }
 
 interface PendingExerciseStart {
@@ -467,9 +468,19 @@ export class ExercisePlaybackCoordinator {
   }
 
   getActiveStepIndex(outputContextTime: number, id?: string) {
-    const playback = this.active.get(id ?? this.latestId ?? "")?.snapshot;
+    const activePlayback = this.active.get(id ?? this.latestId ?? "");
 
-    if (!playback || outputContextTime < playback.originTime) {
+    if (!activePlayback) {
+      return undefined;
+    }
+
+    const playback =
+      outputContextTime < activePlayback.snapshot.originTime &&
+      activePlayback.visualPredecessor
+        ? activePlayback.visualPredecessor
+        : activePlayback.snapshot;
+
+    if (outputContextTime < playback.originTime) {
       return undefined;
     }
 
@@ -533,6 +544,10 @@ export class ExercisePlaybackCoordinator {
       countInStartTime + request.countInBeats * secondsPerBeat;
     const replacementTime =
       request.countInBeats > 0 ? countInStartTime : originTime;
+    const visualPredecessor =
+      options.handoff === true && originTime > currentTime
+        ? this.active.get(request.id)?.snapshot
+        : undefined;
     this.active.forEach((playback, id) => {
       this.stopPlayback(id, playback, {
         ...(replacementTime > currentTime ? { atTime: replacementTime } : {}),
@@ -567,6 +582,7 @@ export class ExercisePlaybackCoordinator {
       noteScheduler,
       request,
       snapshot,
+      ...(visualPredecessor ? { visualPredecessor } : {}),
     };
 
     if (countInGroup) {

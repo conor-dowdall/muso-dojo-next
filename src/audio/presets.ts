@@ -7,6 +7,7 @@ import {
 } from "./types";
 
 function createSamplePreset({
+  attackSecondsByUse,
   availableOn,
   defaultDurationSeconds,
   envelope,
@@ -14,6 +15,7 @@ function createSamplePreset({
   id,
   label,
 }: {
+  attackSecondsByUse?: Partial<Record<AudioUse, number>>;
   availableOn: readonly AudioPresetSurface[];
   defaultDurationSeconds: number;
   envelope: SampleEnvelopeConfig;
@@ -22,6 +24,7 @@ function createSamplePreset({
   label: string;
 }) {
   return {
+    ...(attackSecondsByUse ? { attackSecondsByUse } : {}),
     availableOn,
     defaultDurationSeconds,
     envelope,
@@ -60,6 +63,7 @@ export const audioPresets = {
     label: "Plucked String",
   }),
   "bowed-strings": createSamplePreset({
+    attackSecondsByUse: { exercise: 0.045 },
     availableOn: ["instrument", "drone", "exercise"],
     defaultDurationSeconds: 1.2,
     envelope: {

@@ -153,12 +153,42 @@ describe("normalizePartModuleConfig", () => {
         countInBeats: 5,
         id: "looper-1",
         metronomeEnabled: "yes",
+        octaveOffset: -3,
         type: "exercise-looper",
       }),
     ).toStrictEqual({
       id: "looper-1",
       type: "exercise-looper",
     });
+
+    expect(
+      normalizePartModuleConfig({
+        id: "looper-1",
+        octaveOffset: 5,
+        type: "exercise-looper",
+      }),
+    ).toStrictEqual({
+      id: "looper-1",
+      type: "exercise-looper",
+    });
+  });
+
+  it("keeps exercise looper octave offsets at the practical boundaries", () => {
+    expect(
+      normalizePartModuleConfig({
+        id: "looper-1",
+        octaveOffset: -2,
+        type: "exercise-looper",
+      }),
+    ).toMatchObject({ octaveOffset: -2 });
+
+    expect(
+      normalizePartModuleConfig({
+        id: "looper-1",
+        octaveOffset: 4,
+        type: "exercise-looper",
+      }),
+    ).toMatchObject({ octaveOffset: 4 });
   });
 
   it("drops unsupported exercise pattern extension degrees", () => {

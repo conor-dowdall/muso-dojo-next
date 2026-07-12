@@ -416,17 +416,15 @@ export function createWebAudioEngine(): AudioEngine {
           group.releaseSeconds ?? PERCUSSION_STOP_RELEASE_SECONDS;
 
         if (group.output) {
-          const releaseStartTime = Math.max(
-            context.currentTime,
-            group.cancelAtTime - resolvedReleaseSeconds,
-          );
+          const releaseStartTime = group.cancelAtTime;
+          const releaseEndTime = releaseStartTime + resolvedReleaseSeconds;
 
           group.output.gain.cancelScheduledValues(context.currentTime);
           group.output.gain.setValueAtTime(1, context.currentTime);
           group.output.gain.setValueAtTime(1, releaseStartTime);
           group.output.gain.linearRampToValueAtTime(
             MIN_PLAYBACK_GROUP_GAIN,
-            group.cancelAtTime,
+            releaseEndTime,
           );
         } else {
           group.hits.forEach((hit) =>

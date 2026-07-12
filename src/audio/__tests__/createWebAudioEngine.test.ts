@@ -536,11 +536,13 @@ describe("createWebAudioEngine", () => {
     expect(
       groupGain.events.some(
         (event) =>
-          event.type === "ramp" && event.time === 1.5 && event.value === 0.0001,
+          event.type === "ramp" &&
+          event.time === 1.52 &&
+          event.value === 0.0001,
       ),
     ).toBe(true);
     expect(groupGain.events).toContainEqual({
-      time: 1.48,
+      time: 1.5,
       type: "set",
       value: 1,
     });
@@ -806,6 +808,49 @@ describe("createWebAudioEngine", () => {
     expect(source.loop).toBe(true);
     expect(source.loopEnd).toBeGreaterThan(source.loopStart);
     expect(source.startCalls.at(-1)?.offset).toBeGreaterThanOrEqual(0);
+  });
+
+  it("uses a quicker Bowed Strings attack for exercises than drones", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    const group = engine.createPlaybackGroup();
+    const exerciseStartTime = 1;
+
+    engine.scheduleNote({
+      durationSeconds: 1,
+      group,
+      midiNote: 48,
+      presetId: "bowed-strings",
+      startTime: exerciseStartTime,
+      use: "exercise",
+    });
+    const exerciseGain = MockAudioContext.gainNodes.at(-1)!
+      .gain as unknown as MockAudioParam;
+    const exerciseAttack = exerciseGain.events.find(
+      (event) =>
+        event.type === "ramp" &&
+        event.value !== undefined &&
+        event.value > 0.0001,
+    );
+
+    await engine.createDrone({
+      notes: [{ id: "root", midiNote: 48 }],
+      presetId: "bowed-strings",
+      use: "drone",
+    });
+    const droneGain = MockAudioContext.gainNodes.at(-1)!
+      .gain as unknown as MockAudioParam;
+    const droneAttack = droneGain.events.find(
+      (event) =>
+        event.type === "ramp" &&
+        event.value !== undefined &&
+        event.value > 0.0001,
+    );
+
+    expect(exerciseAttack?.time).toBeCloseTo(exerciseStartTime + 0.045);
+    expect(droneAttack?.time).toBeCloseTo(0.12);
   });
 
   it("recreates drone voices when the note changes", async () => {

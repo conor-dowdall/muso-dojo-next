@@ -44,8 +44,10 @@ export const DEFAULT_EXERCISE_END = {
   octave: 1,
   stepOffset: 0,
 } as const satisfies CollectionRangeBoundary;
-export const EXERCISE_MIN_OCTAVE_OFFSET = -4;
-export const EXERCISE_MAX_OCTAVE_OFFSET = 5;
+// Keep the user-facing starting register within Octaves 1–7. The selected
+// note range may still extend above its starting octave when playable.
+export const EXERCISE_MIN_OCTAVE_OFFSET = -2;
+export const EXERCISE_MAX_OCTAVE_OFFSET = 4;
 export const EXERCISE_INTERVAL_DEGREES = Array.from(
   { length: EXERCISE_INTERVAL_MAX - EXERCISE_INTERVAL_MIN + 1 },
   (_, index) => index + EXERCISE_INTERVAL_MIN,

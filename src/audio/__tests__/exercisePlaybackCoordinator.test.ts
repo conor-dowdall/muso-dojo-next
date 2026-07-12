@@ -153,6 +153,38 @@ describe("ExercisePlaybackCoordinator", () => {
     expect(coordinator.getActiveRequest("a")?.presetId).toBe("bowed-strings");
   });
 
+  it("keeps the outgoing visual step active until a same-Looper handoff", async () => {
+    vi.useFakeTimers();
+    const { coordinator, setCurrentTime } = createHarness();
+    const request = createRequest("a", {
+      events: [
+        {
+          durationBeats: 0.5,
+          midi: 60,
+          offsetBeats: 0,
+          stepIndex: 0,
+        },
+        {
+          durationBeats: 0.5,
+          midi: 62,
+          offsetBeats: 0.5,
+          stepIndex: 1,
+        },
+      ],
+    });
+
+    await coordinator.start(request);
+    setCurrentTime(10.7);
+    await coordinator.start(request, {
+      handoff: true,
+      originTime: 11.08,
+      owner: "part-sequence",
+    });
+
+    expect(coordinator.getActiveStepIndex(10.9, "a")).toBe(1);
+    expect(coordinator.getActiveStepIndex(11.08, "a")).toBe(0);
+  });
+
   it("stops the previous Looper when a replacement count-in begins", async () => {
     const { cancelPlaybackGroup, coordinator } = createHarness();
     await coordinator.start(createRequest("a"));

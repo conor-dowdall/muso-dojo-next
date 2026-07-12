@@ -92,8 +92,14 @@ function getVoiceGain({
   return clamp(velocity ?? 0.82, 0, 1) * preset.gain * regionGain * useGain;
 }
 
-function getAttackSeconds(preset: AudioPreset) {
-  return Math.max(MIN_ATTACK_SECONDS, preset.envelope.attackSeconds);
+function getAttackSeconds(
+  preset: AudioPreset,
+  use: AudioUse = DEFAULT_AUDIO_USE,
+) {
+  return Math.max(
+    MIN_ATTACK_SECONDS,
+    preset.attackSecondsByUse?.[use] ?? preset.envelope.attackSeconds,
+  );
 }
 
 function getReleaseSeconds(preset: AudioPreset, durationSeconds: number) {
@@ -186,7 +192,7 @@ export function createSampleVoice({
 
   const startAt = Math.max(context.currentTime, startTime);
   const attackSeconds = Math.min(
-    getAttackSeconds(preset),
+    getAttackSeconds(preset, use),
     requestedDurationSeconds * 0.25,
   );
   const releaseSeconds = getReleaseSeconds(preset, requestedDurationSeconds);
@@ -389,7 +395,7 @@ export function createDroneVoice({
     use: "drone",
     velocity,
   });
-  const attackSeconds = Math.max(0.04, getAttackSeconds(preset));
+  const attackSeconds = Math.max(0.04, getAttackSeconds(preset, "drone"));
   const startGain = MIN_GAIN_VALUE;
   const targetGain = Math.max(MIN_GAIN_VALUE, voiceGain);
 
