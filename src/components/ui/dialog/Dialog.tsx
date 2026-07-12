@@ -143,7 +143,7 @@ interface DialogHeaderProps {
    * Dialog titles are headings. Prefer Title Case for app-authored titles and
    * preserve user-authored names as supplied.
    */
-  title: string;
+  title: ReactNode;
   onClose?: () => void;
   className?: string;
 }

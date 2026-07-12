@@ -1,7 +1,7 @@
 "use client";
 
-import styles from "./DisplayFormatPicker.module.css";
 import { OptionButton } from "@/components/ui/buttons/OptionButton";
+import choiceGridStyles from "@/components/ui/choice-grid/ChoiceGrid.module.css";
 import { useOptionalMusicPart } from "@/components/music-part/MusicPartContext";
 import {
   displayFormatOptions,
@@ -29,7 +29,7 @@ export function DisplayFormatPicker({
     noteCollectionKey ?? musicPart?.noteCollectionKey ?? "major";
 
   return (
-    <div className={styles.buttonGrid}>
+    <div className={choiceGridStyles.cardGrid}>
       {displayFormatOptions.map((displayFormat) => {
         const unavailableReason = getDisplayFormatUnavailableReason(
           displayFormat.id,

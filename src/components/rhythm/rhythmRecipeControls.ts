@@ -25,47 +25,56 @@ import { beatSubdivisionOptions } from "@/utils/music-theory/beatSubdivision";
 export const rhythmTimekeeperSoundChoices = [
   {
     label: "Turn timekeeper off",
+    name: "Off",
     sound: undefined,
     text: "Off",
   },
   {
     label: "Use closed hi-hat timekeeper",
+    name: "Hi-Hat",
     sound: "hat",
     text: "Hat",
   },
   {
     label: "Use ride cymbal timekeeper",
+    name: "Ride",
     sound: "ride",
     text: "Ride",
   },
   {
     label: "Use shaker timekeeper",
+    name: "Shaker",
     sound: "shaker",
     text: "Shk",
   },
 ] as const satisfies readonly {
   label: string;
+  name: string;
   sound: RhythmTimekeeperSound | undefined;
   text: string;
 }[];
 
 export const rhythmGrooveChoices = [
   {
+    description: "Bass drum on each counted beat",
     groove: "pulse",
     label: "Use bass drum pulse on the counted beats",
     text: "Pulse",
   },
   {
+    description: "Kick and snare groove",
     groove: "kit",
     label: "Use kick and snare kit foundation",
     text: "Kit",
   },
   {
+    description: "Bluegrass-style offbeat snare",
     groove: "bluegrass",
     label: "Use bluegrass-style offbeat snare drive",
     text: "Drive",
   },
 ] as const satisfies readonly {
+  description: string;
   groove: RhythmGroove;
   label: string;
   text: string;
@@ -464,10 +473,28 @@ export function getRhythmTimekeeperSummary(recipe: RhythmRecipe) {
   ]);
 }
 
+export function getRhythmRecipeSummaryParts(recipe: RhythmRecipe) {
+  const timekeeperOff = recipe.timekeeper.feel === "off";
+
+  return {
+    groove: getRhythmGrooveOptionLabel(recipe.groove),
+    meter: getRhythmTheoryReadout(recipe).title,
+    timekeeperRhythm: timekeeperOff
+      ? "Off"
+      : getRhythmTimekeeperRhythmReadoutLabel(recipe.timekeeper),
+    timekeeperSound: timekeeperOff
+      ? undefined
+      : getRhythmTimekeeperOptionLabel("sound", recipe.timekeeper),
+  };
+}
+
 export function getRhythmRecipeCreationSummary(recipe: RhythmRecipe) {
+  const summary = getRhythmRecipeSummaryParts(recipe);
+
   return formatValueSummary([
-    getRhythmTheoryReadout(recipe).title,
-    getRhythmGrooveOptionLabel(recipe.groove),
-    getRhythmTimekeeperSummary(recipe),
+    summary.meter,
+    summary.groove,
+    summary.timekeeperSound,
+    summary.timekeeperRhythm,
   ]);
 }

@@ -30,9 +30,10 @@
   --button-gap: var(--space-3);
 }
 
-.optionButton[data-option-presentation="list"]:disabled:not(
-    [data-selected="true"]
-  ) {
+.optionButton:is(
+    [data-option-presentation="list"],
+    [data-option-presentation="tile"]
+  ):disabled:not([data-selected="true"]) {
   --button-border-current-color: var(--color-border-subtle);
   --button-outline-background: color-mix(
     in srgb,

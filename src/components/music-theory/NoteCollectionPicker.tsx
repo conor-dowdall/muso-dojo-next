@@ -9,6 +9,7 @@ import {
 } from "@musodojo/music-theory-data";
 import styles from "./NoteCollectionPicker.module.css";
 import { OptionButton } from "@/components/ui/buttons/OptionButton";
+import choiceGridStyles from "@/components/ui/choice-grid/ChoiceGrid.module.css";
 import { Heading } from "@/components/ui/typography/Heading";
 
 interface NoteCollectionPickerProps {
@@ -40,7 +41,7 @@ export function NoteCollectionPicker({
               <Heading as="h3" id={headingId} size="xs" variant="muted">
                 {groupMetadata.displayName}
               </Heading>
-              <div className={styles.buttonGrid}>
+              <div className={choiceGridStyles.cardGrid}>
                 {Object.keys(groupCollections).map((key) => {
                   const collectionKey = key as NoteCollectionKey;
 

@@ -18,7 +18,7 @@ interface ObjectMenuDialogProps {
   listClassName?: string;
   onClose: () => void;
   size?: DialogSize;
-  title: string;
+  title: ReactNode;
 }
 
 export function ObjectMenuDialog({

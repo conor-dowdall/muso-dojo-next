@@ -68,7 +68,7 @@ describe("Part band sources", () => {
     expect(isPartBandModule(part, "backingNotes", "looper-b")).toBe(true);
   });
 
-  it("returns to Follow Session when the selected Rhythm is removed", () => {
+  it("returns to the Session Band when the selected Rhythm is removed", () => {
     const part = createPart({
       band: {
         backingNotes: { mode: "module", moduleId: "looper-a" },

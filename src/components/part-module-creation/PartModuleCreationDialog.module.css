@@ -1,3 +1,7 @@
+.section {
+  min-inline-size: 0;
+}
+
 .appearanceDisclosure {
   display: flex;
   min-inline-size: 0;

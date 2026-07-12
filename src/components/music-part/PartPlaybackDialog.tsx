@@ -1,7 +1,8 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { Drum, Repeat } from "lucide-react";
+import { Drum, Music2 } from "lucide-react";
+import { BackingBandLabel } from "@/components/part-module/PartModuleBandSource";
 import {
   DisclosureList,
   DisclosureListChoice,
@@ -16,16 +17,12 @@ import {
   DialogFooterActionGroup,
 } from "@/components/ui/dialog/Dialog";
 import { Button } from "@/components/ui/buttons/Button";
-import { audioPresets } from "@/audio";
-import { formatExerciseOctave } from "@/components/exercise-looper/ExerciseVoiceDisclosureItems";
 import { usePartBandLoopTransport } from "@/components/session/PracticeBandTransport";
 import {
-  getRhythmChoiceSummary,
-  getRhythmRecipeCreationSummary,
-} from "@/components/rhythm/rhythmRecipeControls";
+  getBackingNotesSummary,
+  getBackingRhythmSummary,
+} from "@/components/session/backingBandSummaries";
 import { getAutomaticRhythmSelection } from "@/utils/rhythm/automaticRhythm";
-import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
-import { formatValueSummary } from "@/utils/valueSummary";
 import { type PartBandRole, type PartBandSourceConfig } from "@/types/session";
 import { useMusicPart } from "./MusicPartContext";
 
@@ -53,27 +50,20 @@ export function PartPlaybackDialog({
   const loopTransport = usePartBandLoopTransport(part.sessionId, part.partId);
   const { isOpen: isChoiceOpen, toggleChoice } =
     useDisclosureList<PlaybackChoice>(null);
-  const automaticRhythmSummary = getRhythmChoiceSummary(
-    getRhythmSelectionRecipe(
-      getAutomaticRhythmSelection(
-        part.automaticRhythm.style,
-        part.automaticLengthBeats,
-      ),
+  const automaticRhythmSummary = getBackingRhythmSummary(
+    getAutomaticRhythmSelection(
+      part.automaticRhythm.style,
+      part.automaticLengthBeats,
     ),
   );
   const sessionBackingNotesSummary = part.sessionBackingBand.looper.enabled
-    ? formatValueSummary([
-        audioPresets[part.sessionBackingBand.looper.audioPresetId].label,
-        formatExerciseOctave(part.sessionBackingBand.looper.octaveOffset),
-      ])
+    ? getBackingNotesSummary(part.sessionBackingBand.looper)
     : "Off";
   const sessionRhythmSummary =
     part.sessionBackingBand.rhythm.mode === "off"
       ? "Off"
       : part.sessionBackingBand.rhythm.mode === "custom"
-        ? getRhythmRecipeCreationSummary(
-            getRhythmSelectionRecipe(part.sessionBackingBand.rhythm.selection),
-          )
+        ? getBackingRhythmSummary(part.sessionBackingBand.rhythm.selection)
         : automaticRhythmSummary;
   const backingNotesPreview = getSourcePreview(part, "backingNotes");
   const rhythmPreview = getSourcePreview(part, "rhythm");
@@ -105,12 +95,12 @@ export function PartPlaybackDialog({
       }
       isOpen={isOpen}
       size="standard"
-      title="Backing Band for Part"
+      title={<BackingBandLabel>Backing Band for Part</BackingBandLabel>}
       onClose={onClose}
     >
       <DisclosureListGroup>
         <BandSourceDisclosure
-          icon={<Repeat />}
+          icon={<Music2 />}
           isOpen={isChoiceOpen("backingNotes")}
           label="Backing Notes"
           preview={backingNotesPreview}
@@ -140,7 +130,7 @@ function getSourcePreview(
 ) {
   const source = part.band[role];
   if (source.mode === "session") {
-    return "Follow Session";
+    return "Session Band";
   }
 
   if (source.mode === "off") {
@@ -151,7 +141,7 @@ function getSourcePreview(
     (option) => option.id === source.moduleId,
   );
 
-  return option ? option.label : "Follow Session";
+  return option ? option.label : "Session Band";
 }
 
 function BandSourceDisclosure({
@@ -188,7 +178,7 @@ function BandSourceDisclosure({
     >
       <DisclosureList density="compact">
         <DisclosureListChoice
-          label="Follow Session"
+          label="Session Band"
           selected={source.mode === "session"}
           selectedPreviewKind="current"
           subtitle={sessionSubtitle}

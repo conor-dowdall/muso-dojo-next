@@ -2,7 +2,9 @@
 
 import { useEffect } from "react";
 import { WoodSurfaceDisclosureItem } from "@/components/appearance/WoodSurfaceChoiceList";
-import { NumericStepper } from "@/components/ui/numeric-stepper/NumericStepper";
+import creationStyles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
+import { OptionButton } from "@/components/ui/buttons/OptionButton";
+import choiceGridStyles from "@/components/ui/choice-grid/ChoiceGrid.module.css";
 import {
   DisclosureList,
   DisclosureListChoice,
@@ -21,7 +23,6 @@ import {
   RHYTHM_MAX_BEATS,
   RHYTHM_MIN_BEATS,
 } from "@/data/rhythmPresets";
-import styles from "@/components/part-module-creation/PartModuleCreationDialog.module.css";
 import { type RhythmModuleCreationDefault } from "@/types/instrument-creation-defaults";
 import {
   DEFAULT_RHYTHM_SELECTION,
@@ -41,7 +42,6 @@ import {
   getRhythmStarterChoiceForRecipe,
   getRhythmStarterRecipe,
   getRhythmStarterSummary,
-  getAdjacentCompatibleRhythmBeatCount,
   getRecipeWithBeatCountConstraint,
   isRhythmGrooveChoiceAvailable,
   isRhythmStarterChoiceAvailable,
@@ -49,9 +49,11 @@ import {
   type RhythmBeatCountConstraint,
   rhythmGrooveChoices,
   rhythmStarterChoices,
+  rhythmTimekeeperFeelSubdivisionChoices,
   rhythmTimekeeperSoundChoices,
-  rhythmTimekeeperSubdivisionChoices,
+  rhythmTimekeeperStraightSubdivisionChoices,
 } from "./rhythmRecipeControls";
+import styles from "./RhythmCreationPanel.module.css";
 
 interface RhythmCreationPanelProps {
   ariaLabel?: string;
@@ -83,10 +85,9 @@ export function RhythmCreationPanel({
     | "timekeeper"
     | "variation"
     | "wood"
-  >();
+  >(null);
   const rhythm = value.rhythm ?? DEFAULT_RHYTHM_SELECTION;
   const recipe = getRhythmSelectionRecipe(rhythm);
-  const beatLabel = getRhythmBeatControlLabel(recipe.beats);
   const groupingChoices = getRhythmGroupingOptions(recipe.beats);
   const groupingLabel = getRhythmGroupingChoiceLabel(
     recipe.beats,
@@ -94,30 +95,22 @@ export function RhythmCreationPanel({
   );
   const wood = value.wood ?? DEFAULT_WOOD_SURFACE_ID;
   const isTimekeeperOff = recipe.timekeeper.feel === "off";
-  const hasGroupingChoices = groupingChoices.length > 1;
   const foundationLabel = getRhythmGrooveOptionLabel(recipe.groove);
   const timekeeperLabel = isTimekeeperOff
     ? "Off"
     : getRhythmTimekeeperOptionLabel("sound", recipe.timekeeper);
-  const feelLabel = getRhythmTimekeeperRhythmReadoutLabel(recipe.timekeeper);
+  const subdivisionLabel = getRhythmTimekeeperRhythmReadoutLabel(
+    recipe.timekeeper,
+  );
   const selectedStarterChoice = getRhythmStarterChoiceForRecipe(recipe);
   const starterLabel = selectedStarterChoice?.label ?? "Custom";
-  const previousBeatCount = getAdjacentCompatibleRhythmBeatCount(
-    recipe.beats,
-    beatCountConstraint,
-    "previous",
-  );
-  const nextBeatCount = getAdjacentCompatibleRhythmBeatCount(
-    recipe.beats,
-    beatCountConstraint,
-    "next",
-  );
+  const beatLabel = getRhythmBeatControlLabel(recipe.beats);
   const compatibleBeatCounts =
     getCompatibleRhythmBeatCounts(beatCountConstraint);
-  const beatsSubtitle =
-    compatibleBeatCounts.length < RHYTHM_MAX_BEATS - RHYTHM_MIN_BEATS + 1
-      ? `Available beats: ${compatibleBeatCounts.join(", ")}`
-      : undefined;
+  const beatChoices = Array.from(
+    { length: RHYTHM_MAX_BEATS - RHYTHM_MIN_BEATS + 1 },
+    (_, index) => RHYTHM_MIN_BEATS + index,
+  );
 
   const updateRecipe = (nextRecipe: RhythmRecipe) => {
     const constrainedRecipe = getRecipeWithBeatCountConstraint(
@@ -139,16 +132,16 @@ export function RhythmCreationPanel({
   }, [closeAll, closeSignal]);
 
   useEffect(() => {
+    if (groupingChoices.length < 2) {
+      closeChoice("variation");
+    }
+  }, [closeChoice, groupingChoices.length]);
+
+  useEffect(() => {
     if (isTimekeeperOff) {
       closeChoice("subdivision");
     }
   }, [closeChoice, isTimekeeperOff]);
-
-  useEffect(() => {
-    if (!hasGroupingChoices) {
-      closeChoice("variation");
-    }
-  }, [closeChoice, hasGroupingChoices]);
 
   const handleWoodChange = (nextWood: WoodSurfaceId) => {
     onChange({ ...value, wood: nextWood });
@@ -168,18 +161,8 @@ export function RhythmCreationPanel({
     );
   };
 
-  const getTimekeeperSoundChoiceLabel = (
-    sound: RhythmTimekeeperSound | undefined,
-  ) =>
-    sound === undefined
-      ? "Off"
-      : getRhythmTimekeeperOptionLabel("sound", {
-          ...recipe.timekeeper,
-          sound,
-        });
-
   return (
-    <section className={styles.section} aria-label={ariaLabel}>
+    <section className={creationStyles.section} aria-label={ariaLabel}>
       <DisclosureList>
         <DisclosureListItem
           ariaLabel={`Start from rhythm. Current: ${starterLabel}`}
@@ -223,71 +206,74 @@ export function RhythmCreationPanel({
         </DisclosureListItem>
 
         <DisclosureListItem
-          ariaLabel={
-            beatsSubtitle
-              ? `Beats. Current: ${beatLabel}. ${beatsSubtitle}`
-              : `Beats. Current: ${beatLabel}`
-          }
+          ariaLabel={`Beats. Current: ${beatLabel}`}
           isOpen={isChoiceOpen("beats")}
           label="Beats"
           panelVariant="menu"
           preview={beatLabel}
-          subtitle={beatsSubtitle}
           onToggle={() => toggleChoice("beats")}
         >
-          <NumericStepper
+          <div
             aria-label="Rhythm beats"
-            formatValue={getRhythmBeatControlLabel}
-            max={RHYTHM_MAX_BEATS}
-            min={RHYTHM_MIN_BEATS}
-            value={recipe.beats}
-            canDecrease={previousBeatCount !== recipe.beats}
-            canIncrease={nextBeatCount !== recipe.beats}
-            onChange={(beats) => {
-              const nextBeats =
-                beats < recipe.beats
-                  ? previousBeatCount
-                  : beats > recipe.beats
-                    ? nextBeatCount
-                    : recipe.beats;
+            className={`${choiceGridStyles.tokenGrid} ${styles.numericGrid}`}
+            role="group"
+          >
+            {beatChoices.map((beats) => {
+              const isAvailable = compatibleBeatCounts.includes(beats);
 
-              updateRecipe(getRecipeWithBeatCount(recipe, nextBeats));
-            }}
-          />
+              return (
+                <OptionButton
+                  key={beats}
+                  aria-label={
+                    isAvailable
+                      ? `Use ${beats} ${beats === 1 ? "beat" : "beats"}`
+                      : `${beats} beats. Not compatible with this progression`
+                  }
+                  className={`${choiceGridStyles.tokenChoice} ${choiceGridStyles.squareTokenChoice}`}
+                  disabled={!isAvailable}
+                  label={beats}
+                  presentation="tile"
+                  selected={recipe.beats === beats}
+                  onClick={() =>
+                    updateRecipe(getRecipeWithBeatCount(recipe, beats))
+                  }
+                />
+              );
+            })}
+          </div>
         </DisclosureListItem>
 
         <DisclosureListItem
           ariaLabel={`Variation. Current: ${groupingLabel}`}
-          disabled={!hasGroupingChoices}
+          disabled={groupingChoices.length < 2}
           isOpen={isChoiceOpen("variation")}
           label="Variation"
           panelVariant="menu"
           preview={groupingLabel}
           onToggle={() => toggleChoice("variation")}
         >
-          <DisclosureList density="compact">
-            {groupingChoices.map((grouping) => {
-              const choiceLabel = getRhythmGroupingChoiceLabel(
-                recipe.beats,
-                grouping,
-              );
-
-              return (
-                <DisclosureListChoice
-                  key={grouping}
-                  aria-label={getRhythmGroupingControlLabel(
-                    recipe.beats,
-                    grouping,
-                  )}
-                  label={choiceLabel}
-                  selected={recipe.grouping === grouping}
-                  onClick={() =>
-                    updateRecipe(getRecipeWithGrouping(recipe, grouping))
-                  }
-                />
-              );
-            })}
-          </DisclosureList>
+          <div
+            aria-label="Beat variation"
+            className={`${choiceGridStyles.tokenGrid} ${styles.variationGrid}`}
+            role="group"
+          >
+            {groupingChoices.map((grouping) => (
+              <OptionButton
+                key={grouping}
+                aria-label={getRhythmGroupingControlLabel(
+                  recipe.beats,
+                  grouping,
+                )}
+                className={choiceGridStyles.tokenChoice}
+                label={getRhythmGroupingChoiceLabel(recipe.beats, grouping)}
+                presentation="tile"
+                selected={recipe.grouping === grouping}
+                onClick={() =>
+                  updateRecipe(getRecipeWithGrouping(recipe, grouping))
+                }
+              />
+            ))}
+          </div>
         </DisclosureListItem>
 
         <DisclosureListItem
@@ -306,6 +292,7 @@ export function RhythmCreationPanel({
                 disabled={!isRhythmGrooveChoiceAvailable(recipe, choice.groove)}
                 label={choice.text}
                 selected={recipe.groove === choice.groove}
+                subtitle={choice.description}
                 onClick={() =>
                   updateRecipe(getRecipeWithGroove(recipe, choice.groove))
                 }
@@ -322,12 +309,18 @@ export function RhythmCreationPanel({
           preview={timekeeperLabel}
           onToggle={() => toggleChoice("timekeeper")}
         >
-          <DisclosureList density="compact">
+          <div
+            aria-label="Timekeeper sound"
+            className={`${choiceGridStyles.tokenGrid} ${styles.timekeeperGrid}`}
+            role="group"
+          >
             {rhythmTimekeeperSoundChoices.map((choice) => (
-              <DisclosureListChoice
+              <OptionButton
                 key={choice.sound ?? "off"}
                 aria-label={choice.label}
-                label={getTimekeeperSoundChoiceLabel(choice.sound)}
+                className={choiceGridStyles.tokenChoice}
+                label={choice.name}
+                presentation="tile"
                 selected={
                   choice.sound === undefined
                     ? isTimekeeperOff
@@ -337,37 +330,37 @@ export function RhythmCreationPanel({
                 onClick={() => setTimekeeperSound(choice.sound)}
               />
             ))}
-          </DisclosureList>
+          </div>
         </DisclosureListItem>
 
         <DisclosureListItem
-          ariaLabel={`Subdivision. Current: ${feelLabel}`}
+          ariaLabel={`Timekeeper Pattern. Current: ${subdivisionLabel}`}
           disabled={isTimekeeperOff}
           isOpen={isChoiceOpen("subdivision")}
-          label="Subdivision"
+          label="Timekeeper Pattern"
           panelVariant="menu"
-          preview={feelLabel}
+          preview={subdivisionLabel}
           onToggle={() => toggleChoice("subdivision")}
         >
-          <DisclosureList density="compact">
-            {rhythmTimekeeperSubdivisionChoices.map((choice) => {
-              const choiceLabel = getRhythmTimekeeperRhythmReadoutLabel({
-                ...recipe.timekeeper,
-                feel: choice.feel,
-                subdivision: choice.subdivision,
-              });
-
-              return (
-                <DisclosureListChoice
+          <div className={styles.patternGroups}>
+            <div
+              aria-label="Even subdivisions per beat"
+              className={`${choiceGridStyles.tokenGrid} ${styles.numericGrid}`}
+              role="group"
+            >
+              {rhythmTimekeeperStraightSubdivisionChoices.map((choice) => (
+                <OptionButton
                   key={`${choice.subdivision}-${choice.feel}`}
                   aria-label={choice.label}
+                  className={`${choiceGridStyles.tokenChoice} ${choiceGridStyles.squareTokenChoice}`}
                   disabled={
                     !isRhythmTimekeeperSubdivisionChoiceAvailable(
                       recipe,
                       choice,
                     )
                   }
-                  label={choiceLabel}
+                  label={choice.text}
+                  presentation="tile"
                   selected={
                     recipe.timekeeper.feel === choice.feel &&
                     recipe.timekeeper.subdivision === choice.subdivision
@@ -381,9 +374,43 @@ export function RhythmCreationPanel({
                     )
                   }
                 />
-              );
-            })}
-          </DisclosureList>
+              ))}
+            </div>
+
+            <div
+              aria-label="Timekeeper feel"
+              className={`${choiceGridStyles.tokenGrid} ${styles.feelGrid}`}
+              role="group"
+            >
+              {rhythmTimekeeperFeelSubdivisionChoices.map((choice) => (
+                <OptionButton
+                  key={`${choice.subdivision}-${choice.feel}`}
+                  aria-label={choice.label}
+                  className={choiceGridStyles.tokenChoice}
+                  disabled={
+                    !isRhythmTimekeeperSubdivisionChoiceAvailable(
+                      recipe,
+                      choice,
+                    )
+                  }
+                  label={choice.feel === "swing" ? "Swing" : "Shuffle"}
+                  presentation="tile"
+                  selected={
+                    recipe.timekeeper.feel === choice.feel &&
+                    recipe.timekeeper.subdivision === choice.subdivision
+                  }
+                  onClick={() =>
+                    updateRecipe(
+                      getRecipeWithTimekeeper(recipe, {
+                        feel: choice.feel,
+                        subdivision: choice.subdivision,
+                      }),
+                    )
+                  }
+                />
+              ))}
+            </div>
+          </div>
         </DisclosureListItem>
 
         {showWood ? (

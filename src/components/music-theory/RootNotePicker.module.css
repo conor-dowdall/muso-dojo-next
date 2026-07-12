@@ -1,6 +1,6 @@
 .rootNoteList {
   display: flex;
-  width: fit-content;
+  inline-size: fit-content;
   margin-inline: auto;
   flex-direction: column;
   gap: var(--space-1);
@@ -13,5 +13,5 @@
 }
 
 .rootNoteButton {
-  min-width: var(--space-14);
+  min-inline-size: var(--space-14);
 }

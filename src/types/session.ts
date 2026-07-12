@@ -236,7 +236,7 @@ export interface MusicPartConfig {
   /** Fallback feel used when no Rhythm module owns the band. */
   automaticRhythm?: AutomaticRhythmConfig;
   /**
-   * Optional authored chart duration. It determines Per Part Rhythm length;
+   * Optional authored chart duration. It determines automatic Rhythm length;
    * ordinary Parts without an authored duration use four beats.
    */
   durationInBars?: number;

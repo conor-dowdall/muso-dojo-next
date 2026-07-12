@@ -4,7 +4,8 @@ import {
   enharmonicRootNoteGroups,
   type RootNote,
 } from "@musodojo/music-theory-data";
-import { Button } from "@/components/ui/buttons/Button";
+import { OptionButton } from "@/components/ui/buttons/OptionButton";
+import choiceGridStyles from "@/components/ui/choice-grid/ChoiceGrid.module.css";
 import styles from "./RootNotePicker.module.css";
 
 interface RootNotePickerProps {
@@ -18,10 +19,12 @@ export function RootNotePicker({ value, onChange }: RootNotePickerProps) {
       {enharmonicRootNoteGroups.map((group, groupIndex) => (
         <div key={groupIndex} className={styles.rootNoteGroup}>
           {group.map((note) => (
-            <Button
+            <OptionButton
               key={note}
-              className={styles.rootNoteButton}
+              className={`${choiceGridStyles.tokenChoice} ${styles.rootNoteButton}`}
+              fullWidth={false}
               label={note}
+              presentation="tile"
               selected={value === note}
               onClick={() => onChange(note)}
             />

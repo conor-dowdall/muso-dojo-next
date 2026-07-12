@@ -1,11 +1,4 @@
-.buttonGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--dialog-menu-row-gap, var(--space-2));
-}
-
 .groupList {
-  container-type: inline-size;
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
@@ -22,16 +15,4 @@
 .collectionSection + .collectionSection {
   padding-block-start: var(--space-4);
   border-top: var(--border-width-base) solid var(--color-border-subtle);
-}
-
-@container (width > 28rem) {
-  .buttonGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@container (width > 36rem) {
-  .buttonGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }

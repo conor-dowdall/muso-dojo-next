@@ -9,11 +9,13 @@ import {
 import { useAppStore } from "@/stores/appStore";
 import { getPartBandModules } from "@/utils/music-part/partBand";
 import { resolvePartBackingBand } from "@/utils/music-part/resolvePartBackingBand";
-import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
-import { getRhythmChoiceSummary } from "@/components/rhythm/rhythmRecipeControls";
 import { PartModuleView } from "./PartModuleView";
 import { selectPart } from "./sessionSelectors";
 import { getSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
+import {
+  getBackingNotesSummary,
+  getBackingRhythmSummary,
+} from "./backingBandSummaries";
 
 interface MusicPartViewProps {
   sessionId: string;
@@ -61,6 +63,10 @@ export function MusicPartView({
                 part.modules,
                 "backingNotes",
               ).map((module, index) => ({
+                detail:
+                  module.type === "exercise-looper"
+                    ? getBackingNotesSummary(module)
+                    : undefined,
                 id: module.id,
                 label: `Looper ${index + 1}`,
               })),
@@ -70,9 +76,7 @@ export function MusicPartView({
                   label: `Rhythm ${index + 1}`,
                   detail:
                     module.type === "rhythm"
-                      ? getRhythmChoiceSummary(
-                          getRhythmSelectionRecipe(module.rhythm),
-                        )
+                      ? getBackingRhythmSummary(module.rhythm)
                       : undefined,
                 }),
               ),

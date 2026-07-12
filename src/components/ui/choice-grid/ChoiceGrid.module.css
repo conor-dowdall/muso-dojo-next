@@ -1,0 +1,25 @@
+.tokenGrid,
+.cardGrid {
+  display: grid;
+  min-inline-size: 0;
+  gap: var(--dialog-menu-row-gap, var(--space-2));
+}
+
+.tokenGrid {
+  justify-content: center;
+}
+
+.tokenChoice {
+  --option-button-tile-size: var(--control-size-lg);
+}
+
+.squareTokenChoice {
+  aspect-ratio: 1;
+}
+
+.cardGrid {
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, var(--choice-card-min-width, 10rem)), 1fr)
+  );
+}
