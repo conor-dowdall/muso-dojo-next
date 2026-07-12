@@ -8,13 +8,9 @@ import {
   getPartDurationChartUnits,
   isPartialPartDuration,
 } from "@/utils/music-part/partDuration";
-import {
-  formatPartLengthBeats,
-  getPartLengthBeats,
-} from "@/utils/music-part/partLength";
-import { getAutomaticRhythmSelection } from "@/utils/rhythm/automaticRhythm";
+import { formatPartLengthBeats } from "@/utils/music-part/partLength";
 import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
-import { getPartBandModule, getPartBandSource } from "./partBand";
+import { resolvePartBackingBand } from "./resolvePartBackingBand";
 
 export interface PartLeadSheetSummary {
   accessibleLabel: string;
@@ -32,28 +28,22 @@ export function getPartLeadSheetSummary(
   backingBand?: SessionBackingBandConfig,
 ): PartLeadSheetSummary {
   const identity = rootAndNoteCollection.getIdentity(part);
-  const lengthBeats = getPartLengthBeats(part, backingBand);
-  const rhythmSource = getPartBandSource(part, "rhythm");
-  const selectedRhythm = getPartBandModule(part, "rhythm");
-  const rhythmSelection =
-    (selectedRhythm?.type === "rhythm" ? selectedRhythm.rhythm : undefined) ??
-    (rhythmSource.mode === "session" && backingBand?.rhythm.mode === "custom"
-      ? backingBand.rhythm.selection
-      : getAutomaticRhythmSelection(part.automaticRhythm?.style, lengthBeats));
+  const resolvedBand = resolvePartBackingBand(part, backingBand);
+  const lengthBeats = resolvedBand.durationBeats;
   const meterReadout = getRhythmTheoryReadout(
-    getRhythmSelectionRecipe(rhythmSelection),
+    getRhythmSelectionRecipe(resolvedBand.rhythm.selection),
   );
   const sessionRhythmDescription =
-    backingBand?.rhythm.mode === "custom"
+    resolvedBand.session.rhythm.mode === "custom"
       ? meterReadout.detail
       : `${
           part.automaticRhythm?.style === "swing" ? "Swing" : "Straight"
         } Session rhythm`;
   const meterLabel = meterReadout.title;
   const meterDetail = [
-    rhythmSource.mode === "off"
+    !resolvedBand.rhythm.enabled
       ? "No band rhythm"
-      : rhythmSource.mode === "session"
+      : resolvedBand.rhythm.source.mode === "session"
         ? sessionRhythmDescription
         : meterReadout.detail,
     formatPartLengthBeats(lengthBeats),

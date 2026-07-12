@@ -1,73 +1,32 @@
 import { type MusicPartConfig } from "@/types/session";
-import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
-import { getPartBandModule, getPartBandSource } from "./partBand";
 import { type SessionBackingBandConfig } from "@/types/session";
+import {
+  DEFAULT_PART_LENGTH_BEATS,
+  getPerPartRhythmBeats,
+  normalizePartLengthBeats,
+  resolvePartBackingBand,
+  type PartBackingBandInput,
+} from "./resolvePartBackingBand";
 
-export const DEFAULT_PART_LENGTH_BEATS = 4;
-export const MIN_PART_LENGTH_BEATS = 0.125;
-export const MAX_PART_LENGTH_BEATS = 128;
-const PART_LENGTH_PRECISION = 1_000_000;
+export {
+  DEFAULT_PART_LENGTH_BEATS,
+  MAX_PART_LENGTH_BEATS,
+  MIN_PART_LENGTH_BEATS,
+  normalizePartLengthBeats,
+} from "./resolvePartBackingBand";
 
-function roundPartLength(value: number) {
-  return Math.round(value * PART_LENGTH_PRECISION) / PART_LENGTH_PRECISION;
-}
-
-export function normalizePartLengthBeats(value: unknown) {
-  if (
-    typeof value !== "number" ||
-    !Number.isFinite(value) ||
-    value < MIN_PART_LENGTH_BEATS ||
-    value > MAX_PART_LENGTH_BEATS
-  ) {
-    return undefined;
-  }
-
-  return roundPartLength(value);
-}
-
-interface PartLengthInput {
-  band?: MusicPartConfig["band"];
-  durationInBars?: number;
-  modules?: MusicPartConfig["modules"];
-}
+type PartLengthInput = PartBackingBandInput &
+  Pick<MusicPartConfig, "automaticRhythm">;
 
 export function getAutomaticRhythmBeats(part: PartLengthInput) {
-  return (
-    normalizePartLengthBeats(
-      part.durationInBars === undefined
-        ? undefined
-        : part.durationInBars * DEFAULT_PART_LENGTH_BEATS,
-    ) ?? DEFAULT_PART_LENGTH_BEATS
-  );
+  return getPerPartRhythmBeats(part);
 }
 
 export function getPartLengthBeats(
   part: PartLengthInput,
   backingBand?: SessionBackingBandConfig,
 ) {
-  if (part.modules) {
-    const rhythm = getPartBandModule(
-      {
-        band: part.band,
-        modules: part.modules,
-      },
-      "rhythm",
-    );
-
-    if (rhythm?.type === "rhythm") {
-      return getRhythmSelectionRecipe(rhythm.rhythm).beats;
-    }
-
-    if (
-      backingBand?.rhythm.mode === "custom" &&
-      getPartBandSource({ band: part.band, modules: part.modules }, "rhythm")
-        .mode === "session"
-    ) {
-      return getRhythmSelectionRecipe(backingBand.rhythm.selection).beats;
-    }
-  }
-
-  return getAutomaticRhythmBeats(part);
+  return resolvePartBackingBand(part, backingBand).durationBeats;
 }
 
 export function formatPartLengthBeats(lengthBeats: number) {

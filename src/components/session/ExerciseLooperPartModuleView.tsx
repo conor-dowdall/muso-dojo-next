@@ -4,7 +4,7 @@ import { useShallow } from "zustand/react/shallow";
 import { ExerciseLooperModule } from "@/components/exercise-looper/ExerciseLooperModule";
 import { useAppStore } from "@/stores/appStore";
 import { selectExerciseLooperPartModule, selectPart } from "./sessionSelectors";
-import { isPartBandModule } from "@/utils/music-part/partBand";
+import { resolvePartBackingBand } from "@/utils/music-part/resolvePartBackingBand";
 
 export function ExerciseLooperPartModuleView({
   isPerformanceMode = false,
@@ -32,7 +32,9 @@ export function ExerciseLooperPartModuleView({
       return session && part && looper
         ? {
             ...looper,
-            isBandSource: isPartBandModule(part, "backingNotes", moduleId),
+            isBandSource:
+              resolvePartBackingBand(part, session.backingBand).backingNotes
+                .module?.id === moduleId,
             noteCollectionKey: part.noteCollectionKey,
             rootNote: part.rootNote,
             tempoBpm: session.tempoBpm ?? 80,

@@ -20,6 +20,7 @@ import { ObjectMenuDialog } from "@/components/ui/object-menu";
 import { SelectableActionRow } from "@/components/ui/selectable-overflow-row";
 import { useAppStore } from "@/stores/appStore";
 import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
+import { formatValueSummary } from "@/utils/valueSummary";
 import {
   getSessionBackingBandConfig,
   MAX_SESSION_BACKING_BAND_COUNT_IN_BEATS,
@@ -61,7 +62,7 @@ export function SessionBackingBandDialog({
       ? "Custom"
       : backingBand.rhythm.mode === "off"
         ? "Off"
-        : "Automatic";
+        : "Per Part";
 
   const update = (next: typeof backingBand) =>
     setSessionBackingBand(sessionId, next);
@@ -75,10 +76,10 @@ export function SessionBackingBandDialog({
     >
       <DisclosureListGroup>
         <DisclosureListItem
-          ariaLabel={`Looper. Current: ${looperPreview}`}
+          ariaLabel={`Backing Notes. Current: ${looperPreview}`}
           icon={<Repeat />}
           isOpen={mainDisclosure.isOpen("looper")}
-          label="Looper"
+          label="Backing Notes"
           panelVariant="menu"
           preview={looperPreview}
           onToggle={() => mainDisclosure.toggleChoice("looper")}
@@ -146,7 +147,7 @@ export function SessionBackingBandDialog({
         >
           <DisclosureList density="compact">
             <DisclosureListChoice
-              label="Automatic"
+              label="Per Part"
               selected={backingBand.rhythm.mode === "automatic"}
               selectedPreviewKind="current"
               subtitle="Uses each Part's recommended feel and length"
@@ -172,9 +173,12 @@ export function SessionBackingBandDialog({
               selectedAriaLabel="Custom Rhythm selected"
               selectedPreviewKind="current"
               selectAriaLabel="Use Custom Rhythm"
-              subtitle={getRhythmRecipeCreationSummary(
-                getRhythmSelectionRecipe(backingBand.rhythm.selection),
-              )}
+              subtitle={formatValueSummary([
+                getRhythmRecipeCreationSummary(
+                  getRhythmSelectionRecipe(backingBand.rhythm.selection),
+                ),
+                "Replaces each Part's length",
+              ])}
               onAction={() =>
                 setIsCustomRhythmSettingsOpen((current) => !current)
               }

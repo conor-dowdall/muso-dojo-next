@@ -195,7 +195,7 @@ describe("part module app store actions", () => {
     });
   });
 
-  it("applies Part duration defaults when adding a Rhythm module later", () => {
+  it("preserves an explicit Rhythm length when adding it to a Part", () => {
     const store = createTestStore({
       activeSessionId: sessionId,
       dojoSettings: {},
@@ -220,6 +220,21 @@ describe("part module app store actions", () => {
 
     const moduleId = store.getState().addPartModule(sessionId, partId, {
       type: "rhythm",
+      settings: {
+        rhythm: {
+          recipe: {
+            beats: 6,
+            groove: "kit",
+            grouping: "auto",
+            timekeeper: {
+              feel: "straight",
+              sound: "hat",
+              subdivision: "eighth",
+            },
+          },
+          source: "recipe",
+        },
+      },
     });
     const partModule = store
       .getState()
@@ -230,7 +245,7 @@ describe("part module app store actions", () => {
     expect(partModule).toMatchObject({
       rhythm: {
         recipe: {
-          beats: 2,
+          beats: 6,
         },
       },
       type: "rhythm",

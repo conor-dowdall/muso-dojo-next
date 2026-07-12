@@ -61,7 +61,7 @@ export function PartPlaybackDialog({
       ),
     ),
   );
-  const sessionLooperSummary = part.sessionBackingBand.looper.enabled
+  const sessionBackingNotesSummary = part.sessionBackingBand.looper.enabled
     ? formatValueSummary([
         audioPresets[part.sessionBackingBand.looper.audioPresetId].label,
         formatExerciseOctave(part.sessionBackingBand.looper.octaveOffset),
@@ -76,7 +76,7 @@ export function PartPlaybackDialog({
           )
         : automaticRhythmSummary;
   const backingNotesPreview = getSourcePreview(part, "backingNotes");
-  const rhythmPreview = getSourcePreview(part, "rhythm", sessionRhythmSummary);
+  const rhythmPreview = getSourcePreview(part, "rhythm");
 
   const chooseSource = (role: PartBandRole, source: PartBandSourceConfig) => {
     part.setBandSource?.(role, source);
@@ -112,10 +112,10 @@ export function PartPlaybackDialog({
         <BandSourceDisclosure
           icon={<Repeat />}
           isOpen={isChoiceOpen("backingNotes")}
-          label="Looper"
+          label="Backing Notes"
           preview={backingNotesPreview}
           role="backingNotes"
-          sessionSubtitle={sessionLooperSummary}
+          sessionSubtitle={sessionBackingNotesSummary}
           onChoose={chooseSource}
           onToggle={() => toggleChoice("backingNotes")}
         />
@@ -137,23 +137,10 @@ export function PartPlaybackDialog({
 function getSourcePreview(
   part: ReturnType<typeof useMusicPart>,
   role: PartBandRole,
-  sessionRhythmSummary?: string,
 ) {
   const source = part.band[role];
   if (source.mode === "session") {
-    if (role === "backingNotes") {
-      return part.sessionBackingBand.looper.enabled
-        ? formatValueSummary([
-            "Session Default",
-            audioPresets[part.sessionBackingBand.looper.audioPresetId].label,
-            formatExerciseOctave(part.sessionBackingBand.looper.octaveOffset),
-          ])
-        : formatValueSummary(["Session Default", "Off"]);
-    }
-
-    return part.sessionBackingBand.rhythm.mode !== "off"
-      ? formatValueSummary(["Session Default", sessionRhythmSummary])
-      : formatValueSummary(["Session Default", "Off"]);
+    return "Follow Session";
   }
 
   if (source.mode === "off") {
@@ -164,9 +151,7 @@ function getSourcePreview(
     (option) => option.id === source.moduleId,
   );
 
-  return option
-    ? formatValueSummary([option.label, option.detail])
-    : "Automatic";
+  return option ? option.label : "Follow Session";
 }
 
 function BandSourceDisclosure({
@@ -203,7 +188,7 @@ function BandSourceDisclosure({
     >
       <DisclosureList density="compact">
         <DisclosureListChoice
-          label="Session Default"
+          label="Follow Session"
           selected={source.mode === "session"}
           selectedPreviewKind="current"
           subtitle={sessionSubtitle}

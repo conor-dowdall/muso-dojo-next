@@ -1,5 +1,4 @@
 import { createDefaultPartModuleConfigs } from "@/utils/session/createSessionEntities";
-import { getRhythmSelectionForPartDuration } from "@/utils/music-part/partDuration";
 import { clonePartModuleConfig } from "./cloneConfig";
 import {
   appendPartModules,
@@ -22,23 +21,6 @@ import {
   reconcilePartBandAfterModuleRemoval,
   setPartBandSource,
 } from "@/utils/music-part/partBand";
-
-function applyPartDurationDefaults(
-  part: MusicPartConfig,
-  module: PartModuleConfig,
-): PartModuleConfig {
-  if (module.type !== "rhythm") {
-    return module;
-  }
-
-  return {
-    ...module,
-    rhythm: getRhythmSelectionForPartDuration(
-      part.durationInBars,
-      module.rhythm,
-    ),
-  };
-}
 
 function assignFirstNewBandSources(
   part: MusicPartConfig,
@@ -84,9 +66,7 @@ export function createPartModuleActions(
         return [];
       }
 
-      const partModules = createDefaultPartModuleConfigs(requests).map(
-        (module) => applyPartDurationDefaults(part, module),
-      );
+      const partModules = createDefaultPartModuleConfigs(requests);
 
       set((state) =>
         updateSessionById(state, sessionId, (session) =>

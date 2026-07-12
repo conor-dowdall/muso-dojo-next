@@ -4,7 +4,7 @@ import { useShallow } from "zustand/react/shallow";
 import { RhythmModule } from "@/components/rhythm/RhythmModule";
 import { useAppStore } from "@/stores/appStore";
 import { selectPart, selectRhythmPartModule } from "./sessionSelectors";
-import { isPartBandModule } from "@/utils/music-part/partBand";
+import { resolvePartBackingBand } from "@/utils/music-part/resolvePartBackingBand";
 
 export function RhythmPartModuleView({
   isPerformanceMode = false,
@@ -28,7 +28,9 @@ export function RhythmPartModuleView({
       return session && part && rhythm
         ? {
             ...rhythm,
-            isBandSource: isPartBandModule(part, "rhythm", moduleId),
+            isBandSource:
+              resolvePartBackingBand(part, session.backingBand).rhythm.module
+                ?.id === moduleId,
             tempoBpm: session.tempoBpm ?? 80,
           }
         : undefined;

@@ -416,6 +416,11 @@ export function AddToSessionDialog({
           }
         >
           <ModuleCreationList
+            backingBandSourceSummary={
+              selectedMode === "part"
+                ? "Used by Backing Band in New Part"
+                : "Used by Backing Band in Each New Part"
+            }
             context="session"
             instrumentCreationRangeContext={instrumentCreationRangeContext}
             onDraftChange={setModuleDraft}

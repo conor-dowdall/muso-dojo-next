@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getPartLeadSheetSummary } from "@/utils/music-part/partLeadSheet";
 import { type MusicPartConfig } from "@/types/session";
+import { createDefaultSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 
 function createPart(patch: Partial<MusicPartConfig> = {}): MusicPartConfig {
   return {
@@ -80,5 +81,16 @@ describe("getPartLeadSheetSummary", () => {
     expect(summary.meterLabel).toBe("4/4");
     expect(summary).not.toHaveProperty("lengthLabel");
     expect(summary.meterDetail).toContain("Swing Session rhythm");
+  });
+
+  it("describes a disabled Session Rhythm as no band rhythm", () => {
+    const backingBand = createDefaultSessionBackingBandConfig();
+    const summary = getPartLeadSheetSummary(createPart(), {
+      ...backingBand,
+      rhythm: { ...backingBand.rhythm, mode: "off" },
+    });
+
+    expect(summary.meterDetail).toContain("No band rhythm");
+    expect(summary.meterDetail).not.toContain("Session rhythm");
   });
 });

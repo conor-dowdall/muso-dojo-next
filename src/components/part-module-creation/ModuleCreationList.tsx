@@ -61,6 +61,7 @@ import { type ModuleCreationListDraft } from "./moduleCreationDraft";
 export type { ModuleCreationListDraft } from "./moduleCreationDraft";
 
 interface ModuleCreationListProps {
+  backingBandSourceSummary?: string;
   context: ModuleCreationContext;
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
   onDraftChange: (draft: ModuleCreationListDraft) => void;
@@ -229,6 +230,7 @@ function getRhythmModuleCreationDefault({
 }
 
 export function ModuleCreationList({
+  backingBandSourceSummary = "Used by Backing Band in Part",
   context,
   instrumentCreationRangeContext,
   onDraftChange,
@@ -459,7 +461,7 @@ export function ModuleCreationList({
             selectAriaLabel={`Add ${option.label} module`}
             subtitle={formatValueSummary([
               summary,
-              isBackingBandSource ? "Backing Band source" : undefined,
+              isBackingBandSource ? backingBandSourceSummary : undefined,
             ])}
             onAction={
               hasSettings ? () => toggleSettingsKind(option.kind) : undefined

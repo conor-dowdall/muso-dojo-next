@@ -52,6 +52,25 @@ describe("createChordProgressionParts", () => {
     });
   });
 
+  it("creates independent selected Rhythm sources in every progression Part", () => {
+    const parts = createChordProgressionParts({
+      rootNote: "C",
+      progressionKey: "oneOneFiveFive",
+      moduleRequests: [{ type: "rhythm" }],
+    });
+    const rhythmModules = parts.map((part) => part.modules[0]);
+    const rhythmModuleIds = rhythmModules.map((module) => module?.id);
+
+    expect(new Set(rhythmModuleIds).size).toBe(parts.length);
+    parts.forEach((part, index) => {
+      expect(part.band?.rhythm).toEqual({
+        mode: "module",
+        moduleId: rhythmModuleIds[index],
+      });
+    });
+    expect(rhythmModules[0]).not.toBe(rhythmModules[1]);
+  });
+
   it("expands full progressions into a duration-aware timeline", () => {
     const parts = createChordProgressionParts({
       chordListMode: "full-song-order",

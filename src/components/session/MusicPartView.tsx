@@ -7,14 +7,8 @@ import {
   createInstrumentCreationRangeContextSignature,
 } from "@/components/instrument-creation/instrumentCreationRangeContext";
 import { useAppStore } from "@/stores/appStore";
-import {
-  getAutomaticRhythmBeats,
-  getPartLengthBeats,
-} from "@/utils/music-part/partLength";
-import {
-  getPartBandConfig,
-  getPartBandModules,
-} from "@/utils/music-part/partBand";
+import { getPartBandModules } from "@/utils/music-part/partBand";
+import { resolvePartBackingBand } from "@/utils/music-part/resolvePartBackingBand";
 import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
 import { getRhythmChoiceSummary } from "@/components/rhythm/rhythmRecipeControls";
 import { PartModuleView } from "./PartModuleView";
@@ -46,15 +40,19 @@ export function MusicPartView({
     () => getSessionBackingBandConfig(storedSessionBackingBand),
     [storedSessionBackingBand],
   );
+  const resolvedBand = useMemo(
+    () => (part ? resolvePartBackingBand(part, sessionBackingBand) : undefined),
+    [part, sessionBackingBand],
+  );
   const partSettings = useMemo(
     () =>
-      part
+      part && resolvedBand
         ? {
             rootNote: part.rootNote,
             noteCollectionKey: part.noteCollectionKey,
-            automaticLengthBeats: getAutomaticRhythmBeats(part),
-            effectiveLengthBeats: getPartLengthBeats(part, sessionBackingBand),
-            band: getPartBandConfig(part),
+            automaticLengthBeats: resolvedBand.perPartDurationBeats,
+            effectiveLengthBeats: resolvedBand.durationBeats,
+            band: resolvedBand.band,
             automaticRhythm: part.automaticRhythm ?? {
               style: "standard",
             },
@@ -82,7 +80,7 @@ export function MusicPartView({
             showHeader: part.showHeader,
           }
         : undefined,
-    [part, sessionBackingBand],
+    [part, resolvedBand],
   );
   const moduleIds = useMemo(
     () => part?.modules.map((module) => module.id) ?? [],

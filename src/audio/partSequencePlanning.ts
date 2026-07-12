@@ -10,17 +10,14 @@ import {
   createExerciseSequence,
   type ExercisePattern,
 } from "@/utils/exercise-looper/exerciseSequence";
-import { getPartLengthBeats } from "@/utils/music-part/partLength";
 import {
-  getPartBandModule,
-  getPartBandSource,
-} from "@/utils/music-part/partBand";
-import { getAutomaticRhythmSelection } from "@/utils/rhythm/automaticRhythm";
+  resolvePartBackingBand,
+  type ResolvedPartBackingBand,
+} from "@/utils/music-part/resolvePartBackingBand";
 import { getRhythmSelectionPattern } from "@/utils/rhythm/rhythmConfig";
 import {
   type ExerciseLooperPartModuleConfig,
   type MusicPartConfig,
-  type RhythmPartModuleConfig,
   type SessionConfig,
   type SessionBackingBandConfig,
 } from "@/types/session";
@@ -143,21 +140,16 @@ function createExerciseRequest({
 function createExerciseRequestsForPart(
   part: MusicPartConfig,
   tempoBpm: number,
-  backingBand: SessionBackingBandConfig,
+  resolvedBand: ResolvedPartBackingBand,
 ) {
-  const source = getPartBandSource(part, "backingNotes");
-
-  if (
-    source.mode === "off" ||
-    (source.mode === "session" && !backingBand.looper.enabled)
-  ) {
+  if (!resolvedBand.backingNotes.enabled) {
     return [];
   }
 
-  const selectedModule = getPartBandModule(part, "backingNotes");
-  if (!selectedModule || selectedModule.type !== "exercise-looper") {
+  const selectedModule = resolvedBand.backingNotes.module;
+  if (!selectedModule) {
     const request = createExerciseRequest({
-      automaticLooper: backingBand.looper,
+      automaticLooper: resolvedBand.session.looper,
       metronomeEnabled: DEFAULT_EXERCISE_METRONOME_ENABLED,
       module: undefined,
       part,
@@ -178,26 +170,21 @@ function createExerciseRequestsForPart(
 }
 
 function createRhythmRequest({
-  backingBand,
-  module,
   part,
+  resolvedBand,
   tempoBpm,
 }: {
-  backingBand: SessionBackingBandConfig;
-  module: RhythmPartModuleConfig | undefined;
   part: MusicPartConfig;
+  resolvedBand: ResolvedPartBackingBand;
   tempoBpm: number;
 }): RhythmPlaybackRequest {
-  const lengthBeats = getPartLengthBeats(part, backingBand);
-  const selection =
-    module?.rhythm ??
-    (backingBand.rhythm.mode === "custom"
-      ? backingBand.rhythm.selection
-      : getAutomaticRhythmSelection(part.automaticRhythm?.style, lengthBeats));
+  const selectedRhythmModule = resolvedBand.rhythm.module;
 
   return {
-    id: module?.id ?? `${PART_SEQUENCE_DEFAULT_RHYTHM_ID_PREFIX}:${part.id}`,
-    pattern: getRhythmSelectionPattern(selection),
+    id:
+      selectedRhythmModule?.id ??
+      `${PART_SEQUENCE_DEFAULT_RHYTHM_ID_PREFIX}:${part.id}`,
+    pattern: getRhythmSelectionPattern(resolvedBand.rhythm.selection),
     tempoBpm,
   };
 }
@@ -205,23 +192,16 @@ function createRhythmRequest({
 function createRhythmRequestsForPart(
   part: MusicPartConfig,
   tempoBpm: number,
-  backingBand: SessionBackingBandConfig,
+  resolvedBand: ResolvedPartBackingBand,
 ) {
-  const source = getPartBandSource(part, "rhythm");
-  if (
-    source.mode === "off" ||
-    (source.mode === "session" && backingBand.rhythm.mode === "off")
-  ) {
+  if (!resolvedBand.rhythm.enabled) {
     return [];
   }
 
-  const selectedModule = getPartBandModule(part, "rhythm");
-
   return [
     createRhythmRequest({
-      backingBand,
-      module: selectedModule?.type === "rhythm" ? selectedModule : undefined,
       part,
+      resolvedBand,
       tempoBpm,
     }),
   ];
@@ -338,16 +318,17 @@ export function createPartSequencePlaybackPlan(
     const index = session.parts.findIndex(
       (candidate) => candidate.id === part.id,
     );
-    const durationBeats = getPartLengthBeats(part, backingBand);
+    const resolvedBand = resolvePartBackingBand(part, backingBand);
+    const durationBeats = resolvedBand.durationBeats;
     const exerciseRequests = createExerciseRequestsForPart(
       part,
       tempoBpm,
-      backingBand,
+      resolvedBand,
     );
     const rhythmRequests = createRhythmRequestsForPart(
       part,
       tempoBpm,
-      backingBand,
+      resolvedBand,
     );
     const signatureInput = {
       durationBeats,
