@@ -2251,6 +2251,440 @@
       ]
     },
     {
+      "id": "acoustic-bass",
+      "label": "Acoustic Bass",
+      "deliveryFormats": [
+        "wav",
+        "ogg"
+      ],
+      "preferredDeliveryFormat": "ogg",
+      "regions": [
+        {
+          "regionId": "acoustic-bass-28",
+          "packId": "acoustic-bass",
+          "preset": {
+            "name": "Acoustic Bass",
+            "bank": 0,
+            "program": 32
+          },
+          "instrumentName": "Acoustic Bass",
+          "sample": {
+            "index": 1287,
+            "name": "Acoustic Bass E2",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 70160879,
+            "end": 70240239,
+            "startLoop": 70237439,
+            "endLoop": 70239580,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 28,
+            "rootCents": 2800,
+            "keyLow": 0,
+            "keyHigh": 28,
+            "velocityLow": 121,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 1.5000389892858181,
+              "decaySeconds": 29.007083309699535,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 0.20003624493065955,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "acoustic-bass-29",
+          "packId": "acoustic-bass",
+          "preset": {
+            "name": "Acoustic Bass",
+            "bank": 0,
+            "program": 32
+          },
+          "instrumentName": "Acoustic Bass",
+          "sample": {
+            "index": 1286,
+            "name": "Acoustic Bass F2",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 70069537,
+            "end": 70160833,
+            "startLoop": 70159660,
+            "endLoop": 70160670,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 29,
+            "rootCents": 2900,
+            "keyLow": 29,
+            "keyHigh": 29,
+            "velocityLow": 121,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 1.2998393544242488,
+              "decaySeconds": 25.005380733519765,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 0.20003624493065955,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "acoustic-bass-36",
+          "packId": "acoustic-bass",
+          "preset": {
+            "name": "Acoustic Bass",
+            "bank": 0,
+            "program": 32
+          },
+          "instrumentName": "Acoustic Bass",
+          "sample": {
+            "index": 1285,
+            "name": "Acoustic Bass C3",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 70017051,
+            "end": 70069491,
+            "startLoop": 70068793,
+            "endLoop": 70069468,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 36,
+            "rootCents": 3600,
+            "keyLow": 30,
+            "keyHigh": 36,
+            "velocityLow": 121,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 1.1988628856457777,
+              "decaySeconds": 21.995960055329327,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 0.20003624493065955,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "acoustic-bass-41",
+          "packId": "acoustic-bass",
+          "preset": {
+            "name": "Acoustic Bass",
+            "bank": 0,
+            "program": 32
+          },
+          "instrumentName": "Acoustic Bass",
+          "sample": {
+            "index": 1284,
+            "name": "Acoustic Bass F3",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 69963533,
+            "end": 70017005,
+            "startLoop": 70016436,
+            "endLoop": 70016942,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 41,
+            "rootCents": 4100,
+            "keyLow": 37,
+            "keyHigh": 41,
+            "velocityLow": 121,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 1.0999973132782155,
+              "decaySeconds": 17.00043786584245,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 0.20003624493065955,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "acoustic-bass-46",
+          "packId": "acoustic-bass",
+          "preset": {
+            "name": "Acoustic Bass",
+            "bank": 0,
+            "program": 32
+          },
+          "instrumentName": "Acoustic Bass",
+          "sample": {
+            "index": 1283,
+            "name": "Acoustic Bass A#3",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 69918719,
+            "end": 69963487,
+            "startLoop": 69962666,
+            "endLoop": 69963424,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 46,
+            "rootCents": 4600,
+            "keyLow": 42,
+            "keyHigh": 46,
+            "velocityLow": 121,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 1.0,
+              "decaySeconds": 13.501052738080284,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 0.20003624493065955,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "acoustic-bass-54",
+          "packId": "acoustic-bass",
+          "preset": {
+            "name": "Acoustic Bass",
+            "bank": 0,
+            "program": 32
+          },
+          "instrumentName": "Acoustic Bass",
+          "sample": {
+            "index": 1282,
+            "name": "Acoustic Bass F#4",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 69881945,
+            "end": 69918673,
+            "startLoop": 69918172,
+            "endLoop": 69918649,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 54,
+            "rootCents": 5400,
+            "keyLow": 51,
+            "keyHigh": 54,
+            "velocityLow": 121,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.8001449797226382,
+              "decaySeconds": 8.301277273277979,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 0.20003624493065955,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "acoustic-bass-60",
+          "packId": "acoustic-bass",
+          "preset": {
+            "name": "Acoustic Bass",
+            "bank": 0,
+            "program": 32
+          },
+          "instrumentName": "Acoustic Bass",
+          "sample": {
+            "index": 1281,
+            "name": "Acoustic Bass C5",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 69839211,
+            "end": 69881899,
+            "startLoop": 69881362,
+            "endLoop": 69881868,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 60,
+            "rootCents": 6000,
+            "keyLow": 55,
+            "keyHigh": 60,
+            "velocityLow": 121,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.6499196772121244,
+              "decaySeconds": 8.20119040971215,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 0.20003624493065955,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "acoustic-bass-66",
+          "packId": "acoustic-bass",
+          "preset": {
+            "name": "Acoustic Bass",
+            "bank": 0,
+            "program": 32
+          },
+          "instrumentName": "Acoustic Bass",
+          "sample": {
+            "index": 1280,
+            "name": "Acoustic Bass F#5",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 69801461,
+            "end": 69839165,
+            "startLoop": 69838651,
+            "endLoop": 69839128,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 66,
+            "rootCents": 6600,
+            "keyLow": 61,
+            "keyHigh": 66,
+            "velocityLow": 121,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.5499986566391077,
+              "decaySeconds": 8.097631547193247,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 0.20003624493065955,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        },
+        {
+          "regionId": "acoustic-bass-72",
+          "packId": "acoustic-bass",
+          "preset": {
+            "name": "Acoustic Bass",
+            "bank": 0,
+            "program": 32
+          },
+          "instrumentName": "Acoustic Bass",
+          "sample": {
+            "index": 1279,
+            "name": "Acoustic Bass C6",
+            "sampleRate": 44100,
+            "originalPitch": 60,
+            "pitchCorrection": 0,
+            "start": 69776703,
+            "end": 69801415,
+            "startLoop": 69800809,
+            "endLoop": 69801399,
+            "sampleType": 1,
+            "sampleLink": 0
+          },
+          "resolved": {
+            "rootMidi": 72,
+            "rootCents": 7200,
+            "keyLow": 67,
+            "keyHigh": 127,
+            "velocityLow": 121,
+            "velocityHigh": 127,
+            "fineTune": 0,
+            "coarseTune": 0,
+            "sampleModes": 1,
+            "exclusiveClass": 0,
+            "attenuationCentibels": 0,
+            "pan": 0,
+            "ampEnvelope": {
+              "delaySeconds": 0.0009765625,
+              "attackSeconds": 0.0009765625,
+              "holdSeconds": 0.45010494920905475,
+              "decaySeconds": 7.000703957961675,
+              "sustainGain": 1e-05,
+              "releaseSeconds": 0.20003624493065955,
+              "keynumToHold": 0,
+              "keynumToDecay": 0
+            }
+          }
+        }
+      ]
+    },
+    {
       "id": "percussion",
       "label": "Percussion",
       "deliveryFormats": [

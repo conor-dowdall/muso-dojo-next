@@ -86,6 +86,25 @@
       ]
     },
     {
+      "id": "acoustic-bass",
+      "label": "Acoustic Bass",
+      "sourcePreset": { "bank": 0, "program": 32 },
+      "channels": "mono",
+      "gain": 0.92,
+      "paddingSeconds": 0.02,
+      "roots": [
+        { "rootMidi": 28, "lowMidi": 0, "highMidi": 28 },
+        { "rootMidi": 29, "lowMidi": 29, "highMidi": 29 },
+        { "rootMidi": 36, "lowMidi": 30, "highMidi": 36 },
+        { "rootMidi": 41, "lowMidi": 37, "highMidi": 41 },
+        { "rootMidi": 46, "lowMidi": 42, "highMidi": 46 },
+        { "rootMidi": 54, "lowMidi": 47, "highMidi": 54 },
+        { "rootMidi": 60, "lowMidi": 55, "highMidi": 60 },
+        { "rootMidi": 66, "lowMidi": 61, "highMidi": 66 },
+        { "rootMidi": 72, "lowMidi": 67, "highMidi": 127 }
+      ]
+    },
+    {
       "id": "percussion",
       "label": "Percussion",
       "sourcePreset": { "bank": 128, "program": 0 },

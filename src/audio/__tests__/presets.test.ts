@@ -45,10 +45,20 @@ describe("audio presets", () => {
     expect(isAudioPresetId("percussion")).toBe(false);
     expect(
       getAudioPresetsForSurface("instrument").map((preset) => preset.id),
-    ).toStrictEqual(["piano", "plucked-string", "bowed-strings"]);
+    ).toStrictEqual([
+      "piano",
+      "plucked-string",
+      "acoustic-bass",
+      "bowed-strings",
+    ]);
     expect(
       getAudioPresetsForSurface("exercise").map((preset) => preset.id),
-    ).toStrictEqual(["piano", "plucked-string", "bowed-strings"]);
+    ).toStrictEqual([
+      "piano",
+      "plucked-string",
+      "acoustic-bass",
+      "bowed-strings",
+    ]);
     expect(
       getAudioPresetsForSurface("drone").map((preset) => preset.id),
     ).toEqual(["bowed-strings"]);
@@ -58,6 +68,7 @@ describe("audio presets", () => {
     const expectedPackByPreset = {
       piano: "piano",
       "plucked-string": "plucked-string",
+      "acoustic-bass": "acoustic-bass",
       "bowed-strings": "bowed-strings",
     } as const satisfies Record<string, SamplePackId>;
 

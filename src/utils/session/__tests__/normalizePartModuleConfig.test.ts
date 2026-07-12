@@ -16,7 +16,7 @@ describe("normalizePartModuleConfig", () => {
 
   it("keeps valid persisted drone settings", () => {
     const normalizedModule = normalizePartModuleConfig({
-      audioPresetId: "plucked-string",
+      audioPresetId: "bowed-strings",
       id: "drone-1",
       noteCount: 11,
       octaveOffset: 4,
@@ -25,7 +25,6 @@ describe("normalizePartModuleConfig", () => {
     });
 
     expect(normalizedModule).toStrictEqual({
-      audioPresetId: "plucked-string",
       id: "drone-1",
       noteCount: 11,
       octaveOffset: 4,
@@ -50,12 +49,23 @@ describe("normalizePartModuleConfig", () => {
 
     expect(
       normalizePartModuleConfig({
-        audioPresetId: "not-a-preset",
+        audioPresetId: "acoustic-bass",
         id: "drone-1",
         noteCount: 0,
         octaveOffset: 5,
         type: "drone",
         wood: "not-a-wood",
+      }),
+    ).toStrictEqual({
+      id: "drone-1",
+      type: "drone",
+    });
+
+    expect(
+      normalizePartModuleConfig({
+        audioPresetId: "not-a-preset",
+        id: "drone-1",
+        type: "drone",
       }),
     ).toStrictEqual({
       id: "drone-1",

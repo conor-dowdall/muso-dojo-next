@@ -3,6 +3,79 @@ import { getPlaybackRate } from "@/audio/samplePackLibrary";
 import { samplePacks } from "@/audio/samplePacks.generated";
 
 describe("generated sample packs", () => {
+  it("includes curated Acoustic Bass regions across its native register", () => {
+    const acousticBass = samplePacks["acoustic-bass"];
+
+    expect(acousticBass.regions.map((region) => region.rootMidi)).toEqual([
+      28, 29, 36, 41, 46, 54, 60, 66, 72,
+    ]);
+    expect(
+      acousticBass.regions.map((region) => [
+        region.lowMidi,
+        region.rootMidi,
+        region.highMidi,
+      ]),
+    ).toEqual([
+      [0, 28, 28],
+      [29, 29, 29],
+      [30, 36, 36],
+      [37, 41, 41],
+      [42, 46, 46],
+      [47, 54, 54],
+      [55, 60, 60],
+      [61, 66, 66],
+      [67, 72, 127],
+    ]);
+    expect(
+      acousticBass.regions.map((region) => region.sourceSampleName),
+    ).toEqual([
+      "Acoustic Bass E2",
+      "Acoustic Bass F2",
+      "Acoustic Bass C3",
+      "Acoustic Bass F3",
+      "Acoustic Bass A#3",
+      "Acoustic Bass F#4",
+      "Acoustic Bass C5",
+      "Acoustic Bass F#5",
+      "Acoustic Bass C6",
+    ]);
+  });
+
+  it("gives every pitched pack complete, contiguous MIDI coverage", () => {
+    const pitchedPackIds = [
+      "piano",
+      "plucked-string",
+      "bowed-strings",
+      "acoustic-bass",
+    ] as const;
+
+    pitchedPackIds.forEach((packId) => {
+      const regions = samplePacks[packId].regions;
+
+      expect(regions.at(0)?.lowMidi, packId).toBe(0);
+      expect(regions.at(-1)?.highMidi, packId).toBe(127);
+      expect(new Set(regions.map((region) => region.id)).size, packId).toBe(
+        regions.length,
+      );
+
+      regions.forEach((region, index) => {
+        expect(
+          region.rootMidi,
+          `${packId}:${region.id}`,
+        ).toBeGreaterThanOrEqual(region.lowMidi);
+        expect(region.rootMidi, `${packId}:${region.id}`).toBeLessThanOrEqual(
+          region.highMidi,
+        );
+
+        if (index > 0) {
+          expect(region.lowMidi, `${packId}:${region.id}`).toBe(
+            regions[index - 1]!.highMidi + 1,
+          );
+        }
+      });
+    });
+  });
+
   it("includes the metronome click inside the percussion pack", () => {
     const percussion = samplePacks.percussion;
     const click = percussion.regions.find(

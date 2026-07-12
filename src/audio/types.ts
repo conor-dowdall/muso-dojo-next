@@ -2,8 +2,9 @@ import { type PercussionSampleId } from "@/data/rhythmPresets";
 
 export type AudioUse = "preview" | "tuning" | "drone" | "exercise";
 
-export type AudioPresetId = "piano" | "plucked-string" | "bowed-strings";
-export type SamplePackId = AudioPresetId | "percussion";
+export type AudioPresetId =
+  "piano" | "plucked-string" | "acoustic-bass" | "bowed-strings";
+export type SamplePackId = AudioPresetId | "acoustic-bass" | "percussion";
 export type AudioPresetSurface = "instrument" | "drone" | "exercise";
 
 export type AudioVoiceHandle = string & {

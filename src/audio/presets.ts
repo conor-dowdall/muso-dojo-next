@@ -62,6 +62,19 @@ export const audioPresets = {
     id: "plucked-string",
     label: "Plucked String",
   }),
+  "acoustic-bass": createSamplePreset({
+    availableOn: ["instrument", "exercise"],
+    defaultDurationSeconds: 0.9,
+    envelope: {
+      attackSeconds: 0.003,
+      decaySeconds: 0.7,
+      releaseSeconds: 0.12,
+      sustainGain: 0.04,
+    },
+    gain: 0.82,
+    id: "acoustic-bass",
+    label: "Acoustic Bass",
+  }),
   "bowed-strings": createSamplePreset({
     attackSecondsByUse: { exercise: 0.045 },
     availableOn: ["instrument", "drone", "exercise"],
@@ -86,9 +99,9 @@ export const defaultAudioPresetIds = {
 } as const satisfies Record<AudioUse, AudioPresetId>;
 
 const audioPresetOrderBySurface = {
-  instrument: ["piano", "plucked-string", "bowed-strings"],
+  instrument: ["piano", "plucked-string", "acoustic-bass", "bowed-strings"],
   drone: ["bowed-strings"],
-  exercise: ["piano", "plucked-string", "bowed-strings"],
+  exercise: ["piano", "plucked-string", "acoustic-bass", "bowed-strings"],
 } as const satisfies Record<AudioPresetSurface, readonly AudioPresetId[]>;
 
 export function getDefaultAudioPresetId(use: AudioUse) {

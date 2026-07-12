@@ -6,6 +6,7 @@ import {
 } from "@/audio/audioStopConfig";
 import { createWebAudioEngine } from "@/audio/createWebAudioEngine";
 import {
+  SAMPLE_PACK_IDS,
   clearSamplePackAssetCacheForTests,
   loadSamplePackAsset,
   preloadSamplePackAssets,
@@ -268,8 +269,8 @@ describe("createWebAudioEngine", () => {
     expect(MockAudioContext.lastOptions).toMatchObject({
       latencyHint: "interactive",
     });
-    expect(fetch).toHaveBeenCalledTimes(4);
-    expect(MockAudioContext.decodeCount).toBe(4);
+    expect(fetch).toHaveBeenCalledTimes(SAMPLE_PACK_IDS.length);
+    expect(MockAudioContext.decodeCount).toBe(SAMPLE_PACK_IDS.length);
   });
 
   it("warms generated sample packs without resuming a suspended context", async () => {
@@ -280,8 +281,8 @@ describe("createWebAudioEngine", () => {
     const warmed = await engine.warm();
 
     expect(warmed).toBe(true);
-    expect(fetch).toHaveBeenCalledTimes(4);
-    expect(MockAudioContext.decodeCount).toBe(4);
+    expect(fetch).toHaveBeenCalledTimes(SAMPLE_PACK_IDS.length);
+    expect(MockAudioContext.decodeCount).toBe(SAMPLE_PACK_IDS.length);
     expect(MockAudioContext.resumeCount).toBe(0);
     expect(MockAudioContext.lastInstance?.state).toBe("suspended");
 
@@ -289,8 +290,8 @@ describe("createWebAudioEngine", () => {
 
     expect(prepared).toBe(true);
     expect(MockAudioContext.resumeCount).toBe(1);
-    expect(MockAudioContext.decodeCount).toBe(4);
-    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(MockAudioContext.decodeCount).toBe(SAMPLE_PACK_IDS.length);
+    expect(fetch).toHaveBeenCalledTimes(SAMPLE_PACK_IDS.length);
   });
 
   it("prefers an offline context when warming generated sample packs", async () => {
@@ -304,14 +305,14 @@ describe("createWebAudioEngine", () => {
     expect(MockOfflineAudioContext.instanceCount).toBe(1);
     expect(MockAudioContext.lastInstance).toBeUndefined();
     expect(MockAudioContext.resumeCount).toBe(0);
-    expect(MockAudioContext.decodeCount).toBe(4);
+    expect(MockAudioContext.decodeCount).toBe(SAMPLE_PACK_IDS.length);
 
     const prepared = await engine.prime();
 
     expect(prepared).toBe(true);
     expect(MockAudioContext.resumeCount).toBe(1);
-    expect(MockAudioContext.decodeCount).toBe(4);
-    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(MockAudioContext.decodeCount).toBe(SAMPLE_PACK_IDS.length);
+    expect(fetch).toHaveBeenCalledTimes(SAMPLE_PACK_IDS.length);
   });
 
   it("shares sample fetches when a sample asset request overlaps with priming", async () => {
@@ -321,8 +322,8 @@ describe("createWebAudioEngine", () => {
 
     await Promise.all([loadSamplePackAsset("piano"), engine.prime()]);
 
-    expect(fetch).toHaveBeenCalledTimes(4);
-    expect(MockAudioContext.decodeCount).toBe(4);
+    expect(fetch).toHaveBeenCalledTimes(SAMPLE_PACK_IDS.length);
+    expect(MockAudioContext.decodeCount).toBe(SAMPLE_PACK_IDS.length);
   });
 
   it("shares sample fetches when background sample preloading overlaps with priming", async () => {
@@ -332,8 +333,8 @@ describe("createWebAudioEngine", () => {
 
     await Promise.all([preloadSamplePackAssets(), engine.prime()]);
 
-    expect(fetch).toHaveBeenCalledTimes(4);
-    expect(MockAudioContext.decodeCount).toBe(4);
+    expect(fetch).toHaveBeenCalledTimes(SAMPLE_PACK_IDS.length);
+    expect(MockAudioContext.decodeCount).toBe(SAMPLE_PACK_IDS.length);
   });
 
   it("shares sample fetches when a note preview overlaps with priming", async () => {
@@ -350,8 +351,8 @@ describe("createWebAudioEngine", () => {
       }),
     ]);
 
-    expect(fetch).toHaveBeenCalledTimes(4);
-    expect(MockAudioContext.decodeCount).toBe(4);
+    expect(fetch).toHaveBeenCalledTimes(SAMPLE_PACK_IDS.length);
+    expect(MockAudioContext.decodeCount).toBe(SAMPLE_PACK_IDS.length);
   });
 
   it("does not start an aborted note preview after its sample finishes loading", async () => {

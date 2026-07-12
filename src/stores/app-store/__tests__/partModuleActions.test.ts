@@ -279,7 +279,7 @@ describe("part module app store actions", () => {
     });
   });
 
-  it("updates drone module settings", () => {
+  it("updates supported drone module settings", () => {
     const store = createTestStore();
     const addedModuleId = store.getState().addPartModule(sessionId, partId, {
       type: "drone",
@@ -291,12 +291,7 @@ describe("part module app store actions", () => {
 
     store
       .getState()
-      .setDroneAudioPresetId(
-        sessionId,
-        partId,
-        addedModuleId,
-        "plucked-string",
-      );
+      .setDroneAudioPresetId(sessionId, partId, addedModuleId, "acoustic-bass");
     store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 4);
     store.getState().setDroneOctaveOffset(sessionId, partId, addedModuleId, 5);
     store.getState().setDroneNoteCount(sessionId, partId, addedModuleId, 5);
@@ -309,7 +304,6 @@ describe("part module app store actions", () => {
       );
 
     expect(updatedModule).toMatchObject({
-      audioPresetId: "plucked-string",
       id: addedModuleId,
       noteCount: 5,
       octaveOffset: 4,

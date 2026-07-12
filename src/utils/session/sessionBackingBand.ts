@@ -1,6 +1,5 @@
 import {
   audioPresets,
-  getDefaultAudioPresetId,
   isAudioPresetId,
   isAudioPresetAvailableOn,
 } from "@/audio/presets";
@@ -13,10 +12,13 @@ import {
   DEFAULT_RHYTHM_SELECTION,
   normalizeRhythmSelection,
 } from "@/utils/rhythm/rhythmConfig";
+import { type AudioPresetId } from "@/audio/types";
 import { type SessionBackingBandConfig } from "@/types/session";
 import { isRecord } from "./normalizationPrimitives";
 
 export const DEFAULT_SESSION_BACKING_BAND_COUNT_IN_BEATS = 4;
+export const DEFAULT_SESSION_BACKING_BAND_AUDIO_PRESET_ID =
+  "acoustic-bass" satisfies AudioPresetId;
 export const MIN_SESSION_BACKING_BAND_COUNT_IN_BEATS = 0;
 export const MAX_SESSION_BACKING_BAND_COUNT_IN_BEATS = 16;
 
@@ -24,7 +26,7 @@ export function createDefaultSessionBackingBandConfig(): SessionBackingBandConfi
   return {
     countInBeats: DEFAULT_SESSION_BACKING_BAND_COUNT_IN_BEATS,
     looper: {
-      audioPresetId: getDefaultAudioPresetId("exercise"),
+      audioPresetId: DEFAULT_SESSION_BACKING_BAND_AUDIO_PRESET_ID,
       enabled: true,
       octaveOffset: DEFAULT_EXERCISE_OCTAVE_OFFSET,
     },

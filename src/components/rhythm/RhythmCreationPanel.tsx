@@ -39,20 +39,16 @@ import {
   getCompatibleRhythmBeatCounts,
   getRhythmBeatControlLabel,
   getRhythmGroupingControlLabel,
-  getRhythmStarterChoiceForRecipe,
-  getRhythmStarterRecipe,
-  getRhythmStarterSummary,
   getRecipeWithBeatCountConstraint,
   isRhythmGrooveChoiceAvailable,
-  isRhythmStarterChoiceAvailable,
   isRhythmTimekeeperSubdivisionChoiceAvailable,
   type RhythmBeatCountConstraint,
   rhythmGrooveChoices,
-  rhythmStarterChoices,
   rhythmTimekeeperFeelSubdivisionChoices,
   rhythmTimekeeperSoundChoices,
   rhythmTimekeeperStraightSubdivisionChoices,
 } from "./rhythmRecipeControls";
+import { RhythmPresetDisclosureItem } from "./RhythmPresetDisclosureItem";
 import styles from "./RhythmCreationPanel.module.css";
 
 interface RhythmCreationPanelProps {
@@ -80,7 +76,7 @@ export function RhythmCreationPanel({
   } = useDisclosureList<
     | "beats"
     | "foundation"
-    | "starter"
+    | "preset"
     | "subdivision"
     | "timekeeper"
     | "variation"
@@ -102,8 +98,6 @@ export function RhythmCreationPanel({
   const subdivisionLabel = getRhythmTimekeeperRhythmReadoutLabel(
     recipe.timekeeper,
   );
-  const selectedStarterChoice = getRhythmStarterChoiceForRecipe(recipe);
-  const starterLabel = selectedStarterChoice?.label ?? "Custom";
   const beatLabel = getRhythmBeatControlLabel(recipe.beats);
   const compatibleBeatCounts =
     getCompatibleRhythmBeatCounts(beatCountConstraint);
@@ -164,46 +158,14 @@ export function RhythmCreationPanel({
   return (
     <section className={creationStyles.section} aria-label={ariaLabel}>
       <DisclosureList>
-        <DisclosureListItem
-          ariaLabel={`Start from rhythm. Current: ${starterLabel}`}
-          isOpen={isChoiceOpen("starter")}
-          label="Start From"
-          panelVariant="menu"
-          preview={starterLabel}
-          onToggle={() => toggleChoice("starter")}
-        >
-          <DisclosureList density="compact">
-            {rhythmStarterChoices.map((choice) => {
-              const isAvailable = isRhythmStarterChoiceAvailable(
-                choice.id,
-                beatCountConstraint,
-              );
-
-              return (
-                <DisclosureListChoice
-                  key={choice.id}
-                  aria-label={
-                    isAvailable
-                      ? `Start with ${choice.label}`
-                      : `Start with ${choice.label}. Not compatible with this progression`
-                  }
-                  disabled={!isAvailable}
-                  label={choice.label}
-                  selected={selectedStarterChoice?.id === choice.id}
-                  subtitle={
-                    isAvailable
-                      ? getRhythmStarterSummary(choice.id)
-                      : "Not compatible with this progression"
-                  }
-                  onClick={() => {
-                    updateRecipe(getRhythmStarterRecipe(choice.id));
-                    closeChoice("starter");
-                  }}
-                />
-              );
-            })}
-          </DisclosureList>
-        </DisclosureListItem>
+        <RhythmPresetDisclosureItem
+          beatCountConstraint={beatCountConstraint}
+          isOpen={isChoiceOpen("preset")}
+          recipe={recipe}
+          onChange={updateRecipe}
+          onClose={() => closeChoice("preset")}
+          onToggle={() => toggleChoice("preset")}
+        />
 
         <DisclosureListItem
           ariaLabel={`Beats. Current: ${beatLabel}`}

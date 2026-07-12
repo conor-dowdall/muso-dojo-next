@@ -117,7 +117,7 @@ describe("createPartSequencePlaybackPlan", () => {
           countInBeats: 0,
           id: "part-sequence-looper:part",
           metronomeEnabled: false,
-          presetId: "plucked-string",
+          presetId: "acoustic-bass",
         },
       ],
       rhythmRequests: [{ id: "part-sequence-drums:part" }],

@@ -5,7 +5,12 @@ import {
   type PartModuleConfig,
   type RhythmPartModuleConfig,
 } from "@/types/session";
-import { getDefaultAudioPresetId, isAudioPresetId } from "@/audio/presets";
+import {
+  audioPresets,
+  getDefaultAudioPresetId,
+  isAudioPresetAvailableOn,
+  isAudioPresetId,
+} from "@/audio/presets";
 import { assertNever } from "@/utils/assertNever";
 import { normalizeInstrumentInstanceConfig } from "@/utils/session/normalizeInstrumentConfig";
 import { isPartModuleType } from "@/utils/session/partModuleTypes";
@@ -43,7 +48,11 @@ import {
 import { normalizeRhythmSelection } from "@/utils/rhythm/rhythmConfig";
 
 function normalizeDroneAudioPresetId(value: unknown) {
-  if (!isAudioPresetId(value) || value === getDefaultAudioPresetId("drone")) {
+  if (
+    !isAudioPresetId(value) ||
+    !isAudioPresetAvailableOn(audioPresets[value], "drone") ||
+    value === getDefaultAudioPresetId("drone")
+  ) {
     return undefined;
   }
 

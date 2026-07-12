@@ -1,4 +1,8 @@
-import { getDefaultAudioPresetId } from "@/audio/presets";
+import {
+  audioPresets,
+  getDefaultAudioPresetId,
+  isAudioPresetAvailableOn,
+} from "@/audio/presets";
 import {
   DRONE_MAX_OCTAVE_OFFSET,
   DRONE_MAX_NOTE_COUNT,
@@ -67,7 +71,10 @@ export function createDroneActions(
         currentAudioPresetId,
       );
 
-      if (nextAudioPresetId === currentAudioPresetId) {
+      if (
+        nextAudioPresetId === currentAudioPresetId ||
+        !isAudioPresetAvailableOn(audioPresets[nextAudioPresetId], "drone")
+      ) {
         return;
       }
 

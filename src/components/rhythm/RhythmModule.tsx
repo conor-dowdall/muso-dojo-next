@@ -473,7 +473,9 @@ export function RhythmModule({
           onClone={onClone}
           onClose={() => setIsOptionsOpen(false)}
           onRemove={onRemove}
+          onRhythmRecipeChange={(value) => onRhythmRecipeChange?.(value)}
           onWoodChange={onWoodChange}
+          recipe={recipe}
         />
       ) : null}
     </>

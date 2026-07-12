@@ -10,7 +10,7 @@ describe("Session Backing Band", () => {
     expect(createDefaultSessionBackingBandConfig()).toEqual({
       countInBeats: 4,
       looper: {
-        audioPresetId: "plucked-string",
+        audioPresetId: "acoustic-bass",
         enabled: true,
         octaveOffset: -1,
       },
