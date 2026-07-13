@@ -3,6 +3,7 @@ import { createPartSequencePlaybackPlan } from "@/audio/partSequencePlanning";
 import { RHYTHM_PPQ } from "@/data/rhythmPresets";
 import { DEFAULT_RHYTHM_SELECTION } from "@/utils/rhythm/rhythmConfig";
 import { type MusicPartConfig, type SessionConfig } from "@/types/session";
+import { createChordProgressionParts } from "@/utils/music-part/createChordProgressionParts";
 
 function createPart(
   id: string,
@@ -61,6 +62,231 @@ describe("createPartSequencePlaybackPlan", () => {
       id: "part-sequence-drums:part",
       pattern: { cycleTicks: RHYTHM_PPQ * 2 },
     });
+  });
+
+  it("plans one parent-bar Rhythm across automatic fractional Parts", () => {
+    const plan = createPartSequencePlaybackPlan(
+      createSession([
+        createPart("bar-a", [], {
+          automaticRhythm: { style: "swing" },
+          durationInBars: 0.5,
+        }),
+        createPart("bar-b", [], {
+          automaticRhythm: { style: "swing" },
+          durationInBars: 0.5,
+        }),
+      ]),
+    );
+
+    expect(plan.parts).toMatchObject([
+      {
+        continueRhythm: true,
+        durationBeats: 2,
+        rhythmRequests: [
+          {
+            id: "part-sequence-drums:bar:bar-a",
+            pattern: {
+              cycleTicks: RHYTHM_PPQ * 4,
+              meter: { beatUnit: 4, beats: 4 },
+            },
+          },
+        ],
+      },
+      {
+        continueRhythm: true,
+        durationBeats: 2,
+        rhythmRequests: [
+          {
+            id: "part-sequence-drums:bar:bar-a",
+            pattern: {
+              cycleTicks: RHYTHM_PPQ * 4,
+              meter: { beatUnit: 4, beats: 4 },
+            },
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("keeps a compatible Session Rhythm alive across authored bar boundaries", () => {
+    const createHalfBar = (id: string) =>
+      createPart(id, [], {
+        automaticRhythm: { style: "swing" },
+        durationInBars: 0.5,
+      });
+    const plan = createPartSequencePlaybackPlan(
+      createSession([
+        createHalfBar("one-a"),
+        createHalfBar("one-b"),
+        createHalfBar("two-a"),
+        createHalfBar("two-b"),
+      ]),
+    );
+
+    expect(
+      plan.parts.map((part) => ({
+        continueRhythm: part.continueRhythm,
+        rhythmId: part.rhythmRequests[0]?.id,
+      })),
+    ).toEqual([
+      {
+        continueRhythm: true,
+        rhythmId: "part-sequence-drums:bar:one-a",
+      },
+      {
+        continueRhythm: true,
+        rhythmId: "part-sequence-drums:bar:one-a",
+      },
+      {
+        continueRhythm: true,
+        rhythmId: "part-sequence-drums:bar:one-a",
+      },
+      {
+        continueRhythm: true,
+        rhythmId: "part-sequence-drums:bar:one-a",
+      },
+    ]);
+  });
+
+  it("starts a new rhythm run when the authored bar rhythm changes", () => {
+    const plan = createPartSequencePlaybackPlan(
+      createSession([
+        createPart("swing", [], {
+          automaticRhythm: { style: "swing" },
+        }),
+        createPart("straight", [], {
+          automaticRhythm: { style: "standard" },
+        }),
+      ]),
+    );
+
+    expect(plan.parts).toMatchObject([
+      {
+        continueRhythm: false,
+        rhythmRequests: [{ id: "part-sequence-drums:swing" }],
+      },
+      {
+        continueRhythm: false,
+        rhythmRequests: [{ id: "part-sequence-drums:straight" }],
+      },
+    ]);
+  });
+
+  it("uses one compound rhythm cycle for local modules in a split bar", () => {
+    const createHalfBar = (id: string) =>
+      createPart(
+        id,
+        [
+          {
+            id: `rhythm-${id}`,
+            rhythm: {
+              recipe: {
+                beats: 1,
+                groove: "pulse",
+                grouping: "auto",
+                timekeeper: {
+                  feel: "straight",
+                  sound: "hat",
+                  subdivision: "eighth-triplet",
+                },
+              },
+              source: "recipe",
+            },
+            type: "rhythm",
+          },
+        ],
+        {
+          band: {
+            backingNotes: { mode: "session" },
+            rhythm: { mode: "module", moduleId: `rhythm-${id}` },
+          },
+          durationInBars: 0.5,
+        },
+      );
+    const plan = createPartSequencePlaybackPlan(
+      createSession([createHalfBar("split-a"), createHalfBar("split-b")]),
+    );
+
+    expect(plan.parts).toMatchObject([
+      {
+        continueRhythm: true,
+        rhythmRequests: [
+          {
+            id: "part-sequence-drums:bar:split-a",
+            pattern: {
+              cycleTicks: RHYTHM_PPQ * 2,
+              meter: { beatUnit: 4, beats: 2 },
+            },
+          },
+        ],
+      },
+      {
+        continueRhythm: true,
+        rhythmRequests: [{ id: "part-sequence-drums:bar:split-a" }],
+      },
+    ]);
+  });
+
+  it("keeps a 6/8 Split Return rhythm continuous through its two half-bar chords", () => {
+    const parts = createChordProgressionParts({
+      chordListMode: "full-song-order",
+      moduleRequests: [
+        {
+          settings: {
+            rhythm: {
+              recipe: {
+                beats: 2,
+                groove: "kit",
+                grouping: "auto",
+                timekeeper: {
+                  feel: "straight",
+                  sound: "hat",
+                  subdivision: "eighth-triplet",
+                },
+              },
+              source: "recipe",
+            },
+          },
+          type: "rhythm",
+        },
+      ],
+      progressionKey: "oneFourOneFiveSplitReturn",
+      rootNote: "C",
+    });
+    const plan = createPartSequencePlaybackPlan(createSession(parts));
+    const firstHalf = plan.parts[6];
+    const secondHalf = plan.parts[7];
+
+    expect(firstHalf).toMatchObject({
+      continueRhythm: false,
+      durationBeats: 1,
+      rhythmRequests: [
+        {
+          pattern: {
+            cycleTicks: RHYTHM_PPQ * 2,
+            meter: { beatUnit: 4, beats: 2 },
+          },
+        },
+      ],
+    });
+    expect(firstHalf?.rhythmRequests[0]?.id).toMatch(
+      /^part-sequence-drums:bar:/,
+    );
+    expect(firstHalf?.rhythmRequests[0]?.pattern.hits).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          atTicks: RHYTHM_PPQ,
+          sampleId: "snare",
+        }),
+      ]),
+    );
+    expect(secondHalf).toMatchObject({
+      continueRhythm: true,
+      durationBeats: 1,
+    });
+    expect(secondHalf?.rhythmRequests[0]?.id).toBe(
+      firstHalf?.rhythmRequests[0]?.id,
+    );
   });
 
   it("uses the selected band Rhythm beat length", () => {

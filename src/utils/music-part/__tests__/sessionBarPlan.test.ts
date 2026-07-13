@@ -1,0 +1,273 @@
+import { describe, expect, it } from "vitest";
+import { type MusicPartConfig } from "@/types/session";
+import { createDefaultSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
+import { DEFAULT_RHYTHM_SELECTION } from "@/utils/rhythm/rhythmConfig";
+import { createSessionBarPlan } from "../sessionBarPlan";
+
+function createPart(
+  id: string,
+  patch: Partial<Omit<MusicPartConfig, "id">> = {},
+): MusicPartConfig {
+  return {
+    id,
+    modules: [],
+    noteCollectionKey: "major",
+    rootNote: "C",
+    ...patch,
+  };
+}
+
+function createLocalRhythmPart(id: string, beats: number) {
+  const moduleId = `rhythm-${id}`;
+
+  return createPart(id, {
+    band: {
+      backingNotes: { mode: "session" },
+      rhythm: { mode: "module", moduleId },
+    },
+    durationInBars: 0.5,
+    modules: [
+      {
+        id: moduleId,
+        rhythm: {
+          recipe: { ...DEFAULT_RHYTHM_SELECTION.recipe, beats },
+          source: "recipe",
+        },
+        type: "rhythm",
+      },
+    ],
+  });
+}
+
+describe("createSessionBarPlan", () => {
+  it("exposes a continuous automatic rhythm for an ordinary authored bar", () => {
+    const plan = createSessionBarPlan([
+      createPart("bar", { automaticRhythm: { style: "swing" } }),
+    ]);
+
+    expect(plan.entries[0]?.continuousRhythmSelection).toMatchObject({
+      recipe: { beats: 4, timekeeper: { feel: "swing" } },
+    });
+  });
+
+  it("groups fractional Parts under one authored meter", () => {
+    const plan = createSessionBarPlan([
+      createPart("a", {
+        automaticRhythm: { style: "swing" },
+        durationInBars: 0.5,
+      }),
+      createPart("b", {
+        automaticRhythm: { style: "swing" },
+        durationInBars: 0.5,
+      }),
+    ]);
+
+    expect(plan).toMatchObject({
+      layout: "authored",
+      totalAccessibleLabel: "1",
+    });
+    expect(plan.entries).toHaveLength(1);
+    expect(plan.entries[0]).toMatchObject({
+      accessibleLabel: "1",
+      label: "01",
+      meterLabel: "4/4",
+      segments: [
+        { part: { id: "a" }, segmentLabel: "a" },
+        { part: { id: "b" }, segmentLabel: "b" },
+      ],
+    });
+    expect(plan.entries[0]?.continuousRhythmSelection).toMatchObject({
+      recipe: { beats: 4 },
+    });
+  });
+
+  it("keeps proportionally scaled local Rhythms in the authored layout", () => {
+    const plan = createSessionBarPlan([
+      createLocalRhythmPart("a", 3),
+      createLocalRhythmPart("b", 3),
+    ]);
+
+    expect(plan.layout).toBe("authored");
+    expect(plan.entries[0]?.meterLabel).toBe("6/4");
+    expect(plan.entries[0]).toMatchObject({
+      continuousRhythmScope: "bar",
+      continuousRhythmSelection: {
+        recipe: { beats: 6, groove: "kit" },
+      },
+    });
+  });
+
+  it("uses a compound parent meter instead of fragment meters", () => {
+    const createCompoundPart = (id: string) => {
+      const part = createLocalRhythmPart(id, 1);
+      const rhythmModule = part.modules[0];
+      if (rhythmModule?.type === "rhythm") {
+        rhythmModule.rhythm = {
+          recipe: {
+            ...rhythmModule.rhythm.recipe,
+            groove: "pulse",
+            timekeeper: {
+              feel: "straight",
+              sound: "hat",
+              subdivision: "eighth-triplet",
+            },
+          },
+          source: "recipe",
+        };
+      }
+      return part;
+    };
+    const plan = createSessionBarPlan([
+      createCompoundPart("a"),
+      createCompoundPart("b"),
+    ]);
+
+    expect(plan.layout).toBe("authored");
+    expect(plan.entries[0]?.meterLabel).toBe("6/8");
+    expect(plan.entries[0]).toMatchObject({
+      continuousRhythmScope: "bar",
+      continuousRhythmSelection: {
+        recipe: {
+          beats: 2,
+          groove: "pulse",
+          timekeeper: { subdivision: "eighth-triplet" },
+        },
+      },
+    });
+  });
+
+  it("restores an authored full-bar groove lost while normalizing its segments", () => {
+    const authoredBarRhythm = {
+      recipe: {
+        ...DEFAULT_RHYTHM_SELECTION.recipe,
+        beats: 2,
+        groove: "kit" as const,
+        timekeeper: {
+          feel: "straight" as const,
+          sound: "hat" as const,
+          subdivision: "eighth-triplet" as const,
+        },
+      },
+      source: "recipe" as const,
+    };
+    const parts = [
+      createLocalRhythmPart("a", 1),
+      createLocalRhythmPart("b", 1),
+    ];
+
+    parts.forEach((part) => {
+      const rhythmModule = part.modules[0];
+      if (rhythmModule?.type === "rhythm") {
+        rhythmModule.authoredBarRhythm = authoredBarRhythm;
+        rhythmModule.rhythm = {
+          recipe: {
+            ...authoredBarRhythm.recipe,
+            beats: 1,
+            groove: "pulse",
+          },
+          source: "recipe",
+        };
+      }
+    });
+
+    const plan = createSessionBarPlan(parts);
+
+    expect(plan.entries[0]).toMatchObject({
+      continuousRhythmScope: "bar",
+      continuousRhythmSelection: {
+        recipe: {
+          beats: 2,
+          groove: "kit",
+          timekeeper: { subdivision: "eighth-triplet" },
+        },
+      },
+      meterLabel: "6/8",
+    });
+  });
+
+  it("stops using authored bar provenance after a segment Rhythm is edited", () => {
+    const parts = [
+      createLocalRhythmPart("a", 1),
+      createLocalRhythmPart("b", 1),
+    ];
+    const authoredBarRhythm = {
+      recipe: { ...DEFAULT_RHYTHM_SELECTION.recipe, beats: 2 },
+      source: "recipe" as const,
+    };
+
+    parts.forEach((part) => {
+      const rhythmModule = part.modules[0];
+      if (rhythmModule?.type === "rhythm") {
+        rhythmModule.authoredBarRhythm = authoredBarRhythm;
+        rhythmModule.rhythm = {
+          recipe: {
+            ...authoredBarRhythm.recipe,
+            beats: 1,
+            groove: "pulse",
+          },
+          source: "recipe",
+        };
+      }
+    });
+
+    const editedModule = parts[1]?.modules[0];
+    if (editedModule?.type === "rhythm") {
+      editedModule.rhythm = {
+        recipe: {
+          ...editedModule.rhythm.recipe,
+          timekeeper: {
+            ...editedModule.rhythm.recipe.timekeeper,
+            sound: "ride",
+          },
+        },
+        source: "recipe",
+      };
+    }
+
+    expect(createSessionBarPlan(parts).entries[0]).not.toHaveProperty(
+      "continuousRhythmSelection",
+    );
+  });
+
+  it("falls back to full-width Parts when local Beats break a split", () => {
+    const plan = createSessionBarPlan([
+      createLocalRhythmPart("a", 3),
+      createLocalRhythmPart("b", 4),
+    ]);
+
+    expect(plan.layout).toBe("linear");
+    expect(plan.entries).toHaveLength(2);
+    expect(plan.entries.map((entry) => entry.label)).toEqual(["01", "02"]);
+    expect(
+      plan.entries.flatMap((entry) =>
+        entry.segments.map((segment) => segment.chartSpanUnits),
+      ),
+    ).toEqual([420, 420]);
+  });
+
+  it("treats a Custom Session Rhythm as absolute for every Part", () => {
+    const backingBand = createDefaultSessionBackingBandConfig();
+    const plan = createSessionBarPlan(
+      [
+        createPart("a", { durationInBars: 0.5 }),
+        createPart("b", { durationInBars: 0.5 }),
+      ],
+      {
+        ...backingBand,
+        rhythm: {
+          mode: "custom",
+          selection: {
+            recipe: { ...DEFAULT_RHYTHM_SELECTION.recipe, beats: 5 },
+            source: "recipe",
+          },
+        },
+      },
+    );
+
+    expect(plan.layout).toBe("linear");
+    expect(plan.entries.map((entry) => entry.meterLabel)).toEqual([
+      "5/4",
+      "5/4",
+    ]);
+  });
+});

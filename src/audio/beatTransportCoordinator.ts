@@ -41,6 +41,7 @@ export interface BeatTransportPartStartRequest {
   exercises?: readonly ExercisePlaybackRequest[];
   handoff?: boolean;
   originTime?: number;
+  preserveRhythms?: boolean;
   rhythms?: readonly RhythmPlaybackRequest[];
   source?: BeatTransportStartSource;
   stopMissing?: boolean;
@@ -258,6 +259,7 @@ export class BeatTransportCoordinator {
     exercises = [],
     handoff = false,
     originTime,
+    preserveRhythms = false,
     rhythms = [],
     source = "manual",
     stopMissing = true,
@@ -341,9 +343,13 @@ export class BeatTransportCoordinator {
         .forEach((id) =>
           this.exercise.stop(id, { atTime: resolvedOriginTime }),
         );
-      this.rhythm
-        .getActiveIds(owner)
-        .forEach((id) => this.rhythm.stop(id, { atTime: resolvedOriginTime }));
+      if (!preserveRhythms) {
+        this.rhythm
+          .getActiveIds(owner)
+          .forEach((id) =>
+            this.rhythm.stop(id, { atTime: resolvedOriginTime }),
+          );
+      }
     }
 
     const results = await Promise.all([

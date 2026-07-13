@@ -316,4 +316,48 @@ describe("normalizePartModuleConfig", () => {
       }),
     ).not.toHaveProperty("wood");
   });
+
+  it("normalizes authored full-bar Rhythm provenance", () => {
+    expect(
+      normalizePartModuleConfig({
+        authoredBarRhythm: {
+          recipe: {
+            beats: 2,
+            groove: "kit",
+            grouping: "auto",
+            timekeeper: {
+              feel: "straight",
+              sound: "hat",
+              subdivision: "eighth-triplet",
+            },
+          },
+          source: "recipe",
+        },
+        id: "rhythm-1",
+        rhythm: {
+          recipe: { beats: 1, groove: "pulse" },
+          source: "recipe",
+        },
+        type: "rhythm",
+      }),
+    ).toMatchObject({
+      authoredBarRhythm: {
+        recipe: {
+          beats: 2,
+          groove: "kit",
+          timekeeper: { subdivision: "eighth-triplet" },
+        },
+      },
+      rhythm: { recipe: { beats: 1, groove: "pulse" } },
+    });
+
+    expect(
+      normalizePartModuleConfig({
+        authoredBarRhythm: { source: "unknown" },
+        id: "rhythm-1",
+        rhythm: { source: "recipe" },
+        type: "rhythm",
+      }),
+    ).not.toHaveProperty("authoredBarRhythm");
+  });
 });

@@ -22,7 +22,7 @@ import { useAppStore } from "@/stores/appStore";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { useScopedTransportShortcuts } from "@/hooks/interaction/useScopedTransportShortcuts";
 import { type SessionConfig } from "@/types/session";
-import { createPartBarTimeline } from "@/utils/music-part/partBarTimeline";
+import { createSessionBarPlan } from "@/utils/music-part/sessionBarPlan";
 import styles from "./PracticeBandTransport.module.css";
 
 export interface PracticeBandReadoutModel {
@@ -33,6 +33,7 @@ export interface PracticeBandReadoutModel {
   countLabel: string;
   identityAccessibleLabel?: string;
   identityLabel?: string;
+  positionLabel?: "Bar" | "Part";
 }
 
 function createPartReadout({
@@ -46,10 +47,14 @@ function createPartReadout({
     (part) => part.id === activePartId,
   );
   const part = activeIndex < 0 ? undefined : session.parts[activeIndex];
-  const barTimeline = createPartBarTimeline(session.parts);
-  const barEntry =
-    activeIndex < 0 ? undefined : barTimeline.entries[activeIndex];
-  const countLabel = barTimeline.totalLabel;
+  const barPlan = createSessionBarPlan(session.parts, session.backingBand);
+  const barEntry = barPlan.entries.find((entry) =>
+    entry.segments.some((segment) => segment.part.id === activePartId),
+  );
+  const activeSegment = barEntry?.segments.find(
+    (segment) => segment.part.id === activePartId,
+  );
+  const countLabel = barPlan.totalCountLabel;
 
   if (!part || !barEntry) {
     return {
@@ -61,12 +66,13 @@ function createPartReadout({
 
   return {
     countLabel,
-    barAccessibleLabel: barEntry.barAccessibleLabel,
-    barNumberLabel: barEntry.barNumberLabel,
-    barTotalAccessibleLabel: barEntry.barTotalAccessibleLabel,
-    barTotalLabel: barEntry.barTotalLabel,
+    barAccessibleLabel: `${barEntry.accessibleLabel}${activeSegment?.segmentLabel ?? ""}`,
+    barNumberLabel: barEntry.label,
+    barTotalAccessibleLabel: barPlan.totalAccessibleLabel,
+    barTotalLabel: barPlan.totalNumberLabel,
     identityAccessibleLabel: identity.accessibleLabel,
     identityLabel: identity.label,
+    positionLabel: barPlan.positionLabel,
   };
 }
 
@@ -321,7 +327,8 @@ export function PracticeBandReadout({
     );
   }
 
-  const accessibleLabel = `Bar ${readout.barAccessibleLabel} of ${readout.barTotalAccessibleLabel}. ${readout.identityAccessibleLabel}.`;
+  const positionLabel = readout.positionLabel ?? "Bar";
+  const accessibleLabel = `${positionLabel} ${readout.barAccessibleLabel} of ${readout.barTotalAccessibleLabel}. ${readout.identityAccessibleLabel}.`;
   const partNumberWidth = Math.max(
     readout.barNumberLabel.length,
     readout.barTotalLabel.length,
@@ -341,7 +348,7 @@ export function PracticeBandReadout({
       style={readoutStyle}
     >
       <span aria-hidden="true" className={styles.partPosition}>
-        <span className={styles.partLabel}>Bar</span>
+        <span className={styles.partLabel}>{positionLabel}</span>
         <span className={styles.partCounter}>
           <span className={styles.partNumber}>{readout.barNumberLabel}</span>
           <span className={styles.partOf}>of</span>

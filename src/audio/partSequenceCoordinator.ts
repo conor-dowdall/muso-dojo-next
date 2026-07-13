@@ -173,12 +173,14 @@ export class PartSequenceCoordinator {
   }
 
   private async startPartAtIndex({
+    forceRhythmRestart = false,
     handoff,
     index,
     originTime,
     plan,
     revision,
   }: {
+    forceRhythmRestart?: boolean;
     handoff: boolean;
     index: number;
     originTime?: number;
@@ -214,12 +216,15 @@ export class PartSequenceCoordinator {
     };
     this.emit();
 
+    const preserveRhythms =
+      handoff && part.continueRhythm && !forceRhythmRestart;
     const result = await this.transport.startPart({
       countIn: handoff ? undefined : plan.countIn,
       exercises: part.exerciseRequests,
       handoff,
       originTime,
-      rhythms: part.rhythmRequests,
+      preserveRhythms,
+      rhythms: preserveRhythms ? [] : part.rhythmRequests,
       source: "part-sequence",
       stopMissing: true,
       tempoBpm: plan.tempoBpm,
@@ -308,6 +313,7 @@ export class PartSequenceCoordinator {
     this.plan = plan;
 
     return this.startPartAtIndex({
+      forceRhythmRestart: true,
       handoff: true,
       index: Math.min(currentIndex, plan.parts.length - 1),
       plan,

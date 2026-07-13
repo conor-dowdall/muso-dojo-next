@@ -233,6 +233,53 @@ describe("createChordProgressionParts", () => {
     });
   });
 
+  it("retains the authored full-bar Rhythm behind normalized split modules", () => {
+    const parts = createChordProgressionParts({
+      chordListMode: "full-song-order",
+      rootNote: "C",
+      progressionKey: "oneFourOneFiveSplitReturn",
+      moduleRequests: [
+        {
+          type: "rhythm",
+          settings: {
+            rhythm: {
+              recipe: {
+                beats: 2,
+                groove: "kit",
+                grouping: "auto",
+                timekeeper: {
+                  feel: "straight",
+                  sound: "hat",
+                  subdivision: "eighth-triplet",
+                },
+              },
+              source: "recipe",
+            },
+          },
+        },
+      ],
+    });
+
+    for (const part of parts.slice(6, 8)) {
+      expect(part?.modules[0]).toMatchObject({
+        authoredBarRhythm: {
+          recipe: {
+            beats: 2,
+            groove: "kit",
+            timekeeper: { subdivision: "eighth-triplet" },
+          },
+        },
+        rhythm: {
+          recipe: {
+            beats: 1,
+            groove: "pulse",
+          },
+        },
+        type: "rhythm",
+      });
+    }
+  });
+
   it("builds Rhythm Changes sections as separate progression options", () => {
     const aSectionParts = createChordProgressionParts({
       chordListMode: "full-song-order",

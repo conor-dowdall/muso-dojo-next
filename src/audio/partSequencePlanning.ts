@@ -14,7 +14,11 @@ import {
   resolvePartBackingBand,
   type ResolvedPartBackingBand,
 } from "@/utils/music-part/resolvePartBackingBand";
-import { getRhythmSelectionPattern } from "@/utils/rhythm/rhythmConfig";
+import { createSessionBarPlan } from "@/utils/music-part/sessionBarPlan";
+import {
+  getRhythmSelectionPattern,
+  getRhythmSelectionRecipe,
+} from "@/utils/rhythm/rhythmConfig";
 import {
   type ExerciseLooperPartModuleConfig,
   type MusicPartConfig,
@@ -34,6 +38,7 @@ const PART_SEQUENCE_DEFAULT_EXERCISE_ID_PREFIX = "part-sequence-looper";
 const PART_SEQUENCE_DEFAULT_RHYTHM_ID_PREFIX = "part-sequence-drums";
 
 export interface PartSequenceStepPlan {
+  continueRhythm: boolean;
   durationBeats: number;
   exerciseRequests: readonly ExercisePlaybackRequest[];
   index: number;
@@ -189,6 +194,24 @@ function createRhythmRequest({
   };
 }
 
+function createContinuousBarRhythmRequest({
+  firstPartId,
+  selection,
+  spansMultipleParts,
+  tempoBpm,
+}: {
+  firstPartId: string;
+  selection: SessionBackingBandConfig["rhythm"]["selection"];
+  spansMultipleParts: boolean;
+  tempoBpm: number;
+}): RhythmPlaybackRequest {
+  return {
+    id: `${PART_SEQUENCE_DEFAULT_RHYTHM_ID_PREFIX}:${spansMultipleParts ? "bar:" : ""}${firstPartId}`,
+    pattern: getRhythmSelectionPattern(selection),
+    tempoBpm,
+  };
+}
+
 function createRhythmRequestsForPart(
   part: MusicPartConfig,
   tempoBpm: number,
@@ -238,14 +261,16 @@ function createRhythmResetSignature(request: RhythmPlaybackRequest) {
 }
 
 function createPartResetSignature({
+  continueRhythm,
   durationBeats,
   exerciseRequests,
   rhythmRequests,
 }: Pick<
   PartSequenceStepPlan,
-  "durationBeats" | "exerciseRequests" | "rhythmRequests"
+  "continueRhythm" | "durationBeats" | "exerciseRequests" | "rhythmRequests"
 >) {
   return JSON.stringify({
+    continueRhythm,
     durationBeats,
     exercises: exerciseRequests.map(createExerciseResetSignature),
     rhythms: rhythmRequests.map(createRhythmResetSignature),
@@ -253,14 +278,16 @@ function createPartResetSignature({
 }
 
 function createPartUpdateSignature({
+  continueRhythm,
   durationBeats,
   exerciseRequests,
   rhythmRequests,
 }: Pick<
   PartSequenceStepPlan,
-  "durationBeats" | "exerciseRequests" | "rhythmRequests"
+  "continueRhythm" | "durationBeats" | "exerciseRequests" | "rhythmRequests"
 >) {
   return JSON.stringify({
+    continueRhythm,
     durationBeats,
     exercises: exerciseRequests.map((request) => ({
       ...request,
@@ -314,6 +341,84 @@ export function createPartSequencePlaybackPlan(
     mode === "part-loop"
       ? session.parts.filter((part) => part.id === options.partId)
       : session.parts;
+  const continuousBarRhythms = new Map<
+    string,
+    { continueRhythm: boolean; request: RhythmPlaybackRequest }
+  >();
+
+  if (mode === "session") {
+    const barPlan = createSessionBarPlan(session.parts, backingBand);
+    if (barPlan.layout === "authored") {
+      let activeRun:
+        | {
+            request: RhythmPlaybackRequest;
+            scope: "bar" | "session";
+            signature: string;
+          }
+        | undefined;
+
+      barPlan.entries.forEach((entry) => {
+        const firstPartId = entry.segments[0]?.part.id;
+        if (
+          !entry.continuousRhythmSelection ||
+          !entry.continuousRhythmScope ||
+          !firstPartId
+        ) {
+          activeRun = undefined;
+          return;
+        }
+
+        const signature = JSON.stringify(
+          getRhythmSelectionRecipe(entry.continuousRhythmSelection),
+        );
+        const previousRun = activeRun;
+        const continuesPreviousBar =
+          entry.continuousRhythmScope === "session" &&
+          previousRun?.scope === "session" &&
+          previousRun.signature === signature;
+        const request =
+          continuesPreviousBar && previousRun
+            ? previousRun.request
+            : createContinuousBarRhythmRequest({
+                firstPartId,
+                selection: entry.continuousRhythmSelection,
+                spansMultipleParts: entry.segments.length > 1,
+                tempoBpm,
+              });
+
+        entry.segments.forEach((segment, index) => {
+          continuousBarRhythms.set(segment.part.id, {
+            continueRhythm: continuesPreviousBar || index > 0,
+            request,
+          });
+        });
+        activeRun = {
+          request,
+          scope: entry.continuousRhythmScope,
+          signature,
+        };
+      });
+
+      const firstPartId = session.parts[0]?.id;
+      const firstRhythm = firstPartId
+        ? continuousBarRhythms.get(firstPartId)
+        : undefined;
+      const isOneContinuousCycle =
+        firstRhythm !== undefined &&
+        session.parts.every(
+          (part) =>
+            continuousBarRhythms.get(part.id)?.request === firstRhythm.request,
+        );
+
+      if (firstRhythm && isOneContinuousCycle) {
+        continuousBarRhythms.set(firstPartId, {
+          ...firstRhythm,
+          continueRhythm: true,
+        });
+      }
+    }
+  }
+
   const parts = selectedParts.map((part): PartSequenceStepPlan => {
     const index = session.parts.findIndex(
       (candidate) => candidate.id === part.id,
@@ -325,12 +430,13 @@ export function createPartSequencePlaybackPlan(
       tempoBpm,
       resolvedBand,
     );
-    const rhythmRequests = createRhythmRequestsForPart(
-      part,
-      tempoBpm,
-      resolvedBand,
-    );
+    const continuousBarRhythm = continuousBarRhythms.get(part.id);
+    const rhythmRequests = continuousBarRhythm
+      ? [continuousBarRhythm.request]
+      : createRhythmRequestsForPart(part, tempoBpm, resolvedBand);
+    const continueRhythm = continuousBarRhythm?.continueRhythm ?? false;
     const signatureInput = {
+      continueRhythm,
       durationBeats,
       exerciseRequests,
       rhythmRequests,

@@ -55,12 +55,12 @@ import {
   moduleCreationDefaultsAreEqual,
   moduleCreationKindsAreEqual,
   rhythmModuleCreationDefaultsAreEqual,
-  rhythmSelectionsAreEqual,
 } from "@/utils/instrument-creation/moduleCreationDefaults";
 import { normalizeBoundedRange } from "@/utils/range/numberRange";
 import {
   DEFAULT_RHYTHM_SELECTION,
   normalizeRhythmSelection,
+  rhythmSelectionsAreEqual,
 } from "@/utils/rhythm/rhythmConfig";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 import {

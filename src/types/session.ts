@@ -153,6 +153,8 @@ export interface ExerciseLooperPartModuleConfig extends PartModuleBaseConfig<"ex
 }
 
 export interface RhythmPartModuleConfig extends PartModuleBaseConfig<"rhythm"> {
+  /** Full-bar source retained while generated progression segments remain unchanged. */
+  authoredBarRhythm?: RhythmSelection;
   rhythm: RhythmSelection;
   type: "rhythm";
   wood?: WoodSurfaceId;

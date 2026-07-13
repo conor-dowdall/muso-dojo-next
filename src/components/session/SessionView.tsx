@@ -7,8 +7,8 @@ import { NoteColorProvider } from "@/components/note-colors/NoteColorProvider";
 import { Button } from "@/components/ui/buttons/Button";
 import { useAppStore } from "@/stores/appStore";
 import { type MusicPartConfig } from "@/types/session";
-import { createPartBarTimeline } from "@/utils/music-part/partBarTimeline";
 import { getPartLeadSheetSummary } from "@/utils/music-part/partLeadSheet";
+import { createSessionBarPlan } from "@/utils/music-part/sessionBarPlan";
 import { getSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 import { MusicPartView } from "./MusicPartView";
 import {
@@ -21,7 +21,7 @@ import styles from "./SessionView.module.css";
 
 const EMPTY_SESSION_PARTS: MusicPartConfig[] = [];
 const EMPTY_PART_IDS: string[] = [];
-const EMPTY_PART_SUMMARIES: SessionPartSummary[] = [];
+const EMPTY_CHART_BARS: SessionChartBar[] = [];
 
 interface SessionViewProps {
   sessionId: string;
@@ -30,16 +30,19 @@ interface SessionViewProps {
   viewMode?: SessionViewMode;
 }
 
-interface SessionPartSummary {
+interface SessionChartPart {
   accessibleLabel: string;
-  barAccessibleLabel: string;
-  barLabel: string;
-  barTotalAccessibleLabel: string;
   chartSpanUnits: number;
   id: string;
   identityLabel: string;
-  isPartialBar: boolean;
-  meterLabel: string;
+}
+
+interface SessionChartBar {
+  accessibleLabel: string;
+  id: string;
+  label: string;
+  meterLabel?: string;
+  parts: SessionChartPart[];
 }
 
 export function SessionView({
@@ -68,32 +71,32 @@ export function SessionView({
         : sessionParts.map((part) => part.id),
     [sessionParts],
   );
-  const chartParts = useMemo((): SessionPartSummary[] => {
+  const chartBars = useMemo((): SessionChartBar[] => {
     if (!showsSessionChart(viewMode)) {
-      return EMPTY_PART_SUMMARIES;
+      return EMPTY_CHART_BARS;
     }
 
-    const barTimeline = createPartBarTimeline(sessionParts);
+    const barPlan = createSessionBarPlan(sessionParts, backingBand);
 
-    return sessionParts.map((part, index) => {
-      const barEntry = barTimeline.entries[index];
-
-      if (!barEntry) {
-        throw new Error("Missing chart bar timeline entry");
-      }
-
-      const summary = getPartLeadSheetSummary(part, backingBand);
-
+    return barPlan.entries.map((bar) => {
       return {
-        accessibleLabel: summary.accessibleLabel,
-        barAccessibleLabel: barEntry.barAccessibleLabel,
-        barLabel: barEntry.barLabel,
-        barTotalAccessibleLabel: barEntry.barTotalAccessibleLabel,
-        chartSpanUnits: summary.chartSpanUnits,
-        id: summary.id,
-        identityLabel: summary.identityLabel,
-        isPartialBar: summary.isPartialBar,
-        meterLabel: summary.meterLabel,
+        accessibleLabel: `${barPlan.positionLabel} ${bar.accessibleLabel} of ${barPlan.totalAccessibleLabel}${bar.meterLabel ? `. ${bar.meterLabel}` : ""}`,
+        id: bar.segments[0]?.part.id ?? bar.label,
+        label: bar.label,
+        ...(bar.meterLabel ? { meterLabel: bar.meterLabel } : {}),
+        parts: bar.segments.map((segment) => {
+          const summary = getPartLeadSheetSummary(segment.part, backingBand);
+          const segmentDescription = segment.segmentLabel
+            ? `Segment ${segment.segmentLabel}. `
+            : "";
+
+          return {
+            accessibleLabel: `${segmentDescription}${summary.identityAccessibleLabel}. ${summary.meterDetail}`,
+            chartSpanUnits: segment.chartSpanUnits,
+            id: segment.part.id,
+            identityLabel: summary.identityLabel,
+          };
+        }),
       };
     });
   }, [backingBand, sessionParts, viewMode]);
@@ -139,7 +142,7 @@ export function SessionView({
       ) : showChart ? (
         <BandSessionView
           activePartId={activePartId}
-          parts={chartParts}
+          bars={chartBars}
           pendingPartId={pendingPartId}
         />
       ) : showPartsView ? (
@@ -174,51 +177,65 @@ export function SessionView({
 
 function BandSessionView({
   activePartId,
-  parts,
+  bars,
   pendingPartId,
 }: {
   activePartId?: string;
-  parts: SessionPartSummary[];
+  bars: SessionChartBar[];
   pendingPartId?: string;
 }) {
   return (
     <section className={styles.bandView} aria-label="Chart View">
       <ol className={styles.bandGrid}>
-        {parts.map((part) => {
-          const state =
-            activePartId === part.id
-              ? "active"
-              : pendingPartId === part.id
-                ? "pending"
-                : undefined;
+        {bars.map((bar) => (
+          <li
+            key={bar.id}
+            aria-label={bar.accessibleLabel}
+            className={styles.bandBar}
+          >
+            <span aria-hidden="true" className={styles.bandBarNumber}>
+              {bar.label}
+            </span>
+            {bar.meterLabel ? (
+              <span aria-hidden="true" className={styles.bandBarMeter}>
+                {bar.meterLabel}
+              </span>
+            ) : null}
+            <div className={styles.bandBarSegments}>
+              {bar.parts.map((part) => {
+                const state =
+                  activePartId === part.id
+                    ? "active"
+                    : pendingPartId === part.id
+                      ? "pending"
+                      : undefined;
 
-          return (
-            <li
-              key={part.id}
-              aria-current={state === "active" ? "step" : undefined}
-              className={styles.bandPart}
-              data-chart-duration={part.isPartialBar ? "partial" : "full"}
-              data-part-sequence-state={state}
-              style={
-                {
-                  "--chart-span": part.chartSpanUnits,
-                } as CSSProperties
-              }
-              aria-label={`Bar ${part.barAccessibleLabel} of ${part.barTotalAccessibleLabel}. ${part.accessibleLabel}.`}
-            >
-              <span className={styles.bandPartNumber}>{part.barLabel}</span>
-              <span
-                className={styles.bandPartIdentity}
-                title={part.identityLabel}
-              >
-                {part.identityLabel}
-              </span>
-              <span className={styles.bandPartMeta}>
-                <span className={styles.bandPartMeter}>{part.meterLabel}</span>
-              </span>
-            </li>
-          );
-        })}
+                return (
+                  <div
+                    key={part.id}
+                    aria-current={state === "active" ? "step" : undefined}
+                    aria-label={part.accessibleLabel}
+                    className={styles.bandPart}
+                    data-part-sequence-state={state}
+                    role="group"
+                    style={
+                      {
+                        "--chart-span": part.chartSpanUnits,
+                      } as CSSProperties
+                    }
+                  >
+                    <span
+                      className={styles.bandPartIdentity}
+                      title={part.identityLabel}
+                    >
+                      {part.identityLabel}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </li>
+        ))}
       </ol>
     </section>
   );

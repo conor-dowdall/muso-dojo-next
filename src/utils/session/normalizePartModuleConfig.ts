@@ -47,6 +47,12 @@ import {
 } from "@/utils/exercise-looper/exerciseConfig";
 import { normalizeRhythmSelection } from "@/utils/rhythm/rhythmConfig";
 
+function normalizeOptionalRhythmSelection(value: unknown) {
+  return isRecord(value) && value.source === "recipe" && isRecord(value.recipe)
+    ? normalizeRhythmSelection(value)
+    : undefined;
+}
+
 function normalizeDroneAudioPresetId(value: unknown) {
   if (
     !isAudioPresetId(value) ||
@@ -202,9 +208,13 @@ export function normalizePartModuleConfig(
       } satisfies InstrumentPartModuleConfig;
     }
     case "rhythm": {
+      const authoredBarRhythm = normalizeOptionalRhythmSelection(
+        value.authoredBarRhythm,
+      );
       const wood = normalizeRhythmWood(value.wood);
 
       return {
+        ...(authoredBarRhythm ? { authoredBarRhythm } : {}),
         id: normalizeId(value.id, `module-${index + 1}`),
         rhythm: normalizeRhythmSelection(value.rhythm),
         type: value.type,

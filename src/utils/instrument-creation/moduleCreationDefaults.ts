@@ -8,8 +8,7 @@ import { DEFAULT_KEYBOARD_THEME } from "@/data/keyboard/themes";
 import { DEFAULT_WOOD_SURFACE_ID } from "@/data/woodSurfaces";
 import {
   DEFAULT_RHYTHM_SELECTION,
-  getRhythmSelectionRecipe,
-  type RhythmSelection,
+  rhythmSelectionsAreEqual,
 } from "@/utils/rhythm/rhythmConfig";
 import {
   type DroneModuleCreationDefault,
@@ -226,27 +225,6 @@ export function rhythmModuleCreationDefaultsAreEqual(
     ) &&
     (left.wood ?? DEFAULT_WOOD_SURFACE_ID) ===
       (right.wood ?? DEFAULT_WOOD_SURFACE_ID)
-  );
-}
-
-export function rhythmSelectionsAreEqual(
-  left: RhythmSelection,
-  right: RhythmSelection,
-) {
-  if (left.source !== right.source) {
-    return false;
-  }
-
-  const leftRecipe = getRhythmSelectionRecipe(left);
-  const rightRecipe = getRhythmSelectionRecipe(right);
-
-  return (
-    leftRecipe.beats === rightRecipe.beats &&
-    leftRecipe.groove === rightRecipe.groove &&
-    leftRecipe.grouping === rightRecipe.grouping &&
-    leftRecipe.timekeeper.feel === rightRecipe.timekeeper.feel &&
-    leftRecipe.timekeeper.sound === rightRecipe.timekeeper.sound &&
-    leftRecipe.timekeeper.subdivision === rightRecipe.timekeeper.subdivision
   );
 }
 

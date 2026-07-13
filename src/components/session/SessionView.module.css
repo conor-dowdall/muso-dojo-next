@@ -19,7 +19,7 @@
   list-style: none;
 }
 
-.bandPart {
+.bandBar {
   --band-part-supporting-text: color-mix(
     in srgb,
     var(--color-text-muted) 82%,
@@ -31,6 +31,19 @@
     var(--color-text)
   );
 
+  position: relative;
+  min-inline-size: 0;
+  grid-column: span 420;
+  list-style: none;
+}
+
+.bandBarSegments {
+  display: grid;
+  min-inline-size: 0;
+  grid-template-columns: repeat(420, minmax(0, 1fr));
+}
+
+.bandPart {
   position: relative;
   display: grid;
   min-block-size: var(--space-24);
@@ -74,20 +87,31 @@
   border-style: dashed;
 }
 
-.bandPartNumber {
+.bandBarNumber,
+.bandBarMeter {
   position: absolute;
   inset-block-start: var(--space-2);
-  inset-inline-start: var(--space-3);
   max-inline-size: calc(100% - var(--space-6));
   overflow: hidden;
-  color: var(--band-part-supporting-text);
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   font-weight: var(--font-semibold);
-  letter-spacing: 0;
-  line-height: var(--leading-tight);
   text-overflow: ellipsis;
   white-space: nowrap;
+  z-index: 2;
+}
+
+.bandBarNumber {
+  inset-inline-start: var(--space-3);
+  color: var(--band-part-supporting-text);
+  letter-spacing: 0;
+  line-height: var(--leading-tight);
+}
+
+.bandBarMeter {
+  inset-inline-end: var(--space-3);
+  color: var(--band-part-strong-supporting-text);
+  line-height: var(--leading-none);
 }
 
 .bandPartIdentity {
@@ -103,29 +127,6 @@
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.bandPartMeta {
-  position: absolute;
-  inset-block-start: var(--space-2);
-  inset-inline-end: var(--space-3);
-  display: inline-flex;
-  min-inline-size: 0;
-  max-inline-size: calc(100% - var(--space-12));
-  align-items: center;
-  gap: var(--space-1);
-  overflow: hidden;
-}
-
-.bandPartMeter {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  color: var(--band-part-strong-supporting-text);
-  font-size: var(--text-xs);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--font-semibold);
-  line-height: var(--leading-none);
 }
 
 .partsView {

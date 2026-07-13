@@ -26,6 +26,7 @@ function createPlan(): PartSequencePlaybackPlan {
     updateSignature: "60:update",
     parts: [
       {
+        continueRhythm: false,
         durationBeats: 4,
         exerciseRequests: [],
         index: 0,
@@ -41,6 +42,7 @@ function createPlan(): PartSequencePlaybackPlan {
         updateSignature: "part-a-update",
       },
       {
+        continueRhythm: false,
         durationBeats: 2,
         exerciseRequests: [
           {
@@ -78,6 +80,7 @@ function createSplitBarPlan(): PartSequencePlaybackPlan {
     updateSignature: "60:split-update",
     parts: [
       {
+        continueRhythm: true,
         durationBeats: 2,
         exerciseRequests: [
           {
@@ -101,7 +104,7 @@ function createSplitBarPlan(): PartSequencePlaybackPlan {
         resetSignature: "split-a-reset",
         rhythmRequests: [
           {
-            id: "rhythm-a",
+            id: "rhythm-bar",
             pattern: createRhythmPattern(),
             tempoBpm: 60,
           },
@@ -109,6 +112,7 @@ function createSplitBarPlan(): PartSequencePlaybackPlan {
         updateSignature: "split-a-update",
       },
       {
+        continueRhythm: true,
         durationBeats: 2,
         exerciseRequests: [
           {
@@ -132,7 +136,7 @@ function createSplitBarPlan(): PartSequencePlaybackPlan {
         resetSignature: "split-b-reset",
         rhythmRequests: [
           {
-            id: "rhythm-b",
+            id: "rhythm-bar",
             pattern: createRhythmPattern(),
             tempoBpm: 60,
           },
@@ -259,7 +263,7 @@ describe("PartSequenceCoordinator", () => {
     );
   });
 
-  it("hands off split progression parts as ordinary visible rhythm parts", async () => {
+  it("keeps one parent-bar Rhythm running through a fractional Part handoff", async () => {
     const { coordinator, startPart } = createHarness();
 
     await coordinator.start(createSplitBarPlan());
@@ -267,7 +271,8 @@ describe("PartSequenceCoordinator", () => {
     expect(startPart).toHaveBeenLastCalledWith(
       expect.objectContaining({
         exercises: [expect.objectContaining({ id: "exercise-a" })],
-        rhythms: [expect.objectContaining({ id: "rhythm-a" })],
+        preserveRhythms: false,
+        rhythms: [expect.objectContaining({ id: "rhythm-bar" })],
         stopMissing: true,
       }),
     );
@@ -279,7 +284,8 @@ describe("PartSequenceCoordinator", () => {
         exercises: [expect.objectContaining({ id: "exercise-b" })],
         handoff: true,
         originTime: 12.08,
-        rhythms: [expect.objectContaining({ id: "rhythm-b" })],
+        preserveRhythms: true,
+        rhythms: [],
         stopMissing: true,
       }),
     );

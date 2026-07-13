@@ -322,6 +322,27 @@ export function getRhythmSelectionRecipe(selection: RhythmSelection) {
   return selection.recipe;
 }
 
+export function rhythmSelectionsAreEqual(
+  left: RhythmSelection,
+  right: RhythmSelection,
+) {
+  if (left.source !== right.source) {
+    return false;
+  }
+
+  const leftRecipe = getRhythmSelectionRecipe(left);
+  const rightRecipe = getRhythmSelectionRecipe(right);
+
+  return (
+    leftRecipe.beats === rightRecipe.beats &&
+    leftRecipe.groove === rightRecipe.groove &&
+    leftRecipe.grouping === rightRecipe.grouping &&
+    leftRecipe.timekeeper.feel === rightRecipe.timekeeper.feel &&
+    leftRecipe.timekeeper.sound === rightRecipe.timekeeper.sound &&
+    leftRecipe.timekeeper.subdivision === rightRecipe.timekeeper.subdivision
+  );
+}
+
 export function getRhythmSelectionLabel(selection: RhythmSelection) {
   return getRhythmRecipeLabel(selection.recipe);
 }

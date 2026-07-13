@@ -158,6 +158,7 @@ function applyProgressionRhythmBeatCount(
 
   return {
     ...module,
+    authoredBarRhythm: module.rhythm,
     rhythm: getRhythmSelectionForBeatCount(rhythmBeatCount, module.rhythm),
   };
 }

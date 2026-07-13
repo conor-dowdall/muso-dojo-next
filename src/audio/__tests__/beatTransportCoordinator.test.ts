@@ -261,6 +261,28 @@ describe("BeatTransportCoordinator", () => {
     expect(rhythm.getSnapshot().playbacks.rhythm).toBeDefined();
   });
 
+  it("preserves a parent-bar Rhythm while replacing the Part exercise", async () => {
+    const { exercise, rhythm, transport } = createHarness();
+    await transport.startPart({
+      exercises: [createExerciseRequest("exercise-a")],
+      originTime: 12,
+      rhythms: [createRhythmRequest("bar-rhythm")],
+      source: "part-sequence",
+    });
+    await transport.startPart({
+      exercises: [createExerciseRequest("exercise-b")],
+      handoff: true,
+      originTime: 14,
+      preserveRhythms: true,
+      source: "part-sequence",
+    });
+
+    expect(exercise.getSnapshot().playbacks["exercise-b"]).toBeDefined();
+    expect(rhythm.getSnapshot().playbacks["bar-rhythm"]).toMatchObject({
+      originTime: 12,
+    });
+  });
+
   it("replaces local layers when the Part transport takes ownership", async () => {
     vi.useFakeTimers();
     const { exercise, rhythm, transport } = createHarness();
