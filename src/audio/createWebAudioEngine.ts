@@ -40,6 +40,11 @@ import {
 } from "./types";
 
 const DEFAULT_AUDIO_USE = "preview" satisfies AudioUse;
+// The engine also powers direct touch auditions and playable instruments, so
+// ask browsers that implement the hint to preserve interactive response.
+// Browsers retain discretion over the actual safe output buffer size.
+const AUDIO_CONTEXT_LATENCY_HINT =
+  "interactive" satisfies AudioContextLatencyCategory;
 const MIN_PLAYBACK_GROUP_GAIN = 0.0001;
 const PLAYBACK_GROUP_CLEANUP_SECONDS = 0.25;
 const MASTER_OUTPUT_GAIN = 0.82;
@@ -172,7 +177,9 @@ export function createWebAudioEngine(): AudioEngine {
 
     if (!context || context.state === "closed") {
       try {
-        context = new AudioContextConstructor({ latencyHint: "interactive" });
+        context = new AudioContextConstructor({
+          latencyHint: AUDIO_CONTEXT_LATENCY_HINT,
+        });
       } catch {
         return undefined;
       }
