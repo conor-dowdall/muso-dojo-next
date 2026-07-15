@@ -285,7 +285,7 @@ describe("PartSequenceCoordinator", () => {
         handoff: true,
         originTime: 12.08,
         preserveRhythms: true,
-        rhythms: [],
+        rhythms: [expect.objectContaining({ id: "rhythm-bar" })],
         stopMissing: true,
       }),
     );

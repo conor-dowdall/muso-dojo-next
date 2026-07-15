@@ -294,19 +294,23 @@ describe("createChordProgressionParts", () => {
       moduleRequests: [],
     });
 
-    expect(aSectionParts).toHaveLength(16);
+    expect(aSectionParts).toHaveLength(15);
     expect(aSectionParts.slice(0, 4).map((part) => part.rootNote)).toEqual([
       "C",
       "A",
       "D",
       "G",
     ]);
-    expect(aSectionParts.every((part) => part.durationInBars === 0.5)).toBe(
-      true,
-    );
     expect(
-      aSectionParts.every((part) => getAutomaticRhythmBeats(part) === 2),
+      aSectionParts.slice(0, -1).every((part) => part.durationInBars === 0.5),
     ).toBe(true);
+    expect(aSectionParts.at(-1)?.durationInBars).toBeUndefined();
+    expect(
+      aSectionParts
+        .slice(0, -1)
+        .every((part) => getAutomaticRhythmBeats(part) === 2),
+    ).toBe(true);
+    expect(getAutomaticRhythmBeats(aSectionParts.at(-1)!)).toBe(4);
     expect(
       aSectionParts.every((part) => part.automaticRhythm?.style === "swing"),
     ).toBe(true);

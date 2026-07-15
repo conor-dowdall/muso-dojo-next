@@ -123,6 +123,40 @@ function getTempoBpm(
   return exercises[0]?.tempoBpm ?? rhythms[0]?.tempoBpm;
 }
 
+function rhythmRequestsAreEquivalent(
+  active: RhythmPlaybackRequest | undefined,
+  expected: RhythmPlaybackRequest,
+) {
+  if (
+    !active ||
+    active.id !== expected.id ||
+    normalizeTempo(active.tempoBpm) !== normalizeTempo(expected.tempoBpm)
+  ) {
+    return false;
+  }
+
+  const left = active.pattern;
+  const right = expected.pattern;
+  return (
+    left.ppq === right.ppq &&
+    left.cycleTicks === right.cycleTicks &&
+    left.meter.beats === right.meter.beats &&
+    left.meter.beatUnit === right.meter.beatUnit &&
+    left.swing?.ratio === right.swing?.ratio &&
+    left.swing?.unitTicks === right.swing?.unitTicks &&
+    left.hits.length === right.hits.length &&
+    left.hits.every((hit, index) => {
+      const candidate = right.hits[index];
+      return (
+        candidate !== undefined &&
+        hit.atTicks === candidate.atTicks &&
+        hit.sampleId === candidate.sampleId &&
+        hit.velocity === candidate.velocity
+      );
+    })
+  );
+}
+
 export class BeatTransportCoordinator {
   private countInGroup: PlaybackGroupHandle | undefined;
   private manualControlListeners = new Set<
@@ -270,6 +304,19 @@ export class BeatTransportCoordinator {
     const owner = getPlaybackOwnerForSource(source);
     const selectedExercises = exercises.slice(0, 1);
     const selectedRhythms = rhythms.slice(0, 1);
+    const activeRhythmIds = new Set(this.rhythm.getActiveIds(owner));
+    const canPreserveRhythms =
+      preserveRhythms &&
+      selectedRhythms.length > 0 &&
+      selectedRhythms.every(
+        (request) =>
+          activeRhythmIds.has(request.id) &&
+          rhythmRequestsAreEquivalent(
+            this.rhythm.getActiveRequest(request.id),
+            request,
+          ),
+      );
+    const rhythmsToStart = canPreserveRhythms ? [] : selectedRhythms;
     const resolvedCountIn =
       handoff || !countIn || countIn.durationBeats <= 0 || countIn.pulses <= 0
         ? undefined
@@ -280,7 +327,7 @@ export class BeatTransportCoordinator {
     const preparesFreshOrigin =
       originTime === undefined &&
       (selectedExercises.length > 0 ||
-        selectedRhythms.length > 0 ||
+        rhythmsToStart.length > 0 ||
         resolvedCountIn !== undefined);
 
     if (preparesFreshOrigin) {
@@ -288,7 +335,7 @@ export class BeatTransportCoordinator {
         selectedExercises.length > 0
           ? this.exercise.prepare()
           : Promise.resolve(true),
-        selectedRhythms.length > 0
+        rhythmsToStart.length > 0
           ? this.rhythm.prepare()
           : Promise.resolve(true),
         resolvedCountIn ? this.countInAudio.prime() : Promise.resolve(true),
@@ -343,7 +390,7 @@ export class BeatTransportCoordinator {
         .forEach((id) =>
           this.exercise.stop(id, { atTime: resolvedOriginTime }),
         );
-      if (!preserveRhythms) {
+      if (!canPreserveRhythms) {
         this.rhythm
           .getActiveIds(owner)
           .forEach((id) =>
@@ -361,7 +408,7 @@ export class BeatTransportCoordinator {
           prepared: preparesFreshOrigin,
         }),
       ),
-      ...selectedRhythms.map((request) =>
+      ...rhythmsToStart.map((request) =>
         this.rhythm.start(request, {
           handoff,
           owner,

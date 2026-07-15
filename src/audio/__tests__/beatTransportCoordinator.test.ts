@@ -263,10 +263,11 @@ describe("BeatTransportCoordinator", () => {
 
   it("preserves a parent-bar Rhythm while replacing the Part exercise", async () => {
     const { exercise, rhythm, transport } = createHarness();
+    const parentRhythm = createRhythmRequest("bar-rhythm");
     await transport.startPart({
       exercises: [createExerciseRequest("exercise-a")],
       originTime: 12,
-      rhythms: [createRhythmRequest("bar-rhythm")],
+      rhythms: [parentRhythm],
       source: "part-sequence",
     });
     await transport.startPart({
@@ -274,12 +275,36 @@ describe("BeatTransportCoordinator", () => {
       handoff: true,
       originTime: 14,
       preserveRhythms: true,
+      rhythms: [parentRhythm],
       source: "part-sequence",
     });
 
     expect(exercise.getSnapshot().playbacks["exercise-b"]).toBeDefined();
     expect(rhythm.getSnapshot().playbacks["bar-rhythm"]).toMatchObject({
       originTime: 12,
+    });
+  });
+
+  it("recovers a missing parent-bar Rhythm instead of preserving silence", async () => {
+    const { rhythm, transport } = createHarness();
+    const parentRhythm = createRhythmRequest("bar-rhythm");
+    await transport.startPart({
+      originTime: 12,
+      rhythms: [parentRhythm],
+      source: "part-sequence",
+    });
+    rhythm.stop("bar-rhythm");
+
+    await transport.startPart({
+      handoff: true,
+      originTime: 14,
+      preserveRhythms: true,
+      rhythms: [parentRhythm],
+      source: "part-sequence",
+    });
+
+    expect(rhythm.getSnapshot().playbacks["bar-rhythm"]).toMatchObject({
+      originTime: 14,
     });
   });
 

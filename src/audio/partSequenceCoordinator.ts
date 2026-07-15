@@ -224,7 +224,7 @@ export class PartSequenceCoordinator {
       handoff,
       originTime,
       preserveRhythms,
-      rhythms: preserveRhythms ? [] : part.rhythmRequests,
+      rhythms: part.rhythmRequests,
       source: "part-sequence",
       stopMissing: true,
       tempoBpm: plan.tempoBpm,

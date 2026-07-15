@@ -172,7 +172,7 @@ describe("createPartSequencePlaybackPlan", () => {
     ]);
   });
 
-  it("uses one compound rhythm cycle for local modules in a split bar", () => {
+  it("keeps independent local Rhythm modules separate when their audio does not compose", () => {
     const createHalfBar = (id: string) =>
       createPart(
         id,
@@ -209,20 +209,20 @@ describe("createPartSequencePlaybackPlan", () => {
 
     expect(plan.parts).toMatchObject([
       {
-        continueRhythm: true,
+        continueRhythm: false,
         rhythmRequests: [
           {
-            id: "part-sequence-drums:bar:split-a",
+            id: "rhythm-split-a",
             pattern: {
-              cycleTicks: RHYTHM_PPQ * 2,
-              meter: { beatUnit: 4, beats: 2 },
+              cycleTicks: RHYTHM_PPQ,
+              meter: { beatUnit: 4, beats: 1 },
             },
           },
         ],
       },
       {
-        continueRhythm: true,
-        rhythmRequests: [{ id: "part-sequence-drums:bar:split-a" }],
+        continueRhythm: false,
+        rhythmRequests: [{ id: "rhythm-split-b" }],
       },
     ]);
   });

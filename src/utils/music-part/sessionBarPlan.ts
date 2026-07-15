@@ -5,6 +5,7 @@ import {
 } from "@/types/session";
 import { getAutomaticRhythmSelection } from "@/utils/rhythm/automaticRhythm";
 import {
+  getRhythmSelectionPattern,
   getRhythmSelectionRecipe,
   rhythmSelectionsAreEqual,
   type RhythmSelection,
@@ -59,6 +60,52 @@ interface PendingBarEntry {
 
 function valuesAreClose(left: number, right: number) {
   return Math.abs(left - right) <= DURATION_EPSILON;
+}
+
+function getAuthoredBarStart(entry: PendingBarEntry) {
+  const first = entry.segments[0];
+
+  return first ? first.timelineEntry.barNumber - 1 : undefined;
+}
+
+/**
+ * The timeline is inferred from the current Part order, so reject entries that
+ * only appear to share a bar because a Part crosses a boundary or the entry
+ * begins part-way through a bar. Incomplete final bars remain valid for Chart
+ * layout, but they are not complete parent bars.
+ */
+function segmentsStayWithinOneAuthoredBar(entry: PendingBarEntry) {
+  const barStart = getAuthoredBarStart(entry);
+  if (barStart === undefined) {
+    return true;
+  }
+
+  let expectedStart = barStart;
+  return entry.segments.every((segment) => {
+    const { durationInBars, startInBars } = segment.timelineEntry;
+    const endInBars = startInBars + durationInBars;
+    const isValid =
+      valuesAreClose(startInBars, expectedStart) &&
+      endInBars <= barStart + 1 + DURATION_EPSILON;
+
+    expectedStart = endInBars;
+    return isValid;
+  });
+}
+
+function segmentsFillOneAuthoredBar(entry: PendingBarEntry) {
+  const barStart = getAuthoredBarStart(entry);
+  const last = entry.segments.at(-1);
+
+  return (
+    barStart !== undefined &&
+    last !== undefined &&
+    segmentsStayWithinOneAuthoredBar(entry) &&
+    valuesAreClose(
+      last.timelineEntry.startInBars + last.timelineEntry.durationInBars,
+      barStart + 1,
+    )
+  );
 }
 
 function isAuthoredSplit(entry: PendingBarEntry) {
@@ -142,12 +189,43 @@ function getAutomaticBarRhythmSelection(
     : undefined;
 }
 
-function rhythmsCanShareBar(left: RhythmSelection, right: RhythmSelection) {
-  const leftRecipe = getRhythmSelectionRecipe(left);
-  const rightRecipe = getRhythmSelectionRecipe(right);
+function rhythmHitsAreEqual(
+  left: ReturnType<typeof getRhythmSelectionPattern>["hits"][number],
+  right: ReturnType<typeof getRhythmSelectionPattern>["hits"][number],
+) {
+  return (
+    left.atTicks === right.atTicks &&
+    left.sampleId === right.sampleId &&
+    left.velocity === right.velocity
+  );
+}
+
+function parentRhythmMatchesSegmentAudio(
+  entry: PendingBarEntry,
+  parentSelection: RhythmSelection,
+) {
+  const parentPattern = getRhythmSelectionPattern(parentSelection);
+  let tickOffset = 0;
+  const segmentHits = entry.segments.flatMap((segment) => {
+    const pattern = getRhythmSelectionPattern(
+      segment.resolvedBand.rhythm.selection,
+    );
+    const hits = pattern.hits.map((hit) => ({
+      ...hit,
+      atTicks: hit.atTicks + tickOffset,
+    }));
+
+    tickOffset += pattern.cycleTicks;
+    return hits;
+  });
 
   return (
-    leftRecipe.groove === rightRecipe.groove && timekeepersMatch(left, right)
+    tickOffset === parentPattern.cycleTicks &&
+    segmentHits.length === parentPattern.hits.length &&
+    segmentHits.every((hit, index) => {
+      const parentHit = parentPattern.hits[index];
+      return parentHit !== undefined && rhythmHitsAreEqual(hit, parentHit);
+    })
   );
 }
 
@@ -158,6 +236,10 @@ function getAuthoredLocalBarRhythmSelection(
   const authoredBarRhythm = firstModule?.authoredBarRhythm;
 
   if (!authoredBarRhythm) {
+    return undefined;
+  }
+
+  if (!segmentsFillOneAuthoredBar(entry)) {
     return undefined;
   }
 
@@ -214,11 +296,7 @@ function getLocalBarRhythmSelection(
     remaining.some(
       (segment) =>
         !segment.resolvedBand.rhythm.enabled ||
-        segment.resolvedBand.rhythm.source.mode !== "module" ||
-        !rhythmsCanShareBar(
-          firstSelection,
-          segment.resolvedBand.rhythm.selection,
-        ),
+        segment.resolvedBand.rhythm.source.mode !== "module",
     )
   ) {
     return undefined;
@@ -236,7 +314,7 @@ function getLocalBarRhythmSelection(
   return valuesAreClose(
     getRhythmSelectionRecipe(selection).beats,
     durationBeats,
-  )
+  ) && parentRhythmMatchesSegmentAudio(entry, selection)
     ? selection
     : undefined;
 }
@@ -416,7 +494,13 @@ export function createSessionBarPlan(
 ): SessionBarPlan {
   const authored = createAuthoredEntries(parts, backingBand);
 
-  if (!authored.entries.every(authoredDurationsRemainProportional)) {
+  if (
+    !authored.entries.every(
+      (entry) =>
+        segmentsStayWithinOneAuthoredBar(entry) &&
+        authoredDurationsRemainProportional(entry),
+    )
+  ) {
     return createLinearPlan(parts, backingBand);
   }
 
