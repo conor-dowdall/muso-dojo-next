@@ -160,6 +160,7 @@ const rhythmTheoryMeterClassLabels = {
 
 const Q = RHYTHM_PPQ;
 const E = RHYTHM_PPQ / 2;
+const SWING_KIT_KICK_VELOCITY = 0.2;
 
 export const RHYTHM_MIN_BEATS = 1;
 export const RHYTHM_MAX_BEATS = 8;
@@ -453,9 +454,9 @@ const defaultRhythmBeatGroups = {
   3: [3],
   4: [2, 2],
   5: [3, 2],
-  6: [4, 2],
+  6: [3, 3],
   7: [4, 3],
-  8: [3, 3, 2],
+  8: [4, 4],
 } as const satisfies Record<number, readonly number[]>;
 
 const rhythmGroupingOptionsByBeatCount: Record<
@@ -468,9 +469,9 @@ const rhythmGroupingOptionsByBeatCount: Record<
   3: ["auto", "2+1", "1+2"],
   4: ["auto", "4", "3+1"],
   5: ["auto", "2+3", "2+2+1"],
-  6: ["auto", "2+4", "5+1"],
+  6: ["auto", "4+2", "2+4"],
   7: ["auto", "3+4", "2+2+3"],
-  8: ["auto", "3+2+3", "2+3+3"],
+  8: ["auto", "3+3+2", "3+2+3"],
 };
 
 export function getRhythmGroupingOptions(
@@ -629,7 +630,7 @@ function getKitGroupSnareOffsets(group: number, isOnlyGroup: boolean) {
   return [group - 1];
 }
 
-function getSwingKickVelocity(
+function getSwingPulseKickVelocity(
   beatCount: number,
   groupStarts: Set<number>,
   index: number,
@@ -650,15 +651,11 @@ function addSwingKitGrooveHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
     addHit(hits, spec.cycleTicks, atTicks, "kick", velocity);
   const addSnare = (atTicks: number, velocity: number) =>
     addHit(hits, spec.cycleTicks, atTicks, "snare", velocity);
-  const groupStarts = new Set(spec.groupStarts);
   const snareTicks: number[] = [];
 
   Array.from({ length: spec.meter.beats }, (_, index) => index * Q).forEach(
-    (atTicks, index) => {
-      addKick(
-        atTicks,
-        getSwingKickVelocity(spec.meter.beats, groupStarts, index),
-      );
+    (atTicks) => {
+      addKick(atTicks, SWING_KIT_KICK_VELOCITY);
     },
   );
 
@@ -735,7 +732,7 @@ function addSwingPulseGrooveHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
         spec.cycleTicks,
         atTicks,
         "kick",
-        getSwingKickVelocity(beatCount, groupStarts, index),
+        getSwingPulseKickVelocity(beatCount, groupStarts, index),
       );
     },
   );
@@ -1008,6 +1005,29 @@ function sortHits(hits: RhythmHit[]) {
 export function createRhythmPatternFromRecipe(
   recipe: RhythmRecipe,
 ): RhythmPattern {
+  const repeatedBarBeatCount = getRepeatedSimpleBarBeatCount(recipe);
+
+  if (repeatedBarBeatCount !== undefined) {
+    const barPattern = createRhythmPatternFromRecipe({
+      ...recipe,
+      beats: repeatedBarBeatCount,
+      grouping: "auto",
+    });
+
+    return {
+      cycleTicks: barPattern.cycleTicks * 2,
+      hits: [
+        ...barPattern.hits,
+        ...barPattern.hits.map((hit) => ({
+          ...hit,
+          atTicks: hit.atTicks + barPattern.cycleTicks,
+        })),
+      ],
+      meter: { beats: repeatedBarBeatCount * 2, beatUnit: 4 },
+      ppq: RHYTHM_PPQ,
+    };
+  }
+
   const spec = createRhythmMeterSpec(recipe);
   const hits: RhythmHit[] = [];
 
@@ -1060,6 +1080,16 @@ export function getRhythmTheoryReadout(
 function getRhythmTheoryMeter(recipe: RhythmRecipe): RhythmTheoryMeter {
   const perBeat = getRhythmSubdivisionCountPerBeat(recipe.timekeeper);
   const groups = getRhythmBeatGroups(recipe);
+  const repeatedBarBeatCount = getRepeatedSimpleBarBeatCount(recipe);
+
+  if (repeatedBarBeatCount !== undefined) {
+    return {
+      classDetail:
+        repeatedBarBeatCount === 3 ? "simple-triple" : "simple-quadruple",
+      isCompound: false,
+      title: `${repeatedBarBeatCount}/4 × 2`,
+    };
+  }
 
   if (perBeat === 3) {
     const singleBarCompoundMeter = getCompoundMeterForPrimaryBeats(
@@ -1223,11 +1253,28 @@ function getRhythmVisibleGroupingLabel(recipe: RhythmRecipe) {
   // Common simple meters already imply their default grouping. Show those only
   // when the user deliberately chooses a variation; for longer meters the
   // default grouping is part of the musical idea.
-  if (recipe.grouping === "auto" && ![5, 6, 7, 8].includes(recipe.beats)) {
+  if (
+    recipe.grouping === "auto" &&
+    (![5, 6, 7, 8].includes(recipe.beats) ||
+      getRepeatedSimpleBarBeatCount(recipe) !== undefined)
+  ) {
     return undefined;
   }
 
   return getRhythmBeatGroups(recipe).join("+");
+}
+
+function getRepeatedSimpleBarBeatCount(
+  recipe: RhythmRecipe,
+): 3 | 4 | undefined {
+  const groups = getRhythmBeatGroups(recipe);
+  const barBeatCount = groups[0];
+
+  return groups.length === 2 &&
+    (barBeatCount === 3 || barBeatCount === 4) &&
+    groups.every((group) => group === barBeatCount)
+    ? barBeatCount
+    : undefined;
 }
 
 function getRhythmSubdivisionCountPerBeat(timekeeper: RhythmTimekeeperRecipe) {

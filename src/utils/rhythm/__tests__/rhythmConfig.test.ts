@@ -285,7 +285,7 @@ describe("rhythmConfig", () => {
     expect(pattern.swing).toBeUndefined();
     expect(pattern.hits).toEqual(
       expect.arrayContaining([
-        { atTicks: 0, sampleId: "kick", velocity: 0.26 },
+        { atTicks: 0, sampleId: "kick", velocity: 0.2 },
         { atTicks: 0, sampleId: "ride", velocity: 0.234 },
         { atTicks: RHYTHM_PPQ, sampleId: "kick", velocity: 0.2 },
         {
@@ -294,7 +294,7 @@ describe("rhythmConfig", () => {
           velocity: 0.108,
         },
         { atTicks: RHYTHM_PPQ, sampleId: "snare", velocity: 0.24 },
-        { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.24 },
+        { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.2 },
         { atTicks: RHYTHM_PPQ * 3, sampleId: "kick", velocity: 0.2 },
         { atTicks: RHYTHM_PPQ * 3, sampleId: "snare", velocity: 0.28 },
       ]),
@@ -310,7 +310,7 @@ describe("rhythmConfig", () => {
     );
   });
 
-  it("keeps swing kit variations subtly audible", () => {
+  it("feathers swing kit kicks evenly while snares mark the variation", () => {
     const pattern = getRhythmSelectionPattern({
       recipe: {
         beats: 5,
@@ -327,10 +327,10 @@ describe("rhythmConfig", () => {
 
     expect(pattern.hits).toEqual(
       expect.arrayContaining([
-        { atTicks: 0, sampleId: "kick", velocity: 0.26 },
+        { atTicks: 0, sampleId: "kick", velocity: 0.2 },
         { atTicks: RHYTHM_PPQ, sampleId: "kick", velocity: 0.2 },
         { atTicks: RHYTHM_PPQ, sampleId: "snare", velocity: 0.24 },
-        { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.24 },
+        { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.2 },
         { atTicks: RHYTHM_PPQ * 3, sampleId: "kick", velocity: 0.2 },
         { atTicks: RHYTHM_PPQ * 4, sampleId: "kick", velocity: 0.2 },
         { atTicks: RHYTHM_PPQ * 4, sampleId: "snare", velocity: 0.28 },
@@ -338,7 +338,7 @@ describe("rhythmConfig", () => {
     );
   });
 
-  it("matches pulse and kit kick weight for swing without adding kit snares", () => {
+  it("retains grouping accents in the swing Pulse foundation", () => {
     const pattern = getRhythmSelectionPattern({
       recipe: {
         beats: 4,
@@ -897,17 +897,87 @@ describe("rhythmConfig", () => {
       [3, ["auto", "2+1", "1+2"]],
       [4, ["auto", "4", "3+1"]],
       [5, ["auto", "2+3", "2+2+1"]],
-      [6, ["auto", "2+4", "5+1"]],
+      [6, ["auto", "4+2", "2+4"]],
       [7, ["auto", "3+4", "2+2+3"]],
-      [8, ["auto", "3+2+3", "2+3+3"]],
+      [8, ["auto", "3+3+2", "3+2+3"]],
     ]);
     expect(getRhythmGroupingChoiceLabel(1, "auto")).toBe("1");
     expect(getRhythmGroupingChoiceLabel(2, "auto")).toBe("2");
     expect(getRhythmGroupingChoiceLabel(5, "auto")).toBe("3+2");
-    expect(getRhythmGroupingChoiceLabel(6, "auto")).toBe("4+2");
-    expect(getRhythmGroupingChoiceLabel(6, "5+1")).toBe("5+1");
-    expect(getRhythmGroupingChoiceLabel(8, "auto")).toBe("3+3+2");
+    expect(getRhythmGroupingChoiceLabel(6, "auto")).toBe("3+3");
+    expect(getRhythmGroupingChoiceLabel(6, "4+2")).toBe("4+2");
+    expect(getRhythmGroupingChoiceLabel(6, "2+4")).toBe("2+4");
+    expect(getRhythmGroupingChoiceLabel(8, "auto")).toBe("4+4");
+    expect(getRhythmGroupingChoiceLabel(8, "3+3+2")).toBe("3+3+2");
     expect(getRhythmGroupingChoiceLabel(8, "3+2+3")).toBe("3+2+3");
+  });
+
+  it("plays the default six-beat rhythm as two complete bars of three", () => {
+    const selection = {
+      recipe: {
+        beats: 6,
+        groove: "kit",
+        grouping: "auto",
+        timekeeper: {
+          feel: "off",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      },
+      source: "recipe",
+    } as const;
+    const pattern = getRhythmSelectionPattern(selection);
+
+    expect(getRhythmSelectionLabel(selection)).toBe(
+      "3/4 × 2 - Kit - No Timekeeper",
+    );
+    expect(pattern).toMatchObject({
+      cycleTicks: RHYTHM_PPQ * 6,
+      meter: { beats: 6, beatUnit: 4 },
+    });
+    expect(pattern.hits).toStrictEqual([
+      { atTicks: 0, sampleId: "kick", velocity: 0.9 },
+      { atTicks: RHYTHM_PPQ, sampleId: "snare", velocity: 0.58 },
+      { atTicks: RHYTHM_PPQ * 2, sampleId: "snare", velocity: 0.72 },
+      { atTicks: RHYTHM_PPQ * 3, sampleId: "kick", velocity: 0.9 },
+      { atTicks: RHYTHM_PPQ * 4, sampleId: "snare", velocity: 0.58 },
+      { atTicks: RHYTHM_PPQ * 5, sampleId: "snare", velocity: 0.72 },
+    ]);
+  });
+
+  it("plays the default eight-beat rhythm as two complete bars of four", () => {
+    const selection = {
+      recipe: {
+        beats: 8,
+        groove: "kit",
+        grouping: "auto",
+        timekeeper: {
+          feel: "off",
+          sound: "hat",
+          subdivision: "eighth",
+        },
+      },
+      source: "recipe",
+    } as const;
+    const pattern = getRhythmSelectionPattern(selection);
+
+    expect(getRhythmSelectionLabel(selection)).toBe(
+      "4/4 × 2 - Kit - No Timekeeper",
+    );
+    expect(pattern).toMatchObject({
+      cycleTicks: RHYTHM_PPQ * 8,
+      meter: { beats: 8, beatUnit: 4 },
+    });
+    expect(pattern.hits).toStrictEqual([
+      { atTicks: 0, sampleId: "kick", velocity: 0.9 },
+      { atTicks: RHYTHM_PPQ, sampleId: "snare", velocity: 0.58 },
+      { atTicks: RHYTHM_PPQ * 2, sampleId: "kick", velocity: 0.62 },
+      { atTicks: RHYTHM_PPQ * 3, sampleId: "snare", velocity: 0.72 },
+      { atTicks: RHYTHM_PPQ * 4, sampleId: "kick", velocity: 0.9 },
+      { atTicks: RHYTHM_PPQ * 5, sampleId: "snare", velocity: 0.58 },
+      { atTicks: RHYTHM_PPQ * 6, sampleId: "kick", velocity: 0.62 },
+      { atTicks: RHYTHM_PPQ * 7, sampleId: "snare", velocity: 0.72 },
+    ]);
   });
 
   it("keeps meter class and grouping details intentional", () => {
@@ -968,8 +1038,8 @@ describe("rhythmConfig", () => {
         },
       }),
     ).toStrictEqual({
-      title: "8/4",
-      detail: "Additive • Straight Eighths",
+      title: "4/4 × 2",
+      detail: "Simple Quadruple • Straight Eighths",
     });
     expect(
       getRhythmTheoryReadout({
@@ -1073,14 +1143,14 @@ describe("rhythmConfig", () => {
         },
       }),
     ).toStrictEqual({
-      title: "6/4",
-      detail: "Additive • Straight Eighths",
+      title: "3/4 × 2",
+      detail: "Simple Triple • Straight Eighths",
     });
     expect(
       getRhythmTheoryReadout({
         beats: 6,
         groove: "kit",
-        grouping: "5+1",
+        grouping: "4+2",
         timekeeper: {
           feel: "straight",
           sound: "hat",

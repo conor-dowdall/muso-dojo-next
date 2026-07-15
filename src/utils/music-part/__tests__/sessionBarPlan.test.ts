@@ -81,15 +81,18 @@ describe("createSessionBarPlan", () => {
     });
   });
 
-  it("does not invent a parent groove from merely proportional local Rhythms", () => {
+  it("joins two matching three-beat local Rhythms into repeated 3/4", () => {
     const plan = createSessionBarPlan([
       createLocalRhythmPart("a", 3),
       createLocalRhythmPart("b", 3),
     ]);
 
     expect(plan.layout).toBe("authored");
-    expect(plan.entries[0]?.meterLabel).toBe("6/4");
-    expect(plan.entries[0]).not.toHaveProperty("continuousRhythmSelection");
+    expect(plan.entries[0]).toMatchObject({
+      continuousRhythmScope: "bar",
+      continuousRhythmSelection: { recipe: { beats: 6 } },
+      meterLabel: "3/4 × 2",
+    });
   });
 
   it("shows a compound parent meter without inventing continuous audio", () => {
@@ -321,7 +324,7 @@ describe("createSessionBarPlan", () => {
     expect(plan.entries[0]).toMatchObject({
       continuousRhythmScope: "session",
       continuousRhythmSelection: { recipe: { beats: 6 } },
-      meterLabel: "6/4",
+      meterLabel: "3/4 × 2",
       segments: [
         { part: { id: "a" }, resolvedBand: { durationBeats: 3 } },
         { part: { id: "b" }, resolvedBand: { durationBeats: 3 } },
