@@ -7,6 +7,7 @@ import {
   isAudioPlaybackActive,
   partSequenceCoordinator,
   stopAllAudioPlayback,
+  stopTransportPlayback,
 } from "@/audio";
 import { type SessionConfig } from "@/types/session";
 
@@ -117,7 +118,7 @@ function togglePracticeBand(session: SessionConfig) {
 
   const plan = createPartSequencePlaybackPlan(session);
 
-  stopAllAudioPlayback();
+  stopTransportPlayback();
   void ensureAudioReady();
   void partSequenceCoordinator.start(plan);
 }

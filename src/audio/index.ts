@@ -2,6 +2,7 @@ export { createWebAudioEngine, musoAudioEngine } from "./createWebAudioEngine";
 export {
   isAudioPlaybackActive,
   stopAllAudioPlayback,
+  stopTransportPlayback,
 } from "./stopAllAudioPlayback";
 export {
   audioReadiness,

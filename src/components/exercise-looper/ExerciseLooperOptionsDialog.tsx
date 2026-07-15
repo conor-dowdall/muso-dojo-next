@@ -1,6 +1,6 @@
 "use client";
 
-import { SwatchBook } from "lucide-react";
+import { Repeat, SwatchBook } from "lucide-react";
 import { type AudioPresetId } from "@/audio";
 import { WoodSurfaceDisclosureItem } from "@/components/appearance/WoodSurfaceChoiceList";
 import {
@@ -52,7 +52,12 @@ export function ExerciseLooperOptionsDialog({
   const { isOpen: isChoiceOpen, toggleChoice } =
     useDisclosureList<MenuChoice>(null);
   return (
-    <ObjectMenuDialog isOpen={isOpen} title="Looper Options" onClose={onClose}>
+    <ObjectMenuDialog
+      icon={<Repeat />}
+      isOpen={isOpen}
+      title="Looper Options"
+      onClose={onClose}
+    >
       <DisclosureListGroup>
         <ExercisePlaybackSoundDisclosure
           audioPresetId={audioPresetId}

@@ -83,6 +83,7 @@ export function ObjectManagementGroup({
           aria-label={duplicateCopy.ariaLabel}
           icon={<Copy />}
           label={duplicateCopy.label}
+          preventConcurrentClicks
           onClick={onDuplicate}
         />
       ) : null}

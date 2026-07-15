@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Plus } from "lucide-react";
 import {
   DialogContent,
   DialogContentSection,
@@ -70,7 +71,7 @@ export function PartModuleCreationDialog({
 
   return (
     <>
-      <DialogHeader title={title} onClose={onClose} />
+      <DialogHeader icon={<Plus />} title={title} onClose={onClose} />
       <DialogContent layout="stack" menuRhythm="standard">
         <DialogContentSection ariaLabel="Modules">
           <ModuleCreationList
@@ -86,6 +87,7 @@ export function PartModuleCreationDialog({
             <Button
               disabled={!canAddModules}
               label={addLabel}
+              preventConcurrentClicks
               size="lg"
               onClick={handleAddPartModule}
             />

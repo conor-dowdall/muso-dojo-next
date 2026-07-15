@@ -1,8 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { Drum, Music2 } from "lucide-react";
-import { BackingBandLabel } from "@/components/part-module/PartModuleBandSource";
+import { Disc3, Drum, Music2 } from "lucide-react";
 import {
   DisclosureList,
   DisclosureListChoice,
@@ -93,9 +92,10 @@ export function PartPlaybackDialog({
           </DialogFooterActionBar>
         </DialogFooter>
       }
+      icon={<Disc3 />}
       isOpen={isOpen}
       size="standard"
-      title={<BackingBandLabel>Backing Band for Part</BackingBandLabel>}
+      title="Backing Band for Part"
       onClose={onClose}
     >
       <DisclosureListGroup>

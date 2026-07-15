@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { LibraryBig, Plus } from "lucide-react";
 import {
   DialogContent,
   DialogContentSection,
@@ -165,7 +165,11 @@ export function SessionManagementDialog({
 
   return (
     <>
-      <DialogHeader title="Session Library" onClose={onClose} />
+      <DialogHeader
+        icon={<LibraryBig />}
+        title="Session Library"
+        onClose={onClose}
+      />
       <DialogContent menuRhythm="standard">
         <DialogContentSection ariaLabel="Session choices">
           <DisclosureList grouped groupGap="section">
@@ -173,6 +177,7 @@ export function SessionManagementDialog({
               <DisclosureListAction
                 icon={<Plus />}
                 label="New Session"
+                preventConcurrentClicks
                 onClick={handleAddSession}
               />
             </DisclosureListGroup>

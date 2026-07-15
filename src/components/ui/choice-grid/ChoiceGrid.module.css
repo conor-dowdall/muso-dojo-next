@@ -11,6 +11,8 @@
 
 .tokenChoice {
   --option-button-tile-size: var(--control-size-lg);
+
+  white-space: nowrap;
 }
 
 .squareTokenChoice {

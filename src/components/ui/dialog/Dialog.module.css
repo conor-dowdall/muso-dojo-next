@@ -98,6 +98,7 @@
 
 .dialog[data-state="closing"] {
   animation: popOut var(--transition-medium) var(--ease-out) forwards;
+  pointer-events: none;
 }
 
 .dialog[open] {
@@ -134,6 +135,30 @@
   min-block-size: var(--dialog-header-control-size);
   align-items: center;
   overflow-wrap: anywhere;
+}
+
+.dialogIdentity {
+  display: inline-flex;
+  min-inline-size: 0;
+  align-items: center;
+  gap: var(--identity-icon-gap);
+}
+
+.dialogIdentityIcon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  inline-size: var(--identity-icon-size);
+  block-size: var(--identity-icon-size);
+  align-items: center;
+  justify-content: center;
+  color: var(--dialog-identity-icon-color);
+  line-height: var(--leading-none);
+}
+
+.dialogIdentityIcon > svg {
+  inline-size: 100%;
+  block-size: 100%;
+  stroke-width: var(--identity-icon-stroke-width);
 }
 
 .content {

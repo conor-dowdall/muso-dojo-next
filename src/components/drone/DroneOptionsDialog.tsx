@@ -1,6 +1,6 @@
 "use client";
 
-import { AudioWaveform, SwatchBook, WavesArrowUp } from "lucide-react";
+import { AudioWaveform, SwatchBook, Waves, WavesArrowUp } from "lucide-react";
 import {
   audioPresets,
   ensureAudioReady,
@@ -85,7 +85,12 @@ export function DroneOptionsDialog({
   };
 
   return (
-    <ObjectMenuDialog isOpen={isOpen} title="Drone Options" onClose={onClose}>
+    <ObjectMenuDialog
+      icon={<Waves />}
+      isOpen={isOpen}
+      title="Drone Options"
+      onClose={onClose}
+    >
       <DisclosureListGroup>
         <DisclosureListItem
           ariaLabel={`Playback sound. Current: ${resolvedAudioPreset.label}`}

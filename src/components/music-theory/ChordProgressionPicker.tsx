@@ -35,25 +35,13 @@ function getProgressionCategoryGroupChoice(category: string) {
   return `${category}-progressions`;
 }
 
-function getProgressionCategoryGroupChoiceForProgression(
-  progressionKey: ChordProgressionKey,
-) {
-  const group = progressionCategoryGroups.find((candidateGroup) =>
-    candidateGroup.progressionKeys.includes(progressionKey),
-  );
-
-  return group ? getProgressionCategoryGroupChoice(group.category) : null;
-}
-
 export function ChordProgressionPicker({
   rootNote,
   value,
   onChange,
 }: ChordProgressionPickerProps) {
   const progressionCategoryGroupDisclosure =
-    useDisclosureList<ProgressionCategoryGroupChoice>(
-      getProgressionCategoryGroupChoiceForProgression(value),
-    );
+    useDisclosureList<ProgressionCategoryGroupChoice>();
 
   return (
     <DisclosureList grouped groupGap="related">
@@ -65,7 +53,7 @@ export function ChordProgressionPicker({
         return (
           <DisclosureListItem
             key={groupChoice}
-            ariaLabel={groupTitle}
+            ariaLabel={`${groupTitle}${groupContainsSelection ? ", contains selected progression" : ""}`}
             isOpen={
               progressionCategoryGroupDisclosure.openChoice === groupChoice
             }
@@ -88,12 +76,10 @@ export function ChordProgressionPicker({
                     label={titleLabel}
                     selected={value === candidateKey}
                     subtitle={
-                      <span className={styles.chordSubtitle} title={chordLabel}>
-                        {chordLabel}
-                      </span>
+                      <span className={styles.chordSubtitle}>{chordLabel}</span>
                     }
                     onClick={() => {
-                      progressionCategoryGroupDisclosure.open(groupChoice);
+                      progressionCategoryGroupDisclosure.closeAll();
                       onChange(candidateKey);
                     }}
                   />

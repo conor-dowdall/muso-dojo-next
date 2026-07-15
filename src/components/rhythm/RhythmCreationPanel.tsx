@@ -304,73 +304,75 @@ export function RhythmCreationPanel({
           preview={subdivisionLabel}
           onToggle={() => toggleChoice("subdivision")}
         >
-          <div className={styles.patternGroups}>
-            <div
-              aria-label="Even subdivisions per beat"
-              className={`${choiceGridStyles.tokenGrid} ${styles.numericGrid}`}
-              role="group"
-            >
-              {rhythmTimekeeperStraightSubdivisionChoices.map((choice) => (
-                <OptionButton
-                  key={`${choice.subdivision}-${choice.feel}`}
-                  aria-label={choice.label}
-                  className={`${choiceGridStyles.tokenChoice} ${choiceGridStyles.squareTokenChoice}`}
-                  disabled={
-                    !isRhythmTimekeeperSubdivisionChoiceAvailable(
-                      recipe,
-                      choice,
-                    )
-                  }
-                  label={choice.text}
-                  presentation="tile"
-                  selected={
-                    recipe.timekeeper.feel === choice.feel &&
-                    recipe.timekeeper.subdivision === choice.subdivision
-                  }
-                  onClick={() =>
-                    updateRecipe(
-                      getRecipeWithTimekeeper(recipe, {
-                        feel: choice.feel,
-                        subdivision: choice.subdivision,
-                      }),
-                    )
-                  }
-                />
-              ))}
-            </div>
+          <div className={styles.patternContainer}>
+            <div className={styles.patternGroups}>
+              <div
+                aria-label="Even subdivisions per beat"
+                className={`${choiceGridStyles.tokenGrid} ${styles.numericGrid}`}
+                role="group"
+              >
+                {rhythmTimekeeperStraightSubdivisionChoices.map((choice) => (
+                  <OptionButton
+                    key={`${choice.subdivision}-${choice.feel}`}
+                    aria-label={choice.label}
+                    className={`${choiceGridStyles.tokenChoice} ${choiceGridStyles.squareTokenChoice}`}
+                    disabled={
+                      !isRhythmTimekeeperSubdivisionChoiceAvailable(
+                        recipe,
+                        choice,
+                      )
+                    }
+                    label={choice.text}
+                    presentation="tile"
+                    selected={
+                      recipe.timekeeper.feel === choice.feel &&
+                      recipe.timekeeper.subdivision === choice.subdivision
+                    }
+                    onClick={() =>
+                      updateRecipe(
+                        getRecipeWithTimekeeper(recipe, {
+                          feel: choice.feel,
+                          subdivision: choice.subdivision,
+                        }),
+                      )
+                    }
+                  />
+                ))}
+              </div>
 
-            <div
-              aria-label="Timekeeper feel"
-              className={`${choiceGridStyles.tokenGrid} ${styles.feelGrid}`}
-              role="group"
-            >
-              {rhythmTimekeeperFeelSubdivisionChoices.map((choice) => (
-                <OptionButton
-                  key={`${choice.subdivision}-${choice.feel}`}
-                  aria-label={choice.label}
-                  className={choiceGridStyles.tokenChoice}
-                  disabled={
-                    !isRhythmTimekeeperSubdivisionChoiceAvailable(
-                      recipe,
-                      choice,
-                    )
-                  }
-                  label={choice.feel === "swing" ? "Swing" : "Shuffle"}
-                  presentation="tile"
-                  selected={
-                    recipe.timekeeper.feel === choice.feel &&
-                    recipe.timekeeper.subdivision === choice.subdivision
-                  }
-                  onClick={() =>
-                    updateRecipe(
-                      getRecipeWithTimekeeper(recipe, {
-                        feel: choice.feel,
-                        subdivision: choice.subdivision,
-                      }),
-                    )
-                  }
-                />
-              ))}
+              <div
+                aria-label="Timekeeper feel"
+                className={`${choiceGridStyles.tokenGrid} ${styles.feelGrid}`}
+                role="group"
+              >
+                {rhythmTimekeeperFeelSubdivisionChoices.map((choice) => (
+                  <OptionButton
+                    key={`${choice.subdivision}-${choice.feel}`}
+                    aria-label={choice.label}
+                    className={choiceGridStyles.tokenChoice}
+                    disabled={
+                      !isRhythmTimekeeperSubdivisionChoiceAvailable(
+                        recipe,
+                        choice,
+                      )
+                    }
+                    label={choice.feel === "swing" ? "Swing" : "Shuffle"}
+                    presentation="tile"
+                    selected={
+                      recipe.timekeeper.feel === choice.feel &&
+                      recipe.timekeeper.subdivision === choice.subdivision
+                    }
+                    onClick={() =>
+                      updateRecipe(
+                        getRecipeWithTimekeeper(recipe, {
+                          feel: choice.feel,
+                          subdivision: choice.subdivision,
+                        }),
+                      )
+                    }
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </DisclosureListItem>

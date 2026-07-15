@@ -114,6 +114,20 @@
   --control-size-xl: 3.5rem;
   --control-size-2xl: 4rem;
 
+  /* Shared icon-and-label grammar for dialog identities and menu rows. */
+  --identity-icon-size: var(--text-base);
+  --identity-icon-gap: var(--space-2_5);
+  --identity-icon-stroke-width: 1.75;
+  --dialog-identity-icon-color: var(--color-accent);
+  --menu-leading-icon-color: var(--color-text-muted);
+  --metadata-icon-size: 0.8125rem;
+  --metadata-icon-gap: var(--space-2);
+  --metadata-icon-color: color-mix(
+    in srgb,
+    var(--color-accent) 72%,
+    transparent
+  );
+
   --z-index-base: 0;
   --z-index-max: 9999;
 
@@ -313,8 +327,11 @@ html {
   /*
    * Keep the viewport width stable when switching between short and tall
    * session views. Dialog.tsx keeps a JS fallback for browsers without this.
+   * The solid root canvas also keeps Chromium from briefly painting the
+   * reserved gutter with the body's changing theme gradients.
    */
   scrollbar-gutter: stable;
+  background-color: var(--color-base);
 }
 
 *,

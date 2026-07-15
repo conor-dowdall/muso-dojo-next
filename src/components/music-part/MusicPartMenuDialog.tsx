@@ -1,5 +1,6 @@
 "use client";
 
+import { Ellipsis } from "lucide-react";
 import {
   ObjectManagementGroup,
   ObjectMenuDialog,
@@ -28,6 +29,7 @@ export function MusicPartMenuDialog({
 
   return (
     <ObjectMenuDialog
+      icon={<Ellipsis />}
       isOpen={isOpen}
       size="compact"
       title="Part Actions"

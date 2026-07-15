@@ -242,6 +242,7 @@
     var(--color-border)
   );
   --disclosure-list-confirmation-icon: var(--color-danger);
+  --disclosure-list-confirmation-text: var(--color-text);
 }
 
 .confirmationHeader {

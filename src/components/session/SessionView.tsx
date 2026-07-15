@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/buttons/Button";
 import { useAppStore } from "@/stores/appStore";
 import { type MusicPartConfig } from "@/types/session";
 import { getPartLeadSheetSummary } from "@/utils/music-part/partLeadSheet";
+import { PART_DURATION_CHART_BAR_UNITS } from "@/utils/music-part/partDuration";
 import { createSessionBarPlan } from "@/utils/music-part/sessionBarPlan";
 import { getSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 import { MusicPartView } from "./MusicPartView";
@@ -185,7 +186,15 @@ function BandSessionView({
   pendingPartId?: string;
 }) {
   return (
-    <section className={styles.bandView} aria-label="Chart View">
+    <section
+      className={styles.bandView}
+      aria-label="Chart View"
+      style={
+        {
+          "--chart-bar-units": PART_DURATION_CHART_BAR_UNITS,
+        } as CSSProperties
+      }
+    >
       <ol className={styles.bandGrid}>
         {bars.map((bar) => (
           <li
@@ -193,14 +202,12 @@ function BandSessionView({
             aria-label={bar.accessibleLabel}
             className={styles.bandBar}
           >
-            <span aria-hidden="true" className={styles.bandBarNumber}>
-              {bar.label}
-            </span>
-            {bar.meterLabel ? (
-              <span aria-hidden="true" className={styles.bandBarMeter}>
-                {bar.meterLabel}
-              </span>
-            ) : null}
+            <div aria-hidden="true" className={styles.bandBarHeader}>
+              <span className={styles.bandBarNumber}>{bar.label}</span>
+              {bar.meterLabel ? (
+                <span className={styles.bandBarMeter}>{bar.meterLabel}</span>
+              ) : null}
+            </div>
             <div className={styles.bandBarSegments}>
               {bar.parts.map((part) => {
                 const state =
@@ -224,10 +231,7 @@ function BandSessionView({
                       } as CSSProperties
                     }
                   >
-                    <span
-                      className={styles.bandPartIdentity}
-                      title={part.identityLabel}
-                    >
+                    <span className={styles.bandPartIdentity}>
                       {part.identityLabel}
                     </span>
                   </div>

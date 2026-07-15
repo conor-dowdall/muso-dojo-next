@@ -15,6 +15,7 @@ import {
   isSessionWorkspaceViewMode,
   requiresSessionParts,
   type SessionViewMode,
+  type SessionWorkspaceViewMode,
 } from "@/components/session/sessionViewMode";
 import {
   createInstrumentCreationRangeContextFromSignature,
@@ -35,12 +36,14 @@ import { createDefaultMusicPartConfig } from "@/utils/session/createSessionEntit
 interface HydratedSessionProps {
   onSessionViewModeChange: (mode: SessionViewMode) => void;
   sessionViewMode: SessionViewMode;
+  sessionWorkspaceViewMode: SessionWorkspaceViewMode;
   viewModeTransitionPending: boolean;
 }
 
 function HydratedSession({
   onSessionViewModeChange,
   sessionViewMode,
+  sessionWorkspaceViewMode,
   viewModeTransitionPending,
 }: HydratedSessionProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -93,8 +96,8 @@ function HydratedSession({
     onSessionViewModeChange(nextViewMode);
   };
   const exitFocusViewMode = useCallback(() => {
-    onSessionViewModeChange(useAppStore.getState().sessionWorkspaceViewMode);
-  }, [onSessionViewModeChange]);
+    onSessionViewModeChange(sessionWorkspaceViewMode);
+  }, [onSessionViewModeChange, sessionWorkspaceViewMode]);
 
   useDojoGlobalShortcuts({
     activeSession,
@@ -188,6 +191,7 @@ function HydratedSession({
       <div className={styles.sessionChrome}>
         <SessionHeader
           viewMode={sessionViewMode}
+          workspaceViewMode={sessionWorkspaceViewMode}
           onOpenAddDialog={openAddDialog}
           onOpenSessionTempo={openSessionDialog}
           onOpenSessionsDialog={() => openSessionDialog()}
@@ -272,11 +276,14 @@ function SessionLoadingFallback() {
 }
 
 function HydratedDojoSessionPage() {
+  const sessionWorkspaceViewMode = useAppStore(
+    (state) => state.sessionWorkspaceViewMode,
+  );
   const persistSessionWorkspaceViewMode = useAppStore(
     (state) => state.setSessionWorkspaceViewMode,
   );
   const [sessionViewMode, setSessionViewMode] = useState<SessionViewMode>(
-    () => useAppStore.getState().sessionWorkspaceViewMode,
+    () => sessionWorkspaceViewMode,
   );
   const [viewModeTransitionPending, startViewModeTransition] = useTransition();
   const handleSessionViewModeChange = useCallback(
@@ -304,6 +311,7 @@ function HydratedDojoSessionPage() {
       >
         <HydratedSession
           sessionViewMode={sessionViewMode}
+          sessionWorkspaceViewMode={sessionWorkspaceViewMode}
           onSessionViewModeChange={handleSessionViewModeChange}
           viewModeTransitionPending={viewModeTransitionPending}
         />

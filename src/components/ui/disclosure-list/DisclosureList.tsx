@@ -380,14 +380,10 @@ export function DisclosureListConfirmAction({
           <span className={labelClasses}>{confirmLabel}</span>
         </span>
         <span className={styles.confirmationActions}>
-          <Button
-            label={cancelLabel}
-            size="sm"
-            variant="ghost"
-            onClick={onCancel}
-          />
+          <Button label={cancelLabel} size="sm" onClick={onCancel} />
           <Button
             label={confirmButtonLabel}
+            preventConcurrentClicks
             size="sm"
             tone={tone}
             onClick={onConfirm}

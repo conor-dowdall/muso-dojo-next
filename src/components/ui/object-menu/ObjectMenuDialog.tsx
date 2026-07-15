@@ -15,6 +15,7 @@ interface ObjectMenuDialogProps {
   contentClassName?: string;
   isOpen: boolean;
   footer?: ReactNode;
+  icon?: ReactNode;
   listClassName?: string;
   onClose: () => void;
   size?: DialogSize;
@@ -26,6 +27,7 @@ export function ObjectMenuDialog({
   contentClassName,
   isOpen,
   footer,
+  icon,
   listClassName,
   onClose,
   size = "standard",
@@ -33,7 +35,7 @@ export function ObjectMenuDialog({
 }: ObjectMenuDialogProps) {
   return (
     <Dialog isOpen={isOpen} onClose={onClose} size={size}>
-      <DialogHeader title={title} onClose={onClose} />
+      <DialogHeader icon={icon} title={title} onClose={onClose} />
       <DialogContent className={contentClassName} menuRhythm="compact">
         <DisclosureList className={listClassName} grouped groupGap="section">
           {children}

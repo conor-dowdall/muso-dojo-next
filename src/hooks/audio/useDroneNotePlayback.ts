@@ -5,7 +5,6 @@ import {
   ensureAudioReady,
   getDefaultAudioPresetId,
   musoAudioEngine,
-  partSequenceCoordinator,
   type AudioPresetId,
   type DroneHandle,
   type DroneRequest,
@@ -133,7 +132,8 @@ export function useDroneNotePlayback({
       const startsNote = !activeNoteIds.includes(noteId);
 
       if (startsNote) {
-        partSequenceCoordinator.stop();
+        // A Drone is a persistent accompaniment layer, not a competing
+        // transport. It may continue underneath band and module playback.
         void ensureAudioReady();
         dronePlaybackCoordinator.activate(id);
       }

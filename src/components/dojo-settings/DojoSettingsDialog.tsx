@@ -1,6 +1,6 @@
 "use client";
 
-import { PaintbrushVertical } from "lucide-react";
+import { PaintbrushVertical, Settings2 } from "lucide-react";
 import {
   DialogContent,
   DialogDoneFooter,
@@ -45,7 +45,11 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
 
   return (
     <>
-      <DialogHeader title="Dojo Settings" onClose={onClose} />
+      <DialogHeader
+        icon={<Settings2 />}
+        title="Dojo Settings"
+        onClose={onClose}
+      />
       <DialogContent menuRhythm="compact">
         <DisclosureList grouped groupGap="section">
           <DisclosureListGroup>

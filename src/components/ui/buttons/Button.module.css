@@ -111,6 +111,11 @@
 
 .button[data-tone="danger"] {
   --button-border-color: var(--button-danger-border);
+  --button-outline-background: color-mix(
+    in srgb,
+    var(--color-danger) 8%,
+    var(--color-control-outline-background)
+  );
   --button-selected-background: var(--button-danger-surface);
   --button-selected-border-color: var(--color-danger);
 
@@ -168,7 +173,7 @@
   max-inline-size: 100%;
   align-items: center;
   justify-content: center;
-  gap: var(--button-gap);
+  gap: var(--button-main-gap, var(--button-gap));
 }
 
 .stacked .buttonMain {
@@ -188,6 +193,7 @@
   block-size: var(--button-icon-size);
   align-items: center;
   justify-content: center;
+  color: var(--button-icon-color, currentColor);
   line-height: var(--leading-none);
 }
 
@@ -195,6 +201,7 @@
   inline-size: 100%;
   block-size: 100%;
   flex-shrink: 0;
+  stroke-width: var(--button-icon-stroke-width, 2);
 }
 
 .buttonIcon[data-sizing="content"] {

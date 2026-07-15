@@ -1,28 +1,13 @@
-.label {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.label svg {
-  flex: 0 0 auto;
-  inline-size: 1rem;
-  block-size: 1rem;
-  color: var(--color-accent);
-  stroke-width: 1.75;
-}
-
 .indicator {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-inline-start: var(--space-1);
-  color: var(--color-accent);
-  opacity: 0.72;
+  margin-inline-start: var(--metadata-icon-gap);
+  color: var(--metadata-icon-color);
 }
 
 .indicator svg {
-  inline-size: 0.8125rem;
-  block-size: 0.8125rem;
-  stroke-width: 1.75;
+  inline-size: var(--metadata-icon-size);
+  block-size: var(--metadata-icon-size);
+  stroke-width: var(--identity-icon-stroke-width);
 }

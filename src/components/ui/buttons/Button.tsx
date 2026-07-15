@@ -1,6 +1,12 @@
 import { yieldToPaint } from "@/utils/browser/yieldToPaint";
 import { setPointerModality } from "@/utils/interaction/pointerModality";
-import { type MouseEvent, type PointerEvent, type ReactNode } from "react";
+import {
+  type MouseEvent,
+  type PointerEvent,
+  type ReactNode,
+  useRef,
+  useState,
+} from "react";
 import styles from "./Button.module.css";
 import {
   Typography,
@@ -56,6 +62,8 @@ export type ButtonProps = Omit<
   subtitle?: ReactNode;
   tone?: ButtonTone;
   variant?: ButtonVariant;
+  /** Prevent another activation while this button's deferred handler is pending. */
+  preventConcurrentClicks?: boolean;
   shouldYield?: boolean;
 };
 
@@ -131,21 +139,50 @@ export function Button({
   subtitle,
   tone = "neutral",
   variant = "outline",
+  preventConcurrentClicks = false,
   type = "button",
   shouldYield = true,
   onClick,
   onPointerDown,
   onPointerEnter,
+  disabled,
   style,
   ...props
 }: ButtonProps) {
+  const clickIsPendingRef = useRef(false);
+  const [clickIsPending, setClickIsPending] = useState(false);
+
+  const releasePendingClick = () => {
+    if (!preventConcurrentClicks) {
+      return;
+    }
+
+    clickIsPendingRef.current = false;
+    setClickIsPending(false);
+  };
+
   const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
+    if (preventConcurrentClicks && clickIsPendingRef.current) {
+      return;
+    }
+
+    if (preventConcurrentClicks && onClick) {
+      clickIsPendingRef.current = true;
+      setClickIsPending(true);
+    }
+
+    const invokeClick = () => {
+      try {
+        onClick?.(e);
+      } finally {
+        releasePendingClick();
+      }
+    };
+
     if (shouldYield && onClick) {
-      yieldToPaint(() => {
-        onClick(e);
-      });
+      void yieldToPaint(invokeClick);
     } else {
-      onClick?.(e);
+      invokeClick();
     }
   };
   const handlePointerDown = (e: PointerEvent<HTMLButtonElement>) => {
@@ -217,6 +254,7 @@ export function Button({
       data-selected={selected === true}
       data-size={size}
       data-tone={tone}
+      disabled={disabled || clickIsPending}
       size={buttonTitleSizes[size]}
       type={type}
       className={buttonClasses}

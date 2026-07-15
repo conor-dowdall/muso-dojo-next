@@ -44,7 +44,12 @@ export function RhythmOptionsDialog({
   } = useDisclosureList<MenuChoice>(null);
 
   return (
-    <ObjectMenuDialog isOpen={isOpen} title="Rhythm Options" onClose={onClose}>
+    <ObjectMenuDialog
+      icon={<Drum />}
+      isOpen={isOpen}
+      title="Rhythm Options"
+      onClose={onClose}
+    >
       <DisclosureListGroup>
         <RhythmPresetDisclosureItem
           icon={<Drum />}

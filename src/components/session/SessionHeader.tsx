@@ -5,6 +5,7 @@ import {
   Gauge,
   GalleryThumbnails,
   Disc3,
+  Ellipsis,
   LibraryBig,
   MonitorPlay,
   PanelTop,
@@ -45,6 +46,7 @@ import {
   sessionViewModeConfig,
   sessionViewModes,
   type SessionViewMode,
+  type SessionWorkspaceViewMode,
 } from "./sessionViewMode";
 import styles from "./SessionHeader.module.css";
 import { SessionBackingBandDialog } from "./SessionBackingBandDialog";
@@ -56,6 +58,7 @@ interface SessionHeaderProps {
   onViewModeChange: (mode: SessionViewMode) => void;
   onViewModeExit?: () => void;
   viewMode: SessionViewMode;
+  workspaceViewMode: SessionWorkspaceViewMode;
   viewModeTransitionPending?: boolean;
 }
 
@@ -75,6 +78,7 @@ export function SessionHeader({
   onViewModeChange,
   onViewModeExit,
   viewMode,
+  workspaceViewMode,
   viewModeTransitionPending = false,
 }: SessionHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -98,6 +102,7 @@ export function SessionHeader({
   );
   const hasActiveSession = activeSessionId !== null;
   const viewModeLabel = sessionViewModeConfig[viewMode].label;
+  const workspaceViewModeLabel = sessionViewModeConfig[workspaceViewMode].label;
   const canUsePartViews = activeSessionPartCount > 0;
   const isFocusHeader = isSessionFocusViewMode(viewMode);
   const isAlternateView = viewMode !== "session";
@@ -169,7 +174,6 @@ export function SessionHeader({
               className={styles.title}
               data-content={titleReadout ? "readout" : "text"}
               size="base"
-              title={titleReadout ? undefined : titleText}
             >
               {titleReadout ? (
                 <PracticeBandReadout
@@ -228,7 +232,7 @@ export function SessionHeader({
             )}
             {isFocusHeader ? (
               <IconButton
-                aria-label="Close focus view"
+                aria-label={`Return to ${workspaceViewModeLabel} view`}
                 aria-keyshortcuts="Escape"
                 disabled={!onViewModeExit || viewModeTransitionPending}
                 icon={<X />}
@@ -242,6 +246,7 @@ export function SessionHeader({
       />
 
       <ObjectMenuDialog
+        icon={<Ellipsis />}
         isOpen={isMenuOpen}
         title="Session Menu"
         onClose={() => setIsMenuOpen(false)}

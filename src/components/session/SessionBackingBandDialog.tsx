@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Drum, Music2, SlidersHorizontal, Timer } from "lucide-react";
+import { Disc3, Drum, Music2, SlidersHorizontal, Timer } from "lucide-react";
 import { RHYTHM_MAX_BEATS } from "@/data/rhythmPresets";
 import {
   ExerciseOctaveDisclosure,
@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { NumericStepper } from "@/components/ui/numeric-stepper/NumericStepper";
 import { ObjectMenuDialog } from "@/components/ui/object-menu";
-import { BackingBandLabel } from "@/components/part-module/PartModuleBandSource";
 import { SelectableActionRow } from "@/components/ui/selectable-overflow-row";
 import { useAppStore } from "@/stores/appStore";
 import {
@@ -103,9 +102,10 @@ export function SessionBackingBandDialog({
 
   return (
     <ObjectMenuDialog
+      icon={<Disc3 />}
       isOpen={isOpen}
       size="standard"
-      title={<BackingBandLabel>Session Backing Band</BackingBandLabel>}
+      title="Session Backing Band"
       onClose={onClose}
     >
       <DisclosureListGroup>

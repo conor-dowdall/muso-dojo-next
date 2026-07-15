@@ -28,6 +28,18 @@
   --button-padding-block: var(--space-3);
   --button-padding-inline: var(--space-3);
   --button-gap: var(--space-3);
+  --button-main-gap: var(--identity-icon-gap);
+  --button-icon-color: var(--menu-leading-icon-color);
+  --button-icon-size: var(--identity-icon-size);
+  --button-icon-stroke-width: var(--identity-icon-stroke-width);
+}
+
+.optionButton[data-option-presentation="list"][data-selected="true"] {
+  --button-icon-color: var(--color-accent);
+}
+
+.optionButton[data-option-presentation="list"][data-tone="danger"] {
+  --button-icon-color: var(--color-danger);
 }
 
 .optionButton:is(

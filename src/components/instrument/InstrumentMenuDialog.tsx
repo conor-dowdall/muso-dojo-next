@@ -3,7 +3,9 @@
 import {
   AudioWaveform,
   CaseSensitive,
+  Guitar,
   ListMusic,
+  Piano,
   Ruler,
   SwatchBook,
 } from "lucide-react";
@@ -287,6 +289,7 @@ export function InstrumentMenuDialog({
   return (
     <>
       <ObjectMenuDialog
+        icon={instrumentType === "fretboard" ? <Guitar /> : <Piano />}
         isOpen={isOpen}
         title="Instrument Options"
         onClose={onClose}

@@ -39,7 +39,6 @@ export function MusicPartIdentity({
       aria-label={accessibleLabel}
       className={joinClasses(styles.identity, className)}
       data-prominence={prominence}
-      title={identity.label}
     >
       {partLabel ? (
         <span aria-hidden="true" className={styles.partLabel}>

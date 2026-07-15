@@ -15,6 +15,7 @@ import {
   ListMusic,
   Music3,
   Orbit,
+  Plus,
 } from "lucide-react";
 import {
   DialogContent,
@@ -286,7 +287,7 @@ export function AddToSessionDialog({
 
   return (
     <>
-      <DialogHeader title="Add to Session" onClose={onClose} />
+      <DialogHeader icon={<Plus />} title="Add to Session" onClose={onClose} />
       <DialogContent layout="stack" menuRhythm="standard">
         <DialogContentSection ariaLabel="Material">
           <DisclosureList>
@@ -353,18 +354,12 @@ export function AddToSessionDialog({
                   label="Progression"
                   panelVariant="menu"
                   preview={
-                    <span
-                      className={localStyles.progressionChordPreview}
-                      title={progressionTitleLabel}
-                    >
+                    <span className={localStyles.progressionChordPreview}>
                       {progressionTitleLabel}
                     </span>
                   }
                   subtitle={
-                    <span
-                      className={localStyles.progressionChordPreview}
-                      title={progressionChordLabel}
-                    >
+                    <span className={localStyles.progressionChordPreview}>
                       {progressionChordLabel}
                     </span>
                   }
@@ -441,6 +436,7 @@ export function AddToSessionDialog({
             <Button
               disabled={!canSubmit}
               label={actionLabel}
+              preventConcurrentClicks
               size="lg"
               onClick={handleSubmit}
             />

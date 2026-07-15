@@ -14,7 +14,7 @@ import {
   createPartSequencePlaybackPlan,
   ensureAudioReady,
   partSequenceCoordinator,
-  stopAllAudioPlayback,
+  stopTransportPlayback,
   type PartSequencePlaybackPlan,
   type PartSequenceSnapshot,
 } from "@/audio";
@@ -197,7 +197,7 @@ export function usePracticeBandTransport(
       return;
     }
 
-    stopAllAudioPlayback();
+    stopTransportPlayback();
     void ensureAudioReady();
     void partSequenceCoordinator.start(plan);
   }, [canPlay, isActive, plan]);
@@ -251,7 +251,7 @@ export function usePartBandLoopTransport(
       return;
     }
 
-    stopAllAudioPlayback();
+    stopTransportPlayback();
     void ensureAudioReady();
     void partSequenceCoordinator.start(plan);
   }, [canPlay, isActive, plan]);

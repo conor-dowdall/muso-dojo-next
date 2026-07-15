@@ -184,7 +184,13 @@ export function CustomTuningEditor({
         </form>
       ) : (
         <DisclosureListPanelActions>
-          <Button disabled={!canSave} label="Save" size="sm" onClick={save} />
+          <Button
+            disabled={!canSave}
+            label="Save"
+            preventConcurrentClicks
+            size="sm"
+            onClick={save}
+          />
         </DisclosureListPanelActions>
       )}
     </div>

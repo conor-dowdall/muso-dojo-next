@@ -112,6 +112,7 @@ export function Dialog({
     <dialog
       ref={dialogRef}
       className={cx(styles.dialog, className)}
+      inert={isOpen ? undefined : true}
       onClose={(event) => {
         event.stopPropagation();
         onClose();
@@ -144,19 +145,29 @@ interface DialogHeaderProps {
    * preserve user-authored names as supplied.
    */
   title: ReactNode;
+  /** A stable identity mark for the dialog, not an interactive control. */
+  icon?: ReactNode;
   onClose?: () => void;
   className?: string;
 }
 
 export function DialogHeader({
   title,
+  icon,
   onClose,
   className = "",
 }: DialogHeaderProps) {
   return (
     <header className={cx(styles.dialogHeader, className)}>
       <Heading as="h2" className={styles.dialogTitle} leading="none">
-        {title}
+        <span className={styles.dialogIdentity}>
+          {icon !== undefined ? (
+            <span aria-hidden="true" className={styles.dialogIdentityIcon}>
+              {icon}
+            </span>
+          ) : null}
+          <span>{title}</span>
+        </span>
       </Heading>
       {onClose ? (
         <IconButton
