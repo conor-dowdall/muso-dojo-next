@@ -271,6 +271,22 @@ describe("createWebAudioEngine", () => {
     });
     expect(fetch).toHaveBeenCalledTimes(SAMPLE_PACK_IDS.length);
     expect(MockAudioContext.decodeCount).toBe(SAMPLE_PACK_IDS.length);
+    expect(MockAudioContext.gainNodes).toHaveLength(1);
+    expect(MockAudioContext.connectionCount).toBe(1);
+  });
+
+  it("reuses the primed master output path for playback groups", async () => {
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+
+    await engine.prime();
+    expect(MockAudioContext.gainNodes).toHaveLength(1);
+
+    engine.createPlaybackGroup();
+    engine.createPlaybackGroup();
+
+    expect(MockAudioContext.gainNodes).toHaveLength(3);
   });
 
   it("warms generated sample packs without resuming a suspended context", async () => {

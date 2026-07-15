@@ -196,7 +196,19 @@ export function createWebAudioEngine(): AudioEngine {
     return context.state === "closed" ? undefined : context;
   };
 
-  const getReadyAudioContext = () => getAudioContext({ resume: true });
+  const getReadyAudioContext = async () => {
+    const audioContext = await getAudioContext({ resume: true });
+
+    if (audioContext) {
+      // Build the complete output path while audio is being primed, rather
+      // than immediately before its first audible transient. In particular,
+      // this gives the browser's output pipeline and master compressor time to
+      // settle before an accented count-in or Rhythm downbeat is scheduled.
+      getMasterInput(audioContext);
+    }
+
+    return audioContext;
+  };
 
   const getWarmAudioContext = async () => {
     const OfflineAudioContextConstructor = getOfflineAudioContextConstructor();
