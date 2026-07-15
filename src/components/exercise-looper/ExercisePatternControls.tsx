@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
   ArrowDown,
+  ArrowDownUp,
   ArrowUp,
   ArrowUpDown,
   CirclePile,
@@ -41,6 +42,8 @@ function getCompactDirectionLabel(direction: ExerciseScaleDirection) {
       return "Down";
     case "up-down":
       return "Up-Down";
+    case "down-up":
+      return "Down-Up";
   }
 }
 
@@ -101,9 +104,10 @@ function ExerciseStudyReadout({ display }: { display: ExerciseStudyDisplay }) {
 }
 
 const directionChoices = [
-  { direction: "up-down", icon: <ArrowUpDown />, label: "Up and down" },
+  { direction: "up-down", icon: <ArrowUpDown />, label: "Up, then down" },
   { direction: "ascending", icon: <ArrowUp />, label: "Ascending" },
   { direction: "descending", icon: <ArrowDown />, label: "Descending" },
+  { direction: "down-up", icon: <ArrowDownUp />, label: "Down, then up" },
 ] as const satisfies readonly {
   direction: ExerciseScaleDirection;
   icon: ReactNode;

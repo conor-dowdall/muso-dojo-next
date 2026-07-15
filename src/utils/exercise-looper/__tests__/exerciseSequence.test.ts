@@ -165,6 +165,7 @@ describe("createExerciseSequence", () => {
     ["ascending", [48, 52, 55, 59, 62]],
     ["descending", [62, 59, 55, 52, 48]],
     ["up-down", [48, 52, 55, 59, 62, 59, 55, 52]],
+    ["down-up", [62, 59, 55, 52, 48, 52, 55, 59]],
   ] as const)(
     "plays a finite voicing in %s package order",
     (direction, expectedMidi) => {
@@ -465,6 +466,7 @@ describe("createExerciseSequence", () => {
     ["ascending", [48, 52]],
     ["descending", [52, 48]],
     ["up-down", [48, 52, 48]],
+    ["down-up", [52, 48, 52]],
   ] as const)(
     "plays separate interval notes with an %s inner contour",
     (intervalDirection, expectedMidi) => {

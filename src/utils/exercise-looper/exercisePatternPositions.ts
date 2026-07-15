@@ -41,6 +41,11 @@ export function createScaleAnchors(
     return ascending.toReversed();
   }
 
+  if (direction === "down-up") {
+    // The next cycle supplies the upper endpoint, avoiding doubled loop beats.
+    return [...ascending.toReversed(), ...ascending.slice(1, -1)];
+  }
+
   // The next cycle supplies the lower endpoint, avoiding doubled loop beats.
   return [...ascending, ...ascending.toReversed().slice(1, -1)];
 }
@@ -55,6 +60,10 @@ function createInnerContour(
 
   if (direction === "descending") {
     return positions.toReversed();
+  }
+
+  if (direction === "down-up") {
+    return [...positions.toReversed(), ...positions.slice(1)];
   }
 
   return [...positions, ...positions.toReversed().slice(1)];

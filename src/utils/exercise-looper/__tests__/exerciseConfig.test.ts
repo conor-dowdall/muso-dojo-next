@@ -9,20 +9,20 @@ describe("exercise pattern configuration", () => {
   it("normalizes orthogonal pattern controls", () => {
     expect(
       normalizeExercisePattern({
-        direction: "descending",
+        direction: "down-up",
         extensionDegree: 7,
-        extensionDirection: "ascending",
+        extensionDirection: "down-up",
         intervalDegree: 6,
-        intervalDirection: "descending",
+        intervalDirection: "down-up",
         mode: "extension",
         notePlayback: "together",
       }),
     ).toEqual({
-      direction: "descending",
+      direction: "down-up",
       extensionDegree: 7,
-      extensionDirection: "ascending",
+      extensionDirection: "down-up",
       intervalDegree: 6,
-      intervalDirection: "descending",
+      intervalDirection: "down-up",
       mode: "extension",
       notePlayback: "together",
     });

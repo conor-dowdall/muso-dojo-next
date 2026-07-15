@@ -10,6 +10,7 @@ import {
   type CollectionRangeBoundary,
   type ExercisePattern,
   type ExercisePatternMode,
+  type ExerciseScaleDirection,
 } from "./exerciseSequence";
 import {
   type ExerciseCountInBeats,
@@ -61,6 +62,17 @@ const subdivisions = Object.fromEntries(
 export const exerciseSubdivisionBeats = Object.fromEntries(
   beatSubdivisionIds.map((id) => [id, getBeatSubdivisionStepBeats(id)]),
 ) as Record<ExerciseSubdivision, number>;
+
+function isExerciseScaleDirection(
+  value: unknown,
+): value is ExerciseScaleDirection {
+  return (
+    value === "ascending" ||
+    value === "descending" ||
+    value === "up-down" ||
+    value === "down-up"
+  );
+}
 
 export function normalizeExerciseCountInBeats(
   value: unknown,
@@ -115,26 +127,20 @@ export function normalizeExercisePattern(
   }
 
   if (
-    (value.direction !== "ascending" &&
-      value.direction !== "descending" &&
-      value.direction !== "up-down") ||
+    !isExerciseScaleDirection(value.direction) ||
     typeof value.extensionDegree !== "number" ||
     !Number.isInteger(value.extensionDegree) ||
     !EXERCISE_EXTENSION_DEGREES.includes(
       value.extensionDegree as (typeof EXERCISE_EXTENSION_DEGREES)[number],
     ) ||
     (value.extensionDirection !== undefined &&
-      value.extensionDirection !== "ascending" &&
-      value.extensionDirection !== "descending" &&
-      value.extensionDirection !== "up-down") ||
+      !isExerciseScaleDirection(value.extensionDirection)) ||
     typeof value.intervalDegree !== "number" ||
     !Number.isInteger(value.intervalDegree) ||
     value.intervalDegree < EXERCISE_INTERVAL_MIN ||
     value.intervalDegree > EXERCISE_INTERVAL_MAX ||
     (value.intervalDirection !== undefined &&
-      value.intervalDirection !== "ascending" &&
-      value.intervalDirection !== "descending" &&
-      value.intervalDirection !== "up-down") ||
+      !isExerciseScaleDirection(value.intervalDirection)) ||
     (value.mode !== "single" &&
       value.mode !== "interval" &&
       value.mode !== "extension") ||

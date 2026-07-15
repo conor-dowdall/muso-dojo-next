@@ -8,7 +8,8 @@ export const EXERCISE_INTERVAL_MIN = 2;
 export const EXERCISE_INTERVAL_MAX = 13;
 export const EXERCISE_MAX_OCTAVE_SPAN = 4;
 
-export type ExerciseScaleDirection = "ascending" | "descending" | "up-down";
+export type ExerciseScaleDirection =
+  "ascending" | "descending" | "up-down" | "down-up";
 export type ExercisePatternMode = "single" | "interval" | "extension";
 export type ExerciseNotePlayback = "separate" | "together";
 
