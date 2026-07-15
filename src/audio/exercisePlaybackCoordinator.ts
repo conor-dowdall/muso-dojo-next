@@ -10,6 +10,7 @@ import {
 } from "./audioTimingConfig";
 import { musoAudioEngine } from "./createWebAudioEngine";
 import { AUDIO_STOP_RELEASE_SECONDS } from "./audioStopConfig";
+import { scheduleCountInClicks } from "./countInScheduler";
 import {
   type AudioEngine,
   type AudioPresetId,
@@ -454,19 +455,13 @@ export class ExercisePlaybackCoordinator {
     secondsPerBeat: number;
     currentTime: number;
   }) {
-    for (let beatIndex = 0; beatIndex < countInBeats; beatIndex += 1) {
-      const startTime = countInStartTime + beatIndex * secondsPerBeat;
-
-      if (startTime < currentTime + AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS) {
-        continue;
-      }
-
-      this.audioEngine.scheduleMetronomeClick({
-        accent: beatIndex === 0,
-        group,
-        startTime,
-      });
-    }
+    scheduleCountInClicks(this.audioEngine, {
+      durationSeconds: countInBeats * secondsPerBeat,
+      group,
+      minimumStartTime: currentTime + AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS,
+      pulses: countInBeats,
+      startTime: countInStartTime,
+    });
   }
 
   getActiveStepIndex(outputContextTime: number, id?: string) {

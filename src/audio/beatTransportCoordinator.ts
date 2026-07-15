@@ -18,6 +18,10 @@ import {
 } from "./playbackOwnership";
 import { musoAudioEngine } from "./createWebAudioEngine";
 import { AUDIO_PLAYBACK_START_LEAD_SECONDS } from "./audioTimingConfig";
+import {
+  scheduleCountInClicks,
+  type CountInSchedulerAudioEngine,
+} from "./countInScheduler";
 import { type PlaybackGroupHandle } from "./types";
 
 const BEAT_GRID_EPSILON = 1e-6;
@@ -53,15 +57,10 @@ export interface BeatTransportCountIn {
   pulses: number;
 }
 
-export interface CountInPlaybackAudioEngine {
+export interface CountInPlaybackAudioEngine extends CountInSchedulerAudioEngine {
   cancelPlaybackGroup: (group: PlaybackGroupHandle) => void;
   createPlaybackGroup: () => PlaybackGroupHandle;
   prime: () => Promise<boolean>;
-  scheduleMetronomeClick: (request: {
-    accent?: boolean;
-    group: PlaybackGroupHandle;
-    startTime: number;
-  }) => boolean;
 }
 
 function normalizeTempo(tempoBpm: number) {
@@ -191,17 +190,14 @@ export class BeatTransportCoordinator {
     this.stopCountIn();
     const group = this.countInAudio.createPlaybackGroup();
     const startTime = originTime - countIn.durationBeats * secondsPerBeat;
-    const pulseSeconds =
-      (countIn.durationBeats * secondsPerBeat) / countIn.pulses;
     this.countInGroup = group;
 
-    for (let pulse = 0; pulse < countIn.pulses; pulse += 1) {
-      this.countInAudio.scheduleMetronomeClick({
-        accent: pulse === 0,
-        group,
-        startTime: startTime + pulse * pulseSeconds,
-      });
-    }
+    scheduleCountInClicks(this.countInAudio, {
+      durationSeconds: countIn.durationBeats * secondsPerBeat,
+      group,
+      pulses: countIn.pulses,
+      startTime,
+    });
   }
 
   private notifyManualControl(
