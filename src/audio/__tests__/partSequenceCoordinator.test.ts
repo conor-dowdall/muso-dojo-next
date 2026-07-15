@@ -159,9 +159,12 @@ function createDeferred<T>() {
 function createHarness() {
   vi.useFakeTimers();
   vi.setSystemTime(0);
+  let audioClockOffsetSeconds = 0;
   const startPart = vi.fn(
     async (request: Parameters<BeatTransportCoordinator["startPart"]>[0]) => ({
-      originTime: request.originTime ?? 10 + Date.now() / 1000 + 0.08,
+      originTime:
+        request.originTime ??
+        10 + Date.now() / 1000 + audioClockOffsetSeconds + 0.08,
       started: true,
     }),
   );
@@ -171,7 +174,7 @@ function createHarness() {
   const stopPartPlayback = vi.fn();
   const updatePartLive = vi.fn();
   const transport = {
-    getCurrentTime: () => 10 + Date.now() / 1000,
+    getCurrentTime: () => 10 + Date.now() / 1000 + audioClockOffsetSeconds,
     startPart,
     stopPartPlayback,
     subscribeToManualControl: (listener: () => void) => {
@@ -183,6 +186,9 @@ function createHarness() {
   const coordinator = new PartSequenceCoordinator(transport);
 
   return {
+    advanceAudioClock: (seconds: number) => {
+      audioClockOffsetSeconds += seconds;
+    },
     coordinator,
     manualStart: () =>
       manualStartListeners.forEach((listener) => listener({ kind: "start" })),
@@ -287,6 +293,86 @@ describe("PartSequenceCoordinator", () => {
         preserveRhythms: true,
         rhythms: [expect.objectContaining({ id: "rhythm-bar" })],
         stopMissing: true,
+      }),
+    );
+  });
+
+  it("skips an overdue handoff without rebasing the sequence timeline", async () => {
+    const { advanceAudioClock, coordinator, startPart } = createHarness();
+
+    await coordinator.start(createPlan());
+    advanceAudioClock(2);
+    await vi.advanceTimersToNextTimerAsync();
+
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        handoff: true,
+        originTime: 16.08,
+        preserveRhythms: false,
+        rhythms: [expect.objectContaining({ id: "rhythm-a" })],
+      }),
+    );
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 0,
+      pendingIndex: 0,
+      pendingPartId: "part-a",
+    });
+
+    await vi.advanceTimersByTimeAsync(1250);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 0,
+      activePartId: "part-a",
+      originTime: 16.08,
+    });
+
+    await vi.advanceTimersToNextTimerAsync();
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        handoff: true,
+        originTime: 20.08,
+      }),
+    );
+  });
+
+  it("recovers a delayed one-Part loop on its next absolute loop boundary", async () => {
+    const { advanceAudioClock, coordinator, startPart } = createHarness();
+    const splitPlan = createSplitBarPlan();
+    const plan: PartSequencePlaybackPlan = {
+      ...splitPlan,
+      mode: "part-loop",
+      partResetSignatures: [splitPlan.parts[0]!.resetSignature],
+      parts: [{ ...splitPlan.parts[0]!, durationBeats: 4 }],
+    };
+
+    await coordinator.start(plan);
+    advanceAudioClock(2);
+    await vi.advanceTimersToNextTimerAsync();
+
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        exercises: [expect.objectContaining({ id: "exercise-a" })],
+        handoff: true,
+        originTime: 18.08,
+        preserveRhythms: true,
+        rhythms: [expect.objectContaining({ id: "rhythm-bar" })],
+      }),
+    );
+  });
+
+  it("recovers a delayed fractional bar at a full-bar boundary", async () => {
+    const { advanceAudioClock, coordinator, startPart } = createHarness();
+
+    await coordinator.start(createSplitBarPlan());
+    advanceAudioClock(1.5);
+    await vi.advanceTimersToNextTimerAsync();
+
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        exercises: [expect.objectContaining({ id: "exercise-a" })],
+        handoff: true,
+        originTime: 14.08,
+        preserveRhythms: true,
+        rhythms: [expect.objectContaining({ id: "rhythm-bar" })],
       }),
     );
   });

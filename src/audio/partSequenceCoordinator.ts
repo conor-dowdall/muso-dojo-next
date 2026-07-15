@@ -2,10 +2,16 @@ import {
   beatTransportCoordinator,
   type BeatTransportCoordinator,
 } from "./beatTransportCoordinator";
+import {
+  AUDIO_PLAYBACK_START_LEAD_SECONDS,
+  AUDIO_SCHEDULER_HORIZON_SECONDS,
+} from "./audioTimingConfig";
 import { type PartSequencePlaybackPlan } from "./partSequencePlanning";
 
-const PART_SEQUENCE_HANDOFF_LEAD_SECONDS = 0.35;
+const PART_SEQUENCE_HANDOFF_LEAD_SECONDS = AUDIO_SCHEDULER_HORIZON_SECONDS;
 const PART_SEQUENCE_COMMIT_LEAD_SECONDS = 0.01;
+const PART_SEQUENCE_RECOVERY_LEAD_SECONDS =
+  AUDIO_PLAYBACK_START_LEAD_SECONDS + PART_SEQUENCE_COMMIT_LEAD_SECONDS;
 
 export interface PartSequenceSnapshot {
   activeIndex?: number;
@@ -43,10 +49,75 @@ function getSecondsPerBeat(tempoBpm: number) {
   return 60 / normalizeTempo(tempoBpm);
 }
 
+function getPartIndex(plan: PartSequencePlaybackPlan, occurrence: number) {
+  return occurrence % plan.parts.length;
+}
+
+function getSequenceDurationSeconds(plan: PartSequencePlaybackPlan) {
+  const secondsPerBeat = getSecondsPerBeat(plan.tempoBpm);
+  return plan.parts.reduce(
+    (duration, part) => duration + part.durationBeats * secondsPerBeat,
+    0,
+  );
+}
+
+function getOccurrenceOffsetSeconds(
+  plan: PartSequencePlaybackPlan,
+  occurrence: number,
+) {
+  const partCount = plan.parts.length;
+  const cycle = Math.floor(occurrence / partCount);
+  const index = getPartIndex(plan, occurrence);
+  const secondsPerBeat = getSecondsPerBeat(plan.tempoBpm);
+  const cycleDuration = getSequenceDurationSeconds(plan);
+  const partOffset = plan.parts
+    .slice(0, index)
+    .reduce(
+      (duration, part) => duration + part.durationBeats * secondsPerBeat,
+      0,
+    );
+
+  return cycle * cycleDuration + partOffset;
+}
+
+function rhythmContinuesThroughOccurrences({
+  fromOccurrence,
+  plan,
+  toOccurrence,
+}: {
+  fromOccurrence: number;
+  plan: PartSequencePlaybackPlan;
+  toOccurrence: number;
+}) {
+  if (toOccurrence <= fromOccurrence) {
+    return true;
+  }
+
+  const distance = toOccurrence - fromOccurrence;
+  if (
+    distance >= plan.parts.length &&
+    plan.parts.some((part) => !part.continueRhythm)
+  ) {
+    return false;
+  }
+
+  const occurrencesToInspect = Math.min(distance, plan.parts.length);
+  for (let offset = 1; offset <= occurrencesToInspect; offset += 1) {
+    const part = plan.parts[getPartIndex(plan, fromOccurrence + offset)];
+    if (!part?.continueRhythm) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export class PartSequenceCoordinator {
+  private activeOccurrence: number | undefined;
   private listeners = new Set<() => void>();
   private plan: PartSequencePlaybackPlan | undefined;
   private revision = 0;
+  private sequenceOriginTime: number | undefined;
   private snapshot: PartSequenceSnapshot = idleSnapshot;
   private timer: ReturnType<typeof globalThis.setTimeout> | undefined;
 
@@ -83,21 +154,108 @@ export class PartSequenceCoordinator {
       : Math.max(0, (targetTime - currentTime - leadSeconds) * 1000);
   }
 
-  private commitPart({
-    index,
+  private getOccurrenceOriginTime(
+    plan: PartSequencePlaybackPlan,
+    occurrence: number,
+  ) {
+    return this.sequenceOriginTime === undefined
+      ? undefined
+      : this.sequenceOriginTime + getOccurrenceOffsetSeconds(plan, occurrence);
+  }
+
+  private setSequenceOriginForOccurrence({
+    occurrence,
     originTime,
     plan,
+  }: {
+    occurrence: number;
+    originTime: number;
+    plan: PartSequencePlaybackPlan;
+  }) {
+    this.sequenceOriginTime =
+      originTime - getOccurrenceOffsetSeconds(plan, occurrence);
+  }
+
+  private getNextSchedulableOccurrence({
+    minimumOccurrence,
+    plan,
+  }: {
+    minimumOccurrence: number;
+    plan: PartSequencePlaybackPlan;
+  }) {
+    const currentTime = this.transport.getCurrentTime();
+    if (currentTime === undefined || this.sequenceOriginTime === undefined) {
+      return minimumOccurrence;
+    }
+
+    const minimumOriginTime = currentTime + PART_SEQUENCE_RECOVERY_LEAD_SECONDS;
+    const sequenceDuration = getSequenceDurationSeconds(plan);
+    let occurrence = minimumOccurrence;
+    let originTime = this.getOccurrenceOriginTime(plan, occurrence);
+
+    if (
+      originTime !== undefined &&
+      originTime < minimumOriginTime &&
+      sequenceDuration > 0
+    ) {
+      const elapsedCycles = Math.max(
+        0,
+        Math.floor(
+          (minimumOriginTime - this.sequenceOriginTime) / sequenceDuration,
+        ),
+      );
+      occurrence = Math.max(occurrence, elapsedCycles * plan.parts.length);
+      originTime = this.getOccurrenceOriginTime(plan, occurrence);
+    }
+
+    while (originTime !== undefined && originTime < minimumOriginTime) {
+      occurrence += 1;
+      originTime = this.getOccurrenceOriginTime(plan, occurrence);
+    }
+
+    const activeOccurrence = this.activeOccurrence;
+    if (
+      activeOccurrence === undefined ||
+      rhythmContinuesThroughOccurrences({
+        fromOccurrence: activeOccurrence,
+        plan,
+        toOccurrence: occurrence,
+      })
+    ) {
+      return occurrence;
+    }
+
+    // If recovery crossed a Rhythm reset, do not resume in the middle of its
+    // parent bar. The first Part in the sequence is also a stable cycle reset
+    // for a Rhythm deliberately continued across the Session wrap.
+    while (true) {
+      const index = getPartIndex(plan, occurrence);
+      const part = plan.parts[index];
+      if (index === 0 || !part?.continueRhythm) {
+        return occurrence;
+      }
+      occurrence += 1;
+    }
+  }
+
+  private commitPart({
+    occurrence,
+    originTime,
+    plan,
+    resetTimeline = false,
     revision,
   }: {
-    index: number;
+    occurrence: number;
     originTime?: number;
     plan: PartSequencePlaybackPlan;
+    resetTimeline?: boolean;
     revision: number;
   }) {
     if (revision !== this.revision || this.plan !== plan) {
       return;
     }
 
+    const index = getPartIndex(plan, occurrence);
     const part = plan.parts[index];
 
     if (!part) {
@@ -109,6 +267,14 @@ export class PartSequenceCoordinator {
       part.durationBeats * getSecondsPerBeat(plan.tempoBpm);
     const cycleEndTime =
       originTime === undefined ? undefined : originTime + durationSeconds;
+
+    if (
+      originTime !== undefined &&
+      (resetTimeline || this.sequenceOriginTime === undefined)
+    ) {
+      this.setSequenceOriginForOccurrence({ occurrence, originTime, plan });
+    }
+    this.activeOccurrence = occurrence;
 
     this.snapshot = {
       activeIndex: index,
@@ -128,30 +294,26 @@ export class PartSequenceCoordinator {
     };
     this.emit();
     this.scheduleNextPart({
-      durationSeconds,
-      index,
-      originTime,
+      occurrence,
       plan,
       revision,
     });
   }
 
   private scheduleNextPart({
-    durationSeconds,
-    index,
-    originTime,
+    occurrence,
     plan,
     revision,
   }: {
-    durationSeconds: number;
-    index: number;
-    originTime?: number;
+    occurrence: number;
     plan: PartSequencePlaybackPlan;
     revision: number;
   }) {
-    const nextIndex = (index + 1) % plan.parts.length;
-    const nextOriginTime =
-      originTime === undefined ? undefined : originTime + durationSeconds;
+    const nextOccurrence = occurrence + 1;
+    const nextOriginTime = this.getOccurrenceOriginTime(plan, nextOccurrence);
+    const durationSeconds =
+      plan.parts[getPartIndex(plan, occurrence)]!.durationBeats *
+      getSecondsPerBeat(plan.tempoBpm);
     const delayMilliseconds =
       nextOriginTime === undefined
         ? durationSeconds * 1000
@@ -162,35 +324,48 @@ export class PartSequenceCoordinator {
 
     this.clearTimer();
     this.timer = globalThis.setTimeout(() => {
-      void this.startPartAtIndex({
+      const scheduledOccurrence = this.getNextSchedulableOccurrence({
+        minimumOccurrence: nextOccurrence,
+        plan,
+      });
+      const preserveRhythmPhase = rhythmContinuesThroughOccurrences({
+        fromOccurrence: occurrence,
+        plan,
+        toOccurrence: scheduledOccurrence,
+      });
+      void this.startPartAtOccurrence({
+        forceRhythmRestart: !preserveRhythmPhase,
         handoff: true,
-        index: nextIndex,
-        originTime: nextOriginTime,
+        occurrence: scheduledOccurrence,
+        originTime: this.getOccurrenceOriginTime(plan, scheduledOccurrence),
         plan,
         revision,
       });
     }, delayMilliseconds);
   }
 
-  private async startPartAtIndex({
+  private async startPartAtOccurrence({
     forceRhythmRestart = false,
     handoff,
-    index,
+    occurrence,
     originTime,
     plan,
+    resetTimeline = false,
     revision,
   }: {
     forceRhythmRestart?: boolean;
     handoff: boolean;
-    index: number;
+    occurrence: number;
     originTime?: number;
     plan: PartSequencePlaybackPlan;
+    resetTimeline?: boolean;
     revision: number;
   }) {
     if (revision !== this.revision || this.plan !== plan) {
       return false;
     }
 
+    const index = getPartIndex(plan, occurrence);
     const part = plan.parts[index];
 
     if (!part) {
@@ -249,9 +424,10 @@ export class PartSequenceCoordinator {
 
     if (!shouldCommitLater) {
       this.commitPart({
-        index,
+        occurrence,
         originTime: startedOriginTime,
         plan,
+        resetTimeline,
         revision,
       });
       return true;
@@ -260,9 +436,10 @@ export class PartSequenceCoordinator {
     this.timer = globalThis.setTimeout(
       () =>
         this.commitPart({
-          index,
+          occurrence,
           originTime: startedOriginTime,
           plan,
+          resetTimeline,
           revision,
         }),
       this.getTimerDelayMilliseconds(startedOriginTime),
@@ -288,10 +465,11 @@ export class PartSequenceCoordinator {
     const revision = ++this.revision;
     this.plan = plan;
 
-    return this.startPartAtIndex({
+    return this.startPartAtOccurrence({
       handoff: false,
-      index: 0,
+      occurrence: 0,
       plan,
+      resetTimeline: true,
       revision,
     });
   }
@@ -312,11 +490,12 @@ export class PartSequenceCoordinator {
     const revision = ++this.revision;
     this.plan = plan;
 
-    return this.startPartAtIndex({
+    return this.startPartAtOccurrence({
       forceRhythmRestart: true,
       handoff: true,
-      index: Math.min(currentIndex, plan.parts.length - 1),
+      occurrence: Math.min(currentIndex, plan.parts.length - 1),
       plan,
+      resetTimeline: true,
       revision,
     });
   }
@@ -344,6 +523,9 @@ export class PartSequenceCoordinator {
     this.clearTimer();
     const revision = ++this.revision;
     this.plan = plan;
+    const occurrence = currentIndex;
+    this.activeOccurrence = occurrence;
+    this.setSequenceOriginForOccurrence({ occurrence, originTime, plan });
     this.transport.updatePartLive({
       exercises: part.exerciseRequests,
       rhythms: part.rhythmRequests,
@@ -372,9 +554,7 @@ export class PartSequenceCoordinator {
     };
     this.emit();
     this.scheduleNextPart({
-      durationSeconds,
-      index: currentIndex,
-      originTime,
+      occurrence,
       plan,
       revision,
     });
@@ -383,8 +563,10 @@ export class PartSequenceCoordinator {
 
   stop({ stopPlayback = true }: PartSequenceStopOptions = {}) {
     this.clearTimer();
+    this.activeOccurrence = undefined;
     this.plan = undefined;
     this.revision += 1;
+    this.sequenceOriginTime = undefined;
     this.snapshot = idleSnapshot;
     this.emit();
 

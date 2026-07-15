@@ -17,9 +17,9 @@ import {
   type PlaybackOwner,
 } from "./playbackOwnership";
 import { musoAudioEngine } from "./createWebAudioEngine";
+import { AUDIO_PLAYBACK_START_LEAD_SECONDS } from "./audioTimingConfig";
 import { type PlaybackGroupHandle } from "./types";
 
-const TRANSPORT_START_LEAD_SECONDS = 0.08;
 const BEAT_GRID_EPSILON = 1e-6;
 
 export type BeatTransportStartSource = PlaybackOwner;
@@ -75,7 +75,7 @@ function getNextBeatOrigin({
   currentTime: number;
   grid: BeatGrid;
 }) {
-  const minimumStartTime = currentTime + TRANSPORT_START_LEAD_SECONDS;
+  const minimumStartTime = currentTime + AUDIO_PLAYBACK_START_LEAD_SECONDS;
   if (minimumStartTime <= grid.originTime) {
     return grid.originTime;
   }
@@ -305,7 +305,7 @@ export class BeatTransportCoordinator {
     const selectedExercises = exercises.slice(0, 1);
     const selectedRhythms = rhythms.slice(0, 1);
     const activeRhythmIds = new Set(this.rhythm.getActiveIds(owner));
-    const canPreserveRhythms =
+    const canPreserveRhythmsAtRequestedOrigin =
       preserveRhythms &&
       selectedRhythms.length > 0 &&
       selectedRhythms.every(
@@ -316,7 +316,9 @@ export class BeatTransportCoordinator {
             request,
           ),
       );
-    const rhythmsToStart = canPreserveRhythms ? [] : selectedRhythms;
+    const rhythmsInitiallyRequiringStart = canPreserveRhythmsAtRequestedOrigin
+      ? []
+      : selectedRhythms;
     const resolvedCountIn =
       handoff || !countIn || countIn.durationBeats <= 0 || countIn.pulses <= 0
         ? undefined
@@ -327,7 +329,7 @@ export class BeatTransportCoordinator {
     const preparesFreshOrigin =
       originTime === undefined &&
       (selectedExercises.length > 0 ||
-        rhythmsToStart.length > 0 ||
+        rhythmsInitiallyRequiringStart.length > 0 ||
         resolvedCountIn !== undefined);
 
     if (preparesFreshOrigin) {
@@ -335,7 +337,7 @@ export class BeatTransportCoordinator {
         selectedExercises.length > 0
           ? this.exercise.prepare()
           : Promise.resolve(true),
-        rhythmsToStart.length > 0
+        rhythmsInitiallyRequiringStart.length > 0
           ? this.rhythm.prepare()
           : Promise.resolve(true),
         resolvedCountIn ? this.countInAudio.prime() : Promise.resolve(true),
@@ -354,7 +356,7 @@ export class BeatTransportCoordinator {
       (currentTime === undefined
         ? undefined
         : currentTime +
-          TRANSPORT_START_LEAD_SECONDS +
+          AUDIO_PLAYBACK_START_LEAD_SECONDS +
           (resolvedCountIn?.durationBeats ?? 0) * (secondsPerBeat ?? 0));
     const resolvedOriginTime =
       handoff &&
@@ -369,6 +371,17 @@ export class BeatTransportCoordinator {
             },
           })
         : requestedOrigin;
+    const originWasRebased =
+      requestedOrigin !== undefined &&
+      resolvedOriginTime !== undefined &&
+      resolvedOriginTime > requestedOrigin + BEAT_GRID_EPSILON;
+    // A preserved Rhythm must never remain on the former bar phase while a
+    // late Part handoff is moved to a new beat. Restart both lanes together as
+    // a final safety net; the sequence coordinator normally avoids this by
+    // selecting a future boundary on its absolute timeline.
+    const canPreserveRhythms =
+      canPreserveRhythmsAtRequestedOrigin && !originWasRebased;
+    const rhythmsToStart = canPreserveRhythms ? [] : selectedRhythms;
 
     if (
       resolvedCountIn &&

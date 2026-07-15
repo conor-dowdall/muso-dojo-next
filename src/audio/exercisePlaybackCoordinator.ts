@@ -4,7 +4,10 @@ import {
   type LookaheadSchedulerEvent,
   type LookaheadSchedulerOptions,
 } from "./lookaheadScheduler";
-import { AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS } from "./audioTimingConfig";
+import {
+  AUDIO_PLAYBACK_START_LEAD_SECONDS,
+  AUDIO_SCHEDULER_MINIMUM_LEAD_SECONDS,
+} from "./audioTimingConfig";
 import { musoAudioEngine } from "./createWebAudioEngine";
 import { AUDIO_STOP_RELEASE_SECONDS } from "./audioStopConfig";
 import {
@@ -15,7 +18,6 @@ import {
 import { type PlaybackOwner } from "./playbackOwnership";
 import { type ExerciseCountInBeats } from "@/types/session";
 
-const START_LOOKAHEAD_SECONDS = 0.08;
 const NOTE_GATE_RATIO = 0.9;
 
 export interface ExercisePlaybackEvent {
@@ -537,7 +539,7 @@ export class ExercisePlaybackCoordinator {
     const secondsPerBeat = 60 / normalizeTempo(request.tempoBpm);
     const countInStartTime =
       options.originTime === undefined
-        ? currentTime + START_LOOKAHEAD_SECONDS
+        ? currentTime + AUDIO_PLAYBACK_START_LEAD_SECONDS
         : options.originTime - request.countInBeats * secondsPerBeat;
     const originTime =
       options.originTime ??

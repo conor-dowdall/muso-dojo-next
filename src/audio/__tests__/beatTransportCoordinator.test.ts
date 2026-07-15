@@ -285,6 +285,30 @@ describe("BeatTransportCoordinator", () => {
     });
   });
 
+  it("restarts a preserved Rhythm if a late handoff must move to another beat", async () => {
+    const { rhythm, setCurrentTime, transport } = createHarness();
+    const parentRhythm = createRhythmRequest("bar-rhythm");
+    await transport.startPart({
+      originTime: 12,
+      rhythms: [parentRhythm],
+      source: "part-sequence",
+    });
+    setCurrentTime(14.2);
+
+    const result = await transport.startPart({
+      handoff: true,
+      originTime: 14,
+      preserveRhythms: true,
+      rhythms: [parentRhythm],
+      source: "part-sequence",
+    });
+
+    expect(result).toEqual({ originTime: 15, started: true });
+    expect(rhythm.getSnapshot().playbacks["bar-rhythm"]).toMatchObject({
+      originTime: 15,
+    });
+  });
+
   it("recovers a missing parent-bar Rhythm instead of preserving silence", async () => {
     const { rhythm, transport } = createHarness();
     const parentRhythm = createRhythmRequest("bar-rhythm");

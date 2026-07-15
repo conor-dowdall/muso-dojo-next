@@ -9,11 +9,11 @@ import {
   type LookaheadSchedulerEvent,
   type LookaheadSchedulerOptions,
 } from "./lookaheadScheduler";
+import { AUDIO_PLAYBACK_START_LEAD_SECONDS } from "./audioTimingConfig";
 import { musoAudioEngine } from "./createWebAudioEngine";
 import { type PlaybackOwner } from "./playbackOwnership";
 import { type AudioEngine, type PlaybackGroupHandle } from "./types";
 
-const START_LOOKAHEAD_SECONDS = 0.08;
 const DEFAULT_RHYTHM_HIT_VELOCITY = 0.72;
 const RHYTHM_PLAYBACK_GAIN = 1.18;
 
@@ -388,7 +388,7 @@ export class RhythmPlaybackCoordinator {
 
     const secondsPerBeat = 60 / normalizeTempo(request.tempoBpm);
     const originTime =
-      options.originTime ?? currentTime + START_LOOKAHEAD_SECONDS;
+      options.originTime ?? currentTime + AUDIO_PLAYBACK_START_LEAD_SECONDS;
     this.active.forEach((playback, id) =>
       this.stopPlayback(
         id,
