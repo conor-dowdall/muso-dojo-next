@@ -296,4 +296,36 @@ describe("createSessionBarPlan", () => {
       "5/4",
     ]);
   });
+
+  it("preserves split bars when a Custom Session Rhythm divides cleanly", () => {
+    const backingBand = createDefaultSessionBackingBandConfig();
+    const plan = createSessionBarPlan(
+      [
+        createPart("a", { durationInBars: 0.5 }),
+        createPart("b", { durationInBars: 0.5 }),
+      ],
+      {
+        ...backingBand,
+        rhythm: {
+          mode: "custom",
+          selection: {
+            recipe: { ...DEFAULT_RHYTHM_SELECTION.recipe, beats: 6 },
+            source: "recipe",
+          },
+        },
+      },
+    );
+
+    expect(plan.layout).toBe("authored");
+    expect(plan.entries).toHaveLength(1);
+    expect(plan.entries[0]).toMatchObject({
+      continuousRhythmScope: "session",
+      continuousRhythmSelection: { recipe: { beats: 6 } },
+      meterLabel: "6/4",
+      segments: [
+        { part: { id: "a" }, resolvedBand: { durationBeats: 3 } },
+        { part: { id: "b" }, resolvedBand: { durationBeats: 3 } },
+      ],
+    });
+  });
 });

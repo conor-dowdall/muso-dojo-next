@@ -289,6 +289,66 @@ describe("createPartSequencePlaybackPlan", () => {
     );
   });
 
+  it("uses one compatible Custom Session Rhythm across fractional Parts", () => {
+    const session = createSession([
+      createPart("split-a", [], { durationInBars: 0.5 }),
+      createPart("split-b", [], { durationInBars: 0.5 }),
+    ]);
+    session.backingBand = {
+      countInBeats: 0,
+      looper: {
+        audioPresetId: "acoustic-bass",
+        enabled: true,
+        octaveOffset: 0,
+      },
+      rhythm: {
+        mode: "custom",
+        selection: {
+          recipe: {
+            beats: 2,
+            groove: "kit",
+            grouping: "auto",
+            timekeeper: {
+              feel: "straight",
+              sound: "hat",
+              subdivision: "eighth-triplet",
+            },
+          },
+          source: "recipe",
+        },
+      },
+    };
+
+    const plan = createPartSequencePlaybackPlan(session);
+
+    expect(plan.parts).toMatchObject([
+      {
+        continueRhythm: true,
+        durationBeats: 1,
+        rhythmRequests: [
+          {
+            pattern: { cycleTicks: RHYTHM_PPQ * 2 },
+          },
+        ],
+      },
+      {
+        continueRhythm: true,
+        durationBeats: 1,
+      },
+    ]);
+    expect(plan.parts[1]?.rhythmRequests[0]).toBe(
+      plan.parts[0]?.rhythmRequests[0],
+    );
+    expect(plan.parts[0]?.rhythmRequests[0]?.pattern.hits).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          atTicks: RHYTHM_PPQ,
+          sampleId: "snare",
+        }),
+      ]),
+    );
+  });
+
   it("uses the selected band Rhythm beat length", () => {
     const plan = createPartSequencePlaybackPlan(
       createSession([

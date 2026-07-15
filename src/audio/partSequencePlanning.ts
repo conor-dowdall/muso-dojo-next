@@ -345,6 +345,7 @@ export function createPartSequencePlaybackPlan(
     string,
     { continueRhythm: boolean; request: RhythmPlaybackRequest }
   >();
+  const authoredResolvedBands = new Map<string, ResolvedPartBackingBand>();
 
   if (mode === "session") {
     const barPlan = createSessionBarPlan(session.parts, backingBand);
@@ -358,6 +359,9 @@ export function createPartSequencePlaybackPlan(
         | undefined;
 
       barPlan.entries.forEach((entry) => {
+        entry.segments.forEach((segment) => {
+          authoredResolvedBands.set(segment.part.id, segment.resolvedBand);
+        });
         const firstPartId = entry.segments[0]?.part.id;
         if (
           !entry.continuousRhythmSelection ||
@@ -423,7 +427,9 @@ export function createPartSequencePlaybackPlan(
     const index = session.parts.findIndex(
       (candidate) => candidate.id === part.id,
     );
-    const resolvedBand = resolvePartBackingBand(part, backingBand);
+    const resolvedBand =
+      authoredResolvedBands.get(part.id) ??
+      resolvePartBackingBand(part, backingBand);
     const durationBeats = resolvedBand.durationBeats;
     const exerciseRequests = createExerciseRequestsForPart(
       part,

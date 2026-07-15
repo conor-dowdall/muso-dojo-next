@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Drum, Music2, SlidersHorizontal, Timer } from "lucide-react";
+import { RHYTHM_MAX_BEATS } from "@/data/rhythmPresets";
 import {
   ExerciseOctaveDisclosure,
   ExercisePlaybackSoundDisclosure,
@@ -23,6 +24,12 @@ import {
   MAX_SESSION_BACKING_BAND_COUNT_IN_BEATS,
   MIN_SESSION_BACKING_BAND_COUNT_IN_BEATS,
 } from "@/utils/session/sessionBackingBand";
+import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
+import {
+  getSessionRhythmBarConstraint,
+  sessionRhythmBeatsPreserveAuthoredBars,
+} from "@/utils/music-part/sessionRhythmCompatibility";
+import { formatValueSummary } from "@/utils/valueSummary";
 import {
   getBackingNotesSummary,
   getBackingRhythmSummary,
@@ -63,6 +70,27 @@ export function SessionBackingBandDialog({
   const backingNotesPreview = backingBand.looper.enabled ? "On" : "Off";
   const backingNotesSummary = getBackingNotesSummary(backingBand.looper);
   const bandChoosesSummary = getBandChoosesRhythmSummary(session?.parts ?? []);
+  const customRhythmRecipe = getRhythmSelectionRecipe(
+    backingBand.rhythm.selection,
+  );
+  const sessionRhythmConstraint = getSessionRhythmBarConstraint(
+    session?.parts ?? [],
+  );
+  const customRhythmPreservesSplitBars = sessionRhythmBeatsPreserveAuthoredBars(
+    session?.parts ?? [],
+    customRhythmRecipe.beats,
+  );
+  const rhythmBeatCountConstraint =
+    sessionRhythmConstraint.requiredBarDivision > 1 &&
+    sessionRhythmConstraint.requiredBarDivision <= RHYTHM_MAX_BEATS
+      ? {
+          requiredBarDivision: sessionRhythmConstraint.requiredBarDivision,
+        }
+      : undefined;
+  const customRhythmSummary = formatValueSummary([
+    getBackingRhythmSummary(backingBand.rhythm.selection),
+    customRhythmPreservesSplitBars ? undefined : "Split Bars Play Separately",
+  ]);
   const rhythmPreview =
     backingBand.rhythm.mode === "custom"
       ? "Custom"
@@ -198,7 +226,7 @@ export function SessionBackingBandDialog({
               selectedAriaLabel="Custom Rhythm selected"
               selectedPreviewKind="current"
               selectAriaLabel="Use Custom Rhythm"
-              subtitle={getBackingRhythmSummary(backingBand.rhythm.selection)}
+              subtitle={customRhythmSummary}
               onAction={() =>
                 setIsCustomRhythmSettingsOpen((current) => !current)
               }
@@ -211,6 +239,7 @@ export function SessionBackingBandDialog({
             >
               <RhythmCreationPanel
                 ariaLabel="Session Rhythm settings"
+                beatCountConstraint={rhythmBeatCountConstraint}
                 showWood={false}
                 value={{ rhythm: backingBand.rhythm.selection }}
                 onChange={(value) =>

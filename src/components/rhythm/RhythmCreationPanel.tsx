@@ -189,7 +189,7 @@ export function RhythmCreationPanel({
                   aria-label={
                     isAvailable
                       ? `Use ${beats} ${beats === 1 ? "beat" : "beats"}`
-                      : `${beats} beats. Not compatible with this progression`
+                      : `${beats} beats. Not compatible with the current bar layout`
                   }
                   className={`${choiceGridStyles.tokenChoice} ${choiceGridStyles.squareTokenChoice}`}
                   disabled={!isAvailable}

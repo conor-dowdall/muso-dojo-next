@@ -117,10 +117,26 @@ function isAuthoredSplit(entry: PendingBarEntry) {
   );
 }
 
+function getSessionCustomSegmentBeats(segment: SessionBarPlanSegment) {
+  if (
+    segment.resolvedBand.rhythm.source.mode !== "session" ||
+    segment.resolvedBand.session.rhythm.mode !== "custom"
+  ) {
+    return undefined;
+  }
+
+  return getRepresentablePartDurationBeats(
+    segment.timelineEntry.durationInBars,
+    getRhythmSelectionRecipe(segment.resolvedBand.session.rhythm.selection)
+      .beats,
+  );
+}
+
 function sessionCustomReplacesFraction(segment: SessionBarPlanSegment) {
   return (
     segment.resolvedBand.rhythm.source.mode === "session" &&
-    segment.resolvedBand.session.rhythm.mode === "custom"
+    segment.resolvedBand.session.rhythm.mode === "custom" &&
+    getSessionCustomSegmentBeats(segment) === undefined
   );
 }
 
@@ -184,6 +200,37 @@ function getAutomaticBarRhythmSelection(
   return valuesAreClose(
     getRhythmSelectionRecipe(selection).beats,
     durationBeats,
+  )
+    ? selection
+    : undefined;
+}
+
+function getSessionCustomBarRhythmSelection(
+  entry: PendingBarEntry,
+): RhythmSelection | undefined {
+  const [first, ...remaining] = entry.segments;
+  if (
+    !first ||
+    !segmentsFillOneAuthoredBar(entry) ||
+    !first.resolvedBand.rhythm.enabled ||
+    first.resolvedBand.rhythm.source.mode !== "session" ||
+    first.resolvedBand.session.rhythm.mode !== "custom" ||
+    getSessionCustomSegmentBeats(first) === undefined
+  ) {
+    return undefined;
+  }
+
+  const selection = first.resolvedBand.session.rhythm.selection;
+  return remaining.every(
+    (segment) =>
+      segment.resolvedBand.rhythm.enabled &&
+      segment.resolvedBand.rhythm.source.mode === "session" &&
+      segment.resolvedBand.session.rhythm.mode === "custom" &&
+      getSessionCustomSegmentBeats(segment) !== undefined &&
+      rhythmSelectionsAreEqual(
+        segment.resolvedBand.session.rhythm.selection,
+        selection,
+      ),
   )
     ? selection
     : undefined;
@@ -378,21 +425,29 @@ function getBarMeterSelection(
 }
 
 function completeBarEntry(entry: PendingBarEntry): SessionBarPlanEntry {
-  const automaticRhythmSelection = getAutomaticBarRhythmSelection(entry);
-  const localRhythmSelection = automaticRhythmSelection
+  const sessionCustomRhythmSelection =
+    getSessionCustomBarRhythmSelection(entry);
+  const automaticRhythmSelection = sessionCustomRhythmSelection
     ? undefined
-    : getLocalBarRhythmSelection(entry);
+    : getAutomaticBarRhythmSelection(entry);
+  const localRhythmSelection =
+    sessionCustomRhythmSelection || automaticRhythmSelection
+      ? undefined
+      : getLocalBarRhythmSelection(entry);
   const continuousRhythmSelection =
-    automaticRhythmSelection ?? localRhythmSelection;
+    sessionCustomRhythmSelection ??
+    automaticRhythmSelection ??
+    localRhythmSelection;
   const meterSelection = getBarMeterSelection(entry, continuousRhythmSelection);
 
   return {
     accessibleLabel: entry.accessibleLabel,
     ...(continuousRhythmSelection
       ? {
-          continuousRhythmScope: automaticRhythmSelection
-            ? ("session" as const)
-            : ("bar" as const),
+          continuousRhythmScope:
+            automaticRhythmSelection || sessionCustomRhythmSelection
+              ? ("session" as const)
+              : ("bar" as const),
         }
       : {}),
     ...(continuousRhythmSelection ? { continuousRhythmSelection } : {}),
@@ -434,15 +489,29 @@ function createAuthoredEntries(
         segments: [],
       } satisfies PendingBarEntry);
 
-    target.segments.push({
+    const resolvedBand = resolvePartBackingBand(part, backingBand);
+    const segment = {
       chartSpanUnits: getPartDurationChartUnits(part.durationInBars),
       part,
-      resolvedBand: resolvePartBackingBand(part, backingBand),
+      resolvedBand,
       ...(timelineEntry.segmentLabel
         ? { segmentLabel: timelineEntry.segmentLabel }
         : {}),
       timelineEntry,
-    });
+    } satisfies SessionBarPlanSegment;
+    const sessionCustomBeats = getSessionCustomSegmentBeats(segment);
+
+    target.segments.push(
+      sessionCustomBeats === undefined
+        ? segment
+        : {
+            ...segment,
+            resolvedBand: {
+              ...resolvedBand,
+              durationBeats: sessionCustomBeats,
+            },
+          },
+    );
 
     if (!entry) {
       entries.push(target);
