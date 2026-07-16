@@ -2,6 +2,7 @@ import {
   noteCollection,
   normalizeRootNoteString,
   type NoteCollectionKey,
+  type RootNote,
 } from "@musodojo/music-theory-data";
 import {
   DEFAULT_PART_NOTE_COLLECTION_KEY,
@@ -74,7 +75,9 @@ export function normalizeRootNote(
   return normalizeRootNoteString(value) ?? fallback;
 }
 
-export function normalizeOptionalRootNote(value: unknown): string | undefined {
+export function normalizeOptionalRootNote(
+  value: unknown,
+): RootNote | undefined {
   return typeof value === "string" ? normalizeRootNoteString(value) : undefined;
 }
 

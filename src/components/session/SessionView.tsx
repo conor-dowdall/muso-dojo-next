@@ -36,6 +36,7 @@ interface SessionChartPart {
   chartSpanUnits: number;
   id: string;
   identityLabel: string;
+  romanAnalysis?: string;
 }
 
 interface SessionChartBar {
@@ -90,12 +91,18 @@ export function SessionView({
           const segmentDescription = segment.segmentLabel
             ? `Segment ${segment.segmentLabel}. `
             : "";
+          const romanAnalysisDescription = summary.romanAnalysis
+            ? `. Roman numeral ${summary.romanAnalysis}`
+            : "";
 
           return {
-            accessibleLabel: `${segmentDescription}${summary.identityAccessibleLabel}. ${summary.meterDetail}`,
+            accessibleLabel: `${segmentDescription}${summary.identityAccessibleLabel}${romanAnalysisDescription}. ${summary.meterDetail}`,
             chartSpanUnits: segment.chartSpanUnits,
             id: segment.part.id,
             identityLabel: summary.identityLabel,
+            ...(summary.romanAnalysis
+              ? { romanAnalysis: summary.romanAnalysis }
+              : {}),
           };
         }),
       };
@@ -231,8 +238,15 @@ function BandSessionView({
                       } as CSSProperties
                     }
                   >
-                    <span className={styles.bandPartIdentity}>
-                      {part.identityLabel}
+                    <span className={styles.bandPartContent}>
+                      <span className={styles.bandPartIdentity}>
+                        {part.identityLabel}
+                      </span>
+                      {part.romanAnalysis ? (
+                        <span className={styles.bandPartAnalysis}>
+                          {part.romanAnalysis}
+                        </span>
+                      ) : null}
                     </span>
                   </div>
                 );

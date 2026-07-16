@@ -11,6 +11,7 @@ import {
 import { formatPartLengthBeats } from "@/utils/music-part/partLength";
 import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
 import { resolvePartBackingBand } from "./resolvePartBackingBand";
+import { getValidAuthoredRomanSymbol } from "./partProgressionAnalysis";
 
 export interface PartLeadSheetSummary {
   accessibleLabel: string;
@@ -21,6 +22,7 @@ export interface PartLeadSheetSummary {
   isPartialBar: boolean;
   meterDetail: string;
   meterLabel: string;
+  romanAnalysis?: string;
 }
 
 export function getPartLeadSheetSummary(
@@ -50,11 +52,15 @@ export function getPartLeadSheetSummary(
   ]
     .filter(Boolean)
     .join(". ");
+  const romanAnalysis = getValidAuthoredRomanSymbol(part);
 
   return {
-    accessibleLabel: [identity.accessibleLabel, meterLabel, meterDetail].join(
-      ". ",
-    ),
+    accessibleLabel: [
+      identity.accessibleLabel,
+      ...(romanAnalysis ? [`Roman numeral ${romanAnalysis}`] : []),
+      meterLabel,
+      meterDetail,
+    ].join(". "),
     chartSpanUnits: getPartDurationChartUnits(part.durationInBars),
     id: part.id,
     identityAccessibleLabel: identity.accessibleLabel,
@@ -62,5 +68,6 @@ export function getPartLeadSheetSummary(
     isPartialBar: isPartialPartDuration(part.durationInBars),
     meterDetail,
     meterLabel,
+    ...(romanAnalysis ? { romanAnalysis } : {}),
   };
 }

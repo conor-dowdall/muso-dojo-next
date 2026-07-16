@@ -13,6 +13,7 @@ import {
 import { normalizeMusicPartConfig } from "@/utils/session/normalizeMusicPartConfig";
 import {
   type ChordProgressionChordListMode,
+  type AuthoredChordProgressionConfig,
   type AutomaticRhythmStyle,
   type MusicPartConfig,
   type PartModuleConfig,
@@ -56,6 +57,7 @@ interface DurationAwareChordProgression {
 }
 
 interface ProgressionPartReference {
+  authoredProgression?: AuthoredChordProgressionConfig;
   durationInBars?: number;
   reference: ChordProgressionChordReference;
   rhythmBeatCount?: number;
@@ -92,6 +94,7 @@ function getProgressionChordDurationInBars(
 function createFullProgressionPartReferences(
   rootNote: RootNote,
   progressionKey: ChordProgressionKey,
+  progressionInstanceId: string,
   beatsPerBar = PART_DURATION_BEATS_PER_BAR,
 ): ProgressionPartReference[] {
   const progression = chordProgressions[progressionKey] as
@@ -100,6 +103,7 @@ function createFullProgressionPartReferences(
     rootNote,
     progressionKey,
   );
+  const romanSymbols = chordProgression.getRomanSymbols(progressionKey);
   const partReferences: ProgressionPartReference[] = [];
   let currentBarPosition = 0;
 
@@ -120,6 +124,19 @@ function createFullProgressionPartReferences(
       );
 
       partReferences.push({
+        ...(romanSymbols[referenceIndex]
+          ? {
+              authoredProgression: {
+                kind: "chord-progression" as const,
+                noteCollectionKey: reference.chordCollectionKey,
+                progressionInstanceId,
+                progressionKey,
+                romanSymbol: romanSymbols[referenceIndex],
+                rootNote: reference.rootNote,
+                tonalCenter: rootNote,
+              },
+            }
+          : {}),
         reference,
         ...(Math.abs(durationInBars - BAR_DURATION_IN_BARS) > DURATION_EPSILON
           ? { durationInBars }
@@ -197,6 +214,7 @@ function createPartFromReference<T extends PartModuleType>({
     id: partId,
     rootNote: partReference.reference.rootNote,
     noteCollectionKey: partReference.reference.chordCollectionKey,
+    authoredProgression: partReference.authoredProgression,
     durationInBars: partReference.durationInBars,
     automaticRhythm: {
       style: automaticRhythm,
@@ -232,6 +250,7 @@ export function createChordProgressionParts<
       ? createFullProgressionPartReferences(
           normalizedRootNote,
           progressionKey,
+          createEntityId(`progression-${progressionKey}`),
           rhythmBeatsPerBar,
         )
       : createUniqueProgressionPartReferences(

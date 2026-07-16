@@ -41,6 +41,17 @@ export interface AutomaticRhythmConfig {
   style: AutomaticRhythmStyle;
 }
 
+/** Authored harmonic identity retained while a generated progression Part is edited. */
+export interface AuthoredChordProgressionConfig {
+  kind: "chord-progression";
+  noteCollectionKey: NoteCollectionKey;
+  progressionInstanceId: string;
+  progressionKey: ChordProgressionKey;
+  romanSymbol: string;
+  rootNote: string;
+  tonalCenter: RootNote;
+}
+
 export type PartBandSourceConfig =
   { mode: "session" } | { mode: "off" } | { mode: "module"; moduleId: string };
 
@@ -233,6 +244,8 @@ export interface MusicPartConfig {
   id: string;
   rootNote: string;
   noteCollectionKey: NoteCollectionKey;
+  /** Optional source analysis for a Part generated in full progression order. */
+  authoredProgression?: AuthoredChordProgressionConfig;
   /** Explicit source selection for each Practice Band role. */
   band?: PartBandConfig;
   /** Fallback feel used when no Rhythm module owns the band. */

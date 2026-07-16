@@ -2,6 +2,55 @@ import { describe, expect, it } from "vitest";
 import { normalizeMusicPartConfig } from "@/utils/session/normalizeMusicPartConfig";
 
 describe("normalizeMusicPartConfig", () => {
+  it("normalizes complete authored progression analysis", () => {
+    expect(
+      normalizeMusicPartConfig({
+        authoredProgression: {
+          kind: "chord-progression",
+          noteCollectionKey: "dominant7",
+          progressionInstanceId: " progression-1 ",
+          progressionKey: "authenticCadence",
+          romanSymbol: " V7 ",
+          rootNote: "G",
+          tonalCenter: "C",
+        },
+        id: "part-1",
+        modules: [],
+        noteCollectionKey: "dominant7",
+        rootNote: "G",
+      }),
+    ).toMatchObject({
+      authoredProgression: {
+        kind: "chord-progression",
+        noteCollectionKey: "dominant7",
+        progressionInstanceId: "progression-1",
+        progressionKey: "authenticCadence",
+        romanSymbol: "V7",
+        rootNote: "G",
+        tonalCenter: "C",
+      },
+    });
+  });
+
+  it("drops incomplete or invalid authored progression analysis", () => {
+    expect(
+      normalizeMusicPartConfig({
+        authoredProgression: {
+          kind: "chord-progression",
+          progressionInstanceId: "progression-1",
+          progressionKey: "not-a-progression",
+          romanSymbol: "I",
+          rootNote: "C",
+          tonalCenter: "C",
+        },
+        id: "part-1",
+        modules: [],
+        noteCollectionKey: "major",
+        rootNote: "C",
+      }),
+    ).not.toHaveProperty("authoredProgression");
+  });
+
   it("ignores old persisted layout values", () => {
     const part = normalizeMusicPartConfig({
       id: "part-1",

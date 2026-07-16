@@ -118,17 +118,43 @@
   line-height: var(--leading-none);
 }
 
-.bandPartIdentity {
+.bandPartContent {
+  display: grid;
+  block-size: 100%;
   inline-size: 100%;
   max-inline-size: 100%;
   min-inline-size: 0;
+  min-block-size: 0;
   box-sizing: border-box;
+  grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+  justify-items: center;
+  overflow: hidden;
+}
+
+.bandPartIdentity {
+  grid-row: 2;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
   overflow: hidden;
   padding-inline: 0;
   font-size: clamp(var(--text-lg), 10cqi, var(--text-2xl));
   font-weight: var(--font-semibold);
   line-height: var(--leading-tight);
   text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bandPartAnalysis {
+  align-self: center;
+  grid-row: 3;
+  max-inline-size: 100%;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: clamp(var(--text-xs), 5cqi, var(--text-sm));
+  font-weight: var(--font-medium);
+  line-height: var(--leading-none);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

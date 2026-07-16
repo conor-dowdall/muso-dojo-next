@@ -1,4 +1,9 @@
-import { type MusicPartConfig, type PartModuleConfig } from "@/types/session";
+import { chordProgression } from "@musodojo/music-theory-data";
+import {
+  type AuthoredChordProgressionConfig,
+  type MusicPartConfig,
+  type PartModuleConfig,
+} from "@/types/session";
 import { normalizePartDurationInBars } from "@/utils/music-part/partDuration";
 import { normalizePartBandConfig } from "@/utils/music-part/partBand";
 import { normalizePartModuleConfig } from "@/utils/session/normalizePartModuleConfig";
@@ -7,9 +12,54 @@ import {
   isRecord,
   normalizeId,
   normalizeNoteCollectionKey,
+  normalizeOptionalNoteCollectionKey,
   normalizeOptionalBoolean,
+  normalizeOptionalRootNote,
   normalizeRootNote,
+  normalizeString,
 } from "@/utils/session/normalizationPrimitives";
+
+function normalizeAuthoredChordProgressionConfig(
+  value: unknown,
+): AuthoredChordProgressionConfig | undefined {
+  if (!isRecord(value) || value.kind !== "chord-progression") {
+    return undefined;
+  }
+
+  const noteCollectionKey = normalizeOptionalNoteCollectionKey(
+    value.noteCollectionKey,
+  );
+  const progressionInstanceId = normalizeString(value.progressionInstanceId);
+  const progressionKey =
+    typeof value.progressionKey === "string" &&
+    chordProgression.isValidKey(value.progressionKey)
+      ? value.progressionKey
+      : undefined;
+  const romanSymbol = normalizeString(value.romanSymbol);
+  const rootNote = normalizeOptionalRootNote(value.rootNote);
+  const tonalCenter = normalizeOptionalRootNote(value.tonalCenter);
+
+  if (
+    !noteCollectionKey ||
+    !progressionInstanceId ||
+    !progressionKey ||
+    !romanSymbol ||
+    !rootNote ||
+    !tonalCenter
+  ) {
+    return undefined;
+  }
+
+  return {
+    kind: "chord-progression",
+    noteCollectionKey,
+    progressionInstanceId,
+    progressionKey,
+    romanSymbol,
+    rootNote,
+    tonalCenter,
+  };
+}
 
 export function normalizeMusicPartConfig(
   value: unknown,
@@ -41,11 +91,15 @@ export function normalizeMusicPartConfig(
         : ("standard" as const),
   };
   const band = normalizePartBandConfig(value.band, modules);
+  const authoredProgression = normalizeAuthoredChordProgressionConfig(
+    value.authoredProgression,
+  );
 
   return {
     id: normalizeId(value.id, `part-${index + 1}`),
     rootNote: normalizeRootNote(value.rootNote),
     noteCollectionKey: normalizeNoteCollectionKey(value.noteCollectionKey),
+    ...(authoredProgression ? { authoredProgression } : {}),
     band,
     automaticRhythm,
     ...(durationInBars !== undefined ? { durationInBars } : {}),

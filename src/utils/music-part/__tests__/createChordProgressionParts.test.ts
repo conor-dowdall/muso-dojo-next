@@ -126,6 +126,23 @@ describe("createChordProgressionParts", () => {
     });
     expect(getAutomaticRhythmBeats(parts[8] ?? {})).toBe(4);
     expect(parts[8]).not.toHaveProperty("durationInBars");
+
+    const progressionInstanceIds = parts.map(
+      (part) => part.authoredProgression?.progressionInstanceId,
+    );
+    expect(new Set(progressionInstanceIds).size).toBe(1);
+    expect(parts[0]?.authoredProgression).toMatchObject({
+      kind: "chord-progression",
+      noteCollectionKey: "major",
+      progressionKey: "oneFourOneFiveSplitReturn",
+      romanSymbol: "I",
+      rootNote: "C",
+      tonalCenter: "C",
+    });
+    expect(parts[7]?.authoredProgression).toMatchObject({
+      romanSymbol: "V",
+      rootNote: "G",
+    });
   });
 
   it("keeps unique-chord mode as a one-part-per-chord practice palette", () => {
@@ -138,6 +155,9 @@ describe("createChordProgressionParts", () => {
 
     expect(parts.map((part) => part.rootNote)).toEqual(["C", "F", "G"]);
     expect(parts.every((part) => part.modules.length === 0)).toBe(true);
+    expect(parts.every((part) => part.authoredProgression === undefined)).toBe(
+      true,
+    );
   });
 
   it("preserves custom Rhythm defaults when progression durations adjust beats", () => {

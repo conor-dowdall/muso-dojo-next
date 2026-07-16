@@ -14,6 +14,37 @@ function createPart(patch: Partial<MusicPartConfig> = {}): MusicPartConfig {
 }
 
 describe("getPartLeadSheetSummary", () => {
+  const authoredProgression = {
+    kind: "chord-progression" as const,
+    noteCollectionKey: "major" as const,
+    progressionInstanceId: "progression-1",
+    progressionKey: "oneFourOneFive" as const,
+    romanSymbol: "I",
+    rootNote: "C",
+    tonalCenter: "C" as const,
+  };
+
+  it("shows authored Roman analysis while harmonic identity still matches", () => {
+    const summary = getPartLeadSheetSummary(
+      createPart({ authoredProgression, durationInBars: 0.5 }),
+    );
+
+    expect(summary.romanAnalysis).toBe("I");
+    expect(summary.accessibleLabel).toContain("Roman numeral I");
+  });
+
+  it("hides stale Roman analysis after a harmonic edit", () => {
+    const changedRoot = getPartLeadSheetSummary(
+      createPart({ authoredProgression, rootNote: "D" }),
+    );
+    const changedCollection = getPartLeadSheetSummary(
+      createPart({ authoredProgression, noteCollectionKey: "minor" }),
+    );
+
+    expect(changedRoot).not.toHaveProperty("romanAnalysis");
+    expect(changedCollection).not.toHaveProperty("romanAnalysis");
+  });
+
   it("shows a half-bar progression Part as a proportional 2/4 chart entry", () => {
     const summary = getPartLeadSheetSummary(
       createPart({ durationInBars: 0.5 }),
