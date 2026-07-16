@@ -3,8 +3,10 @@
 import { type ReactNode, useMemo, useState } from "react";
 import {
   chordProgression,
+  chordProgressions,
   noteCollection,
   normalizeRootNoteString,
+  type ChordProgression,
   type ChordProgressionKey,
   type NoteCollectionKey,
   type RootNote,
@@ -40,6 +42,7 @@ import {
 } from "@/components/part-module-creation/ModuleCreationList";
 import { createRememberModuleCreationRequest } from "@/components/part-module-creation/moduleCreationDraft";
 import { ChordProgressionPicker } from "@/components/music-theory/ChordProgressionPicker";
+import { CustomChordProgressionsDialog } from "@/components/music-theory/CustomChordProgressionsDialog";
 import { NoteCollectionPicker } from "@/components/music-theory/NoteCollectionPicker";
 import { AddToSessionRootNoteItem } from "@/components/session/AddToSessionRootNoteItem";
 import { useAppStore } from "@/stores/appStore";
@@ -52,6 +55,10 @@ import {
   type PartModuleCreationRequest,
   type SessionMaterialCreationKind,
 } from "@/types/session";
+import {
+  type ChordProgressionSelection,
+  type SavedChordProgression,
+} from "@/types/custom-chord-progression";
 import {
   DEFAULT_PART_NOTE_COLLECTION_KEY,
   DEFAULT_PART_ROOT_NOTE,
@@ -73,13 +80,25 @@ interface AddToSessionDialogProps {
     moduleRequests: PartModuleCreationRequest[];
     replaceSession: boolean;
   }) => void;
-  onAddChordProgression: (settings: {
-    rootNote: RootNote;
-    progressionKey: ChordProgressionKey;
-    chordListMode: ChordProgressionChordListMode;
-    moduleRequests: PartModuleCreationRequest[];
-    replaceSession: boolean;
-  }) => void;
+  onAddChordProgression: (
+    settings: {
+      rootNote: RootNote;
+      chordListMode: ChordProgressionChordListMode;
+      moduleRequests: PartModuleCreationRequest[];
+      replaceSession: boolean;
+    } & (
+      | {
+          progression?: never;
+          progressionKey: ChordProgressionKey;
+          progressionName?: never;
+        }
+      | {
+          progression: ChordProgression;
+          progressionKey?: never;
+          progressionName: string;
+        }
+    ),
+  ) => void;
   onClose: () => void;
 }
 
@@ -120,20 +139,37 @@ const chordListOptions = [
   subtitle: string;
 }[];
 
-function getInitialProgressionKey(
-  progressionKey: string | undefined,
-): ChordProgressionKey {
-  return (
-    (progressionKey && chordProgression.isValidKey(progressionKey)
-      ? progressionKey
-      : undefined) ?? DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY
-  );
+function getDefaultProgressionSelection(): ChordProgressionSelection {
+  return {
+    kind: "built-in",
+    progressionKey: DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY,
+  };
+}
+
+function getInitialProgressionSelection(
+  selection: ChordProgressionSelection | undefined,
+  customProgressions: readonly SavedChordProgression[],
+): ChordProgressionSelection {
+  if (
+    selection?.kind === "custom" &&
+    customProgressions.some(
+      (progression) => progression.id === selection.progressionId,
+    )
+  ) {
+    return selection;
+  }
+
+  return selection?.kind === "built-in" &&
+    chordProgression.isValidKey(selection.progressionKey)
+    ? selection
+    : getDefaultProgressionSelection();
 }
 
 const emptyModuleDraft = {
   moduleKinds: [],
   moduleRequests: [],
 } satisfies ModuleCreationListDraft;
+const emptyCustomChordProgressions: readonly SavedChordProgression[] = [];
 
 function getChordListOption(mode: ChordProgressionChordListMode) {
   return (
@@ -151,6 +187,11 @@ export function AddToSessionDialog({
   const sessionMaterialCreationDefaults = useAppStore(
     (state) => state.dojoSettings.sessionMaterialCreationDefaults,
   );
+  const savedCustomChordProgressions = useAppStore(
+    (state) => state.dojoSettings.customChordProgressions,
+  );
+  const customChordProgressions =
+    savedCustomChordProgressions ?? emptyCustomChordProgressions;
   const [selectedMode, setSelectedMode] = useState<SessionMaterialCreationKind>(
     () =>
       sessionMaterialCreationDefaults?.materialKind ??
@@ -164,10 +205,13 @@ export function AddToSessionDialog({
       sessionMaterialCreationDefaults?.noteCollectionKey ??
       DEFAULT_PART_NOTE_COLLECTION_KEY,
   );
-  const [progressionKey, setProgressionKey] = useState<ChordProgressionKey>(
-    () =>
-      getInitialProgressionKey(sessionMaterialCreationDefaults?.progressionKey),
-  );
+  const [progressionSelection, setProgressionSelection] =
+    useState<ChordProgressionSelection>(() =>
+      getInitialProgressionSelection(
+        sessionMaterialCreationDefaults?.progression,
+        customChordProgressions,
+      ),
+    );
   const [chordListMode, setChordListMode] =
     useState<ChordProgressionChordListMode>(
       () =>
@@ -175,6 +219,8 @@ export function AddToSessionDialog({
         DEFAULT_SESSION_MATERIAL_CREATION_CHORD_LIST_MODE,
     );
   const [replaceSession, setReplaceSession] = useState(false);
+  const [isCustomProgressionsOpen, setIsCustomProgressionsOpen] =
+    useState(false);
   const [moduleDraft, setModuleDraft] =
     useState<ModuleCreationListDraft>(emptyModuleDraft);
   const sessionDisclosure = useDisclosureList<SessionChoice>();
@@ -187,17 +233,44 @@ export function AddToSessionDialog({
 
   const selectedRootNote =
     normalizeRootNoteString(rootNote) ?? DEFAULT_PART_ROOT_NOTE;
+  const selectedCustomProgression =
+    progressionSelection.kind === "custom"
+      ? customChordProgressions.find(
+          (progression) =>
+            progression.id === progressionSelection.progressionId,
+        )
+      : undefined;
+  const effectiveProgressionSelection = selectedCustomProgression
+    ? progressionSelection
+    : progressionSelection.kind === "built-in"
+      ? progressionSelection
+      : getDefaultProgressionSelection();
+  const selectedProgressionKey =
+    effectiveProgressionSelection.kind === "built-in"
+      ? effectiveProgressionSelection.progressionKey
+      : undefined;
+  const selectedProgression =
+    selectedCustomProgression?.progression ??
+    chordProgressions[
+      selectedProgressionKey ??
+        DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY
+    ];
+  const progressionInput = selectedProgressionKey ?? selectedProgression;
   const {
     chordLabel: progressionChordLabel,
     romanLabel: progressionRomanLabel,
     titleLabel: progressionTitleLabel,
-  } = getChordProgressionDisplayLabels(selectedRootNote, progressionKey);
+  } = getChordProgressionDisplayLabels(
+    selectedRootNote,
+    progressionInput,
+    selectedCustomProgression?.name,
+  );
   const selectedChordListOption = getChordListOption(chordListMode);
   const selectedNoteCollectionName =
     noteCollection.getDisplayName(noteCollectionKey);
   const progressionRhythmProfile = useMemo(
-    () => getChordProgressionRhythmProfile(progressionKey),
-    [progressionKey],
+    () => getChordProgressionRhythmProfile(progressionInput),
+    [progressionInput],
   );
   const rhythmBeatCountConstraint = useMemo(
     () =>
@@ -250,7 +323,7 @@ export function AddToSessionDialog({
       chordListMode,
       materialKind: selectedMode,
       noteCollectionKey,
-      progressionKey,
+      progression: effectiveProgressionSelection,
       rootNote: selectedRootNote,
     });
   };
@@ -273,12 +346,23 @@ export function AddToSessionDialog({
       return;
     }
 
+    const progressionSettings =
+      effectiveProgressionSelection.kind === "built-in"
+        ? {
+            progressionKey: effectiveProgressionSelection.progressionKey,
+          }
+        : {
+            progression: selectedProgression,
+            progressionName:
+              selectedCustomProgression?.name ?? "Custom Progression",
+          };
+
     onAddChordProgression({
       rootNote: selectedRootNote,
-      progressionKey,
       chordListMode,
       moduleRequests: moduleDraft.moduleRequests,
       replaceSession: effectiveReplaceSession,
+      ...progressionSettings,
     });
     rememberSessionMaterial();
     rememberSessionModuleCreation();
@@ -366,10 +450,17 @@ export function AddToSessionDialog({
                   onToggle={() => sessionDisclosure.toggleChoice("progression")}
                 >
                   <ChordProgressionPicker
+                    customSelected={
+                      effectiveProgressionSelection.kind === "custom"
+                    }
+                    onManageCustom={() => setIsCustomProgressionsOpen(true)}
                     rootNote={selectedRootNote}
-                    value={progressionKey}
+                    value={selectedProgressionKey}
                     onChange={(candidateKey) => {
-                      setProgressionKey(candidateKey);
+                      setProgressionSelection({
+                        kind: "built-in",
+                        progressionKey: candidateKey,
+                      });
                       sessionDisclosure.closeChoice("progression");
                     }}
                   />
@@ -443,6 +534,27 @@ export function AddToSessionDialog({
           </DialogFooterActionGroup>
         </DialogFooterActionBar>
       </DialogFooter>
+      <CustomChordProgressionsDialog
+        isOpen={isCustomProgressionsOpen}
+        rootNote={selectedRootNote}
+        seedProgression={selectedProgression}
+        selectedId={
+          effectiveProgressionSelection.kind === "custom"
+            ? effectiveProgressionSelection.progressionId
+            : undefined
+        }
+        onClose={() => setIsCustomProgressionsOpen(false)}
+        onDeleteSelected={() =>
+          setProgressionSelection(getDefaultProgressionSelection())
+        }
+        onSelect={(progression) => {
+          setProgressionSelection({
+            kind: "custom",
+            progressionId: progression.id,
+          });
+          sessionDisclosure.closeChoice("progression");
+        }}
+      />
     </>
   );
 }

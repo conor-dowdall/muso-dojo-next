@@ -24,7 +24,10 @@ describe("normalizeMusicPartConfig", () => {
         kind: "chord-progression",
         noteCollectionKey: "dominant7",
         progressionInstanceId: "progression-1",
-        progressionKey: "authenticCadence",
+        source: {
+          kind: "built-in",
+          progressionKey: "authenticCadence",
+        },
         romanSymbol: "V7",
         rootNote: "G",
         tonalCenter: "C",
@@ -49,6 +52,31 @@ describe("normalizeMusicPartConfig", () => {
         rootNote: "C",
       }),
     ).not.toHaveProperty("authoredProgression");
+  });
+
+  it("normalizes custom progression provenance without a library link", () => {
+    expect(
+      normalizeMusicPartConfig({
+        authoredProgression: {
+          kind: "chord-progression",
+          noteCollectionKey: "minor7",
+          progressionInstanceId: "custom-instance",
+          source: { kind: "custom", name: " My Changes " },
+          romanSymbol: "ii7",
+          rootNote: "D",
+          tonalCenter: "C",
+        },
+        id: "part-1",
+        modules: [],
+        noteCollectionKey: "minor7",
+        rootNote: "D",
+      }),
+    ).toMatchObject({
+      authoredProgression: {
+        source: { kind: "custom", name: "My Changes" },
+        romanSymbol: "ii7",
+      },
+    });
   });
 
   it("ignores old persisted layout values", () => {

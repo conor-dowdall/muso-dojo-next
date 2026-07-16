@@ -23,6 +23,10 @@ import {
   savedTuningNameIsAvailable,
 } from "@/utils/fretboard/customFretboardTunings";
 import { createEntityId } from "@/utils/session/createSessionEntities";
+import {
+  normalizeSavedChordProgressionInput,
+  savedChordProgressionNameIsAvailable,
+} from "@/utils/music-theory/customChordProgressions";
 
 function setOptionalDojoSetting<TKey extends keyof DojoSettings>(
   set: AppStoreSet,
@@ -135,6 +139,104 @@ export function createDojoSettingsActions(
   };
 
   return {
+    addCustomChordProgression: (progressionInput) => {
+      const progression = normalizeSavedChordProgressionInput(progressionInput);
+
+      if (!progression) {
+        return undefined;
+      }
+
+      const id = createEntityId("progression");
+      let wasAdded = false;
+
+      set((state) => {
+        const customChordProgressions =
+          state.dojoSettings.customChordProgressions ?? [];
+
+        if (
+          !savedChordProgressionNameIsAvailable(
+            customChordProgressions,
+            progression.name,
+          )
+        ) {
+          return state;
+        }
+
+        wasAdded = true;
+        return {
+          dojoSettings: {
+            ...state.dojoSettings,
+            customChordProgressions: [
+              ...customChordProgressions,
+              { id, ...progression },
+            ],
+          },
+        };
+      });
+
+      return wasAdded ? id : undefined;
+    },
+    updateCustomChordProgression: (progressionId, progressionInput) => {
+      const progression = normalizeSavedChordProgressionInput(progressionInput);
+
+      if (!progression) {
+        return;
+      }
+
+      set((state) => {
+        const customChordProgressions =
+          state.dojoSettings.customChordProgressions ?? [];
+        const progressionIndex = customChordProgressions.findIndex(
+          (candidate) => candidate.id === progressionId,
+        );
+
+        if (
+          progressionIndex < 0 ||
+          !savedChordProgressionNameIsAvailable(
+            customChordProgressions,
+            progression.name,
+            progressionId,
+          )
+        ) {
+          return state;
+        }
+
+        const nextProgressions = [...customChordProgressions];
+        nextProgressions[progressionIndex] = {
+          id: progressionId,
+          ...progression,
+        };
+
+        return {
+          dojoSettings: {
+            ...state.dojoSettings,
+            customChordProgressions: nextProgressions,
+          },
+        };
+      });
+    },
+    removeCustomChordProgression: (progressionId) => {
+      set((state) => {
+        const customChordProgressions =
+          state.dojoSettings.customChordProgressions ?? [];
+        const nextProgressions = customChordProgressions.filter(
+          (progression) => progression.id !== progressionId,
+        );
+
+        if (nextProgressions.length === customChordProgressions.length) {
+          return state;
+        }
+
+        const dojoSettings = { ...state.dojoSettings };
+        if (nextProgressions.length === 0) {
+          delete dojoSettings.customChordProgressions;
+        } else {
+          dojoSettings.customChordProgressions = nextProgressions;
+        }
+
+        return { dojoSettings };
+      });
+    },
     addCustomFretboardTuning: (tuningInput) => {
       const tuning = normalizeSavedFretboardTuningInput(tuningInput);
 

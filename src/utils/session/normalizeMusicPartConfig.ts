@@ -1,4 +1,7 @@
-import { chordProgression } from "@musodojo/music-theory-data";
+import {
+  chordProgression,
+  type ChordProgressionAnalysisRomanSymbol,
+} from "@musodojo/music-theory-data";
 import {
   type AuthoredChordProgressionConfig,
   type MusicPartConfig,
@@ -30,19 +33,37 @@ function normalizeAuthoredChordProgressionConfig(
     value.noteCollectionKey,
   );
   const progressionInstanceId = normalizeString(value.progressionInstanceId);
-  const progressionKey =
-    typeof value.progressionKey === "string" &&
-    chordProgression.isValidKey(value.progressionKey)
-      ? value.progressionKey
-      : undefined;
-  const romanSymbol = normalizeString(value.romanSymbol);
+  const sourceValue = isRecord(value.source) ? value.source : undefined;
+  const customSourceName = normalizeString(sourceValue?.name);
+  const source =
+    sourceValue?.kind === "built-in" &&
+    typeof sourceValue.progressionKey === "string" &&
+    chordProgression.isValidKey(sourceValue.progressionKey)
+      ? ({
+          kind: "built-in" as const,
+          progressionKey: sourceValue.progressionKey,
+        } satisfies AuthoredChordProgressionConfig["source"])
+      : sourceValue?.kind === "custom" && customSourceName
+        ? ({
+            kind: "custom" as const,
+            name: customSourceName,
+          } satisfies AuthoredChordProgressionConfig["source"])
+        : typeof value.progressionKey === "string" &&
+            chordProgression.isValidKey(value.progressionKey)
+          ? ({
+              kind: "built-in" as const,
+              progressionKey: value.progressionKey,
+            } satisfies AuthoredChordProgressionConfig["source"])
+          : undefined;
+  const romanSymbol = normalizeString(value.romanSymbol) as
+    ChordProgressionAnalysisRomanSymbol | undefined;
   const rootNote = normalizeOptionalRootNote(value.rootNote);
   const tonalCenter = normalizeOptionalRootNote(value.tonalCenter);
 
   if (
     !noteCollectionKey ||
     !progressionInstanceId ||
-    !progressionKey ||
+    !source ||
     !romanSymbol ||
     !rootNote ||
     !tonalCenter
@@ -54,7 +75,7 @@ function normalizeAuthoredChordProgressionConfig(
     kind: "chord-progression",
     noteCollectionKey,
     progressionInstanceId,
-    progressionKey,
+    source,
     romanSymbol,
     rootNote,
     tonalCenter,

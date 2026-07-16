@@ -1,0 +1,8 @@
+.summary {
+  display: block;
+  min-inline-size: 0;
+  max-inline-size: min(24rem, 60vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

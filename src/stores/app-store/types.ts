@@ -7,6 +7,7 @@ import { type DisplayFormatId } from "@/data/displayFormats";
 import { type FretboardInlayPresetName } from "@/data/fretboard/inlayPresets";
 import { type RememberModuleCreationRequest } from "@/types/instrument-creation-defaults";
 import { type SavedFretboardTuningInput } from "@/types/custom-fretboard-tuning";
+import { type SavedChordProgressionInput } from "@/types/custom-chord-progression";
 import {
   type ActiveNotes,
   type ActiveNotesLockSnapshot,
@@ -71,6 +72,14 @@ export type RhythmSettingsPatch = Partial<
 >;
 
 export interface DojoSettingsActions {
+  addCustomChordProgression: (
+    progression: SavedChordProgressionInput,
+  ) => string | undefined;
+  updateCustomChordProgression: (
+    progressionId: string,
+    progression: SavedChordProgressionInput,
+  ) => void;
+  removeCustomChordProgression: (progressionId: string) => void;
   addCustomFretboardTuning: (
     tuning: SavedFretboardTuningInput,
   ) => string | undefined;

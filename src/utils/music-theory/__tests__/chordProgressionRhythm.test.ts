@@ -45,4 +45,33 @@ describe("chordProgressionRhythm", () => {
       preferredRhythmStarterId: "4-4",
     });
   });
+
+  it("derives compatibility and a Standard feel from custom progressions", () => {
+    expect(
+      getChordProgressionRhythmProfile({
+        chords: [
+          {
+            degree: "1",
+            chordCollectionKey: "major",
+            durationInBars: 1 / 3,
+          },
+          {
+            degree: "4",
+            chordCollectionKey: "major",
+            durationInBars: 1 / 3,
+          },
+          {
+            degree: "5",
+            chordCollectionKey: "dominant7",
+            durationInBars: 1 / 3,
+          },
+        ],
+      }),
+    ).toMatchObject({
+      hasSplitBars: true,
+      preferredRhythmStarterId: "4-4",
+      requiredBarDivision: 3,
+      totalBars: 1,
+    });
+  });
 });

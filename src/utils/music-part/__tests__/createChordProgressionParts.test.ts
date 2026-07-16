@@ -7,6 +7,81 @@ import { createChordProgressionParts } from "@/utils/music-part/createChordProgr
 import { getAutomaticRhythmBeats } from "@/utils/music-part/partLength";
 
 describe("createChordProgressionParts", () => {
+  it("creates fractional Parts with independent custom provenance", () => {
+    const progression = {
+      chords: [
+        {
+          degree: "1" as const,
+          chordCollectionKey: "major" as const,
+          durationInBars: 0.5,
+        },
+        {
+          degree: "5" as const,
+          chordCollectionKey: "dominant7" as const,
+          durationInBars: 0.5,
+        },
+      ],
+    };
+    const parts = createChordProgressionParts({
+      chordListMode: "full-song-order",
+      rootNote: "D",
+      progression,
+      progressionName: "Custom Turnaround",
+      moduleRequests: [],
+    });
+
+    expect(parts).toHaveLength(2);
+    expect(parts.map((part) => part.durationInBars)).toEqual([0.5, 0.5]);
+    expect(parts.map((part) => part.rootNote)).toEqual(["D", "A"]);
+    expect(parts[0]?.authoredProgression).toMatchObject({
+      source: { kind: "custom", name: "Custom Turnaround" },
+      romanSymbol: "I",
+      tonalCenter: "D",
+    });
+    expect(parts[1]?.authoredProgression).toMatchObject({
+      source: { kind: "custom", name: "Custom Turnaround" },
+      romanSymbol: "V7",
+    });
+    expect(parts[0]?.authoredProgression?.progressionInstanceId).toBe(
+      parts[1]?.authoredProgression?.progressionInstanceId,
+    );
+  });
+
+  it("supports custom progressions as a unique-chord practice palette", () => {
+    const progression = {
+      chords: [
+        {
+          degree: "1" as const,
+          chordCollectionKey: "major" as const,
+          durationInBars: 0.5,
+        },
+        {
+          degree: "5" as const,
+          chordCollectionKey: "dominant7" as const,
+          durationInBars: 0.5,
+        },
+        {
+          degree: "1" as const,
+          chordCollectionKey: "major" as const,
+          durationInBars: 1,
+        },
+      ],
+    };
+    const parts = createChordProgressionParts({
+      chordListMode: "each-chord-once",
+      rootNote: "E♭",
+      progression,
+      progressionName: "Custom Changes",
+      moduleRequests: [],
+    });
+
+    expect(parts.map((part) => part.rootNote)).toEqual(["E♭", "B♭"]);
+    expect(parts.every((part) => part.durationInBars === undefined)).toBe(true);
+    expect(parts.every((part) => part.authoredProgression === undefined)).toBe(
+      true,
+    );
+  });
+
   it("copies the requested module set to every progression part", () => {
     const parts = createChordProgressionParts({
       rootNote: "C",
@@ -134,7 +209,10 @@ describe("createChordProgressionParts", () => {
     expect(parts[0]?.authoredProgression).toMatchObject({
       kind: "chord-progression",
       noteCollectionKey: "major",
-      progressionKey: "oneFourOneFiveSplitReturn",
+      source: {
+        kind: "built-in",
+        progressionKey: "oneFourOneFiveSplitReturn",
+      },
       romanSymbol: "I",
       rootNote: "C",
       tonalCenter: "C",

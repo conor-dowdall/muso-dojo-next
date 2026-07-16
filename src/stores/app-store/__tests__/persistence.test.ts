@@ -383,8 +383,55 @@ describe("app store persistence", () => {
       chordListMode: "each-chord-once",
       materialKind: "chord-progression",
       noteCollectionKey: "minor",
-      progressionKey: "majorTwoFiveOne",
+      progression: {
+        kind: "built-in",
+        progressionKey: "majorTwoFiveOne",
+      },
       rootNote: "D",
+    });
+  });
+
+  it("normalizes saved custom progressions and custom selection", () => {
+    const persistedState = createPersistedSnapshot("persisted-session");
+    const normalized = normalizeAppStoreSnapshot(
+      {
+        ...persistedState,
+        dojoSettings: {
+          customChordProgressions: [
+            {
+              id: "custom-1",
+              name: "My Changes",
+              progression: {
+                chords: [
+                  {
+                    degree: "1",
+                    chordCollectionKey: "major",
+                    durationInBars: 1,
+                  },
+                ],
+              },
+            },
+          ],
+          sessionMaterialCreationDefaults: {
+            materialKind: "chord-progression",
+            progression: { kind: "custom", progressionId: "custom-1" },
+          },
+        },
+      },
+      fallbackSnapshot,
+    );
+
+    expect(normalized.dojoSettings).toMatchObject({
+      customChordProgressions: [
+        {
+          id: "custom-1",
+          name: "My Changes",
+        },
+      ],
+      sessionMaterialCreationDefaults: {
+        materialKind: "chord-progression",
+        progression: { kind: "custom", progressionId: "custom-1" },
+      },
     });
   });
 

@@ -7,6 +7,7 @@ import { isRecord } from "@/utils/session/normalizationPrimitives";
 import { normalizeModuleCreationDefaults } from "@/utils/session/normalizeModuleCreationDefaults";
 import { normalizeSessionMaterialCreationDefaults } from "@/utils/session/sessionMaterialCreationDefaults";
 import { normalizeSavedFretboardTunings } from "@/utils/fretboard/customFretboardTunings";
+import { normalizeSavedChordProgressions } from "@/utils/music-theory/customChordProgressions";
 
 function normalizedNoteColorConfig(value: NoteColorConfig | undefined) {
   return normalizeNoteColorConfig(value) ?? DEFAULT_NOTE_COLOR_CONFIG;
@@ -68,6 +69,9 @@ export function normalizeDojoSettings(value: unknown): DojoSettings {
   const customFretboardTunings = normalizeSavedFretboardTunings(
     value.customFretboardTunings,
   );
+  const customChordProgressions = normalizeSavedChordProgressions(
+    value.customChordProgressions,
+  );
   const noteColorConfig = normalizeNoteColorSetting(value.noteColorConfig);
   const moduleCreationDefaults = normalizeModuleCreationDefaults(
     value.moduleCreationDefaults,
@@ -79,6 +83,7 @@ export function normalizeDojoSettings(value: unknown): DojoSettings {
 
   return {
     ...(appTheme ? { appTheme } : {}),
+    ...(customChordProgressions ? { customChordProgressions } : {}),
     ...(customFretboardTunings ? { customFretboardTunings } : {}),
     ...(noteColorConfig ? { noteColorConfig } : {}),
     ...(moduleCreationDefaults ? { moduleCreationDefaults } : {}),

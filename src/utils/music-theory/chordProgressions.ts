@@ -1,24 +1,13 @@
 import {
   chordProgression,
   chordProgressions,
+  type ChordProgression,
   type ChordProgressionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 
-interface DurationAwareChordProgressionChord {
-  durationInBars: number;
-}
-
-type ChordProgressionInput = Parameters<
-  typeof chordProgression.getChordNames
->[1];
-
-interface ChordProgressionDisplayMetadata {
-  commonName?: string;
-  primaryName?: string;
-  chords: readonly DurationAwareChordProgressionChord[];
-}
+export type ChordProgressionInput = ChordProgression | ChordProgressionKey;
 
 export interface ChordProgressionDisplayLabels {
   chordLabel: string;
@@ -36,13 +25,13 @@ const DURATION_EPSILON = 0.000_001;
 
 function resolveChordProgression(
   progressionOrKey: ChordProgressionInput,
-): ChordProgressionDisplayMetadata | undefined {
+): ChordProgression | undefined {
   if (typeof progressionOrKey !== "string") {
-    return progressionOrKey as ChordProgressionDisplayMetadata;
+    return progressionOrKey;
   }
 
   return chordProgression.isValidKey(progressionOrKey)
-    ? (chordProgressions[progressionOrKey] as ChordProgressionDisplayMetadata)
+    ? chordProgressions[progressionOrKey]
     : undefined;
 }
 
@@ -107,17 +96,16 @@ export function getChordProgressionDisplaySummary(
 
 export function getChordProgressionDisplayLabels(
   rootNote: RootNote,
-  progressionKey: ChordProgressionKey,
+  progressionOrKey: ChordProgressionInput,
+  title?: string,
 ): ChordProgressionDisplayLabels {
-  const summary = getChordProgressionDisplaySummary(rootNote, progressionKey);
-  const progression = chordProgressions[
-    progressionKey
-  ] as ChordProgressionDisplayMetadata;
+  const summary = getChordProgressionDisplaySummary(rootNote, progressionOrKey);
+  const progression = resolveChordProgression(progressionOrKey);
   const romanLabel = summary.romanNames.join(DISPLAY_VALUE_SEPARATOR);
 
   return {
     chordLabel: summary.chordNames.join(DISPLAY_VALUE_SEPARATOR),
     romanLabel,
-    titleLabel: progression.commonName ?? progression.primaryName ?? romanLabel,
+    titleLabel: title ?? progression?.commonName ?? romanLabel,
   };
 }

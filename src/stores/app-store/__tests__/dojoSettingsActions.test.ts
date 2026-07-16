@@ -11,6 +11,72 @@ const musoDojoNoteColors = {
 } as const;
 
 describe("dojo settings app store actions", () => {
+  it("creates, edits, and deletes custom progressions without changing sessions", () => {
+    const store = createTestStore();
+    const existingSession = store.getState().sessions[sessionId];
+    const progression = {
+      chords: [
+        {
+          degree: "1" as const,
+          chordCollectionKey: "major" as const,
+          durationInBars: 1,
+        },
+      ],
+    };
+    const progressionId = store.getState().addCustomChordProgression({
+      name: "My Changes",
+      progression,
+    });
+
+    expect(progressionId).toMatch(/^progression-/);
+    expect(store.getState().dojoSettings.customChordProgressions).toEqual([
+      { id: progressionId, name: "My Changes", progression },
+    ]);
+
+    store.getState().updateCustomChordProgression(progressionId ?? "", {
+      name: "My Turnaround",
+      progression,
+    });
+
+    expect(
+      store.getState().dojoSettings.customChordProgressions?.[0]?.name,
+    ).toBe("My Turnaround");
+    expect(store.getState().sessions[sessionId]).toBe(existingSession);
+
+    store.getState().removeCustomChordProgression(progressionId ?? "");
+
+    expect(
+      store.getState().dojoSettings.customChordProgressions,
+    ).toBeUndefined();
+    expect(store.getState().sessions[sessionId]).toBe(existingSession);
+  });
+
+  it("rejects duplicate custom progression names", () => {
+    const store = createTestStore();
+    const progression = {
+      chords: [
+        {
+          degree: "1" as const,
+          chordCollectionKey: "major" as const,
+          durationInBars: 1,
+        },
+      ],
+    };
+
+    expect(
+      store.getState().addCustomChordProgression({
+        name: "My Changes",
+        progression,
+      }),
+    ).toBeDefined();
+    expect(
+      store.getState().addCustomChordProgression({
+        name: " my changes ",
+        progression,
+      }),
+    ).toBeUndefined();
+  });
+
   it("creates, edits, and deletes custom tunings without changing sessions", () => {
     const store = createTestStore();
     const existingSession = store.getState().sessions[sessionId];
@@ -305,7 +371,10 @@ describe("dojo settings app store actions", () => {
       chordListMode: "full-song-order",
       materialKind: "chord-progression",
       noteCollectionKey: "minor",
-      progressionKey: "majorTwoFiveOne",
+      progression: {
+        kind: "built-in",
+        progressionKey: "majorTwoFiveOne",
+      },
       rootNote: "D",
     });
 
@@ -314,7 +383,10 @@ describe("dojo settings app store actions", () => {
     ).toEqual({
       materialKind: "chord-progression",
       noteCollectionKey: "minor",
-      progressionKey: "majorTwoFiveOne",
+      progression: {
+        kind: "built-in",
+        progressionKey: "majorTwoFiveOne",
+      },
       rootNote: "D",
     });
   });
@@ -349,7 +421,10 @@ describe("dojo settings app store actions", () => {
           chordListMode: "each-chord-once",
           materialKind: "chord-progression",
           noteCollectionKey: "minor",
-          progressionKey: "majorTwoFiveOne",
+          progression: {
+            kind: "built-in",
+            progressionKey: "majorTwoFiveOne",
+          },
           rootNote: "D",
         },
       },
@@ -359,7 +434,10 @@ describe("dojo settings app store actions", () => {
       chordListMode: "full-song-order",
       materialKind: "part",
       noteCollectionKey: "major",
-      progressionKey: "oneOneFiveFive",
+      progression: {
+        kind: "built-in",
+        progressionKey: "oneOneFiveFive",
+      },
       rootNote: "C",
     });
 

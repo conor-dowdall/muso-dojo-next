@@ -7,35 +7,33 @@ import {
 } from "@musodojo/music-theory-data";
 import {
   DisclosureList,
+  DisclosureListAction,
   DisclosureListChoice,
+  DisclosureListGroup,
   DisclosureListItem,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
+import { ListMusic } from "lucide-react";
 import { getChordProgressionDisplayLabels } from "@/utils/music-theory/chordProgressions";
 import styles from "./ChordProgressionPicker.module.css";
 
 type ProgressionCategoryGroupChoice = string;
 
-interface ChordProgressionCategoryGroup {
-  category: string;
-  name: string;
-  progressionKeys: readonly ChordProgressionKey[];
-}
-
 interface ChordProgressionPickerProps {
+  customSelected?: boolean;
+  onManageCustom: () => void;
   rootNote: RootNote;
-  value: ChordProgressionKey;
+  value?: ChordProgressionKey;
   onChange: (progressionKey: ChordProgressionKey) => void;
 }
-
-const progressionCategoryGroups =
-  chordProgressionCategoryGroups as readonly ChordProgressionCategoryGroup[];
 
 function getProgressionCategoryGroupChoice(category: string) {
   return `${category}-progressions`;
 }
 
 export function ChordProgressionPicker({
+  customSelected = false,
+  onManageCustom,
   rootNote,
   value,
   onChange,
@@ -45,10 +43,19 @@ export function ChordProgressionPicker({
 
   return (
     <DisclosureList grouped groupGap="related">
-      {progressionCategoryGroups.map((group) => {
+      <DisclosureListGroup aria-label="Custom progression library">
+        <DisclosureListAction
+          icon={<ListMusic />}
+          label="Custom Progressions"
+          selected={customSelected}
+          onClick={onManageCustom}
+        />
+      </DisclosureListGroup>
+      {chordProgressionCategoryGroups.map((group) => {
         const groupChoice = getProgressionCategoryGroupChoice(group.category);
         const groupTitle = group.name;
-        const groupContainsSelection = group.progressionKeys.includes(value);
+        const groupContainsSelection =
+          value !== undefined && group.progressionKeys.includes(value);
 
         return (
           <DisclosureListItem

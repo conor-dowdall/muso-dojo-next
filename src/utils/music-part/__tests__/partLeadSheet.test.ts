@@ -18,8 +18,11 @@ describe("getPartLeadSheetSummary", () => {
     kind: "chord-progression" as const,
     noteCollectionKey: "major" as const,
     progressionInstanceId: "progression-1",
-    progressionKey: "oneFourOneFive" as const,
-    romanSymbol: "I",
+    source: {
+      kind: "built-in" as const,
+      progressionKey: "oneFourOneFive" as const,
+    },
+    romanSymbol: "I" as const,
     rootNote: "C",
     tonalCenter: "C" as const,
   };

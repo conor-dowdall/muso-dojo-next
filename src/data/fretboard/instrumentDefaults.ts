@@ -128,7 +128,7 @@ export function getDefaultFretboardWoodThemeName(
     case "guitar":
     case "bassGuitar":
     case "ukulele":
-    default:
+    case undefined:
       return DEFAULT_FRETBOARD_THEME;
   }
 }

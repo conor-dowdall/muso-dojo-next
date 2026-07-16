@@ -60,7 +60,7 @@ describe("instrument creation responsive defaults", () => {
         theme: "studio",
       },
       fretboard: {
-        instrument: "bass",
+        instrument: "bassGuitar",
         tuningKey: "bassFiveStringBeadg",
         handedness: "left",
         appearanceSource: "custom",
@@ -80,7 +80,7 @@ describe("instrument creation responsive defaults", () => {
       theme: "studio",
     });
     expect(selections.fretboardSelection).toMatchObject({
-      instrument: "bass",
+      instrument: "bassGuitar",
       tuningKey: "bassFiveStringBeadg",
       fretRange: [0, 5],
       handedness: "left",
@@ -95,7 +95,7 @@ describe("instrument creation responsive defaults", () => {
       "tiny",
       {
         fretboard: {
-          instrument: "bass",
+          instrument: "bassGuitar",
           tuningKey: "bassFiveStringBeadg",
           handedness: "left",
           appearanceSource: "custom",
@@ -119,7 +119,7 @@ describe("instrument creation responsive defaults", () => {
       midiRange: [36, 72],
     });
     expect(selections.fretboardSelection).toMatchObject({
-      instrument: "bass",
+      instrument: "bassGuitar",
       fretRange: [0, 12],
       handedness: "left",
     });

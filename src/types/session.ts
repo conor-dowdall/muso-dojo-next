@@ -1,4 +1,5 @@
 import {
+  type ChordProgressionAnalysisRomanSymbol,
   type ChordProgressionKey,
   type NoteCollectionKey,
   type RootNote,
@@ -21,6 +22,10 @@ import { type KeyboardConfig } from "@/types/keyboard";
 import { type DisplayFormatId } from "@/data/displayFormats";
 import { type AppThemeName } from "@/data/appThemes";
 import { type SavedFretboardTuning } from "@/types/custom-fretboard-tuning";
+import {
+  type ChordProgressionSelection,
+  type SavedChordProgression,
+} from "@/types/custom-chord-progression";
 import { type WoodSurfaceId } from "@/data/woodSurfaces";
 import {
   type CollectionRangeBoundary,
@@ -46,8 +51,10 @@ export interface AuthoredChordProgressionConfig {
   kind: "chord-progression";
   noteCollectionKey: NoteCollectionKey;
   progressionInstanceId: string;
-  progressionKey: ChordProgressionKey;
-  romanSymbol: string;
+  source:
+    | { kind: "built-in"; progressionKey: ChordProgressionKey }
+    | { kind: "custom"; name: string };
+  romanSymbol: ChordProgressionAnalysisRomanSymbol;
   rootNote: string;
   tonalCenter: RootNote;
 }
@@ -81,7 +88,7 @@ export interface SessionMaterialCreationDefaults {
   chordListMode?: ChordProgressionChordListMode;
   materialKind?: SessionMaterialCreationKind;
   noteCollectionKey?: NoteCollectionKey;
-  progressionKey?: ChordProgressionKey;
+  progression?: ChordProgressionSelection;
   rootNote?: RootNote;
 }
 
@@ -279,6 +286,7 @@ export interface SessionConfig {
  */
 export interface DojoSettings {
   appTheme?: AppThemeName;
+  customChordProgressions?: SavedChordProgression[];
   customFretboardTunings?: SavedFretboardTuning[];
   noteColorConfig?: NoteColorConfig;
   moduleCreationDefaults?: ModuleCreationDefaults;

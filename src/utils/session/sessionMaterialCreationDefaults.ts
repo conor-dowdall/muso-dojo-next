@@ -10,6 +10,7 @@ import {
   type SessionMaterialCreationDefaults,
   type SessionMaterialCreationKind,
 } from "@/types/session";
+import { type ChordProgressionSelection } from "@/types/custom-chord-progression";
 import {
   DEFAULT_PART_NOTE_COLLECTION_KEY,
   DEFAULT_PART_ROOT_NOTE,
@@ -38,7 +39,10 @@ export function createBuiltInSessionMaterialCreationDefaults(): Required<Session
     chordListMode: DEFAULT_SESSION_MATERIAL_CREATION_CHORD_LIST_MODE,
     materialKind: DEFAULT_SESSION_MATERIAL_CREATION_KIND,
     noteCollectionKey: DEFAULT_PART_NOTE_COLLECTION_KEY,
-    progressionKey: DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY,
+    progression: {
+      kind: "built-in",
+      progressionKey: DEFAULT_SESSION_MATERIAL_CREATION_PROGRESSION_KEY,
+    },
     rootNote: DEFAULT_PART_ROOT_NOTE,
   };
 }
@@ -65,9 +69,31 @@ function normalizeSessionMaterialNoteCollectionKey(value: unknown) {
     : undefined;
 }
 
-function normalizeSessionMaterialProgressionKey(value: unknown) {
-  return typeof value === "string" && chordProgression.isValidKey(value)
-    ? value
+function normalizeSessionMaterialProgression(
+  value: unknown,
+  legacyProgressionKey?: unknown,
+): ChordProgressionSelection | undefined {
+  if (isRecord(value)) {
+    if (
+      value.kind === "built-in" &&
+      typeof value.progressionKey === "string" &&
+      chordProgression.isValidKey(value.progressionKey)
+    ) {
+      return { kind: "built-in", progressionKey: value.progressionKey };
+    }
+
+    if (
+      value.kind === "custom" &&
+      typeof value.progressionId === "string" &&
+      value.progressionId.trim()
+    ) {
+      return { kind: "custom", progressionId: value.progressionId.trim() };
+    }
+  }
+
+  return typeof legacyProgressionKey === "string" &&
+    chordProgression.isValidKey(legacyProgressionKey)
+    ? { kind: "built-in", progressionKey: legacyProgressionKey }
     : undefined;
 }
 
@@ -92,7 +118,8 @@ export function normalizeSessionMaterialCreationDefaults(
   const noteCollectionKey = normalizeSessionMaterialNoteCollectionKey(
     value.noteCollectionKey,
   );
-  const progressionKey = normalizeSessionMaterialProgressionKey(
+  const progression = normalizeSessionMaterialProgression(
+    value.progression,
     value.progressionKey,
   );
   const chordListMode = normalizeSessionMaterialChordListMode(
@@ -109,8 +136,13 @@ export function normalizeSessionMaterialCreationDefaults(
     noteCollectionKey !== builtInDefaults.noteCollectionKey
       ? { noteCollectionKey }
       : {}),
-    ...(progressionKey && progressionKey !== builtInDefaults.progressionKey
-      ? { progressionKey }
+    ...(progression &&
+    (progression.kind !== builtInDefaults.progression.kind ||
+      progression.kind === "custom" ||
+      (builtInDefaults.progression.kind === "built-in" &&
+        progression.progressionKey !==
+          builtInDefaults.progression.progressionKey))
+      ? { progression }
       : {}),
     ...(rootNote && rootNote !== builtInDefaults.rootNote ? { rootNote } : {}),
   } satisfies SessionMaterialCreationDefaults;
@@ -138,7 +170,14 @@ export function sessionMaterialCreationDefaultsAreEqual(
     resolvedLeft.chordListMode === resolvedRight.chordListMode &&
     resolvedLeft.materialKind === resolvedRight.materialKind &&
     resolvedLeft.noteCollectionKey === resolvedRight.noteCollectionKey &&
-    resolvedLeft.progressionKey === resolvedRight.progressionKey &&
+    resolvedLeft.progression.kind === resolvedRight.progression.kind &&
+    (resolvedLeft.progression.kind === "built-in"
+      ? resolvedRight.progression.kind === "built-in" &&
+        resolvedLeft.progression.progressionKey ===
+          resolvedRight.progression.progressionKey
+      : resolvedRight.progression.kind === "custom" &&
+        resolvedLeft.progression.progressionId ===
+          resolvedRight.progression.progressionId) &&
     resolvedLeft.rootNote === resolvedRight.rootNote
   );
 }

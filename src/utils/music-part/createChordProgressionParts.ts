@@ -2,6 +2,7 @@ import {
   chordProgression,
   chordProgressions,
   normalizeRootNoteString,
+  type ChordProgression,
   type ChordProgressionChordReference,
   type ChordProgressionKey,
   type RootNote,
@@ -36,24 +37,28 @@ const BAR_DURATION_IN_BARS = 1;
 const DURATION_EPSILON = 0.000_001;
 const DURATION_PRECISION = 1_000_000;
 
+type ChordProgressionCreationSelection =
+  | {
+      progression?: never;
+      progressionKey: ChordProgressionKey;
+      progressionName?: never;
+    }
+  | {
+      progression: ChordProgression;
+      progressionKey?: never;
+      progressionName: string;
+    };
+
 type CreateChordProgressionPartsOptions<
   T extends PartModuleType = PartModuleType,
-> = {
+> = ChordProgressionCreationSelection & {
   rootNote: string;
-  progressionKey: ChordProgressionKey;
   chordListMode?: ChordProgressionChordListMode;
   moduleRequests: PartModuleCreationRequest<T>[];
 };
 
-function createProgressionPartId(
-  progressionKey: ChordProgressionKey,
-  index: number,
-) {
-  return createEntityId(`part-${progressionKey}-${index + 1}`);
-}
-
-interface DurationAwareChordProgression {
-  chords: readonly { durationInBars: number }[];
+function createProgressionPartId(progressionIdentity: string, index: number) {
+  return createEntityId(`part-${progressionIdentity}-${index + 1}`);
 }
 
 interface ProgressionPartReference {
@@ -79,7 +84,7 @@ function getRhythmBeatCountForSegmentWithBarBeats(
 }
 
 function getProgressionChordDurationInBars(
-  progression: DurationAwareChordProgression | undefined,
+  progression: ChordProgression,
   index: number,
 ) {
   const durationInBars = progression?.chords[index]?.durationInBars;
@@ -93,23 +98,26 @@ function getProgressionChordDurationInBars(
 
 function createFullProgressionPartReferences(
   rootNote: RootNote,
-  progressionKey: ChordProgressionKey,
+  progression: ChordProgression | ChordProgressionKey,
+  progressionSource: AuthoredChordProgressionConfig["source"],
   progressionInstanceId: string,
   beatsPerBar = PART_DURATION_BEATS_PER_BAR,
 ): ProgressionPartReference[] {
-  const progression = chordProgressions[progressionKey] as
-    DurationAwareChordProgression | undefined;
+  const resolvedProgression =
+    typeof progression === "string"
+      ? chordProgressions[progression]
+      : progression;
   const references = chordProgression.getChordChangeReferences(
     rootNote,
-    progressionKey,
+    progression,
   );
-  const romanSymbols = chordProgression.getRomanSymbols(progressionKey);
+  const romanSymbols = chordProgression.getRomanSymbols(progression);
   const partReferences: ProgressionPartReference[] = [];
   let currentBarPosition = 0;
 
   references.forEach((reference, referenceIndex) => {
     let remainingDuration = getProgressionChordDurationInBars(
-      progression,
+      resolvedProgression,
       referenceIndex,
     );
 
@@ -130,7 +138,7 @@ function createFullProgressionPartReferences(
                 kind: "chord-progression" as const,
                 noteCollectionKey: reference.chordCollectionKey,
                 progressionInstanceId,
-                progressionKey,
+                source: progressionSource,
                 romanSymbol: romanSymbols[referenceIndex],
                 rootNote: reference.rootNote,
                 tonalCenter: rootNote,
@@ -158,10 +166,10 @@ function createFullProgressionPartReferences(
 
 function createUniqueProgressionPartReferences(
   rootNote: RootNote,
-  progressionKey: ChordProgressionKey,
+  progression: ChordProgression | ChordProgressionKey,
 ): ProgressionPartReference[] {
   return chordProgression
-    .getUniqueChordReferences(rootNote, progressionKey)
+    .getUniqueChordReferences(rootNote, progression)
     .map((reference) => ({ reference }));
 }
 
@@ -233,15 +241,23 @@ export function createChordProgressionParts<
   T extends PartModuleType = PartModuleType,
 >({
   rootNote,
+  progression,
   progressionKey,
+  progressionName,
   chordListMode = "each-chord-once",
   moduleRequests,
 }: CreateChordProgressionPartsOptions<T>): MusicPartConfig[] {
   const normalizedRootNote = (normalizeRootNoteString(rootNote) ??
     DEFAULT_PART_ROOT_NOTE) as RootNote;
+  const progressionInput = progression ?? progressionKey;
+  const progressionIdentity = progressionKey ?? progressionName;
+  const progressionSource: AuthoredChordProgressionConfig["source"] =
+    progressionKey
+      ? { kind: "built-in", progressionKey }
+      : { kind: "custom", name: progressionName };
   const rhythmBeatsPerBar = getRequestedRhythmBeatsPerBar(moduleRequests);
   const automaticRhythm =
-    getChordProgressionRhythmProfile(progressionKey)
+    getChordProgressionRhythmProfile(progressionInput)
       .preferredRhythmStarterId === "swing"
       ? "swing"
       : "standard";
@@ -249,19 +265,20 @@ export function createChordProgressionParts<
     chordListMode === "full-song-order"
       ? createFullProgressionPartReferences(
           normalizedRootNote,
-          progressionKey,
-          createEntityId(`progression-${progressionKey}`),
+          progressionInput,
+          progressionSource,
+          createEntityId(`progression-${progressionIdentity}`),
           rhythmBeatsPerBar,
         )
       : createUniqueProgressionPartReferences(
           normalizedRootNote,
-          progressionKey,
+          progressionInput,
         );
 
   return references.map((partReference, index) =>
     createPartFromReference({
       moduleRequests,
-      partId: createProgressionPartId(progressionKey, index),
+      partId: createProgressionPartId(progressionIdentity, index),
       partReference,
       automaticRhythm,
     }),

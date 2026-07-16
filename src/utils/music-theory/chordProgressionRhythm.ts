@@ -1,6 +1,7 @@
 import {
   chordProgression,
   chordProgressions,
+  type ChordProgression,
   type ChordProgressionKey,
 } from "@musodojo/music-theory-data";
 import { RHYTHM_MAX_BEATS } from "@/data/rhythmPresets";
@@ -8,16 +9,6 @@ import { RHYTHM_MAX_BEATS } from "@/data/rhythmPresets";
 const DURATION_EPSILON = 0.000_001;
 
 export type ChordProgressionPreferredRhythmStarter = "4-4" | "swing";
-
-interface RhythmAwareChordProgression {
-  category?: string;
-  chords: readonly { durationInBars: number }[];
-  commonName?: string;
-  family?: string;
-  primaryName?: string;
-  style?: string;
-  tags?: readonly string[];
-}
 
 export interface ChordProgressionRhythmProfile {
   hasSplitBars: boolean;
@@ -61,7 +52,7 @@ function getSimpleFractionDenominator(
   return undefined;
 }
 
-function progressionPrefersSwing(progression: RhythmAwareChordProgression) {
+function progressionPrefersSwing(progression: ChordProgression) {
   return progression.category === "jazz" || progression.category === "blues";
 }
 
@@ -84,12 +75,13 @@ export function getRequiredBarDivisionForDurations(
 }
 
 export function getChordProgressionRhythmProfile(
-  progressionKey: ChordProgressionKey,
+  progressionOrKey: ChordProgression | ChordProgressionKey,
 ): ChordProgressionRhythmProfile {
-  const progression = chordProgressions[
-    progressionKey
-  ] as RhythmAwareChordProgression;
-  const totalBars = chordProgression.getTotalDurationInBars(progressionKey);
+  const progression =
+    typeof progressionOrKey === "string"
+      ? chordProgressions[progressionOrKey]
+      : progressionOrKey;
+  const totalBars = chordProgression.getTotalDurationInBars(progressionOrKey);
   const requiredBarDivision = getRequiredBarDivisionForDurations(
     progression.chords.map((chord) => chord.durationInBars),
   );

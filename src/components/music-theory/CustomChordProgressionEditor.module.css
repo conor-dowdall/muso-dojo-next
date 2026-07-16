@@ -1,0 +1,88 @@
+.editor,
+.barList,
+.bar,
+.chordEditor,
+.nameField {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+}
+
+.editor {
+  gap: var(--dialog-menu-section-gap, var(--space-5));
+}
+
+.nameField,
+.chordEditor {
+  gap: var(--space-2);
+}
+
+.nameLabel,
+.barNumber {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+}
+
+.nameInput {
+  inline-size: 100%;
+}
+
+.message {
+  color: var(--color-danger);
+  font-size: var(--text-xs);
+}
+
+.barList {
+  gap: var(--space-3);
+}
+
+.bar {
+  overflow: hidden;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: var(--border-width-base) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--color-panel-background);
+}
+
+.barHeader {
+  display: flex;
+  min-inline-size: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.chordRow {
+  display: flex;
+  min-inline-size: 0;
+  gap: var(--space-1);
+}
+
+.chordButton {
+  flex: 1 1 0;
+  min-inline-size: 0;
+}
+
+.rootGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.editorActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+@media (max-width: 30rem) {
+  .rootGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .editorActions > * {
+    flex: 1 1 auto;
+  }
+}
