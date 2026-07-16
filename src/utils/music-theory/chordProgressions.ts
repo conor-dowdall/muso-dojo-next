@@ -68,6 +68,21 @@ function expandLabelsByBar(
   return bars;
 }
 
+export function getChordProgressionRomanBarLabels(
+  progressionOrKey: ChordProgressionInput,
+) {
+  const progression = resolveChordProgression(progressionOrKey);
+
+  if (!progression) {
+    return [];
+  }
+
+  return expandLabelsByBar(
+    chordProgression.getRomanSymbols(progressionOrKey),
+    progression.chords.map((chord) => chord.durationInBars),
+  );
+}
+
 export function getChordProgressionDisplaySummary(
   rootNote: RootNote,
   progressionOrKey: ChordProgressionInput,
@@ -83,14 +98,9 @@ export function getChordProgressionDisplaySummary(
     .map((barReferences) =>
       barReferences.map((reference) => reference.chordName).join(" "),
     );
-  const romanNames = chordProgression.getRomanSymbols(progressionOrKey);
-  const durationsInBars = progression.chords.map(
-    (chord) => chord.durationInBars,
-  );
-
   return {
     chordNames,
-    romanNames: expandLabelsByBar(romanNames, durationsInBars),
+    romanNames: getChordProgressionRomanBarLabels(progressionOrKey),
   };
 }
 

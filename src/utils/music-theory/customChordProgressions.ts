@@ -1,4 +1,5 @@
 import {
+  noteLabelCollections,
   noteCollections,
   type ChordCollectionKey,
   type ChordProgression,
@@ -18,20 +19,10 @@ import {
 export const CUSTOM_CHORD_PROGRESSION_MAX_BARS = 32;
 export const CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR = 4;
 
-export const customChordProgressionDegrees = [
-  "1",
-  "♭2",
-  "2",
-  "♭3",
-  "3",
-  "4",
-  "♯4",
-  "5",
-  "♭6",
-  "6",
-  "♭7",
-  "7",
-] as const satisfies readonly ChordProgressionDegree[];
+export const customChordProgressionFlatDegrees = noteLabelCollections
+  .intervalsFlat.labels as readonly ChordProgressionDegree[];
+export const customChordProgressionSharpDegrees = noteLabelCollections
+  .intervalsSharp.labels as readonly ChordProgressionDegree[];
 
 export interface CustomChordProgressionDraftChord {
   chordCollectionKey: ChordCollectionKey;
@@ -43,9 +34,10 @@ export interface CustomChordProgressionDraftBar {
 }
 
 const DURATION_EPSILON = 0.000_001;
-const customChordProgressionDegreeSet = new Set<string>(
-  customChordProgressionDegrees,
-);
+const customChordProgressionDegreeSet = new Set<string>([
+  ...customChordProgressionFlatDegrees,
+  ...customChordProgressionSharpDegrees,
+]);
 
 function valuesAreClose(left: number, right: number) {
   return Math.abs(left - right) <= DURATION_EPSILON;

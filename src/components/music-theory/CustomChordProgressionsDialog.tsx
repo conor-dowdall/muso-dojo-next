@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  type ChordProgression,
-  type RootNote,
-} from "@musodojo/music-theory-data";
+import { type ChordProgression } from "@musodojo/music-theory-data";
 import { ListMusic, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
@@ -23,35 +20,27 @@ import { SelectableOverflowRow } from "@/components/ui/selectable-overflow-row";
 import { useAppStore } from "@/stores/appStore";
 import { type SavedChordProgression } from "@/types/custom-chord-progression";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
-import { getChordProgressionDisplaySummary } from "@/utils/music-theory/chordProgressions";
+import { getChordProgressionRomanBarLabels } from "@/utils/music-theory/chordProgressions";
 import { savedChordProgressionNameIsAvailable } from "@/utils/music-theory/customChordProgressions";
 import { CustomChordProgressionEditor } from "./CustomChordProgressionEditor";
 import styles from "./CustomChordProgressionsDialog.module.css";
 
 interface CustomChordProgressionsDialogProps {
   isOpen: boolean;
-  rootNote: RootNote;
-  seedProgression: ChordProgression;
   selectedId?: string;
   onClose: () => void;
   onDeleteSelected: () => void;
   onSelect: (progression: SavedChordProgression) => void;
 }
 
-function formatProgressionSummary(
-  rootNote: RootNote,
-  progression: ChordProgression,
-) {
-  return getChordProgressionDisplaySummary(
-    rootNote,
-    progression,
-  ).chordNames.join(DISPLAY_VALUE_SEPARATOR);
+function formatProgressionSummary(progression: ChordProgression) {
+  return getChordProgressionRomanBarLabels(progression).join(
+    DISPLAY_VALUE_SEPARATOR,
+  );
 }
 
 export function CustomChordProgressionsDialog({
   isOpen,
-  rootNote,
-  seedProgression,
   selectedId,
   onClose,
   onDeleteSelected,
@@ -128,14 +117,12 @@ export function CustomChordProgressionsDialog({
               >
                 <CustomChordProgressionEditor
                   key={`new-${newEditorVersion}`}
-                  initialProgression={seedProgression}
                   isNameAvailable={(name) =>
                     savedChordProgressionNameIsAvailable(
                       allProgressions ?? [],
                       name,
                     )
                   }
-                  rootNote={rootNote}
                   onSave={handleCreate}
                 />
               </DisclosureListActionItem>
@@ -158,10 +145,7 @@ export function CustomChordProgressionsDialog({
                       selectedAriaLabel={`Current progression: ${progression.name}`}
                       subtitle={
                         <span className={styles.summary}>
-                          {formatProgressionSummary(
-                            rootNote,
-                            progression.progression,
-                          )}
+                          {formatProgressionSummary(progression.progression)}
                         </span>
                       }
                       onSelect={() => {
@@ -206,7 +190,6 @@ export function CustomChordProgressionsDialog({
                                   progression.id,
                                 )
                               }
-                              rootNote={rootNote}
                               onSave={(name, nextProgression) => {
                                 updateProgression(progression.id, {
                                   name,

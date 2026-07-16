@@ -1,13 +1,35 @@
-import { chordProgressions } from "@musodojo/music-theory-data";
+import {
+  chordProgression,
+  chordProgressions,
+  noteLabelCollections,
+} from "@musodojo/music-theory-data";
 import { describe, expect, it } from "vitest";
 import {
   createCustomProgressionBars,
   createCustomProgressionFromBars,
+  customChordProgressionFlatDegrees,
   normalizeCustomChordProgression,
   normalizeSavedChordProgressions,
 } from "@/utils/music-theory/customChordProgressions";
 
 describe("customChordProgressions", () => {
+  it("uses the package flat intervals and preserves optional sharp spellings", () => {
+    expect(customChordProgressionFlatDegrees).toBe(
+      noteLabelCollections.intervalsFlat.labels,
+    );
+
+    const progression = createCustomProgressionFromBars([
+      {
+        chords: [{ degree: "♯4", chordCollectionKey: "diminishedTriad" }],
+      },
+    ]);
+
+    expect(progression?.chords[0]?.degree).toBe("♯4");
+    expect(
+      progression && chordProgression.getDirectRomanSymbols(progression),
+    ).toEqual(["♯iv°"]);
+  });
+
   it("converts visual bar slots into exact fractional chord events", () => {
     const progression = createCustomProgressionFromBars([
       { chords: [{ degree: "1", chordCollectionKey: "major" }] },

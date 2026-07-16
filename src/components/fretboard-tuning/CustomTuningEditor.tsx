@@ -1,14 +1,11 @@
 "use client";
 
 import { formatMidiNote } from "@musodojo/music-theory-data";
-import { Check } from "lucide-react";
-import { type SyntheticEvent, useId, useState } from "react";
+import { type SyntheticEvent, useState } from "react";
 import { Button } from "@/components/ui/buttons/Button";
-import { IconButton } from "@/components/ui/buttons/IconButton";
-import fieldStyles from "@/components/ui/control-field/ControlField.module.css";
 import { NumericStepper } from "@/components/ui/numeric-stepper/NumericStepper";
-import { Text } from "@/components/ui/typography/Text";
 import { DisclosureListPanelActions } from "@/components/ui/disclosure-list/DisclosureList";
+import { NamedLibraryItemSaveField } from "@/components/ui/named-library-item/NamedLibraryItemSaveField";
 import {
   CUSTOM_TUNING_MAX_MIDI,
   CUSTOM_TUNING_MAX_STRINGS,
@@ -59,8 +56,6 @@ export function CustomTuningEditor({
   onSave,
   showNameField = false,
 }: CustomTuningEditorProps) {
-  const nameInputId = useId();
-  const nameMessageId = useId();
   const [name, setName] = useState(initialName);
   const [openMidiNotes, setOpenMidiNotes] = useState([...initialOpenMidiNotes]);
   const normalizedName = normalizeCustomTuningName(name);
@@ -144,43 +139,14 @@ export function CustomTuningEditor({
 
       {showNameField ? (
         <form className={styles.nameForm} onSubmit={handleSubmit}>
-          <div className={styles.nameField}>
-            <label className={styles.nameLabel} htmlFor={nameInputId}>
-              Tuning Name
-            </label>
-            <div className={styles.nameControl}>
-              <input
-                aria-describedby={nameMessage ? nameMessageId : undefined}
-                aria-invalid={hasNameConflict || undefined}
-                autoComplete="off"
-                className={`${fieldStyles.surface} ${fieldStyles.text} ${styles.nameInput}`}
-                id={nameInputId}
-                placeholder="Tuning Name"
-                spellCheck={false}
-                value={name}
-                onChange={(event) => setName(event.currentTarget.value)}
-              />
-              <IconButton
-                aria-label="Save tuning"
-                disabled={!canSave}
-                icon={<Check />}
-                shouldYield={false}
-                size="lg"
-                type="submit"
-              />
-            </div>
-            {nameMessage ? (
-              <Text
-                as="span"
-                className={styles.message}
-                id={nameMessageId}
-                size="xs"
-                variant="muted"
-              >
-                {nameMessage}
-              </Text>
-            ) : null}
-          </div>
+          <NamedLibraryItemSaveField
+            disabled={!canSave}
+            errorMessage={nameMessage || undefined}
+            label="Tuning Name"
+            saveAriaLabel="Save tuning"
+            value={name}
+            onChange={setName}
+          />
         </form>
       ) : (
         <DisclosureListPanelActions>

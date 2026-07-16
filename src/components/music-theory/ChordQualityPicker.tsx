@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  chordProgression,
   groupedNoteCollections,
   noteCollectionGroupsMetadata,
   type ChordCollection,
@@ -12,23 +13,38 @@ import choiceGridStyles from "@/components/ui/choice-grid/ChoiceGrid.module.css"
 import { Heading } from "@/components/ui/typography/Heading";
 import styles from "./NoteCollectionPicker.module.css";
 
-interface ChordCollectionPickerProps {
+interface ChordQualityPickerProps {
   value: ChordCollectionKey;
   onChange: (value: ChordCollectionKey) => void;
 }
 
-function getChordTypeName(collection: ChordCollection) {
+const descriptiveChordNamePattern =
+  /^(Major|Minor|Dominant|Diminished|Half Diminished|Augmented)/;
+
+export function getChordQualityDisplayName(collection: ChordCollection) {
   return (
-    collection.names.find(
-      (name) => name.length > 2 && /^[A-Za-z]/.test(name),
-    ) ?? collection.primaryName
+    collection.names.find((name) => descriptiveChordNamePattern.test(name)) ??
+    collection.primaryName
   );
 }
 
-export function ChordCollectionPicker({
+function getChordQualityRomanExample(chordCollectionKey: ChordCollectionKey) {
+  return chordProgression.getDirectRomanSymbols({
+    chords: [{ chordCollectionKey, degree: "1", durationInBars: 1 }],
+  })[0];
+}
+
+function getGroupDisplayName(groupKey: NoteCollectionGroupKey) {
+  return noteCollectionGroupsMetadata[groupKey].displayName.replace(
+    / Variants$/,
+    "",
+  );
+}
+
+export function ChordQualityPicker({
   value,
   onChange,
-}: ChordCollectionPickerProps) {
+}: ChordQualityPickerProps) {
   return (
     <div className={styles.groupList}>
       {(Object.keys(groupedNoteCollections) as NoteCollectionGroupKey[]).map(
@@ -44,7 +60,7 @@ export function ChordCollectionPicker({
             return null;
           }
 
-          const headingId = `chord-collection-${groupKey}`;
+          const headingId = `chord-quality-${groupKey}`;
 
           return (
             <section
@@ -53,17 +69,17 @@ export function ChordCollectionPicker({
               aria-labelledby={headingId}
             >
               <Heading as="h3" id={headingId} size="xs" variant="muted">
-                {noteCollectionGroupsMetadata[groupKey].displayName}
+                {getGroupDisplayName(groupKey)}
               </Heading>
               <div className={choiceGridStyles.cardGrid}>
                 {chordEntries.map(([key, collection]) => (
                   <OptionButton
                     key={key}
                     density="compact"
-                    label={getChordTypeName(collection)}
+                    label={getChordQualityDisplayName(collection)}
                     presentation="tile"
                     selected={value === key}
-                    subtitle={`${collection.symbol.chordSuffix || "M"} · ${collection.intervals.join(" ")}`}
+                    subtitle={`${getChordQualityRomanExample(key)} · ${collection.intervals.join(" ")}`}
                     onClick={() => onChange(key)}
                   />
                 ))}
