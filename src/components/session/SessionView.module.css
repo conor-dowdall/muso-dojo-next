@@ -85,18 +85,13 @@
   z-index: 1;
 }
 
-.bandPart[data-part-sequence-state="active"],
-.bandPart[data-part-sequence-state="pending"] {
+.bandPart[data-part-sequence-state="active"] {
   border-color: var(--color-accent);
 }
 
 .bandPart[data-part-sequence-state="active"] {
   background: var(--chart-active-background);
   box-shadow: inset 0 0 0 var(--space-px) var(--color-accent);
-}
-
-.bandPart[data-part-sequence-state="pending"] {
-  border-style: dashed;
 }
 
 .bandBarNumber,

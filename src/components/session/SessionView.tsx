@@ -119,21 +119,11 @@ export function SessionView({
   const activePartId = partSequenceIsActive
     ? partSequenceSnapshot.activePartId
     : undefined;
-  const pendingPartId = partSequenceIsActive
-    ? partSequenceSnapshot.pendingPartId
-    : undefined;
   const livePartId = activePartId ?? partIds[0];
   const readOnlyPartChrome = usesReadOnlyPartChrome(viewMode);
   const showChart = showsSessionChart(viewMode);
   const showPartsView = !showChart;
   const showOnlyLivePart = showsOnlyLivePart(viewMode);
-
-  const getPartSequenceState = (partId: string) =>
-    activePartId === partId
-      ? "active"
-      : pendingPartId === partId
-        ? "pending"
-        : undefined;
 
   return (
     <NoteColorProvider config={noteColorConfig}>
@@ -148,11 +138,7 @@ export function SessionView({
           />
         </div>
       ) : showChart ? (
-        <BandSessionView
-          activePartId={activePartId}
-          bars={chartBars}
-          pendingPartId={pendingPartId}
-        />
+        <BandSessionView activePartId={activePartId} bars={chartBars} />
       ) : showPartsView ? (
         <div className={styles.partsView}>
           {partIds.map((partId) => {
@@ -167,8 +153,8 @@ export function SessionView({
                 <MusicPartView
                   sessionId={sessionId}
                   partId={partId}
-                  partSequenceState={
-                    showOnlyLivePart ? undefined : getPartSequenceState(partId)
+                  isPartSequenceActive={
+                    !showOnlyLivePart && activePartId === partId
                   }
                   isPerformanceMode={readOnlyPartChrome}
                   onOpenSessionTempo={onOpenSessionTempo}
@@ -186,11 +172,9 @@ export function SessionView({
 function BandSessionView({
   activePartId,
   bars,
-  pendingPartId,
 }: {
   activePartId?: string;
   bars: SessionChartBar[];
-  pendingPartId?: string;
 }) {
   return (
     <section
@@ -217,20 +201,15 @@ function BandSessionView({
             </div>
             <div className={styles.bandBarSegments}>
               {bar.parts.map((part) => {
-                const state =
-                  activePartId === part.id
-                    ? "active"
-                    : pendingPartId === part.id
-                      ? "pending"
-                      : undefined;
+                const isActive = activePartId === part.id;
 
                 return (
                   <div
                     key={part.id}
-                    aria-current={state === "active" ? "step" : undefined}
+                    aria-current={isActive ? "step" : undefined}
                     aria-label={part.accessibleLabel}
                     className={styles.bandPart}
-                    data-part-sequence-state={state}
+                    data-part-sequence-state={isActive ? "active" : undefined}
                     role="group"
                     style={
                       {

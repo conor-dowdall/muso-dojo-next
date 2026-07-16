@@ -40,8 +40,8 @@ interface MusicPartProps {
   headerClassName?: string;
   accentColor?: string;
   instrumentCreationRangeContext?: InstrumentCreationRangeContext;
+  isPartSequenceActive?: boolean;
   isPerformanceMode?: boolean;
-  partSequenceState?: "active" | "pending";
   showHeader?: boolean;
   showReadOnlyIdentity?: boolean;
   onAddPartModules?: AddPartModulesHandler;
@@ -127,7 +127,7 @@ export function MusicPart({
   accentColor,
   instrumentCreationRangeContext,
   isPerformanceMode = false,
-  partSequenceState,
+  isPartSequenceActive = false,
   rootNote: controlledRootNote,
   initialRootNote = "C",
   onRootNoteChange,
@@ -194,7 +194,7 @@ export function MusicPart({
       <div className={styles.musicPartWrapper}>
         <section
           className={`${styles.musicPart} ${className}`}
-          data-part-sequence-state={partSequenceState}
+          data-part-sequence-state={isPartSequenceActive ? "active" : undefined}
           style={
             accentColor
               ? ({ "--color-accent": accentColor } as CSSProperties)

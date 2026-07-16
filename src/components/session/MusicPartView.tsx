@@ -20,18 +20,18 @@ import {
 interface MusicPartViewProps {
   sessionId: string;
   partId: string;
+  isPartSequenceActive?: boolean;
   isPerformanceMode?: boolean;
   onOpenSessionTempo?: (sessionId: string) => void;
-  partSequenceState?: "active" | "pending";
   showReadOnlyIdentity?: boolean;
 }
 
 export function MusicPartView({
   sessionId,
   partId,
+  isPartSequenceActive = false,
   isPerformanceMode = false,
   onOpenSessionTempo,
-  partSequenceState,
   showReadOnlyIdentity = false,
 }: MusicPartViewProps) {
   const part = useAppStore((state) => selectPart(state, sessionId, partId));
@@ -114,7 +114,7 @@ export function MusicPartView({
     <MusicPart
       sessionId={sessionId}
       partId={partId}
-      partSequenceState={partSequenceState}
+      isPartSequenceActive={isPartSequenceActive}
       instrumentCreationRangeContext={instrumentCreationRangeContext}
       isPerformanceMode={isPerformanceMode}
       rootNote={partSettings.rootNote}
