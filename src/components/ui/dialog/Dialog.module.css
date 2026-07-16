@@ -38,11 +38,7 @@
 }
 
 .dialog {
-  --dialog-background: color-mix(
-    in srgb,
-    var(--color-base) 72%,
-    var(--color-surface)
-  );
+  --dialog-background: var(--color-panel-background);
   --dialog-background-highlight: color-mix(
     in srgb,
     var(--color-surface-highlight) 36%,

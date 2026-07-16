@@ -35,6 +35,11 @@
     var(--color-page-background-shade) 8%
   );
   --color-surface: #14161b;
+  --color-panel-background: color-mix(
+    in srgb,
+    var(--color-base) 72%,
+    var(--color-surface)
+  );
   --color-surface-hover: #20232a;
   --color-border: rgb(255 255 255 / 0.24);
   --color-border-subtle: rgb(255 255 255 / 0.13);
