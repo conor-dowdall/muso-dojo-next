@@ -107,7 +107,7 @@ export function isValidFretboardIcon(icon: unknown): icon is FretboardIcon {
 function getTuningInstrument(
   tuningKey: StringInstrumentTuningKey,
 ): StringInstrumentKey {
-  return stringInstrumentTunings[tuningKey].instrument as StringInstrumentKey;
+  return stringInstrumentTunings[tuningKey].instrument;
 }
 
 export function getDefaultTuningKey(

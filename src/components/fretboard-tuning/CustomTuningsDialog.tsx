@@ -1,6 +1,9 @@
 "use client";
 
-import { type StringInstrumentKey } from "@musodojo/music-theory-data";
+import {
+  type OpenStringMidiNotes,
+  type StringInstrumentKey,
+} from "@musodojo/music-theory-data";
 import { ListChevronsUpDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
@@ -82,7 +85,7 @@ export function CustomTuningsDialog({
     closeRowEditors();
   };
 
-  const handleCreate = (openMidiNotes: readonly number[], name?: string) => {
+  const handleCreate = (openMidiNotes: OpenStringMidiNotes, name?: string) => {
     if (!name) {
       return;
     }

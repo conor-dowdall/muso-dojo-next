@@ -27,11 +27,10 @@ export const customChordProgressionFlatDegrees = noteLabelCollections
 export const customChordProgressionSharpDegrees = noteLabelCollections
   .intervalsSharp.labels as readonly ChordProgressionDegree[];
 
-export interface CustomChordProgressionDraftChord {
-  chordCollectionKey: ChordCollectionKey;
-  degree: ChordProgressionDegree;
-  durationInBars: number;
-}
+export type CustomChordProgressionDraftChord = Pick<
+  ChordProgressionChord,
+  "chordCollectionKey" | "degree" | "durationInBars"
+>;
 
 export interface CustomChordProgressionDraftBar {
   chords: CustomChordProgressionDraftChord[];
@@ -334,14 +333,17 @@ export function normalizeCustomChordProgression(
 
   const chords = value.chords.map(normalizeCustomProgressionChord);
 
-  if (
-    chords.some((chord) => chord === undefined) ||
-    !progressionHasValidBars(chords as ChordProgressionChord[])
-  ) {
+  if (!chords.every(isDefinedChord) || !progressionHasValidBars(chords)) {
     return undefined;
   }
 
-  return { chords: chords as ChordProgressionChord[] };
+  return { chords };
+}
+
+function isDefinedChord(
+  chord: ChordProgressionChord | undefined,
+): chord is ChordProgressionChord {
+  return chord !== undefined;
 }
 
 export function normalizeCustomChordProgressionName(value: unknown) {

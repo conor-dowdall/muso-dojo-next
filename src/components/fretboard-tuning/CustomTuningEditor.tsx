@@ -1,6 +1,9 @@
 "use client";
 
-import { formatMidiNote } from "@musodojo/music-theory-data";
+import {
+  formatMidiNote,
+  type OpenStringMidiNotes,
+} from "@musodojo/music-theory-data";
 import { type SyntheticEvent, useState } from "react";
 import { Button } from "@/components/ui/buttons/Button";
 import { NumericStepper } from "@/components/ui/numeric-stepper/NumericStepper";
@@ -11,6 +14,7 @@ import {
   CUSTOM_TUNING_MAX_STRINGS,
   CUSTOM_TUNING_MIN_MIDI,
   CUSTOM_TUNING_MIN_STRINGS,
+  normalizeCustomTuningNotes,
   normalizeCustomTuningName,
   tuningNotesAreEqual,
 } from "@/utils/fretboard/customFretboardTunings";
@@ -20,7 +24,7 @@ interface CustomTuningEditorProps {
   initialName?: string;
   initialOpenMidiNotes: readonly number[];
   isNameAvailable?: (name: string) => boolean;
-  onSave: (openMidiNotes: readonly number[], name?: string) => void;
+  onSave: (openMidiNotes: OpenStringMidiNotes, name?: string) => void;
   showNameField?: boolean;
 }
 
@@ -57,7 +61,9 @@ export function CustomTuningEditor({
   showNameField = false,
 }: CustomTuningEditorProps) {
   const [name, setName] = useState(initialName);
-  const [openMidiNotes, setOpenMidiNotes] = useState([...initialOpenMidiNotes]);
+  const [openMidiNotes, setOpenMidiNotes] = useState<number[]>([
+    ...initialOpenMidiNotes,
+  ]);
   const normalizedName = normalizeCustomTuningName(name);
   const normalizedInitialName = normalizeCustomTuningName(initialName);
   const hasNameConflict =
@@ -76,11 +82,13 @@ export function CustomTuningEditor({
     : notesChanged;
 
   const save = () => {
-    if (!canSave) {
+    const normalizedOpenMidiNotes = normalizeCustomTuningNotes(openMidiNotes);
+
+    if (!canSave || !normalizedOpenMidiNotes) {
       return;
     }
 
-    onSave(openMidiNotes, normalizedName);
+    onSave(normalizedOpenMidiNotes, normalizedName);
   };
 
   const handleSubmit = (event: SyntheticEvent<HTMLFormElement>) => {

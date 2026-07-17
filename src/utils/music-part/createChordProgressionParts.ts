@@ -247,8 +247,8 @@ export function createChordProgressionParts<
   chordListMode = "each-chord-once",
   moduleRequests,
 }: CreateChordProgressionPartsOptions<T>): MusicPartConfig[] {
-  const normalizedRootNote = (normalizeRootNoteString(rootNote) ??
-    DEFAULT_PART_ROOT_NOTE) as RootNote;
+  const normalizedRootNote =
+    normalizeRootNoteString(rootNote) ?? DEFAULT_PART_ROOT_NOTE;
   const progressionInput = progression ?? progressionKey;
   const progressionIdentity = progressionKey ?? progressionName;
   const progressionSource: AuthoredChordProgressionConfig["source"] =

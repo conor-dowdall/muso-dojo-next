@@ -2,6 +2,8 @@ import {
   normalizeChromaticIndex,
   noteLabelCollections,
   stringInstruments,
+  type MidiNoteNumber,
+  type OpenStringMidiNotes,
   type StringInstrumentKey,
 } from "@musodojo/music-theory-data";
 import {
@@ -42,7 +44,7 @@ export function formatCustomOpenStringNotes(openMidiNotes: readonly number[]) {
 
 export function normalizeCustomTuningNotes(
   value: unknown,
-): number[] | undefined {
+): OpenStringMidiNotes | undefined {
   if (!Array.isArray(value)) {
     return undefined;
   }
@@ -57,7 +59,21 @@ export function normalizeCustomTuningNotes(
       ),
     );
 
-  return notes.length >= CUSTOM_TUNING_MIN_STRINGS ? notes : undefined;
+  const midiNotes = notes.filter(isMidiNoteNumber);
+  const [firstNote, ...remainingNotes] = midiNotes;
+
+  return firstNote !== undefined &&
+    midiNotes.length >= CUSTOM_TUNING_MIN_STRINGS
+    ? [firstNote, ...remainingNotes]
+    : undefined;
+}
+
+function isMidiNoteNumber(value: number): value is MidiNoteNumber {
+  return (
+    Number.isInteger(value) &&
+    value >= CUSTOM_TUNING_MIN_MIDI &&
+    value <= CUSTOM_TUNING_MAX_MIDI
+  );
 }
 
 export function normalizeCustomTuningName(value: unknown) {
