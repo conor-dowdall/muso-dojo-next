@@ -9,6 +9,10 @@
   justify-content: center;
 }
 
+.numericTokenGrid {
+  grid-template-columns: repeat(4, var(--control-size-lg));
+}
+
 .tokenChoice {
   --option-button-tile-size: var(--control-size-lg);
 

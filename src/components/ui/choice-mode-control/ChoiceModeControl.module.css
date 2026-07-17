@@ -1,0 +1,8 @@
+.controls {
+  display: inline-flex;
+  max-inline-size: 100%;
+  flex: 0 0 auto;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--space-1);
+}

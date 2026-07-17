@@ -1,43 +1,90 @@
 "use client";
 
 import {
-  chordProgression,
-  groupedNoteCollections,
-  noteCollectionGroupsMetadata,
-  type ChordCollection,
+  getChordQualityChordCollectionKey,
   type ChordCollectionKey,
-  type NoteCollectionGroupKey,
+  type ChordQuality,
 } from "@musodojo/music-theory-data";
+import { useState } from "react";
 import { OptionButton } from "@/components/ui/buttons/OptionButton";
-import choiceGridStyles from "@/components/ui/choice-grid/ChoiceGrid.module.css";
-import { Heading } from "@/components/ui/typography/Heading";
-import styles from "./NoteCollectionPicker.module.css";
+import {
+  DisclosureList,
+  DisclosureListItem,
+} from "@/components/ui/disclosure-list/DisclosureList";
+import styles from "./ChordQualityPicker.module.css";
 
 interface ChordQualityPickerProps {
-  value: ChordCollectionKey;
+  value?: ChordCollectionKey;
   onChange: (value: ChordCollectionKey) => void;
 }
 
-const descriptiveChordNamePattern =
-  /^(Major|Minor|Dominant|Diminished|Half Diminished|Augmented)/;
+interface ChordQualityChoice {
+  chordCollectionKey: ChordCollectionKey;
+  label: string;
+}
 
-export function getChordQualityDisplayName(collection: ChordCollection) {
+function qualityChoice(
+  quality: ChordQuality,
+  label: string,
+): ChordQualityChoice {
+  return {
+    chordCollectionKey: getChordQualityChordCollectionKey(quality),
+    label,
+  };
+}
+
+export const customProgressionCommonChordChoices = [
+  qualityChoice("M", "Major"),
+  qualityChoice("m", "Minor"),
+  qualityChoice("7", "Dominant 7"),
+] as const satisfies readonly ChordQualityChoice[];
+
+export const customProgressionMoreChordChoices = [
+  qualityChoice("M7", "Major 7"),
+  qualityChoice("m7", "Minor 7"),
+  qualityChoice("°", "Diminished"),
+  qualityChoice("ø7", "Half-Diminished 7"),
+  qualityChoice("°7", "Diminished 7"),
+  qualityChoice("+", "Augmented"),
+  {
+    chordCollectionKey: "augmented7",
+    label: "Augmented 7",
+  },
+  qualityChoice("+M7", "Augmented Major 7"),
+] as const satisfies readonly ChordQualityChoice[];
+
+const commonChordKeySet = new Set<ChordCollectionKey>(
+  customProgressionCommonChordChoices.map(
+    (choice) => choice.chordCollectionKey,
+  ),
+);
+
+function ChordChoiceGrid({
+  choices,
+  className,
+  value,
+  onChange,
+}: {
+  choices: readonly ChordQualityChoice[];
+  className: string;
+  value?: ChordCollectionKey;
+  onChange: (value: ChordCollectionKey) => void;
+}) {
   return (
-    collection.names.find((name) => descriptiveChordNamePattern.test(name)) ??
-    collection.primaryName
-  );
-}
-
-function getChordQualityRomanExample(chordCollectionKey: ChordCollectionKey) {
-  return chordProgression.getDirectRomanSymbols({
-    chords: [{ chordCollectionKey, degree: "1", durationInBars: 1 }],
-  })[0];
-}
-
-function getGroupDisplayName(groupKey: NoteCollectionGroupKey) {
-  return noteCollectionGroupsMetadata[groupKey].displayName.replace(
-    / Variants$/,
-    "",
+    <div className={className}>
+      {choices.map(({ chordCollectionKey, label }) => (
+        <OptionButton
+          key={chordCollectionKey}
+          aria-label={`Use ${label} chord`}
+          className={styles.qualityChoice}
+          density="compact"
+          label={label}
+          presentation="tile"
+          selected={value === chordCollectionKey}
+          onClick={() => onChange(chordCollectionKey)}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -45,49 +92,37 @@ export function ChordQualityPicker({
   value,
   onChange,
 }: ChordQualityPickerProps) {
+  const [isMoreOpen, setIsMoreOpen] = useState(
+    value !== undefined && !commonChordKeySet.has(value),
+  );
+
   return (
-    <div className={styles.groupList}>
-      {(Object.keys(groupedNoteCollections) as NoteCollectionGroupKey[]).map(
-        (groupKey) => {
-          const chordEntries = Object.entries(
-            groupedNoteCollections[groupKey],
-          ).filter(
-            (entry): entry is [ChordCollectionKey, ChordCollection] =>
-              entry[1].category === "chord",
-          );
-
-          if (chordEntries.length === 0) {
-            return null;
-          }
-
-          const headingId = `chord-quality-${groupKey}`;
-
-          return (
-            <section
-              key={groupKey}
-              className={styles.collectionSection}
-              aria-labelledby={headingId}
-            >
-              <Heading as="h3" id={headingId} size="xs" variant="muted">
-                {getGroupDisplayName(groupKey)}
-              </Heading>
-              <div className={choiceGridStyles.cardGrid}>
-                {chordEntries.map(([key, collection]) => (
-                  <OptionButton
-                    key={key}
-                    density="compact"
-                    label={getChordQualityDisplayName(collection)}
-                    presentation="tile"
-                    selected={value === key}
-                    subtitle={`${getChordQualityRomanExample(key)} · ${collection.intervals.join(" ")}`}
-                    onClick={() => onChange(key)}
-                  />
-                ))}
-              </div>
-            </section>
-          );
-        },
-      )}
+    <div className={styles.picker}>
+      <ChordChoiceGrid
+        choices={customProgressionCommonChordChoices}
+        className={styles.commonGrid}
+        value={value}
+        onChange={(chordCollectionKey) => {
+          onChange(chordCollectionKey);
+          setIsMoreOpen(false);
+        }}
+      />
+      <DisclosureList density="compact">
+        <DisclosureListItem
+          ariaLabel="More chord choices"
+          isOpen={isMoreOpen}
+          label="More Chords"
+          panelVariant="menu"
+          onToggle={() => setIsMoreOpen((current) => !current)}
+        >
+          <ChordChoiceGrid
+            choices={customProgressionMoreChordChoices}
+            className={styles.moreGrid}
+            value={value}
+            onChange={onChange}
+          />
+        </DisclosureListItem>
+      </DisclosureList>
     </div>
   );
 }

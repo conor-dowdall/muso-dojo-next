@@ -2,45 +2,47 @@
 
 import {
   chordProgression,
-  noteCollections,
   type ChordCollectionKey,
   type ChordProgression,
   type ChordProgressionDegree,
 } from "@musodojo/music-theory-data";
+import { Copy, ListEnd, ListStart, Plus, Trash2 } from "lucide-react";
 import {
-  ArrowDown,
-  ArrowUp,
-  Copy,
-  MoreHorizontal,
-  Plus,
-  Trash2,
-} from "lucide-react";
-import { type SyntheticEvent, useMemo, useRef, useState } from "react";
+  type CSSProperties,
+  type SyntheticEvent,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { OptionButton } from "@/components/ui/buttons/OptionButton";
 import choiceGridStyles from "@/components/ui/choice-grid/ChoiceGrid.module.css";
 import {
+  ControlHeader,
+  ControlHeaderCluster,
+} from "@/components/ui/control-header/ControlHeader";
+import { ChoiceModeControl } from "@/components/ui/choice-mode-control/ChoiceModeControl";
+import {
   DisclosureList,
-  DisclosureListAction,
   DisclosureListItem,
   DisclosureListPanelActions,
-  useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { NamedLibraryItemSaveField } from "@/components/ui/named-library-item/NamedLibraryItemSaveField";
-import { Text } from "@/components/ui/typography/Text";
-import {
-  ChordQualityPicker,
-  getChordQualityDisplayName,
-} from "./ChordQualityPicker";
+import { ChordQualityPicker } from "./ChordQualityPicker";
 import {
   CUSTOM_CHORD_PROGRESSION_MAX_BARS,
+  CUSTOM_CHORD_PROGRESSION_MAX_BEATS_PER_BAR,
   CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR,
+  CUSTOM_CHORD_PROGRESSION_MIN_BEATS_PER_BAR,
   createCustomProgressionBars,
   createCustomProgressionFromBars,
   customChordProgressionFlatDegrees,
   customChordProgressionSharpDegrees,
+  getCustomProgressionCompatibleBeatCounts,
   normalizeCustomChordProgressionName,
+  removeCustomProgressionDraftChord,
+  selectCustomProgressionBarBeat,
   type CustomChordProgressionDraftBar,
 } from "@/utils/music-theory/customChordProgressions";
 import styles from "./CustomChordProgressionEditor.module.css";
@@ -52,15 +54,42 @@ interface CustomChordProgressionEditorProps {
   onSave: (name: string, progression: ChordProgression) => void;
 }
 
-interface SelectedChord {
+interface ExistingSelectedChord {
   barIndex: number;
   chordIndex: number;
+  kind: "existing";
+  draft: CustomChordProgressionDraftBar["chords"][number];
 }
+
+interface NewSelectedChord {
+  barIndex: number;
+  beatIndex: number;
+  kind: "new";
+  draft: {
+    chordCollectionKey?: ChordCollectionKey;
+    degree?: ChordProgressionDegree;
+  };
+}
+
+type SelectedChord = ExistingSelectedChord | NewSelectedChord;
 
 type DegreeSpelling = "flat" | "sharp";
 
+const degreeSpellingOptions = [
+  {
+    ariaLabel: "Use flat degree spellings",
+    label: "Flat",
+    value: "flat",
+  },
+  {
+    ariaLabel: "Use sharp degree spellings",
+    label: "Sharp",
+    value: "sharp",
+  },
+] as const;
+
 const tonicBar = {
-  chords: [{ chordCollectionKey: "major", degree: "1" }],
+  chords: [{ chordCollectionKey: "major", degree: "1", durationInBars: 1 }],
 } satisfies CustomChordProgressionDraftBar;
 
 function cloneBars(bars: readonly CustomChordProgressionDraftBar[]) {
@@ -72,7 +101,62 @@ function cloneBars(bars: readonly CustomChordProgressionDraftBar[]) {
 function getInitialBars(progression: ChordProgression | undefined) {
   return progression
     ? cloneBars(createCustomProgressionBars(progression) ?? [])
-    : [];
+    : cloneBars([tonicBar]);
+}
+
+function applySelectedChordDraft(
+  bars: readonly CustomChordProgressionDraftBar[],
+  selectedChord: SelectedChord | null,
+  beatCount: number,
+) {
+  const clonedBars = bars.map((bar, barIndex) => ({
+    chords: bar.chords.map((chord, chordIndex) =>
+      selectedChord?.kind === "existing" &&
+      selectedChord.barIndex === barIndex &&
+      selectedChord.chordIndex === chordIndex
+        ? { ...selectedChord.draft }
+        : { ...chord },
+    ),
+  }));
+
+  if (
+    selectedChord?.kind !== "new" ||
+    !selectedChord.draft.degree ||
+    !selectedChord.draft.chordCollectionKey
+  ) {
+    return clonedBars;
+  }
+
+  const bar = clonedBars[selectedChord.barIndex];
+  if (!bar) return clonedBars;
+
+  const selection = selectCustomProgressionBarBeat(
+    bar,
+    beatCount,
+    selectedChord.beatIndex,
+  );
+  if (!selection?.inserted) return clonedBars;
+
+  const insertedChord = selection.bar.chords[selection.chordIndex];
+  if (!insertedChord) return clonedBars;
+
+  selection.bar.chords[selection.chordIndex] = {
+    ...insertedChord,
+    chordCollectionKey: selectedChord.draft.chordCollectionKey,
+    degree: selectedChord.draft.degree,
+  };
+  clonedBars[selectedChord.barIndex] = selection.bar;
+
+  return clonedBars;
+}
+
+function selectedChordIsComplete(selectedChord: SelectedChord | null) {
+  return (
+    selectedChord?.kind === "existing" ||
+    (selectedChord?.kind === "new" &&
+      selectedChord.draft.degree !== undefined &&
+      selectedChord.draft.chordCollectionKey !== undefined)
+  );
 }
 
 function barsAreEqual(
@@ -88,7 +172,8 @@ function barsAreEqual(
           const candidate = right[barIndex]?.chords[chordIndex];
           return (
             chord.degree === candidate?.degree &&
-            chord.chordCollectionKey === candidate.chordCollectionKey
+            chord.chordCollectionKey === candidate.chordCollectionKey &&
+            chord.durationInBars === candidate.durationInBars
           );
         }),
     )
@@ -106,27 +191,8 @@ function getChordRomanSymbol(
   );
 }
 
-function getChordQualityLabel(chordCollectionKey: ChordCollectionKey) {
-  const collection = noteCollections[chordCollectionKey];
-
-  return collection.category === "chord"
-    ? getChordQualityDisplayName(collection)
-    : chordCollectionKey;
-}
-
-function getBarDivisionLabel(chordCount: number) {
-  switch (chordCount) {
-    case 1:
-      return "Whole Bar";
-    case 2:
-      return "Halves";
-    case 3:
-      return "Thirds";
-    case 4:
-      return "Quarters";
-    default:
-      return "";
-  }
+function formatBarNumber(barIndex: number) {
+  return String(barIndex + 1).padStart(2, "0");
 }
 
 function getDegreeOptions(spelling: DegreeSpelling) {
@@ -142,6 +208,30 @@ function getDegreeChromaticIndex(degree: ChordProgressionDegree) {
     : customChordProgressionSharpDegrees.indexOf(degree);
 }
 
+function getInitialBeatCount(bars: readonly CustomChordProgressionDraftBar[]) {
+  const compatibleBeatCounts = getCustomProgressionCompatibleBeatCounts(bars);
+
+  return compatibleBeatCounts.includes(4) ? 4 : (compatibleBeatCounts[0] ?? 4);
+}
+
+function formatBeatCount(beats: number) {
+  return `${beats} ${beats === 1 ? "Beat" : "Beats"}`;
+}
+
+function getChordIndexAtBeat(
+  chordStartBeatIndexes: readonly number[],
+  beatIndex: number,
+) {
+  let chordIndex = 0;
+
+  for (let index = 1; index < chordStartBeatIndexes.length; index += 1) {
+    if (chordStartBeatIndexes[index]! > beatIndex) break;
+    chordIndex = index;
+  }
+
+  return chordIndex;
+}
+
 export function CustomChordProgressionEditor({
   initialName = "",
   initialProgression,
@@ -151,14 +241,16 @@ export function CustomChordProgressionEditor({
   const [initialBars] = useState(() => getInitialBars(initialProgression));
   const [name, setName] = useState(initialName);
   const [bars, setBars] = useState(() => cloneBars(initialBars));
+  const [beatCount, setBeatCount] = useState(() =>
+    getInitialBeatCount(initialBars),
+  );
+  const [isBeatCountOpen, setIsBeatCountOpen] = useState(false);
   const [selectedChord, setSelectedChord] = useState<SelectedChord | null>(
     null,
   );
-  const [openBarActions, setOpenBarActions] = useState<number | null>(null);
   const [degreeSpelling, setDegreeSpelling] = useState<DegreeSpelling>("flat");
   const submissionPendingRef = useRef(false);
   const [submissionPending, setSubmissionPending] = useState(false);
-  const chordDisclosure = useDisclosureList<"degree" | "quality">();
   const progression = useMemo(
     () => createCustomProgressionFromBars(bars),
     [bars],
@@ -175,44 +267,184 @@ export function CustomChordProgressionEditor({
     normalizedName !== undefined &&
     !hasNameConflict &&
     progression !== undefined &&
+    selectedChord === null &&
     (initialProgression === undefined || hasChanges);
+  const compatibleBeatCounts = useMemo(
+    () => getCustomProgressionCompatibleBeatCounts(bars),
+    [bars],
+  );
+  const beatChoices = Array.from(
+    {
+      length:
+        CUSTOM_CHORD_PROGRESSION_MAX_BEATS_PER_BAR -
+        CUSTOM_CHORD_PROGRESSION_MIN_BEATS_PER_BAR +
+        1,
+    },
+    (_, index) => CUSTOM_CHORD_PROGRESSION_MIN_BEATS_PER_BAR + index,
+  );
 
-  const updateChord = (
-    barIndex: number,
-    chordIndex: number,
-    patch: Partial<CustomChordProgressionDraftBar["chords"][number]>,
-  ) => {
-    setBars((currentBars) =>
-      currentBars.map((bar, candidateBarIndex) =>
-        candidateBarIndex === barIndex
+  const addBar = () => {
+    setBars((current) => [...current, cloneBars([tonicBar])[0]!]);
+    setSelectedChord(null);
+  };
+
+  const changeDegreeSpelling = (spelling: DegreeSpelling) => {
+    setDegreeSpelling(spelling);
+    if (!selectedChord?.draft.degree) return;
+
+    const degreeIndex = getDegreeChromaticIndex(selectedChord.draft.degree);
+    const nextDegree = getDegreeOptions(spelling)[degreeIndex];
+
+    if (nextDegree && nextDegree !== selectedChord.draft.degree) {
+      setSelectedChord((current) =>
+        current?.kind === "existing"
           ? {
-              chords: bar.chords.map((chord, candidateChordIndex) =>
-                candidateChordIndex === chordIndex
-                  ? { ...chord, ...patch }
-                  : chord,
-              ),
+              ...current,
+              draft: { ...current.draft, degree: nextDegree },
             }
-          : bar,
-      ),
+          : current?.kind === "new"
+            ? {
+                ...current,
+                draft: { ...current.draft, degree: nextDegree },
+              }
+            : current,
+      );
+    }
+  };
+
+  const updateSelectedChordDraft = (
+    patch: Partial<
+      Pick<
+        CustomChordProgressionDraftBar["chords"][number],
+        "chordCollectionKey" | "degree"
+      >
+    >,
+  ) => {
+    setSelectedChord((current) =>
+      current?.kind === "existing"
+        ? { ...current, draft: { ...current.draft, ...patch } }
+        : current?.kind === "new"
+          ? { ...current, draft: { ...current.draft, ...patch } }
+          : current,
     );
   };
 
-  const addBar = () => {
-    const barIndex = bars.length;
-    setBars((current) => [...current, cloneBars([tonicBar])[0]!]);
-    setOpenBarActions(null);
-    chordDisclosure.closeAll();
-    setSelectedChord({ barIndex, chordIndex: 0 });
+  const commitNewSelectedChord = (
+    patch: Partial<
+      Pick<
+        CustomChordProgressionDraftBar["chords"][number],
+        "chordCollectionKey" | "degree"
+      >
+    >,
+  ) => {
+    if (selectedChord?.kind !== "new") return false;
+
+    const bar = bars[selectedChord.barIndex];
+    if (!bar) return false;
+
+    const selection = selectCustomProgressionBarBeat(
+      bar,
+      beatCount,
+      selectedChord.beatIndex,
+    );
+    if (!selection?.inserted) return false;
+
+    const insertedChord = selection.bar.chords[selection.chordIndex];
+    if (!insertedChord) return false;
+
+    const chord = {
+      ...insertedChord,
+      chordCollectionKey:
+        patch.chordCollectionKey ??
+        selectedChord.draft.chordCollectionKey ??
+        "major",
+      degree: patch.degree ?? selectedChord.draft.degree ?? "1",
+    };
+    selection.bar.chords[selection.chordIndex] = chord;
+
+    setBars((current) =>
+      current.map((candidateBar, barIndex) =>
+        barIndex === selectedChord.barIndex ? selection.bar : candidateBar,
+      ),
+    );
+    setSelectedChord({
+      barIndex: selectedChord.barIndex,
+      chordIndex: selection.chordIndex,
+      draft: { ...chord },
+      kind: "existing",
+    });
+
+    return true;
   };
 
-  const selectChord = (
-    chord: CustomChordProgressionDraftBar["chords"][number],
-    barIndex: number,
-    chordIndex: number,
-    selected: boolean,
-  ) => {
-    setOpenBarActions(null);
-    chordDisclosure.closeAll();
+  const selectChordDegree = (degree: ChordProgressionDegree) => {
+    if (!commitNewSelectedChord({ degree })) {
+      updateSelectedChordDraft({ degree });
+    }
+  };
+
+  const selectChordQuality = (chordCollectionKey: ChordCollectionKey) => {
+    if (!commitNewSelectedChord({ chordCollectionKey })) {
+      updateSelectedChordDraft({ chordCollectionKey });
+    }
+  };
+
+  const commitSelectedChord = () => {
+    if (!selectedChordIsComplete(selectedChord)) return;
+
+    setBars((current) =>
+      applySelectedChordDraft(current, selectedChord, beatCount),
+    );
+    setSelectedChord(null);
+  };
+
+  const selectBeat = (barIndex: number, beatIndex: number) => {
+    if (
+      selectedChord?.kind === "new" &&
+      selectedChord.barIndex === barIndex &&
+      selectedChord.beatIndex === beatIndex
+    ) {
+      setBars(applySelectedChordDraft(bars, selectedChord, beatCount));
+      setSelectedChord(null);
+      return;
+    }
+
+    const committedBars = applySelectedChordDraft(
+      bars,
+      selectedChord,
+      beatCount,
+    );
+    const bar = committedBars[barIndex];
+    if (!bar) return;
+
+    const selection = selectCustomProgressionBarBeat(bar, beatCount, beatIndex);
+    if (!selection) return;
+
+    setIsBeatCountOpen(false);
+
+    if (
+      !selection.inserted &&
+      selectedChord?.kind === "existing" &&
+      selectedChord.barIndex === barIndex &&
+      selectedChord.chordIndex === selection.chordIndex
+    ) {
+      setBars(committedBars);
+      setSelectedChord(null);
+      return;
+    }
+
+    if (selection.inserted) {
+      setBars(committedBars);
+      setSelectedChord({
+        barIndex,
+        beatIndex,
+        draft: {},
+        kind: "new",
+      });
+      return;
+    }
+
+    const chord = selection.bar.chords[selection.chordIndex]!;
 
     if (chord.degree.startsWith("♯")) {
       setDegreeSpelling("sharp");
@@ -220,22 +452,61 @@ export function CustomChordProgressionEditor({
       setDegreeSpelling("flat");
     }
 
-    setSelectedChord(selected ? null : { barIndex, chordIndex });
+    setBars(
+      committedBars.map((candidateBar, candidateBarIndex) =>
+        candidateBarIndex === barIndex ? selection.bar : candidateBar,
+      ),
+    );
+
+    setSelectedChord({
+      barIndex,
+      chordIndex: selection.chordIndex,
+      draft: { ...chord },
+      kind: "existing",
+    });
   };
 
-  const changeDegreeSpelling = (
-    spelling: DegreeSpelling,
-    barIndex: number,
-    chordIndex: number,
-    currentDegree: ChordProgressionDegree,
-  ) => {
-    setDegreeSpelling(spelling);
-    const degreeIndex = getDegreeChromaticIndex(currentDegree);
-    const nextDegree = getDegreeOptions(spelling)[degreeIndex];
+  const removeSelectedChord = () => {
+    if (selectedChord?.kind !== "existing") return;
 
-    if (nextDegree && nextDegree !== currentDegree) {
-      updateChord(barIndex, chordIndex, { degree: nextDegree });
-    }
+    const { barIndex, chordIndex } = selectedChord;
+    setBars((current) =>
+      current.map((bar, candidateBarIndex) =>
+        candidateBarIndex === barIndex
+          ? (removeCustomProgressionDraftChord(bar, chordIndex) ?? bar)
+          : bar,
+      ),
+    );
+    setSelectedChord(null);
+  };
+
+  const moveBar = (barIndex: number, direction: "earlier" | "later") => {
+    const nextIndex = direction === "earlier" ? barIndex - 1 : barIndex + 1;
+    if (nextIndex < 0 || nextIndex >= bars.length) return;
+
+    setBars((current) => {
+      const next = [...current];
+      [next[barIndex], next[nextIndex]] = [next[nextIndex]!, next[barIndex]!];
+      return next;
+    });
+    setSelectedChord(null);
+  };
+
+  const duplicateBar = (barIndex: number) => {
+    if (bars.length >= CUSTOM_CHORD_PROGRESSION_MAX_BARS) return;
+
+    setBars((current) => [
+      ...current.slice(0, barIndex + 1),
+      ...cloneBars([current[barIndex]!]),
+      ...current.slice(barIndex + 1),
+    ]);
+    setSelectedChord(null);
+  };
+
+  const removeBar = (barIndex: number) => {
+    setBars((current) => current.filter((_, index) => index !== barIndex));
+    setSelectedChord(null);
+    if (bars.length === 1) setIsBeatCountOpen(false);
   };
 
   const handleSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
@@ -264,9 +535,6 @@ export function CustomChordProgressionEditor({
     <form className={styles.editor} onSubmit={handleSubmit}>
       {bars.length === 0 ? (
         <div className={styles.emptyState}>
-          <Text size="sm" variant="muted">
-            Bars define chord proportions. Rhythm determines the beats.
-          </Text>
           <Button
             icon={<Plus />}
             label="Add First Bar"
@@ -276,280 +544,260 @@ export function CustomChordProgressionEditor({
         </div>
       ) : (
         <>
-          <div className={styles.barList}>
-            {bars.map((bar, barIndex) => {
-              const isBarActionsOpen = openBarActions === barIndex;
+          <DisclosureList>
+            <DisclosureListItem
+              ariaLabel={`Beats per bar. Current: ${formatBeatCount(beatCount)}`}
+              disabled={selectedChord !== null}
+              isOpen={isBeatCountOpen}
+              label="Beats per Bar"
+              panelVariant="menu"
+              preview={formatBeatCount(beatCount)}
+              onToggle={() => setIsBeatCountOpen((current) => !current)}
+            >
+              <div
+                aria-label="Beats per bar"
+                className={`${choiceGridStyles.tokenGrid} ${choiceGridStyles.numericTokenGrid}`}
+                role="group"
+              >
+                {beatChoices.map((beats) => {
+                  const isAvailable = compatibleBeatCounts.includes(beats);
 
-              return (
-                <section className={styles.bar} key={`bar-${barIndex}`}>
-                  <div className={styles.barHeader}>
-                    <span className={styles.barIdentity}>
-                      <span className={styles.barNumber}>
-                        Bar {barIndex + 1}
-                      </span>
-                      <span className={styles.barDivision}>
-                        {getBarDivisionLabel(bar.chords.length)}
-                      </span>
-                    </span>
-                    <IconButton
-                      aria-label={`${isBarActionsOpen ? "Close" : "Open"} actions for bar ${barIndex + 1}`}
-                      icon={<MoreHorizontal />}
-                      selected={isBarActionsOpen}
-                      size="sm"
-                      variant="ghost"
+                  return (
+                    <OptionButton
+                      key={beats}
+                      aria-label={
+                        isAvailable
+                          ? `Use ${formatBeatCount(beats).toLocaleLowerCase()}`
+                          : `${formatBeatCount(beats)}. Not compatible with the current chord changes`
+                      }
+                      className={`${choiceGridStyles.tokenChoice} ${choiceGridStyles.squareTokenChoice}`}
+                      disabled={!isAvailable}
+                      label={beats}
+                      presentation="tile"
+                      selected={beatCount === beats}
                       onClick={() => {
-                        setSelectedChord(null);
-                        chordDisclosure.closeAll();
-                        setOpenBarActions((current) =>
-                          current === barIndex ? null : barIndex,
-                        );
+                        setBeatCount(beats);
+                        setIsBeatCountOpen(false);
                       }}
                     />
-                  </div>
+                  );
+                })}
+              </div>
+            </DisclosureListItem>
+          </DisclosureList>
 
-                  <div className={styles.chordRow}>
-                    {bar.chords.map((chord, chordIndex) => {
-                      const selected =
-                        selectedChord?.barIndex === barIndex &&
+          <div className={styles.barList}>
+            {bars.map((bar, barIndex) => {
+              let elapsedDurationInBars = 0;
+              const chordStartBeatIndexes = bar.chords.map((chord) => {
+                const startBeatIndex = Math.round(
+                  elapsedDurationInBars * beatCount,
+                );
+                elapsedDurationInBars += chord.durationInBars;
+                return startBeatIndex;
+              });
+              const barGridStyle = {
+                "--custom-progression-beats": beatCount,
+              } as CSSProperties;
+
+              return (
+                <section
+                  key={`bar-${barIndex}`}
+                  aria-label={`Bar ${barIndex + 1}`}
+                  className={styles.bar}
+                >
+                  <ControlHeader
+                    className={styles.barHeader}
+                    primary={
+                      <span aria-hidden="true" className={styles.barNumber}>
+                        {formatBarNumber(barIndex)}
+                      </span>
+                    }
+                    actions={
+                      <ControlHeaderCluster gap="cluster">
+                        <ControlHeaderCluster
+                          aria-label={`Reorder bar ${barIndex + 1}`}
+                          role="group"
+                        >
+                          <IconButton
+                            aria-label={`Move bar ${barIndex + 1} earlier`}
+                            disabled={selectedChord !== null || barIndex === 0}
+                            icon={<ListStart />}
+                            size="sm"
+                            onClick={() => moveBar(barIndex, "earlier")}
+                          />
+                          <IconButton
+                            aria-label={`Move bar ${barIndex + 1} later`}
+                            disabled={
+                              selectedChord !== null ||
+                              barIndex === bars.length - 1
+                            }
+                            icon={<ListEnd />}
+                            size="sm"
+                            onClick={() => moveBar(barIndex, "later")}
+                          />
+                        </ControlHeaderCluster>
+                        <ControlHeaderCluster
+                          aria-label={`Manage bar ${barIndex + 1}`}
+                          role="group"
+                        >
+                          <IconButton
+                            aria-label={`Duplicate bar ${barIndex + 1}`}
+                            disabled={
+                              selectedChord !== null ||
+                              bars.length >= CUSTOM_CHORD_PROGRESSION_MAX_BARS
+                            }
+                            icon={<Copy />}
+                            size="sm"
+                            onClick={() => duplicateBar(barIndex)}
+                          />
+                          <IconButton
+                            aria-label={`Remove bar ${barIndex + 1}`}
+                            disabled={selectedChord !== null}
+                            icon={<Trash2 />}
+                            size="sm"
+                            tone="danger"
+                            onClick={() => removeBar(barIndex)}
+                          />
+                        </ControlHeaderCluster>
+                      </ControlHeaderCluster>
+                    }
+                  />
+
+                  <div
+                    aria-label={`Chords in bar ${barIndex + 1}`}
+                    className={styles.chordBeatGrid}
+                    role="group"
+                    style={barGridStyle}
+                  >
+                    {beatChoices.slice(0, beatCount).map((_, beatIndex) => {
+                      const chordStartIndex =
+                        chordStartBeatIndexes.indexOf(beatIndex);
+                      const isChordStart = chordStartIndex >= 0;
+                      const chordIndex = getChordIndexAtBeat(
+                        chordStartBeatIndexes,
+                        beatIndex,
+                      );
+                      const chord = bar.chords[chordIndex]!;
+                      const existingSelected =
+                        selectedChord?.kind === "existing" &&
+                        selectedChord.barIndex === barIndex &&
                         selectedChord.chordIndex === chordIndex;
+                      const pendingSelected =
+                        selectedChord?.kind === "new" &&
+                        selectedChord.barIndex === barIndex &&
+                        selectedChord.beatIndex === beatIndex;
+                      const displayChord = existingSelected
+                        ? selectedChord.draft
+                        : chord;
+                      const romanSymbol = getChordRomanSymbol(
+                        displayChord.degree,
+                        displayChord.chordCollectionKey,
+                      );
 
                       return (
                         <OptionButton
-                          key={`chord-${chordIndex}`}
-                          className={styles.chordButton}
-                          density="compact"
-                          label={getChordRomanSymbol(
-                            chord.degree,
-                            chord.chordCollectionKey,
-                          )}
-                          presentation="tile"
-                          selected={selected}
-                          onClick={() =>
-                            selectChord(chord, barIndex, chordIndex, selected)
+                          key={beatIndex}
+                          aria-label={
+                            isChordStart
+                              ? `Edit ${romanSymbol} on beat ${beatIndex + 1} in bar ${barIndex + 1}`
+                              : `Choose a chord for beat ${beatIndex + 1} in bar ${barIndex + 1}`
                           }
+                          className={styles.chordBeatButton}
+                          data-chord-start={isChordStart ? true : undefined}
+                          data-repeat={isChordStart ? undefined : true}
+                          density="compact"
+                          disabled={
+                            !isChordStart &&
+                            bar.chords.length >=
+                              CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR
+                          }
+                          label={isChordStart ? romanSymbol : "/"}
+                          labelProps={{
+                            titleSize: "lg",
+                            titleWeight: "semibold",
+                          }}
+                          presentation="tile"
+                          selected={
+                            pendingSelected ||
+                            (isChordStart ? existingSelected : false)
+                          }
+                          onClick={() => selectBeat(barIndex, beatIndex)}
                         />
                       );
                     })}
                   </div>
 
-                  {isBarActionsOpen ? (
-                    <DisclosureList density="compact">
-                      <DisclosureListAction
-                        disabled={barIndex === 0}
-                        icon={<ArrowUp />}
-                        label="Move Earlier"
-                        onClick={() => {
-                          setBars((current) => {
-                            const next = [...current];
-                            [next[barIndex - 1], next[barIndex]] = [
-                              next[barIndex]!,
-                              next[barIndex - 1]!,
-                            ];
-                            return next;
-                          });
-                          setOpenBarActions(null);
-                        }}
-                      />
-                      <DisclosureListAction
-                        disabled={barIndex === bars.length - 1}
-                        icon={<ArrowDown />}
-                        label="Move Later"
-                        onClick={() => {
-                          setBars((current) => {
-                            const next = [...current];
-                            [next[barIndex], next[barIndex + 1]] = [
-                              next[barIndex + 1]!,
-                              next[barIndex]!,
-                            ];
-                            return next;
-                          });
-                          setOpenBarActions(null);
-                        }}
-                      />
-                      <DisclosureListAction
-                        disabled={
-                          bars.length >= CUSTOM_CHORD_PROGRESSION_MAX_BARS
-                        }
-                        icon={<Copy />}
-                        label="Duplicate Bar"
-                        onClick={() => {
-                          setBars((current) => [
-                            ...current.slice(0, barIndex + 1),
-                            ...cloneBars([current[barIndex]!]),
-                            ...current.slice(barIndex + 1),
-                          ]);
-                          setOpenBarActions(null);
-                        }}
-                      />
-                      <DisclosureListAction
-                        icon={<Trash2 />}
-                        label="Remove Bar"
-                        tone="danger"
-                        onClick={() => {
-                          setBars((current) =>
-                            current.filter((_, index) => index !== barIndex),
-                          );
-                          setSelectedChord(null);
-                          setOpenBarActions(null);
-                        }}
-                      />
-                    </DisclosureList>
-                  ) : null}
-
                   {selectedChord?.barIndex === barIndex
                     ? (() => {
-                        const chordIndex = selectedChord.chordIndex;
-                        const chord = bar.chords[chordIndex];
-                        if (!chord) return null;
-                        const qualityLabel = getChordQualityLabel(
-                          chord.chordCollectionKey,
-                        );
+                        if (
+                          selectedChord.kind === "existing" &&
+                          !bar.chords[selectedChord.chordIndex]
+                        ) {
+                          return null;
+                        }
+                        const draft = selectedChord.draft;
+                        const selectedChordKey =
+                          selectedChord.kind === "existing"
+                            ? `chord-${selectedChord.chordIndex}`
+                            : `beat-${selectedChord.beatIndex}`;
 
                         return (
                           <div className={styles.chordEditor}>
-                            <DisclosureList>
-                              <DisclosureListItem
-                                ariaLabel={`Choose degree, ${chord.degree} selected`}
-                                isOpen={chordDisclosure.openChoice === "degree"}
-                                keepMounted
-                                label="Degree"
-                                preview={chord.degree}
-                                onToggle={() =>
-                                  chordDisclosure.toggleChoice("degree")
-                                }
+                            <div className={styles.choiceSection}>
+                              <ChoiceModeControl
+                                ariaLabel="Degree spelling"
+                                options={degreeSpellingOptions}
+                                value={degreeSpelling}
+                                onChange={changeDegreeSpelling}
+                              />
+                              <div
+                                aria-label="Chord degree"
+                                className={styles.degreeGrid}
+                                role="group"
                               >
-                                <div className={styles.spellingGrid}>
-                                  {(["flat", "sharp"] as const).map(
-                                    (spelling) => (
-                                      <OptionButton
-                                        key={spelling}
-                                        density="compact"
-                                        label={
-                                          spelling === "flat"
-                                            ? "♭ Flats"
-                                            : "♯ Sharps"
-                                        }
-                                        presentation="tile"
-                                        selected={degreeSpelling === spelling}
-                                        onClick={() =>
-                                          changeDegreeSpelling(
-                                            spelling,
-                                            barIndex,
-                                            chordIndex,
-                                            chord.degree,
-                                          )
-                                        }
-                                      />
-                                    ),
-                                  )}
-                                </div>
-                                <div
-                                  className={`${choiceGridStyles.tokenGrid} ${styles.degreeGrid}`}
-                                >
-                                  {getDegreeOptions(degreeSpelling).map(
-                                    (degree) => (
-                                      <OptionButton
-                                        key={degree}
-                                        className={choiceGridStyles.tokenChoice}
-                                        fullWidth={false}
-                                        label={degree}
-                                        presentation="tile"
-                                        selected={chord.degree === degree}
-                                        onClick={() => {
-                                          updateChord(barIndex, chordIndex, {
-                                            degree,
-                                          });
-                                          chordDisclosure.closeChoice("degree");
-                                        }}
-                                      />
-                                    ),
-                                  )}
-                                </div>
-                              </DisclosureListItem>
-                              <DisclosureListItem
-                                ariaLabel={`Choose chord quality, ${qualityLabel} selected`}
-                                isOpen={
-                                  chordDisclosure.openChoice === "quality"
-                                }
-                                keepMounted
-                                label="Chord Quality"
-                                preview={qualityLabel}
-                                onToggle={() =>
-                                  chordDisclosure.toggleChoice("quality")
-                                }
-                              >
-                                <ChordQualityPicker
-                                  value={chord.chordCollectionKey}
-                                  onChange={(chordCollectionKey) => {
-                                    updateChord(barIndex, chordIndex, {
-                                      chordCollectionKey,
-                                    });
-                                    chordDisclosure.closeChoice("quality");
-                                  }}
-                                />
-                              </DisclosureListItem>
-                            </DisclosureList>
+                                {getDegreeOptions(degreeSpelling).map(
+                                  (degree) => (
+                                    <OptionButton
+                                      key={degree}
+                                      aria-label={`Use ${degree} degree`}
+                                      className={styles.degreeChoice}
+                                      density="compact"
+                                      label={degree}
+                                      presentation="tile"
+                                      selected={draft.degree === degree}
+                                      onClick={() => selectChordDegree(degree)}
+                                    />
+                                  ),
+                                )}
+                              </div>
+                            </div>
+
+                            <div className={styles.choiceSection}>
+                              <ChordQualityPicker
+                                key={`${barIndex}-${selectedChordKey}`}
+                                value={draft.chordCollectionKey}
+                                onChange={selectChordQuality}
+                              />
+                            </div>
+
                             <DisclosureListPanelActions align="stretch">
+                              {selectedChord.kind === "existing" &&
+                              bar.chords.length > 1 ? (
+                                <Button
+                                  label="Remove Chord"
+                                  size="sm"
+                                  tone="danger"
+                                  onClick={removeSelectedChord}
+                                />
+                              ) : null}
                               <Button
                                 disabled={
-                                  bar.chords.length >=
-                                  CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR
+                                  !selectedChordIsComplete(selectedChord)
                                 }
-                                label="Insert Chord After"
-                                size="sm"
-                                onClick={() => {
-                                  setBars((current) =>
-                                    current.map(
-                                      (candidateBar, candidateBarIndex) =>
-                                        candidateBarIndex === barIndex
-                                          ? {
-                                              chords: [
-                                                ...candidateBar.chords.slice(
-                                                  0,
-                                                  chordIndex + 1,
-                                                ),
-                                                { ...chord },
-                                                ...candidateBar.chords.slice(
-                                                  chordIndex + 1,
-                                                ),
-                                              ],
-                                            }
-                                          : candidateBar,
-                                    ),
-                                  );
-                                  setSelectedChord({
-                                    barIndex,
-                                    chordIndex: chordIndex + 1,
-                                  });
-                                }}
-                              />
-                              <Button
-                                disabled={bar.chords.length === 1}
-                                label="Remove Chord"
-                                size="sm"
-                                tone="danger"
-                                onClick={() => {
-                                  setBars((current) =>
-                                    current.map(
-                                      (candidateBar, candidateBarIndex) =>
-                                        candidateBarIndex === barIndex
-                                          ? {
-                                              chords:
-                                                candidateBar.chords.filter(
-                                                  (_, index) =>
-                                                    index !== chordIndex,
-                                                ),
-                                            }
-                                          : candidateBar,
-                                    ),
-                                  );
-                                  setSelectedChord(null);
-                                }}
-                              />
-                              <Button
                                 label="Done"
                                 size="sm"
-                                onClick={() => setSelectedChord(null)}
+                                onClick={commitSelectedChord}
                               />
                             </DisclosureListPanelActions>
                           </div>
@@ -563,7 +811,10 @@ export function CustomChordProgressionEditor({
 
           <div className={styles.addBarAction}>
             <Button
-              disabled={bars.length >= CUSTOM_CHORD_PROGRESSION_MAX_BARS}
+              disabled={
+                selectedChord !== null ||
+                bars.length >= CUSTOM_CHORD_PROGRESSION_MAX_BARS
+              }
               icon={<Plus />}
               label="Add Bar"
               size="sm"

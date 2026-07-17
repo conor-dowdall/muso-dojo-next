@@ -1,0 +1,31 @@
+.picker {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.commonGrid,
+.moreGrid {
+  display: grid;
+  min-inline-size: 0;
+  gap: var(--space-1);
+}
+
+.commonGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.moreGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.qualityChoice {
+  min-inline-size: 0;
+}
+
+@container (width >= 30rem) {
+  .moreGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

@@ -1,8 +1,3 @@
-.numericGrid {
-  grid-template-columns: repeat(4, var(--control-size-lg));
-  justify-content: center;
-}
-
 .variationGrid {
   grid-auto-columns: var(--space-16);
   grid-auto-flow: column;

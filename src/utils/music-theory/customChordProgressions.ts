@@ -17,7 +17,10 @@ import {
 } from "@/utils/session/normalizationPrimitives";
 
 export const CUSTOM_CHORD_PROGRESSION_MAX_BARS = 32;
-export const CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR = 4;
+export const CUSTOM_CHORD_PROGRESSION_MIN_BEATS_PER_BAR = 1;
+export const CUSTOM_CHORD_PROGRESSION_MAX_BEATS_PER_BAR = 8;
+export const CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR =
+  CUSTOM_CHORD_PROGRESSION_MAX_BEATS_PER_BAR;
 
 export const customChordProgressionFlatDegrees = noteLabelCollections
   .intervalsFlat.labels as readonly ChordProgressionDegree[];
@@ -27,6 +30,7 @@ export const customChordProgressionSharpDegrees = noteLabelCollections
 export interface CustomChordProgressionDraftChord {
   chordCollectionKey: ChordCollectionKey;
   degree: ChordProgressionDegree;
+  durationInBars: number;
 }
 
 export interface CustomChordProgressionDraftBar {
@@ -41,6 +45,126 @@ const customChordProgressionDegreeSet = new Set<string>([
 
 function valuesAreClose(left: number, right: number) {
   return Math.abs(left - right) <= DURATION_EPSILON;
+}
+
+function durationFitsBeatGrid(durationInBars: number, beats: number) {
+  return valuesAreClose(
+    durationInBars * beats,
+    Math.round(durationInBars * beats),
+  );
+}
+
+export function getCustomProgressionCompatibleBeatCounts(
+  bars: readonly CustomChordProgressionDraftBar[],
+) {
+  return Array.from(
+    {
+      length:
+        CUSTOM_CHORD_PROGRESSION_MAX_BEATS_PER_BAR -
+        CUSTOM_CHORD_PROGRESSION_MIN_BEATS_PER_BAR +
+        1,
+    },
+    (_, index) => CUSTOM_CHORD_PROGRESSION_MIN_BEATS_PER_BAR + index,
+  ).filter((beats) =>
+    bars.every((bar) =>
+      bar.chords.every((chord) =>
+        durationFitsBeatGrid(chord.durationInBars, beats),
+      ),
+    ),
+  );
+}
+
+export interface CustomProgressionBarBeatSelection {
+  bar: CustomChordProgressionDraftBar;
+  chordIndex: number;
+  inserted: boolean;
+}
+
+export function selectCustomProgressionBarBeat(
+  bar: CustomChordProgressionDraftBar,
+  beats: number,
+  beatIndex: number,
+): CustomProgressionBarBeatSelection | undefined {
+  if (
+    !Number.isInteger(beats) ||
+    beats < CUSTOM_CHORD_PROGRESSION_MIN_BEATS_PER_BAR ||
+    beats > CUSTOM_CHORD_PROGRESSION_MAX_BEATS_PER_BAR ||
+    !Number.isInteger(beatIndex) ||
+    beatIndex < 0 ||
+    beatIndex >= beats ||
+    !getCustomProgressionCompatibleBeatCounts([bar]).includes(beats)
+  ) {
+    return undefined;
+  }
+
+  const positionInBars = beatIndex / beats;
+  let chordStartInBars = 0;
+
+  for (let chordIndex = 0; chordIndex < bar.chords.length; chordIndex += 1) {
+    const chord = bar.chords[chordIndex]!;
+    const chordEndInBars = chordStartInBars + chord.durationInBars;
+
+    if (valuesAreClose(positionInBars, chordStartInBars)) {
+      return { bar, chordIndex, inserted: false };
+    }
+
+    if (
+      positionInBars > chordStartInBars + DURATION_EPSILON &&
+      positionInBars < chordEndInBars - DURATION_EPSILON
+    ) {
+      const leadingDuration = positionInBars - chordStartInBars;
+      const trailingDuration = chordEndInBars - positionInBars;
+      const nextBar = {
+        chords: [
+          ...bar.chords.slice(0, chordIndex),
+          { ...chord, durationInBars: leadingDuration },
+          { ...chord, durationInBars: trailingDuration },
+          ...bar.chords.slice(chordIndex + 1),
+        ],
+      };
+
+      return {
+        bar: nextBar,
+        chordIndex: chordIndex + 1,
+        inserted: true,
+      };
+    }
+
+    chordStartInBars = chordEndInBars;
+  }
+
+  return undefined;
+}
+
+export function removeCustomProgressionDraftChord(
+  bar: CustomChordProgressionDraftBar,
+  chordIndex: number,
+): CustomChordProgressionDraftBar | undefined {
+  if (
+    bar.chords.length <= 1 ||
+    !Number.isInteger(chordIndex) ||
+    chordIndex < 0 ||
+    chordIndex >= bar.chords.length
+  ) {
+    return undefined;
+  }
+
+  const removedChord = bar.chords[chordIndex]!;
+  const recipientIndex = chordIndex > 0 ? chordIndex - 1 : 1;
+
+  return {
+    chords: bar.chords
+      .map((chord, index) =>
+        index === recipientIndex
+          ? {
+              ...chord,
+              durationInBars:
+                chord.durationInBars + removedChord.durationInBars,
+            }
+          : chord,
+      )
+      .filter((_, index) => index !== chordIndex),
+  };
 }
 
 function normalizeChordCollectionKey(
@@ -107,10 +231,8 @@ function progressionHasValidBars(chords: readonly ChordProgressionChord[]) {
     if (valuesAreClose(currentBarDuration, 1)) {
       if (
         currentBar.length > CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR ||
-        currentBar.some(
-          (candidate) =>
-            !valuesAreClose(candidate.durationInBars, 1 / currentBar.length),
-        )
+        getCustomProgressionCompatibleBeatCounts([{ chords: currentBar }])
+          .length === 0
       ) {
         return false;
       }
@@ -137,19 +259,21 @@ export function createCustomProgressionFromBars(
     bars.some(
       (bar) =>
         bar.chords.length < 1 ||
-        bar.chords.length > CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR,
+        bar.chords.length > CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR ||
+        !valuesAreClose(
+          bar.chords.reduce(
+            (duration, chord) => duration + chord.durationInBars,
+            0,
+          ),
+          1,
+        ),
     )
   ) {
     return undefined;
   }
 
   return normalizeCustomChordProgression({
-    chords: bars.flatMap((bar) =>
-      bar.chords.map((chord) => ({
-        ...chord,
-        durationInBars: 1 / bar.chords.length,
-      })),
-    ),
+    chords: bars.flatMap((bar) => bar.chords.map((chord) => ({ ...chord }))),
   });
 }
 
@@ -181,19 +305,20 @@ export function createCustomProgressionBars(
       if (valuesAreClose(currentBarDuration, 1)) {
         if (
           currentBar.length > CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR ||
-          currentBar.some(
-            (candidate) =>
-              !valuesAreClose(candidate.durationInBars, 1 / currentBar.length),
-          )
+          getCustomProgressionCompatibleBeatCounts([{ chords: currentBar }])
+            .length === 0
         ) {
           return undefined;
         }
 
         bars.push({
-          chords: currentBar.map(({ chordCollectionKey, degree }) => ({
-            chordCollectionKey,
-            degree,
-          })),
+          chords: currentBar.map(
+            ({ chordCollectionKey, degree, durationInBars }) => ({
+              chordCollectionKey,
+              degree,
+              durationInBars,
+            }),
+          ),
         });
         currentBar = [];
         currentBarDuration = 0;

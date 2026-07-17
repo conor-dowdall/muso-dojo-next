@@ -8,8 +8,11 @@ import {
   createCustomProgressionBars,
   createCustomProgressionFromBars,
   customChordProgressionFlatDegrees,
+  getCustomProgressionCompatibleBeatCounts,
   normalizeCustomChordProgression,
   normalizeSavedChordProgressions,
+  removeCustomProgressionDraftChord,
+  selectCustomProgressionBarBeat,
 } from "@/utils/music-theory/customChordProgressions";
 
 describe("customChordProgressions", () => {
@@ -20,7 +23,13 @@ describe("customChordProgressions", () => {
 
     const progression = createCustomProgressionFromBars([
       {
-        chords: [{ degree: "♯4", chordCollectionKey: "diminishedTriad" }],
+        chords: [
+          {
+            degree: "♯4",
+            chordCollectionKey: "diminishedTriad",
+            durationInBars: 1,
+          },
+        ],
       },
     ]);
 
@@ -32,26 +41,62 @@ describe("customChordProgressions", () => {
 
   it("converts visual bar slots into exact fractional chord events", () => {
     const progression = createCustomProgressionFromBars([
-      { chords: [{ degree: "1", chordCollectionKey: "major" }] },
       {
         chords: [
-          { degree: "4", chordCollectionKey: "major" },
-          { degree: "5", chordCollectionKey: "dominant7" },
+          { degree: "1", chordCollectionKey: "major", durationInBars: 1 },
         ],
       },
       {
         chords: [
-          { degree: "1", chordCollectionKey: "major" },
-          { degree: "3", chordCollectionKey: "minor" },
-          { degree: "6", chordCollectionKey: "minor" },
+          { degree: "4", chordCollectionKey: "major", durationInBars: 0.5 },
+          {
+            degree: "5",
+            chordCollectionKey: "dominant7",
+            durationInBars: 0.5,
+          },
         ],
       },
       {
         chords: [
-          { degree: "2", chordCollectionKey: "minor7" },
-          { degree: "5", chordCollectionKey: "dominant7" },
-          { degree: "1", chordCollectionKey: "major7" },
-          { degree: "6", chordCollectionKey: "minor7" },
+          {
+            degree: "1",
+            chordCollectionKey: "major",
+            durationInBars: 1 / 3,
+          },
+          {
+            degree: "3",
+            chordCollectionKey: "minor",
+            durationInBars: 1 / 3,
+          },
+          {
+            degree: "6",
+            chordCollectionKey: "minor",
+            durationInBars: 1 / 3,
+          },
+        ],
+      },
+      {
+        chords: [
+          {
+            degree: "2",
+            chordCollectionKey: "minor7",
+            durationInBars: 0.25,
+          },
+          {
+            degree: "5",
+            chordCollectionKey: "dominant7",
+            durationInBars: 0.25,
+          },
+          {
+            degree: "1",
+            chordCollectionKey: "major7",
+            durationInBars: 0.25,
+          },
+          {
+            degree: "6",
+            chordCollectionKey: "minor7",
+            durationInBars: 0.25,
+          },
         ],
       },
     ]);
@@ -74,14 +119,30 @@ describe("customChordProgressions", () => {
     const bars = createCustomProgressionBars(chordProgressions.oneOneFiveFive);
 
     expect(bars).toEqual([
-      { chords: [{ degree: "1", chordCollectionKey: "major" }] },
-      { chords: [{ degree: "1", chordCollectionKey: "major" }] },
-      { chords: [{ degree: "5", chordCollectionKey: "major" }] },
-      { chords: [{ degree: "5", chordCollectionKey: "major" }] },
+      {
+        chords: [
+          { degree: "1", chordCollectionKey: "major", durationInBars: 1 },
+        ],
+      },
+      {
+        chords: [
+          { degree: "1", chordCollectionKey: "major", durationInBars: 1 },
+        ],
+      },
+      {
+        chords: [
+          { degree: "5", chordCollectionKey: "major", durationInBars: 1 },
+        ],
+      },
+      {
+        chords: [
+          { degree: "5", chordCollectionKey: "major", durationInBars: 1 },
+        ],
+      },
     ]);
   });
 
-  it("rejects incomplete, uneven, or unsupported custom bars", () => {
+  it("accepts uneven beat-aligned bars and rejects incomplete or unsupported bars", () => {
     expect(
       normalizeCustomChordProgression({
         chords: [
@@ -108,6 +169,22 @@ describe("customChordProgressions", () => {
           },
         ],
       }),
+    ).toBeDefined();
+    expect(
+      normalizeCustomChordProgression({
+        chords: [
+          {
+            degree: "1",
+            chordCollectionKey: "major",
+            durationInBars: 1 / 9,
+          },
+          {
+            degree: "5",
+            chordCollectionKey: "major",
+            durationInBars: 8 / 9,
+          },
+        ],
+      }),
     ).toBeUndefined();
     expect(
       normalizeCustomChordProgression({
@@ -126,6 +203,7 @@ describe("customChordProgressions", () => {
     const tonic = {
       degree: "1" as const,
       chordCollectionKey: "major" as const,
+      durationInBars: 1,
     };
 
     expect(
@@ -135,9 +213,68 @@ describe("customChordProgressions", () => {
     ).toBeUndefined();
     expect(
       createCustomProgressionFromBars([
-        { chords: Array.from({ length: 5 }, () => tonic) },
+        { chords: Array.from({ length: 9 }, () => tonic) },
       ]),
     ).toBeUndefined();
+  });
+
+  it("creates chord changes on counted beats and preserves the complete bar", () => {
+    const wholeBar = {
+      chords: [
+        {
+          degree: "1" as const,
+          chordCollectionKey: "major" as const,
+          durationInBars: 1,
+        },
+      ],
+    };
+    const beatThree = selectCustomProgressionBarBeat(wholeBar, 4, 2);
+
+    expect(beatThree).toEqual({
+      bar: {
+        chords: [
+          { degree: "1", chordCollectionKey: "major", durationInBars: 0.5 },
+          { degree: "1", chordCollectionKey: "major", durationInBars: 0.5 },
+        ],
+      },
+      chordIndex: 1,
+      inserted: true,
+    });
+
+    const beatFour =
+      beatThree && selectCustomProgressionBarBeat(beatThree.bar, 4, 3);
+    expect(beatFour?.bar.chords.map((chord) => chord.durationInBars)).toEqual([
+      0.5, 0.25, 0.25,
+    ]);
+
+    const removed =
+      beatFour && removeCustomProgressionDraftChord(beatFour.bar, 1);
+    expect(removed?.chords.map((chord) => chord.durationInBars)).toEqual([
+      0.75, 0.25,
+    ]);
+  });
+
+  it("offers only beat grids that preserve every chord boundary", () => {
+    const bars = [
+      {
+        chords: [
+          {
+            degree: "1" as const,
+            chordCollectionKey: "major" as const,
+            durationInBars: 0.5,
+          },
+          {
+            degree: "5" as const,
+            chordCollectionKey: "major" as const,
+            durationInBars: 0.5,
+          },
+        ],
+      },
+    ];
+
+    expect(getCustomProgressionCompatibleBeatCounts(bars)).toEqual([
+      2, 4, 6, 8,
+    ]);
   });
 
   it("normalizes unique saved progression names and strips analysis metadata", () => {

@@ -177,7 +177,7 @@ export function RhythmCreationPanel({
         >
           <div
             aria-label="Rhythm beats"
-            className={`${choiceGridStyles.tokenGrid} ${styles.numericGrid}`}
+            className={`${choiceGridStyles.tokenGrid} ${choiceGridStyles.numericTokenGrid}`}
             role="group"
           >
             {beatChoices.map((beats) => {
@@ -308,7 +308,7 @@ export function RhythmCreationPanel({
             <div className={styles.patternGroups}>
               <div
                 aria-label="Even subdivisions per beat"
-                className={`${choiceGridStyles.tokenGrid} ${styles.numericGrid}`}
+                className={`${choiceGridStyles.tokenGrid} ${choiceGridStyles.numericTokenGrid}`}
                 role="group"
               >
                 {rhythmTimekeeperStraightSubdivisionChoices.map((choice) => (
