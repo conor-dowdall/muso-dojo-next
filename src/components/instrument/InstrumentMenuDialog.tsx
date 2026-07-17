@@ -4,7 +4,7 @@ import {
   AudioWaveform,
   CaseSensitive,
   Guitar,
-  ListMusic,
+  ListChevronsUpDown,
   Piano,
   Ruler,
   SwatchBook,
@@ -318,7 +318,7 @@ export function InstrumentMenuDialog({
           {fretboardTuning && fretboardOpenMidiNotes && fretboardTuningNotes ? (
             <DisclosureListItem
               ariaLabel={`Tuning. Current: ${fretboardTuningLabel}`}
-              icon={<ListMusic />}
+              icon={<ListChevronsUpDown />}
               isOpen={isChoiceOpen("tuning")}
               label="Tuning"
               onToggle={() => toggleChoice("tuning")}

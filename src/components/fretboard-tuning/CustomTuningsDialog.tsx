@@ -1,7 +1,7 @@
 "use client";
 
 import { type StringInstrumentKey } from "@musodojo/music-theory-data";
-import { Guitar, Pencil, Plus, Trash2 } from "lucide-react";
+import { ListChevronsUpDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   Dialog,
@@ -103,7 +103,7 @@ export function CustomTuningsDialog({
   return (
     <Dialog isOpen={isOpen} onClose={onClose} size="standard">
       <DialogHeader
-        icon={<Guitar />}
+        icon={<ListChevronsUpDown />}
         title="Custom Tunings"
         onClose={onClose}
       />

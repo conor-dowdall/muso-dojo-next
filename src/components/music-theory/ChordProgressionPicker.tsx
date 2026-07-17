@@ -42,7 +42,7 @@ export function ChordProgressionPicker({
     useDisclosureList<ProgressionCategoryGroupChoice>();
 
   return (
-    <DisclosureList grouped groupGap="related">
+    <DisclosureList grouped>
       <DisclosureListGroup aria-label="Custom progression library">
         <DisclosureListAction
           icon={<ListMusic />}
@@ -51,51 +51,55 @@ export function ChordProgressionPicker({
           onClick={onManageCustom}
         />
       </DisclosureListGroup>
-      {chordProgressionCategoryGroups.map((group) => {
-        const groupChoice = getProgressionCategoryGroupChoice(group.category);
-        const groupTitle = group.name;
-        const groupContainsSelection =
-          value !== undefined && group.progressionKeys.includes(value);
+      <DisclosureListGroup aria-label="Built-in progressions">
+        {chordProgressionCategoryGroups.map((group) => {
+          const groupChoice = getProgressionCategoryGroupChoice(group.category);
+          const groupTitle = group.name;
+          const groupContainsSelection =
+            value !== undefined && group.progressionKeys.includes(value);
 
-        return (
-          <DisclosureListItem
-            key={groupChoice}
-            ariaLabel={`${groupTitle}${groupContainsSelection ? ", contains selected progression" : ""}`}
-            isOpen={
-              progressionCategoryGroupDisclosure.openChoice === groupChoice
-            }
-            keepMounted
-            label={groupTitle}
-            panelVariant="menu"
-            selected={groupContainsSelection}
-            onToggle={() =>
-              progressionCategoryGroupDisclosure.toggleChoice(groupChoice)
-            }
-          >
-            <DisclosureList>
-              {group.progressionKeys.map((candidateKey) => {
-                const { chordLabel, titleLabel } =
-                  getChordProgressionDisplayLabels(rootNote, candidateKey);
+          return (
+            <DisclosureListItem
+              key={groupChoice}
+              ariaLabel={`${groupTitle}${groupContainsSelection ? ", contains selected progression" : ""}`}
+              isOpen={
+                progressionCategoryGroupDisclosure.openChoice === groupChoice
+              }
+              keepMounted
+              label={groupTitle}
+              panelVariant="menu"
+              selected={groupContainsSelection}
+              onToggle={() =>
+                progressionCategoryGroupDisclosure.toggleChoice(groupChoice)
+              }
+            >
+              <DisclosureList>
+                {group.progressionKeys.map((candidateKey) => {
+                  const { chordLabel, titleLabel } =
+                    getChordProgressionDisplayLabels(rootNote, candidateKey);
 
-                return (
-                  <DisclosureListChoice
-                    key={candidateKey}
-                    label={titleLabel}
-                    selected={value === candidateKey}
-                    subtitle={
-                      <span className={styles.chordSubtitle}>{chordLabel}</span>
-                    }
-                    onClick={() => {
-                      progressionCategoryGroupDisclosure.closeAll();
-                      onChange(candidateKey);
-                    }}
-                  />
-                );
-              })}
-            </DisclosureList>
-          </DisclosureListItem>
-        );
-      })}
+                  return (
+                    <DisclosureListChoice
+                      key={candidateKey}
+                      label={titleLabel}
+                      selected={value === candidateKey}
+                      subtitle={
+                        <span className={styles.chordSubtitle}>
+                          {chordLabel}
+                        </span>
+                      }
+                      onClick={() => {
+                        progressionCategoryGroupDisclosure.closeAll();
+                        onChange(candidateKey);
+                      }}
+                    />
+                  );
+                })}
+              </DisclosureList>
+            </DisclosureListItem>
+          );
+        })}
+      </DisclosureListGroup>
     </DisclosureList>
   );
 }
