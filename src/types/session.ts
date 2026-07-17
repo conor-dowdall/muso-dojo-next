@@ -1,6 +1,7 @@
 import {
   type ChordProgressionAnalysisRomanSymbol,
   type ChordProgressionKey,
+  type NoteName,
   type NoteCollectionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
@@ -55,7 +56,8 @@ export interface AuthoredChordProgressionConfig {
     | { kind: "built-in"; progressionKey: ChordProgressionKey }
     | { kind: "custom"; name: string };
   romanSymbol: ChordProgressionAnalysisRomanSymbol;
-  rootNote: string;
+  /** The theoretically spelled root, which may contain a double accidental. */
+  rootNote: NoteName;
   tonalCenter: RootNote;
 }
 

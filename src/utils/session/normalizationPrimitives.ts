@@ -1,6 +1,8 @@
 import {
   noteCollection,
+  normalizeNoteNameString,
   normalizeRootNoteString,
+  type NoteName,
   type NoteCollectionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
@@ -79,6 +81,12 @@ export function normalizeOptionalRootNote(
   value: unknown,
 ): RootNote | undefined {
   return typeof value === "string" ? normalizeRootNoteString(value) : undefined;
+}
+
+export function normalizeOptionalNoteName(
+  value: unknown,
+): NoteName | undefined {
+  return typeof value === "string" ? normalizeNoteNameString(value) : undefined;
 }
 
 export function normalizeNoteCollectionKey(

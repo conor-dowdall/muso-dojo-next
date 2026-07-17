@@ -79,6 +79,33 @@ describe("normalizeMusicPartConfig", () => {
     });
   });
 
+  it("preserves a theoretically spelled progression root", () => {
+    expect(
+      normalizeMusicPartConfig({
+        authoredProgression: {
+          kind: "chord-progression",
+          noteCollectionKey: "diminished7",
+          progressionInstanceId: "jazz-blues",
+          source: { kind: "built-in", progressionKey: "jazzBlues" },
+          romanSymbol: "♯iv°7",
+          rootNote: "F##",
+          tonalCenter: "C#",
+        },
+        id: "sharp-four",
+        modules: [],
+        noteCollectionKey: "diminished7",
+        rootNote: "G",
+      }),
+    ).toMatchObject({
+      authoredProgression: {
+        romanSymbol: "♯iv°7",
+        rootNote: "F𝄪",
+        tonalCenter: "C♯",
+      },
+      rootNote: "G",
+    });
+  });
+
   it("ignores old persisted layout values", () => {
     const part = normalizeMusicPartConfig({
       id: "part-1",

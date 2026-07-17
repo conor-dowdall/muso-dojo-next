@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  normalizeRootNoteString,
+  resolvePracticalRootNote,
+  rootNotes,
   chordProgressions,
   type ChordProgressionKey,
 } from "@musodojo/music-theory-data";
@@ -7,6 +10,78 @@ import { createChordProgressionParts } from "@/utils/music-part/createChordProgr
 import { getAutomaticRhythmBeats } from "@/utils/music-part/partLength";
 
 describe("createChordProgressionParts", () => {
+  it("uses practical Part roots while retaining theoretical progression spelling", () => {
+    const jazzBluesParts = createChordProgressionParts({
+      chordListMode: "full-song-order",
+      rootNote: "C♯",
+      progressionKey: "jazzBlues",
+      moduleRequests: [],
+    });
+    const sharpFour = jazzBluesParts.find(
+      (part) => part.authoredProgression?.romanSymbol === "♯iv°7",
+    );
+    const flatOne = createChordProgressionParts({
+      chordListMode: "full-song-order",
+      rootNote: "B♭",
+      progression: {
+        chords: [
+          {
+            degree: "♭1",
+            chordCollectionKey: "major",
+            durationInBars: 1,
+          },
+        ],
+      },
+      progressionName: "Flat Tonic",
+      moduleRequests: [],
+    })[0];
+
+    expect(sharpFour).toMatchObject({
+      rootNote: "G",
+      authoredProgression: {
+        rootNote: "F𝄪",
+        romanSymbol: "♯iv°7",
+      },
+    });
+    expect(flatOne).toMatchObject({
+      rootNote: "A",
+      authoredProgression: {
+        rootNote: "B𝄫",
+        romanSymbol: "♭I",
+      },
+    });
+  });
+
+  it("creates pitch-safe Parts for every built-in progression and tonal center", () => {
+    const progressionKeys = Object.keys(
+      chordProgressions,
+    ) as ChordProgressionKey[];
+
+    for (const rootNote of rootNotes) {
+      for (const progressionKey of progressionKeys) {
+        const parts = createChordProgressionParts({
+          chordListMode: "full-song-order",
+          rootNote,
+          progressionKey,
+          moduleRequests: [],
+        });
+
+        for (const part of parts) {
+          const practicalRoot = normalizeRootNoteString(part.rootNote);
+          const authored = part.authoredProgression;
+
+          expect(practicalRoot).toBeDefined();
+          expect(authored).toBeDefined();
+          if (practicalRoot && authored) {
+            expect(practicalRoot).toBe(
+              resolvePracticalRootNote(authored.rootNote),
+            );
+          }
+        }
+      }
+    }
+  });
+
   it("creates fractional Parts with independent custom provenance", () => {
     const progression = {
       chords: [

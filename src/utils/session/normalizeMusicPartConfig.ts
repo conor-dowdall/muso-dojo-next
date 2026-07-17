@@ -15,6 +15,7 @@ import {
   isRecord,
   normalizeId,
   normalizeNoteCollectionKey,
+  normalizeOptionalNoteName,
   normalizeOptionalNoteCollectionKey,
   normalizeOptionalBoolean,
   normalizeOptionalRootNote,
@@ -57,7 +58,7 @@ function normalizeAuthoredChordProgressionConfig(
           : undefined;
   const romanSymbol = normalizeString(value.romanSymbol) as
     ChordProgressionAnalysisRomanSymbol | undefined;
-  const rootNote = normalizeOptionalRootNote(value.rootNote);
+  const rootNote = normalizeOptionalNoteName(value.rootNote);
   const tonalCenter = normalizeOptionalRootNote(value.tonalCenter);
 
   if (

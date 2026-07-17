@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { getPartLeadSheetSummary } from "@/utils/music-part/partLeadSheet";
-import { type MusicPartConfig } from "@/types/session";
+import {
+  type AuthoredChordProgressionConfig,
+  type MusicPartConfig,
+} from "@/types/session";
 import { createDefaultSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 
 function createPart(patch: Partial<MusicPartConfig> = {}): MusicPartConfig {
@@ -23,9 +26,9 @@ describe("getPartLeadSheetSummary", () => {
       progressionKey: "oneFourOneFive" as const,
     },
     romanSymbol: "I" as const,
-    rootNote: "C",
+    rootNote: "C" as const,
     tonalCenter: "C" as const,
-  };
+  } satisfies AuthoredChordProgressionConfig;
 
   it("shows authored Roman analysis while harmonic identity still matches", () => {
     const summary = getPartLeadSheetSummary(
@@ -46,6 +49,25 @@ describe("getPartLeadSheetSummary", () => {
 
     expect(changedRoot).not.toHaveProperty("romanAnalysis");
     expect(changedCollection).not.toHaveProperty("romanAnalysis");
+  });
+
+  it("keeps theoretical Roman analysis for its practical root spelling", () => {
+    const summary = getPartLeadSheetSummary(
+      createPart({
+        rootNote: "G",
+        noteCollectionKey: "diminished7",
+        authoredProgression: {
+          ...authoredProgression,
+          noteCollectionKey: "diminished7",
+          romanSymbol: "♯iv°7",
+          rootNote: "F𝄪",
+          tonalCenter: "C♯",
+        },
+      }),
+    );
+
+    expect(summary.identityLabel).toBe("G°7");
+    expect(summary.romanAnalysis).toBe("♯iv°7");
   });
 
   it("shows a half-bar progression Part as a proportional 2/4 chart entry", () => {

@@ -1,3 +1,4 @@
+import { resolvePracticalRootNote } from "@musodojo/music-theory-data";
 import { type MusicPartConfig } from "@/types/session";
 
 /**
@@ -9,7 +10,7 @@ export function getValidAuthoredRomanSymbol(part: MusicPartConfig) {
   const authored = part.authoredProgression;
 
   return authored &&
-    part.rootNote === authored.rootNote &&
+    part.rootNote === resolvePracticalRootNote(authored.rootNote) &&
     part.noteCollectionKey === authored.noteCollectionKey
     ? authored.romanSymbol
     : undefined;

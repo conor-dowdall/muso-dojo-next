@@ -1,6 +1,7 @@
 import {
   chordProgression,
   chordProgressions,
+  rootAndNoteCollection,
   type ChordProgression,
   type ChordProgressionKey,
   type RootNote,
@@ -96,7 +97,15 @@ export function getChordProgressionDisplaySummary(
   const chordNames = chordProgression
     .getChordReferencesByBar(rootNote, progressionOrKey)
     .map((barReferences) =>
-      barReferences.map((reference) => reference.chordName).join(" "),
+      barReferences
+        .map(
+          (reference) =>
+            rootAndNoteCollection.getIdentity({
+              rootNote: reference.practicalRootNote,
+              noteCollectionKey: reference.chordCollectionKey,
+            }).label,
+        )
+        .join(" "),
     );
   return {
     chordNames,

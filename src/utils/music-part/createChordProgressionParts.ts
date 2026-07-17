@@ -220,7 +220,7 @@ function createPartFromReference<T extends PartModuleType>({
         );
   const part = normalizeMusicPartConfig({
     id: partId,
-    rootNote: partReference.reference.rootNote,
+    rootNote: partReference.reference.practicalRootNote,
     noteCollectionKey: partReference.reference.chordCollectionKey,
     authoredProgression: partReference.authoredProgression,
     durationInBars: partReference.durationInBars,
