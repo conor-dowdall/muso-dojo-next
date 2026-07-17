@@ -84,12 +84,13 @@ export function CustomChordProgressionsDialog({
 
   const handleCreate = (name: string, progression: ChordProgression) => {
     const id = addProgression({ name, progression });
-    if (!id) return;
+    if (!id) return false;
 
     onSelect({ id, name, progression });
     setIsNewOpen(false);
     setNewEditorVersion((version) => version + 1);
     onClose();
+    return true;
   };
 
   return (
@@ -168,7 +169,6 @@ export function CustomChordProgressionsDialog({
                             ariaLabel={`Edit ${progression.name}`}
                             icon={<Pencil />}
                             isOpen={editProgressionId === progression.id}
-                            keepMounted
                             label="Edit"
                             onToggle={() => {
                               setEditProgressionId((current) =>
@@ -191,11 +191,20 @@ export function CustomChordProgressionsDialog({
                                 )
                               }
                               onSave={(name, nextProgression) => {
-                                updateProgression(progression.id, {
-                                  name,
-                                  progression: nextProgression,
-                                });
+                                const wasUpdated = updateProgression(
+                                  progression.id,
+                                  {
+                                    name,
+                                    progression: nextProgression,
+                                  },
+                                );
+
+                                if (!wasUpdated) {
+                                  return false;
+                                }
+
                                 setEditProgressionId(null);
+                                return true;
                               }}
                             />
                           </DisclosureListActionItem>

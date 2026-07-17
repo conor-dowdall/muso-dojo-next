@@ -6,7 +6,7 @@ import {
   noteColorConfigsAreEqual,
 } from "@/utils/session/normalizeDojoSettings";
 import {
-  normalizeSessionMaterialCreationDefaults,
+  normalizeSessionMaterialCreationDefaultsForLibrary,
   sessionMaterialCreationDefaultsAreEqual,
 } from "@/utils/session/sessionMaterialCreationDefaults";
 import {
@@ -108,10 +108,13 @@ export function createDojoSettingsActions(
   ) => {
     set((state) => {
       const sessionMaterialCreationDefaults =
-        normalizeSessionMaterialCreationDefaults({
-          ...state.dojoSettings.sessionMaterialCreationDefaults,
-          ...request,
-        });
+        normalizeSessionMaterialCreationDefaultsForLibrary(
+          {
+            ...state.dojoSettings.sessionMaterialCreationDefaults,
+            ...request,
+          },
+          state.dojoSettings.customChordProgressions,
+        );
 
       if (
         sessionMaterialCreationDefaultsAreEqual(
@@ -180,9 +183,10 @@ export function createDojoSettingsActions(
       const progression = normalizeSavedChordProgressionInput(progressionInput);
 
       if (!progression) {
-        return;
+        return false;
       }
 
+      let wasUpdated = false;
       set((state) => {
         const customChordProgressions =
           state.dojoSettings.customChordProgressions ?? [];
@@ -206,6 +210,7 @@ export function createDojoSettingsActions(
           id: progressionId,
           ...progression,
         };
+        wasUpdated = true;
 
         return {
           dojoSettings: {
@@ -214,6 +219,8 @@ export function createDojoSettingsActions(
           },
         };
       });
+
+      return wasUpdated;
     },
     removeCustomChordProgression: (progressionId) => {
       set((state) => {
@@ -232,6 +239,18 @@ export function createDojoSettingsActions(
           delete dojoSettings.customChordProgressions;
         } else {
           dojoSettings.customChordProgressions = nextProgressions;
+        }
+
+        const sessionMaterialCreationDefaults =
+          normalizeSessionMaterialCreationDefaultsForLibrary(
+            dojoSettings.sessionMaterialCreationDefaults,
+            nextProgressions,
+          );
+        if (sessionMaterialCreationDefaults) {
+          dojoSettings.sessionMaterialCreationDefaults =
+            sessionMaterialCreationDefaults;
+        } else {
+          delete dojoSettings.sessionMaterialCreationDefaults;
         }
 
         return { dojoSettings };

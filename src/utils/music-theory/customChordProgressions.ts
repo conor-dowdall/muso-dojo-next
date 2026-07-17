@@ -1,6 +1,5 @@
 import {
   noteLabelCollections,
-  noteCollections,
   type ChordCollectionKey,
   type ChordProgression,
   type ChordProgressionChord,
@@ -10,6 +9,7 @@ import {
   type SavedChordProgression,
   type SavedChordProgressionInput,
 } from "@/types/custom-chord-progression";
+import { isCustomChordProgressionChordCollectionKey } from "@/data/customChordProgressionChordQualities";
 import {
   ensureUniqueIds,
   isRecord,
@@ -170,15 +170,7 @@ export function removeCustomProgressionDraftChord(
 function normalizeChordCollectionKey(
   value: unknown,
 ): ChordCollectionKey | undefined {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-
-  const collection = noteCollections[value as keyof typeof noteCollections];
-
-  return collection?.category === "chord"
-    ? (value as ChordCollectionKey)
-    : undefined;
+  return isCustomChordProgressionChordCollectionKey(value) ? value : undefined;
 }
 
 function normalizeCustomProgressionChord(

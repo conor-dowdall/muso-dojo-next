@@ -197,6 +197,17 @@ describe("customChordProgressions", () => {
         ],
       }),
     ).toBeUndefined();
+    expect(
+      normalizeCustomChordProgression({
+        chords: [
+          {
+            degree: "1",
+            chordCollectionKey: "major9",
+            durationInBars: 1,
+          },
+        ],
+      }),
+    ).toBeUndefined();
   });
 
   it("enforces the visual composer's bar and chord limits", () => {

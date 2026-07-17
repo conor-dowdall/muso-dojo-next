@@ -1,57 +1,23 @@
 "use client";
 
-import {
-  getChordQualityChordCollectionKey,
-  type ChordCollectionKey,
-  type ChordQuality,
-} from "@musodojo/music-theory-data";
+import { type ChordCollectionKey } from "@musodojo/music-theory-data";
 import { useState } from "react";
 import { OptionButton } from "@/components/ui/buttons/OptionButton";
 import {
   DisclosureList,
   DisclosureListItem,
 } from "@/components/ui/disclosure-list/DisclosureList";
+import {
+  customProgressionCommonChordChoices,
+  customProgressionMoreChordChoices,
+  type CustomChordProgressionChordChoice,
+} from "@/data/customChordProgressionChordQualities";
 import styles from "./ChordQualityPicker.module.css";
 
 interface ChordQualityPickerProps {
   value?: ChordCollectionKey;
   onChange: (value: ChordCollectionKey) => void;
 }
-
-interface ChordQualityChoice {
-  chordCollectionKey: ChordCollectionKey;
-  label: string;
-}
-
-function qualityChoice(
-  quality: ChordQuality,
-  label: string,
-): ChordQualityChoice {
-  return {
-    chordCollectionKey: getChordQualityChordCollectionKey(quality),
-    label,
-  };
-}
-
-export const customProgressionCommonChordChoices = [
-  qualityChoice("M", "Major"),
-  qualityChoice("m", "Minor"),
-  qualityChoice("7", "Dominant 7"),
-] as const satisfies readonly ChordQualityChoice[];
-
-export const customProgressionMoreChordChoices = [
-  qualityChoice("M7", "Major 7"),
-  qualityChoice("m7", "Minor 7"),
-  qualityChoice("°", "Diminished"),
-  qualityChoice("ø7", "Half-Diminished 7"),
-  qualityChoice("°7", "Diminished 7"),
-  qualityChoice("+", "Augmented"),
-  {
-    chordCollectionKey: "augmented7",
-    label: "Augmented 7",
-  },
-  qualityChoice("+M7", "Augmented Major 7"),
-] as const satisfies readonly ChordQualityChoice[];
 
 const commonChordKeySet = new Set<ChordCollectionKey>(
   customProgressionCommonChordChoices.map(
@@ -65,7 +31,7 @@ function ChordChoiceGrid({
   value,
   onChange,
 }: {
-  choices: readonly ChordQualityChoice[];
+  choices: readonly CustomChordProgressionChordChoice[];
   className: string;
   value?: ChordCollectionKey;
   onChange: (value: ChordCollectionKey) => void;

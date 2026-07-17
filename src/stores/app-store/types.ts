@@ -78,7 +78,7 @@ export interface DojoSettingsActions {
   updateCustomChordProgression: (
     progressionId: string,
     progression: SavedChordProgressionInput,
-  ) => void;
+  ) => boolean;
   removeCustomChordProgression: (progressionId: string) => void;
   addCustomFretboardTuning: (
     tuning: SavedFretboardTuningInput,

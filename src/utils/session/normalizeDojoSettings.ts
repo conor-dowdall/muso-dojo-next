@@ -5,7 +5,7 @@ import { type DojoSettings } from "@/types/session";
 import { normalizeNoteColorConfig } from "@/utils/note-colors/createNoteColorConfig";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 import { normalizeModuleCreationDefaults } from "@/utils/session/normalizeModuleCreationDefaults";
-import { normalizeSessionMaterialCreationDefaults } from "@/utils/session/sessionMaterialCreationDefaults";
+import { normalizeSessionMaterialCreationDefaultsForLibrary } from "@/utils/session/sessionMaterialCreationDefaults";
 import { normalizeSavedFretboardTunings } from "@/utils/fretboard/customFretboardTunings";
 import { normalizeSavedChordProgressions } from "@/utils/music-theory/customChordProgressions";
 
@@ -77,8 +77,9 @@ export function normalizeDojoSettings(value: unknown): DojoSettings {
     value.moduleCreationDefaults,
   );
   const sessionMaterialCreationDefaults =
-    normalizeSessionMaterialCreationDefaults(
+    normalizeSessionMaterialCreationDefaultsForLibrary(
       value.sessionMaterialCreationDefaults,
+      customChordProgressions,
     );
 
   return {

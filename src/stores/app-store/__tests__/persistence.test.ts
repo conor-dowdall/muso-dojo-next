@@ -435,6 +435,26 @@ describe("app store persistence", () => {
     });
   });
 
+  it("drops a remembered custom progression that is not in the library", () => {
+    const persistedState = createPersistedSnapshot("persisted-session");
+    const normalized = normalizeAppStoreSnapshot(
+      {
+        ...persistedState,
+        dojoSettings: {
+          sessionMaterialCreationDefaults: {
+            materialKind: "chord-progression",
+            progression: { kind: "custom", progressionId: "missing" },
+          },
+        },
+      },
+      fallbackSnapshot,
+    );
+
+    expect(normalized.dojoSettings.sessionMaterialCreationDefaults).toEqual({
+      materialKind: "chord-progression",
+    });
+  });
+
   it("drops built-in and invalid session material creation defaults", () => {
     const persistedState = createPersistedSnapshot("persisted-session");
 

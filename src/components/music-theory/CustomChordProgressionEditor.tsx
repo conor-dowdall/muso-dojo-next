@@ -51,7 +51,7 @@ interface CustomChordProgressionEditorProps {
   initialName?: string;
   initialProgression?: ChordProgression;
   isNameAvailable?: (name: string) => boolean;
-  onSave: (name: string, progression: ChordProgression) => void;
+  onSave: (name: string, progression: ChordProgression) => boolean;
 }
 
 interface ExistingSelectedChord {
@@ -523,7 +523,12 @@ export function CustomChordProgressionEditor({
     submissionPendingRef.current = true;
     setSubmissionPending(true);
     try {
-      onSave(normalizedName, progression);
+      const wasSaved = onSave(normalizedName, progression);
+
+      if (!wasSaved) {
+        submissionPendingRef.current = false;
+        setSubmissionPending(false);
+      }
     } catch (error) {
       submissionPendingRef.current = false;
       setSubmissionPending(false);

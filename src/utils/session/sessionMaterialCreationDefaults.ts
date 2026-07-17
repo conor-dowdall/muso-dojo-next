@@ -10,7 +10,10 @@ import {
   type SessionMaterialCreationDefaults,
   type SessionMaterialCreationKind,
 } from "@/types/session";
-import { type ChordProgressionSelection } from "@/types/custom-chord-progression";
+import {
+  type ChordProgressionSelection,
+  type SavedChordProgression,
+} from "@/types/custom-chord-progression";
 import {
   DEFAULT_PART_NOTE_COLLECTION_KEY,
   DEFAULT_PART_ROOT_NOTE,
@@ -148,6 +151,30 @@ export function normalizeSessionMaterialCreationDefaults(
   } satisfies SessionMaterialCreationDefaults;
 
   return Object.keys(defaults).length === 0 ? undefined : defaults;
+}
+
+export function normalizeSessionMaterialCreationDefaultsForLibrary(
+  value: unknown,
+  customProgressions: readonly SavedChordProgression[] | undefined,
+): SessionMaterialCreationDefaults | undefined {
+  const defaults = normalizeSessionMaterialCreationDefaults(value);
+  const progressionSelection = defaults?.progression;
+
+  if (
+    progressionSelection?.kind !== "custom" ||
+    customProgressions?.some(
+      (progression) => progression.id === progressionSelection.progressionId,
+    )
+  ) {
+    return defaults;
+  }
+
+  const reconciledDefaults = { ...defaults };
+  delete reconciledDefaults.progression;
+
+  return Object.keys(reconciledDefaults).length > 0
+    ? reconciledDefaults
+    : undefined;
 }
 
 function resolveSessionMaterialCreationDefaults(

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   customProgressionCommonChordChoices,
   customProgressionMoreChordChoices,
-} from "@/components/music-theory/ChordQualityPicker";
+} from "@/data/customChordProgressionChordQualities";
 
 describe("ChordQualityPicker", () => {
   it("keeps the high-frequency chord vocabulary immediately available", () => {

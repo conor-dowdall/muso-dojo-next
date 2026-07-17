@@ -33,21 +33,34 @@ describe("dojo settings app store actions", () => {
       { id: progressionId, name: "My Changes", progression },
     ]);
 
-    store.getState().updateCustomChordProgression(progressionId ?? "", {
-      name: "My Turnaround",
-      progression,
-    });
+    expect(
+      store.getState().updateCustomChordProgression(progressionId ?? "", {
+        name: "My Turnaround",
+        progression,
+      }),
+    ).toBe(true);
 
     expect(
       store.getState().dojoSettings.customChordProgressions?.[0]?.name,
     ).toBe("My Turnaround");
     expect(store.getState().sessions[sessionId]).toBe(existingSession);
 
+    store.getState().rememberSessionMaterialCreation({
+      materialKind: "chord-progression",
+      progression: {
+        kind: "custom",
+        progressionId: progressionId ?? "",
+      },
+    });
+
     store.getState().removeCustomChordProgression(progressionId ?? "");
 
     expect(
       store.getState().dojoSettings.customChordProgressions,
     ).toBeUndefined();
+    expect(
+      store.getState().dojoSettings.sessionMaterialCreationDefaults,
+    ).toEqual({ materialKind: "chord-progression" });
     expect(store.getState().sessions[sessionId]).toBe(existingSession);
   });
 
@@ -75,6 +88,23 @@ describe("dojo settings app store actions", () => {
         progression,
       }),
     ).toBeUndefined();
+
+    expect(
+      store.getState().updateCustomChordProgression("missing", {
+        name: "Other Changes",
+        progression,
+      }),
+    ).toBe(false);
+  });
+
+  it("does not remember a missing custom progression", () => {
+    const store = createTestStore();
+
+    store.getState().rememberSessionMaterialCreation({
+      progression: { kind: "custom", progressionId: "missing" },
+    });
+
+    expect(store.getState().dojoSettings).toEqual({});
   });
 
   it("creates, edits, and deletes custom tunings without changing sessions", () => {
