@@ -8,11 +8,11 @@ import {
   createCustomProgressionBars,
   createCustomProgressionFromBars,
   customChordProgressionFlatDegrees,
-  getCustomProgressionCompatibleBeatCounts,
+  getCustomProgressionCompatiblePositionCounts,
   normalizeCustomChordProgression,
   normalizeSavedChordProgressions,
   removeCustomProgressionDraftChord,
-  selectCustomProgressionBarBeat,
+  selectCustomProgressionBarPosition,
 } from "@/utils/music-theory/customChordProgressions";
 
 describe("customChordProgressions", () => {
@@ -142,7 +142,7 @@ describe("customChordProgressions", () => {
     ]);
   });
 
-  it("accepts uneven beat-aligned bars and rejects incomplete or unsupported bars", () => {
+  it("accepts uneven grid-aligned bars and rejects incomplete or unsupported bars", () => {
     expect(
       normalizeCustomChordProgression({
         chords: [
@@ -229,7 +229,7 @@ describe("customChordProgressions", () => {
     ).toBeUndefined();
   });
 
-  it("creates chord changes on counted beats and preserves the complete bar", () => {
+  it("creates chord changes at grid positions and preserves the complete bar", () => {
     const wholeBar = {
       chords: [
         {
@@ -239,9 +239,9 @@ describe("customChordProgressions", () => {
         },
       ],
     };
-    const beatThree = selectCustomProgressionBarBeat(wholeBar, 4, 2);
+    const positionThree = selectCustomProgressionBarPosition(wholeBar, 4, 2);
 
-    expect(beatThree).toEqual({
+    expect(positionThree).toEqual({
       bar: {
         chords: [
           { degree: "1", chordCollectionKey: "major", durationInBars: 0.5 },
@@ -252,20 +252,21 @@ describe("customChordProgressions", () => {
       inserted: true,
     });
 
-    const beatFour =
-      beatThree && selectCustomProgressionBarBeat(beatThree.bar, 4, 3);
-    expect(beatFour?.bar.chords.map((chord) => chord.durationInBars)).toEqual([
-      0.5, 0.25, 0.25,
-    ]);
+    const positionFour =
+      positionThree &&
+      selectCustomProgressionBarPosition(positionThree.bar, 4, 3);
+    expect(
+      positionFour?.bar.chords.map((chord) => chord.durationInBars),
+    ).toEqual([0.5, 0.25, 0.25]);
 
     const removed =
-      beatFour && removeCustomProgressionDraftChord(beatFour.bar, 1);
+      positionFour && removeCustomProgressionDraftChord(positionFour.bar, 1);
     expect(removed?.chords.map((chord) => chord.durationInBars)).toEqual([
       0.75, 0.25,
     ]);
   });
 
-  it("offers only beat grids that preserve every chord boundary", () => {
+  it("offers only position counts that preserve every chord boundary", () => {
     const bars = [
       {
         chords: [
@@ -283,7 +284,7 @@ describe("customChordProgressions", () => {
       },
     ];
 
-    expect(getCustomProgressionCompatibleBeatCounts(bars)).toEqual([
+    expect(getCustomProgressionCompatiblePositionCounts(bars)).toEqual([
       2, 4, 6, 8,
     ]);
   });

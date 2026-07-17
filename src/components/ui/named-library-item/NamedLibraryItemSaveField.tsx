@@ -1,7 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { useId } from "react";
+import { type Ref, useId } from "react";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import fieldStyles from "@/components/ui/control-field/ControlField.module.css";
 import { Text } from "@/components/ui/typography/Text";
@@ -13,12 +13,14 @@ interface NamedLibraryItemSaveFieldProps {
   saveAriaLabel: string;
   value: string;
   errorMessage?: string;
+  inputRef?: Ref<HTMLInputElement>;
   onChange: (value: string) => void;
 }
 
 export function NamedLibraryItemSaveField({
   disabled,
   errorMessage,
+  inputRef,
   label,
   saveAriaLabel,
   value,
@@ -39,6 +41,7 @@ export function NamedLibraryItemSaveField({
           autoComplete="off"
           className={`${fieldStyles.surface} ${fieldStyles.text} ${styles.input}`}
           id={inputId}
+          ref={inputRef}
           placeholder={label}
           spellCheck={false}
           value={value}

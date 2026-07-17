@@ -1,11 +1,9 @@
 "use client";
 
-import { type SyntheticEvent, useEffect, useId, useRef, useState } from "react";
-import { Check, Pencil } from "lucide-react";
-import { IconButton } from "@/components/ui/buttons/IconButton";
-import fieldStyles from "@/components/ui/control-field/ControlField.module.css";
+import { type SyntheticEvent, useEffect, useRef, useState } from "react";
+import { Pencil } from "lucide-react";
 import { DisclosureListActionItem } from "@/components/ui/disclosure-list/DisclosureList";
-import { Text } from "@/components/ui/typography/Text";
+import { NamedLibraryItemSaveField } from "@/components/ui/named-library-item/NamedLibraryItemSaveField";
 import styles from "./InlineRenameActionItem.module.css";
 
 interface InlineRenameActionItemProps {
@@ -31,8 +29,6 @@ export function InlineRenameActionItem({
   shouldFocusInput = false,
   value,
 }: InlineRenameActionItemProps) {
-  const nameInputId = useId();
-  const nameMessageId = useId();
   const nameInputRef = useRef<HTMLInputElement>(null);
   const hasFocusedInitialNameInput = useRef(false);
   const [draft, setDraft] = useState({ savedValue: value, value });
@@ -107,49 +103,17 @@ export function InlineRenameActionItem({
       onToggle={onToggle}
     >
       <form className={styles.nameForm} onSubmit={handleRename}>
-        <div className={styles.nameField}>
-          <label className={styles.nameLabel} htmlFor={nameInputId}>
-            {fieldLabel}
-          </label>
-          <div className={styles.nameControl}>
-            <input
-              aria-describedby={renameMessage ? nameMessageId : undefined}
-              aria-invalid={isNameEmpty || hasNameConflict}
-              autoComplete="off"
-              className={`${fieldStyles.surface} ${fieldStyles.text} ${styles.nameInput}`}
-              id={nameInputId}
-              ref={nameInputRef}
-              spellCheck={false}
-              value={draftValue}
-              onChange={(event) =>
-                setDraft({
-                  savedValue: value,
-                  value: event.currentTarget.value,
-                })
-              }
-            />
-            <IconButton
-              aria-label={`Save ${fieldLabel.toLowerCase()}`}
-              disabled={!canRename}
-              icon={<Check />}
-              shouldYield={false}
-              size="lg"
-              type="submit"
-            />
-          </div>
-          {renameMessage ? (
-            <Text
-              as="span"
-              className={styles.nameMessage}
-              data-tone="danger"
-              id={nameMessageId}
-              size="xs"
-              variant="muted"
-            >
-              {renameMessage}
-            </Text>
-          ) : null}
-        </div>
+        <NamedLibraryItemSaveField
+          disabled={!canRename}
+          errorMessage={renameMessage || undefined}
+          inputRef={nameInputRef}
+          label={fieldLabel}
+          saveAriaLabel={`Save ${fieldLabel.toLowerCase()}`}
+          value={draftValue}
+          onChange={(nextValue) =>
+            setDraft({ savedValue: value, value: nextValue })
+          }
+        />
       </form>
     </DisclosureListActionItem>
   );

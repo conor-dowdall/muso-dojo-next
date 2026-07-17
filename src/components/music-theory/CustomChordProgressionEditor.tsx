@@ -32,17 +32,17 @@ import { NamedLibraryItemSaveField } from "@/components/ui/named-library-item/Na
 import { ChordQualityPicker } from "./ChordQualityPicker";
 import {
   CUSTOM_CHORD_PROGRESSION_MAX_BARS,
-  CUSTOM_CHORD_PROGRESSION_MAX_BEATS_PER_BAR,
   CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR,
-  CUSTOM_CHORD_PROGRESSION_MIN_BEATS_PER_BAR,
+  CUSTOM_CHORD_PROGRESSION_MAX_GRID_POSITIONS,
+  CUSTOM_CHORD_PROGRESSION_MIN_GRID_POSITIONS,
   createCustomProgressionBars,
   createCustomProgressionFromBars,
   customChordProgressionFlatDegrees,
   customChordProgressionSharpDegrees,
-  getCustomProgressionCompatibleBeatCounts,
+  getCustomProgressionCompatiblePositionCounts,
   normalizeCustomChordProgressionName,
   removeCustomProgressionDraftChord,
-  selectCustomProgressionBarBeat,
+  selectCustomProgressionBarPosition,
   type CustomChordProgressionDraftBar,
 } from "@/utils/music-theory/customChordProgressions";
 import styles from "./CustomChordProgressionEditor.module.css";
@@ -63,7 +63,7 @@ interface ExistingSelectedChord {
 
 interface NewSelectedChord {
   barIndex: number;
-  beatIndex: number;
+  positionIndex: number;
   kind: "new";
   draft: {
     chordCollectionKey?: ChordCollectionKey;
@@ -107,7 +107,7 @@ function getInitialBars(progression: ChordProgression | undefined) {
 function applySelectedChordDraft(
   bars: readonly CustomChordProgressionDraftBar[],
   selectedChord: SelectedChord | null,
-  beatCount: number,
+  positionCount: number,
 ) {
   const clonedBars = bars.map((bar, barIndex) => ({
     chords: bar.chords.map((chord, chordIndex) =>
@@ -130,10 +130,10 @@ function applySelectedChordDraft(
   const bar = clonedBars[selectedChord.barIndex];
   if (!bar) return clonedBars;
 
-  const selection = selectCustomProgressionBarBeat(
+  const selection = selectCustomProgressionBarPosition(
     bar,
-    beatCount,
-    selectedChord.beatIndex,
+    positionCount,
+    selectedChord.positionIndex,
   );
   if (!selection?.inserted) return clonedBars;
 
@@ -208,24 +208,29 @@ function getDegreeChromaticIndex(degree: ChordProgressionDegree) {
     : customChordProgressionSharpDegrees.indexOf(degree);
 }
 
-function getInitialBeatCount(bars: readonly CustomChordProgressionDraftBar[]) {
-  const compatibleBeatCounts = getCustomProgressionCompatibleBeatCounts(bars);
+function getInitialPositionCount(
+  bars: readonly CustomChordProgressionDraftBar[],
+) {
+  const compatiblePositionCounts =
+    getCustomProgressionCompatiblePositionCounts(bars);
 
-  return compatibleBeatCounts.includes(4) ? 4 : (compatibleBeatCounts[0] ?? 4);
+  return compatiblePositionCounts.includes(4)
+    ? 4
+    : (compatiblePositionCounts[0] ?? 4);
 }
 
-function formatBeatCount(beats: number) {
-  return `${beats} ${beats === 1 ? "Beat" : "Beats"}`;
+function formatPositionCount(positionCount: number) {
+  return `${positionCount} per Bar`;
 }
 
-function getChordIndexAtBeat(
-  chordStartBeatIndexes: readonly number[],
-  beatIndex: number,
+function getChordIndexAtPosition(
+  chordStartPositionIndexes: readonly number[],
+  positionIndex: number,
 ) {
   let chordIndex = 0;
 
-  for (let index = 1; index < chordStartBeatIndexes.length; index += 1) {
-    if (chordStartBeatIndexes[index]! > beatIndex) break;
+  for (let index = 1; index < chordStartPositionIndexes.length; index += 1) {
+    if (chordStartPositionIndexes[index]! > positionIndex) break;
     chordIndex = index;
   }
 
@@ -241,19 +246,26 @@ export function CustomChordProgressionEditor({
   const [initialBars] = useState(() => getInitialBars(initialProgression));
   const [name, setName] = useState(initialName);
   const [bars, setBars] = useState(() => cloneBars(initialBars));
-  const [beatCount, setBeatCount] = useState(() =>
-    getInitialBeatCount(initialBars),
+  const [positionCount, setPositionCount] = useState(() =>
+    getInitialPositionCount(initialBars),
   );
-  const [isBeatCountOpen, setIsBeatCountOpen] = useState(false);
+  const [isPositionCountOpen, setIsPositionCountOpen] = useState(false);
   const [selectedChord, setSelectedChord] = useState<SelectedChord | null>(
     null,
   );
   const [degreeSpelling, setDegreeSpelling] = useState<DegreeSpelling>("flat");
   const submissionPendingRef = useRef(false);
   const [submissionPending, setSubmissionPending] = useState(false);
+  const savableBars = useMemo(
+    () =>
+      selectedChordIsComplete(selectedChord)
+        ? applySelectedChordDraft(bars, selectedChord, positionCount)
+        : bars,
+    [bars, positionCount, selectedChord],
+  );
   const progression = useMemo(
-    () => createCustomProgressionFromBars(bars),
-    [bars],
+    () => createCustomProgressionFromBars(savableBars),
+    [savableBars],
   );
   const normalizedName = normalizeCustomChordProgressionName(name);
   const normalizedInitialName =
@@ -262,25 +274,24 @@ export function CustomChordProgressionEditor({
     normalizedName !== undefined && !isNameAvailable(normalizedName);
   const hasChanges =
     normalizedName !== normalizedInitialName ||
-    !barsAreEqual(bars, initialBars);
+    !barsAreEqual(savableBars, initialBars);
   const canSave =
     normalizedName !== undefined &&
     !hasNameConflict &&
     progression !== undefined &&
-    selectedChord === null &&
     (initialProgression === undefined || hasChanges);
-  const compatibleBeatCounts = useMemo(
-    () => getCustomProgressionCompatibleBeatCounts(bars),
+  const compatiblePositionCounts = useMemo(
+    () => getCustomProgressionCompatiblePositionCounts(bars),
     [bars],
   );
-  const beatChoices = Array.from(
+  const positionChoices = Array.from(
     {
       length:
-        CUSTOM_CHORD_PROGRESSION_MAX_BEATS_PER_BAR -
-        CUSTOM_CHORD_PROGRESSION_MIN_BEATS_PER_BAR +
+        CUSTOM_CHORD_PROGRESSION_MAX_GRID_POSITIONS -
+        CUSTOM_CHORD_PROGRESSION_MIN_GRID_POSITIONS +
         1,
     },
-    (_, index) => CUSTOM_CHORD_PROGRESSION_MIN_BEATS_PER_BAR + index,
+    (_, index) => CUSTOM_CHORD_PROGRESSION_MIN_GRID_POSITIONS + index,
   );
 
   const addBar = () => {
@@ -342,10 +353,10 @@ export function CustomChordProgressionEditor({
     const bar = bars[selectedChord.barIndex];
     if (!bar) return false;
 
-    const selection = selectCustomProgressionBarBeat(
+    const selection = selectCustomProgressionBarPosition(
       bar,
-      beatCount,
-      selectedChord.beatIndex,
+      positionCount,
+      selectedChord.positionIndex,
     );
     if (!selection?.inserted) return false;
 
@@ -393,18 +404,18 @@ export function CustomChordProgressionEditor({
     if (!selectedChordIsComplete(selectedChord)) return;
 
     setBars((current) =>
-      applySelectedChordDraft(current, selectedChord, beatCount),
+      applySelectedChordDraft(current, selectedChord, positionCount),
     );
     setSelectedChord(null);
   };
 
-  const selectBeat = (barIndex: number, beatIndex: number) => {
+  const selectPosition = (barIndex: number, positionIndex: number) => {
     if (
       selectedChord?.kind === "new" &&
       selectedChord.barIndex === barIndex &&
-      selectedChord.beatIndex === beatIndex
+      selectedChord.positionIndex === positionIndex
     ) {
-      setBars(applySelectedChordDraft(bars, selectedChord, beatCount));
+      setBars(applySelectedChordDraft(bars, selectedChord, positionCount));
       setSelectedChord(null);
       return;
     }
@@ -412,15 +423,19 @@ export function CustomChordProgressionEditor({
     const committedBars = applySelectedChordDraft(
       bars,
       selectedChord,
-      beatCount,
+      positionCount,
     );
     const bar = committedBars[barIndex];
     if (!bar) return;
 
-    const selection = selectCustomProgressionBarBeat(bar, beatCount, beatIndex);
+    const selection = selectCustomProgressionBarPosition(
+      bar,
+      positionCount,
+      positionIndex,
+    );
     if (!selection) return;
 
-    setIsBeatCountOpen(false);
+    setIsPositionCountOpen(false);
 
     if (
       !selection.inserted &&
@@ -437,7 +452,7 @@ export function CustomChordProgressionEditor({
       setBars(committedBars);
       setSelectedChord({
         barIndex,
-        beatIndex,
+        positionIndex,
         draft: {},
         kind: "new",
       });
@@ -506,7 +521,7 @@ export function CustomChordProgressionEditor({
   const removeBar = (barIndex: number) => {
     setBars((current) => current.filter((_, index) => index !== barIndex));
     setSelectedChord(null);
-    if (bars.length === 1) setIsBeatCountOpen(false);
+    if (bars.length === 1) setIsPositionCountOpen(false);
   };
 
   const handleSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
@@ -551,38 +566,40 @@ export function CustomChordProgressionEditor({
         <>
           <DisclosureList>
             <DisclosureListItem
-              ariaLabel={`Beats per bar. Current: ${formatBeatCount(beatCount)}`}
+              ariaLabel={`Chord positions per bar. Current: ${positionCount}`}
               disabled={selectedChord !== null}
-              isOpen={isBeatCountOpen}
-              label="Beats per Bar"
+              isOpen={isPositionCountOpen}
+              label="Chord Positions"
               panelVariant="menu"
-              preview={formatBeatCount(beatCount)}
-              onToggle={() => setIsBeatCountOpen((current) => !current)}
+              preview={formatPositionCount(positionCount)}
+              onToggle={() => setIsPositionCountOpen((current) => !current)}
             >
               <div
-                aria-label="Beats per bar"
+                aria-label="Chord positions per bar"
                 className={`${choiceGridStyles.tokenGrid} ${choiceGridStyles.numericTokenGrid}`}
                 role="group"
               >
-                {beatChoices.map((beats) => {
-                  const isAvailable = compatibleBeatCounts.includes(beats);
+                {positionChoices.map((candidatePositionCount) => {
+                  const isAvailable = compatiblePositionCounts.includes(
+                    candidatePositionCount,
+                  );
 
                   return (
                     <OptionButton
-                      key={beats}
+                      key={candidatePositionCount}
                       aria-label={
                         isAvailable
-                          ? `Use ${formatBeatCount(beats).toLocaleLowerCase()}`
-                          : `${formatBeatCount(beats)}. Not compatible with the current chord changes`
+                          ? `Use ${candidatePositionCount} chord positions per bar`
+                          : `${candidatePositionCount} chord positions per bar. Not compatible with the current chord changes`
                       }
                       className={`${choiceGridStyles.tokenChoice} ${choiceGridStyles.squareTokenChoice}`}
                       disabled={!isAvailable}
-                      label={beats}
+                      label={candidatePositionCount}
                       presentation="tile"
-                      selected={beatCount === beats}
+                      selected={positionCount === candidatePositionCount}
                       onClick={() => {
-                        setBeatCount(beats);
-                        setIsBeatCountOpen(false);
+                        setPositionCount(candidatePositionCount);
+                        setIsPositionCountOpen(false);
                       }}
                     />
                   );
@@ -594,15 +611,15 @@ export function CustomChordProgressionEditor({
           <div className={styles.barList}>
             {bars.map((bar, barIndex) => {
               let elapsedDurationInBars = 0;
-              const chordStartBeatIndexes = bar.chords.map((chord) => {
-                const startBeatIndex = Math.round(
-                  elapsedDurationInBars * beatCount,
+              const chordStartPositionIndexes = bar.chords.map((chord) => {
+                const startPositionIndex = Math.round(
+                  elapsedDurationInBars * positionCount,
                 );
                 elapsedDurationInBars += chord.durationInBars;
-                return startBeatIndex;
+                return startPositionIndex;
               });
               const barGridStyle = {
-                "--custom-progression-beats": beatCount,
+                "--custom-progression-grid-columns": positionCount,
               } as CSSProperties;
 
               return (
@@ -671,66 +688,70 @@ export function CustomChordProgressionEditor({
 
                   <div
                     aria-label={`Chords in bar ${barIndex + 1}`}
-                    className={styles.chordBeatGrid}
+                    className={styles.chordPositionGrid}
                     role="group"
                     style={barGridStyle}
                   >
-                    {beatChoices.slice(0, beatCount).map((_, beatIndex) => {
-                      const chordStartIndex =
-                        chordStartBeatIndexes.indexOf(beatIndex);
-                      const isChordStart = chordStartIndex >= 0;
-                      const chordIndex = getChordIndexAtBeat(
-                        chordStartBeatIndexes,
-                        beatIndex,
-                      );
-                      const chord = bar.chords[chordIndex]!;
-                      const existingSelected =
-                        selectedChord?.kind === "existing" &&
-                        selectedChord.barIndex === barIndex &&
-                        selectedChord.chordIndex === chordIndex;
-                      const pendingSelected =
-                        selectedChord?.kind === "new" &&
-                        selectedChord.barIndex === barIndex &&
-                        selectedChord.beatIndex === beatIndex;
-                      const displayChord = existingSelected
-                        ? selectedChord.draft
-                        : chord;
-                      const romanSymbol = getChordRomanSymbol(
-                        displayChord.degree,
-                        displayChord.chordCollectionKey,
-                      );
+                    {positionChoices
+                      .slice(0, positionCount)
+                      .map((_, positionIndex) => {
+                        const chordStartIndex =
+                          chordStartPositionIndexes.indexOf(positionIndex);
+                        const isChordStart = chordStartIndex >= 0;
+                        const chordIndex = getChordIndexAtPosition(
+                          chordStartPositionIndexes,
+                          positionIndex,
+                        );
+                        const chord = bar.chords[chordIndex]!;
+                        const existingSelected =
+                          selectedChord?.kind === "existing" &&
+                          selectedChord.barIndex === barIndex &&
+                          selectedChord.chordIndex === chordIndex;
+                        const pendingSelected =
+                          selectedChord?.kind === "new" &&
+                          selectedChord.barIndex === barIndex &&
+                          selectedChord.positionIndex === positionIndex;
+                        const displayChord = existingSelected
+                          ? selectedChord.draft
+                          : chord;
+                        const romanSymbol = getChordRomanSymbol(
+                          displayChord.degree,
+                          displayChord.chordCollectionKey,
+                        );
 
-                      return (
-                        <OptionButton
-                          key={beatIndex}
-                          aria-label={
-                            isChordStart
-                              ? `Edit ${romanSymbol} on beat ${beatIndex + 1} in bar ${barIndex + 1}`
-                              : `Choose a chord for beat ${beatIndex + 1} in bar ${barIndex + 1}`
-                          }
-                          className={styles.chordBeatButton}
-                          data-chord-start={isChordStart ? true : undefined}
-                          data-repeat={isChordStart ? undefined : true}
-                          density="compact"
-                          disabled={
-                            !isChordStart &&
-                            bar.chords.length >=
-                              CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR
-                          }
-                          label={isChordStart ? romanSymbol : "/"}
-                          labelProps={{
-                            titleSize: "lg",
-                            titleWeight: "semibold",
-                          }}
-                          presentation="tile"
-                          selected={
-                            pendingSelected ||
-                            (isChordStart ? existingSelected : false)
-                          }
-                          onClick={() => selectBeat(barIndex, beatIndex)}
-                        />
-                      );
-                    })}
+                        return (
+                          <OptionButton
+                            key={positionIndex}
+                            aria-label={
+                              isChordStart
+                                ? `Edit ${romanSymbol} at position ${positionIndex + 1} in bar ${barIndex + 1}`
+                                : `Choose a chord for position ${positionIndex + 1} in bar ${barIndex + 1}`
+                            }
+                            className={styles.chordPositionButton}
+                            data-chord-start={isChordStart ? true : undefined}
+                            data-repeat={isChordStart ? undefined : true}
+                            density="compact"
+                            disabled={
+                              !isChordStart &&
+                              bar.chords.length >=
+                                CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR
+                            }
+                            label={isChordStart ? romanSymbol : "/"}
+                            labelProps={{
+                              titleSize: "lg",
+                              titleWeight: "semibold",
+                            }}
+                            presentation="tile"
+                            selected={
+                              pendingSelected ||
+                              (isChordStart ? existingSelected : false)
+                            }
+                            onClick={() =>
+                              selectPosition(barIndex, positionIndex)
+                            }
+                          />
+                        );
+                      })}
                   </div>
 
                   {selectedChord?.barIndex === barIndex
@@ -745,7 +766,7 @@ export function CustomChordProgressionEditor({
                         const selectedChordKey =
                           selectedChord.kind === "existing"
                             ? `chord-${selectedChord.chordIndex}`
-                            : `beat-${selectedChord.beatIndex}`;
+                            : `position-${selectedChord.positionIndex}`;
 
                         return (
                           <div className={styles.chordEditor}>
@@ -786,16 +807,17 @@ export function CustomChordProgressionEditor({
                               />
                             </div>
 
-                            <DisclosureListPanelActions align="stretch">
-                              {selectedChord.kind === "existing" &&
-                              bar.chords.length > 1 ? (
-                                <Button
-                                  label="Remove Chord"
-                                  size="sm"
-                                  tone="danger"
-                                  onClick={removeSelectedChord}
-                                />
-                              ) : null}
+                            <DisclosureListPanelActions>
+                              <Button
+                                disabled={
+                                  selectedChord.kind !== "existing" ||
+                                  bar.chords.length <= 1
+                                }
+                                label="Remove Chord"
+                                size="sm"
+                                tone="danger"
+                                onClick={removeSelectedChord}
+                              />
                               <Button
                                 disabled={
                                   !selectedChordIsComplete(selectedChord)

@@ -299,6 +299,11 @@
 .button:disabled:not([data-selected="true"]) {
   --button-border-current-color: var(--button-unavailable-border-color);
   --button-border-extra-width: var(--border-width-none);
+  --button-outline-background: color-mix(
+    in srgb,
+    var(--color-border-subtle) 18%,
+    var(--color-control-outline-background)
+  );
 
   color: var(--color-text-muted);
 }

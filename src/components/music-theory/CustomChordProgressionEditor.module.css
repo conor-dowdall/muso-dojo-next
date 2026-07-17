@@ -42,16 +42,16 @@
   white-space: nowrap;
 }
 
-.chordBeatGrid {
+.chordPositionGrid {
   display: grid;
   min-inline-size: 0;
   grid-template-columns: repeat(
-    var(--custom-progression-beats),
+    var(--custom-progression-grid-columns),
     minmax(0, 1fr)
   );
 }
 
-.chordBeatButton {
+.chordPositionButton {
   --button-border-color: transparent;
   --button-outline-background: transparent;
   --button-radius: 0;
@@ -60,11 +60,11 @@
   min-inline-size: 0;
 }
 
-.chordBeatButton[data-repeat="true"] {
+.chordPositionButton[data-repeat="true"] {
   color: var(--color-text-muted);
 }
 
-.chordBeatButton:not(:last-child):not([data-selected="true"]) {
+.chordPositionButton:not(:last-child):not([data-selected="true"]) {
   border-inline-end-color: var(--color-border-subtle);
 }
 

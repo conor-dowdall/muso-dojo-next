@@ -17,10 +17,10 @@ import {
 } from "@/utils/session/normalizationPrimitives";
 
 export const CUSTOM_CHORD_PROGRESSION_MAX_BARS = 32;
-export const CUSTOM_CHORD_PROGRESSION_MIN_BEATS_PER_BAR = 1;
-export const CUSTOM_CHORD_PROGRESSION_MAX_BEATS_PER_BAR = 8;
+export const CUSTOM_CHORD_PROGRESSION_MIN_GRID_POSITIONS = 1;
+export const CUSTOM_CHORD_PROGRESSION_MAX_GRID_POSITIONS = 8;
 export const CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR =
-  CUSTOM_CHORD_PROGRESSION_MAX_BEATS_PER_BAR;
+  CUSTOM_CHORD_PROGRESSION_MAX_GRID_POSITIONS;
 
 export const customChordProgressionFlatDegrees = noteLabelCollections
   .intervalsFlat.labels as readonly ChordProgressionDegree[];
@@ -47,57 +47,57 @@ function valuesAreClose(left: number, right: number) {
   return Math.abs(left - right) <= DURATION_EPSILON;
 }
 
-function durationFitsBeatGrid(durationInBars: number, beats: number) {
+function durationFitsGrid(durationInBars: number, positionCount: number) {
   return valuesAreClose(
-    durationInBars * beats,
-    Math.round(durationInBars * beats),
+    durationInBars * positionCount,
+    Math.round(durationInBars * positionCount),
   );
 }
 
-export function getCustomProgressionCompatibleBeatCounts(
+export function getCustomProgressionCompatiblePositionCounts(
   bars: readonly CustomChordProgressionDraftBar[],
 ) {
   return Array.from(
     {
       length:
-        CUSTOM_CHORD_PROGRESSION_MAX_BEATS_PER_BAR -
-        CUSTOM_CHORD_PROGRESSION_MIN_BEATS_PER_BAR +
+        CUSTOM_CHORD_PROGRESSION_MAX_GRID_POSITIONS -
+        CUSTOM_CHORD_PROGRESSION_MIN_GRID_POSITIONS +
         1,
     },
-    (_, index) => CUSTOM_CHORD_PROGRESSION_MIN_BEATS_PER_BAR + index,
-  ).filter((beats) =>
+    (_, index) => CUSTOM_CHORD_PROGRESSION_MIN_GRID_POSITIONS + index,
+  ).filter((positionCount) =>
     bars.every((bar) =>
       bar.chords.every((chord) =>
-        durationFitsBeatGrid(chord.durationInBars, beats),
+        durationFitsGrid(chord.durationInBars, positionCount),
       ),
     ),
   );
 }
 
-export interface CustomProgressionBarBeatSelection {
+export interface CustomProgressionBarPositionSelection {
   bar: CustomChordProgressionDraftBar;
   chordIndex: number;
   inserted: boolean;
 }
 
-export function selectCustomProgressionBarBeat(
+export function selectCustomProgressionBarPosition(
   bar: CustomChordProgressionDraftBar,
-  beats: number,
-  beatIndex: number,
-): CustomProgressionBarBeatSelection | undefined {
+  positionCount: number,
+  positionIndex: number,
+): CustomProgressionBarPositionSelection | undefined {
   if (
-    !Number.isInteger(beats) ||
-    beats < CUSTOM_CHORD_PROGRESSION_MIN_BEATS_PER_BAR ||
-    beats > CUSTOM_CHORD_PROGRESSION_MAX_BEATS_PER_BAR ||
-    !Number.isInteger(beatIndex) ||
-    beatIndex < 0 ||
-    beatIndex >= beats ||
-    !getCustomProgressionCompatibleBeatCounts([bar]).includes(beats)
+    !Number.isInteger(positionCount) ||
+    positionCount < CUSTOM_CHORD_PROGRESSION_MIN_GRID_POSITIONS ||
+    positionCount > CUSTOM_CHORD_PROGRESSION_MAX_GRID_POSITIONS ||
+    !Number.isInteger(positionIndex) ||
+    positionIndex < 0 ||
+    positionIndex >= positionCount ||
+    !getCustomProgressionCompatiblePositionCounts([bar]).includes(positionCount)
   ) {
     return undefined;
   }
 
-  const positionInBars = beatIndex / beats;
+  const positionInBars = positionIndex / positionCount;
   let chordStartInBars = 0;
 
   for (let chordIndex = 0; chordIndex < bar.chords.length; chordIndex += 1) {
@@ -223,7 +223,7 @@ function progressionHasValidBars(chords: readonly ChordProgressionChord[]) {
     if (valuesAreClose(currentBarDuration, 1)) {
       if (
         currentBar.length > CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR ||
-        getCustomProgressionCompatibleBeatCounts([{ chords: currentBar }])
+        getCustomProgressionCompatiblePositionCounts([{ chords: currentBar }])
           .length === 0
       ) {
         return false;
@@ -297,7 +297,7 @@ export function createCustomProgressionBars(
       if (valuesAreClose(currentBarDuration, 1)) {
         if (
           currentBar.length > CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR ||
-          getCustomProgressionCompatibleBeatCounts([{ chords: currentBar }])
+          getCustomProgressionCompatiblePositionCounts([{ chords: currentBar }])
             .length === 0
         ) {
           return undefined;
