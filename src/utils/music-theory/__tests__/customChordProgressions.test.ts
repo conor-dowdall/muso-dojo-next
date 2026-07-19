@@ -287,7 +287,7 @@ describe("customChordProgressions", () => {
     ]);
   });
 
-  it("normalizes unique saved progression names and preserves valid analysis", () => {
+  it("normalizes unique saved progression names with derived-only analysis", () => {
     const progression = {
       chords: [
         {
@@ -314,7 +314,6 @@ describe("customChordProgressions", () => {
               degree: "5",
               chordCollectionKey: "dominant7",
               durationInBars: 1,
-              analysis: { romanSymbol: "V7/ii" },
             },
           ],
         },

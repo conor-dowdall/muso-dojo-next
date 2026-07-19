@@ -62,6 +62,21 @@ describe("rhythmConfig", () => {
     ).toStrictEqual(DEFAULT_RHYTHM_RECIPE);
   });
 
+  it("normalizes legacy subdivisions before applying Rhythm policy", () => {
+    expect(
+      normalizeRhythmRecipe({
+        beats: 4,
+        groove: "kit",
+        grouping: "auto",
+        timekeeper: {
+          feel: "straight",
+          sound: "hat",
+          subdivision: "sixteenth",
+        },
+      }).timekeeper.subdivision,
+    ).toBe("4-per-beat");
+  });
+
   it("normalizes timekeeper modifiers to canonical subdivisions", () => {
     expect(
       normalizeRhythmRecipe({

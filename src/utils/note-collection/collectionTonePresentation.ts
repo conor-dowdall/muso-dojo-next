@@ -8,20 +8,20 @@ import {
 const SEMITONES_PER_OCTAVE = 12;
 
 export interface CollectionTonePresentation {
-  collectionIndex: number;
-  columnIndex: number;
-  intervalDegree?: number;
-  intervalLabel: string;
-  octave: number;
-  semitones: number;
+  readonly collectionIndex: number;
+  readonly columnIndex: number;
+  readonly intervalDegree?: number;
+  readonly intervalLabel: string;
+  readonly octave: number;
+  readonly semitones: number;
 }
 
 export interface CollectionTonePresentationMetadata {
-  columnCount: number;
-  degreeSignature?: string;
-  isFiniteVoicing: boolean;
-  supportsOctaveRangeEditing: boolean;
-  tones: readonly CollectionTonePresentation[];
+  readonly columnCount: number;
+  readonly degreeSignature?: string;
+  readonly isFiniteVoicing: boolean;
+  readonly supportsOctaveRangeEditing: boolean;
+  readonly tones: readonly CollectionTonePresentation[];
 }
 
 const presentationMetadataByCollectionKey = new Map<
@@ -47,22 +47,26 @@ export function getCollectionTonePresentationMetadata(
   }
 
   const sequence = noteCollection.getToneSequence(collectionKey);
-  const tones = sequence.tones.map((tone): CollectionTonePresentation => ({
-    collectionIndex: tone.collectionIndex,
-    columnIndex: tone.pitchClassIndex,
-    intervalDegree: tone.intervalDegree,
-    intervalLabel: tone.interval,
-    octave: tone.octaveOffset,
-    semitones: tone.semitones,
-  }));
+  const tones = Object.freeze(
+    sequence.tones.map((tone): CollectionTonePresentation =>
+      Object.freeze({
+        collectionIndex: tone.collectionIndex,
+        columnIndex: tone.pitchClassIndex,
+        intervalDegree: tone.intervalDegree,
+        intervalLabel: tone.interval,
+        octave: tone.octaveOffset,
+        semitones: tone.semitones,
+      }),
+    ),
+  );
 
-  const metadata = {
+  const metadata: CollectionTonePresentationMetadata = Object.freeze({
     columnCount: sequence.pitchClasses.length,
     degreeSignature: getDegreeSignature(tones),
     isFiniteVoicing: sequence.hasCompoundIntervals,
     supportsOctaveRangeEditing: true,
     tones,
-  };
+  });
 
   presentationMetadataByCollectionKey.set(collectionKey, metadata);
   return metadata;

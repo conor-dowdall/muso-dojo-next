@@ -185,6 +185,14 @@ function progressionHasValidBars(progression: ChordProgression) {
   );
 }
 
+function normalizeCustomChordProgressionChord({
+  chordCollectionKey,
+  degree,
+  durationInBars,
+}: ChordProgressionChord): ChordProgressionChord {
+  return { chordCollectionKey, degree, durationInBars };
+}
+
 export function createCustomProgressionFromBars(
   bars: readonly CustomChordProgressionDraftBar[],
 ): ChordProgression | undefined {
@@ -247,18 +255,24 @@ export function normalizeCustomChordProgression(
     return undefined;
   }
 
-  const { chords } = result.value;
+  const [firstChord, ...remainingChords] = result.value.chords;
+  const progression = {
+    chords: [
+      normalizeCustomChordProgressionChord(firstChord),
+      ...remainingChords.map(normalizeCustomChordProgressionChord),
+    ],
+  } satisfies ChordProgression;
 
   if (
-    !chords.every((chord) =>
+    !progression.chords.every((chord) =>
       isCustomChordProgressionChordCollectionKey(chord.chordCollectionKey),
     ) ||
-    !progressionHasValidBars(result.value)
+    !progressionHasValidBars(progression)
   ) {
     return undefined;
   }
 
-  return result.value;
+  return progression;
 }
 
 export function normalizeCustomChordProgressionName(value: unknown) {

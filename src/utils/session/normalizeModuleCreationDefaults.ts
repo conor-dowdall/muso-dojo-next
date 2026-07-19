@@ -156,13 +156,9 @@ export function normalizeFretboardCreationDefault(
   const tuning = normalizeCustomTuningNotes(value.tuning);
   const tuningKey = tuning
     ? undefined
-    : (isStringInstrumentTuningKeyForInstrument(
-          instrument,
-          value.tuningKey,
-        )
+    : ((isStringInstrumentTuningKeyForInstrument(instrument, value.tuningKey)
         ? value.tuningKey
-        : undefined) ??
-      stringInstruments[instrument].defaultTuning;
+        : undefined) ?? stringInstruments[instrument].defaultTuning);
   const tuningName = tuning
     ? normalizeCustomTuningName(value.tuningName)
     : undefined;

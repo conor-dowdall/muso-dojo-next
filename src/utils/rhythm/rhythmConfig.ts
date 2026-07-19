@@ -14,7 +14,6 @@ import {
   rhythmGrooveSupportsBeatCount,
   rhythmTimekeeperFeelOptions,
   rhythmTimekeeperSoundOptions,
-  rhythmTimekeeperSubdivisionOptions,
   type PercussionSampleId,
   type RhythmGroove,
   type RhythmGrouping,
@@ -29,6 +28,7 @@ import {
   type RhythmTimekeeperSubdivision,
 } from "@/data/rhythmPresets";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
+import { normalizeBeatSubdivisionKey } from "@/utils/rhythm/beatSubdivision";
 
 export const DEFAULT_RHYTHM_RECIPE_SELECTION = {
   recipe: DEFAULT_RHYTHM_RECIPE,
@@ -70,11 +70,6 @@ function createOptionIdRecord<T extends string>(options: readonly { id: T }[]) {
 const rhythmTimekeeperSoundIds = createOptionIdRecord<RhythmTimekeeperSound>(
   rhythmTimekeeperSoundOptions,
 );
-
-const rhythmTimekeeperSubdivisionIds =
-  createOptionIdRecord<RhythmTimekeeperSubdivision>(
-    rhythmTimekeeperSubdivisionOptions,
-  );
 
 const rhythmTimekeeperFeelIds = createOptionIdRecord<RhythmTimekeeperFeel>(
   rhythmTimekeeperFeelOptions,
@@ -155,11 +150,9 @@ function normalizeRhythmTimekeeperRecipe(
     return DEFAULT_RHYTHM_RECIPE.timekeeper;
   }
 
-  const rawSubdivision = normalizeRecipeField<RhythmTimekeeperSubdivision>(
-    rhythmTimekeeperSubdivisionIds,
-    value.subdivision,
-    DEFAULT_RHYTHM_RECIPE.timekeeper.subdivision,
-  );
+  const rawSubdivision =
+    normalizeBeatSubdivisionKey(value.subdivision) ??
+    DEFAULT_RHYTHM_RECIPE.timekeeper.subdivision;
   const rawFeel = normalizeRecipeField<RhythmTimekeeperFeel>(
     rhythmTimekeeperFeelIds,
     value.feel,

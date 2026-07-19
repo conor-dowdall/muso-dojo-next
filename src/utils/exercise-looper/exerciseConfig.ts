@@ -2,7 +2,6 @@ import { getDefaultAudioPresetId, isAudioPresetId } from "@/audio/presets";
 import {
   beatSubdivisionKeys,
   getBeatSubdivisionStep,
-  isBeatSubdivisionKey,
 } from "@musodojo/music-theory-data";
 import {
   DEFAULT_WOOD_SURFACE_ID,
@@ -22,6 +21,7 @@ import {
   type ExerciseSubdivision,
 } from "@/types/session";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
+import { normalizeBeatSubdivisionKey } from "@/utils/rhythm/beatSubdivision";
 
 export { DEFAULT_EXERCISE_OCTAVE_OFFSET };
 
@@ -91,7 +91,7 @@ export function normalizeExerciseMetronomeEnabled(
 export function normalizeExerciseSubdivision(
   value: unknown,
 ): ExerciseSubdivision | undefined {
-  return isBeatSubdivisionKey(value) ? value : undefined;
+  return normalizeBeatSubdivisionKey(value);
 }
 
 export function normalizeCollectionRangeBoundary(

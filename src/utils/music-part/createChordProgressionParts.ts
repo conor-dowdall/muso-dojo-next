@@ -126,19 +126,9 @@ function createUniqueProgressionPartReferences(
   rootNote: RootNote,
   progression: ChordProgression | ChordProgressionKey,
 ): ProgressionPartReference[] {
-  const resolved = chordProgression.resolve(rootNote, progression);
-  const seen = new Set<string>();
-
-  return resolved.events.flatMap(({ reference }) => {
-    const identity = `${reference.rootNote}:${reference.chordCollectionKey}:${reference.chordName}`;
-
-    if (seen.has(identity)) {
-      return [];
-    }
-
-    seen.add(identity);
-    return [{ reference }];
-  });
+  return chordProgression
+    .getUniqueChordReferences(rootNote, progression)
+    .map((reference) => ({ reference }));
 }
 
 function applyProgressionRhythmBeatCount(

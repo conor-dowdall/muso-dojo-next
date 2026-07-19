@@ -3,9 +3,27 @@ import {
   DEFAULT_EXERCISE_PATTERN,
   getExerciseDegreeOptions,
   normalizeExercisePattern,
+  normalizeExerciseSubdivision,
 } from "@/utils/exercise-looper/exerciseConfig";
 
 describe("exercise pattern configuration", () => {
+  it.each([
+    ["quarter", "1-per-beat"],
+    ["eighth", "2-per-beat"],
+    ["eighth-triplet", "3-per-beat"],
+    ["sixteenth", "4-per-beat"],
+    ["quintuplet", "5-per-beat"],
+    ["sixteenth-triplet", "6-per-beat"],
+    ["septuplet", "7-per-beat"],
+    ["thirty-second", "8-per-beat"],
+  ] as const)("normalizes legacy subdivision %s", (legacy, canonical) => {
+    expect(normalizeExerciseSubdivision(legacy)).toBe(canonical);
+  });
+
+  it("preserves canonical subdivisions", () => {
+    expect(normalizeExerciseSubdivision("6-per-beat")).toBe("6-per-beat");
+  });
+
   it("normalizes orthogonal pattern controls", () => {
     expect(
       normalizeExercisePattern({
