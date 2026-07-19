@@ -152,6 +152,7 @@ export function CustomTuningEditor({
             errorMessage={nameMessage || undefined}
             label="Tuning Name"
             saveAriaLabel="Save tuning"
+            saveLabel="Save"
             value={name}
             onChange={setName}
           />

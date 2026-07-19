@@ -1,17 +1,13 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import {
   Gauge,
   GalleryThumbnails,
   Disc3,
   Ellipsis,
   LibraryBig,
-  MonitorPlay,
-  PanelTop,
-  PanelsTopLeft,
   Plus,
-  Rows3,
   Settings2,
   X,
 } from "lucide-react";
@@ -23,12 +19,9 @@ import {
 } from "@/components/ui/control-header/ControlHeader";
 import { Dialog } from "@/components/ui/dialog/Dialog";
 import { DojoSettingsDialog } from "@/components/dojo-settings/DojoSettingsDialog";
-import { useAppStore } from "@/stores/appStore";
+import { type AppStore, useAppStore } from "@/stores/appStore";
 import {
-  DisclosureList,
   DisclosureListAction,
-  DisclosureListActionItem,
-  DisclosureListChoice,
   DisclosureListGroup,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import {
@@ -42,14 +35,14 @@ import {
 } from "./PracticeBandTransport";
 import {
   isSessionFocusViewMode,
-  requiresSessionParts,
   sessionViewModeConfig,
-  sessionViewModes,
   type SessionViewMode,
   type SessionWorkspaceViewMode,
 } from "./sessionViewMode";
 import styles from "./SessionHeader.module.css";
 import { SessionBackingBandDialog } from "./SessionBackingBandDialog";
+import { SessionViewDialog } from "./SessionViewDialog";
+import { SessionRenameActionItem } from "./SessionRenameActionItem";
 
 interface SessionHeaderProps {
   onOpenAddDialog: () => void;
@@ -62,14 +55,36 @@ interface SessionHeaderProps {
   viewModeTransitionPending?: boolean;
 }
 
-type SessionMenuSection = "view";
+type SessionMenuSection = "rename";
 
-const sessionViewModeIcons = {
-  session: <PanelsTopLeft />,
-  chart: <Rows3 />,
-  live: <MonitorPlay />,
-  clean: <PanelTop />,
-} as const satisfies Record<SessionViewMode, ReactNode>;
+type SessionNameSummary = {
+  id: string;
+  name: string;
+};
+
+function createSessionNameSummariesSelector() {
+  let previousSummaries: readonly SessionNameSummary[] | undefined;
+
+  return (state: AppStore): readonly SessionNameSummary[] => {
+    const sessions = Object.values(state.sessions);
+
+    if (
+      previousSummaries?.length === sessions.length &&
+      sessions.every(
+        (session, index) =>
+          previousSummaries?.[index]?.id === session.id &&
+          previousSummaries[index]?.name === session.name,
+      )
+    ) {
+      return previousSummaries;
+    }
+
+    previousSummaries = sessions.map(({ id, name }) => ({ id, name }));
+    return previousSummaries;
+  };
+}
+
+const selectSessionNameSummaries = createSessionNameSummariesSelector();
 
 export function SessionHeader({
   onOpenAddDialog,
@@ -84,10 +99,13 @@ export function SessionHeader({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openMenuSection, setOpenMenuSection] =
     useState<SessionMenuSection | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
   const [isBackingBandDialogOpen, setIsBackingBandDialogOpen] = useState(false);
   const [dialogKey, setDialogKey] = useState(0);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
+  const sessionNameSummaries = useAppStore(selectSessionNameSummaries);
+  const renameSession = useAppStore((state) => state.renameSession);
   const practiceBandTransport = usePracticeBandTransport(activeSessionId);
   const sessionName = useAppStore(
     (state) =>
@@ -101,6 +119,9 @@ export function SessionHeader({
     activeSessionId ? (state.sessions[activeSessionId]?.parts.length ?? 0) : 0,
   );
   const hasActiveSession = activeSessionId !== null;
+  const activeSessionNameSummary = activeSessionId
+    ? sessionNameSummaries.find((session) => session.id === activeSessionId)
+    : undefined;
   const viewModeLabel = sessionViewModeConfig[viewMode].label;
   const workspaceViewModeLabel = sessionViewModeConfig[workspaceViewMode].label;
   const canUsePartViews = activeSessionPartCount > 0;
@@ -113,21 +134,25 @@ export function SessionHeader({
 
   const openSettingsDialog = () => {
     setIsMenuOpen(false);
+    setOpenMenuSection(null);
     setDialogKey((currentKey) => currentKey + 1);
     setIsSettingsDialogOpen(true);
   };
 
   const closeSettingsDialog = () => setIsSettingsDialogOpen(false);
   const openSessionMenu = () => {
+    setIsViewDialogOpen(false);
     setOpenMenuSection(null);
     setIsMenuOpen(true);
   };
-  const openViewSection = () => {
-    setOpenMenuSection("view");
-    setIsMenuOpen(true);
+  const openViewDialog = () => {
+    setIsMenuOpen(false);
+    setOpenMenuSection(null);
+    setIsViewDialogOpen(true);
   };
   const openSessionsDialog = () => {
     setIsMenuOpen(false);
+    setOpenMenuSection(null);
     onOpenSessionsDialog();
   };
   const openSessionTempo = () => {
@@ -139,6 +164,7 @@ export function SessionHeader({
   };
   const selectViewMode = (nextViewMode: SessionViewMode) => {
     setIsMenuOpen(false);
+    setIsViewDialogOpen(false);
     setOpenMenuSection(null);
 
     if (nextViewMode === viewMode) {
@@ -215,17 +241,17 @@ export function SessionHeader({
               onClick={openSessionTempo}
             />
             <IconButton
-              aria-label={`Session view. Current: ${viewModeLabel}`}
+              aria-label={`Choose view. Current: ${viewModeLabel}`}
               disabled={!hasActiveSession || viewModeTransitionPending}
               icon={<GalleryThumbnails />}
               selected={isAlternateView}
               size="sm"
               shouldYield={false}
-              onClick={openViewSection}
+              onClick={openViewDialog}
             />
             {isFocusHeader ? null : (
               <OverflowMenuButton
-                aria-label="Session menu"
+                aria-label="Menu"
                 disabled={viewModeTransitionPending}
                 onClick={openSessionMenu}
               />
@@ -248,50 +274,35 @@ export function SessionHeader({
       <ObjectMenuDialog
         icon={<Ellipsis />}
         isOpen={isMenuOpen}
-        title="Session Menu"
+        title="Menu"
         onClose={() => setIsMenuOpen(false)}
       >
         <DisclosureListGroup>
-          <DisclosureListActionItem
-            ariaLabel={`Choose session view. Current: ${viewModeLabel}`}
+          <DisclosureListAction
+            aria-label={`Choose view. Current: ${viewModeLabel}`}
+            disabled={!hasActiveSession || viewModeTransitionPending}
             icon={<GalleryThumbnails />}
-            isOpen={openMenuSection === "view"}
             label="View"
-            panelVariant="menu"
             preview={viewModeLabel}
-            selected={isAlternateView}
-            onToggle={() => toggleMenuSection("view")}
-          >
-            <DisclosureList density="compact">
-              {sessionViewModes.map((mode) => {
-                const copy = sessionViewModeConfig[mode];
-                const disabled = requiresSessionParts(mode) && !canUsePartViews;
-
-                return (
-                  <DisclosureListChoice
-                    key={mode}
-                    aria-label={`Use ${copy.label} view`}
-                    disabled={disabled}
-                    icon={sessionViewModeIcons[mode]}
-                    label={copy.label}
-                    selected={mode === viewMode}
-                    selectedPreviewKind="current"
-                    onClick={() => selectViewMode(mode)}
-                  />
-                );
-              })}
-            </DisclosureList>
-          </DisclosureListActionItem>
-        </DisclosureListGroup>
-
-        <DisclosureListGroup>
+            onClick={openViewDialog}
+          />
+          {activeSessionNameSummary ? (
+            <SessionRenameActionItem
+              isOpen={openMenuSection === "rename"}
+              label="Rename Session"
+              session={activeSessionNameSummary}
+              sessions={sessionNameSummaries}
+              shouldFocusInput
+              onClose={() => setOpenMenuSection(null)}
+              onRenameSession={renameSession}
+              onToggle={() => toggleMenuSection("rename")}
+            />
+          ) : null}
           <DisclosureListAction
             icon={<LibraryBig />}
             label="Session Library"
             onClick={openSessionsDialog}
           />
-        </DisclosureListGroup>
-        <DisclosureListGroup>
           <DisclosureListAction
             icon={<Settings2 />}
             label="Dojo Settings"
@@ -299,6 +310,14 @@ export function SessionHeader({
           />
         </DisclosureListGroup>
       </ObjectMenuDialog>
+
+      <SessionViewDialog
+        canUsePartViews={canUsePartViews}
+        isOpen={isViewDialogOpen}
+        viewMode={viewMode}
+        onClose={() => setIsViewDialogOpen(false)}
+        onSelect={selectViewMode}
+      />
 
       <Dialog
         isOpen={isSettingsDialogOpen}

@@ -78,7 +78,7 @@ import {
 } from "@/utils/fretboard/customFretboardTunings";
 import { formatOpenStringNotes } from "@/components/instrument-creation/options";
 
-export type InstrumentMenuChoice =
+type InstrumentMenuChoice =
   "appearance" | "sound" | "display" | "size" | "tuning";
 
 export interface FretboardAppearanceSettings {
@@ -110,7 +110,6 @@ interface InstrumentMenuDialogProps {
   audioPresetId?: AudioPresetId;
   audioPresetContext?: InstrumentAudioPresetContext;
   displayFormatId: DisplayFormatId;
-  initialOpenChoice?: InstrumentMenuChoice | null;
   instrumentSize: InstrumentSize;
   instrumentType: InstrumentType;
   isOpen: boolean;
@@ -161,7 +160,6 @@ export function InstrumentMenuDialog({
   audioPresetId,
   audioPresetContext,
   displayFormatId,
-  initialOpenChoice = null,
   instrumentSize,
   instrumentType,
   isOpen,
@@ -180,7 +178,7 @@ export function InstrumentMenuDialog({
     closeChoice,
     isOpen: isChoiceOpen,
     toggleChoice,
-  } = useDisclosureList<InstrumentMenuChoice>(initialOpenChoice);
+  } = useDisclosureList<InstrumentMenuChoice>(null);
   const resolvedAudioPresetId = resolveInstrumentAudioPresetId(
     instrumentType,
     audioPresetId,
@@ -234,12 +232,12 @@ export function InstrumentMenuDialog({
 
   const handleDisplayFormatChange = (displayFormatId: DisplayFormatId) => {
     onDisplayFormatIdChange(displayFormatId);
-    onClose();
+    closeChoice("display");
   };
 
   const handleInstrumentDisplaySizeChange = (size: InstrumentSize) => {
     onInstrumentDisplaySizeChange?.(size);
-    onClose();
+    closeChoice("size");
   };
 
   const handleClone = () => {
@@ -267,7 +265,7 @@ export function InstrumentMenuDialog({
       instrument: fretboardTuning.instrument,
       tuningKey,
     });
-    onClose();
+    closeChoice("tuning");
   };
 
   const handleCustomTuningSelect = (tuning: SavedFretboardTuning) => {

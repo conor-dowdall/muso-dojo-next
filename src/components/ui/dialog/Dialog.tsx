@@ -292,26 +292,28 @@ export function DialogFooterActionGroup({
   );
 }
 
-interface DialogDoneFooterProps {
+interface DialogCloseFooterProps {
   buttonSize?: ButtonProps["size"];
   className?: string;
-  label?: string;
-  onDone: () => void;
+  onClose: () => void;
 }
 
-export function DialogDoneFooter({
+/**
+ * Standard footer for dialogs whose changes are applied immediately. Use an
+ * explicit action footer instead when closing commits staged work.
+ */
+export function DialogCloseFooter({
   buttonSize = "lg",
   className = "",
-  label = "Done",
-  onDone,
-}: DialogDoneFooterProps) {
+  onClose,
+}: DialogCloseFooterProps) {
   return (
     <DialogFooter className={className}>
       <section
         className={styles.dialogFooterActions}
         aria-label="Dialog actions"
       >
-        <Button label={label} size={buttonSize} onClick={onDone} />
+        <Button label="Close" size={buttonSize} onClick={onClose} />
       </section>
     </DialogFooter>
   );

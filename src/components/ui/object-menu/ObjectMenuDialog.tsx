@@ -3,8 +3,8 @@
 import { type ReactNode } from "react";
 import {
   Dialog,
+  DialogCloseFooter,
   DialogContent,
-  DialogDoneFooter,
   DialogHeader,
   type DialogSize,
 } from "@/components/ui/dialog/Dialog";
@@ -41,7 +41,7 @@ export function ObjectMenuDialog({
           {children}
         </DisclosureList>
       </DialogContent>
-      {footer ?? <DialogDoneFooter onDone={onClose} />}
+      {footer ?? <DialogCloseFooter onClose={onClose} />}
     </Dialog>
   );
 }

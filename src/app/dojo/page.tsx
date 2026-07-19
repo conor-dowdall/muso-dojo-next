@@ -9,6 +9,7 @@ import { AddToSessionDialog } from "@/components/session/AddToSessionDialog";
 import { SessionHeader } from "@/components/session/SessionHeader";
 import { SessionLoader } from "@/components/session/SessionLoader";
 import { SessionManagementDialog } from "@/components/session/SessionManagementDialog";
+import { SessionTempoDialog } from "@/components/session/SessionTempoDialog";
 import { SessionView } from "@/components/session/SessionView";
 import {
   isSessionFocusViewMode,
@@ -48,7 +49,8 @@ function HydratedSession({
 }: HydratedSessionProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addDialogKey, setAddDialogKey] = useState(0);
-  const [isSessionDialogOpen, setIsSessionDialogOpen] = useState(false);
+  const [isSessionLibraryOpen, setIsSessionLibraryOpen] = useState(false);
+  const [isSessionTempoOpen, setIsSessionTempoOpen] = useState(false);
   const [sessionDialogKey, setSessionDialogKey] = useState(0);
   const [sessionDialogTempoId, setSessionDialogTempoId] = useState<
     string | null
@@ -77,15 +79,24 @@ function HydratedSession({
       instrumentCreationRangeContextSignature,
     );
   const openAddDialog = () => {
-    setIsSessionDialogOpen(false);
+    setIsSessionLibraryOpen(false);
+    setIsSessionTempoOpen(false);
     setAddDialogKey((currentKey) => currentKey + 1);
     setIsAddDialogOpen(true);
   };
-  const openSessionDialog = (tempoSessionId?: string) => {
+  const openSessionLibrary = () => {
     setIsAddDialogOpen(false);
     setSessionDialogKey((currentKey) => currentKey + 1);
-    setSessionDialogTempoId(tempoSessionId ?? null);
-    setIsSessionDialogOpen(true);
+    setSessionDialogTempoId(null);
+    setIsSessionTempoOpen(false);
+    setIsSessionLibraryOpen(true);
+  };
+  const openSessionTempo = (sessionId: string) => {
+    setIsAddDialogOpen(false);
+    setSessionDialogKey((currentKey) => currentKey + 1);
+    setSessionDialogTempoId(sessionId);
+    setIsSessionLibraryOpen(false);
+    setIsSessionTempoOpen(true);
   };
   const handleSessionViewModeChange = (nextViewMode: SessionViewMode) => {
     if (nextViewMode !== "session") {
@@ -101,7 +112,7 @@ function HydratedSession({
 
   useDojoGlobalShortcuts({
     activeSession,
-    dialogOpen: isAddDialogOpen || isSessionDialogOpen,
+    dialogOpen: isAddDialogOpen || isSessionLibraryOpen || isSessionTempoOpen,
     onExitFocusMode: isFocusViewMode ? exitFocusViewMode : undefined,
   });
   useSessionPlaybackReconciliation(activeSession);
@@ -193,8 +204,8 @@ function HydratedSession({
           viewMode={sessionViewMode}
           workspaceViewMode={sessionWorkspaceViewMode}
           onOpenAddDialog={openAddDialog}
-          onOpenSessionTempo={openSessionDialog}
-          onOpenSessionsDialog={() => openSessionDialog()}
+          onOpenSessionTempo={openSessionTempo}
+          onOpenSessionsDialog={openSessionLibrary}
           onViewModeChange={handleSessionViewModeChange}
           onViewModeExit={isFocusViewMode ? exitFocusViewMode : undefined}
           viewModeTransitionPending={viewModeTransitionPending}
@@ -205,19 +216,31 @@ function HydratedSession({
           sessionId={activeSessionId}
           viewMode={sessionViewMode}
           onOpenAddDialog={isFocusViewMode ? undefined : openAddDialog}
-          onOpenSessionTempo={openSessionDialog}
+          onOpenSessionTempo={openSessionTempo}
         />
       ) : null}
       <Dialog
-        isOpen={isSessionDialogOpen}
-        onClose={() => setIsSessionDialogOpen(false)}
+        isOpen={isSessionLibraryOpen}
+        onClose={() => setIsSessionLibraryOpen(false)}
         size="standard"
       >
         <SessionManagementDialog
           key={sessionDialogKey}
-          initialOpenTempoSessionId={sessionDialogTempoId ?? undefined}
-          onClose={() => setIsSessionDialogOpen(false)}
+          onClose={() => setIsSessionLibraryOpen(false)}
         />
+      </Dialog>
+      <Dialog
+        isOpen={isSessionTempoOpen}
+        onClose={() => setIsSessionTempoOpen(false)}
+        size="standard"
+      >
+        {sessionDialogTempoId ? (
+          <SessionTempoDialog
+            key={sessionDialogKey}
+            sessionId={sessionDialogTempoId}
+            onClose={() => setIsSessionTempoOpen(false)}
+          />
+        ) : null}
       </Dialog>
       <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="wide">
         <AddToSessionDialog

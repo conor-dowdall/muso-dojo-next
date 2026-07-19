@@ -87,7 +87,7 @@ export function PartPlaybackDialog({
               />
             </DialogFooterActionGroup>
             <DialogFooterActionGroup placement="primary">
-              <Button label="Done" size="lg" onClick={onClose} />
+              <Button label="Close" size="lg" onClick={onClose} />
             </DialogFooterActionGroup>
           </DialogFooterActionBar>
         </DialogFooter>

@@ -5,7 +5,7 @@ import { LibraryBig, Plus } from "lucide-react";
 import {
   DialogContent,
   DialogContentSection,
-  DialogDoneFooter,
+  DialogCloseFooter,
   DialogHeader,
 } from "@/components/ui/dialog/Dialog";
 import { Text } from "@/components/ui/typography/Text";
@@ -23,7 +23,6 @@ import {
 } from "./sessionManagementFormatting";
 
 interface SessionManagementDialogProps {
-  initialOpenTempoSessionId?: string;
   onClose: () => void;
 }
 
@@ -73,17 +72,14 @@ const selectSessionManagementSnapshot =
   createSessionManagementSnapshotSelector();
 
 export function SessionManagementDialog({
-  initialOpenTempoSessionId,
   onClose,
 }: SessionManagementDialogProps) {
-  const [openSessionId, setOpenSessionId] = useState<string | null>(
-    initialOpenTempoSessionId ?? null,
-  );
+  const [openSessionId, setOpenSessionId] = useState<string | null>(null);
   const [openRenameSessionId, setOpenRenameSessionId] = useState<string | null>(
     null,
   );
   const [openTempoSessionId, setOpenTempoSessionId] = useState<string | null>(
-    initialOpenTempoSessionId ?? null,
+    null,
   );
   const [deleteConfirmationSessionId, setDeleteConfirmationSessionId] =
     useState<string | null>(null);
@@ -129,6 +125,7 @@ export function SessionManagementDialog({
     setOpenRenameSessionId(null);
     setOpenTempoSessionId(null);
     setDeleteConfirmationSessionId(null);
+    onClose();
   };
 
   const handleCloneSession = (sessionId: string) => {
@@ -226,7 +223,7 @@ export function SessionManagementDialog({
           </DisclosureList>
         </DialogContentSection>
       </DialogContent>
-      <DialogDoneFooter onDone={onClose} />
+      <DialogCloseFooter onClose={onClose} />
     </>
   );
 }

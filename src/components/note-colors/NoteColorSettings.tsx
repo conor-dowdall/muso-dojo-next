@@ -398,7 +398,7 @@ export function NoteColorSettings({
         </DisclosureList>
 
         <DisclosureListPanelActions>
-          <Button label="Done" size="sm" onClick={closeNoteColors} />
+          <Button label="Close" size="sm" onClick={closeNoteColors} />
         </DisclosureListPanelActions>
       </div>
     </DisclosureListItem>

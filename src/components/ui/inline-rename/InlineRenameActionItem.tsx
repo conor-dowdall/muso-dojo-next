@@ -11,6 +11,7 @@ interface InlineRenameActionItemProps {
   fieldLabel: string;
   isNameAvailable: (name: string) => boolean;
   isOpen: boolean;
+  label?: string;
   onClose: () => void;
   onRename: (name: string) => void;
   onToggle: () => void;
@@ -23,6 +24,7 @@ export function InlineRenameActionItem({
   fieldLabel,
   isNameAvailable,
   isOpen,
+  label = "Rename",
   onClose,
   onRename,
   onToggle,
@@ -99,7 +101,7 @@ export function InlineRenameActionItem({
       icon={<Pencil />}
       isOpen={isOpen}
       keepMounted
-      label="Rename"
+      label={label}
       onToggle={onToggle}
     >
       <form className={styles.nameForm} onSubmit={handleRename}>

@@ -7,7 +7,7 @@ import {
   Dialog,
   DialogContent,
   DialogContentSection,
-  DialogDoneFooter,
+  DialogCloseFooter,
   DialogHeader,
 } from "@/components/ui/dialog/Dialog";
 import {
@@ -245,7 +245,7 @@ export function CustomChordProgressionsDialog({
           </DisclosureList>
         </DialogContentSection>
       </DialogContent>
-      <DialogDoneFooter onDone={onClose} />
+      <DialogCloseFooter onClose={onClose} />
     </Dialog>
   );
 }

@@ -72,6 +72,12 @@ interface NewSelectedChord {
 }
 
 type SelectedChord = ExistingSelectedChord | NewSelectedChord;
+type SelectedChordDraftPatch = Partial<
+  Pick<
+    CustomChordProgressionDraftBar["chords"][number],
+    "chordCollectionKey" | "degree"
+  >
+>;
 
 type DegreeSpelling = "flat" | "sharp";
 
@@ -295,8 +301,41 @@ export function CustomChordProgressionEditor({
   );
 
   const addBar = () => {
-    setBars((current) => [...current, cloneBars([tonicBar])[0]!]);
+    setBars((current) => [
+      ...applySelectedChordDraft(current, selectedChord, positionCount),
+      cloneBars([tonicBar])[0]!,
+    ]);
     setSelectedChord(null);
+  };
+
+  const updateSelectedChordDraft = (patch: SelectedChordDraftPatch) => {
+    if (!selectedChord) return;
+
+    if (selectedChord.kind === "existing") {
+      setSelectedChord({
+        ...selectedChord,
+        draft: { ...selectedChord.draft, ...patch },
+      });
+      setBars((current) =>
+        current.map((bar, barIndex) =>
+          barIndex === selectedChord.barIndex
+            ? {
+                chords: bar.chords.map((chord, chordIndex) =>
+                  chordIndex === selectedChord.chordIndex
+                    ? { ...chord, ...patch }
+                    : chord,
+                ),
+              }
+            : bar,
+        ),
+      );
+      return;
+    }
+
+    setSelectedChord({
+      ...selectedChord,
+      draft: { ...selectedChord.draft, ...patch },
+    });
   };
 
   const changeDegreeSpelling = (spelling: DegreeSpelling) => {
@@ -307,47 +346,11 @@ export function CustomChordProgressionEditor({
     const nextDegree = getDegreeOptions(spelling)[degreeIndex];
 
     if (nextDegree && nextDegree !== selectedChord.draft.degree) {
-      setSelectedChord((current) =>
-        current?.kind === "existing"
-          ? {
-              ...current,
-              draft: { ...current.draft, degree: nextDegree },
-            }
-          : current?.kind === "new"
-            ? {
-                ...current,
-                draft: { ...current.draft, degree: nextDegree },
-              }
-            : current,
-      );
+      updateSelectedChordDraft({ degree: nextDegree });
     }
   };
 
-  const updateSelectedChordDraft = (
-    patch: Partial<
-      Pick<
-        CustomChordProgressionDraftBar["chords"][number],
-        "chordCollectionKey" | "degree"
-      >
-    >,
-  ) => {
-    setSelectedChord((current) =>
-      current?.kind === "existing"
-        ? { ...current, draft: { ...current.draft, ...patch } }
-        : current?.kind === "new"
-          ? { ...current, draft: { ...current.draft, ...patch } }
-          : current,
-    );
-  };
-
-  const commitNewSelectedChord = (
-    patch: Partial<
-      Pick<
-        CustomChordProgressionDraftBar["chords"][number],
-        "chordCollectionKey" | "degree"
-      >
-    >,
-  ) => {
+  const commitNewSelectedChord = (patch: SelectedChordDraftPatch) => {
     if (selectedChord?.kind !== "new") return false;
 
     const bar = bars[selectedChord.barIndex];
@@ -400,12 +403,12 @@ export function CustomChordProgressionEditor({
     }
   };
 
-  const commitSelectedChord = () => {
-    if (!selectedChordIsComplete(selectedChord)) return;
-
-    setBars((current) =>
-      applySelectedChordDraft(current, selectedChord, positionCount),
-    );
+  const closeSelectedChordEditor = () => {
+    if (selectedChordIsComplete(selectedChord)) {
+      setBars((current) =>
+        applySelectedChordDraft(current, selectedChord, positionCount),
+      );
+    }
     setSelectedChord(null);
   };
 
@@ -500,7 +503,9 @@ export function CustomChordProgressionEditor({
     if (nextIndex < 0 || nextIndex >= bars.length) return;
 
     setBars((current) => {
-      const next = [...current];
+      const next = [
+        ...applySelectedChordDraft(current, selectedChord, positionCount),
+      ];
       [next[barIndex], next[nextIndex]] = [next[nextIndex]!, next[barIndex]!];
       return next;
     });
@@ -510,16 +515,28 @@ export function CustomChordProgressionEditor({
   const duplicateBar = (barIndex: number) => {
     if (bars.length >= CUSTOM_CHORD_PROGRESSION_MAX_BARS) return;
 
-    setBars((current) => [
-      ...current.slice(0, barIndex + 1),
-      ...cloneBars([current[barIndex]!]),
-      ...current.slice(barIndex + 1),
-    ]);
+    setBars((current) => {
+      const next = applySelectedChordDraft(
+        current,
+        selectedChord,
+        positionCount,
+      );
+
+      return [
+        ...next.slice(0, barIndex + 1),
+        ...cloneBars([next[barIndex]!]),
+        ...next.slice(barIndex + 1),
+      ];
+    });
     setSelectedChord(null);
   };
 
   const removeBar = (barIndex: number) => {
-    setBars((current) => current.filter((_, index) => index !== barIndex));
+    setBars((current) =>
+      applySelectedChordDraft(current, selectedChord, positionCount).filter(
+        (_, index) => index !== barIndex,
+      ),
+    );
     setSelectedChord(null);
     if (bars.length === 1) setIsPositionCountOpen(false);
   };
@@ -567,12 +584,14 @@ export function CustomChordProgressionEditor({
           <DisclosureList>
             <DisclosureListItem
               ariaLabel={`Chord positions per bar. Current: ${positionCount}`}
-              disabled={selectedChord !== null}
               isOpen={isPositionCountOpen}
               label="Chord Positions"
               panelVariant="menu"
               preview={formatPositionCount(positionCount)}
-              onToggle={() => setIsPositionCountOpen((current) => !current)}
+              onToggle={() => {
+                closeSelectedChordEditor();
+                setIsPositionCountOpen((current) => !current);
+              }}
             >
               <div
                 aria-label="Chord positions per bar"
@@ -643,17 +662,14 @@ export function CustomChordProgressionEditor({
                         >
                           <IconButton
                             aria-label={`Move bar ${barIndex + 1} earlier`}
-                            disabled={selectedChord !== null || barIndex === 0}
+                            disabled={barIndex === 0}
                             icon={<ListStart />}
                             size="sm"
                             onClick={() => moveBar(barIndex, "earlier")}
                           />
                           <IconButton
                             aria-label={`Move bar ${barIndex + 1} later`}
-                            disabled={
-                              selectedChord !== null ||
-                              barIndex === bars.length - 1
-                            }
+                            disabled={barIndex === bars.length - 1}
                             icon={<ListEnd />}
                             size="sm"
                             onClick={() => moveBar(barIndex, "later")}
@@ -666,7 +682,6 @@ export function CustomChordProgressionEditor({
                           <IconButton
                             aria-label={`Duplicate bar ${barIndex + 1}`}
                             disabled={
-                              selectedChord !== null ||
                               bars.length >= CUSTOM_CHORD_PROGRESSION_MAX_BARS
                             }
                             icon={<Copy />}
@@ -675,7 +690,6 @@ export function CustomChordProgressionEditor({
                           />
                           <IconButton
                             aria-label={`Remove bar ${barIndex + 1}`}
-                            disabled={selectedChord !== null}
                             icon={<Trash2 />}
                             size="sm"
                             tone="danger"
@@ -819,12 +833,9 @@ export function CustomChordProgressionEditor({
                                 onClick={removeSelectedChord}
                               />
                               <Button
-                                disabled={
-                                  !selectedChordIsComplete(selectedChord)
-                                }
-                                label="Done"
+                                label="Close"
                                 size="sm"
-                                onClick={commitSelectedChord}
+                                onClick={closeSelectedChordEditor}
                               />
                             </DisclosureListPanelActions>
                           </div>
@@ -838,10 +849,7 @@ export function CustomChordProgressionEditor({
 
           <div className={styles.addBarAction}>
             <Button
-              disabled={
-                selectedChord !== null ||
-                bars.length >= CUSTOM_CHORD_PROGRESSION_MAX_BARS
-              }
+              disabled={bars.length >= CUSTOM_CHORD_PROGRESSION_MAX_BARS}
               icon={<Plus />}
               label="Add Bar"
               size="sm"
@@ -858,6 +866,7 @@ export function CustomChordProgressionEditor({
         }
         label="Progression Name"
         saveAriaLabel="Save progression"
+        saveLabel="Save"
         value={name}
         onChange={setName}
       />

@@ -24,13 +24,9 @@ export function createRememberModuleCreationRequest(
   draft: ModuleCreationListDraft,
   context: ModuleCreationContext,
 ): RememberModuleCreationRequest {
-  const rememberedModuleKinds = draft.moduleKinds.filter(
-    (kind) => kind !== "exercise-looper" && kind !== "rhythm",
-  );
-
   return {
     context,
-    moduleKinds: rememberedModuleKinds,
+    moduleKinds: [...draft.moduleKinds],
     ...(draft.drone ? { drone: draft.drone } : {}),
     ...(draft.exerciseLooper ? { exerciseLooper: draft.exerciseLooper } : {}),
     ...(draft.fretboard ? { fretboard: draft.fretboard } : {}),

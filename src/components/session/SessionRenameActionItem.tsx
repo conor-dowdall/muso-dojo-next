@@ -8,6 +8,7 @@ import {
 
 interface SessionRenameActionItemProps {
   isOpen: boolean;
+  label?: string;
   onClose: () => void;
   onRenameSession: (sessionId: string, name: string) => void;
   onToggle: () => void;
@@ -16,13 +17,10 @@ interface SessionRenameActionItemProps {
   shouldFocusInput?: boolean;
 }
 
-/**
- * Row action for the Sessions library surface.
- * Keep the visible row action-oriented ("Rename"), while the inline editor
- * labels the editable field ("Session Name").
- */
+/** Shared inline action for surfaces that manage a Session's name. */
 export function SessionRenameActionItem({
   isOpen,
+  label = "Rename",
   onClose,
   onRenameSession,
   onToggle,
@@ -43,6 +41,7 @@ export function SessionRenameActionItem({
         )
       }
       isOpen={isOpen}
+      label={label}
       shouldFocusInput={shouldFocusInput}
       value={session.name}
       onClose={onClose}

@@ -357,7 +357,7 @@ export function FretboardInstrumentCreationPanel({
             </DisclosureList>
 
             <DisclosureListPanelActions>
-              <Button label="Done" size="sm" onClick={handleAppearanceDone} />
+              <Button label="Close" size="sm" onClick={handleAppearanceDone} />
             </DisclosureListPanelActions>
           </div>
         </DisclosureListItem>

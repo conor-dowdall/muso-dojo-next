@@ -2,6 +2,7 @@
 
 import { Check } from "lucide-react";
 import { type Ref, useId } from "react";
+import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import fieldStyles from "@/components/ui/control-field/ControlField.module.css";
 import { Text } from "@/components/ui/typography/Text";
@@ -11,6 +12,7 @@ interface NamedLibraryItemSaveFieldProps {
   disabled: boolean;
   label: string;
   saveAriaLabel: string;
+  saveLabel?: string;
   value: string;
   errorMessage?: string;
   inputRef?: Ref<HTMLInputElement>;
@@ -23,6 +25,7 @@ export function NamedLibraryItemSaveField({
   inputRef,
   label,
   saveAriaLabel,
+  saveLabel,
   value,
   onChange,
 }: NamedLibraryItemSaveFieldProps) {
@@ -47,14 +50,25 @@ export function NamedLibraryItemSaveField({
           value={value}
           onChange={(event) => onChange(event.currentTarget.value)}
         />
-        <IconButton
-          aria-label={saveAriaLabel}
-          disabled={disabled}
-          icon={<Check />}
-          shouldYield={false}
-          size="lg"
-          type="submit"
-        />
+        {saveLabel ? (
+          <Button
+            aria-label={saveAriaLabel}
+            disabled={disabled}
+            label={saveLabel}
+            shouldYield={false}
+            size="lg"
+            type="submit"
+          />
+        ) : (
+          <IconButton
+            aria-label={saveAriaLabel}
+            disabled={disabled}
+            icon={<Check />}
+            shouldYield={false}
+            size="lg"
+            type="submit"
+          />
+        )}
       </div>
       {errorMessage ? (
         <Text

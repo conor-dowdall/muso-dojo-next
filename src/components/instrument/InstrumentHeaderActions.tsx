@@ -42,9 +42,9 @@ import {
   type FretboardAppearanceSettings,
   type FretboardTuningSettings,
   InstrumentMenuDialog,
-  type InstrumentMenuChoice,
   type KeyboardAppearanceSettings,
 } from "./InstrumentMenuDialog";
+import { NoteLabelsDialog } from "./NoteLabelsDialog";
 import { createInstrumentLayoutConfig } from "@/utils/instrument/createInstrumentLayoutConfig";
 import { type InstrumentAudioPresetContext } from "@/utils/instrument/resolveInstrumentAudioPreset";
 import { resolveInstrumentNoteInteractionMode } from "@/utils/instrument/resolveInstrumentInteractionMode";
@@ -157,10 +157,8 @@ export const InstrumentHeaderActions = ({
   onRemove,
 }: InstrumentHeaderActionsProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isNoteLabelsOpen, setIsNoteLabelsOpen] = useState(false);
   const [menuDialogKey, setMenuDialogKey] = useState(0);
-  const [menuChoice, setMenuChoice] = useState<InstrumentMenuChoice | null>(
-    null,
-  );
   const effectiveNoteInteractionMode = resolveInstrumentNoteInteractionMode({
     activeNotesLocked,
     noteInteractionMode,
@@ -180,10 +178,15 @@ export const InstrumentHeaderActions = ({
     ? "Unlock notes"
     : "Lock current notes";
 
-  const openMenu = (choice: InstrumentMenuChoice | null) => {
-    setMenuChoice(choice);
+  const openMenu = () => {
+    setIsNoteLabelsOpen(false);
     setMenuDialogKey((currentKey) => currentKey + 1);
     setIsMenuOpen(true);
+  };
+
+  const openNoteLabels = () => {
+    setIsMenuOpen(false);
+    setIsNoteLabelsOpen(true);
   };
 
   const cycleNoteSize = () => {
@@ -228,7 +231,7 @@ export const InstrumentHeaderActions = ({
               <DisplayFormatTriggerButton
                 className={styles.displayFormatButton}
                 value={displayFormatId}
-                onClick={() => openMenu("display")}
+                onClick={openNoteLabels}
               />
               <IconButton
                 aria-label={`Change note size. Current: ${noteEmphasisLabel}`}
@@ -285,11 +288,17 @@ export const InstrumentHeaderActions = ({
             >
               <OverflowMenuButton
                 aria-label="Instrument options"
-                onClick={() => openMenu(null)}
+                onClick={openMenu}
               />
             </ControlHeaderCluster>
           </>
         }
+      />
+      <NoteLabelsDialog
+        displayFormatId={displayFormatId}
+        isOpen={isNoteLabelsOpen}
+        onClose={() => setIsNoteLabelsOpen(false)}
+        onDisplayFormatIdChange={onDisplayFormatIdChange}
       />
       <InstrumentMenuDialog
         key={menuDialogKey}
@@ -298,7 +307,6 @@ export const InstrumentHeaderActions = ({
         displayFormatId={displayFormatId}
         fretboardAppearance={fretboardAppearance}
         fretboardTuning={fretboardTuning}
-        initialOpenChoice={menuChoice}
         instrumentSize={instrumentSize}
         instrumentType={instrumentType}
         keyboardAppearance={keyboardAppearance}

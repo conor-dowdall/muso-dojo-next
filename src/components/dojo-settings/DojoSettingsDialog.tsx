@@ -2,8 +2,8 @@
 
 import { PaintbrushVertical, Settings2 } from "lucide-react";
 import {
+  DialogCloseFooter,
   DialogContent,
-  DialogDoneFooter,
   DialogHeader,
 } from "@/components/ui/dialog/Dialog";
 import { NoteColorSettings } from "@/components/note-colors/NoteColorSettings";
@@ -89,7 +89,7 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
           </DisclosureListGroup>
         </DisclosureList>
       </DialogContent>
-      <DialogDoneFooter onDone={onClose} />
+      <DialogCloseFooter onClose={onClose} />
     </>
   );
 }
