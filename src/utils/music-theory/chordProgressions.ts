@@ -1,8 +1,10 @@
 import {
   chordProgression,
-  chordProgressions,
+  chordProgressionDefinitions,
+  getChordProgressionChordDirectRomanSymbol,
   rootAndNoteCollection,
   type ChordProgression,
+  type ChordProgressionChord,
   type ChordProgressionKey,
   type RootNote,
 } from "@musodojo/music-theory-data";
@@ -21,66 +23,28 @@ export interface ChordProgressionDisplaySummary {
   romanNames: string[];
 }
 
-const BAR_LENGTH = 1;
-const DURATION_EPSILON = 0.000_001;
-
-function resolveChordProgression(
-  progressionOrKey: ChordProgressionInput,
-): ChordProgression | undefined {
-  if (typeof progressionOrKey !== "string") {
-    return progressionOrKey;
-  }
-
-  return chordProgression.isValidKey(progressionOrKey)
-    ? chordProgressions[progressionOrKey]
-    : undefined;
-}
-
-function expandLabelsByBar(
-  labels: readonly string[],
-  durationsInBars: readonly number[],
-) {
-  const bars: string[] = [];
-  let currentBarLabels: string[] = [];
-  let remainingBarSpace = BAR_LENGTH;
-
-  labels.forEach((label, index) => {
-    let remainingDuration = durationsInBars[index] ?? 0;
-
-    while (remainingDuration > DURATION_EPSILON) {
-      currentBarLabels.push(label);
-      const sliceDuration = Math.min(remainingDuration, remainingBarSpace);
-
-      remainingDuration -= sliceDuration;
-      remainingBarSpace -= sliceDuration;
-
-      if (remainingBarSpace <= DURATION_EPSILON) {
-        bars.push(currentBarLabels.join(" "));
-        currentBarLabels = [];
-        remainingBarSpace = BAR_LENGTH;
-      }
-    }
-  });
-
-  if (currentBarLabels.length > 0) {
-    bars.push(currentBarLabels.join(" "));
-  }
-
-  return bars;
+function getChordRomanSymbol(chord: ChordProgressionChord) {
+  return (
+    chord.analysis?.romanSymbol ??
+    getChordProgressionChordDirectRomanSymbol(chord)
+  );
 }
 
 export function getChordProgressionRomanBarLabels(
   progressionOrKey: ChordProgressionInput,
 ) {
-  const progression = resolveChordProgression(progressionOrKey);
+  const progression =
+    typeof progressionOrKey === "string"
+      ? chordProgressionDefinitions[progressionOrKey].progression
+      : progressionOrKey;
+  const timing = chordProgression.getTiming(progressionOrKey);
 
-  if (!progression) {
-    return [];
-  }
-
-  return expandLabelsByBar(
-    chordProgression.getRomanSymbols(progressionOrKey),
-    progression.chords.map((chord) => chord.durationInBars),
+  return timing.bars.map((bar) =>
+    bar.segments
+      .map((segment) => progression.chords[segment.eventIndex])
+      .filter((chord): chord is ChordProgressionChord => chord !== undefined)
+      .map(getChordRomanSymbol)
+      .join(" "),
   );
 }
 
@@ -88,16 +52,13 @@ export function getChordProgressionDisplaySummary(
   rootNote: RootNote,
   progressionOrKey: ChordProgressionInput,
 ): ChordProgressionDisplaySummary {
-  const progression = resolveChordProgression(progressionOrKey);
+  const resolved = chordProgression.resolve(rootNote, progressionOrKey);
 
-  if (!progression) {
-    return { chordNames: [], romanNames: [] };
-  }
-
-  const chordNames = chordProgression
-    .getChordReferencesByBar(rootNote, progressionOrKey)
-    .map((barReferences) =>
-      barReferences
+  return {
+    chordNames: resolved.bars.map((bar) =>
+      bar.segments
+        .map((segment) => resolved.events[segment.eventIndex]?.reference)
+        .filter((reference) => reference !== undefined)
         .map(
           (reference) =>
             rootAndNoteCollection.getIdentity({
@@ -106,10 +67,13 @@ export function getChordProgressionDisplaySummary(
             }).label,
         )
         .join(" "),
-    );
-  return {
-    chordNames,
-    romanNames: getChordProgressionRomanBarLabels(progressionOrKey),
+    ),
+    romanNames: resolved.bars.map((bar) =>
+      bar.segments
+        .map((segment) => resolved.events[segment.eventIndex]?.romanSymbol)
+        .filter((romanSymbol) => romanSymbol !== undefined)
+        .join(" "),
+    ),
   };
 }
 
@@ -119,12 +83,15 @@ export function getChordProgressionDisplayLabels(
   title?: string,
 ): ChordProgressionDisplayLabels {
   const summary = getChordProgressionDisplaySummary(rootNote, progressionOrKey);
-  const progression = resolveChordProgression(progressionOrKey);
   const romanLabel = summary.romanNames.join(DISPLAY_VALUE_SEPARATOR);
+  const definitionName =
+    typeof progressionOrKey === "string"
+      ? chordProgressionDefinitions[progressionOrKey].name
+      : undefined;
 
   return {
     chordLabel: summary.chordNames.join(DISPLAY_VALUE_SEPARATOR),
     romanLabel,
-    titleLabel: title ?? progression?.commonName ?? romanLabel,
+    titleLabel: title ?? definitionName ?? romanLabel,
   };
 }

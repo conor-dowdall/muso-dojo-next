@@ -22,7 +22,7 @@ describe("dojo settings app store actions", () => {
           durationInBars: 1,
         },
       ],
-    };
+    } as const;
     const progressionId = store.getState().addCustomChordProgression({
       name: "My Changes",
       progression,
@@ -74,7 +74,7 @@ describe("dojo settings app store actions", () => {
           durationInBars: 1,
         },
       ],
-    };
+    } as const;
 
     expect(
       store.getState().addCustomChordProgression({

@@ -62,7 +62,7 @@ describe("normalizeMusicPartConfig", () => {
           noteCollectionKey: "minor7",
           progressionInstanceId: "custom-instance",
           source: { kind: "custom", name: " My Changes " },
-          romanSymbol: "ii7",
+          romanSymbol: "iim7",
           rootNote: "D",
           tonalCenter: "C",
         },
@@ -74,7 +74,7 @@ describe("normalizeMusicPartConfig", () => {
     ).toMatchObject({
       authoredProgression: {
         source: { kind: "custom", name: "My Changes" },
-        romanSymbol: "ii7",
+        romanSymbol: "iim7",
       },
     });
   });

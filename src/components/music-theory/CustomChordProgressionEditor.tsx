@@ -4,7 +4,7 @@ import {
   chordProgression,
   type ChordCollectionKey,
   type ChordProgression,
-  type ChordProgressionDegree,
+  type ChordRootDegree,
 } from "@musodojo/music-theory-data";
 import { Copy, ListEnd, ListStart, Plus, Trash2 } from "lucide-react";
 import {
@@ -67,7 +67,7 @@ interface NewSelectedChord {
   kind: "new";
   draft: {
     chordCollectionKey?: ChordCollectionKey;
-    degree?: ChordProgressionDegree;
+    degree?: ChordRootDegree;
   };
 }
 
@@ -181,7 +181,7 @@ function barsAreEqual(
 }
 
 function getChordRomanSymbol(
-  degree: ChordProgressionDegree,
+  degree: ChordRootDegree,
   chordCollectionKey: ChordCollectionKey,
 ) {
   return (
@@ -201,7 +201,7 @@ function getDegreeOptions(spelling: DegreeSpelling) {
     : customChordProgressionSharpDegrees;
 }
 
-function getDegreeChromaticIndex(degree: ChordProgressionDegree) {
+function getDegreeChromaticIndex(degree: ChordRootDegree) {
   const flatIndex = customChordProgressionFlatDegrees.indexOf(degree);
   return flatIndex >= 0
     ? flatIndex
@@ -388,7 +388,7 @@ export function CustomChordProgressionEditor({
     return true;
   };
 
-  const selectChordDegree = (degree: ChordProgressionDegree) => {
+  const selectChordDegree = (degree: ChordRootDegree) => {
     if (!commitNewSelectedChord({ degree })) {
       updateSelectedChordDraft({ degree });
     }

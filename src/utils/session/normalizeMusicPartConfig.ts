@@ -1,7 +1,4 @@
-import {
-  chordProgression,
-  type ChordProgressionAnalysisRomanSymbol,
-} from "@musodojo/music-theory-data";
+import { chordProgression } from "@musodojo/music-theory-data";
 import {
   type AuthoredChordProgressionConfig,
   type MusicPartConfig,
@@ -56,8 +53,10 @@ function normalizeAuthoredChordProgressionConfig(
               progressionKey: value.progressionKey,
             } satisfies AuthoredChordProgressionConfig["source"])
           : undefined;
-  const romanSymbol = normalizeString(value.romanSymbol) as
-    ChordProgressionAnalysisRomanSymbol | undefined;
+  const romanSymbolValue = normalizeString(value.romanSymbol);
+  const romanSymbol = chordProgression.isAnalysisRomanSymbol(romanSymbolValue)
+    ? romanSymbolValue
+    : undefined;
   const rootNote = normalizeOptionalNoteName(value.rootNote);
   const tonalCenter = normalizeOptionalRootNote(value.tonalCenter);
 

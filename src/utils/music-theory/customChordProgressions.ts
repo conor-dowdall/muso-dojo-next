@@ -1,9 +1,9 @@
 import {
-  noteLabelCollections,
-  type ChordCollectionKey,
+  chordProgression,
+  flatChordRootDegrees,
+  sharpChordRootDegrees,
   type ChordProgression,
   type ChordProgressionChord,
-  type ChordProgressionDegree,
 } from "@musodojo/music-theory-data";
 import {
   type SavedChordProgression,
@@ -22,10 +22,8 @@ export const CUSTOM_CHORD_PROGRESSION_MAX_GRID_POSITIONS = 8;
 export const CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR =
   CUSTOM_CHORD_PROGRESSION_MAX_GRID_POSITIONS;
 
-export const customChordProgressionFlatDegrees = noteLabelCollections
-  .intervalsFlat.labels as readonly ChordProgressionDegree[];
-export const customChordProgressionSharpDegrees = noteLabelCollections
-  .intervalsSharp.labels as readonly ChordProgressionDegree[];
+export const customChordProgressionFlatDegrees = flatChordRootDegrees;
+export const customChordProgressionSharpDegrees = sharpChordRootDegrees;
 
 export type CustomChordProgressionDraftChord = Pick<
   ChordProgressionChord,
@@ -37,11 +35,6 @@ export interface CustomChordProgressionDraftBar {
 }
 
 const DURATION_EPSILON = 0.000_001;
-const customChordProgressionDegreeSet = new Set<string>([
-  ...customChordProgressionFlatDegrees,
-  ...customChordProgressionSharpDegrees,
-]);
-
 function valuesAreClose(left: number, right: number) {
   return Math.abs(left - right) <= DURATION_EPSILON;
 }
@@ -166,79 +159,30 @@ export function removeCustomProgressionDraftChord(
   };
 }
 
-function normalizeChordCollectionKey(
-  value: unknown,
-): ChordCollectionKey | undefined {
-  return isCustomChordProgressionChordCollectionKey(value) ? value : undefined;
-}
+function progressionHasValidBars(progression: ChordProgression) {
+  const timing = chordProgression.getTiming(progression);
 
-function normalizeCustomProgressionChord(
-  value: unknown,
-): ChordProgressionChord | undefined {
-  if (!isRecord(value)) {
-    return undefined;
-  }
+  return (
+    timing.endsOnBarBoundary &&
+    timing.bars.length >= 1 &&
+    timing.bars.length <= CUSTOM_CHORD_PROGRESSION_MAX_BARS &&
+    timing.bars.every((bar) => {
+      const draftBar = {
+        chords: bar.segments.flatMap((segment) => {
+          const chord = progression.chords[segment.eventIndex];
 
-  const degree =
-    typeof value.degree === "string" &&
-    customChordProgressionDegreeSet.has(value.degree)
-      ? (value.degree as ChordProgressionDegree)
-      : undefined;
-  const chordCollectionKey = normalizeChordCollectionKey(
-    value.chordCollectionKey,
+          return chord
+            ? [{ ...chord, durationInBars: segment.durationInBars }]
+            : [];
+        }),
+      };
+
+      return (
+        draftBar.chords.length <= CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR &&
+        getCustomProgressionCompatiblePositionCounts([draftBar]).length > 0
+      );
+    })
   );
-  const durationInBars = value.durationInBars;
-
-  if (
-    !degree ||
-    !chordCollectionKey ||
-    typeof durationInBars !== "number" ||
-    !Number.isFinite(durationInBars) ||
-    durationInBars <= 0
-  ) {
-    return undefined;
-  }
-
-  return { chordCollectionKey, degree, durationInBars };
-}
-
-function progressionHasValidBars(chords: readonly ChordProgressionChord[]) {
-  let barCount = 0;
-  let currentBar: ChordProgressionChord[] = [];
-  let currentBarDuration = 0;
-
-  for (const chord of chords) {
-    if (chord.durationInBars > 1 + DURATION_EPSILON) {
-      return false;
-    }
-
-    currentBar.push(chord);
-    currentBarDuration += chord.durationInBars;
-
-    if (currentBarDuration > 1 + DURATION_EPSILON) {
-      return false;
-    }
-
-    if (valuesAreClose(currentBarDuration, 1)) {
-      if (
-        currentBar.length > CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR ||
-        getCustomProgressionCompatiblePositionCounts([{ chords: currentBar }])
-          .length === 0
-      ) {
-        return false;
-      }
-
-      barCount += 1;
-      if (barCount > CUSTOM_CHORD_PROGRESSION_MAX_BARS) {
-        return false;
-      }
-
-      currentBar = [];
-      currentBarDuration = 0;
-    }
-  }
-
-  return barCount > 0 && currentBar.length === 0;
 }
 
 export function createCustomProgressionFromBars(
@@ -271,79 +215,50 @@ export function createCustomProgressionFromBars(
 export function createCustomProgressionBars(
   progression: ChordProgression,
 ): CustomChordProgressionDraftBar[] | undefined {
-  const bars: CustomChordProgressionDraftBar[] = [];
-  let currentBar: Array<
-    CustomChordProgressionDraftChord & { durationInBars: number }
-  > = [];
-  let currentBarDuration = 0;
-
-  for (const chord of progression.chords) {
-    let remainingDuration = chord.durationInBars;
-
-    while (remainingDuration > DURATION_EPSILON) {
-      const segmentDuration = Math.min(
-        remainingDuration,
-        1 - currentBarDuration,
-      );
-      currentBar.push({
-        chordCollectionKey: chord.chordCollectionKey,
-        degree: chord.degree,
-        durationInBars: segmentDuration,
-      });
-      currentBarDuration += segmentDuration;
-      remainingDuration -= segmentDuration;
-
-      if (valuesAreClose(currentBarDuration, 1)) {
-        if (
-          currentBar.length > CUSTOM_CHORD_PROGRESSION_MAX_CHORDS_PER_BAR ||
-          getCustomProgressionCompatiblePositionCounts([{ chords: currentBar }])
-            .length === 0
-        ) {
-          return undefined;
-        }
-
-        bars.push({
-          chords: currentBar.map(
-            ({ chordCollectionKey, degree, durationInBars }) => ({
-              chordCollectionKey,
-              degree,
-              durationInBars,
-            }),
-          ),
-        });
-        currentBar = [];
-        currentBarDuration = 0;
-
-        if (bars.length > CUSTOM_CHORD_PROGRESSION_MAX_BARS) {
-          return undefined;
-        }
-      }
-    }
+  if (!progressionHasValidBars(progression)) {
+    return undefined;
   }
 
-  return bars.length > 0 && currentBar.length === 0 ? bars : undefined;
+  const timing = chordProgression.getTiming(progression);
+
+  return timing.bars.map((bar) => ({
+    chords: bar.segments.flatMap((segment) => {
+      const chord = progression.chords[segment.eventIndex];
+
+      return chord
+        ? [
+            {
+              chordCollectionKey: chord.chordCollectionKey,
+              degree: chord.degree,
+              durationInBars: segment.durationInBars,
+            },
+          ]
+        : [];
+    }),
+  }));
 }
 
 export function normalizeCustomChordProgression(
   value: unknown,
 ): ChordProgression | undefined {
-  if (!isRecord(value) || !Array.isArray(value.chords)) {
+  const result = chordProgression.parse(value);
+
+  if (!result.success) {
     return undefined;
   }
 
-  const chords = value.chords.map(normalizeCustomProgressionChord);
+  const { chords } = result.value;
 
-  if (!chords.every(isDefinedChord) || !progressionHasValidBars(chords)) {
+  if (
+    !chords.every((chord) =>
+      isCustomChordProgressionChordCollectionKey(chord.chordCollectionKey),
+    ) ||
+    !progressionHasValidBars(result.value)
+  ) {
     return undefined;
   }
 
-  return { chords };
-}
-
-function isDefinedChord(
-  chord: ChordProgressionChord | undefined,
-): chord is ChordProgressionChord {
-  return chord !== undefined;
+  return result.value;
 }
 
 export function normalizeCustomChordProgressionName(value: unknown) {
@@ -358,10 +273,22 @@ export function normalizeSavedChordProgression(
   }
 
   const id = normalizeString(value.id);
-  const name = normalizeCustomChordProgressionName(value.name);
-  const progression = normalizeCustomChordProgression(value.progression);
+  const definitionResult = chordProgression.parseDefinition({
+    name: value.name,
+    progression: value.progression,
+  });
 
-  return id && name && progression ? { id, name, progression } : undefined;
+  if (!id || !definitionResult.success) {
+    return undefined;
+  }
+
+  const progression = normalizeCustomChordProgression(
+    definitionResult.value.progression,
+  );
+
+  return progression
+    ? { id, name: definitionResult.value.name, progression }
+    : undefined;
 }
 
 export function normalizeSavedChordProgressions(
@@ -399,10 +326,19 @@ export function normalizeSavedChordProgressions(
 export function normalizeSavedChordProgressionInput(
   value: SavedChordProgressionInput,
 ): SavedChordProgressionInput | undefined {
-  const name = normalizeCustomChordProgressionName(value.name);
-  const progression = normalizeCustomChordProgression(value.progression);
+  const definitionResult = chordProgression.parseDefinition(value);
 
-  return name && progression ? { name, progression } : undefined;
+  if (!definitionResult.success) {
+    return undefined;
+  }
+
+  const progression = normalizeCustomChordProgression(
+    definitionResult.value.progression,
+  );
+
+  return progression
+    ? { name: definitionResult.value.name, progression }
+    : undefined;
 }
 
 export function normalizeChordProgressionNameForComparison(name: string) {

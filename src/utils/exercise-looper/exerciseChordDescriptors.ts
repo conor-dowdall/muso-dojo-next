@@ -1,5 +1,7 @@
 import {
+  chordCollectionKeys,
   diatonicModes,
+  getChordCollectionChordSuffix,
   harmonicMinorModes,
   melodicMinorModes,
   noteCollection,
@@ -45,15 +47,12 @@ const scaleDegreeModeKeysByCollection = new Map<
   }),
 );
 const chordSuffixByIntervalSignature = new Map(
-  Object.entries(noteCollections).flatMap(([key, collection]) =>
-    collection.category === "chord"
-      ? [
-          [
-            noteCollection.getExtensions(key as NoteCollectionKey).join(" "),
-            collection.primaryName,
-          ] as const,
-        ]
-      : [],
+  chordCollectionKeys.map(
+    (key) =>
+      [
+        noteCollection.getExtensions(key).join(" "),
+        getChordCollectionChordSuffix(key),
+      ] as const,
   ),
 );
 
@@ -193,11 +192,15 @@ function getChordName({
   rootName: NoteName;
 }) {
   if (extensionDegree === 5) {
-    const triad = noteCollection.getTriads(relativeCollectionKey)[0];
+    const triad = noteCollection.getTriadChordSuffixes(
+      relativeCollectionKey,
+    )[0];
     return triad === undefined ? rootName : `${rootName}${triad}`;
   }
 
-  const seventh = noteCollection.getSeventhChords(relativeCollectionKey)[0];
+  const seventh = noteCollection.getSeventhChordSuffixes(
+    relativeCollectionKey,
+  )[0];
 
   if (extensionDegree === 7) {
     return seventh === undefined ? rootName : `${rootName}${seventh}`;
@@ -353,7 +356,7 @@ export function supportsTertianExercises(noteCollectionKey: NoteCollectionKey) {
     supportsScaleDegreeExercises(noteCollectionKey) &&
     collection.integers.length === 7 &&
     noteCollection
-      .getTriads(noteCollectionKey)
-      .every((quality) => quality !== undefined)
+      .getTriadChordCollectionKeys(noteCollectionKey)
+      .every((chordCollectionKey) => chordCollectionKey !== undefined)
   );
 }

@@ -1,18 +1,18 @@
 import {
-  type ChordProgression,
+  type ChordProgressionDefinition,
   type ChordProgressionKey,
 } from "@musodojo/music-theory-data";
 
-export interface SavedChordProgression {
+type CustomChordProgressionDefinition = Pick<
+  ChordProgressionDefinition,
+  "name" | "progression"
+>;
+
+export interface SavedChordProgression extends CustomChordProgressionDefinition {
   id: string;
-  name: string;
-  progression: ChordProgression;
 }
 
-export interface SavedChordProgressionInput {
-  name: string;
-  progression: ChordProgression;
-}
+export type SavedChordProgressionInput = CustomChordProgressionDefinition;
 
 export type ChordProgressionSelection =
   | { kind: "built-in"; progressionKey: ChordProgressionKey }

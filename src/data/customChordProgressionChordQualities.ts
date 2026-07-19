@@ -1,42 +1,35 @@
-import {
-  getChordQualityChordCollectionKey,
-  type ChordCollectionKey,
-  type ChordQuality,
-} from "@musodojo/music-theory-data";
+import { type ChordCollectionKey } from "@musodojo/music-theory-data";
 
 export interface CustomChordProgressionChordChoice {
   chordCollectionKey: ChordCollectionKey;
   label: string;
 }
 
-function qualityChoice(
-  quality: ChordQuality,
+function chordChoice(
+  chordCollectionKey: ChordCollectionKey,
   label: string,
 ): CustomChordProgressionChordChoice {
   return {
-    chordCollectionKey: getChordQualityChordCollectionKey(quality),
+    chordCollectionKey,
     label,
   };
 }
 
 export const customProgressionCommonChordChoices = [
-  qualityChoice("M", "Major"),
-  qualityChoice("m", "Minor"),
-  qualityChoice("7", "Dominant 7"),
+  chordChoice("major", "Major"),
+  chordChoice("minor", "Minor"),
+  chordChoice("dominant7", "Dominant 7"),
 ] as const satisfies readonly CustomChordProgressionChordChoice[];
 
 export const customProgressionMoreChordChoices = [
-  qualityChoice("M7", "Major 7"),
-  qualityChoice("m7", "Minor 7"),
-  qualityChoice("°", "Diminished"),
-  qualityChoice("ø7", "Half-Diminished 7"),
-  qualityChoice("°7", "Diminished 7"),
-  qualityChoice("+", "Augmented"),
-  {
-    chordCollectionKey: "augmented7",
-    label: "Augmented 7",
-  },
-  qualityChoice("+M7", "Augmented Major 7"),
+  chordChoice("major7", "Major 7"),
+  chordChoice("minor7", "Minor 7"),
+  chordChoice("diminishedTriad", "Diminished"),
+  chordChoice("halfDiminished7", "Half-Diminished 7"),
+  chordChoice("diminished7", "Diminished 7"),
+  chordChoice("augmentedTriad", "Augmented"),
+  chordChoice("augmented7", "Augmented 7"),
+  chordChoice("augmentedMajor7", "Augmented Major 7"),
 ] as const satisfies readonly CustomChordProgressionChordChoice[];
 
 const customChordProgressionChordCollectionKeySet = new Set<string>([

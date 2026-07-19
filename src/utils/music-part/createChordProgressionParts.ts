@@ -1,6 +1,5 @@
 import {
   chordProgression,
-  chordProgressions,
   normalizeRootNoteString,
   type ChordProgression,
   type ChordProgressionChordReference,
@@ -35,7 +34,6 @@ import {
 
 const BAR_DURATION_IN_BARS = 1;
 const DURATION_EPSILON = 0.000_001;
-const DURATION_PRECISION = 1_000_000;
 
 type ChordProgressionCreationSelection =
   | {
@@ -68,10 +66,6 @@ interface ProgressionPartReference {
   rhythmBeatCount?: number;
 }
 
-function normalizeSegmentDuration(durationInBars: number) {
-  return Math.round(durationInBars * DURATION_PRECISION) / DURATION_PRECISION;
-}
-
 function getRhythmBeatCountForSegmentWithBarBeats(
   durationInBars: number,
   beatsPerBar: number,
@@ -83,19 +77,6 @@ function getRhythmBeatCountForSegmentWithBarBeats(
   return getRepresentablePartDurationBeats(durationInBars, beatsPerBar);
 }
 
-function getProgressionChordDurationInBars(
-  progression: ChordProgression,
-  index: number,
-) {
-  const durationInBars = progression?.chords[index]?.durationInBars;
-
-  return typeof durationInBars === "number" &&
-    Number.isFinite(durationInBars) &&
-    durationInBars > DURATION_EPSILON
-    ? durationInBars
-    : BAR_DURATION_IN_BARS;
-}
-
 function createFullProgressionPartReferences(
   rootNote: RootNote,
   progression: ChordProgression | ChordProgressionKey,
@@ -103,74 +84,61 @@ function createFullProgressionPartReferences(
   progressionInstanceId: string,
   beatsPerBar = PART_DURATION_BEATS_PER_BAR,
 ): ProgressionPartReference[] {
-  const resolvedProgression =
-    typeof progression === "string"
-      ? chordProgressions[progression]
-      : progression;
-  const references = chordProgression.getChordChangeReferences(
-    rootNote,
-    progression,
-  );
-  const romanSymbols = chordProgression.getRomanSymbols(progression);
-  const partReferences: ProgressionPartReference[] = [];
-  let currentBarPosition = 0;
+  const resolved = chordProgression.resolve(rootNote, progression);
 
-  references.forEach((reference, referenceIndex) => {
-    let remainingDuration = getProgressionChordDurationInBars(
-      resolvedProgression,
-      referenceIndex,
-    );
+  return resolved.bars.flatMap((bar) =>
+    bar.segments.map((segment) => {
+      const event = resolved.events[segment.eventIndex];
 
-    while (remainingDuration > DURATION_EPSILON) {
-      const remainingBarDuration = BAR_DURATION_IN_BARS - currentBarPosition;
-      const durationInBars = normalizeSegmentDuration(
-        Math.min(remainingDuration, remainingBarDuration),
-      );
+      if (!event) {
+        throw new Error(
+          `Missing resolved chord progression event ${segment.eventIndex}`,
+        );
+      }
+
+      const durationInBars = segment.durationInBars;
       const rhythmBeatCount = getRhythmBeatCountForSegmentWithBarBeats(
         durationInBars,
         beatsPerBar,
       );
 
-      partReferences.push({
-        ...(romanSymbols[referenceIndex]
-          ? {
-              authoredProgression: {
-                kind: "chord-progression" as const,
-                noteCollectionKey: reference.chordCollectionKey,
-                progressionInstanceId,
-                source: progressionSource,
-                romanSymbol: romanSymbols[referenceIndex],
-                rootNote: reference.rootNote,
-                tonalCenter: rootNote,
-              },
-            }
-          : {}),
-        reference,
+      return {
+        authoredProgression: {
+          kind: "chord-progression" as const,
+          noteCollectionKey: event.reference.chordCollectionKey,
+          progressionInstanceId,
+          source: progressionSource,
+          romanSymbol: event.romanSymbol,
+          rootNote: event.reference.rootNote,
+          tonalCenter: rootNote,
+        },
+        reference: event.reference,
         ...(Math.abs(durationInBars - BAR_DURATION_IN_BARS) > DURATION_EPSILON
           ? { durationInBars }
           : {}),
         ...(rhythmBeatCount !== undefined ? { rhythmBeatCount } : {}),
-      });
-
-      remainingDuration -= durationInBars;
-      currentBarPosition += durationInBars;
-
-      if (currentBarPosition >= BAR_DURATION_IN_BARS - DURATION_EPSILON) {
-        currentBarPosition = 0;
-      }
-    }
-  });
-
-  return partReferences;
+      };
+    }),
+  );
 }
 
 function createUniqueProgressionPartReferences(
   rootNote: RootNote,
   progression: ChordProgression | ChordProgressionKey,
 ): ProgressionPartReference[] {
-  return chordProgression
-    .getUniqueChordReferences(rootNote, progression)
-    .map((reference) => ({ reference }));
+  const resolved = chordProgression.resolve(rootNote, progression);
+  const seen = new Set<string>();
+
+  return resolved.events.flatMap(({ reference }) => {
+    const identity = `${reference.rootNote}:${reference.chordCollectionKey}:${reference.chordName}`;
+
+    if (seen.has(identity)) {
+      return [];
+    }
+
+    seen.add(identity);
+    return [{ reference }];
+  });
 }
 
 function applyProgressionRhythmBeatCount(

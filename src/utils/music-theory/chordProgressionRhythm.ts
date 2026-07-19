@@ -1,6 +1,6 @@
 import {
   chordProgression,
-  chordProgressions,
+  chordProgressionDefinitions,
   type ChordProgression,
   type ChordProgressionKey,
 } from "@musodojo/music-theory-data";
@@ -52,8 +52,16 @@ function getSimpleFractionDenominator(
   return undefined;
 }
 
-function progressionPrefersSwing(progression: ChordProgression) {
-  return progression.category === "jazz" || progression.category === "blues";
+function progressionPrefersSwing(
+  progressionOrKey: ChordProgression | ChordProgressionKey,
+) {
+  if (typeof progressionOrKey !== "string") {
+    return false;
+  }
+
+  const category = chordProgressionDefinitions[progressionOrKey]?.category;
+
+  return category === "jazz" || category === "blues";
 }
 
 export function getRequiredBarDivisionForDurations(
@@ -77,21 +85,14 @@ export function getRequiredBarDivisionForDurations(
 export function getChordProgressionRhythmProfile(
   progressionOrKey: ChordProgression | ChordProgressionKey,
 ): ChordProgressionRhythmProfile {
-  const progression =
-    typeof progressionOrKey === "string"
-      ? chordProgressions[progressionOrKey]
-      : progressionOrKey;
-  const totalBars = chordProgression.getTotalDurationInBars(progressionOrKey);
-  const requiredBarDivision = getRequiredBarDivisionForDurations(
-    progression.chords.map((chord) => chord.durationInBars),
-  );
+  const timing = chordProgression.getTiming(progressionOrKey);
 
   return {
-    hasSplitBars: requiredBarDivision > 1,
-    preferredRhythmStarterId: progressionPrefersSwing(progression)
+    hasSplitBars: timing.requiredBarDivision > 1,
+    preferredRhythmStarterId: progressionPrefersSwing(progressionOrKey)
       ? "swing"
       : "4-4",
-    requiredBarDivision,
-    totalBars,
+    requiredBarDivision: timing.requiredBarDivision,
+    totalBars: timing.totalDurationInBars,
   };
 }

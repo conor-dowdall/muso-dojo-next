@@ -96,7 +96,7 @@ describe("createChordProgressionParts", () => {
           durationInBars: 0.5,
         },
       ],
-    };
+    } as const;
     const parts = createChordProgressionParts({
       chordListMode: "full-song-order",
       rootNote: "D",
@@ -141,7 +141,7 @@ describe("createChordProgressionParts", () => {
           durationInBars: 1,
         },
       ],
-    };
+    } as const;
     const parts = createChordProgressionParts({
       chordListMode: "each-chord-once",
       rootNote: "E♭",
@@ -536,11 +536,7 @@ describe("createChordProgressionParts", () => {
   });
 
   it("stores fractional chart durations even when default Rhythm beats cannot represent them", () => {
-    const progressionKey = "thirdBarRegression" as ChordProgressionKey;
-    const mutableProgressions = chordProgressions as Record<string, unknown>;
-    const previousProgression = mutableProgressions[progressionKey];
-
-    mutableProgressions[progressionKey] = {
+    const progression = {
       chords: [
         {
           chordCollectionKey: "major",
@@ -553,38 +549,30 @@ describe("createChordProgressionParts", () => {
           durationInBars: 2 / 3,
         },
       ],
-    };
-
-    try {
-      const parts = createChordProgressionParts({
-        chordListMode: "full-song-order",
-        rootNote: "C",
-        progressionKey,
-        moduleRequests: [
-          {
-            type: "instrument",
-            settings: {
-              instrumentType: "fretboard",
-            },
+    } as const;
+    const parts = createChordProgressionParts({
+      chordListMode: "full-song-order",
+      rootNote: "C",
+      progression,
+      progressionName: "Third Bar Regression",
+      moduleRequests: [
+        {
+          type: "instrument",
+          settings: {
+            instrumentType: "fretboard",
           },
-        ],
-      });
+        },
+      ],
+    });
 
-      expect(parts).toHaveLength(2);
-      expect(parts[0]).toMatchObject({
-        rootNote: "C",
-      });
-      expect(parts[0]?.durationInBars).toBeCloseTo(1 / 3);
-      expect(parts[1]).toMatchObject({
-        rootNote: "G",
-      });
-      expect(parts[1]?.durationInBars).toBeCloseTo(2 / 3);
-    } finally {
-      if (previousProgression === undefined) {
-        delete mutableProgressions[progressionKey];
-      } else {
-        mutableProgressions[progressionKey] = previousProgression;
-      }
-    }
+    expect(parts).toHaveLength(2);
+    expect(parts[0]).toMatchObject({
+      rootNote: "C",
+    });
+    expect(parts[0]?.durationInBars).toBeCloseTo(1 / 3);
+    expect(parts[1]).toMatchObject({
+      rootNote: "G",
+    });
+    expect(parts[1]?.durationInBars).toBeCloseTo(2 / 3);
   });
 });

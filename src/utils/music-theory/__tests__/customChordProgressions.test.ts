@@ -1,7 +1,7 @@
 import {
   chordProgression,
   chordProgressions,
-  noteLabelCollections,
+  flatChordRootDegrees,
 } from "@musodojo/music-theory-data";
 import { describe, expect, it } from "vitest";
 import {
@@ -17,9 +17,7 @@ import {
 
 describe("customChordProgressions", () => {
   it("uses the package flat intervals and preserves optional sharp spellings", () => {
-    expect(customChordProgressionFlatDegrees).toBe(
-      noteLabelCollections.intervalsFlat.labels,
-    );
+    expect(customChordProgressionFlatDegrees).toBe(flatChordRootDegrees);
 
     const progression = createCustomProgressionFromBars([
       {
@@ -289,7 +287,7 @@ describe("customChordProgressions", () => {
     ]);
   });
 
-  it("normalizes unique saved progression names and strips analysis metadata", () => {
+  it("normalizes unique saved progression names and preserves valid analysis", () => {
     const progression = {
       chords: [
         {
@@ -316,6 +314,7 @@ describe("customChordProgressions", () => {
               degree: "5",
               chordCollectionKey: "dominant7",
               durationInBars: 1,
+              analysis: { romanSymbol: "V7/ii" },
             },
           ],
         },
