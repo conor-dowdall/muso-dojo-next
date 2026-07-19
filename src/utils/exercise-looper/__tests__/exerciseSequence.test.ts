@@ -718,7 +718,7 @@ describe("createExerciseSequence", () => {
       sequence.steps.map((step) => step.notes.map((note) => note.midi)),
     ).toEqual([[48, 52, 55]]);
     expect(sequence.chordDescriptorsByAnchorPosition.get(0)?.chordName).toBe(
-      "CM",
+      "C",
     );
   });
 

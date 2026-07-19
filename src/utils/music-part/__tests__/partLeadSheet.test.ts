@@ -77,7 +77,7 @@ describe("getPartLeadSheetSummary", () => {
 
     expect(summary).toMatchObject({
       chartSpanUnits: 210,
-      identityLabel: "CM",
+      identityLabel: "C",
       isPartialBar: true,
       meterLabel: "2/4",
     });

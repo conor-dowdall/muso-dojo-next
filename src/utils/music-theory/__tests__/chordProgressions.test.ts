@@ -21,5 +21,17 @@ describe("chord progression display", () => {
     expect(getChordProgressionDisplayLabels("C", "jazzBlues").titleLabel).toBe(
       "Jazz Blues",
     );
+    expect(
+      getChordProgressionDisplayLabels("C", "oneOneFiveFive").titleLabel,
+    ).toBe("I | I | V | V");
+  });
+
+  it("separates resolved chord and Roman summaries by bar", () => {
+    expect(
+      getChordProgressionDisplayLabels("C", "oneOneFiveFive"),
+    ).toMatchObject({
+      chordLabel: "C | C | G | G",
+      romanLabel: "I | I | V | V",
+    });
   });
 });

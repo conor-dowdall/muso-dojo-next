@@ -19,8 +19,10 @@ import {
 import { SelectableOverflowRow } from "@/components/ui/selectable-overflow-row";
 import { useAppStore } from "@/stores/appStore";
 import { type SavedChordProgression } from "@/types/custom-chord-progression";
-import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
-import { getChordProgressionRomanBarLabels } from "@/utils/music-theory/chordProgressions";
+import {
+  CHORD_PROGRESSION_BAR_SEPARATOR,
+  getChordProgressionRomanBarLabels,
+} from "@/utils/music-theory/chordProgressions";
 import { savedChordProgressionNameIsAvailable } from "@/utils/music-theory/customChordProgressions";
 import { CustomChordProgressionEditor } from "./CustomChordProgressionEditor";
 import styles from "./CustomChordProgressionsDialog.module.css";
@@ -35,7 +37,7 @@ interface CustomChordProgressionsDialogProps {
 
 function formatProgressionSummary(progression: ChordProgression) {
   return getChordProgressionRomanBarLabels(progression).join(
-    DISPLAY_VALUE_SEPARATOR,
+    CHORD_PROGRESSION_BAR_SEPARATOR,
   );
 }
 
