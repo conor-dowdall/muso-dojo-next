@@ -106,7 +106,7 @@ describe("getPartLeadSheetSummary", () => {
                 timekeeper: {
                   feel: "straight",
                   sound: "hat",
-                  subdivision: "eighth-triplet",
+                  subdivision: "3-per-beat",
                 },
               },
               source: "recipe",

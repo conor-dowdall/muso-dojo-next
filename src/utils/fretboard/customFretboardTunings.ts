@@ -1,8 +1,8 @@
 import {
+  isMidiNoteNumber,
+  isStringInstrumentKey,
   normalizeChromaticIndex,
   noteLabelCollections,
-  stringInstruments,
-  type MidiNoteNumber,
   type OpenStringMidiNotes,
   type StringInstrumentKey,
 } from "@musodojo/music-theory-data";
@@ -68,24 +68,8 @@ export function normalizeCustomTuningNotes(
     : undefined;
 }
 
-function isMidiNoteNumber(value: number): value is MidiNoteNumber {
-  return (
-    Number.isInteger(value) &&
-    value >= CUSTOM_TUNING_MIN_MIDI &&
-    value <= CUSTOM_TUNING_MAX_MIDI
-  );
-}
-
 export function normalizeCustomTuningName(value: unknown) {
   return normalizeString(value);
-}
-
-function normalizeStringInstrumentKey(
-  value: unknown,
-): StringInstrumentKey | undefined {
-  return typeof value === "string" && value in stringInstruments
-    ? (value as StringInstrumentKey)
-    : undefined;
 }
 
 export function normalizeSavedFretboardTuning(
@@ -96,7 +80,9 @@ export function normalizeSavedFretboardTuning(
   }
 
   const id = normalizeString(value.id);
-  const instrument = normalizeStringInstrumentKey(value.instrument);
+  const instrument = isStringInstrumentKey(value.instrument)
+    ? value.instrument
+    : undefined;
   const name = normalizeCustomTuningName(value.name);
   const openMidiNotes = normalizeCustomTuningNotes(value.openMidiNotes);
 
@@ -137,7 +123,9 @@ export function normalizeSavedFretboardTunings(
 export function normalizeSavedFretboardTuningInput(
   value: SavedFretboardTuningInput,
 ): SavedFretboardTuningInput | undefined {
-  const instrument = normalizeStringInstrumentKey(value.instrument);
+  const instrument = isStringInstrumentKey(value.instrument)
+    ? value.instrument
+    : undefined;
   const name = normalizeCustomTuningName(value.name);
   const openMidiNotes = normalizeCustomTuningNotes(value.openMidiNotes);
 

@@ -1,19 +1,21 @@
 import { describe, expect, it } from "vitest";
 import {
-  getCollectionToneAtPosition,
-  getCollectionToneSequenceMetadata,
-} from "@/utils/music-theory/collectionToneSequence";
+  getCollectionTonePresentationAtPosition,
+  getCollectionTonePresentationMetadata,
+} from "@/utils/note-collection/collectionTonePresentation";
 
 describe("collection tone sequences", () => {
   it("preserves ordinary collection cycles", () => {
-    expect(getCollectionToneAtPosition("ionian", -1)).toMatchObject({
-      collectionIndex: 6,
-      intervalDegree: 7,
-      intervalLabel: "7",
-      octave: -1,
-      semitones: -1,
-    });
-    expect(getCollectionToneAtPosition("ionian", 7)).toMatchObject({
+    expect(getCollectionTonePresentationAtPosition("ionian", -1)).toMatchObject(
+      {
+        collectionIndex: 6,
+        intervalDegree: 7,
+        intervalLabel: "7",
+        octave: -1,
+        semitones: -1,
+      },
+    );
+    expect(getCollectionTonePresentationAtPosition("ionian", 7)).toMatchObject({
       collectionIndex: 0,
       intervalDegree: 8,
       intervalLabel: "8",
@@ -34,10 +36,11 @@ describe("collection tone sequences", () => {
   ] as const)(
     "uses the declared %s formula as the first finite register",
     (collectionKey, expectedSemitones, expectedIntervals) => {
-      const metadata = getCollectionToneSequenceMetadata(collectionKey);
+      const metadata = getCollectionTonePresentationMetadata(collectionKey);
       const tones = Array.from(
         { length: expectedSemitones.length },
-        (_, position) => getCollectionToneAtPosition(collectionKey, position),
+        (_, position) =>
+          getCollectionTonePresentationAtPosition(collectionKey, position),
       );
 
       expect(metadata.isFiniteVoicing).toBe(true);
@@ -52,7 +55,10 @@ describe("collection tone sequences", () => {
         expectedIntervals,
       );
       expect(
-        getCollectionToneAtPosition(collectionKey, expectedSemitones.length),
+        getCollectionTonePresentationAtPosition(
+          collectionKey,
+          expectedSemitones.length,
+        ),
       ).toMatchObject({
         collectionIndex: 0,
         intervalLabel: "8",
@@ -63,8 +69,8 @@ describe("collection tone sequences", () => {
   );
 
   it("aligns finite voicing columns by pitch class", () => {
-    const major9 = getCollectionToneSequenceMetadata("major9");
-    const dominant13 = getCollectionToneSequenceMetadata("dominant13");
+    const major9 = getCollectionTonePresentationMetadata("major9");
+    const dominant13 = getCollectionTonePresentationMetadata("dominant13");
 
     expect(major9.columnCount).toBe(5);
     expect(major9.tones.map((tone) => tone.columnIndex)).toEqual([
@@ -78,7 +84,7 @@ describe("collection tone sequences", () => {
 
   it("repeats finite formulas in package order across registers", () => {
     const tones = Array.from({ length: 10 }, (_, position) =>
-      getCollectionToneAtPosition("major9", position),
+      getCollectionTonePresentationAtPosition("major9", position),
     );
 
     expect(tones.map((tone) => tone?.semitones)).toEqual([
@@ -107,8 +113,8 @@ describe("collection tone sequences", () => {
     ["bluesPentatonic", 6],
     ["major", 3],
   ] as const)("keeps %s octave-cyclic", (collectionKey, nextOctavePosition) => {
-    const metadata = getCollectionToneSequenceMetadata(collectionKey);
-    const nextRoot = getCollectionToneAtPosition(
+    const metadata = getCollectionTonePresentationMetadata(collectionKey);
+    const nextRoot = getCollectionTonePresentationAtPosition(
       collectionKey,
       nextOctavePosition,
     );

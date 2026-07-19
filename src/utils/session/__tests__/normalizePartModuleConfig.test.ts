@@ -103,7 +103,7 @@ describe("normalizePartModuleConfig", () => {
           notePlayback: "together",
         },
         start: { octave: 0, stepOffset: 1 },
-        subdivision: "sixteenth",
+        subdivision: "4-per-beat",
         type: "exercise-looper",
         wood: "maple",
       }),
@@ -124,7 +124,7 @@ describe("normalizePartModuleConfig", () => {
         notePlayback: "together",
       },
       start: { octave: 0, stepOffset: 1 },
-      subdivision: "sixteenth",
+      subdivision: "4-per-beat",
       type: "exercise-looper",
       wood: "maple",
     });
@@ -149,7 +149,7 @@ describe("normalizePartModuleConfig", () => {
           notePlayback: "separate",
         },
         start: { octave: 0, stepOffset: 0 },
-        subdivision: "quarter",
+        subdivision: "1-per-beat",
         type: "exercise-looper",
         wood: "rosewood",
       }),
@@ -234,7 +234,7 @@ describe("normalizePartModuleConfig", () => {
             timekeeper: {
               feel: "swing",
               sound: "ride",
-              subdivision: "eighth",
+              subdivision: "2-per-beat",
             },
           },
           source: "recipe",
@@ -252,7 +252,7 @@ describe("normalizePartModuleConfig", () => {
           timekeeper: {
             feel: "straight",
             sound: "ride",
-            subdivision: "eighth",
+            subdivision: "2-per-beat",
           },
         },
         source: "recipe",
@@ -280,7 +280,7 @@ describe("normalizePartModuleConfig", () => {
           timekeeper: {
             feel: "straight",
             sound: "hat",
-            subdivision: "eighth",
+            subdivision: "2-per-beat",
           },
         },
         source: "recipe",
@@ -328,7 +328,7 @@ describe("normalizePartModuleConfig", () => {
             timekeeper: {
               feel: "straight",
               sound: "hat",
-              subdivision: "eighth-triplet",
+              subdivision: "3-per-beat",
             },
           },
           source: "recipe",
@@ -345,7 +345,7 @@ describe("normalizePartModuleConfig", () => {
         recipe: {
           beats: 2,
           groove: "kit",
-          timekeeper: { subdivision: "eighth-triplet" },
+          timekeeper: { subdivision: "3-per-beat" },
         },
       },
       rhythm: { recipe: { beats: 1, groove: "pulse" } },

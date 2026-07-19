@@ -25,16 +25,14 @@ describe("exercise rhythm controls", () => {
   });
 
   it("labels densities and their musical note names", () => {
-    expect(getExerciseSubdivisionLabel("eighth-triplet")).toBe(
+    expect(getExerciseSubdivisionLabel("3-per-beat")).toBe(
       "Eighth-Note Triplets",
     );
-    expect(getExerciseSubdivisionDensityLabel("eighth-triplet")).toBe(
-      "3 per Beat",
-    );
-    expect(getExerciseSubdivisionNoteLabel("eighth-triplet")).toBe(
+    expect(getExerciseSubdivisionDensityLabel("3-per-beat")).toBe("3 per Beat");
+    expect(getExerciseSubdivisionNoteLabel("3-per-beat")).toBe(
       "Eighth-Note Triplets",
     );
-    expect(getExerciseSubdivisionAriaLabel("septuplet")).toBe(
+    expect(getExerciseSubdivisionAriaLabel("7-per-beat")).toBe(
       "Septuplets, 7 per Beat",
     );
   });

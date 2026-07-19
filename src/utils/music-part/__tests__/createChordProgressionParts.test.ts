@@ -330,7 +330,7 @@ describe("createChordProgressionParts", () => {
                 timekeeper: {
                   feel: "swing",
                   sound: "ride",
-                  subdivision: "eighth",
+                  subdivision: "2-per-beat",
                 },
               },
               source: "recipe",
@@ -348,7 +348,7 @@ describe("createChordProgressionParts", () => {
           timekeeper: {
             feel: "swing",
             sound: "ride",
-            subdivision: "eighth",
+            subdivision: "2-per-beat",
           },
         },
       },
@@ -373,7 +373,7 @@ describe("createChordProgressionParts", () => {
                 timekeeper: {
                   feel: "straight",
                   sound: "hat",
-                  subdivision: "eighth",
+                  subdivision: "2-per-beat",
                 },
               },
               source: "recipe",
@@ -423,7 +423,7 @@ describe("createChordProgressionParts", () => {
                 timekeeper: {
                   feel: "straight",
                   sound: "hat",
-                  subdivision: "eighth-triplet",
+                  subdivision: "3-per-beat",
                 },
               },
               source: "recipe",
@@ -439,7 +439,7 @@ describe("createChordProgressionParts", () => {
           recipe: {
             beats: 2,
             groove: "kit",
-            timekeeper: { subdivision: "eighth-triplet" },
+            timekeeper: { subdivision: "3-per-beat" },
           },
         },
         rhythm: {

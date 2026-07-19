@@ -55,7 +55,7 @@ describe("createSessionEntities", () => {
           timekeeper: {
             feel: "straight",
             sound: "hat",
-            subdivision: "eighth",
+            subdivision: "2-per-beat",
           },
         },
         source: "recipe",
@@ -125,7 +125,7 @@ describe("createSessionEntities", () => {
                 timekeeper: {
                   feel: "swing",
                   sound: "ride",
-                  subdivision: "eighth",
+                  subdivision: "2-per-beat",
                 },
               },
               source: "recipe",
@@ -143,7 +143,7 @@ describe("createSessionEntities", () => {
           timekeeper: {
             feel: "swing",
             sound: "ride",
-            subdivision: "eighth",
+            subdivision: "2-per-beat",
           },
         },
       },
@@ -166,7 +166,7 @@ describe("createSessionEntities", () => {
                 timekeeper: {
                   feel: "shuffle",
                   sound: "shaker",
-                  subdivision: "eighth",
+                  subdivision: "2-per-beat",
                 },
               },
               source: "recipe",
@@ -184,7 +184,7 @@ describe("createSessionEntities", () => {
           timekeeper: {
             feel: "shuffle",
             sound: "shaker",
-            subdivision: "eighth",
+            subdivision: "2-per-beat",
           },
         },
       },

@@ -18,9 +18,9 @@ import {
   DEFAULT_PART_ROOT_NOTE,
 } from "@/utils/session/sessionDefaults";
 import {
-  getCollectionToneAtPosition,
-  getCollectionToneSequenceMetadata,
-} from "@/utils/music-theory/collectionToneSequence";
+  getCollectionTonePresentationAtPosition,
+  getCollectionTonePresentationMetadata,
+} from "@/utils/note-collection/collectionTonePresentation";
 
 // Middle-register anchor for generated drone pitches; octave controls offset
 // from here before the notes are handed to the audio engine.
@@ -154,7 +154,7 @@ export function resolveDroneNotes({
   const resolvedNoteCollectionKey = resolveNoteCollectionKey(noteCollectionKey);
   const resolvedOctaveOffset = resolveOctaveOffset(octaveOffset);
   const collection = noteCollections[resolvedNoteCollectionKey];
-  const toneSequence = getCollectionToneSequenceMetadata(
+  const toneSequence = getCollectionTonePresentationMetadata(
     resolvedNoteCollectionKey,
   );
   const rootInteger = rootNoteToIntegerMap.get(resolvedRootNote) ?? 0;
@@ -193,7 +193,7 @@ export function resolveDroneNotes({
   const candidates: DroneNoteButton[] = [];
 
   for (let position = 0; position < candidateCount; position += 1) {
-    const tone = getCollectionToneAtPosition(
+    const tone = getCollectionTonePresentationAtPosition(
       resolvedNoteCollectionKey,
       position,
     );

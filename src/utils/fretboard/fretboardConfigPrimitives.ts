@@ -1,4 +1,6 @@
 import {
+  isStringInstrumentKey,
+  isStringInstrumentTuningKey,
   stringInstruments,
   stringInstrumentTunings,
   type StringInstrumentKey,
@@ -85,16 +87,6 @@ export function isFretboardConfigRecord(
   value: unknown,
 ): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isStringInstrumentKey(value: unknown): value is StringInstrumentKey {
-  return typeof value === "string" && value in stringInstruments;
-}
-
-function isStringInstrumentTuningKey(
-  value: unknown,
-): value is StringInstrumentTuningKey {
-  return typeof value === "string" && value in stringInstrumentTunings;
 }
 
 export function isValidFretboardIcon(icon: unknown): icon is FretboardIcon {

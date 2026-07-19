@@ -40,14 +40,14 @@ describe("rhythmRecipeControls", () => {
       beats: 2,
       timekeeper: {
         feel: "straight",
-        subdivision: "eighth-triplet",
+        subdivision: "3-per-beat",
       },
     });
     expect(twelveEight).toMatchObject({
       beats: 4,
       timekeeper: {
         feel: "straight",
-        subdivision: "eighth-triplet",
+        subdivision: "3-per-beat",
       },
     });
     expect(getRhythmTheoryReadout(sixEight).title).toBe("6/8");
@@ -65,7 +65,7 @@ describe("rhythmRecipeControls", () => {
       timekeeper: {
         feel: "swing",
         sound: "ride",
-        subdivision: "eighth",
+        subdivision: "2-per-beat",
       },
     });
     expect(shuffle).toMatchObject({
@@ -75,7 +75,7 @@ describe("rhythmRecipeControls", () => {
       timekeeper: {
         feel: "shuffle",
         sound: "hat",
-        subdivision: "eighth",
+        subdivision: "2-per-beat",
       },
     });
   });
@@ -94,7 +94,7 @@ describe("rhythmRecipeControls", () => {
     ).toBe("4/4");
     expect(
       getRhythmStarterChoiceForRecipe(
-        getRecipeWithTimekeeper(fourFour, { subdivision: "quintuplet" }),
+        getRecipeWithTimekeeper(fourFour, { subdivision: "5-per-beat" }),
       )?.label,
     ).toBe("4/4");
     expect(
@@ -149,7 +149,7 @@ describe("rhythmRecipeControls", () => {
       timekeeper: {
         feel: "straight",
         sound: "hat",
-        subdivision: "eighth",
+        subdivision: "2-per-beat",
       },
     });
     expect(getRhythmStarterSummary("country")).toBe(
@@ -179,19 +179,19 @@ describe("rhythmRecipeControls", () => {
       groove: "bluegrass",
       timekeeper: {
         feel: "straight",
-        subdivision: "eighth",
+        subdivision: "2-per-beat",
       },
     });
     expect(
       getRecipeWithTimekeeper(drive, {
         feel: "swing",
-        subdivision: "eighth",
+        subdivision: "2-per-beat",
       }),
     ).toMatchObject({
       groove: "bluegrass",
       timekeeper: {
         feel: "straight",
-        subdivision: "eighth",
+        subdivision: "2-per-beat",
       },
     });
   });
@@ -215,7 +215,7 @@ describe("rhythmRecipeControls", () => {
       groove: "pulse",
       timekeeper: {
         feel: "straight",
-        subdivision: "eighth",
+        subdivision: "2-per-beat",
       },
     });
   });

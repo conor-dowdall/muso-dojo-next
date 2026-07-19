@@ -1,14 +1,13 @@
 import {
   DIATONIC_STEPS_PER_OCTAVE,
-  getIntervalLabelDegree,
-  noteCollections,
+  noteCollection,
   shiftIntervalLabelByOctaves,
   type NoteCollectionKey,
 } from "@musodojo/music-theory-data";
 
 const SEMITONES_PER_OCTAVE = 12;
 
-export interface CollectionTone {
+export interface CollectionTonePresentation {
   collectionIndex: number;
   columnIndex: number;
   intervalDegree?: number;
@@ -17,43 +16,20 @@ export interface CollectionTone {
   semitones: number;
 }
 
-export interface CollectionToneSequenceMetadata {
+export interface CollectionTonePresentationMetadata {
   columnCount: number;
   degreeSignature?: string;
   isFiniteVoicing: boolean;
   supportsOctaveRangeEditing: boolean;
-  tones: readonly CollectionTone[];
+  tones: readonly CollectionTonePresentation[];
 }
 
-const metadataByCollectionKey = new Map<
+const presentationMetadataByCollectionKey = new Map<
   NoteCollectionKey,
-  CollectionToneSequenceMetadata
+  CollectionTonePresentationMetadata
 >();
 
-function floorDivide(value: number, divisor: number) {
-  return Math.floor(value / divisor);
-}
-
-function modulo(value: number, divisor: number) {
-  return ((value % divisor) + divisor) % divisor;
-}
-
-function getFiniteVoicingColumns(integers: readonly number[]) {
-  const pitchClasses = [
-    ...new Set(
-      integers.map((semitones) => modulo(semitones, SEMITONES_PER_OCTAVE)),
-    ),
-  ].toSorted((left, right) => left - right);
-
-  return {
-    columnByPitchClass: new Map(
-      pitchClasses.map((pitchClass, columnIndex) => [pitchClass, columnIndex]),
-    ),
-    columnCount: pitchClasses.length,
-  };
-}
-
-function getDegreeSignature(tones: readonly CollectionTone[]) {
+function getDegreeSignature(tones: readonly { intervalDegree?: number }[]) {
   const degrees = tones.map((tone) => tone.intervalDegree);
 
   return degrees.every((degree) => degree !== undefined)
@@ -61,97 +37,61 @@ function getDegreeSignature(tones: readonly CollectionTone[]) {
     : undefined;
 }
 
-function createMetadata(
+export function getCollectionTonePresentationMetadata(
   collectionKey: NoteCollectionKey,
-): CollectionToneSequenceMetadata {
-  const collection = noteCollections[collectionKey];
-  const integers: readonly number[] = collection.integers;
-  const intervals: readonly unknown[] = collection.intervals;
-  const isFiniteVoicing = integers.some(
-    (semitones) => semitones >= SEMITONES_PER_OCTAVE,
-  );
-  const finiteColumns = isFiniteVoicing
-    ? getFiniteVoicingColumns(integers)
-    : undefined;
-  const tones = integers.map(
-    (semitones: number, collectionIndex: number): CollectionTone => {
-      const octave = floorDivide(semitones, SEMITONES_PER_OCTAVE);
-      const intervalLabel = String(
-        intervals[collectionIndex] ?? collectionIndex + 1,
-      );
-      const columnIndex = isFiniteVoicing
-        ? (finiteColumns?.columnByPitchClass.get(
-            modulo(semitones, SEMITONES_PER_OCTAVE),
-          ) ?? 0)
-        : collectionIndex;
-
-      return {
-        collectionIndex,
-        columnIndex,
-        intervalDegree: getIntervalLabelDegree(intervalLabel),
-        intervalLabel,
-        octave,
-        semitones,
-      };
-    },
-  );
-
-  return {
-    columnCount: finiteColumns?.columnCount ?? tones.length,
-    degreeSignature: getDegreeSignature(tones),
-    isFiniteVoicing,
-    supportsOctaveRangeEditing: true,
-    tones,
-  };
-}
-
-export function getCollectionToneSequenceMetadata(
-  collectionKey: NoteCollectionKey,
-) {
-  const existing = metadataByCollectionKey.get(collectionKey);
+): CollectionTonePresentationMetadata {
+  const existing = presentationMetadataByCollectionKey.get(collectionKey);
 
   if (existing) {
     return existing;
   }
 
-  const metadata = createMetadata(collectionKey);
-  metadataByCollectionKey.set(collectionKey, metadata);
+  const sequence = noteCollection.getToneSequence(collectionKey);
+  const tones = sequence.tones.map((tone): CollectionTonePresentation => ({
+    collectionIndex: tone.collectionIndex,
+    columnIndex: tone.pitchClassIndex,
+    intervalDegree: tone.intervalDegree,
+    intervalLabel: tone.interval,
+    octave: tone.octaveOffset,
+    semitones: tone.semitones,
+  }));
+
+  const metadata = {
+    columnCount: sequence.pitchClasses.length,
+    degreeSignature: getDegreeSignature(tones),
+    isFiniteVoicing: sequence.hasCompoundIntervals,
+    supportsOctaveRangeEditing: true,
+    tones,
+  };
+
+  presentationMetadataByCollectionKey.set(collectionKey, metadata);
   return metadata;
 }
 
-export function getCollectionToneAtPosition(
+export function getCollectionTonePresentationAtPosition(
   collectionKey: NoteCollectionKey,
   position: number,
-): CollectionTone | undefined {
-  const metadata = getCollectionToneSequenceMetadata(collectionKey);
-  const resolvedPosition = Math.trunc(position);
-  const collectionSize = metadata.tones.length;
+): CollectionTonePresentation | undefined {
+  const tone = noteCollection.getToneAtPosition(collectionKey, position);
 
-  if (collectionSize === 0) {
+  if (!tone) {
     return undefined;
   }
 
-  const cycle = floorDivide(resolvedPosition, collectionSize);
-  const baseTone = metadata.tones[modulo(resolvedPosition, collectionSize)];
-
-  if (!baseTone) {
-    return undefined;
-  }
-
-  const semitones = baseTone.semitones + cycle * SEMITONES_PER_OCTAVE;
   const intervalDegree =
-    baseTone.intervalDegree === undefined || cycle < 0
-      ? baseTone.intervalDegree
-      : baseTone.intervalDegree + cycle * DIATONIC_STEPS_PER_OCTAVE;
+    tone.intervalDegree === undefined || tone.cycle < 0
+      ? tone.intervalDegree
+      : tone.intervalDegree + tone.cycle * DIATONIC_STEPS_PER_OCTAVE;
 
   return {
-    ...baseTone,
+    collectionIndex: tone.collectionIndex,
+    columnIndex: tone.pitchClassIndex,
     intervalDegree,
     intervalLabel:
-      cycle < 0
-        ? baseTone.intervalLabel
-        : shiftIntervalLabelByOctaves(baseTone.intervalLabel, cycle),
-    octave: floorDivide(semitones, SEMITONES_PER_OCTAVE),
-    semitones,
+      tone.cycle < 0
+        ? tone.interval
+        : shiftIntervalLabelByOctaves(tone.interval, tone.cycle),
+    octave: Math.floor(tone.resolvedSemitones / SEMITONES_PER_OCTAVE),
+    semitones: tone.resolvedSemitones,
   };
 }

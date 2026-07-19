@@ -1,6 +1,7 @@
 import {
   type ChordProgressionAnalysisRomanSymbol,
   type ChordProgressionKey,
+  type BeatSubdivisionKey,
   type NoteName,
   type NoteCollectionKey,
   type RootNote,
@@ -32,7 +33,6 @@ import {
   type CollectionRangeBoundary,
   type ExercisePattern,
 } from "@/utils/exercise-looper/exerciseSequence";
-import { type BeatSubdivisionId } from "@/utils/music-theory/beatSubdivision";
 import { type RhythmSelection } from "@/utils/rhythm/rhythmConfig";
 import { type SessionWorkspaceViewMode } from "@/types/session-view";
 
@@ -155,7 +155,7 @@ export interface DronePartModuleConfig extends PartModuleBaseConfig<"drone"> {
   wood?: WoodSurfaceId;
 }
 
-export type ExerciseSubdivision = BeatSubdivisionId;
+export type ExerciseSubdivision = BeatSubdivisionKey;
 
 export type ExerciseCountInBeats = 0 | 2 | 3 | 4;
 

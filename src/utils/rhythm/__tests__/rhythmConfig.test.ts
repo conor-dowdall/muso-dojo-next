@@ -27,7 +27,7 @@ describe("rhythmConfig", () => {
           timekeeper: {
             feel: "swing",
             sound: "ride",
-            subdivision: "eighth",
+            subdivision: "2-per-beat",
             volume: 0.8,
           },
           volume: 0.2,
@@ -42,7 +42,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "swing",
           sound: "ride",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -69,7 +69,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "triplet",
           sound: "hat",
-          subdivision: "quarter",
+          subdivision: "1-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -79,7 +79,7 @@ describe("rhythmConfig", () => {
       timekeeper: {
         feel: "straight",
         sound: "hat",
-        subdivision: "eighth-triplet",
+        subdivision: "3-per-beat",
       },
     });
     expect(
@@ -88,7 +88,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "triplet",
           sound: "hat",
-          subdivision: "sixteenth",
+          subdivision: "4-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -98,7 +98,7 @@ describe("rhythmConfig", () => {
       timekeeper: {
         feel: "straight",
         sound: "hat",
-        subdivision: "sixteenth-triplet",
+        subdivision: "6-per-beat",
       },
     });
     expect(
@@ -107,7 +107,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "shuffle",
           sound: "ride",
-          subdivision: "sixteenth",
+          subdivision: "4-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -117,7 +117,7 @@ describe("rhythmConfig", () => {
       timekeeper: {
         feel: "shuffle",
         sound: "ride",
-        subdivision: "eighth",
+        subdivision: "2-per-beat",
       },
     });
   });
@@ -131,7 +131,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -141,7 +141,7 @@ describe("rhythmConfig", () => {
       timekeeper: {
         feel: "straight",
         sound: "hat",
-        subdivision: "eighth",
+        subdivision: "2-per-beat",
       },
     });
   });
@@ -155,7 +155,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "off",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -165,7 +165,7 @@ describe("rhythmConfig", () => {
       timekeeper: {
         feel: "off",
         sound: "hat",
-        subdivision: "eighth",
+        subdivision: "2-per-beat",
       },
     });
   });
@@ -179,7 +179,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "off",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -196,7 +196,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toMatchObject({
@@ -212,7 +212,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toMatchObject({
@@ -231,7 +231,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "shuffle",
           sound: "ride",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -241,7 +241,7 @@ describe("rhythmConfig", () => {
       timekeeper: {
         feel: "straight",
         sound: "ride",
-        subdivision: "eighth",
+        subdivision: "2-per-beat",
       },
     });
   });
@@ -266,7 +266,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "swing",
           sound: "ride",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -319,7 +319,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "swing",
           sound: "ride",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -347,7 +347,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "swing",
           sound: "ride",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -373,7 +373,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "shuffle",
           sound: "ride",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -409,7 +409,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "off",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -431,7 +431,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "off",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -454,7 +454,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "off",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -482,7 +482,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "swing",
           sound: "ride",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -492,7 +492,7 @@ describe("rhythmConfig", () => {
       timekeeper: {
         feel: "straight",
         sound: "ride",
-        subdivision: "eighth",
+        subdivision: "2-per-beat",
       },
     });
   });
@@ -506,7 +506,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "off",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -545,7 +545,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth-triplet",
+          subdivision: "3-per-beat",
         },
       },
       source: "recipe",
@@ -561,7 +561,7 @@ describe("rhythmConfig", () => {
   });
 
   it("generates higher tuplet timekeeper densities inside each beat", () => {
-    const createHatTicks = (subdivision: "quintuplet" | "septuplet") => {
+    const createHatTicks = (subdivision: "5-per-beat" | "7-per-beat") => {
       const pattern = getRhythmSelectionPattern({
         recipe: {
           beats: 1,
@@ -581,14 +581,14 @@ describe("rhythmConfig", () => {
         .map((hit) => hit.atTicks);
     };
 
-    expect(createHatTicks("quintuplet")).toEqual([
+    expect(createHatTicks("5-per-beat")).toEqual([
       0,
       RHYTHM_PPQ / 5,
       (RHYTHM_PPQ * 2) / 5,
       (RHYTHM_PPQ * 3) / 5,
       (RHYTHM_PPQ * 4) / 5,
     ]);
-    expect(createHatTicks("septuplet")).toEqual(
+    expect(createHatTicks("7-per-beat")).toEqual(
       Array.from({ length: 7 }, (_, index) => (RHYTHM_PPQ * index) / 7),
     );
   });
@@ -602,7 +602,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth-triplet",
+          subdivision: "3-per-beat",
         },
       },
       source: "recipe",
@@ -626,7 +626,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "sixteenth",
+          subdivision: "4-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -641,7 +641,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -656,7 +656,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -671,7 +671,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -686,7 +686,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth-triplet",
+          subdivision: "3-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -701,7 +701,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "swing",
           sound: "ride",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -716,7 +716,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "ride",
-          subdivision: "eighth-triplet",
+          subdivision: "3-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -733,7 +733,7 @@ describe("rhythmConfig", () => {
             timekeeper: {
               feel: "straight",
               sound: "ride",
-              subdivision: "eighth-triplet",
+              subdivision: "3-per-beat",
             },
           },
           source: "recipe",
@@ -751,7 +751,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "quintuplet",
+          subdivision: "5-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -766,7 +766,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "septuplet",
+          subdivision: "7-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -781,7 +781,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "thirty-second",
+          subdivision: "8-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -799,7 +799,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "off",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -828,7 +828,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "off",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -855,7 +855,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "off",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -868,7 +868,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "off",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -921,7 +921,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "off",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -954,7 +954,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "off",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       },
       source: "recipe",
@@ -989,7 +989,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -1004,7 +1004,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -1019,7 +1019,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -1034,7 +1034,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -1049,7 +1049,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -1064,7 +1064,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -1079,7 +1079,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -1094,7 +1094,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -1109,7 +1109,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -1124,7 +1124,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -1139,7 +1139,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -1154,7 +1154,7 @@ describe("rhythmConfig", () => {
         timekeeper: {
           feel: "straight",
           sound: "hat",
-          subdivision: "eighth",
+          subdivision: "2-per-beat",
         },
       }),
     ).toStrictEqual({
@@ -1166,15 +1166,15 @@ describe("rhythmConfig", () => {
   it("always reports a meter class for normalized recipe combinations", () => {
     const grooves = ["pulse", "kit", "bluegrass"] as const;
     const timekeepers = [
-      { feel: "off", sound: "hat", subdivision: "eighth" },
-      { feel: "straight", sound: "hat", subdivision: "quarter" },
-      { feel: "straight", sound: "hat", subdivision: "eighth" },
-      { feel: "straight", sound: "hat", subdivision: "sixteenth" },
-      { feel: "straight", sound: "ride", subdivision: "eighth-triplet" },
-      { feel: "straight", sound: "ride", subdivision: "quintuplet" },
-      { feel: "straight", sound: "ride", subdivision: "septuplet" },
-      { feel: "swing", sound: "ride", subdivision: "eighth" },
-      { feel: "shuffle", sound: "shaker", subdivision: "eighth" },
+      { feel: "off", sound: "hat", subdivision: "2-per-beat" },
+      { feel: "straight", sound: "hat", subdivision: "1-per-beat" },
+      { feel: "straight", sound: "hat", subdivision: "2-per-beat" },
+      { feel: "straight", sound: "hat", subdivision: "4-per-beat" },
+      { feel: "straight", sound: "ride", subdivision: "3-per-beat" },
+      { feel: "straight", sound: "ride", subdivision: "5-per-beat" },
+      { feel: "straight", sound: "ride", subdivision: "7-per-beat" },
+      { feel: "swing", sound: "ride", subdivision: "2-per-beat" },
+      { feel: "shuffle", sound: "shaker", subdivision: "2-per-beat" },
     ] as const;
 
     for (let beats = 1; beats <= 8; beats += 1) {

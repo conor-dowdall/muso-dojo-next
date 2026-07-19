@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveCollectionPositionMatch } from "@/utils/music-theory/collectionPositionIdentity";
+import { resolveCollectionPositionMatch } from "@/utils/note-collection/collectionPositionIdentity";
 
 describe("resolveCollectionPositionMatch", () => {
   it("preserves collection position when collection sizes match", () => {

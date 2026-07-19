@@ -5,9 +5,9 @@ import {
 } from "@musodojo/music-theory-data";
 import { isPlayableMidiNote } from "@/audio/pitch";
 import {
-  getCollectionToneAtPosition,
-  getCollectionToneSequenceMetadata,
-} from "@/utils/music-theory/collectionToneSequence";
+  getCollectionTonePresentationAtPosition,
+  getCollectionTonePresentationMetadata,
+} from "@/utils/note-collection/collectionTonePresentation";
 import {
   createChordDescriptorsByAnchorPosition,
   createIntervalDescriptorsByAnchorPosition,
@@ -141,13 +141,14 @@ function createDisplayRows({
   octaveOffset: number;
   rootNote: ReturnType<typeof resolveExerciseRootNote>;
 }) {
-  const metadata = getCollectionToneSequenceMetadata(collectionKey);
+  const metadata = getCollectionTonePresentationMetadata(collectionKey);
   const firstOctave =
-    getCollectionToneAtPosition(collectionKey, firstPosition)?.octave ?? 0;
+    getCollectionTonePresentationAtPosition(collectionKey, firstPosition)
+      ?.octave ?? 0;
   const lastDisplayPosition = displayPositions.at(-1) ?? lastPosition;
   const lastDisplayOctave =
-    getCollectionToneAtPosition(collectionKey, lastDisplayPosition)?.octave ??
-    firstOctave;
+    getCollectionTonePresentationAtPosition(collectionKey, lastDisplayPosition)
+      ?.octave ?? firstOctave;
   const rows = Array.from(
     { length: lastDisplayOctave - firstOctave + 1 },
     () => [] as ExerciseDisplayNote[],
@@ -165,7 +166,10 @@ function createDisplayRows({
       return;
     }
 
-    const tone = getCollectionToneAtPosition(collectionKey, collectionPosition);
+    const tone = getCollectionTonePresentationAtPosition(
+      collectionKey,
+      collectionPosition,
+    );
 
     if (!tone) {
       return;
@@ -202,7 +206,7 @@ function createStudyReference({
   collectionKey: NoteCollectionKey;
   noteNames: readonly string[];
 }) {
-  const metadata = getCollectionToneSequenceMetadata(collectionKey);
+  const metadata = getCollectionTonePresentationMetadata(collectionKey);
   const studyReference = metadata.tones.flatMap((tone): ExerciseStudyNote[] => {
     const label = noteNames[tone.collectionIndex];
 
@@ -218,7 +222,7 @@ function createStudyReference({
     return studyReference;
   }
 
-  const octave = getCollectionToneAtPosition(
+  const octave = getCollectionTonePresentationAtPosition(
     collectionKey,
     metadata.tones.length,
   );
@@ -249,7 +253,9 @@ export function createExerciseSequence({
 }): ExerciseSequence {
   const resolvedCollectionKey = resolveExerciseCollectionKey(noteCollectionKey);
   const resolvedRootNote = resolveExerciseRootNote(rootNote);
-  const toneSequence = getCollectionToneSequenceMetadata(resolvedCollectionKey);
+  const toneSequence = getCollectionTonePresentationMetadata(
+    resolvedCollectionKey,
+  );
   const collectionSize = toneSequence.tones.length;
   const resolvedEnd = end ?? { octave: 1, stepOffset: 0 };
   const noteNames = rootAndNoteCollection.getNoteNames(
@@ -354,11 +360,13 @@ export function createExerciseSequence({
     noteNames,
   });
   const firstAnchorOctave =
-    getCollectionToneAtPosition(resolvedCollectionKey, firstPosition)?.octave ??
-    0;
+    getCollectionTonePresentationAtPosition(
+      resolvedCollectionKey,
+      firstPosition,
+    )?.octave ?? 0;
   const lastAnchorOctave =
-    getCollectionToneAtPosition(resolvedCollectionKey, lastPosition)?.octave ??
-    firstAnchorOctave;
+    getCollectionTonePresentationAtPosition(resolvedCollectionKey, lastPosition)
+      ?.octave ?? firstAnchorOctave;
   const rows = Array.from(
     { length: lastAnchorOctave - firstAnchorOctave + 1 },
     () => [] as ExerciseDisplayNote[],

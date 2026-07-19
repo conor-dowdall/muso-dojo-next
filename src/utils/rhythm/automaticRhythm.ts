@@ -18,7 +18,7 @@ const automaticRhythmSelections = {
         ...DEFAULT_RHYTHM_RECIPE.timekeeper,
         feel: "swing",
         sound: "ride",
-        subdivision: "eighth",
+        subdivision: "2-per-beat",
       },
     },
     source: "recipe",

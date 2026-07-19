@@ -1,11 +1,13 @@
 import {
-  beatSubdivisionIds,
   getBeatSubdivisionCount,
+  beatSubdivisionKeys,
+  type BeatSubdivisionKey,
+} from "@musodojo/music-theory-data";
+import {
   getBeatSubdivisionDensityLabel,
   getBeatSubdivisionDescription,
   getBeatSubdivisionTheoryLabel,
-  type BeatSubdivisionId,
-} from "@/utils/music-theory/beatSubdivision";
+} from "@/data/beatSubdivisions";
 
 export const RHYTHM_PPQ = 480;
 
@@ -50,7 +52,7 @@ export interface RhythmPattern {
 }
 
 export type RhythmTimekeeperSound = "hat" | "ride" | "shaker";
-export type RhythmTimekeeperSubdivision = BeatSubdivisionId;
+export type RhythmTimekeeperSubdivision = BeatSubdivisionKey;
 export type RhythmTimekeeperFeel =
   "off" | "straight" | "triplet" | "swing" | "shuffle";
 
@@ -183,11 +185,11 @@ export const rhythmTimekeeperSoundOptions = [
   },
 ] as const satisfies readonly RhythmRecipeOption<RhythmTimekeeperSound>[];
 
-export const rhythmTimekeeperSubdivisionOptions = beatSubdivisionIds.map(
-  (id) => ({
-    id,
-    label: getBeatSubdivisionDensityLabel(id),
-    description: getBeatSubdivisionDescription(id),
+export const rhythmTimekeeperSubdivisionOptions = beatSubdivisionKeys.map(
+  (key) => ({
+    id: key,
+    label: getBeatSubdivisionDensityLabel(key),
+    description: getBeatSubdivisionDescription(key),
   }),
 ) satisfies readonly RhythmRecipeOption<RhythmTimekeeperSubdivision>[];
 
@@ -348,7 +350,7 @@ export const DEFAULT_RHYTHM_RECIPE = {
   timekeeper: {
     feel: "straight",
     sound: "hat",
-    subdivision: "eighth",
+    subdivision: "2-per-beat",
   },
 } as const satisfies RhythmRecipe;
 
@@ -527,11 +529,11 @@ export function rhythmRecipeSupportsTimekeeperFeel(
 function getTripletTimekeeperSubdivision(
   subdivision: RhythmTimekeeperSubdivision,
 ): RhythmTimekeeperSubdivision {
-  return subdivision === "sixteenth" ||
-    subdivision === "sixteenth-triplet" ||
-    subdivision === "thirty-second"
-    ? "sixteenth-triplet"
-    : "eighth-triplet";
+  return subdivision === "4-per-beat" ||
+    subdivision === "6-per-beat" ||
+    subdivision === "8-per-beat"
+    ? "6-per-beat"
+    : "3-per-beat";
 }
 
 export function getRhythmCanonicalTimekeeper(
@@ -549,7 +551,7 @@ export function getRhythmCanonicalTimekeeper(
     ...timekeeper,
     subdivision:
       timekeeper.feel === "swing" || timekeeper.feel === "shuffle"
-        ? "eighth"
+        ? "2-per-beat"
         : timekeeper.subdivision,
   };
 }
@@ -570,7 +572,7 @@ export function getRhythmCompatibleTimekeeper(
   return {
     ...canonicalTimekeeper,
     feel: "straight",
-    subdivision: "eighth",
+    subdivision: "2-per-beat",
   };
 }
 
@@ -874,7 +876,7 @@ function addSwingTimekeeperHits(
   sampleId: PercussionSampleId,
   subdivision: RhythmTimekeeperSubdivision,
 ) {
-  if (subdivision === "quarter") {
+  if (subdivision === "1-per-beat") {
     addStraightTimekeeperHits(hits, spec, sampleId, subdivision);
     return;
   }
@@ -906,12 +908,12 @@ function addShuffleTimekeeperHits(
   sampleId: PercussionSampleId,
   subdivision: RhythmTimekeeperSubdivision,
 ) {
-  if (subdivision === "quarter") {
+  if (subdivision === "1-per-beat") {
     addStraightTimekeeperHits(hits, spec, sampleId, subdivision);
     return;
   }
 
-  const pairTicks = subdivision === "sixteenth" ? E : Q;
+  const pairTicks = subdivision === "4-per-beat" ? E : Q;
   const offbeatTicks = Math.round((pairTicks * 2) / 3);
   const count = Math.ceil(spec.cycleTicks / pairTicks);
 
@@ -936,7 +938,7 @@ function addShuffleTimekeeperHits(
         spec.cycleTicks,
         atTicks + offbeatTicks,
         sampleId,
-        subdivision === "sixteenth" ? 0.2 : 0.24,
+        subdivision === "4-per-beat" ? 0.2 : 0.24,
       );
     },
   );

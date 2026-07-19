@@ -6,7 +6,7 @@ import {
 import {
   resolveCollectionPositionMatch,
   type CollectionPositionIdentity,
-} from "@/utils/music-theory/collectionPositionIdentity";
+} from "@/utils/note-collection/collectionPositionIdentity";
 
 export type ExerciseStudyAnchorIdentity = CollectionPositionIdentity;
 

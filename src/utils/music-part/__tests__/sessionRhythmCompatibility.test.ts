@@ -53,7 +53,7 @@ describe("Session Rhythm bar compatibility", () => {
                 timekeeper: {
                   feel: "straight",
                   sound: "hat",
-                  subdivision: "eighth",
+                  subdivision: "2-per-beat",
                 },
               },
               source: "recipe",

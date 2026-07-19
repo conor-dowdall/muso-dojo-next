@@ -1,5 +1,10 @@
 import { getDefaultAudioPresetId, isAudioPresetId } from "@/audio/presets";
 import {
+  beatSubdivisionKeys,
+  getBeatSubdivisionStep,
+  isBeatSubdivisionKey,
+} from "@musodojo/music-theory-data";
+import {
   DEFAULT_WOOD_SURFACE_ID,
   normalizeWoodSurfaceId,
 } from "@/data/woodSurfaces";
@@ -16,10 +21,6 @@ import {
   type ExerciseCountInBeats,
   type ExerciseSubdivision,
 } from "@/types/session";
-import {
-  beatSubdivisionIds,
-  getBeatSubdivisionStepBeats,
-} from "@/utils/music-theory/beatSubdivision";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 
 export { DEFAULT_EXERCISE_OCTAVE_OFFSET };
@@ -36,7 +37,7 @@ export const DEFAULT_EXERCISE_PATTERN = {
   notePlayback: "separate",
 } as const satisfies ExercisePattern;
 export const DEFAULT_EXERCISE_SUBDIVISION =
-  "quarter" satisfies ExerciseSubdivision;
+  "1-per-beat" satisfies ExerciseSubdivision;
 export const DEFAULT_EXERCISE_START = {
   octave: 0,
   stepOffset: 0,
@@ -55,12 +56,11 @@ export const EXERCISE_INTERVAL_DEGREES = Array.from(
 );
 export const EXERCISE_EXTENSION_DEGREES = [5, 7, 9, 11, 13] as const;
 
-const subdivisions = Object.fromEntries(
-  beatSubdivisionIds.map((id) => [id, true]),
-) as Record<ExerciseSubdivision, true>;
-
 export const exerciseSubdivisionBeats = Object.fromEntries(
-  beatSubdivisionIds.map((id) => [id, getBeatSubdivisionStepBeats(id)]),
+  beatSubdivisionKeys.map((key) => {
+    const step = getBeatSubdivisionStep(key);
+    return [key, step.numerator / step.denominator];
+  }),
 ) as Record<ExerciseSubdivision, number>;
 
 function isExerciseScaleDirection(
@@ -91,9 +91,7 @@ export function normalizeExerciseMetronomeEnabled(
 export function normalizeExerciseSubdivision(
   value: unknown,
 ): ExerciseSubdivision | undefined {
-  return typeof value === "string" && value in subdivisions
-    ? (value as ExerciseSubdivision)
-    : undefined;
+  return isBeatSubdivisionKey(value) ? value : undefined;
 }
 
 export function normalizeCollectionRangeBoundary(

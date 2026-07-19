@@ -127,7 +127,7 @@ describe("part module app store actions", () => {
       timekeeper: {
         feel: "swing",
         sound: "ride",
-        subdivision: "eighth",
+        subdivision: "2-per-beat",
       },
     });
     store.getState().setRhythmWood(sessionId, partId, moduleId, "maple");
@@ -148,7 +148,7 @@ describe("part module app store actions", () => {
           timekeeper: {
             feel: "swing",
             sound: "ride",
-            subdivision: "eighth",
+            subdivision: "2-per-beat",
           },
         },
         source: "recipe",
@@ -229,7 +229,7 @@ describe("part module app store actions", () => {
             timekeeper: {
               feel: "straight",
               sound: "hat",
-              subdivision: "eighth",
+              subdivision: "2-per-beat",
             },
           },
           source: "recipe",
@@ -380,7 +380,7 @@ describe("part module app store actions", () => {
       sessionId,
       partId,
       moduleId,
-      "sixteenth",
+      "4-per-beat",
     );
     state.setExerciseLooperEnd(sessionId, partId, moduleId, {
       octave: 1,
@@ -409,7 +409,7 @@ describe("part module app store actions", () => {
         mode: "interval",
         notePlayback: "together",
       },
-      subdivision: "sixteenth",
+      subdivision: "4-per-beat",
       type: "exercise-looper",
       wood: "ebony",
     });

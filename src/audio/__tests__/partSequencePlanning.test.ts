@@ -187,7 +187,7 @@ describe("createPartSequencePlaybackPlan", () => {
                 timekeeper: {
                   feel: "straight",
                   sound: "hat",
-                  subdivision: "eighth-triplet",
+                  subdivision: "3-per-beat",
                 },
               },
               source: "recipe",
@@ -241,7 +241,7 @@ describe("createPartSequencePlaybackPlan", () => {
                 timekeeper: {
                   feel: "straight",
                   sound: "hat",
-                  subdivision: "eighth-triplet",
+                  subdivision: "3-per-beat",
                 },
               },
               source: "recipe",
@@ -311,7 +311,7 @@ describe("createPartSequencePlaybackPlan", () => {
             timekeeper: {
               feel: "straight",
               sound: "hat",
-              subdivision: "eighth-triplet",
+              subdivision: "3-per-beat",
             },
           },
           source: "recipe",
@@ -450,7 +450,7 @@ describe("createPartSequencePlaybackPlan", () => {
             timekeeper: {
               feel: "swing",
               sound: "ride",
-              subdivision: "eighth",
+              subdivision: "2-per-beat",
             },
           },
           source: "recipe",

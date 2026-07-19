@@ -1,5 +1,6 @@
 import {
   colorCollections,
+  isColorCollectionKey,
   normalizeHexColor as normalizeCoreHexColor,
   type ColorCollectionKey,
 } from "@musodojo/music-theory-data";
@@ -34,11 +35,7 @@ export function normalizeNoteColorMode(
 export function normalizeNoteColorPresetKey(
   value: unknown,
 ): ColorCollectionKey | undefined {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-
-  return value in colorCollections ? (value as ColorCollectionKey) : undefined;
+  return isColorCollectionKey(value) ? value : undefined;
 }
 
 export function normalizeHexColor(value: unknown): string | undefined {

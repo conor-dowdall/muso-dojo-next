@@ -60,7 +60,7 @@ describe("session app store actions", () => {
             timekeeper: {
               feel: "straight" as const,
               sound: "hat" as const,
-              subdivision: "eighth" as const,
+              subdivision: "2-per-beat" as const,
             },
           },
           source: "recipe" as const,

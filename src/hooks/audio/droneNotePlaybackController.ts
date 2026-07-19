@@ -1,5 +1,5 @@
 import { type AudioPresetId } from "@/audio";
-import { resolveCollectionPositionMatch } from "@/utils/music-theory/collectionPositionIdentity";
+import { resolveCollectionPositionMatch } from "@/utils/note-collection/collectionPositionIdentity";
 
 const DRONE_BASE_VELOCITY = 0.65;
 const DRONE_BALANCE_REFERENCE_INTERVAL = 24;

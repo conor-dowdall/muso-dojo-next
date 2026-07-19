@@ -3,13 +3,13 @@ import {
   beatSubdivisionOptions,
   getBeatSubdivisionDensityLabel,
   getBeatSubdivisionNoteLabel,
-} from "@/utils/music-theory/beatSubdivision";
+} from "@/data/beatSubdivisions";
 
 export const exerciseSubdivisionChoices = beatSubdivisionOptions.map(
   (option) => ({
     label: option.controlLabel,
     noteLabel: option.noteLabel,
-    subdivision: option.id,
+    subdivision: option.key,
     text: String(option.countPerBeat),
   }),
 ) satisfies readonly {

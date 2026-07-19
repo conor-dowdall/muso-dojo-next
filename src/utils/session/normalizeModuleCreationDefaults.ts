@@ -1,8 +1,7 @@
 import {
-  stringInstrumentTuningKeysByInstrument,
+  isStringInstrumentKey,
+  isStringInstrumentTuningKeyForInstrument,
   stringInstruments,
-  type StringInstrumentKey,
-  type StringInstrumentTuningKey,
 } from "@musodojo/music-theory-data";
 import {
   DEFAULT_CUSTOM_FRETBOARD_INLAY_PRESET,
@@ -102,26 +101,6 @@ function normalizeIntegerInRange({
     : fallback;
 }
 
-function normalizeStringInstrumentKey(
-  value: unknown,
-): StringInstrumentKey | undefined {
-  return typeof value === "string" && value in stringInstruments
-    ? (value as StringInstrumentKey)
-    : undefined;
-}
-
-function normalizeStringInstrumentTuningKey(
-  value: unknown,
-  instrument: StringInstrumentKey,
-): StringInstrumentTuningKey | undefined {
-  const tuningKeys = stringInstrumentTuningKeysByInstrument[instrument];
-
-  return typeof value === "string" &&
-    tuningKeys.includes(value as StringInstrumentTuningKey)
-    ? (value as StringInstrumentTuningKey)
-    : undefined;
-}
-
 function normalizeHandedness(value: unknown): "right" | "left" {
   return value === "left" ? "left" : "right";
 }
@@ -162,7 +141,9 @@ export function normalizeFretboardCreationDefault(
     return undefined;
   }
 
-  const instrument = normalizeStringInstrumentKey(value.instrument);
+  const instrument = isStringInstrumentKey(value.instrument)
+    ? value.instrument
+    : undefined;
 
   if (!instrument) {
     return undefined;
@@ -175,8 +156,13 @@ export function normalizeFretboardCreationDefault(
   const tuning = normalizeCustomTuningNotes(value.tuning);
   const tuningKey = tuning
     ? undefined
-    : (normalizeStringInstrumentTuningKey(value.tuningKey, instrument) ??
-      stringInstruments[instrument].defaultTuning);
+    : (isStringInstrumentTuningKeyForInstrument(
+          instrument,
+          value.tuningKey,
+        )
+        ? value.tuningKey
+        : undefined) ??
+      stringInstruments[instrument].defaultTuning;
   const tuningName = tuning
     ? normalizeCustomTuningName(value.tuningName)
     : undefined;

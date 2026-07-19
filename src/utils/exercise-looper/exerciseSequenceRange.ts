@@ -8,7 +8,7 @@ import {
   type RootNote,
 } from "@musodojo/music-theory-data";
 import { MIDI_MAX, MIDI_MIN, isPlayableMidiNote } from "@/audio/pitch";
-import { getCollectionToneAtPosition } from "@/utils/music-theory/collectionToneSequence";
+import { getCollectionTonePresentationAtPosition } from "@/utils/note-collection/collectionTonePresentation";
 import {
   DEFAULT_PART_NOTE_COLLECTION_KEY,
   DEFAULT_PART_ROOT_NOTE,
@@ -88,7 +88,7 @@ export function getMidiForCollectionPosition({
   position: number;
   rootNote: RootNote;
 }) {
-  const tone = getCollectionToneAtPosition(collectionKey, position);
+  const tone = getCollectionTonePresentationAtPosition(collectionKey, position);
 
   if (!tone) {
     return undefined;

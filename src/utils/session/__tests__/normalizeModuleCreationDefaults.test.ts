@@ -43,7 +43,7 @@ describe("normalizeModuleCreationDefaults", () => {
             timekeeper: {
               feel: "straight",
               sound: "hat",
-              subdivision: "eighth",
+              subdivision: "2-per-beat",
             },
           },
           source: "recipe",
@@ -86,7 +86,7 @@ describe("normalizeModuleCreationDefaults", () => {
             timekeeper: {
               feel: "swing",
               sound: "ride",
-              subdivision: "eighth",
+              subdivision: "2-per-beat",
             },
           },
           source: "recipe",
@@ -102,7 +102,7 @@ describe("normalizeModuleCreationDefaults", () => {
           timekeeper: {
             feel: "swing",
             sound: "ride",
-            subdivision: "eighth",
+            subdivision: "2-per-beat",
           },
         },
         source: "recipe",

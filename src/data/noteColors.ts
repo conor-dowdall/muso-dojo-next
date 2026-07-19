@@ -1,6 +1,7 @@
 import {
   CHROMATIC_INDEXES,
   CHROMATIC_NOTE_COUNT,
+  colorCollectionKeys,
   colorCollections,
   createChromaticTuple,
   getDefaultNoteColorLabelCollectionKey,
@@ -26,9 +27,7 @@ export const DEFAULT_NOTE_COLOR_CONFIG = {
 export const NOTE_COLOR_THEME_VALUE = "var(--note-color-theme)";
 export const NOTE_COLOR_NEUTRAL_VALUE = "var(--note-color-neutral)";
 
-export const noteColorPresetKeys = Object.keys(
-  colorCollections,
-) as ColorCollectionKey[];
+export const noteColorPresetKeys = colorCollectionKeys;
 
 export const createNoteColorTuple = createChromaticTuple;
 

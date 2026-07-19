@@ -20,7 +20,7 @@ import {
   type RhythmTimekeeperSound,
   type RhythmTimekeeperSubdivision,
 } from "@/utils/rhythm/rhythmConfig";
-import { beatSubdivisionOptions } from "@/utils/music-theory/beatSubdivision";
+import { beatSubdivisionOptions } from "@/data/beatSubdivisions";
 
 export const rhythmTimekeeperSoundChoices = [
   {
@@ -85,7 +85,7 @@ export const rhythmTimekeeperStraightSubdivisionChoices =
     label: option.controlLabel,
     text: String(option.countPerBeat),
     feel: "straight" as const,
-    subdivision: option.id,
+    subdivision: option.key,
   })) satisfies readonly {
     feel: RhythmTimekeeperFeel;
     label: string;
@@ -98,13 +98,13 @@ export const rhythmTimekeeperFeelSubdivisionChoices = [
     label: "Use swing eighths timekeeper pattern",
     text: "Sw",
     feel: "swing",
-    subdivision: "eighth",
+    subdivision: "2-per-beat",
   },
   {
     label: "Use shuffle eighths timekeeper pattern",
     text: "Shf",
     feel: "shuffle",
-    subdivision: "eighth",
+    subdivision: "2-per-beat",
   },
 ] as const satisfies readonly {
   feel: RhythmTimekeeperFeel;
@@ -174,7 +174,7 @@ const rhythmStarterRecipes = {
     timekeeper: {
       ...DEFAULT_RHYTHM_RECIPE.timekeeper,
       feel: "straight",
-      subdivision: "eighth-triplet",
+      subdivision: "3-per-beat",
     },
   },
   "12-8": {
@@ -183,7 +183,7 @@ const rhythmStarterRecipes = {
     timekeeper: {
       ...DEFAULT_RHYTHM_RECIPE.timekeeper,
       feel: "straight",
-      subdivision: "eighth-triplet",
+      subdivision: "3-per-beat",
     },
   },
   shuffle: {
@@ -192,7 +192,7 @@ const rhythmStarterRecipes = {
       ...DEFAULT_RHYTHM_RECIPE.timekeeper,
       feel: "shuffle",
       sound: "hat",
-      subdivision: "eighth",
+      subdivision: "2-per-beat",
     },
   },
   swing: {
@@ -201,7 +201,7 @@ const rhythmStarterRecipes = {
       ...DEFAULT_RHYTHM_RECIPE.timekeeper,
       feel: "swing",
       sound: "ride",
-      subdivision: "eighth",
+      subdivision: "2-per-beat",
     },
   },
   country: {
@@ -211,7 +211,7 @@ const rhythmStarterRecipes = {
       ...DEFAULT_RHYTHM_RECIPE.timekeeper,
       feel: "straight",
       sound: "hat",
-      subdivision: "eighth",
+      subdivision: "2-per-beat",
     },
   },
 } satisfies Record<RhythmStarterId, RhythmRecipe>;

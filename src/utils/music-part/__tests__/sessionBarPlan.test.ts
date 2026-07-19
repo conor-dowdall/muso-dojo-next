@@ -107,7 +107,7 @@ describe("createSessionBarPlan", () => {
             timekeeper: {
               feel: "straight",
               sound: "hat",
-              subdivision: "eighth-triplet",
+              subdivision: "3-per-beat",
             },
           },
           source: "recipe",
@@ -134,7 +134,7 @@ describe("createSessionBarPlan", () => {
         timekeeper: {
           feel: "straight" as const,
           sound: "hat" as const,
-          subdivision: "eighth-triplet" as const,
+          subdivision: "3-per-beat" as const,
         },
       },
       source: "recipe" as const,
@@ -167,7 +167,7 @@ describe("createSessionBarPlan", () => {
         recipe: {
           beats: 2,
           groove: "kit",
-          timekeeper: { subdivision: "eighth-triplet" },
+          timekeeper: { subdivision: "3-per-beat" },
         },
       },
       meterLabel: "6/8",
