@@ -45,17 +45,17 @@
   color: var(--entry-text);
   background:
     radial-gradient(
-      ellipse 92rem 36rem at 50% -24rem,
+      ellipse 92rem 36rem at 50% -24rem in srgb,
       var(--entry-page-gradient),
       transparent 72%
     ),
     radial-gradient(
-      ellipse 76rem 44rem at 14% 112%,
+      ellipse 76rem 44rem at 14% 112% in srgb,
       var(--entry-page-gradient-secondary),
       transparent 76%
     ),
     linear-gradient(
-      145deg,
+      145deg in srgb,
       var(--entry-page-background-start) 0%,
       var(--entry-base) 48%,
       var(--entry-page-background-end) 100%

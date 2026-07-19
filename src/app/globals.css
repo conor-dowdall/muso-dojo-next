@@ -311,17 +311,17 @@ body {
   background-color: var(--color-base);
   background:
     radial-gradient(
-      ellipse 92rem 36rem at 50% -24rem,
+      ellipse 92rem 36rem at 50% -24rem in srgb,
       var(--color-page-gradient),
       transparent 72%
     ),
     radial-gradient(
-      ellipse 76rem 44rem at 14% 112%,
+      ellipse 76rem 44rem at 14% 112% in srgb,
       var(--color-page-gradient-secondary),
       transparent 76%
     ),
     linear-gradient(
-      145deg,
+      145deg in srgb,
       var(--color-page-background-start) 0%,
       var(--color-base) 48%,
       var(--color-page-background-end) 100%
