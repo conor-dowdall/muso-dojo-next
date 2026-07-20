@@ -102,9 +102,7 @@
   line-height: var(--leading-none);
   text-align: start;
   text-decoration: none;
-  box-shadow:
-    inset 0 var(--space-px) 0 var(--entry-card-highlight),
-    0 24px 80px rgb(0 0 0 / 0.42);
+  box-shadow: inset 0 var(--space-px) 0 var(--entry-card-highlight);
   transition:
     background-color var(--transition-fast) var(--ease-out),
     border-color var(--transition-fast) var(--ease-out),

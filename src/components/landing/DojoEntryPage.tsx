@@ -29,7 +29,7 @@ export function DojoEntryPage({
             className={styles.appHeaderLogo}
             height={450}
             preload
-            src="/logos/hero-lockup-on-dark-transparent-1600x450.webp"
+            src="/logos/hero-lockup-dark-transparent-1600x450.webp"
             width={1600}
           />
         </header>
