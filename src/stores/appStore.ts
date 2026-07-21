@@ -39,7 +39,10 @@ export const useAppStore = create<AppStore>()(
       {
         name: APP_STORE_STORAGE_KEY,
         version: APP_STORE_VERSION,
-        storage: createDebouncedAppStoreStorage(() => localStorage),
+        storage:
+          typeof window === "undefined"
+            ? undefined
+            : createDebouncedAppStoreStorage(() => window.localStorage),
         partialize: partializeAppStoreSnapshot,
         migrate: (persistedState) =>
           normalizePersistedAppStoreSnapshot(persistedState, initialSnapshot),
