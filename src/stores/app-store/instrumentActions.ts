@@ -13,9 +13,15 @@ import {
 import {
   type AppStoreGet,
   type AppStoreSet,
+  type FretboardInstrumentSettingsPatch,
   type InstrumentActions,
+  type KeyboardInstrumentSettingsPatch,
 } from "./types";
-import { type InstrumentInstanceConfig } from "@/types/session";
+import {
+  type InstrumentInstanceBaseConfig,
+  type InstrumentInstanceConfig,
+  type InstrumentType,
+} from "@/types/session";
 import { areOptionalActiveNotesEqual } from "@/utils/instrument/areActiveNotesEqual";
 import { createInstrumentLayoutConfig } from "@/utils/instrument/createInstrumentLayoutConfig";
 import {
@@ -39,30 +45,51 @@ export function createInstrumentActions(
   set: AppStoreSet,
   get: AppStoreGet,
 ): InstrumentActions {
-  return {
-    updateInstrumentSettings: (sessionId, partId, moduleId, patch) => {
-      const shouldClearActiveNotes =
-        patch.range !== undefined || patch.config !== undefined;
+  type InstrumentSettingsPatch =
+    | FretboardInstrumentSettingsPatch
+    | KeyboardInstrumentSettingsPatch
+    | Partial<InstrumentInstanceBaseConfig>;
 
-      set((state) =>
-        updateSessionById(state, sessionId, (session) =>
-          updatePartById(session, partId, (part) =>
-            updateInstrumentByModuleId(part, moduleId, (instrument) => {
-              const patchedInstrument = {
-                ...instrument,
-                ...patch,
-              };
+  const updateInstrumentSettings = (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    expectedType: InstrumentType | undefined,
+    patch: InstrumentSettingsPatch,
+  ) => {
+    const shouldClearActiveNotes =
+      ("range" in patch && patch.range !== undefined) ||
+      ("config" in patch && patch.config !== undefined);
 
-              return normalizeInstrumentForWrite(
-                shouldClearActiveNotes
-                  ? clearInstrumentActiveNotesLock(patchedInstrument)
-                  : patchedInstrument,
-              );
-            }),
-          ),
+    set((state) =>
+      updateSessionById(state, sessionId, (session) =>
+        updatePartById(session, partId, (part) =>
+          updateInstrumentByModuleId(part, moduleId, (instrument) => {
+            if (expectedType && instrument.type !== expectedType) {
+              return undefined;
+            }
+
+            const patchedInstrument = {
+              ...instrument,
+              ...patch,
+            };
+
+            return normalizeInstrumentForWrite(
+              shouldClearActiveNotes
+                ? clearInstrumentActiveNotesLock(patchedInstrument)
+                : patchedInstrument,
+            );
+          }),
         ),
-      );
-    },
+      ),
+    );
+  };
+
+  return {
+    updateFretboardInstrumentSettings: (sessionId, partId, moduleId, patch) =>
+      updateInstrumentSettings(sessionId, partId, moduleId, "fretboard", patch),
+    updateKeyboardInstrumentSettings: (sessionId, partId, moduleId, patch) =>
+      updateInstrumentSettings(sessionId, partId, moduleId, "keyboard", patch),
     setInstrumentDisplayFormatId: (
       sessionId,
       partId,
@@ -89,7 +116,7 @@ export function createInstrumentActions(
         return;
       }
 
-      get().updateInstrumentSettings(sessionId, partId, moduleId, {
+      updateInstrumentSettings(sessionId, partId, moduleId, undefined, {
         displayFormatId: nextDisplayFormatId,
       });
     },
@@ -114,7 +141,7 @@ export function createInstrumentActions(
         return;
       }
 
-      get().updateInstrumentSettings(sessionId, partId, moduleId, {
+      updateInstrumentSettings(sessionId, partId, moduleId, undefined, {
         noteEmphasis: nextNoteEmphasis,
       });
     },
@@ -150,7 +177,7 @@ export function createInstrumentActions(
         return;
       }
 
-      get().updateInstrumentSettings(sessionId, partId, moduleId, {
+      updateInstrumentSettings(sessionId, partId, moduleId, undefined, {
         audioPresetId: nextAudioPresetId,
       });
     },
@@ -172,7 +199,7 @@ export function createInstrumentActions(
         return;
       }
 
-      get().updateInstrumentSettings(sessionId, partId, moduleId, {
+      updateInstrumentSettings(sessionId, partId, moduleId, undefined, {
         layout: {
           ...instrument.layout,
           size: nextSize,

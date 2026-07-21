@@ -32,7 +32,7 @@ function ChordChoiceGrid({
   onChange,
 }: {
   choices: readonly CustomChordProgressionChordChoice[];
-  className: string;
+  className?: string;
   value?: ChordCollectionKey;
   onChange: (value: ChordCollectionKey) => void;
 }) {

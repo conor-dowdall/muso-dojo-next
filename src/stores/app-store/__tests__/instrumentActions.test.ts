@@ -232,11 +232,13 @@ describe("instrument app store actions", () => {
       }),
     );
 
-    store.getState().updateInstrumentSettings(sessionId, partId, moduleId, {
-      config: {
-        fretRange: [0, 7],
-      },
-    });
+    store
+      .getState()
+      .updateFretboardInstrumentSettings(sessionId, partId, moduleId, {
+        config: {
+          fretRange: [0, 7],
+        },
+      });
 
     expect(getTestInstrument(store)).not.toHaveProperty("activeNotes");
     expect(getTestInstrument(store)).not.toHaveProperty("activeNotesLocked");
@@ -248,22 +250,42 @@ describe("instrument app store actions", () => {
   it("stores and clears explicit fretboard appearance settings", () => {
     const store = createTestStore();
 
-    store.getState().updateInstrumentSettings(sessionId, partId, moduleId, {
-      inlayPreset: "pawPrint",
-      theme: "maple",
-    });
+    store
+      .getState()
+      .updateFretboardInstrumentSettings(sessionId, partId, moduleId, {
+        inlayPreset: "pawPrint",
+        theme: "maple",
+      });
 
     expect(getTestInstrument(store)).toMatchObject({
       inlayPreset: "pawPrint",
       theme: "maple",
     });
 
-    store.getState().updateInstrumentSettings(sessionId, partId, moduleId, {
-      inlayPreset: undefined,
-      theme: undefined,
-    });
+    store
+      .getState()
+      .updateFretboardInstrumentSettings(sessionId, partId, moduleId, {
+        inlayPreset: undefined,
+        theme: undefined,
+      });
 
     expect(getTestInstrument(store)).not.toHaveProperty("inlayPreset");
+    expect(getTestInstrument(store)).not.toHaveProperty("theme");
+  });
+
+  it("rejects settings intended for a different instrument type", () => {
+    const store = createTestStore();
+    const sessionsBefore = store.getState().sessions;
+
+    store
+      .getState()
+      .updateKeyboardInstrumentSettings(sessionId, partId, moduleId, {
+        range: "keys61",
+        theme: "studio",
+      });
+
+    expect(store.getState().sessions).toBe(sessionsBefore);
+    expect(getTestInstrument(store)).not.toHaveProperty("range");
     expect(getTestInstrument(store)).not.toHaveProperty("theme");
   });
 

@@ -147,7 +147,13 @@ export function updatePartById(
     return undefined;
   }
 
-  const updatedPart = updater(session.parts[partIndex]);
+  const part = session.parts[partIndex];
+
+  if (!part) {
+    return undefined;
+  }
+
+  const updatedPart = updater(part);
 
   if (!updatedPart) {
     return undefined;
@@ -173,7 +179,13 @@ export function updatePartModuleById(
     return undefined;
   }
 
-  const updatedModule = updater(part.modules[moduleIndex]);
+  const partModule = part.modules[moduleIndex];
+
+  if (!partModule) {
+    return undefined;
+  }
+
+  const updatedModule = updater(partModule);
 
   if (!updatedModule) {
     return undefined;
@@ -328,6 +340,11 @@ export function updateInstrumentActiveNotesByModuleId(
   }
 
   const part = session.parts[partIndex];
+
+  if (!part) {
+    return state;
+  }
+
   const moduleIndex = findPartModuleIndex(part, moduleId);
 
   if (moduleIndex === -1) {

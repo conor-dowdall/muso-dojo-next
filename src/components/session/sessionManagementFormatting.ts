@@ -94,8 +94,9 @@ export function sessionSummaryMatchesSession(
     summary.name === session.name &&
     summary.tempoBpm === (session.tempoBpm ?? 80) &&
     summary.parts.length === session.parts.length &&
-    summary.parts.every((partSummary, index) =>
-      partSummaryMatchesMusicPart(partSummary, session.parts[index]),
-    )
+    summary.parts.every((partSummary, index) => {
+      const part = session.parts[index];
+      return part ? partSummaryMatchesMusicPart(partSummary, part) : false;
+    })
   );
 }

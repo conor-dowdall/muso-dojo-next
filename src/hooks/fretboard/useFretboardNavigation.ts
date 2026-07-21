@@ -9,6 +9,21 @@ interface UseFretboardNavigationParams {
   onInteract: (target: InstrumentNoteInteractionTarget) => void;
 }
 
+function parseFocusedKey(key: string): readonly [number, number] | undefined {
+  const [rawStringIndex, rawFretNumber] = key.split("-");
+
+  if (rawStringIndex === undefined || rawFretNumber === undefined) {
+    return undefined;
+  }
+
+  const stringIndex = Number(rawStringIndex);
+  const fretNumber = Number(rawFretNumber);
+
+  return Number.isInteger(stringIndex) && Number.isInteger(fretNumber)
+    ? [stringIndex, fretNumber]
+    : undefined;
+}
+
 /**
  * Specialized hook for Fretboard navigation.
  */
@@ -23,15 +38,18 @@ export function useFretboardNavigation<T extends HTMLElement>({
   const initialFocusedKey = `0-${startFret}`;
 
   const getMidiForKey = (key: string) => {
-    const [stringIndex, fret] = key.split("-").map(Number);
-    return tuning[stringIndex] + fret;
+    const [stringIndex, fret] = parseFocusedKey(key) ?? [0, startFret];
+    return (tuning[stringIndex] ?? tuning[0] ?? 0) + fret;
   };
 
   const onNavigate = (
     currentKey: string,
     direction: "up" | "down" | "left" | "right",
   ) => {
-    const [stringIndex, fretNumber] = currentKey.split("-").map(Number);
+    const [stringIndex, fretNumber] = parseFocusedKey(currentKey) ?? [
+      0,
+      startFret,
+    ];
     let nextString = stringIndex;
     let nextFret = fretNumber;
 
@@ -62,11 +80,13 @@ export function useFretboardNavigation<T extends HTMLElement>({
   useEffect(() => {
     const maxStringIndex = tuning.length - 1;
     const maxFret = startFret + numFrets - 1;
-    const [focusedStringIndex, focusedFret] = focusedKey.split("-").map(Number);
+    const focusedPosition = parseFocusedKey(focusedKey);
+    const focusedStringIndex = focusedPosition?.[0];
+    const focusedFret = focusedPosition?.[1];
 
     const isFocusedKeyValid =
-      Number.isInteger(focusedStringIndex) &&
-      Number.isInteger(focusedFret) &&
+      focusedStringIndex !== undefined &&
+      focusedFret !== undefined &&
       focusedStringIndex >= 0 &&
       focusedStringIndex <= maxStringIndex &&
       focusedFret >= startFret &&

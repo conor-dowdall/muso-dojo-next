@@ -1,6 +1,4 @@
-import { createStore } from "zustand/vanilla";
-import { createAppStoreActions } from "@/stores/app-store/actions";
-import { type AppStore } from "@/stores/app-store/types";
+import { createAppStore } from "@/stores/app-store/storeInitializer";
 import { type ActiveNotes } from "@/types/instrument-active-note";
 import {
   type AppStoreSnapshot,
@@ -53,10 +51,7 @@ export function createStoreSnapshot(
 }
 
 export function createTestStore(snapshot = createStoreSnapshot()) {
-  return createStore<AppStore>()((set, get) => ({
-    ...snapshot,
-    ...createAppStoreActions(set, get),
-  }));
+  return createAppStore(snapshot);
 }
 
 export function getTestInstrument(store: ReturnType<typeof createTestStore>) {

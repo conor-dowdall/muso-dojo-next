@@ -249,7 +249,7 @@ export function normalizeStringTextureArray(
     const value = Array.isArray(values) ? values[index] : undefined;
     return isValidStringTexture(value)
       ? value
-      : getDefaultStringTexture(tuning[index]);
+      : getDefaultStringTexture(tuning[index] ?? 60);
   });
 }
 

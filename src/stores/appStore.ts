@@ -16,13 +16,14 @@ import {
   normalizePersistedAppStoreSnapshot,
   partializeAppStoreSnapshot,
 } from "@/stores/app-store/persistence";
-import { createAppStoreActions } from "@/stores/app-store/actions";
+import { createAppStoreInitializer } from "@/stores/app-store/storeInitializer";
 import { type AppStore } from "@/stores/app-store/types";
 
 export type {
   DroneSettingsPatch,
   AppStore,
-  InstrumentSettingsPatch,
+  FretboardInstrumentSettingsPatch,
+  KeyboardInstrumentSettingsPatch,
 } from "@/stores/app-store/types";
 
 const initialSnapshot = createAppStoreSnapshot(createFallbackSessionConfig());
@@ -32,10 +33,7 @@ let hasCompletedHydration = false;
 export const useAppStore = create<AppStore>()(
   devtools(
     persist<AppStore, [], [], AppStorePersistedSnapshot>(
-      (set, get) => ({
-        ...initialSnapshot,
-        ...createAppStoreActions(set, get),
-      }),
+      createAppStoreInitializer(initialSnapshot),
       {
         name: APP_STORE_STORAGE_KEY,
         version: APP_STORE_VERSION,
@@ -88,7 +86,8 @@ export function useHydrateAppStore() {
       hasRequestedHydration = true;
 
       try {
-        void Promise.resolve(useAppStore.persist.rehydrate()).catch(
+        void Promise.resolve(useAppStore.persist.rehydrate()).then(
+          markHydrated,
           markHydrated,
         );
       } catch {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { MusicPart } from "@/components/music-part/MusicPart";
 import {
   createInstrumentCreationRangeContextFromSignature,
@@ -10,7 +11,6 @@ import { useAppStore } from "@/stores/appStore";
 import { getPartBandModules } from "@/utils/music-part/partBand";
 import { resolvePartBackingBand } from "@/utils/music-part/resolvePartBackingBand";
 import { PartModuleView } from "./PartModuleView";
-import { selectPart } from "./sessionSelectors";
 import { getSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 import {
   getBackingNotesSummary,
@@ -34,7 +34,59 @@ export function MusicPartView({
   onOpenSessionTempo,
   showReadOnlyIdentity = false,
 }: MusicPartViewProps) {
-  const part = useAppStore((state) => selectPart(state, sessionId, partId));
+  const partSource = useAppStore(
+    useShallow((state) => {
+      const part = state.sessions[sessionId]?.parts.find(
+        (candidatePart) => candidatePart.id === partId,
+      );
+
+      return part
+        ? {
+            automaticRhythm: part.automaticRhythm,
+            band: part.band,
+            durationInBars: part.durationInBars,
+            noteCollectionKey: part.noteCollectionKey,
+            rootNote: part.rootNote,
+            showHeader: part.showHeader,
+          }
+        : undefined;
+    }),
+  );
+  const backingNotesModules = useAppStore(
+    useShallow((state) => {
+      const modules = state.sessions[sessionId]?.parts.find(
+        (part) => part.id === partId,
+      )?.modules;
+
+      return modules ? getPartBandModules(modules, "backingNotes") : [];
+    }),
+  );
+  const rhythmModules = useAppStore(
+    useShallow((state) => {
+      const modules = state.sessions[sessionId]?.parts.find(
+        (part) => part.id === partId,
+      )?.modules;
+
+      return modules ? getPartBandModules(modules, "rhythm") : [];
+    }),
+  );
+  const moduleIds = useAppStore(
+    useShallow(
+      (state) =>
+        state.sessions[sessionId]?.parts
+          .find((part) => part.id === partId)
+          ?.modules.map((module) => module.id) ?? [],
+    ),
+  );
+  const instrumentCreationRangeContextSignature = useAppStore(
+    useShallow((state) => {
+      const part = state.sessions[sessionId]?.parts.find(
+        (candidatePart) => candidatePart.id === partId,
+      );
+
+      return createInstrumentCreationRangeContextSignature(part ? [part] : []);
+    }),
+  );
   const storedSessionBackingBand = useAppStore(
     (state) => state.sessions[sessionId]?.backingBand,
   );
@@ -43,26 +95,34 @@ export function MusicPartView({
     [storedSessionBackingBand],
   );
   const resolvedBand = useMemo(
-    () => (part ? resolvePartBackingBand(part, sessionBackingBand) : undefined),
-    [part, sessionBackingBand],
+    () =>
+      partSource
+        ? resolvePartBackingBand(
+            {
+              automaticRhythm: partSource.automaticRhythm,
+              band: partSource.band,
+              durationInBars: partSource.durationInBars,
+              modules: [...backingNotesModules, ...rhythmModules],
+            },
+            sessionBackingBand,
+          )
+        : undefined,
+    [backingNotesModules, partSource, rhythmModules, sessionBackingBand],
   );
   const partSettings = useMemo(
     () =>
-      part && resolvedBand
+      partSource && resolvedBand
         ? {
-            rootNote: part.rootNote,
-            noteCollectionKey: part.noteCollectionKey,
+            rootNote: partSource.rootNote,
+            noteCollectionKey: partSource.noteCollectionKey,
             automaticLengthBeats: resolvedBand.perPartDurationBeats,
             effectiveLengthBeats: resolvedBand.durationBeats,
             band: resolvedBand.band,
-            automaticRhythm: part.automaticRhythm ?? {
+            automaticRhythm: partSource.automaticRhythm ?? {
               style: "standard",
             },
             bandModuleOptions: {
-              backingNotes: getPartBandModules(
-                part.modules,
-                "backingNotes",
-              ).map((module, index) => ({
+              backingNotes: backingNotesModules.map((module, index) => ({
                 detail:
                   module.type === "exercise-looper"
                     ? getBackingNotesSummary(module)
@@ -70,25 +130,19 @@ export function MusicPartView({
                 id: module.id,
                 label: `Looper ${index + 1}`,
               })),
-              rhythm: getPartBandModules(part.modules, "rhythm").map(
-                (module, index) => ({
-                  id: module.id,
-                  label: `Rhythm ${index + 1}`,
-                  detail:
-                    module.type === "rhythm"
-                      ? getBackingRhythmSummary(module.rhythm)
-                      : undefined,
-                }),
-              ),
+              rhythm: rhythmModules.map((module, index) => ({
+                id: module.id,
+                label: `Rhythm ${index + 1}`,
+                detail:
+                  module.type === "rhythm"
+                    ? getBackingRhythmSummary(module.rhythm)
+                    : undefined,
+              })),
             },
-            showHeader: part.showHeader,
+            showHeader: partSource.showHeader,
           }
         : undefined,
-    [part, resolvedBand],
-  );
-  const moduleIds = useMemo(
-    () => part?.modules.map((module) => module.id) ?? [],
-    [part],
+    [backingNotesModules, partSource, resolvedBand, rhythmModules],
   );
   const setPartRootNote = useAppStore((state) => state.setPartRootNote);
   const setPartNoteCollectionKey = useAppStore(
@@ -98,10 +152,6 @@ export function MusicPartView({
   const addPartModules = useAppStore((state) => state.addPartModules);
   const clonePart = useAppStore((state) => state.clonePart);
   const removePart = useAppStore((state) => state.removePart);
-  const instrumentCreationRangeContextSignature = useMemo(
-    () => createInstrumentCreationRangeContextSignature(part ? [part] : []),
-    [part],
-  );
   const instrumentCreationRangeContext =
     createInstrumentCreationRangeContextFromSignature(
       instrumentCreationRangeContextSignature,

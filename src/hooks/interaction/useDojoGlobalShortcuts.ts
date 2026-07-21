@@ -9,6 +9,7 @@ import {
   stopAllAudioPlayback,
   stopTransportPlayback,
 } from "@/audio";
+import { useAppStore } from "@/stores/appStore";
 import { type SessionConfig } from "@/types/session";
 
 const editableShortcutTargetSelector = [
@@ -47,7 +48,7 @@ interface DojoGlobalShortcutEvent {
 }
 
 interface UseDojoGlobalShortcutsOptions {
-  activeSession?: SessionConfig;
+  activeSessionId: string | null;
   dialogOpen: boolean;
   onExitFocusMode?: () => void;
 }
@@ -124,12 +125,15 @@ function togglePracticeBand(session: SessionConfig) {
 }
 
 export function useDojoGlobalShortcuts({
-  activeSession,
+  activeSessionId,
   dialogOpen,
   onExitFocusMode,
 }: UseDojoGlobalShortcutsOptions) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      const activeSession = activeSessionId
+        ? useAppStore.getState().sessions[activeSessionId]
+        : undefined;
       const action = getDojoGlobalShortcutAction(event, {
         audioPlaying: isAudioPlaybackActive(),
         canTogglePracticeBand: (activeSession?.parts.length ?? 0) > 0,
@@ -166,5 +170,5 @@ export function useDojoGlobalShortcuts({
     window.addEventListener("keydown", handleKeyDown, { capture: true });
     return () =>
       window.removeEventListener("keydown", handleKeyDown, { capture: true });
-  }, [activeSession, dialogOpen, onExitFocusMode]);
+  }, [activeSessionId, dialogOpen, onExitFocusMode]);
 }

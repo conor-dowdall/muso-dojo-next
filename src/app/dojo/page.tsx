@@ -56,9 +56,6 @@ function HydratedSession({
     string | null
   >(null);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
-  const activeSession = useAppStore((state) =>
-    state.activeSessionId ? state.sessions[state.activeSessionId] : undefined,
-  );
   const instrumentCreationRangeContextSignature = useAppStore(
     useShallow((state) =>
       createInstrumentCreationRangeContextSignature(
@@ -71,7 +68,11 @@ function HydratedSession({
   const addPart = useAppStore((state) => state.addPart);
   const addParts = useAppStore((state) => state.addParts);
   const replaceParts = useAppStore((state) => state.replaceParts);
-  const activeSessionPartCount = activeSession?.parts.length ?? 0;
+  const activeSessionPartCount = useAppStore((state) =>
+    state.activeSessionId
+      ? (state.sessions[state.activeSessionId]?.parts.length ?? 0)
+      : 0,
+  );
   const isFocusViewMode = isSessionFocusViewMode(sessionViewMode);
   const closeAddDialog = () => setIsAddDialogOpen(false);
   const instrumentCreationRangeContext =
@@ -111,11 +112,11 @@ function HydratedSession({
   }, [onSessionViewModeChange, sessionWorkspaceViewMode]);
 
   useDojoGlobalShortcuts({
-    activeSession,
+    activeSessionId,
     dialogOpen: isAddDialogOpen || isSessionLibraryOpen || isSessionTempoOpen,
     onExitFocusMode: isFocusViewMode ? exitFocusViewMode : undefined,
   });
-  useSessionPlaybackReconciliation(activeSession);
+  useSessionPlaybackReconciliation(activeSessionId);
 
   useEffect(() => {
     if (!activeSessionId || !musoAudioEngine.isSupported()) {

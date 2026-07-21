@@ -5,35 +5,83 @@ import {
   exercisePlaybackCoordinator,
   rhythmPlaybackCoordinator,
 } from "@/audio";
-import { type SessionConfig } from "@/types/session";
+import { useAppStore } from "@/stores/appStore";
+import { type AppStore } from "@/stores/app-store/types";
 import {
   isExerciseLooperPartModule,
   isRhythmPartModule,
 } from "@/utils/session/partModuleTypes";
 
-export function useSessionPlaybackReconciliation(
-  session: SessionConfig | undefined,
+interface PlaybackModuleIds {
+  exercise: readonly string[];
+  rhythm: readonly string[];
+}
+
+const EMPTY_PLAYBACK_MODULE_IDS: PlaybackModuleIds = {
+  exercise: [],
+  rhythm: [],
+};
+
+function stringArraysAreEqual(
+  left: readonly string[],
+  right: readonly string[],
 ) {
-  const validIds = useMemo(() => {
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
+}
+
+export function createPlaybackModuleIdsSelector(sessionId: string | null) {
+  let previousSelection = EMPTY_PLAYBACK_MODULE_IDS;
+
+  return (state: AppStore): PlaybackModuleIds => {
+    const session = sessionId ? state.sessions[sessionId] : undefined;
+
     if (!session) {
-      return { exercise: new Set<string>(), rhythm: new Set<string>() };
+      previousSelection = EMPTY_PLAYBACK_MODULE_IDS;
+      return previousSelection;
     }
 
-    return {
-      exercise: new Set(
-        session.parts.flatMap((part) =>
-          part.modules
-            .filter(isExerciseLooperPartModule)
-            .map((module) => module.id),
-        ),
+    const nextSelection: PlaybackModuleIds = {
+      exercise: session.parts.flatMap((part) =>
+        part.modules
+          .filter(isExerciseLooperPartModule)
+          .map((module) => module.id),
       ),
-      rhythm: new Set(
-        session.parts.flatMap((part) =>
-          part.modules.filter(isRhythmPartModule).map((module) => module.id),
-        ),
+      rhythm: session.parts.flatMap((part) =>
+        part.modules.filter(isRhythmPartModule).map((module) => module.id),
       ),
     };
-  }, [session]);
+
+    if (
+      stringArraysAreEqual(
+        previousSelection.exercise,
+        nextSelection.exercise,
+      ) &&
+      stringArraysAreEqual(previousSelection.rhythm, nextSelection.rhythm)
+    ) {
+      return previousSelection;
+    }
+
+    previousSelection = nextSelection;
+    return previousSelection;
+  };
+}
+
+export function useSessionPlaybackReconciliation(sessionId: string | null) {
+  const selectPlaybackModuleIds = useMemo(
+    () => createPlaybackModuleIdsSelector(sessionId),
+    [sessionId],
+  );
+  const playbackModuleIds = useAppStore(selectPlaybackModuleIds);
+  const validIds = useMemo(
+    () => ({
+      exercise: new Set(playbackModuleIds.exercise),
+      rhythm: new Set(playbackModuleIds.rhythm),
+    }),
+    [playbackModuleIds],
+  );
 
   useEffect(() => {
     const exerciseSnapshot = exercisePlaybackCoordinator.getSnapshot();

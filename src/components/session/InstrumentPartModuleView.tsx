@@ -96,8 +96,11 @@ export function InstrumentPartModuleView({
   const setInstrumentDisplaySize = useAppStore(
     (state) => state.setInstrumentDisplaySize,
   );
-  const updateInstrumentSettings = useAppStore(
-    (state) => state.updateInstrumentSettings,
+  const updateFretboardInstrumentSettings = useAppStore(
+    (state) => state.updateFretboardInstrumentSettings,
+  );
+  const updateKeyboardInstrumentSettings = useAppStore(
+    (state) => state.updateKeyboardInstrumentSettings,
   );
   const setInstrumentActiveNotesLock = useAppStore(
     (state) => state.setInstrumentActiveNotesLock,
@@ -164,15 +167,19 @@ export function InstrumentPartModuleView({
           {...sharedProps}
           inlayPreset={instrument.inlayPreset}
           onInlayPresetChange={(inlayPreset) =>
-            updateInstrumentSettings(sessionId, partId, moduleId, {
+            updateFretboardInstrumentSettings(sessionId, partId, moduleId, {
               inlayPreset,
             })
           }
           onThemeChange={(theme) =>
-            updateInstrumentSettings(sessionId, partId, moduleId, { theme })
+            updateFretboardInstrumentSettings(sessionId, partId, moduleId, {
+              theme,
+            })
           }
           onConfigChange={(config) =>
-            updateInstrumentSettings(sessionId, partId, moduleId, { config })
+            updateFretboardInstrumentSettings(sessionId, partId, moduleId, {
+              config,
+            })
           }
           theme={instrument.theme}
           config={instrument.config}
@@ -190,7 +197,9 @@ export function InstrumentPartModuleView({
         <Keyboard
           {...sharedProps}
           onThemeChange={(theme) =>
-            updateInstrumentSettings(sessionId, partId, moduleId, { theme })
+            updateKeyboardInstrumentSettings(sessionId, partId, moduleId, {
+              theme,
+            })
           }
           range={instrument.range}
           theme={instrument.theme}

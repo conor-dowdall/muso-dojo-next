@@ -75,6 +75,10 @@ export function createInstrumentCreationRangeContext(
   for (let partIndex = parts.length - 1; partIndex >= 0; partIndex -= 1) {
     const part = parts[partIndex];
 
+    if (!part) {
+      continue;
+    }
+
     for (
       let moduleIndex = part.modules.length - 1;
       moduleIndex >= 0;

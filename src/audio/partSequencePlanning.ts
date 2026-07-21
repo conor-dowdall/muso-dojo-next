@@ -414,7 +414,7 @@ export function createPartSequencePlaybackPlan(
             continuousBarRhythms.get(part.id)?.request === firstRhythm.request,
         );
 
-      if (firstRhythm && isOneContinuousCycle) {
+      if (firstPartId && firstRhythm && isOneContinuousCycle) {
         continuousBarRhythms.set(firstPartId, {
           ...firstRhythm,
           continueRhythm: true,

@@ -664,6 +664,10 @@ function addSwingKitGrooveHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
   spec.groups.forEach((group, index) => {
     const groupStart = spec.groupStarts[index];
 
+    if (groupStart === undefined) {
+      return;
+    }
+
     getKitGroupSnareOffsets(group, spec.groups.length === 1).forEach(
       (offset) => {
         snareTicks.push((groupStart + offset) * Q);
@@ -686,6 +690,10 @@ function addKitGrooveHits(hits: RhythmHit[], spec: RhythmMeterSpec) {
 
   spec.groups.forEach((group, index) => {
     const groupStart = spec.groupStarts[index];
+
+    if (groupStart === undefined) {
+      return;
+    }
 
     addKick(groupStart * Q, groupStart === 0 ? 0.9 : 0.62);
 

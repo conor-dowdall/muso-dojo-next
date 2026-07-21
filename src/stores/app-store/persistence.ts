@@ -81,13 +81,17 @@ export function createDebouncedAppStoreStorage(
     debounceMs = APP_STORE_PERSISTENCE_DEBOUNCE_MS,
     maxWaitMs = APP_STORE_PERSISTENCE_MAX_WAIT_MS,
   }: DebouncedAppStoreStorageOptions = {},
-): PersistStorage<AppStorePersistedSnapshot> | undefined {
+): PersistStorage<AppStorePersistedSnapshot, void> {
   let storage: StateStorage;
 
   try {
     storage = getStorage();
   } catch {
-    return undefined;
+    storage = {
+      getItem: () => null,
+      removeItem: () => undefined,
+      setItem: () => undefined,
+    };
   }
 
   const resolvedMaxWaitMs = Math.max(maxWaitMs, debounceMs);
@@ -127,7 +131,11 @@ export function createDebouncedAppStoreStorage(
     clearPendingWrite();
 
     try {
-      storage.setItem(name, JSON.stringify(value));
+      const result = storage.setItem(name, JSON.stringify(value));
+
+      if (isPromiseLike(result)) {
+        void Promise.resolve(result).catch(() => undefined);
+      }
     } catch {
       // Storage failures should not interrupt instrument interactions.
     }
@@ -150,11 +158,15 @@ export function createDebouncedAppStoreStorage(
         return pendingValue;
       }
 
-      const storedValue = storage.getItem(name);
+      try {
+        const storedValue = storage.getItem(name);
 
-      return isPromiseLike<string | null>(storedValue)
-        ? storedValue.then(parsePersistedValue)
-        : parsePersistedValue(storedValue);
+        return isPromiseLike<string | null>(storedValue)
+          ? Promise.resolve(storedValue).then(parsePersistedValue, () => null)
+          : parsePersistedValue(storedValue);
+      } catch {
+        return null;
+      }
     },
     setItem: (name, value) => {
       pendingName = name;
@@ -166,7 +178,15 @@ export function createDebouncedAppStoreStorage(
         clearPendingWrite();
       }
 
-      return storage.removeItem(name);
+      try {
+        const result = storage.removeItem(name);
+
+        if (isPromiseLike(result)) {
+          void Promise.resolve(result).catch(() => undefined);
+        }
+      } catch {
+        // Storage failures should not interrupt store reset operations.
+      }
     },
   };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { type CSSProperties, useMemo, useSyncExternalStore } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { Plus } from "lucide-react";
 import { partSequenceCoordinator } from "@/audio";
 import { NoteColorProvider } from "@/components/note-colors/NoteColorProvider";
@@ -22,7 +23,6 @@ import styles from "./SessionView.module.css";
 
 const EMPTY_SESSION_PARTS: MusicPartConfig[] = [];
 const EMPTY_PART_IDS: string[] = [];
-const EMPTY_CHART_BARS: SessionChartBar[] = [];
 
 interface SessionViewProps {
   sessionId: string;
@@ -56,58 +56,13 @@ export function SessionView({
   const noteColorConfig = useAppStore(
     (state) => state.dojoSettings.noteColorConfig,
   );
-  const sessionParts = useAppStore(
-    (state) => state.sessions[sessionId]?.parts ?? EMPTY_SESSION_PARTS,
+  const partIds = useAppStore(
+    useShallow(
+      (state) =>
+        state.sessions[sessionId]?.parts.map((part) => part.id) ??
+        EMPTY_PART_IDS,
+    ),
   );
-  const storedBackingBand = useAppStore(
-    (state) => state.sessions[sessionId]?.backingBand,
-  );
-  const backingBand = useMemo(
-    () => getSessionBackingBandConfig(storedBackingBand),
-    [storedBackingBand],
-  );
-  const partIds = useMemo(
-    () =>
-      sessionParts.length === 0
-        ? EMPTY_PART_IDS
-        : sessionParts.map((part) => part.id),
-    [sessionParts],
-  );
-  const chartBars = useMemo((): SessionChartBar[] => {
-    if (!showsSessionChart(viewMode)) {
-      return EMPTY_CHART_BARS;
-    }
-
-    const barPlan = createSessionBarPlan(sessionParts, backingBand);
-
-    return barPlan.entries.map((bar) => {
-      return {
-        accessibleLabel: `${barPlan.positionLabel} ${bar.accessibleLabel} of ${barPlan.totalAccessibleLabel}${bar.meterLabel ? `. ${bar.meterLabel}` : ""}`,
-        id: bar.segments[0]?.part.id ?? bar.label,
-        label: bar.label,
-        ...(bar.meterLabel ? { meterLabel: bar.meterLabel } : {}),
-        parts: bar.segments.map((segment) => {
-          const summary = getPartLeadSheetSummary(segment.part, backingBand);
-          const segmentDescription = segment.segmentLabel
-            ? `Segment ${segment.segmentLabel}. `
-            : "";
-          const romanAnalysisDescription = summary.romanAnalysis
-            ? `. Roman numeral ${summary.romanAnalysis}`
-            : "";
-
-          return {
-            accessibleLabel: `${segmentDescription}${summary.identityAccessibleLabel}${romanAnalysisDescription}. ${summary.meterDetail}`,
-            chartSpanUnits: segment.chartSpanUnits,
-            id: segment.part.id,
-            identityLabel: summary.identityLabel,
-            ...(summary.romanAnalysis
-              ? { romanAnalysis: summary.romanAnalysis }
-              : {}),
-          };
-        }),
-      };
-    });
-  }, [backingBand, sessionParts, viewMode]);
   const partSequenceSnapshot = useSyncExternalStore(
     partSequenceCoordinator.subscribe,
     partSequenceCoordinator.getSnapshot,
@@ -138,7 +93,7 @@ export function SessionView({
           />
         </div>
       ) : showChart ? (
-        <BandSessionView activePartId={activePartId} bars={chartBars} />
+        <SessionChartView activePartId={activePartId} sessionId={sessionId} />
       ) : showPartsView ? (
         <div className={styles.partsView}>
           {partIds.map((partId) => {
@@ -167,6 +122,56 @@ export function SessionView({
       ) : null}
     </NoteColorProvider>
   );
+}
+
+function SessionChartView({
+  activePartId,
+  sessionId,
+}: {
+  activePartId?: string;
+  sessionId: string;
+}) {
+  const sessionParts = useAppStore(
+    (state) => state.sessions[sessionId]?.parts ?? EMPTY_SESSION_PARTS,
+  );
+  const storedBackingBand = useAppStore(
+    (state) => state.sessions[sessionId]?.backingBand,
+  );
+  const backingBand = useMemo(
+    () => getSessionBackingBandConfig(storedBackingBand),
+    [storedBackingBand],
+  );
+  const bars = useMemo((): SessionChartBar[] => {
+    const barPlan = createSessionBarPlan(sessionParts, backingBand);
+
+    return barPlan.entries.map((bar) => ({
+      accessibleLabel: `${barPlan.positionLabel} ${bar.accessibleLabel} of ${barPlan.totalAccessibleLabel}${bar.meterLabel ? `. ${bar.meterLabel}` : ""}`,
+      id: bar.segments[0]?.part.id ?? bar.label,
+      label: bar.label,
+      ...(bar.meterLabel ? { meterLabel: bar.meterLabel } : {}),
+      parts: bar.segments.map((segment) => {
+        const summary = getPartLeadSheetSummary(segment.part, backingBand);
+        const segmentDescription = segment.segmentLabel
+          ? `Segment ${segment.segmentLabel}. `
+          : "";
+        const romanAnalysisDescription = summary.romanAnalysis
+          ? `. Roman numeral ${summary.romanAnalysis}`
+          : "";
+
+        return {
+          accessibleLabel: `${segmentDescription}${summary.identityAccessibleLabel}${romanAnalysisDescription}. ${summary.meterDetail}`,
+          chartSpanUnits: segment.chartSpanUnits,
+          id: segment.part.id,
+          identityLabel: summary.identityLabel,
+          ...(summary.romanAnalysis
+            ? { romanAnalysis: summary.romanAnalysis }
+            : {}),
+        };
+      }),
+    }));
+  }, [backingBand, sessionParts]);
+
+  return <BandSessionView activePartId={activePartId} bars={bars} />;
 }
 
 function BandSessionView({

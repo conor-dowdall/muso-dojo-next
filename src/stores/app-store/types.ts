@@ -4,7 +4,6 @@ import { type AudioPresetId } from "@/audio/types";
 import { type AppThemeChoice } from "@/data/appThemes";
 import { type WoodSurfaceId } from "@/data/woodSurfaces";
 import { type DisplayFormatId } from "@/data/displayFormats";
-import { type FretboardInlayPresetName } from "@/data/fretboard/inlayPresets";
 import { type RememberModuleCreationRequest } from "@/types/instrument-creation-defaults";
 import { type SavedFretboardTuningInput } from "@/types/custom-fretboard-tuning";
 import { type SavedChordProgressionInput } from "@/types/custom-chord-progression";
@@ -25,7 +24,6 @@ import {
   type ExerciseLooperPartModuleConfig,
   type ExerciseSubdivision,
   type FretboardInstrumentInstanceConfig,
-  type InstrumentInstanceBaseConfig,
   type KeyboardInstrumentInstanceConfig,
   type MusicPartCreationRequest,
   type MusicPartConfig,
@@ -44,16 +42,13 @@ import {
   type ExercisePattern,
 } from "@/utils/exercise-looper/exerciseSequence";
 
-export type InstrumentSettingsPatch = Partial<InstrumentInstanceBaseConfig> & {
-  inlayPreset?: FretboardInlayPresetName;
-  theme?:
-    | FretboardInstrumentInstanceConfig["theme"]
-    | KeyboardInstrumentInstanceConfig["theme"];
-  range?: KeyboardInstrumentInstanceConfig["range"];
-  config?:
-    | FretboardInstrumentInstanceConfig["config"]
-    | KeyboardInstrumentInstanceConfig["config"];
-};
+export type FretboardInstrumentSettingsPatch = Partial<
+  Omit<FretboardInstrumentInstanceConfig, "type">
+>;
+
+export type KeyboardInstrumentSettingsPatch = Partial<
+  Omit<KeyboardInstrumentInstanceConfig, "type">
+>;
 
 export type PartSettingsPatch = Partial<
   Omit<MusicPartConfig, "id" | "modules">
@@ -155,11 +150,17 @@ export interface PartActions {
 }
 
 export interface InstrumentActions {
-  updateInstrumentSettings: (
+  updateFretboardInstrumentSettings: (
     sessionId: string,
     partId: string,
     moduleId: string,
-    patch: InstrumentSettingsPatch,
+    patch: FretboardInstrumentSettingsPatch,
+  ) => void;
+  updateKeyboardInstrumentSettings: (
+    sessionId: string,
+    partId: string,
+    moduleId: string,
+    patch: KeyboardInstrumentSettingsPatch,
   ) => void;
   setInstrumentDisplayFormatId: (
     sessionId: string,

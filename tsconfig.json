@@ -28,8 +28,8 @@
     "allowUnusedLabels": false,
     "noFallthroughCasesInSwitch": true,
     "allowUnreachableCode": false,
-    "noImplicitOverride": true
-    // "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true
     // "exactOptionalPropertyTypes": true
   },
   "include": [

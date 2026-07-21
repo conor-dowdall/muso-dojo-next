@@ -6,8 +6,9 @@ import {
   type StateStorage,
   type StorageValue,
 } from "zustand/middleware";
-import { createAppStoreActions } from "@/stores/app-store/actions";
+import { createAppStoreInitializer } from "@/stores/app-store/storeInitializer";
 import {
+  APP_STORE_PERSISTENCE_DEBOUNCE_MS,
   APP_STORE_VERSION,
   type AppStorePersistedSnapshot,
   createDebouncedAppStoreStorage,
@@ -128,10 +129,7 @@ function createPersistedTestStore(
 ) {
   return createStore<AppStore>()(
     persist<AppStore, [], [], AppStorePersistedSnapshot>(
-      (set, get) => ({
-        ...fallbackSnapshot,
-        ...createAppStoreActions(set, get),
-      }),
+      createAppStoreInitializer(fallbackSnapshot),
       {
         name: "store",
         version: APP_STORE_VERSION,
@@ -941,5 +939,61 @@ describe("app store persistence", () => {
     expect(stateStorage.removeItemCount).toBe(1);
     expect(stateStorage.setItemCount).toBe(0);
     expect(storage?.getItem("store")).toBeNull();
+  });
+
+  it("falls back to unavailable storage without removing the persist API", async () => {
+    const storage = createDebouncedAppStoreStorage(() => {
+      throw new Error("Storage access is blocked");
+    });
+    const store = createPersistedTestStore(storage);
+    let didFinishHydration = false;
+
+    store.persist.onFinishHydration(() => {
+      didFinishHydration = true;
+    });
+
+    await store.persist.rehydrate();
+
+    expect(store.persist.hasHydrated()).toBe(true);
+    expect(didFinishHydration).toBe(true);
+    expect(partializeAppStoreSnapshot(store.getState())).toEqual(
+      fallbackSnapshot,
+    );
+  });
+
+  it("treats throwing and rejected storage reads as missing data", async () => {
+    vi.useFakeTimers();
+    const rejectingSetItem = vi.fn(() =>
+      Promise.reject(new Error("Async write failed")),
+    );
+    const rejectingRemoveItem = vi.fn(() =>
+      Promise.reject(new Error("Async remove failed")),
+    );
+    const throwingStorage = createDebouncedAppStoreStorage(() => ({
+      getItem: () => {
+        throw new Error("Read failed");
+      },
+      removeItem: () => undefined,
+      setItem: () => undefined,
+    }));
+    const rejectingStorage = createDebouncedAppStoreStorage(() => ({
+      getItem: () => Promise.reject(new Error("Async read failed")),
+      removeItem: rejectingRemoveItem,
+      setItem: rejectingSetItem,
+    }));
+
+    expect(throwingStorage.getItem("store")).toBeNull();
+    await expect(rejectingStorage.getItem("store")).resolves.toBeNull();
+
+    expect(() =>
+      rejectingStorage.setItem("store", createPersistedValue("x")),
+    ).not.toThrow();
+    vi.advanceTimersByTime(APP_STORE_PERSISTENCE_DEBOUNCE_MS);
+    await Promise.resolve();
+    expect(() => rejectingStorage.removeItem("store")).not.toThrow();
+    await Promise.resolve();
+
+    expect(rejectingSetItem).toHaveBeenCalledOnce();
+    expect(rejectingRemoveItem).toHaveBeenCalledOnce();
   });
 });

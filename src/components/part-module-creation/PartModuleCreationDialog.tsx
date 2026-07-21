@@ -40,7 +40,10 @@ function getAddLabel(moduleKinds: readonly ModuleCreationKind[]) {
   }
 
   if (moduleKinds.length === 1) {
-    return `Add ${getModuleCreationKindLabel(moduleKinds[0])}`;
+    const moduleKind = moduleKinds[0];
+    return moduleKind
+      ? `Add ${getModuleCreationKindLabel(moduleKind)}`
+      : "Add Modules";
   }
 
   return `Add ${moduleKinds.length} Modules`;

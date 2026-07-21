@@ -15,7 +15,7 @@ export function areActiveNotesEqual(a: ActiveNotes, b: ActiveNotes): boolean {
     const valA = a[key];
     const valB = b[key];
 
-    if (!valB) return false;
+    if (!valA || !valB) return false;
     if (valA.midi !== valB.midi) return false;
     if (valA.emphasis !== valB.emphasis) return false;
   }
