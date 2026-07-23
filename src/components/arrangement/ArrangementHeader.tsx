@@ -3,13 +3,15 @@
 import { useMemo, useState } from "react";
 import {
   Ellipsis,
+  GalleryThumbnails,
   Gauge,
   LibraryBig,
   ListVideo,
-  Plus,
   Repeat2,
+  Rows3,
   Settings2,
   Square,
+  PanelsTopLeft,
 } from "lucide-react";
 import {
   ControlHeader,
@@ -22,6 +24,7 @@ import {
   OverflowMenuButton,
 } from "@/components/ui/object-menu";
 import {
+  DisclosureListChoice,
   DisclosureListAction,
   DisclosureListGroup,
 } from "@/components/ui/disclosure-list/DisclosureList";
@@ -36,19 +39,22 @@ import styles from "./ArrangementWorkspace.module.css";
 
 export function ArrangementHeader({
   arrangementId,
-  onOpenAddSection,
   onOpenLibrary,
   transport,
+  viewMode,
+  onViewModeChange,
 }: {
   arrangementId: string;
-  onOpenAddSection: () => void;
   onOpenLibrary: () => void;
+  onViewModeChange: (mode: "build" | "chart") => void;
   transport: ReturnType<typeof useArrangementTransport>;
+  viewMode: "build" | "chart";
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [tempoOpen, setTempoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
   const arrangement = useAppStore((state) => state.arrangements[arrangementId]);
   const arrangementRecord = useAppStore((state) => state.arrangements);
   const arrangements = useMemo(
@@ -81,12 +87,6 @@ export function ArrangementHeader({
         actions={
           <ControlHeaderCluster aria-label="Arrangement actions" role="group">
             <IconButton
-              aria-label="Add Section"
-              icon={<Plus />}
-              size="sm"
-              onClick={onOpenAddSection}
-            />
-            <IconButton
               aria-label={
                 transport.isActive ? "Stop Arrangement" : "Play Arrangement"
               }
@@ -115,6 +115,13 @@ export function ArrangementHeader({
               icon={<Gauge />}
               size="sm"
               onClick={() => setTempoOpen(true)}
+            />
+            <IconButton
+              aria-label={`Choose view. Current: ${viewMode === "build" ? "Build" : "Chart"}`}
+              icon={<GalleryThumbnails />}
+              selected={viewMode !== "build"}
+              size="sm"
+              onClick={() => setViewOpen(true)}
             />
             <OverflowMenuButton
               aria-label="Arrangement menu"
@@ -162,6 +169,39 @@ export function ArrangementHeader({
             onClick={() => {
               setMenuOpen(false);
               setSettingsOpen(true);
+            }}
+          />
+        </DisclosureListGroup>
+      </ObjectMenuDialog>
+      <ObjectMenuDialog
+        icon={<GalleryThumbnails />}
+        isOpen={viewOpen}
+        size="compact"
+        title="View"
+        onClose={() => setViewOpen(false)}
+      >
+        <DisclosureListGroup>
+          <DisclosureListChoice
+            aria-label="Use Build view"
+            icon={<PanelsTopLeft />}
+            label="Build"
+            selected={viewMode === "build"}
+            selectedPreviewKind="current"
+            onClick={() => {
+              onViewModeChange("build");
+              setViewOpen(false);
+            }}
+          />
+          <DisclosureListChoice
+            aria-label="Use Chart view"
+            disabled={arrangement.entries.length === 0}
+            icon={<Rows3 />}
+            label="Chart"
+            selected={viewMode === "chart"}
+            selectedPreviewKind="current"
+            onClick={() => {
+              onViewModeChange("chart");
+              setViewOpen(false);
             }}
           />
         </DisclosureListGroup>

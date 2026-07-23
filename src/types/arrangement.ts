@@ -5,6 +5,9 @@ import {
 
 export type ArrangementPlaybackMode = "once" | "loop";
 
+export const MIN_ARRANGEMENT_ENTRY_PLAY_COUNT = 1;
+export const MAX_ARRANGEMENT_ENTRY_PLAY_COUNT = 8;
+
 export interface ArrangementSectionSource {
   sessionId: string;
   sessionName: string;

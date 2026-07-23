@@ -1,15 +1,17 @@
 import {
+  MAX_ARRANGEMENT_ENTRY_PLAY_COUNT,
+  MIN_ARRANGEMENT_ENTRY_PLAY_COUNT,
   type ArrangementConfig,
   type ArrangementSectionConfig,
 } from "@/types/arrangement";
 import { type SessionConfig } from "@/types/session";
+import { createDefaultArrangementSectionName } from "@/utils/arrangement/arrangementSectionNames";
 import { cloneMusicPartGraph } from "@/utils/arrangement/cloneMusicPartGraph";
 import { createEntityId } from "@/utils/session/createSessionEntities";
 import { normalizeSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 import {
   createEntityCopyName,
   createUniqueArrangementName,
-  createUniqueEntityName,
   DEFAULT_ARRANGEMENT_NAME,
   normalizeEntityNameForComparison,
 } from "./entityIds";
@@ -213,10 +215,8 @@ export function createArrangementActions(
       }
       const section = captureSection(
         session,
-        createUniqueEntityName(
-          session.name,
+        createDefaultArrangementSectionName(
           arrangement.sections.map(({ name }) => name),
-          "Section",
         ),
       );
       const entryId = createEntityId("entry");
@@ -348,8 +348,8 @@ export function createArrangementActions(
         !arrangement ||
         !entry ||
         !Number.isInteger(playCount) ||
-        playCount < 1 ||
-        playCount > 99 ||
+        playCount < MIN_ARRANGEMENT_ENTRY_PLAY_COUNT ||
+        playCount > MAX_ARRANGEMENT_ENTRY_PLAY_COUNT ||
         entry.playCount === playCount
       )
         return;

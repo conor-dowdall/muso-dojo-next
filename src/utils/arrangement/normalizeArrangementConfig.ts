@@ -1,10 +1,13 @@
 import {
+  MAX_ARRANGEMENT_ENTRY_PLAY_COUNT,
+  MIN_ARRANGEMENT_ENTRY_PLAY_COUNT,
   type ArrangementConfig,
   type ArrangementEntryConfig,
   type ArrangementPlaybackMode,
   type ArrangementSectionConfig,
 } from "@/types/arrangement";
 import { type MusicPartConfig } from "@/types/session";
+import { formatArrangementSectionName } from "@/utils/arrangement/arrangementSectionNames";
 import { normalizeMusicPartConfig } from "@/utils/session/normalizeMusicPartConfig";
 import {
   ensureUniqueIds,
@@ -45,7 +48,7 @@ function normalizeSection(
 
   return {
     id: normalizeId(input.id, `section-${index + 1}`),
-    name: normalizeString(input.name) ?? `Section ${index + 1}`,
+    name: normalizeString(input.name) ?? formatArrangementSectionName(index),
     source: {
       sessionId: normalizeString(source.sessionId) ?? "unavailable-session",
       sessionName: normalizeString(source.sessionName) ?? "Unavailable Session",
@@ -64,7 +67,12 @@ function normalizeEntry(value: unknown, index: number): ArrangementEntryConfig {
   return {
     id: normalizeId(input.id, `entry-${index + 1}`),
     sectionId: normalizeString(input.sectionId) ?? "",
-    playCount: clampInteger(input.playCount, 1, 1, 99),
+    playCount: clampInteger(
+      input.playCount,
+      MIN_ARRANGEMENT_ENTRY_PLAY_COUNT,
+      MIN_ARRANGEMENT_ENTRY_PLAY_COUNT,
+      MAX_ARRANGEMENT_ENTRY_PLAY_COUNT,
+    ),
   };
 }
 

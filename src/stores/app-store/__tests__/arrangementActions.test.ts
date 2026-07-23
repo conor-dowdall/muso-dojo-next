@@ -24,6 +24,7 @@ describe("arrangement app store actions", () => {
     const arrangement = store.getState().arrangements[arrangementId]!;
     expect(arrangement.tempoBpm).toBe(112);
     expect(arrangement.sections).toHaveLength(1);
+    expect(arrangement.sections[0]?.name).toBe("Section A");
     expect(arrangement.entries).toHaveLength(1);
     expect(arrangement.sections[0]?.parts[0]?.id).not.toBe(
       store.getState().sessions[sessionId]?.parts[0]?.id,
@@ -95,12 +96,13 @@ describe("arrangement app store actions", () => {
       ],
     );
 
-    store.getState().setArrangementEntryPlayCount(arrangementId, secondId, 100);
+    store.getState().setArrangementEntryPlayCount(arrangementId, secondId, 8);
+    store.getState().setArrangementEntryPlayCount(arrangementId, secondId, 9);
     expect(
       store
         .getState()
         .arrangements[arrangementId]?.entries.find(({ id }) => id === secondId)
         ?.playCount,
-    ).toBe(3);
+    ).toBe(8);
   });
 });

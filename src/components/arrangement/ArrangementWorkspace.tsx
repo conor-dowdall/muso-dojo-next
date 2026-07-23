@@ -20,15 +20,18 @@ import {
   ControlHeader,
   ControlHeaderCluster,
 } from "@/components/ui/control-header/ControlHeader";
-import { Dialog } from "@/components/ui/dialog/Dialog";
 import {
   DisclosureList,
   DisclosureListAction,
+  DisclosureListActionItem,
   DisclosureListConfirmAction,
   DisclosureListGroup,
+  DisclosureListPanel,
+  DisclosureListPanelActions,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { InlineRenameActionItem } from "@/components/ui/inline-rename/InlineRenameActionItem";
 import { NumericStepper } from "@/components/ui/numeric-stepper/NumericStepper";
+import { ObjectMenuDialog } from "@/components/ui/object-menu";
 import { Heading } from "@/components/ui/typography/Heading";
 import { Text } from "@/components/ui/typography/Text";
 import { NoteColorProvider } from "@/components/note-colors/NoteColorProvider";
@@ -37,9 +40,16 @@ import { useArrangementTransport } from "@/hooks/audio/useArrangementTransport";
 import { useArrangementChartCue } from "@/hooks/audio/useArrangementChartCue";
 import { useAppStore } from "@/stores/appStore";
 import { normalizeEntityNameForComparison } from "@/stores/app-store/entityIds";
+import {
+  MAX_ARRANGEMENT_ENTRY_PLAY_COUNT,
+  MIN_ARRANGEMENT_ENTRY_PLAY_COUNT,
+} from "@/types/arrangement";
+import { createDefaultArrangementSectionName } from "@/utils/arrangement/arrangementSectionNames";
 import { ArrangementHeader } from "./ArrangementHeader";
-import { ArrangementSectionPickerDialog } from "./ArrangementSectionPickerDialog";
+import { ArrangementSectionPicker } from "./ArrangementSectionPicker";
 import styles from "./ArrangementWorkspace.module.css";
+
+type ArrangementViewMode = "build" | "chart";
 
 export function ArrangementWorkspace({
   arrangementId,
@@ -55,7 +65,6 @@ export function ArrangementWorkspace({
   );
   const actions = useAppStore(
     useShallow((state) => ({
-      append: state.appendArrangementSectionEntry,
       cloneEntry: state.cloneArrangementEntry,
       moveEntry: state.moveArrangementEntry,
       removeEntry: state.removeArrangementEntry,
@@ -65,91 +74,97 @@ export function ArrangementWorkspace({
       setPlayCount: state.setArrangementEntryPlayCount,
     })),
   );
+  const [viewMode, setViewMode] = useState<ArrangementViewMode>("build");
   const [selectedEntryId, setSelectedEntryId] = useState<string | undefined>(
     () => arrangement?.entries[0]?.id,
   );
   const [addOpen, setAddOpen] = useState(false);
-  const [replaceSectionId, setReplaceSectionId] = useState<string | undefined>(
-    undefined,
-  );
+  const [replaceEntryId, setReplaceEntryId] = useState<string | undefined>();
+  const [openEditorEntryId, setOpenEditorEntryId] = useState<
+    string | undefined
+  >();
   const [renameOpen, setRenameOpen] = useState(false);
-  const [removeConfirming, setRemoveConfirming] = useState(false);
-  const tileRefs = useRef(new Map<string, HTMLDivElement>());
+  const [removeConfirmEntryId, setRemoveConfirmEntryId] = useState<
+    string | undefined
+  >();
+  const chartTileRefs = useRef(new Map<string, HTMLDivElement>());
+  const cardRefs = useRef(new Map<string, HTMLElement>());
   const transport = useArrangementTransport(arrangementId, selectedEntryId);
   const selectedEntry =
     arrangement?.entries.find(({ id }) => id === selectedEntryId) ??
     arrangement?.entries[0];
-  const selectedSection = arrangement?.sections.find(
-    ({ id }) => id === selectedEntry?.sectionId,
-  );
   const fallback = selectedEntry
     ? { entryId: selectedEntry.id, sectionId: selectedEntry.sectionId }
     : undefined;
   const chartCue = useArrangementChartCue(transport.plan, fallback);
+  const resolvedViewMode =
+    arrangement?.entries.length === 0 ? "build" : viewMode;
 
   useEffect(() => {
-    if (transport.activeEntryId) {
-      const tile = tileRefs.current.get(transport.activeEntryId);
-      const reducedMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
-      tile?.scrollIntoView({
-        behavior: reducedMotion ? "auto" : "smooth",
-        block: "nearest",
-        inline: "nearest",
-      });
-      const activeEntryId = transport.activeEntryId;
-      const selectionTimer = globalThis.setTimeout(
-        () => setSelectedEntryId(activeEntryId),
-        0,
-      );
-      return () => globalThis.clearTimeout(selectionTimer);
-    }
-  }, [transport.activeEntryId]);
-
-  const presentationSection = arrangement?.sections.find(
-    ({ id }) => id === chartCue.presentation?.sectionId,
-  );
-  const selectedIndex =
-    arrangement?.entries.findIndex(({ id }) => id === selectedEntry?.id) ?? -1;
-  const sectionUseCount =
-    arrangement?.entries.filter(
-      ({ sectionId }) => sectionId === selectedSection?.id,
-    ).length ?? 0;
-  const sourceSession = selectedSection
-    ? sessions[selectedSection.source.sessionId]
-    : undefined;
-  const sourceChanged =
-    sourceSession !== undefined &&
-    sourceSession.lastModified !== selectedSection?.source.sessionLastModified;
-  const stopForMutation = () => {
-    if (transport.isActive) partSequenceCoordinator.stop();
-  };
-  const selectNewEntry = (entryId: string) => {
-    setSelectedEntryId(entryId);
-    globalThis.setTimeout(
-      () =>
-        tileRefs.current
-          .get(entryId)
-          ?.scrollIntoView({ block: "nearest", inline: "nearest" }),
+    if (!transport.activeEntryId) return;
+    const activeEntryId = transport.activeEntryId;
+    const tile = chartTileRefs.current.get(activeEntryId);
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    tile?.scrollIntoView({
+      behavior: reducedMotion ? "auto" : "smooth",
+      block: "nearest",
+      inline: "nearest",
+    });
+    const selectionTimer = globalThis.setTimeout(
+      () => setSelectedEntryId(activeEntryId),
       0,
     );
-  };
+    return () => globalThis.clearTimeout(selectionTimer);
+  }, [transport.activeEntryId]);
 
   if (!arrangement) return null;
 
-  const removeSelectedEntry = () => {
-    if (!selectedEntry) return;
+  const presentationSection = arrangement.sections.find(
+    ({ id }) => id === chartCue.presentation?.sectionId,
+  );
+  const removeEntry = arrangement.entries.find(
+    ({ id }) => id === removeConfirmEntryId,
+  );
+  const removeSection = arrangement.sections.find(
+    ({ id }) => id === removeEntry?.sectionId,
+  );
+  const nextSectionName = createDefaultArrangementSectionName(
+    arrangement.sections.map(({ name }) => name),
+  );
+  const stopForMutation = () => {
+    if (transport.isActive) partSequenceCoordinator.stop();
+  };
+  const sectionUseCount = (sectionId: string) =>
+    arrangement.entries.filter((entry) => entry.sectionId === sectionId).length;
+  const selectNewEntry = (entryId: string) => {
+    setSelectedEntryId(entryId);
+    setOpenEditorEntryId(entryId);
+    setRenameOpen(false);
+    setReplaceEntryId(undefined);
+    globalThis.setTimeout(() => {
+      cardRefs.current
+        .get(entryId)
+        ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }, 0);
+  };
+  const removeEntryById = (entryId: string) => {
     stopForMutation();
-    const currentIndex = arrangement.entries.findIndex(
-      ({ id }) => id === selectedEntry.id,
-    );
+    const index = arrangement.entries.findIndex(({ id }) => id === entryId);
     const nextSelection =
-      arrangement.entries[currentIndex + 1]?.id ??
-      arrangement.entries[currentIndex - 1]?.id;
-    actions.removeEntry(arrangementId, selectedEntry.id);
-    setSelectedEntryId(nextSelection);
-    setRemoveConfirming(false);
+      arrangement.entries[index + 1]?.id ?? arrangement.entries[index - 1]?.id;
+    actions.removeEntry(arrangementId, entryId);
+    if (selectedEntryId === entryId) setSelectedEntryId(nextSelection);
+    if (openEditorEntryId === entryId) setOpenEditorEntryId(undefined);
+    setRemoveConfirmEntryId(undefined);
+  };
+  const requestRemove = (entryId: string, sectionId: string) => {
+    if (sectionUseCount(sectionId) === 1) {
+      setRemoveConfirmEntryId(entryId);
+    } else {
+      removeEntryById(entryId);
+    }
   };
 
   return (
@@ -158,311 +173,409 @@ export function ArrangementWorkspace({
         <ArrangementHeader
           arrangementId={arrangementId}
           transport={transport}
-          onOpenAddSection={() => setAddOpen(true)}
+          viewMode={resolvedViewMode}
           onOpenLibrary={onOpenLibrary}
+          onViewModeChange={setViewMode}
         />
 
-        {arrangement.entries.length === 0 ? (
-          <section className={styles.empty}>
-            <Heading as="h2" size="lg">
-              No Sections Yet
-            </Heading>
-            <Button
-              icon={<Plus />}
-              label="Add First Section"
-              size="md"
-              variant="outline"
-              onClick={() => setAddOpen(true)}
-            />
-          </section>
-        ) : (
-          <>
-            <section aria-labelledby="arrangement-sequence-heading">
-              <Heading
-                as="h2"
-                className={styles.eyebrow}
-                id="arrangement-sequence-heading"
-                size="xs"
-              >
-                Arrangement
-              </Heading>
-              <div className={styles.sequence}>
+        {resolvedViewMode === "build" ? (
+          <section aria-label="Arrangement Sections">
+            {arrangement.entries.length === 0 && !addOpen ? (
+              <div className={styles.emptyBuild}>
+                <Text as="p" size="sm" variant="muted">
+                  Add a Section to begin building this Arrangement.
+                </Text>
+              </div>
+            ) : (
+              <div className={styles.sectionList}>
                 {arrangement.entries.map((entry, entryIndex) => {
                   const section = arrangement.sections.find(
                     ({ id }) => id === entry.sectionId,
                   );
+                  if (!section) return null;
+                  const sourceSession = sessions[section.source.sessionId];
+                  const uses = sectionUseCount(section.id);
+                  const sourceChanged =
+                    sourceSession !== undefined &&
+                    sourceSession.lastModified !==
+                      section.source.sessionLastModified;
                   const active = transport.activeEntryId === entry.id;
                   const pending =
                     !active && transport.pendingEntryId === entry.id;
-                  const upNext = chartCue.upNextEntryId === entry.id;
+                  const editorPanelId = `arrangement-entry-${entry.id}-editor`;
+
                   return (
-                    <div
+                    <section
                       key={entry.id}
-                      className={styles.entryHost}
                       ref={(node) => {
-                        if (node) tileRefs.current.set(entry.id, node);
-                        else tileRefs.current.delete(entry.id);
+                        if (node) cardRefs.current.set(entry.id, node);
+                        else cardRefs.current.delete(entry.id);
                       }}
+                      aria-label={`${section.name}, Entry ${entryIndex + 1}`}
+                      className={styles.sectionCard}
+                      data-active={active || undefined}
+                      data-pending={pending || undefined}
                     >
-                      <OptionButton
-                        aria-current={active ? "step" : undefined}
-                        aria-label={`${section?.name ?? "Unavailable Section"}, entry ${entryIndex + 1}, plays ${entry.playCount} ${entry.playCount === 1 ? "time" : "times"}${upNext ? ", up next" : ""}`}
-                        className={styles.entryTile}
-                        data-active={active || undefined}
-                        data-pending={pending || undefined}
-                        data-up-next={upNext || undefined}
-                        disabled={
-                          transport.isActive ||
-                          (section?.parts.length ?? 0) === 0
+                      <ControlHeader
+                        className={styles.sectionCardHeader}
+                        primary={
+                          <span className={styles.sectionName}>
+                            {section.name}
+                          </span>
                         }
-                        label={`${section?.name ?? "Unavailable"}${entry.playCount > 1 ? ` ×${entry.playCount}` : ""}`}
-                        presentation="tile"
-                        selected={
-                          !transport.isActive && entry.id === selectedEntry?.id
+                        actions={
+                          <ControlHeaderCluster gap="cluster">
+                            <ControlHeaderCluster
+                              aria-label={`Reorder ${section.name}`}
+                              role="group"
+                            >
+                              <IconButton
+                                aria-label={`Move ${section.name} earlier`}
+                                disabled={entryIndex === 0}
+                                icon={<ListStart />}
+                                size="sm"
+                                onClick={() => {
+                                  stopForMutation();
+                                  actions.moveEntry(
+                                    arrangementId,
+                                    entry.id,
+                                    "earlier",
+                                  );
+                                }}
+                              />
+                              <IconButton
+                                aria-label={`Move ${section.name} later`}
+                                disabled={
+                                  entryIndex === arrangement.entries.length - 1
+                                }
+                                icon={<ListEnd />}
+                                size="sm"
+                                onClick={() => {
+                                  stopForMutation();
+                                  actions.moveEntry(
+                                    arrangementId,
+                                    entry.id,
+                                    "later",
+                                  );
+                                }}
+                              />
+                            </ControlHeaderCluster>
+                            <ControlHeaderCluster
+                              aria-label={`Manage ${section.name}`}
+                              role="group"
+                            >
+                              <IconButton
+                                aria-label={`Duplicate ${section.name} Entry`}
+                                icon={<Copy />}
+                                size="sm"
+                                onClick={() => {
+                                  stopForMutation();
+                                  const id = actions.cloneEntry(
+                                    arrangementId,
+                                    entry.id,
+                                  );
+                                  if (id) selectNewEntry(id);
+                                }}
+                              />
+                              <IconButton
+                                aria-label={`Remove ${section.name} from Arrangement`}
+                                icon={<Trash2 />}
+                                size="sm"
+                                tone="danger"
+                                onClick={() =>
+                                  requestRemove(entry.id, section.id)
+                                }
+                              />
+                            </ControlHeaderCluster>
+                          </ControlHeaderCluster>
                         }
-                        subtitle={upNext ? "Up Next" : undefined}
-                        onClick={() => setSelectedEntryId(entry.id)}
                       />
-                    </div>
+
+                      <OptionButton
+                        aria-label={`${openEditorEntryId === entry.id ? "Close" : "Edit"} ${section.name}, Entry ${entryIndex + 1}. ${entry.playCount} ${entry.playCount === 1 ? "play" : "plays"}`}
+                        aria-controls={
+                          openEditorEntryId === entry.id
+                            ? editorPanelId
+                            : undefined
+                        }
+                        aria-expanded={openEditorEntryId === entry.id}
+                        className={styles.sectionSummaryButton}
+                        disclosureState={
+                          openEditorEntryId === entry.id ? "open" : "closed"
+                        }
+                        label={section.source.sessionName}
+                        presentation="list"
+                        preview={`×${entry.playCount}`}
+                        selected={openEditorEntryId === entry.id}
+                        selectionSemantics="visual"
+                        onClick={() => {
+                          if (transport.isActive) return;
+                          setSelectedEntryId(entry.id);
+                          setRenameOpen(false);
+                          setReplaceEntryId(undefined);
+                          setOpenEditorEntryId((current) =>
+                            current === entry.id ? undefined : entry.id,
+                          );
+                        }}
+                      />
+
+                      <DisclosureListPanel
+                        className={styles.sectionDisclosurePanel}
+                        contentClassName={styles.sectionEditor}
+                        id={editorPanelId}
+                        isOpen={openEditorEntryId === entry.id}
+                        variant="menu"
+                      >
+                        {uses > 1 || sourceChanged || !sourceSession ? (
+                          <div className={styles.sectionStatus}>
+                            {uses > 1 ? (
+                              <Text as="span" size="xs" variant="muted">
+                                Used in {uses} Entries
+                              </Text>
+                            ) : null}
+                            {sourceChanged ? (
+                              <Text as="span" size="xs" variant="muted">
+                                {section.source.sessionName} has changed
+                              </Text>
+                            ) : null}
+                            {!sourceSession ? (
+                              <Text as="span" size="xs" variant="muted">
+                                {section.source.sessionName} is unavailable
+                              </Text>
+                            ) : null}
+                          </div>
+                        ) : null}
+
+                        <DisclosureList grouped groupGap="section">
+                          <DisclosureListGroup>
+                            <div className={styles.playsControl}>
+                              <NumericStepper
+                                aria-label={`Plays for ${section.name}`}
+                                formatValue={(value) =>
+                                  `×${value} ${value === 1 ? "Play" : "Plays"}`
+                                }
+                                max={MAX_ARRANGEMENT_ENTRY_PLAY_COUNT}
+                                min={MIN_ARRANGEMENT_ENTRY_PLAY_COUNT}
+                                value={entry.playCount}
+                                onChange={(value) => {
+                                  stopForMutation();
+                                  actions.setPlayCount(
+                                    arrangementId,
+                                    entry.id,
+                                    value,
+                                  );
+                                }}
+                              />
+                            </div>
+                            <InlineRenameActionItem
+                              ariaLabel={`Rename ${section.name}`}
+                              fieldLabel="Section name"
+                              isNameAvailable={(name) =>
+                                !arrangement.sections.some(
+                                  (candidate) =>
+                                    candidate.id !== section.id &&
+                                    normalizeEntityNameForComparison(
+                                      candidate.name,
+                                    ) ===
+                                      normalizeEntityNameForComparison(name),
+                                )
+                              }
+                              isOpen={renameOpen}
+                              label={`Rename ${section.name}`}
+                              value={section.name}
+                              onClose={() => setRenameOpen(false)}
+                              onRename={(name) =>
+                                actions.renameSection(
+                                  arrangementId,
+                                  section.id,
+                                  name,
+                                )
+                              }
+                              onToggle={() => {
+                                setReplaceEntryId(undefined);
+                                setRenameOpen((open) => !open);
+                              }}
+                            />
+                          </DisclosureListGroup>
+                          <DisclosureListGroup>
+                            <DisclosureListAction
+                              disabled={
+                                !sourceSession ||
+                                sourceSession.parts.length === 0
+                              }
+                              icon={<RefreshCw />}
+                              label={`Refresh ${section.source.sessionName}`}
+                              subtitle={
+                                uses > 1
+                                  ? `Updates ${section.name} · Affects ${uses} Entries`
+                                  : `Updates ${section.name}`
+                              }
+                              onClick={() => {
+                                if (!sourceSession) return;
+                                stopForMutation();
+                                actions.replaceSection(
+                                  arrangementId,
+                                  section.id,
+                                  sourceSession.id,
+                                );
+                              }}
+                            />
+                            <DisclosureListActionItem
+                              ariaLabel={`Replace ${section.source.sessionName} for ${section.name}`}
+                              disabled={
+                                !Object.values(sessions).some(
+                                  ({ parts }) => parts.length > 0,
+                                )
+                              }
+                              icon={<Replace />}
+                              isOpen={replaceEntryId === entry.id}
+                              label={`Replace ${section.source.sessionName}…`}
+                              panelVariant="menu"
+                              subtitle={
+                                uses > 1
+                                  ? `Changes ${section.name} · Affects ${uses} Entries`
+                                  : `Changes ${section.name}`
+                              }
+                              onToggle={() => {
+                                setRenameOpen(false);
+                                setReplaceEntryId((current) =>
+                                  current === entry.id ? undefined : entry.id,
+                                );
+                              }}
+                            >
+                              <ArrangementSectionPicker
+                                arrangementId={arrangementId}
+                                className={styles.nestedSectionPicker}
+                                replaceSectionId={section.id}
+                                onBeforeChange={stopForMutation}
+                                onClose={() => setReplaceEntryId(undefined)}
+                              />
+                            </DisclosureListActionItem>
+                            <DisclosureListAction
+                              disabled={!sourceSession}
+                              icon={<ExternalLink />}
+                              label={`Go to ${section.source.sessionName}`}
+                              onClick={() => {
+                                if (!sourceSession) return;
+                                partSequenceCoordinator.stop();
+                                actions.setActiveWorkspace({
+                                  kind: "session",
+                                  id: sourceSession.id,
+                                });
+                              }}
+                            />
+                          </DisclosureListGroup>
+                        </DisclosureList>
+
+                        <DisclosureListPanelActions>
+                          <Button
+                            label="Close"
+                            size="sm"
+                            onClick={() => {
+                              setRenameOpen(false);
+                              setReplaceEntryId(undefined);
+                              setOpenEditorEntryId(undefined);
+                            }}
+                          />
+                        </DisclosureListPanelActions>
+                      </DisclosureListPanel>
+                    </section>
                   );
                 })}
+                {addOpen ? (
+                  <section
+                    aria-label={`${nextSectionName}, choose a Session`}
+                    className={styles.sectionCard}
+                    data-pending
+                  >
+                    <ControlHeader
+                      className={styles.sectionCardHeader}
+                      primary={
+                        <span className={styles.sectionName}>
+                          {nextSectionName}
+                        </span>
+                      }
+                    />
+                    <ArrangementSectionPicker
+                      arrangementId={arrangementId}
+                      onAppended={selectNewEntry}
+                      onBeforeChange={stopForMutation}
+                      onClose={() => setAddOpen(false)}
+                    />
+                  </section>
+                ) : null}
               </div>
-            </section>
+            )}
 
-            {selectedEntry && selectedSection ? (
-              <section
-                aria-labelledby="selected-section-heading"
-                className={styles.editorCard}
-              >
-                <Heading
-                  as="h2"
-                  className={styles.eyebrow}
-                  id="selected-section-heading"
-                  size="xs"
-                >
-                  Selected Section
-                </Heading>
-                <ControlHeader
-                  className={styles.editorHeader}
-                  primary={
-                    <div>
-                      <Heading as="h3" size="base">
-                        {selectedSection.name}
-                      </Heading>
-                      <Text as="p" size="sm" variant="muted">
-                        {transport.isActive &&
-                        transport.activeEntryId === selectedEntry.id
-                          ? `Play ${(transport.activePlayIndex ?? 0) + 1} of ${transport.activePlayCount ?? selectedEntry.playCount}`
-                          : `Entry ${selectedIndex + 1} of ${arrangement.entries.length}`}
-                      </Text>
-                    </div>
-                  }
-                  actions={
-                    <ControlHeaderCluster
-                      aria-label={`Actions for ${selectedSection.name}`}
-                      role="group"
-                    >
-                      <IconButton
-                        aria-label={`Move ${selectedSection.name} earlier`}
-                        disabled={selectedIndex <= 0}
-                        icon={<ListStart />}
-                        size="sm"
-                        onClick={() => {
-                          stopForMutation();
-                          actions.moveEntry(
-                            arrangementId,
-                            selectedEntry.id,
-                            "earlier",
-                          );
-                        }}
-                      />
-                      <IconButton
-                        aria-label={`Move ${selectedSection.name} later`}
-                        disabled={
-                          selectedIndex >= arrangement.entries.length - 1
-                        }
-                        icon={<ListEnd />}
-                        size="sm"
-                        onClick={() => {
-                          stopForMutation();
-                          actions.moveEntry(
-                            arrangementId,
-                            selectedEntry.id,
-                            "later",
-                          );
-                        }}
-                      />
-                      <IconButton
-                        aria-label={`Duplicate ${selectedSection.name} entry`}
-                        icon={<Copy />}
-                        size="sm"
-                        onClick={() => {
-                          stopForMutation();
-                          const id = actions.cloneEntry(
-                            arrangementId,
-                            selectedEntry.id,
-                          );
-                          if (id) selectNewEntry(id);
-                        }}
-                      />
-                      <IconButton
-                        aria-label={`Remove ${selectedSection.name} from arrangement`}
-                        icon={<Trash2 />}
-                        size="sm"
-                        tone="danger"
-                        onClick={() => {
-                          if (sectionUseCount === 1) setRemoveConfirming(true);
-                          else removeSelectedEntry();
-                        }}
-                      />
-                    </ControlHeaderCluster>
-                  }
-                />
-
-                <div className={styles.playCount}>
-                  <Text as="span" size="sm">
-                    Section plays
-                  </Text>
-                  <NumericStepper
-                    aria-label={`Section plays for ${selectedSection.name}`}
-                    formatValue={(value) => `×${value}`}
-                    max={99}
-                    min={1}
-                    value={selectedEntry.playCount}
-                    onChange={(value) => {
-                      stopForMutation();
-                      actions.setPlayCount(
-                        arrangementId,
-                        selectedEntry.id,
-                        value,
-                      );
+            <div className={styles.addSectionAction}>
+              <Button
+                icon={<Plus />}
+                label="Add Section"
+                selected={addOpen}
+                size="sm"
+                onClick={() => {
+                  setReplaceEntryId(undefined);
+                  setOpenEditorEntryId(undefined);
+                  setRenameOpen(false);
+                  setAddOpen((open) => !open);
+                }}
+              />
+            </div>
+          </section>
+        ) : (
+          <section aria-labelledby="arrangement-chart-heading">
+            <Heading
+              as="h2"
+              className={styles.eyebrow}
+              id="arrangement-chart-heading"
+              size="xs"
+            >
+              Chart
+            </Heading>
+            <div className={styles.sequence}>
+              {arrangement.entries.map((entry, entryIndex) => {
+                const section = arrangement.sections.find(
+                  ({ id }) => id === entry.sectionId,
+                );
+                const active = transport.activeEntryId === entry.id;
+                const pending =
+                  !active && transport.pendingEntryId === entry.id;
+                const upNext = chartCue.upNextEntryId === entry.id;
+                return (
+                  <div
+                    key={entry.id}
+                    ref={(node) => {
+                      if (node) chartTileRefs.current.set(entry.id, node);
+                      else chartTileRefs.current.delete(entry.id);
                     }}
-                  />
-                </div>
-                {sectionUseCount > 1 ? (
-                  <Text as="p" size="sm" variant="muted">
-                    Used {sectionUseCount} times in this Arrangement
-                  </Text>
-                ) : null}
-                {sourceChanged ? (
-                  <Text as="p" size="sm" variant="muted">
-                    Source changed since capture
-                  </Text>
-                ) : null}
-                {!sourceSession ? (
-                  <Text as="p" size="sm" variant="muted">
-                    Source Session unavailable
-                  </Text>
-                ) : null}
-
-                <DisclosureList grouped groupGap="section">
-                  <DisclosureListGroup>
-                    <InlineRenameActionItem
-                      ariaLabel={`Rename ${selectedSection.name} section`}
-                      fieldLabel="Section name"
-                      isNameAvailable={(name) =>
-                        !arrangement.sections.some(
-                          (candidate) =>
-                            candidate.id !== selectedSection.id &&
-                            normalizeEntityNameForComparison(candidate.name) ===
-                              normalizeEntityNameForComparison(name),
-                        )
-                      }
-                      isOpen={renameOpen}
-                      label="Rename Section"
-                      value={selectedSection.name}
-                      onClose={() => setRenameOpen(false)}
-                      onRename={(name) =>
-                        actions.renameSection(
-                          arrangementId,
-                          selectedSection.id,
-                          name,
-                        )
-                      }
-                      onToggle={() => setRenameOpen((open) => !open)}
-                    />
-                    <DisclosureListAction
+                    className={styles.entryHost}
+                  >
+                    <OptionButton
+                      aria-current={active ? "step" : undefined}
+                      aria-label={`${section?.name ?? "Unavailable Section"}, Entry ${entryIndex + 1}, plays ${entry.playCount} ${entry.playCount === 1 ? "time" : "times"}${upNext ? ", up next" : ""}`}
+                      className={styles.entryTile}
+                      data-active={active || undefined}
+                      data-pending={pending || undefined}
+                      data-up-next={upNext || undefined}
                       disabled={
-                        !sourceSession || sourceSession.parts.length === 0
+                        transport.isActive || (section?.parts.length ?? 0) === 0
                       }
-                      icon={<RefreshCw />}
-                      label="Refresh from Source"
-                      subtitle={
-                        sectionUseCount > 1
-                          ? `Updates ${sectionUseCount} Entries`
-                          : undefined
+                      label={`${section?.name ?? "Unavailable"}${entry.playCount > 1 ? ` ×${entry.playCount}` : ""}`}
+                      presentation="tile"
+                      selected={
+                        !transport.isActive && entry.id === selectedEntry?.id
                       }
-                      onClick={() => {
-                        if (!sourceSession) return;
-                        stopForMutation();
-                        actions.replaceSection(
-                          arrangementId,
-                          selectedSection.id,
-                          sourceSession.id,
-                        );
-                      }}
+                      subtitle={upNext ? "Up Next" : undefined}
+                      onClick={() => setSelectedEntryId(entry.id)}
                     />
-                    <DisclosureListAction
-                      disabled={
-                        !Object.values(sessions).some(
-                          ({ parts }) => parts.length > 0,
-                        )
-                      }
-                      icon={<Replace />}
-                      label="Replace from Session…"
-                      subtitle={
-                        sectionUseCount > 1
-                          ? `Updates ${sectionUseCount} Entries`
-                          : undefined
-                      }
-                      onClick={() => setReplaceSectionId(selectedSection.id)}
-                    />
-                    <DisclosureListAction
-                      disabled={!sourceSession}
-                      icon={<ExternalLink />}
-                      label="Open Source Session"
-                      onClick={() => {
-                        if (!sourceSession) return;
-                        partSequenceCoordinator.stop();
-                        actions.setActiveWorkspace({
-                          kind: "session",
-                          id: sourceSession.id,
-                        });
-                      }}
-                    />
-                  </DisclosureListGroup>
-                  {sectionUseCount === 1 ? (
-                    <DisclosureListGroup>
-                      <DisclosureListConfirmAction
-                        actionAriaLabel={`Remove ${selectedSection.name} from arrangement`}
-                        confirmAriaLabel={`Confirm removing ${selectedSection.name}. Its captured Section will also be deleted.`}
-                        confirmButtonLabel="Remove"
-                        confirmLabel={`Remove ${selectedSection.name}? Its captured Section will also be deleted.`}
-                        icon={<Trash2 />}
-                        isConfirming={removeConfirming}
-                        label="Remove from Arrangement"
-                        tone="danger"
-                        onCancel={() => setRemoveConfirming(false)}
-                        onConfirm={removeSelectedEntry}
-                        onRequestConfirm={() => setRemoveConfirming(true)}
-                      />
-                    </DisclosureListGroup>
-                  ) : null}
-                </DisclosureList>
-              </section>
-            ) : null}
+                  </div>
+                );
+              })}
+            </div>
 
             {presentationSection ? (
-              <section aria-labelledby="arrangement-chart-heading">
+              <>
                 <div className={styles.chartHeading}>
-                  <Heading
-                    as="h2"
-                    className={styles.eyebrow}
-                    id="arrangement-chart-heading"
-                    size="xs"
-                  >
-                    Chart
-                  </Heading>
                   <Text as="p" size="sm" variant="muted">
                     {chartCue.presentation?.kind === "upcoming"
                       ? `Up Next · ${presentationSection.name}`
@@ -488,38 +601,37 @@ export function ArrangementWorkspace({
                     ? `Up next, ${presentationSection.name}`
                     : ""}
                 </span>
-              </section>
+              </>
             ) : null}
-          </>
+          </section>
         )}
       </div>
 
-      <Dialog
-        isOpen={addOpen}
-        size="standard"
-        onClose={() => setAddOpen(false)}
+      <ObjectMenuDialog
+        icon={<Trash2 />}
+        isOpen={Boolean(removeEntry && removeSection)}
+        size="compact"
+        title={removeSection ? `Remove ${removeSection.name}?` : "Remove"}
+        onClose={() => setRemoveConfirmEntryId(undefined)}
       >
-        <ArrangementSectionPickerDialog
-          arrangementId={arrangementId}
-          onAppended={selectNewEntry}
-          onBeforeChange={stopForMutation}
-          onClose={() => setAddOpen(false)}
-        />
-      </Dialog>
-      <Dialog
-        isOpen={Boolean(replaceSectionId)}
-        size="standard"
-        onClose={() => setReplaceSectionId(undefined)}
-      >
-        {replaceSectionId ? (
-          <ArrangementSectionPickerDialog
-            arrangementId={arrangementId}
-            replaceSectionId={replaceSectionId}
-            onBeforeChange={stopForMutation}
-            onClose={() => setReplaceSectionId(undefined)}
-          />
+        {removeEntry && removeSection ? (
+          <DisclosureListGroup>
+            <DisclosureListConfirmAction
+              actionAriaLabel={`Remove ${removeSection.name} from Arrangement`}
+              confirmAriaLabel={`Confirm removing ${removeSection.name} from this Arrangement. ${removeSection.source.sessionName} will not be changed.`}
+              confirmButtonLabel="Remove"
+              confirmLabel={`Remove ${removeSection.name} from this Arrangement? ${removeSection.source.sessionName} will not be changed.`}
+              icon={<Trash2 />}
+              isConfirming
+              label="Remove from Arrangement"
+              tone="danger"
+              onCancel={() => setRemoveConfirmEntryId(undefined)}
+              onConfirm={() => removeEntryById(removeEntry.id)}
+              onRequestConfirm={() => undefined}
+            />
+          </DisclosureListGroup>
         ) : null}
-      </Dialog>
+      </ObjectMenuDialog>
     </NoteColorProvider>
   );
 }

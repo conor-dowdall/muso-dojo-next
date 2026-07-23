@@ -23,8 +23,17 @@ describe("normalizeArrangementConfig", () => {
       name: "Song",
       tempoBpm: 300,
       playbackMode: "once",
-      entries: [{ id: "entry", sectionId: "used", playCount: 99 }],
+      entries: [{ id: "entry", sectionId: "used", playCount: 8 }],
       sections: [{ id: "used", name: "A", parts: [] }],
     });
+  });
+
+  it("uses alphabetic default Section names", () => {
+    const arrangement = normalizeArrangementConfig({
+      sections: [{ id: "section", parts: [] }],
+      entries: [{ id: "entry", sectionId: "section" }],
+    });
+
+    expect(arrangement.sections[0]?.name).toBe("Section A");
   });
 });
