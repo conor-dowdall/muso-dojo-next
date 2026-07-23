@@ -8,7 +8,9 @@ import { Dialog } from "@/components/ui/dialog/Dialog";
 import { AddToSessionDialog } from "@/components/session/AddToSessionDialog";
 import { SessionHeader } from "@/components/session/SessionHeader";
 import { SessionLoader } from "@/components/session/SessionLoader";
-import { SessionManagementDialog } from "@/components/session/SessionManagementDialog";
+import { WorkspaceLibraryDialog } from "@/components/workspace/WorkspaceLibraryDialog";
+import { PersistenceStatusViewport } from "@/components/workspace/PersistenceStatusViewport";
+import { ArrangementWorkspace } from "@/components/arrangement/ArrangementWorkspace";
 import { SessionTempoDialog } from "@/components/session/SessionTempoDialog";
 import { SessionView } from "@/components/session/SessionView";
 import {
@@ -56,6 +58,7 @@ function HydratedSession({
     string | null
   >(null);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
+  const activeWorkspace = useAppStore((state) => state.activeWorkspace);
   const instrumentCreationRangeContextSignature = useAppStore(
     useShallow((state) =>
       createInstrumentCreationRangeContextSignature(
@@ -119,7 +122,7 @@ function HydratedSession({
   useSessionPlaybackReconciliation(activeSessionId);
 
   useEffect(() => {
-    if (!activeSessionId || !musoAudioEngine.isSupported()) {
+    if (!activeWorkspace || !musoAudioEngine.isSupported()) {
       return;
     }
 
@@ -153,15 +156,15 @@ function HydratedSession({
     });
 
     return removeListeners;
-  }, [activeSessionId]);
+  }, [activeWorkspace]);
 
   useEffect(() => {
-    if (!activeSessionId || !musoAudioEngine.isSupported()) {
+    if (!activeWorkspace || !musoAudioEngine.isSupported()) {
       return;
     }
 
     void musoAudioEngine.warm();
-  }, [activeSessionId]);
+  }, [activeWorkspace]);
 
   useEffect(() => {
     if (!activeSessionId && sessionViewMode !== "session") {
@@ -180,11 +183,13 @@ function HydratedSession({
 
     if (
       snapshot.playing &&
-      (activeSessionId === null || snapshot.sessionId !== activeSessionId)
+      (!activeWorkspace ||
+        snapshot.owner?.kind !== activeWorkspace.kind ||
+        snapshot.owner.id !== activeWorkspace.id)
     ) {
       partSequenceCoordinator.stop();
     }
-  }, [activeSessionId]);
+  }, [activeWorkspace]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -197,6 +202,29 @@ function HydratedSession({
     return () =>
       document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
+
+  if (activeWorkspace?.kind === "arrangement") {
+    return (
+      <>
+        <ArrangementWorkspace
+          arrangementId={activeWorkspace.id}
+          onOpenLibrary={openSessionLibrary}
+        />
+        <Dialog
+          isOpen={isSessionLibraryOpen}
+          onClose={() => setIsSessionLibraryOpen(false)}
+          size="standard"
+        >
+          <WorkspaceLibraryDialog
+            key={sessionDialogKey}
+            onClose={() => setIsSessionLibraryOpen(false)}
+          />
+        </Dialog>
+        <AudioStatusViewport />
+        <PersistenceStatusViewport />
+      </>
+    );
+  }
 
   return (
     <>
@@ -225,7 +253,7 @@ function HydratedSession({
         onClose={() => setIsSessionLibraryOpen(false)}
         size="standard"
       >
-        <SessionManagementDialog
+        <WorkspaceLibraryDialog
           key={sessionDialogKey}
           onClose={() => setIsSessionLibraryOpen(false)}
         />
@@ -291,6 +319,7 @@ function HydratedSession({
         />
       </Dialog>
       <AudioStatusViewport />
+      <PersistenceStatusViewport />
     </>
   );
 }

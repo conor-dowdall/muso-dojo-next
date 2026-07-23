@@ -162,11 +162,7 @@ export function SessionManagementDialog({
 
   return (
     <>
-      <DialogHeader
-        icon={<LibraryBig />}
-        title="Session Library"
-        onClose={onClose}
-      />
+      <DialogHeader icon={<LibraryBig />} title="Library" onClose={onClose} />
       <DialogContent menuRhythm="standard">
         <DialogContentSection ariaLabel="Session choices">
           <DisclosureList grouped groupGap="section">

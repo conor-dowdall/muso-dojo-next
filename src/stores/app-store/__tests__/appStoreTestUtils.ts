@@ -20,6 +20,8 @@ export function createStoreSnapshot(
   instrumentPatch: Partial<FretboardInstrumentInstanceConfig> = {},
 ): AppStoreSnapshot {
   return {
+    activeWorkspace: { kind: "session", id: sessionId },
+    arrangements: {},
     activeSessionId: sessionId,
     dojoSettings: {},
     sessionWorkspaceViewMode: "session",

@@ -6,7 +6,7 @@ import {
 import { type AppStoreSnapshot } from "@/types/session";
 import { normalizeAppStoreSnapshot } from "@/utils/session/normalizeAppStoreSnapshot";
 
-export const APP_STORE_VERSION = 11;
+export const APP_STORE_VERSION = 12;
 export const APP_STORE_STORAGE_KEY = "muso-dojo-app-store";
 export const APP_STORE_PERSISTENCE_DEBOUNCE_MS = 600;
 export const APP_STORE_PERSISTENCE_MAX_WAIT_MS = 3000;
@@ -19,10 +19,23 @@ interface DebouncedAppStoreStorageOptions {
   maxWaitMs?: number;
 }
 
+export const APP_STORE_PERSISTENCE_STATUS_EVENT =
+  "muso-dojo:persistence-status";
+
+function reportPersistenceStatus(status: "failed" | "saved") {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent(APP_STORE_PERSISTENCE_STATUS_EVENT, { detail: status }),
+    );
+  }
+}
+
 export function partializeAppStoreSnapshot(
   state: AppStoreSnapshot,
 ): AppStorePersistedSnapshot {
   return {
+    activeWorkspace: state.activeWorkspace,
+    arrangements: state.arrangements,
     activeSessionId: state.activeSessionId,
     dojoSettings: state.dojoSettings,
     sessionWorkspaceViewMode: state.sessionWorkspaceViewMode,
@@ -134,10 +147,15 @@ export function createDebouncedAppStoreStorage(
       const result = storage.setItem(name, JSON.stringify(value));
 
       if (isPromiseLike(result)) {
-        void Promise.resolve(result).catch(() => undefined);
+        void Promise.resolve(result).then(
+          () => reportPersistenceStatus("saved"),
+          () => reportPersistenceStatus("failed"),
+        );
+      } else {
+        reportPersistenceStatus("saved");
       }
     } catch {
-      // Storage failures should not interrupt instrument interactions.
+      reportPersistenceStatus("failed");
     }
   };
 

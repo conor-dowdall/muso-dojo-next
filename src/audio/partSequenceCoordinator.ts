@@ -7,6 +7,12 @@ import {
   AUDIO_SCHEDULER_HORIZON_SECONDS,
 } from "./audioTimingConfig";
 import { type PartSequencePlaybackPlan } from "./partSequencePlanning";
+import {
+  type ArrangementStepContext,
+  type PartSequenceStartOptions,
+  type PlaybackCompletionPolicy,
+  type PlaybackSequenceOwner,
+} from "./partSequencePlanning";
 
 const PART_SEQUENCE_HANDOFF_LEAD_SECONDS = AUDIO_SCHEDULER_HORIZON_SECONDS;
 const PART_SEQUENCE_COMMIT_LEAD_SECONDS = 0.01;
@@ -14,8 +20,13 @@ const PART_SEQUENCE_RECOVERY_LEAD_SECONDS =
   AUDIO_PLAYBACK_START_LEAD_SECONDS + PART_SEQUENCE_COMMIT_LEAD_SECONDS;
 
 export interface PartSequenceSnapshot {
+  activeArrangementContext?: ArrangementStepContext;
   activeIndex?: number;
+  activeOccurrence?: number;
   activePartId?: string;
+  activeSourcePartId?: string;
+  activeStepId?: string;
+  completionPolicy?: PlaybackCompletionPolicy;
   contentSignature?: string;
   cycleEndTime?: number;
   originTime?: number;
@@ -23,8 +34,11 @@ export interface PartSequenceSnapshot {
   partResetSignatures?: readonly string[];
   pendingIndex?: number;
   pendingPartId?: string;
+  pendingArrangementContext?: ArrangementStepContext;
+  pendingStepId?: string;
   playing: boolean;
   mode?: PartSequencePlaybackPlan["mode"];
+  owner?: PlaybackSequenceOwner;
   sessionId?: string;
   signature?: string;
   sourceSignature?: string;
@@ -50,7 +64,9 @@ function getSecondsPerBeat(tempoBpm: number) {
 }
 
 function getPartIndex(plan: PartSequencePlaybackPlan, occurrence: number) {
-  return occurrence % plan.parts.length;
+  return plan.completionPolicy === "stop-at-end"
+    ? occurrence
+    : occurrence % plan.parts.length;
 }
 
 function getSequenceDurationSeconds(plan: PartSequencePlaybackPlan) {
@@ -66,7 +82,10 @@ function getOccurrenceOffsetSeconds(
   occurrence: number,
 ) {
   const partCount = plan.parts.length;
-  const cycle = Math.floor(occurrence / partCount);
+  const cycle =
+    plan.completionPolicy === "stop-at-end"
+      ? 0
+      : Math.floor(occurrence / partCount);
   const index = getPartIndex(plan, occurrence);
   const secondsPerBeat = getSecondsPerBeat(plan.tempoBpm);
   const cycleDuration = getSequenceDurationSeconds(plan);
@@ -120,6 +139,7 @@ export class PartSequenceCoordinator {
   private sequenceOriginTime: number | undefined;
   private snapshot: PartSequenceSnapshot = idleSnapshot;
   private timer: ReturnType<typeof globalThis.setTimeout> | undefined;
+  private startCountIn: PartSequenceStartOptions["countIn"] | undefined;
 
   constructor(
     private readonly transport: BeatTransportCoordinator = beatTransportCoordinator,
@@ -277,8 +297,13 @@ export class PartSequenceCoordinator {
     this.activeOccurrence = occurrence;
 
     this.snapshot = {
+      activeArrangementContext: part.arrangement,
       activeIndex: index,
+      activeOccurrence: occurrence,
       activePartId: part.partId,
+      activeSourcePartId: part.sourcePartId ?? part.partId,
+      activeStepId: part.stepId ?? part.partId,
+      completionPolicy: plan.completionPolicy ?? "loop",
       contentSignature: plan.contentSignature,
       ...(cycleEndTime === undefined ? {} : { cycleEndTime }),
       ...(originTime === undefined ? {} : { originTime }),
@@ -286,6 +311,7 @@ export class PartSequenceCoordinator {
       partResetSignatures: plan.partResetSignatures,
       playing: true,
       mode: plan.mode,
+      owner: plan.owner ?? { kind: "session", id: plan.sessionId },
       sessionId: plan.sessionId,
       signature: plan.signature,
       sourceSignature: plan.sourceSignature,
@@ -311,6 +337,27 @@ export class PartSequenceCoordinator {
   }) {
     const nextOccurrence = occurrence + 1;
     const nextOriginTime = this.getOccurrenceOriginTime(plan, nextOccurrence);
+    if (
+      plan.completionPolicy === "stop-at-end" &&
+      nextOccurrence >= plan.parts.length
+    ) {
+      const currentPart = plan.parts[occurrence];
+      const durationSeconds =
+        (currentPart?.durationBeats ?? 0) * getSecondsPerBeat(plan.tempoBpm);
+      const endTime =
+        nextOriginTime ??
+        (this.snapshot.originTime === undefined
+          ? undefined
+          : this.snapshot.originTime + durationSeconds);
+      this.clearTimer();
+      this.timer = globalThis.setTimeout(
+        () => this.stop({ stopPlayback: true }),
+        endTime === undefined
+          ? durationSeconds * 1000
+          : this.getTimerDelayMilliseconds(endTime),
+      );
+      return;
+    }
     const durationSeconds =
       plan.parts[getPartIndex(plan, occurrence)]!.durationBeats *
       getSecondsPerBeat(plan.tempoBpm);
@@ -328,6 +375,13 @@ export class PartSequenceCoordinator {
         minimumOccurrence: nextOccurrence,
         plan,
       });
+      if (
+        plan.completionPolicy === "stop-at-end" &&
+        scheduledOccurrence >= plan.parts.length
+      ) {
+        this.stop({ stopPlayback: true });
+        return;
+      }
       const preserveRhythmPhase = rhythmContinuesThroughOccurrences({
         fromOccurrence: occurrence,
         plan,
@@ -376,13 +430,17 @@ export class PartSequenceCoordinator {
     this.clearTimer();
     this.snapshot = {
       ...this.snapshot,
+      completionPolicy: plan.completionPolicy ?? "loop",
       contentSignature: plan.contentSignature,
       partCount: plan.parts.length,
       partResetSignatures: plan.partResetSignatures,
       pendingIndex: index,
       pendingPartId: part.partId,
+      pendingArrangementContext: part.arrangement,
+      pendingStepId: part.stepId ?? part.partId,
       playing: true,
       mode: plan.mode,
+      owner: plan.owner ?? { kind: "session", id: plan.sessionId },
       sessionId: plan.sessionId,
       signature: plan.signature,
       sourceSignature: plan.sourceSignature,
@@ -394,7 +452,7 @@ export class PartSequenceCoordinator {
     const preserveRhythms =
       handoff && part.continueRhythm && !forceRhythmRestart;
     const result = await this.transport.startPart({
-      countIn: handoff ? undefined : plan.countIn,
+      countIn: handoff ? undefined : (this.startCountIn ?? plan.countIn),
       exercises: part.exerciseRequests,
       handoff,
       originTime,
@@ -450,12 +508,17 @@ export class PartSequenceCoordinator {
 
   getSnapshot = () => this.snapshot;
 
+  getClockTime = () => this.transport.getCurrentTime();
+
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   };
 
-  async start(plan: PartSequencePlaybackPlan) {
+  async start(
+    plan: PartSequencePlaybackPlan,
+    options?: Partial<PartSequenceStartOptions>,
+  ) {
     this.stop({ stopPlayback: false });
 
     if (plan.parts.length === 0) {
@@ -464,10 +527,15 @@ export class PartSequenceCoordinator {
 
     const revision = ++this.revision;
     this.plan = plan;
+    this.startCountIn = options?.countIn ?? plan.countIn;
+    const startIndex = Math.min(
+      plan.parts.length - 1,
+      Math.max(0, Math.round(options?.startIndex ?? 0)),
+    );
 
     return this.startPartAtOccurrence({
       handoff: false,
-      occurrence: 0,
+      occurrence: startIndex,
       plan,
       resetTimeline: true,
       revision,
@@ -523,7 +591,10 @@ export class PartSequenceCoordinator {
     this.clearTimer();
     const revision = ++this.revision;
     this.plan = plan;
-    const occurrence = currentIndex;
+    const occurrence =
+      plan.completionPolicy === "stop-at-end"
+        ? currentIndex
+        : (this.activeOccurrence ?? currentIndex);
     this.activeOccurrence = occurrence;
     this.setSequenceOriginForOccurrence({ occurrence, originTime, plan });
     this.transport.updatePartLive({
@@ -537,8 +608,13 @@ export class PartSequenceCoordinator {
 
     this.snapshot = {
       ...this.snapshot,
+      activeArrangementContext: part.arrangement,
       activeIndex: currentIndex,
+      activeOccurrence: occurrence,
       activePartId: part.partId,
+      activeSourcePartId: part.sourcePartId ?? part.partId,
+      activeStepId: part.stepId ?? part.partId,
+      completionPolicy: plan.completionPolicy ?? "loop",
       contentSignature: plan.contentSignature,
       cycleEndTime,
       originTime,
@@ -546,6 +622,7 @@ export class PartSequenceCoordinator {
       partResetSignatures: plan.partResetSignatures,
       playing: true,
       mode: plan.mode,
+      owner: plan.owner ?? { kind: "session", id: plan.sessionId },
       sessionId: plan.sessionId,
       signature: plan.signature,
       sourceSignature: plan.sourceSignature,
@@ -567,6 +644,7 @@ export class PartSequenceCoordinator {
     this.plan = undefined;
     this.revision += 1;
     this.sequenceOriginTime = undefined;
+    this.startCountIn = undefined;
     this.snapshot = idleSnapshot;
     this.emit();
 

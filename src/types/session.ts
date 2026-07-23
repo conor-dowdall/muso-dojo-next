@@ -35,6 +35,10 @@ import {
 } from "@/utils/exercise-looper/exerciseSequence";
 import { type RhythmSelection } from "@/utils/rhythm/rhythmConfig";
 import { type SessionWorkspaceViewMode } from "@/types/session-view";
+import {
+  type ActiveWorkspaceRef,
+  type ArrangementConfig,
+} from "@/types/arrangement";
 
 export type ChordProgressionChordListMode =
   "each-chord-once" | "full-song-order";
@@ -296,6 +300,12 @@ export interface DojoSettings {
 }
 
 export interface AppStoreSnapshot {
+  activeWorkspace: ActiveWorkspaceRef;
+  arrangements: Record<string, ArrangementConfig>;
+  /**
+   * Compatibility mirror for Session-oriented selectors. New workspace code
+   * should use activeWorkspace.
+   */
   activeSessionId: string | null;
   dojoSettings: DojoSettings;
   sessionWorkspaceViewMode: SessionWorkspaceViewMode;

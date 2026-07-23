@@ -300,7 +300,7 @@ export function SessionHeader({
           ) : null}
           <DisclosureListAction
             icon={<LibraryBig />}
-            label="Session Library"
+            label="Library"
             onClick={openSessionsDialog}
           />
           <DisclosureListAction

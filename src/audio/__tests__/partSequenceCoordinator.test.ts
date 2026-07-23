@@ -269,6 +269,39 @@ describe("PartSequenceCoordinator", () => {
     );
   });
 
+  it("starts at a selected index and stops a finite plan at its exact end", async () => {
+    const { coordinator, startPart, stopPartPlayback } = createHarness();
+    const plan = {
+      ...createPlan(),
+      completionPolicy: "stop-at-end" as const,
+    };
+
+    await coordinator.start(plan, {
+      startIndex: 1,
+      countIn: { durationBeats: 3, pulses: 3 },
+    });
+
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        countIn: { durationBeats: 3, pulses: 3 },
+        exercises: [expect.objectContaining({ id: "exercise-b" })],
+      }),
+    );
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 1,
+      activeOccurrence: 1,
+      completionPolicy: "stop-at-end",
+      playing: true,
+    });
+
+    await vi.advanceTimersByTimeAsync(2079);
+    expect(coordinator.getSnapshot().playing).toBe(true);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(coordinator.getSnapshot().playing).toBe(false);
+    expect(stopPartPlayback).toHaveBeenCalledOnce();
+    expect(startPart).toHaveBeenCalledOnce();
+  });
+
   it("keeps one parent-bar Rhythm running through a fractional Part handoff", async () => {
     const { coordinator, startPart } = createHarness();
 

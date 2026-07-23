@@ -1,5 +1,11 @@
 export type ManagedObjectKind =
-  "session" | "part" | "instrument" | "drone" | "exercise looper" | "rhythm";
+  | "session"
+  | "arrangement"
+  | "part"
+  | "instrument"
+  | "drone"
+  | "exercise looper"
+  | "rhythm";
 
 export type ObjectManagementActionKind = "duplicate" | "danger";
 
@@ -29,6 +35,11 @@ interface ObjectManagementDangerCopy {
 }
 
 const objectManagementCopy = {
+  arrangement: {
+    dangerGerund: "deleting",
+    dangerVerb: "Delete",
+    noun: "arrangement",
+  },
   session: {
     dangerGerund: "deleting",
     dangerVerb: "Delete",
