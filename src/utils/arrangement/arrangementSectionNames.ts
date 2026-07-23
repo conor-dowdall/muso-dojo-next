@@ -12,7 +12,7 @@ function formatAlphabeticIndex(index: number) {
 }
 
 export function formatArrangementSectionName(index: number) {
-  return `Section ${formatAlphabeticIndex(index)}`;
+  return formatAlphabeticIndex(index);
 }
 
 export function createDefaultArrangementSectionName(

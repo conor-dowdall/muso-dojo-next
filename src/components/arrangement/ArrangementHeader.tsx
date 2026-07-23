@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   Ellipsis,
   GalleryThumbnails,
@@ -28,11 +28,9 @@ import {
   DisclosureListAction,
   DisclosureListGroup,
 } from "@/components/ui/disclosure-list/DisclosureList";
-import { InlineRenameActionItem } from "@/components/ui/inline-rename/InlineRenameActionItem";
 import { Dialog } from "@/components/ui/dialog/Dialog";
 import { DojoSettingsDialog } from "@/components/dojo-settings/DojoSettingsDialog";
 import { useAppStore } from "@/stores/appStore";
-import { normalizeEntityNameForComparison } from "@/stores/app-store/entityIds";
 import { type useArrangementTransport } from "@/hooks/audio/useArrangementTransport";
 import { ArrangementTempoDialog } from "./ArrangementTempoDialog";
 import styles from "./ArrangementWorkspace.module.css";
@@ -51,17 +49,10 @@ export function ArrangementHeader({
   viewMode: "build" | "chart";
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [renameOpen, setRenameOpen] = useState(false);
   const [tempoOpen, setTempoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const arrangement = useAppStore((state) => state.arrangements[arrangementId]);
-  const arrangementRecord = useAppStore((state) => state.arrangements);
-  const arrangements = useMemo(
-    () => Object.values(arrangementRecord),
-    [arrangementRecord],
-  );
-  const renameArrangement = useAppStore((state) => state.renameArrangement);
   const setPlaybackMode = useAppStore(
     (state) => state.setArrangementPlaybackMode,
   );
@@ -137,24 +128,6 @@ export function ArrangementHeader({
         onClose={() => setMenuOpen(false)}
       >
         <DisclosureListGroup>
-          <InlineRenameActionItem
-            ariaLabel={`Rename ${arrangement.name} arrangement`}
-            fieldLabel="Arrangement name"
-            isNameAvailable={(name) =>
-              !arrangements.some(
-                (candidate) =>
-                  candidate.id !== arrangementId &&
-                  normalizeEntityNameForComparison(candidate.name) ===
-                    normalizeEntityNameForComparison(name),
-              )
-            }
-            isOpen={renameOpen}
-            label="Rename Arrangement"
-            value={arrangement.name}
-            onClose={() => setRenameOpen(false)}
-            onRename={(name) => renameArrangement(arrangementId, name)}
-            onToggle={() => setRenameOpen((open) => !open)}
-          />
           <DisclosureListAction
             icon={<LibraryBig />}
             label="Library"

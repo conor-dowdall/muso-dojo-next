@@ -110,6 +110,9 @@
   --content-max-inline-size: 50rem;
   --session-max-inline-size: 104rem;
   --session-stack-gap: clamp(var(--space-4), 2vw, var(--space-6));
+  --dialog-width-compact: 20rem;
+  --dialog-width-standard: 40rem;
+  --dialog-width-wide: var(--content-max-inline-size);
 
   /* Controls */
   --control-size-xs: 1.75rem;

@@ -280,36 +280,6 @@ export function createArrangementActions(
       }));
       return true;
     },
-    renameArrangementSection: (arrangementId, sectionId, name) => {
-      const trimmed = name.trim();
-      const arrangement = get().arrangements[arrangementId];
-      const section = arrangement?.sections.find(({ id }) => id === sectionId);
-      if (
-        !arrangement ||
-        !section ||
-        !trimmed ||
-        section.name === trimmed ||
-        arrangement.sections.some(
-          (candidate) =>
-            candidate.id !== sectionId &&
-            normalizeEntityNameForComparison(candidate.name) ===
-              normalizeEntityNameForComparison(trimmed),
-        )
-      )
-        return;
-      set((state) => ({
-        arrangements: {
-          ...state.arrangements,
-          [arrangementId]: touchArrangement(arrangement, {
-            sections: arrangement.sections.map((candidate) =>
-              candidate.id === sectionId
-                ? { ...candidate, name: trimmed }
-                : candidate,
-            ),
-          }),
-        },
-      }));
-    },
     moveArrangementEntry: (arrangementId, entryId, direction) => {
       const arrangement = get().arrangements[arrangementId];
       if (!arrangement) return;

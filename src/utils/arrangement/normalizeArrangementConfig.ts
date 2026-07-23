@@ -48,7 +48,7 @@ function normalizeSection(
 
   return {
     id: normalizeId(input.id, `section-${index + 1}`),
-    name: normalizeString(input.name) ?? formatArrangementSectionName(index),
+    name: formatArrangementSectionName(index),
     source: {
       sessionId: normalizeString(source.sessionId) ?? "unavailable-session",
       sessionName: normalizeString(source.sessionName) ?? "Unavailable Session",

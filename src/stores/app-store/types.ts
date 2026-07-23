@@ -125,11 +125,6 @@ export interface ArrangementActions {
     sectionId: string,
     sessionId: string,
   ) => boolean;
-  renameArrangementSection: (
-    arrangementId: string,
-    sectionId: string,
-    name: string,
-  ) => void;
   moveArrangementEntry: (
     arrangementId: string,
     entryId: string,

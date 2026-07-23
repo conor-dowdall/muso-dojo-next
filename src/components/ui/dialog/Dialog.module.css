@@ -52,9 +52,6 @@
     var(--dialog-background) 82%,
     var(--color-surface-hover)
   );
-  --dialog-width-compact: 20rem;
-  --dialog-width-standard: 40rem;
-  --dialog-width-wide: var(--content-max-inline-size);
   --dialog-inline-size: var(--dialog-width-standard);
   --dialog-viewport-gutter: var(--page-inline-gutter);
 
