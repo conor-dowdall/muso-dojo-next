@@ -72,7 +72,7 @@ export function ArrangementWorkspace({
   const [openSessionEntryId, setOpenSessionEntryId] = useState<
     string | undefined
   >();
-  const chartTileRefs = useRef(new Map<string, HTMLDivElement>());
+  const chartTileRefs = useRef(new Map<string, HTMLLIElement>());
   const cardRefs = useRef(new Map<string, HTMLElement>());
   const transport = useArrangementTransport(arrangementId);
   const selectedEntry =
@@ -374,7 +374,7 @@ export function ArrangementWorkspace({
           </section>
         ) : (
           <section aria-label="Arrangement Chart" className={styles.chartView}>
-            <div className={styles.sequence}>
+            <ol className={styles.sequence}>
               {arrangement.entries.map((entry, entryIndex) => {
                 const section = arrangement.sections.find(
                   ({ id }) => id === entry.sectionId,
@@ -384,7 +384,7 @@ export function ArrangementWorkspace({
                   transport.isActive &&
                   chartCue.presentation?.entryId === entry.id;
                 return (
-                  <div
+                  <li
                     key={entry.id}
                     ref={(node) => {
                       if (node) chartTileRefs.current.set(entry.id, node);
@@ -419,10 +419,10 @@ export function ArrangementWorkspace({
                         setSelectedEntryId(entry.id);
                       }}
                     />
-                  </div>
+                  </li>
                 );
               })}
-            </div>
+            </ol>
 
             {presentationSection && chartCue.presentation ? (
               <>
