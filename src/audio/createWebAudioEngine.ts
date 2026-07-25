@@ -45,6 +45,7 @@ const DEFAULT_AUDIO_USE = "preview" satisfies AudioUse;
 // Browsers retain discretion over the actual safe output buffer size.
 const AUDIO_CONTEXT_LATENCY_HINT =
   "interactive" satisfies AudioContextLatencyCategory;
+const AUDIO_BOUNDARY_EPSILON_SECONDS = 1e-6;
 const MIN_PLAYBACK_GROUP_GAIN = 0.0001;
 const PLAYBACK_GROUP_CLEANUP_SECONDS = 0.25;
 const MASTER_OUTPUT_GAIN = 0.82;
@@ -60,11 +61,13 @@ interface PlaybackGroup {
 
 interface ScheduledHit {
   disconnect: () => void;
+  startTime: number;
   stop: (atTime?: number) => void;
 }
 
 interface ActiveVoice extends ActiveSampleVoice {
   group?: PlaybackGroupHandle;
+  startTime: number;
 }
 
 interface ActiveDrone {
@@ -89,6 +92,10 @@ function createDroneHandle(index: number) {
 
 function getNow() {
   return typeof performance === "undefined" ? Date.now() : performance.now();
+}
+
+function startsAtOrAfterBoundary(startTime: number, boundaryTime: number) {
+  return startTime >= boundaryTime - AUDIO_BOUNDARY_EPSILON_SECONDS;
 }
 
 function getPresetForRequest({
@@ -399,6 +406,7 @@ export function createWebAudioEngine(): AudioEngine {
     activeVoices.set(handle, {
       ...voice,
       group,
+      startTime,
     });
     if (group) {
       playbackGroups.get(group)?.voices.add(handle);
@@ -431,11 +439,12 @@ export function createWebAudioEngine(): AudioEngine {
           group.cancelAtTime = cancelAtTime;
           group.releaseSeconds = releaseSeconds;
         }
+        const boundaryTime = group.cancelAtTime;
         const resolvedReleaseSeconds =
           group.releaseSeconds ?? PERCUSSION_STOP_RELEASE_SECONDS;
 
         if (group.output) {
-          const releaseStartTime = group.cancelAtTime;
+          const releaseStartTime = boundaryTime;
           const releaseEndTime = releaseStartTime + resolvedReleaseSeconds;
 
           group.output.gain.cancelScheduledValues(context.currentTime);
@@ -445,6 +454,24 @@ export function createWebAudioEngine(): AudioEngine {
             MIN_PLAYBACK_GROUP_GAIN,
             releaseEndTime,
           );
+          // The group release preserves material that is already sounding,
+          // but an event whose attack begins on the boundary must not enter
+          // that release. It may already have been queued by the lookahead
+          // scheduler before this finite boundary was registered.
+          group.hits.forEach((hit) => {
+            if (startsAtOrAfterBoundary(hit.startTime, boundaryTime)) {
+              applyScheduledGroupCancelToHit(group, hit);
+            }
+          });
+          group.voices.forEach((voiceHandle) => {
+            const voice = activeVoices.get(voiceHandle);
+            if (
+              voice &&
+              startsAtOrAfterBoundary(voice.startTime, boundaryTime)
+            ) {
+              stopVoice(voiceHandle, 0, boundaryTime);
+            }
+          });
         } else {
           group.hits.forEach((hit) =>
             applyScheduledGroupCancelToHit(group, hit),
@@ -462,7 +489,7 @@ export function createWebAudioEngine(): AudioEngine {
           },
           Math.max(
             0,
-            (group.cancelAtTime -
+            (boundaryTime -
               context.currentTime +
               resolvedReleaseSeconds +
               PLAYBACK_GROUP_CLEANUP_SECONDS) *
@@ -598,7 +625,7 @@ export function createWebAudioEngine(): AudioEngine {
 
       if (
         group.cancelAtTime !== undefined &&
-        request.startTime >= group.cancelAtTime
+        startsAtOrAfterBoundary(request.startTime, group.cancelAtTime)
       ) {
         return false;
       }
@@ -654,7 +681,7 @@ export function createWebAudioEngine(): AudioEngine {
 
       if (
         group.cancelAtTime !== undefined &&
-        request.startTime >= group.cancelAtTime
+        startsAtOrAfterBoundary(request.startTime, group.cancelAtTime)
       ) {
         return false;
       }
@@ -710,7 +737,7 @@ export function createWebAudioEngine(): AudioEngine {
 
       if (
         group.cancelAtTime !== undefined &&
-        request.startTime >= group.cancelAtTime
+        startsAtOrAfterBoundary(request.startTime, group.cancelAtTime)
       ) {
         return undefined;
       }

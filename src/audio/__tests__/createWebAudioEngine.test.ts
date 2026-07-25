@@ -580,6 +580,36 @@ describe("createWebAudioEngine", () => {
     ).toBe(false);
   });
 
+  it("silences events already queued on a future group boundary", async () => {
+    vi.useFakeTimers();
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    MockAudioContext.lastInstance!.currentTime = 1;
+    const group = engine.createPlaybackGroup();
+    const noteHandle = engine.scheduleNote({
+      durationSeconds: 1,
+      group,
+      midiNote: 60,
+      startTime: 1.5,
+      use: "exercise",
+    });
+    const clickScheduled = engine.scheduleMetronomeClick({
+      group,
+      startTime: 1.5,
+    });
+    const noteSource = MockAudioContext.bufferSources.at(-2)!;
+    const clickSource = MockAudioContext.bufferSources.at(-1)!;
+
+    engine.cancelPlaybackGroup(group, { atTime: 1.5 });
+
+    expect(noteHandle).toBeDefined();
+    expect(clickScheduled).toBe(true);
+    expect(noteSource.stopCalls).toContainEqual({ time: 1.5 });
+    expect(clickSource.stopCalls).toContainEqual({ time: 1.5 });
+  });
+
   it("can clear a future group cancellation before its audio boundary", async () => {
     vi.useFakeTimers();
     installMockAudioWindow();

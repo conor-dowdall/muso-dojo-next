@@ -306,6 +306,26 @@ describe("PartSequenceCoordinator", () => {
     expect(startPart).toHaveBeenCalledOnce();
   });
 
+  it("registers the boundary before a short finite part ends", async () => {
+    const { coordinator, stopPartPlayback } = createHarness();
+    const basePlan = createPlan();
+    const plan = {
+      ...basePlan,
+      completionPolicy: "stop-at-end" as const,
+      parts: [{ ...basePlan.parts[0]!, durationBeats: 0.5 }],
+    };
+
+    await coordinator.start(plan);
+
+    expect(stopPartPlayback).toHaveBeenCalledWith("part-sequence", {
+      atTime: 10.58,
+    });
+    await vi.advanceTimersByTimeAsync(579);
+    expect(coordinator.getSnapshot().playing).toBe(true);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(coordinator.getSnapshot().playing).toBe(false);
+  });
+
   it("keeps one parent-bar Rhythm running through a fractional Part handoff", async () => {
     const { coordinator, startPart } = createHarness();
 

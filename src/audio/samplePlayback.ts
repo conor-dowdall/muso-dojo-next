@@ -281,7 +281,25 @@ export function createSampleVoice({
   };
 
   const stop = (nextReleaseSeconds = releaseSeconds, atTime?: number) => {
-    const stopStartTime = Math.max(context.currentTime, atTime ?? startAt);
+    const requestedStopTime = atTime ?? context.currentTime;
+
+    if (atTime !== undefined && requestedStopTime <= startAt) {
+      if (cancelStartTime !== undefined && startAt >= cancelStartTime) {
+        return;
+      }
+
+      cancelStartTime = startAt;
+      gain.gain.cancelScheduledValues(startAt);
+      gain.gain.setValueAtTime(MIN_GAIN_VALUE, startAt);
+      try {
+        source.stop(startAt);
+      } catch {
+        onEnded();
+      }
+      return;
+    }
+
+    const stopStartTime = Math.max(context.currentTime, requestedStopTime);
     const stopTime = stopStartTime + Math.max(0, nextReleaseSeconds);
 
     if (cancelStartTime !== undefined && stopStartTime >= cancelStartTime) {
