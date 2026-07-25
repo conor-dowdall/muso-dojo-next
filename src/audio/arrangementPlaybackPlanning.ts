@@ -71,7 +71,7 @@ function createSectionSteps({
     backingBand: section.backingBand,
     id: `${arrangement.id}:${section.id}`,
     lastModified: arrangement.lastModified,
-    name: section.name,
+    name: section.source.sessionName,
     parts: section.parts,
     tempoBpm: arrangement.tempoBpm,
   });

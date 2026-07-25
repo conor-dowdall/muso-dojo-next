@@ -175,8 +175,6 @@ export function ArrangementWorkspace({
                     sourceSession !== undefined &&
                     sourceSession.lastModified !==
                       section.source.sessionLastModified;
-                  const sourceUpdateAvailable =
-                    sourceChanged && sourceSession.parts.length > 0;
                   const sourceUnavailable = sourceSession === undefined;
                   const sourceSessionName =
                     sourceSession?.name ?? section.source.sessionName;
@@ -272,7 +270,7 @@ export function ArrangementWorkspace({
 
                       <div className={styles.sectionControlRow}>
                         <OptionButton
-                          aria-label={`Session for Section ${sectionNumber}. Current: ${sourceSessionName}.${sourceUnavailable ? " Session unavailable." : sourceUpdateAvailable ? " Update available." : ""}`}
+                          aria-label={`Session for Section ${sectionNumber}. Current: ${sourceSessionName}.${sourceUnavailable ? " Session unavailable." : sourceChanged ? " Session changed since it was added." : ""}`}
                           aria-controls={
                             openSessionEntryId === entry.id
                               ? `session-picker-${entry.id}`
@@ -291,7 +289,7 @@ export function ArrangementWorkspace({
                               <SelectionPreviewLabel>
                                 Unavailable
                               </SelectionPreviewLabel>
-                            ) : sourceUpdateAvailable ? (
+                            ) : sourceChanged ? (
                               <SelectionPreviewLabel>
                                 Changed
                               </SelectionPreviewLabel>
@@ -300,7 +298,7 @@ export function ArrangementWorkspace({
                           selected={openSessionEntryId === entry.id}
                           selectionSemantics="visual"
                           onClick={() => {
-                            if (transport.isActive) return;
+                            stopForMutation();
                             setSelectedEntryId(entry.id);
                             setOpenSessionEntryId((current) =>
                               current === entry.id ? undefined : entry.id,

@@ -9,8 +9,8 @@ describe("normalizeArrangementConfig", () => {
       tempoBpm: 999,
       playbackMode: "invalid",
       sections: [
-        { id: "used", name: "A", parts: [] },
-        { id: "unused", name: "B", parts: [] },
+        { id: "used", parts: [] },
+        { id: "unused", parts: [] },
       ],
       entries: [
         { id: "entry", sectionId: "used", playCount: 120 },
@@ -24,16 +24,16 @@ describe("normalizeArrangementConfig", () => {
       tempoBpm: 300,
       playbackMode: "once",
       entries: [{ id: "entry", sectionId: "used", playCount: 16 }],
-      sections: [{ id: "used", name: "A", parts: [] }],
+      sections: [{ id: "used", parts: [] }],
     });
   });
 
-  it("uses fixed alphabetic Section names", () => {
+  it("ignores legacy serialized Section names", () => {
     const arrangement = normalizeArrangementConfig({
       sections: [{ id: "section", name: "Legacy Custom Name", parts: [] }],
       entries: [{ id: "entry", sectionId: "section" }],
     });
 
-    expect(arrangement.sections[0]?.name).toBe("A");
+    expect(arrangement.sections[0]).not.toHaveProperty("name");
   });
 });

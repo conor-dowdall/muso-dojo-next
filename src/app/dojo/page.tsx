@@ -207,6 +207,7 @@ function HydratedSession({
     return (
       <>
         <ArrangementWorkspace
+          key={activeWorkspace.id}
           arrangementId={activeWorkspace.id}
           onOpenLibrary={openSessionLibrary}
         />

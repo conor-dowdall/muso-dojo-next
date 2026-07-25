@@ -15,7 +15,6 @@ function createArrangement(): ArrangementConfig {
     sections: [
       {
         id: "a",
-        name: "A",
         backingBand,
         parts: [
           {
@@ -35,7 +34,6 @@ function createArrangement(): ArrangementConfig {
       },
       {
         id: "b",
-        name: "B",
         backingBand: createDefaultSessionBackingBandConfig(),
         parts: [
           {

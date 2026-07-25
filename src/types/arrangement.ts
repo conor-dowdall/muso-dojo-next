@@ -18,7 +18,6 @@ export interface ArrangementSectionSource {
 
 export interface ArrangementSectionConfig {
   id: string;
-  name: string;
   source: ArrangementSectionSource;
   backingBand: SessionBackingBandConfig;
   parts: MusicPartConfig[];

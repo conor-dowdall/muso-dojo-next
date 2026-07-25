@@ -77,17 +77,18 @@ describe("getArrangementLibrarySubtitle", () => {
     ).toBe("1 Section • 120 BPM • 1 Session Changed");
   });
 
-  it("reports unavailable Sessions ahead of refreshable changes", () => {
+  it("reports unavailable and emptied changed Sessions", () => {
     const arrangement = createArrangement();
+    const emptiedSession: SessionConfig = { ...session, parts: [] };
 
     expect(getArrangementLibrarySubtitle(arrangement, {})).toBe(
       "1 Section • 120 BPM • 1 Session Unavailable",
     );
     expect(
       getArrangementLibrarySubtitle(arrangement, {
-        [session.id]: { ...session, parts: [] },
+        [session.id]: emptiedSession,
       }),
-    ).toBe("1 Section • 120 BPM");
+    ).toBe("1 Section • 120 BPM • 1 Session Changed");
   });
 
   it("counts Arrangements that use a Session without counting repeated Sections", () => {

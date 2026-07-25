@@ -7,7 +7,6 @@ import {
   type ArrangementSectionConfig,
 } from "@/types/arrangement";
 import { type MusicPartConfig } from "@/types/session";
-import { formatArrangementSectionName } from "@/utils/arrangement/arrangementSectionNames";
 import { normalizeMusicPartConfig } from "@/utils/session/normalizeMusicPartConfig";
 import {
   ensureUniqueIds,
@@ -48,7 +47,6 @@ function normalizeSection(
 
   return {
     id: normalizeId(input.id, `section-${index + 1}`),
-    name: formatArrangementSectionName(index),
     source: {
       sessionId: normalizeString(source.sessionId) ?? "unavailable-session",
       sessionName: normalizeString(source.sessionName) ?? "Unavailable Session",

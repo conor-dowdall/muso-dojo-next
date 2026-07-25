@@ -5,7 +5,6 @@ import {
   type ArrangementSectionConfig,
 } from "@/types/arrangement";
 import { type SessionConfig } from "@/types/session";
-import { createDefaultArrangementSectionName } from "@/utils/arrangement/arrangementSectionNames";
 import { cloneMusicPartGraph } from "@/utils/arrangement/cloneMusicPartGraph";
 import { createEntityId } from "@/utils/session/createSessionEntities";
 import { normalizeSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
@@ -33,13 +32,11 @@ function copySerializable<T>(value: T): T {
 
 function captureSection(
   session: SessionConfig,
-  name: string,
   sectionId = createEntityId("section"),
 ): ArrangementSectionConfig {
   const capturedAt = now();
   return {
     id: sectionId,
-    name,
     source: {
       sessionId: session.id,
       sessionName: session.name,
@@ -213,12 +210,7 @@ export function createArrangementActions(
       if (!arrangement || !session || session.parts.length === 0) {
         return undefined;
       }
-      const section = captureSection(
-        session,
-        createDefaultArrangementSectionName(
-          arrangement.sections.map(({ name }) => name),
-        ),
-      );
+      const section = captureSection(session);
       const entryId = createEntityId("entry");
       const entry = { id: entryId, sectionId: section.id, playCount: 1 };
       const firstCapture = arrangement.entries.length === 0;
@@ -267,7 +259,7 @@ export function createArrangementActions(
       if (!arrangement || !section || !session || session.parts.length === 0) {
         return false;
       }
-      const replacement = captureSection(session, section.name, section.id);
+      const replacement = captureSection(session, section.id);
       set((current) => ({
         arrangements: {
           ...current.arrangements,

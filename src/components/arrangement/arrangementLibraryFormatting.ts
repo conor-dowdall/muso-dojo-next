@@ -7,10 +7,7 @@ type ArrangementLibrarySummary = Pick<
   "entries" | "sections" | "tempoBpm"
 >;
 
-type ArrangementSourceSessionSummary = Pick<
-  SessionConfig,
-  "lastModified" | "parts"
->;
+type ArrangementSourceSessionSummary = Pick<SessionConfig, "lastModified">;
 
 function getSourceSessionStatusCounts(
   arrangement: ArrangementLibrarySummary,
@@ -26,10 +23,7 @@ function getSourceSessionStatusCounts(
       return;
     }
 
-    if (
-      session.parts.length > 0 &&
-      session.lastModified !== section.source.sessionLastModified
-    ) {
+    if (session.lastModified !== section.source.sessionLastModified) {
       changedSessionIds.add(section.source.sessionId);
     }
   });
