@@ -52,9 +52,6 @@
     var(--dialog-background) 82%,
     var(--color-surface-hover)
   );
-  --dialog-width-compact: 20rem;
-  --dialog-width-standard: 40rem;
-  --dialog-width-wide: var(--content-max-inline-size);
   --dialog-inline-size: var(--dialog-width-standard);
   --dialog-viewport-gutter: var(--page-inline-gutter);
 
@@ -211,6 +208,16 @@
   flex-direction: column;
   gap: var(--space-4);
   padding-block: 0;
+}
+
+.contentSection[data-menu-group="true"] {
+  gap: var(--dialog-menu-related-group-gap, var(--space-3));
+}
+
+.contentSection[data-menu-group="true"]
+  + .contentSection[data-menu-group="true"] {
+  padding-block-start: var(--space-4);
+  border-top: var(--border-width-base) solid var(--color-border-subtle);
 }
 
 .dialogFooter {

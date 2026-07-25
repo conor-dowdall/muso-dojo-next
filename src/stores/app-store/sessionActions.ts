@@ -21,11 +21,18 @@ export function createSessionActions(
     setActiveSessionId: (sessionId) => {
       const state = get();
 
-      if (state.activeSessionId === sessionId || !state.sessions[sessionId]) {
+      if (
+        (state.activeWorkspace?.kind === "session" &&
+          state.activeWorkspace.id === sessionId) ||
+        !state.sessions[sessionId]
+      ) {
         return;
       }
 
-      set({ activeSessionId: sessionId });
+      set({
+        activeWorkspace: { kind: "session", id: sessionId },
+        activeSessionId: sessionId,
+      });
     },
     addSession: (settings) => {
       const session = createDefaultSessionConfig({
@@ -37,6 +44,7 @@ export function createSessionActions(
       });
 
       set((state) => ({
+        activeWorkspace: { kind: "session", id: session.id },
         activeSessionId: session.id,
         sessions: {
           ...state.sessions,
@@ -53,6 +61,7 @@ export function createSessionActions(
       );
 
       set((state) => ({
+        activeWorkspace: { kind: "session", id: importedSession.id },
         activeSessionId: importedSession.id,
         sessions: {
           ...state.sessions,
@@ -76,6 +85,7 @@ export function createSessionActions(
       );
 
       set((state) => ({
+        activeWorkspace: { kind: "session", id: clonedSession.id },
         activeSessionId: clonedSession.id,
         sessions: {
           ...state.sessions,
@@ -94,12 +104,25 @@ export function createSessionActions(
         const nextSessions = { ...state.sessions };
         delete nextSessions[sessionId];
         const replacementSession = Object.values(nextSessions)[0];
+        const replacementArrangement = Object.values(state.arrangements)[0];
+        const wasActive =
+          state.activeWorkspace?.kind === "session" &&
+          state.activeWorkspace.id === sessionId;
+        const activeWorkspace = wasActive
+          ? replacementSession
+            ? ({ kind: "session", id: replacementSession.id } as const)
+            : replacementArrangement
+              ? ({
+                  kind: "arrangement",
+                  id: replacementArrangement.id,
+                } as const)
+              : null
+          : state.activeWorkspace;
 
         return {
+          activeWorkspace,
           activeSessionId:
-            state.activeSessionId === sessionId
-              ? (replacementSession?.id ?? null)
-              : state.activeSessionId,
+            activeWorkspace?.kind === "session" ? activeWorkspace.id : null,
           sessions: nextSessions,
         };
       });

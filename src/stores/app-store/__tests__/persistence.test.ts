@@ -37,6 +37,8 @@ const fallbackSnapshot = createAppStoreSnapshot({
 
 function createPersistedSnapshot(sessionId: string): AppStoreSnapshot {
   return {
+    activeWorkspace: { kind: "session", id: sessionId },
+    arrangements: {},
     activeSessionId: sessionId,
     dojoSettings: {},
     sessionWorkspaceViewMode: "session",
@@ -153,7 +155,7 @@ describe("app store persistence", () => {
   });
 
   it("declares the current persisted store version", () => {
-    expect(APP_STORE_VERSION).toBe(11);
+    expect(APP_STORE_VERSION).toBe(12);
   });
 
   it("falls back when persisted state is not an object snapshot", () => {

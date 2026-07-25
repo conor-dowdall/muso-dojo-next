@@ -485,11 +485,18 @@ export class BeatTransportCoordinator {
     this.rhythm.stop(id);
   }
 
-  stopPartPlayback(owner: PlaybackOwner = "part-sequence") {
+  stopPartPlayback(
+    owner: PlaybackOwner = "part-sequence",
+    options?: { atTime?: number },
+  ) {
     this.revision += 1;
     this.stopCountIn();
-    this.exercise.getActiveIds(owner).forEach((id) => this.exercise.stop(id));
-    this.rhythm.getActiveIds(owner).forEach((id) => this.rhythm.stop(id));
+    this.exercise
+      .getActiveIds(owner)
+      .forEach((id) => this.exercise.stop(id, options));
+    this.rhythm
+      .getActiveIds(owner)
+      .forEach((id) => this.rhythm.stop(id, options));
   }
 }
 

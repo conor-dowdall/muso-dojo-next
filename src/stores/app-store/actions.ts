@@ -7,6 +7,7 @@ import { createPartModuleActions } from "./partModuleActions";
 import { createRhythmActions } from "./rhythmActions";
 import { createSessionActions } from "./sessionActions";
 import { createWorkspaceActions } from "./workspaceActions";
+import { createArrangementActions } from "./arrangementActions";
 import {
   type AppStoreActions,
   type AppStoreGet,
@@ -19,6 +20,7 @@ export function createAppStoreActions(
 ): AppStoreActions {
   return {
     ...createWorkspaceActions(set),
+    ...createArrangementActions(set, get),
     ...createDojoSettingsActions(set),
     ...createSessionActions(set, get),
     ...createPartActions(set, get),

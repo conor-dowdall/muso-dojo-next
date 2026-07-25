@@ -27,6 +27,10 @@ import {
   normalizeSavedChordProgressionInput,
   savedChordProgressionNameIsAvailable,
 } from "@/utils/music-theory/customChordProgressions";
+import {
+  createEntityCopyName,
+  createUniqueEntityName,
+} from "@/stores/app-store/entityIds";
 
 function setOptionalDojoSetting<TKey extends keyof DojoSettings>(
   set: AppStoreSet,
@@ -179,6 +183,45 @@ export function createDojoSettingsActions(
 
       return wasAdded ? id : undefined;
     },
+    cloneCustomChordProgression: (progressionId) => {
+      const id = createEntityId("progression");
+      let wasCloned = false;
+
+      set((state) => {
+        const customChordProgressions =
+          state.dojoSettings.customChordProgressions ?? [];
+        const source = customChordProgressions.find(
+          (progression) => progression.id === progressionId,
+        );
+        if (!source) {
+          return state;
+        }
+
+        const progression = normalizeSavedChordProgressionInput({
+          name: createUniqueEntityName(
+            createEntityCopyName(source.name),
+            customChordProgressions.map(({ name }) => name),
+          ),
+          progression: source.progression,
+        });
+        if (!progression) {
+          return state;
+        }
+
+        wasCloned = true;
+        return {
+          dojoSettings: {
+            ...state.dojoSettings,
+            customChordProgressions: [
+              ...customChordProgressions,
+              { id, ...progression },
+            ],
+          },
+        };
+      });
+
+      return wasCloned ? id : undefined;
+    },
     updateCustomChordProgression: (progressionId, progressionInput) => {
       const progression = normalizeSavedChordProgressionInput(progressionInput);
 
@@ -293,6 +336,48 @@ export function createDojoSettingsActions(
       });
 
       return wasAdded ? id : undefined;
+    },
+    cloneCustomFretboardTuning: (tuningId) => {
+      const id = createEntityId("tuning");
+      let wasCloned = false;
+
+      set((state) => {
+        const customFretboardTunings =
+          state.dojoSettings.customFretboardTunings ?? [];
+        const source = customFretboardTunings.find(
+          (tuning) => tuning.id === tuningId,
+        );
+        if (!source) {
+          return state;
+        }
+
+        const tuning = normalizeSavedFretboardTuningInput({
+          instrument: source.instrument,
+          name: createUniqueEntityName(
+            createEntityCopyName(source.name),
+            customFretboardTunings
+              .filter((candidate) => candidate.instrument === source.instrument)
+              .map(({ name }) => name),
+          ),
+          openMidiNotes: source.openMidiNotes,
+        });
+        if (!tuning) {
+          return state;
+        }
+
+        wasCloned = true;
+        return {
+          dojoSettings: {
+            ...state.dojoSettings,
+            customFretboardTunings: [
+              ...customFretboardTunings,
+              { id, ...tuning },
+            ],
+          },
+        };
+      });
+
+      return wasCloned ? id : undefined;
     },
     updateCustomFretboardTuning: (tuningId, tuningInput) => {
       const tuning = normalizeSavedFretboardTuningInput(tuningInput);

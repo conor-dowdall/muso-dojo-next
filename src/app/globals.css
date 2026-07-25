@@ -110,6 +110,9 @@
   --content-max-inline-size: 50rem;
   --session-max-inline-size: 104rem;
   --session-stack-gap: clamp(var(--space-4), 2vw, var(--space-6));
+  --dialog-width-compact: 20rem;
+  --dialog-width-standard: 40rem;
+  --dialog-width-wide: var(--content-max-inline-size);
 
   /* Controls */
   --control-size-xs: 1.75rem;
@@ -300,6 +303,16 @@
   --color-interaction-ring-dark: rgb(20 8 37 / 0.72);
   --color-focus-ring: #d8b4fe;
   --color-focus-ring-contrast: rgb(24 7 43 / 0.9);
+}
+
+:root,
+[data-theme] {
+  --color-chart-item-background: var(--color-panel-background);
+  --color-chart-item-active-background: color-mix(
+    in srgb,
+    var(--color-accent) 7%,
+    var(--color-panel-background)
+  );
 }
 
 body {

@@ -97,6 +97,41 @@ describe("dojo settings app store actions", () => {
     ).toBe(false);
   });
 
+  it("duplicates custom progressions with unique names and independent data", () => {
+    const store = createTestStore();
+    const progressionId = store.getState().addCustomChordProgression({
+      name: "My Changes",
+      progression: {
+        chords: [
+          {
+            degree: "1",
+            chordCollectionKey: "major",
+            durationInBars: 1,
+          },
+        ],
+      },
+    });
+
+    const firstCopyId = store
+      .getState()
+      .cloneCustomChordProgression(progressionId ?? "");
+    const secondCopyId = store
+      .getState()
+      .cloneCustomChordProgression(progressionId ?? "");
+    const progressions =
+      store.getState().dojoSettings.customChordProgressions ?? [];
+
+    expect(firstCopyId).toBeDefined();
+    expect(secondCopyId).toBeDefined();
+    expect(progressions.map(({ name }) => name)).toEqual([
+      "My Changes",
+      "My Changes Copy",
+      "My Changes Copy 2",
+    ]);
+    expect(progressions[1]?.progression).toEqual(progressions[0]?.progression);
+    expect(progressions[1]?.progression).not.toBe(progressions[0]?.progression);
+  });
+
   it("does not remember a missing custom progression", () => {
     const store = createTestStore();
 
@@ -169,6 +204,33 @@ describe("dojo settings app store actions", () => {
         openMidiNotes: [69, 62, 66, 71],
       }),
     ).toBeDefined();
+  });
+
+  it("duplicates custom tunings with unique names and independent notes", () => {
+    const store = createTestStore();
+    const tuningId = store.getState().addCustomFretboardTuning({
+      instrument: "guitar",
+      name: "Open D",
+      openMidiNotes: [38, 45, 50, 54, 57, 62],
+    });
+
+    const firstCopyId = store
+      .getState()
+      .cloneCustomFretboardTuning(tuningId ?? "");
+    const secondCopyId = store
+      .getState()
+      .cloneCustomFretboardTuning(tuningId ?? "");
+    const tunings = store.getState().dojoSettings.customFretboardTunings ?? [];
+
+    expect(firstCopyId).toBeDefined();
+    expect(secondCopyId).toBeDefined();
+    expect(tunings.map(({ name }) => name)).toEqual([
+      "Open D",
+      "Open D Copy",
+      "Open D Copy 2",
+    ]);
+    expect(tunings[1]?.openMidiNotes).toEqual(tunings[0]?.openMidiNotes);
+    expect(tunings[1]?.openMidiNotes).not.toBe(tunings[0]?.openMidiNotes);
   });
 
   it("stores the selected app theme setting", () => {

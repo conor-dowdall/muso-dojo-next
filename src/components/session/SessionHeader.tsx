@@ -274,7 +274,7 @@ export function SessionHeader({
       <ObjectMenuDialog
         icon={<Ellipsis />}
         isOpen={isMenuOpen}
-        title="Menu"
+        title="Session Menu"
         onClose={() => setIsMenuOpen(false)}
       >
         <DisclosureListGroup>
@@ -300,7 +300,7 @@ export function SessionHeader({
           ) : null}
           <DisclosureListAction
             icon={<LibraryBig />}
-            label="Session Library"
+            label="Library"
             onClick={openSessionsDialog}
           />
           <DisclosureListAction

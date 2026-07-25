@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog/Dialog";
 import { Button } from "@/components/ui/buttons/Button";
 import { CheckOptionButton } from "@/components/ui/buttons/CheckOptionButton";
+import { Heading } from "@/components/ui/typography/Heading";
 import {
   DisclosureList,
   DisclosureListChoice,
@@ -373,7 +374,7 @@ export function AddToSessionDialog({
     <>
       <DialogHeader icon={<Plus />} title="Add to Session" onClose={onClose} />
       <DialogContent layout="stack" menuRhythm="standard">
-        <DialogContentSection ariaLabel="Material">
+        <DialogContentSection ariaLabel="Choose what to add" menuGroup>
           <DisclosureList>
             {sessionAddOptions.map((option) => (
               <DisclosureListChoice
@@ -388,7 +389,10 @@ export function AddToSessionDialog({
           </DisclosureList>
         </DialogContentSection>
 
-        <DialogContentSection ariaLabel="Music">
+        <DialogContentSection ariaLabel="Configure" menuGroup>
+          <Heading as="h3" size="xs" variant="muted">
+            Configure
+          </Heading>
           <DisclosureList>
             {selectedMode === "part" ? (
               <>
@@ -500,7 +504,11 @@ export function AddToSessionDialog({
           ariaLabel={
             selectedMode === "part" ? "Modules" : "Modules in Each Part"
           }
+          menuGroup
         >
+          <Heading as="h3" size="xs" variant="muted">
+            Modules
+          </Heading>
           <ModuleCreationList
             context="session"
             instrumentCreationRangeContext={instrumentCreationRangeContext}

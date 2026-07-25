@@ -162,7 +162,7 @@ export function SessionTempoEditor({
         <label className={styles.numberField}>
           <span className={`${fieldStyles.surface} ${styles.numberControl}`}>
             <input
-              aria-label="Exact session tempo in beats per minute"
+              aria-label="Exact tempo in beats per minute"
               className={`${fieldStyles.text} ${fieldStyles.numericText} ${styles.numberInput}`}
               enterKeyHint="done"
               inputMode="numeric"

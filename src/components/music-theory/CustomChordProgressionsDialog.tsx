@@ -1,7 +1,7 @@
 "use client";
 
 import { type ChordProgression } from "@musodojo/music-theory-data";
-import { ListMusic, Pencil, Plus, Trash2 } from "lucide-react";
+import { Bookmark, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   Dialog,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog/Dialog";
 import {
   DisclosureList,
+  DisclosureListAction,
   DisclosureListActionItem,
   DisclosureListConfirmAction,
   DisclosureListGroup,
@@ -53,6 +54,9 @@ export function CustomChordProgressionsDialog({
   );
   const addProgression = useAppStore(
     (state) => state.addCustomChordProgression,
+  );
+  const cloneProgression = useAppStore(
+    (state) => state.cloneCustomChordProgression,
   );
   const updateProgression = useAppStore(
     (state) => state.updateCustomChordProgression,
@@ -98,8 +102,8 @@ export function CustomChordProgressionsDialog({
   return (
     <Dialog isOpen={isOpen} onClose={onClose} size="wide">
       <DialogHeader
-        icon={<ListMusic />}
-        title="Custom Progressions"
+        icon={<Bookmark />}
+        title="My Progressions"
         onClose={onClose}
       />
       <DialogContent menuRhythm="standard">
@@ -212,11 +216,22 @@ export function CustomChordProgressionsDialog({
                           </DisclosureListActionItem>
                         </DisclosureListGroup>
                         <DisclosureListGroup>
+                          <DisclosureListAction
+                            aria-label={`Duplicate ${progression.name}`}
+                            icon={<Copy />}
+                            label="Duplicate"
+                            preventConcurrentClicks
+                            onClick={() => {
+                              cloneProgression(progression.id);
+                              setOpenProgressionId(null);
+                              closeRowEditors();
+                            }}
+                          />
                           <DisclosureListConfirmAction
                             actionAriaLabel={`Delete ${progression.name}`}
-                            confirmAriaLabel={`Confirm deleting ${progression.name}. Existing Sessions will not change.`}
+                            confirmAriaLabel={`Confirm deleting ${progression.name}. This cannot be undone.`}
                             confirmButtonLabel="Delete"
-                            confirmLabel={`Delete ${progression.name}? Existing Sessions will not change.`}
+                            confirmLabel={`Delete ${progression.name}?`}
                             icon={<Trash2 />}
                             isConfirming={
                               deleteProgressionId === progression.id

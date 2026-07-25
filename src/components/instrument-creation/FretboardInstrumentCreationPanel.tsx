@@ -231,6 +231,7 @@ export function FretboardInstrumentCreationPanel({
           onToggle={() => handleToggleChoice("tuning")}
         >
           <FretboardTuningChoices
+            customSelected={value.tuning !== undefined}
             instrument={value.instrument}
             tuningKey={value.tuningKey}
             onManage={() => setIsCustomTuningsOpen(true)}

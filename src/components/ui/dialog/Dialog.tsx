@@ -218,17 +218,21 @@ interface DialogContentSectionProps {
   ariaLabel?: string;
   children: ReactNode;
   className?: string;
+  /** Uses the standard heading-to-content gap and separates adjacent groups. */
+  menuGroup?: boolean;
 }
 
 export function DialogContentSection({
   ariaLabel,
   children,
   className = "",
+  menuGroup = false,
 }: DialogContentSectionProps) {
   return (
     <section
       className={cx(styles.contentSection, className)}
       aria-label={ariaLabel}
+      data-menu-group={menuGroup ? true : undefined}
     >
       {children}
     </section>

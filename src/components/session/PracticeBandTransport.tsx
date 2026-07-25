@@ -33,7 +33,8 @@ export interface PracticeBandReadoutModel {
   countLabel: string;
   identityAccessibleLabel?: string;
   identityLabel?: string;
-  positionLabel?: "Bar" | "Part";
+  positionAccessibleLabel?: string;
+  positionLabel?: "Bar" | "Part" | "§";
 }
 
 function createPartReadout({
@@ -328,7 +329,9 @@ export function PracticeBandReadout({
   }
 
   const positionLabel = readout.positionLabel ?? "Bar";
-  const accessibleLabel = `${positionLabel} ${readout.barAccessibleLabel} of ${readout.barTotalAccessibleLabel}. ${readout.identityAccessibleLabel}.`;
+  const positionAccessibleLabel =
+    readout.positionAccessibleLabel ?? positionLabel;
+  const accessibleLabel = `${positionAccessibleLabel} ${readout.barAccessibleLabel} of ${readout.barTotalAccessibleLabel}. ${readout.identityAccessibleLabel}.`;
   const partNumberWidth = Math.max(
     readout.barNumberLabel.length,
     readout.barTotalLabel.length,
@@ -347,7 +350,11 @@ export function PracticeBandReadout({
       data-prominence={prominence}
       style={readoutStyle}
     >
-      <span aria-hidden="true" className={styles.partPosition}>
+      <span
+        aria-hidden="true"
+        className={styles.partPosition}
+        data-position-style={positionLabel === "§" ? "symbol" : undefined}
+      >
         <span className={styles.partLabel}>{positionLabel}</span>
         <span className={styles.partCounter}>
           <span className={styles.partNumber}>{readout.barNumberLabel}</span>

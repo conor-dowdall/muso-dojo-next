@@ -37,23 +37,43 @@ import { type BeatTransportCountIn } from "./beatTransportCoordinator";
 const PART_SEQUENCE_DEFAULT_EXERCISE_ID_PREFIX = "part-sequence-looper";
 const PART_SEQUENCE_DEFAULT_RHYTHM_ID_PREFIX = "part-sequence-drums";
 
+export type PlaybackSequenceOwner =
+  { kind: "session"; id: string } | { kind: "arrangement"; id: string };
+
+export type PlaybackCompletionPolicy = "loop" | "stop-at-end";
+
+export interface ArrangementStepContext {
+  entryId: string;
+  entryIndex: number;
+  sectionId: string;
+  playIndex: number;
+  playCount: number;
+  sourcePartId: string;
+}
+
 export interface PartSequenceStepPlan {
+  arrangement?: ArrangementStepContext;
   continueRhythm: boolean;
   durationBeats: number;
   exerciseRequests: readonly ExercisePlaybackRequest[];
   index: number;
   partId: string;
+  sourcePartId?: string;
+  stepId?: string;
   resetSignature: string;
   rhythmRequests: readonly RhythmPlaybackRequest[];
   updateSignature: string;
 }
 
 export interface PartSequencePlaybackPlan {
+  completionPolicy?: PlaybackCompletionPolicy;
   countIn: BeatTransportCountIn;
   contentSignature: string;
-  mode: "session" | "part-loop";
+  mode: "session" | "part-loop" | "arrangement";
+  owner?: PlaybackSequenceOwner;
   partResetSignatures: readonly string[];
   parts: readonly PartSequenceStepPlan[];
+  steps?: readonly PartSequenceStepPlan[];
   sessionId: string;
   signature: string;
   sourceSignature: string;
@@ -64,6 +84,11 @@ export interface PartSequencePlaybackPlan {
 export interface PartSequencePlaybackPlanOptions {
   mode?: "session" | "part-loop";
   partId?: string;
+}
+
+export interface PartSequenceStartOptions {
+  startIndex: number;
+  countIn: BeatTransportCountIn;
 }
 
 function getEffectiveExercisePattern({
@@ -452,6 +477,8 @@ export function createPartSequencePlaybackPlan(
       ...signatureInput,
       index,
       partId: part.id,
+      sourcePartId: part.id,
+      stepId: part.id,
       resetSignature: createPartResetSignature(signatureInput),
       updateSignature: createPartUpdateSignature(signatureInput),
     };
@@ -461,11 +488,14 @@ export function createPartSequencePlaybackPlan(
   const updateSignature = createUpdateSignature(parts);
 
   return {
+    completionPolicy: "loop",
     countIn: getPartCountIn(selectedParts[0], backingBand),
     contentSignature,
     mode,
+    owner: { kind: "session", id: session.id },
     partResetSignatures: parts.map((part) => part.resetSignature),
     parts,
+    steps: parts,
     sessionId: session.id,
     signature: `${tempoBpm}:${contentSignature}`,
     sourceSignature,

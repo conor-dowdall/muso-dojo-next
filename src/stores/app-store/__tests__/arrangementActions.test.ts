@@ -1,0 +1,184 @@
+import { describe, expect, it } from "vitest";
+import { createTestStore, partId, sessionId } from "./appStoreTestUtils";
+
+describe("arrangement app store actions", () => {
+  it("creates, captures, reuses, and removes owned Sections", () => {
+    const store = createTestStore();
+    const arrangementId = store.getState().addArrangement();
+
+    expect(store.getState().activeWorkspace).toEqual({
+      kind: "arrangement",
+      id: arrangementId,
+    });
+    expect(store.getState().arrangements[arrangementId]).toMatchObject({
+      name: "My Arrangement",
+      playbackMode: "once",
+      tempoBpm: 80,
+    });
+
+    store.getState().setSessionTempoBpm(sessionId, 112);
+    const capture = store
+      .getState()
+      .addArrangementSectionFromSession(arrangementId, sessionId);
+    expect(capture).toBeDefined();
+    const arrangement = store.getState().arrangements[arrangementId]!;
+    expect(arrangement.tempoBpm).toBe(112);
+    expect(arrangement.sections).toHaveLength(1);
+    expect(arrangement.sections[0]?.name).toBe("A");
+    expect(arrangement.entries).toHaveLength(1);
+    expect(arrangement.sections[0]?.parts[0]?.id).not.toBe(
+      store.getState().sessions[sessionId]?.parts[0]?.id,
+    );
+
+    const secondEntryId = store
+      .getState()
+      .appendArrangementSectionEntry(arrangementId, capture!.sectionId);
+    expect(secondEntryId).toBeDefined();
+    expect(store.getState().arrangements[arrangementId]?.sections).toHaveLength(
+      1,
+    );
+    expect(store.getState().arrangements[arrangementId]?.entries).toHaveLength(
+      2,
+    );
+
+    store.getState().removeArrangementEntry(arrangementId, capture!.entryId);
+    expect(store.getState().arrangements[arrangementId]?.sections).toHaveLength(
+      1,
+    );
+    store.getState().removeArrangementEntry(arrangementId, secondEntryId!);
+    expect(store.getState().arrangements[arrangementId]).toMatchObject({
+      entries: [],
+      sections: [],
+    });
+  });
+
+  it("duplicates every owned identity while retaining shared Section references", () => {
+    const store = createTestStore();
+    const arrangementId = store.getState().addArrangement();
+    const capture = store
+      .getState()
+      .addArrangementSectionFromSession(arrangementId, sessionId)!;
+    store
+      .getState()
+      .appendArrangementSectionEntry(arrangementId, capture.sectionId);
+
+    const cloneId = store.getState().cloneArrangement(arrangementId)!;
+    const source = store.getState().arrangements[arrangementId]!;
+    const clone = store.getState().arrangements[cloneId]!;
+
+    expect(clone.id).not.toBe(source.id);
+    expect(clone.sections[0]?.id).not.toBe(source.sections[0]?.id);
+    expect(clone.sections[0]?.parts[0]?.id).not.toBe(
+      source.sections[0]?.parts[0]?.id,
+    );
+    expect(new Set(clone.entries.map(({ id }) => id)).size).toBe(2);
+    expect(new Set(clone.entries.map(({ sectionId }) => sectionId)).size).toBe(
+      1,
+    );
+  });
+
+  it("preserves Entry selection identities across edits and clamps invalid requests", () => {
+    const store = createTestStore();
+    const arrangementId = store.getState().addArrangement();
+    const capture = store
+      .getState()
+      .addArrangementSectionFromSession(arrangementId, sessionId)!;
+    const secondId = store
+      .getState()
+      .cloneArrangementEntry(arrangementId, capture.entryId)!;
+
+    store.getState().setArrangementEntryPlayCount(arrangementId, secondId, 3);
+    store.getState().moveArrangementEntry(arrangementId, secondId, "earlier");
+    expect(store.getState().arrangements[arrangementId]?.entries).toMatchObject(
+      [
+        { id: secondId, playCount: 3 },
+        { id: capture.entryId, playCount: 1 },
+      ],
+    );
+
+    store.getState().setArrangementEntryPlayCount(arrangementId, secondId, 16);
+    store.getState().setArrangementEntryPlayCount(arrangementId, secondId, 17);
+    expect(
+      store
+        .getState()
+        .arrangements[arrangementId]?.entries.find(({ id }) => id === secondId)
+        ?.playCount,
+    ).toBe(16);
+  });
+
+  it("refreshes a shared Section snapshot without changing its Arrangement structure", () => {
+    const store = createTestStore();
+    const arrangementId = store.getState().addArrangement();
+    const capture = store
+      .getState()
+      .addArrangementSectionFromSession(arrangementId, sessionId)!;
+    const repeatedEntryId = store
+      .getState()
+      .cloneArrangementEntry(arrangementId, capture.entryId)!;
+
+    store
+      .getState()
+      .setArrangementEntryPlayCount(arrangementId, repeatedEntryId, 3);
+    store.getState().setArrangementTempoBpm(arrangementId, 96);
+    store.getState().setArrangementPlaybackMode(arrangementId, "loop");
+
+    const capturedSection =
+      store.getState().arrangements[arrangementId]!.sections[0]!;
+    const capturedPartId = capturedSection.parts[0]!.id;
+    const entrySnapshot = store.getState().arrangements[arrangementId]!.entries;
+
+    store.getState().updatePartSettings(sessionId, partId, { rootNote: "D" });
+    store.getState().renameSession(sessionId, "Updated Source Session");
+    const updatedSession = store.getState().sessions[sessionId]!;
+
+    expect(updatedSession.lastModified).not.toBe(
+      capturedSection.source.sessionLastModified,
+    );
+    expect(
+      store
+        .getState()
+        .replaceArrangementSectionFromSession(
+          arrangementId,
+          capture.sectionId,
+          sessionId,
+        ),
+    ).toBe(true);
+
+    const refreshedArrangement = store.getState().arrangements[arrangementId]!;
+    const refreshedSection = refreshedArrangement.sections[0]!;
+
+    expect(refreshedArrangement).toMatchObject({
+      playbackMode: "loop",
+      tempoBpm: 96,
+      entries: [
+        { id: capture.entryId, sectionId: capture.sectionId, playCount: 1 },
+        { id: repeatedEntryId, sectionId: capture.sectionId, playCount: 3 },
+      ],
+    });
+    expect(refreshedArrangement.entries).toEqual(entrySnapshot);
+    expect(refreshedSection.id).toBe(capture.sectionId);
+    expect(refreshedSection.source).toMatchObject({
+      sessionId,
+      sessionName: "Updated Source Session",
+      sessionLastModified: updatedSession.lastModified,
+    });
+    expect(refreshedSection.parts[0]).toMatchObject({ rootNote: "D" });
+    expect(refreshedSection.parts[0]?.id).not.toBe(capturedPartId);
+    expect(refreshedSection.parts[0]?.id).not.toBe(updatedSession.parts[0]?.id);
+  });
+
+  it("keeps captured Sections intact when their source Session is deleted", () => {
+    const store = createTestStore();
+    const arrangementId = store.getState().addArrangement();
+    store.getState().addArrangementSectionFromSession(arrangementId, sessionId);
+    const capturedSections =
+      store.getState().arrangements[arrangementId]!.sections;
+
+    store.getState().removeSession(sessionId);
+
+    expect(store.getState().sessions[sessionId]).toBeUndefined();
+    expect(store.getState().arrangements[arrangementId]?.sections).toEqual(
+      capturedSections,
+    );
+  });
+});

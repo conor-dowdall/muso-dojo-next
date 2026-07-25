@@ -141,8 +141,29 @@ function SessionChartView({
     () => getSessionBackingBandConfig(storedBackingBand),
     [storedBackingBand],
   );
+  return (
+    <SessionChart
+      activePartId={activePartId}
+      ariaLabel="Chart View"
+      backingBand={backingBand}
+      parts={sessionParts}
+    />
+  );
+}
+
+export function SessionChart({
+  activePartId,
+  ariaLabel,
+  backingBand,
+  parts,
+}: {
+  activePartId?: string;
+  ariaLabel: string;
+  backingBand: ReturnType<typeof getSessionBackingBandConfig>;
+  parts: readonly MusicPartConfig[];
+}) {
   const bars = useMemo((): SessionChartBar[] => {
-    const barPlan = createSessionBarPlan(sessionParts, backingBand);
+    const barPlan = createSessionBarPlan(parts, backingBand);
 
     return barPlan.entries.map((bar) => ({
       accessibleLabel: `${barPlan.positionLabel} ${bar.accessibleLabel} of ${barPlan.totalAccessibleLabel}${bar.meterLabel ? `. ${bar.meterLabel}` : ""}`,
@@ -169,22 +190,30 @@ function SessionChartView({
         };
       }),
     }));
-  }, [backingBand, sessionParts]);
+  }, [backingBand, parts]);
 
-  return <BandSessionView activePartId={activePartId} bars={bars} />;
+  return (
+    <BandSessionView
+      activePartId={activePartId}
+      ariaLabel={ariaLabel}
+      bars={bars}
+    />
+  );
 }
 
 function BandSessionView({
   activePartId,
+  ariaLabel,
   bars,
 }: {
   activePartId?: string;
+  ariaLabel: string;
   bars: SessionChartBar[];
 }) {
   return (
     <section
       className={styles.bandView}
-      aria-label="Chart View"
+      aria-label={ariaLabel}
       style={
         {
           "--chart-bar-units": PART_DURATION_CHART_BAR_UNITS,

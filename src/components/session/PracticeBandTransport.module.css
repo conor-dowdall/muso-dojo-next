@@ -36,6 +36,20 @@
   letter-spacing: 0;
 }
 
+.partPosition[data-position-style="symbol"] {
+  gap: 0.08ch;
+}
+
+.partPosition[data-position-style="symbol"] .partLabel {
+  display: inline-flex;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.16em;
+  line-height: 0.8;
+  transform: translateY(-0.01em);
+}
+
 .partLabel,
 .partOf {
   min-inline-size: 0;
@@ -101,5 +115,9 @@
 
   .partLabel {
     display: none;
+  }
+
+  .partPosition[data-position-style="symbol"] .partLabel {
+    display: inline-flex;
   }
 }

@@ -1,0 +1,44 @@
+import {
+  type MusicPartConfig,
+  type SessionBackingBandConfig,
+} from "@/types/session";
+
+export type ArrangementPlaybackMode = "once" | "loop";
+
+export const MIN_ARRANGEMENT_ENTRY_PLAY_COUNT = 1;
+export const MAX_ARRANGEMENT_ENTRY_PLAY_COUNT = 16;
+
+export interface ArrangementSectionSource {
+  sessionId: string;
+  sessionName: string;
+  sessionLastModified: string;
+  sessionTempoBpm: number;
+  capturedAt: string;
+}
+
+export interface ArrangementSectionConfig {
+  id: string;
+  name: string;
+  source: ArrangementSectionSource;
+  backingBand: SessionBackingBandConfig;
+  parts: MusicPartConfig[];
+}
+
+export interface ArrangementEntryConfig {
+  id: string;
+  sectionId: string;
+  playCount: number;
+}
+
+export interface ArrangementConfig {
+  id: string;
+  name: string;
+  lastModified: string;
+  tempoBpm: number;
+  playbackMode: ArrangementPlaybackMode;
+  sections: ArrangementSectionConfig[];
+  entries: ArrangementEntryConfig[];
+}
+
+export type ActiveWorkspaceRef =
+  { kind: "session"; id: string } | { kind: "arrangement"; id: string } | null;

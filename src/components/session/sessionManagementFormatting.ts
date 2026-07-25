@@ -19,8 +19,6 @@ export interface SessionManagementSnapshot {
   sessions: SessionManagementSessionSummary[];
 }
 
-const maxSessionSignaturePreviewCount = 2;
-
 export function normalizeSessionNameForComparison(name: string) {
   return name.trim().toLocaleLowerCase();
 }
@@ -33,35 +31,23 @@ function getPartSignatureLabel(part: SessionManagementPartSummary) {
   return rootAndNoteCollection.getIdentity(part).label;
 }
 
-export function getSessionSubtitle(parts: SessionManagementPartSummary[]) {
+export function getSessionSubtitle(
+  parts: SessionManagementPartSummary[],
+  tempoBpm: number,
+) {
   if (parts.length === 0) {
     return "No Parts Yet";
   }
 
-  const signatureCounts = new Map<string, number>();
+  const firstPartLabel = getPartSignatureLabel(parts[0]!);
+  const partPreview =
+    parts.length === 1 ? firstPartLabel : `${firstPartLabel}...`;
 
-  parts.forEach((part) => {
-    const signature = getPartSignatureLabel(part);
-    signatureCounts.set(signature, (signatureCounts.get(signature) ?? 0) + 1);
-  });
-
-  const signatures = Array.from(signatureCounts.entries()).map(
-    ([signature, count]) =>
-      count === 1 ? signature : `${signature} x${count}`,
-  );
-  const previewSignatures = signatures.slice(
-    0,
-    maxSessionSignaturePreviewCount,
-  );
-  const remainingSignatureCount = signatures.length - previewSignatures.length;
-  const moreSignaturesLabel =
-    remainingSignatureCount > 0 ? ` + ${remainingSignatureCount} more` : "";
-
-  return `${getSessionPartCountLabel(
-    parts.length,
-  )}${DISPLAY_VALUE_SEPARATOR}${previewSignatures.join(
-    ", ",
-  )}${moreSignaturesLabel}`;
+  return [
+    getSessionPartCountLabel(parts.length),
+    partPreview,
+    `${tempoBpm} BPM`,
+  ].join(DISPLAY_VALUE_SEPARATOR);
 }
 
 export function createSessionPartSummary(

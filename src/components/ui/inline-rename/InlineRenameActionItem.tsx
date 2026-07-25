@@ -2,7 +2,7 @@
 
 import { type SyntheticEvent, useEffect, useRef, useState } from "react";
 import { Pencil } from "lucide-react";
-import { DisclosureListActionItem } from "@/components/ui/disclosure-list/DisclosureList";
+import { DisclosureListItem } from "@/components/ui/disclosure-list/DisclosureList";
 import { NamedLibraryItemSaveField } from "@/components/ui/named-library-item/NamedLibraryItemSaveField";
 import styles from "./InlineRenameActionItem.module.css";
 
@@ -96,7 +96,7 @@ export function InlineRenameActionItem({
   }, [isOpen, shouldFocusInput]);
 
   return (
-    <DisclosureListActionItem
+    <DisclosureListItem
       ariaLabel={ariaLabel}
       icon={<Pencil />}
       isOpen={isOpen}
@@ -117,6 +117,6 @@ export function InlineRenameActionItem({
           }
         />
       </form>
-    </DisclosureListActionItem>
+    </DisclosureListItem>
   );
 }

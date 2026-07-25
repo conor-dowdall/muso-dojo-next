@@ -197,6 +197,8 @@ describe("part module app store actions", () => {
 
   it("preserves an explicit Rhythm length when adding it to a Part", () => {
     const store = createTestStore({
+      activeWorkspace: { kind: "session", id: sessionId },
+      arrangements: {},
       activeSessionId: sessionId,
       dojoSettings: {},
       sessionWorkspaceViewMode: "session",

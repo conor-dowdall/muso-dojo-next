@@ -10,10 +10,11 @@ import {
   getSessionSubtitle,
   type SessionManagementSessionSummary,
 } from "./sessionManagementFormatting";
+import { TempoActionItem } from "@/components/tempo/TempoActionItem";
 import { SessionRenameActionItem } from "./SessionRenameActionItem";
-import { SessionTempoActionItem } from "./SessionTempoActionItem";
 
 interface SessionManagementRowProps {
+  arrangementReferenceCount: number;
   session: SessionManagementSessionSummary;
   sessions: readonly SessionManagementSessionSummary[];
   isActive: boolean;
@@ -35,6 +36,7 @@ interface SessionManagementRowProps {
 }
 
 export function SessionManagementRow({
+  arrangementReferenceCount,
   session,
   sessions,
   isActive,
@@ -57,6 +59,14 @@ export function SessionManagementRow({
   const actionsLabel = `${isOpen ? "Close" : "Open"} actions for ${
     session.name
   } session`;
+  const arrangementImpact =
+    arrangementReferenceCount === 1
+      ? "1 Arrangement references this session."
+      : `${arrangementReferenceCount} Arrangements reference this session.`;
+  const deleteConfirmLabel =
+    arrangementReferenceCount > 0
+      ? `Delete ${session.name}? ${arrangementImpact}`
+      : undefined;
 
   return (
     <SelectableOverflowRow
@@ -66,15 +76,16 @@ export function SessionManagementRow({
       selected={isActive}
       selectAriaLabel={`Use ${session.name} session`}
       selectedAriaLabel={`Current session: ${session.name}`}
-      subtitle={getSessionSubtitle(session.parts)}
+      subtitle={getSessionSubtitle(session.parts, session.tempoBpm)}
       onSelect={() => onUseSession(session.id)}
       onToggleActions={() => onToggleActions(session.id)}
     >
       <DisclosureList grouped groupGap="section">
         <DisclosureListGroup>
-          <SessionTempoActionItem
+          <TempoActionItem
+            entityKind="session"
+            item={session}
             isOpen={isTempoOpen}
-            session={session}
             onTempoBpmChange={onSetTempoBpm}
             onToggle={() => onToggleTempo(session.id)}
           />
@@ -89,6 +100,12 @@ export function SessionManagementRow({
           />
         </DisclosureListGroup>
         <ObjectManagementGroup
+          dangerConfirmAriaLabel={
+            deleteConfirmLabel
+              ? `Confirm deleting ${session.name}. ${arrangementImpact} This cannot be undone.`
+              : undefined
+          }
+          dangerConfirmLabel={deleteConfirmLabel}
           isDangerConfirming={isDeleteConfirming}
           kind="session"
           objectName={session.name}

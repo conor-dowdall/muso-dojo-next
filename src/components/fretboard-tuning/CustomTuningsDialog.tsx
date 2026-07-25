@@ -4,7 +4,7 @@ import {
   type OpenStringMidiNotes,
   type StringInstrumentKey,
 } from "@musodojo/music-theory-data";
-import { ListChevronsUpDown, Pencil, Plus, Trash2 } from "lucide-react";
+import { Bookmark, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   Dialog,
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog/Dialog";
 import {
   DisclosureList,
+  DisclosureListAction,
   DisclosureListActionItem,
   DisclosureListConfirmAction,
   DisclosureListGroup,
@@ -55,6 +56,7 @@ export function CustomTuningsDialog({
     (state) => state.dojoSettings.customFretboardTunings,
   );
   const addTuning = useAppStore((state) => state.addCustomFretboardTuning);
+  const cloneTuning = useAppStore((state) => state.cloneCustomFretboardTuning);
   const updateTuning = useAppStore(
     (state) => state.updateCustomFretboardTuning,
   );
@@ -105,11 +107,7 @@ export function CustomTuningsDialog({
 
   return (
     <Dialog isOpen={isOpen} onClose={onClose} size="standard">
-      <DialogHeader
-        icon={<ListChevronsUpDown />}
-        title="Custom Tunings"
-        onClose={onClose}
-      />
+      <DialogHeader icon={<Bookmark />} title="My Tunings" onClose={onClose} />
       <DialogContent menuRhythm="standard">
         <DialogContentSection ariaLabel="Custom tuning choices">
           <DisclosureList grouped groupGap="section">
@@ -221,11 +219,22 @@ export function CustomTuningsDialog({
                         </DisclosureListGroup>
 
                         <DisclosureListGroup>
+                          <DisclosureListAction
+                            aria-label={`Duplicate ${tuning.name} tuning`}
+                            icon={<Copy />}
+                            label="Duplicate"
+                            preventConcurrentClicks
+                            onClick={() => {
+                              cloneTuning(tuning.id);
+                              setOpenTuningId(null);
+                              closeRowEditors();
+                            }}
+                          />
                           <DisclosureListConfirmAction
                             actionAriaLabel={`Delete ${tuning.name} tuning`}
-                            confirmAriaLabel={`Confirm deleting ${tuning.name}. Existing Fretboards will keep their tuning.`}
+                            confirmAriaLabel={`Confirm deleting ${tuning.name}. This cannot be undone.`}
                             confirmButtonLabel="Delete"
-                            confirmLabel={`Delete ${tuning.name}? Existing Fretboards will not change.`}
+                            confirmLabel={`Delete ${tuning.name}?`}
                             icon={<Trash2 />}
                             isConfirming={deleteTuningId === tuning.id}
                             label="Delete"

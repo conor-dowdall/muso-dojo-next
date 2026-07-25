@@ -18,6 +18,10 @@ import { type NoteColorConfig } from "@/types/note-colors";
 import { type SettingValue } from "@/types/state";
 import { type SessionWorkspaceViewMode } from "@/types/session-view";
 import {
+  type ActiveWorkspaceRef,
+  type ArrangementPlaybackMode,
+} from "@/types/arrangement";
+import {
   type AppStoreSnapshot,
   type DronePartModuleConfig,
   type ExerciseCountInBeats,
@@ -70,6 +74,7 @@ export interface DojoSettingsActions {
   addCustomChordProgression: (
     progression: SavedChordProgressionInput,
   ) => string | undefined;
+  cloneCustomChordProgression: (progressionId: string) => string | undefined;
   updateCustomChordProgression: (
     progressionId: string,
     progression: SavedChordProgressionInput,
@@ -78,6 +83,7 @@ export interface DojoSettingsActions {
   addCustomFretboardTuning: (
     tuning: SavedFretboardTuningInput,
   ) => string | undefined;
+  cloneCustomFretboardTuning: (tuningId: string) => string | undefined;
   updateCustomFretboardTuning: (
     tuningId: string,
     tuning: SavedFretboardTuningInput,
@@ -92,9 +98,50 @@ export interface DojoSettingsActions {
 }
 
 export interface WorkspaceActions {
+  setActiveWorkspace: (workspace: ActiveWorkspaceRef) => void;
   setSessionWorkspaceViewMode: (
     mode: SessionWorkspaceViewMode,
   ) => SessionWorkspaceViewMode;
+}
+
+export interface ArrangementActions {
+  addArrangement: (settings?: { name?: string }) => string;
+  cloneArrangement: (arrangementId: string) => string | undefined;
+  removeArrangement: (arrangementId: string) => void;
+  renameArrangement: (arrangementId: string, name: string) => void;
+  setArrangementTempoBpm: (arrangementId: string, tempoBpm: number) => void;
+  setArrangementPlaybackMode: (
+    arrangementId: string,
+    mode: ArrangementPlaybackMode,
+  ) => void;
+  addArrangementSectionFromSession: (
+    arrangementId: string,
+    sessionId: string,
+  ) => { sectionId: string; entryId: string } | undefined;
+  appendArrangementSectionEntry: (
+    arrangementId: string,
+    sectionId: string,
+  ) => string | undefined;
+  replaceArrangementSectionFromSession: (
+    arrangementId: string,
+    sectionId: string,
+    sessionId: string,
+  ) => boolean;
+  moveArrangementEntry: (
+    arrangementId: string,
+    entryId: string,
+    direction: "earlier" | "later",
+  ) => void;
+  cloneArrangementEntry: (
+    arrangementId: string,
+    entryId: string,
+  ) => string | undefined;
+  setArrangementEntryPlayCount: (
+    arrangementId: string,
+    entryId: string,
+    playCount: number,
+  ) => void;
+  removeArrangementEntry: (arrangementId: string, entryId: string) => void;
 }
 
 export interface SessionActions {
@@ -346,6 +393,7 @@ export interface RhythmActions {
 // Module -> Instrument.
 export type AppStoreActions = DojoSettingsActions &
   WorkspaceActions &
+  ArrangementActions &
   SessionActions &
   PartActions &
   PartModuleActions &

@@ -325,6 +325,7 @@ export function InstrumentMenuDialog({
               subtitle={fretboardTuningNotes}
             >
               <FretboardTuningChoices
+                customSelected={fretboardTuning.tuningName !== undefined}
                 instrument={fretboardTuning.instrument}
                 tuningKey={fretboardTuning.tuningKey}
                 onManage={() => setIsCustomTuningsOpen(true)}

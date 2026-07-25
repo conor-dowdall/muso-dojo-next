@@ -27,11 +27,19 @@ export {
   getExercisePlaybackCycleDurationBeats,
 } from "./exercisePlaybackRequest";
 export {
+  type ArrangementStepContext,
   createPartSequencePlaybackPlan,
+  type PartSequenceStartOptions,
+  type PlaybackCompletionPolicy,
+  type PlaybackSequenceOwner,
   type PartSequencePlaybackPlan,
   type PartSequencePlaybackPlanOptions,
   type PartSequenceStepPlan,
 } from "./partSequencePlanning";
+export {
+  createArrangementPlaybackRequest,
+  type ArrangementPlaybackRequest,
+} from "./arrangementPlaybackPlanning";
 export {
   partSequenceCoordinator,
   PartSequenceCoordinator,

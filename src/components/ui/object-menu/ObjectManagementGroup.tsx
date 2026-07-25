@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Copy, Trash2 } from "lucide-react";
 import {
   DisclosureListAction,
@@ -13,6 +13,8 @@ import {
 } from "./objectMenuCopy";
 
 interface ObjectManagementGroupBaseProps {
+  dangerConfirmAriaLabel?: string;
+  dangerConfirmLabel?: ReactNode;
   kind: ManagedObjectKind;
   objectName?: string;
   onDanger?: () => void;
@@ -35,6 +37,8 @@ type ObjectManagementGroupProps = ObjectManagementGroupBaseProps &
   (ControlledDangerConfirmationProps | UncontrolledDangerConfirmationProps);
 
 export function ObjectManagementGroup({
+  dangerConfirmAriaLabel,
+  dangerConfirmLabel,
   isDangerConfirming,
   kind,
   objectName,
@@ -90,9 +94,11 @@ export function ObjectManagementGroup({
       {onDanger ? (
         <DisclosureListConfirmAction
           actionAriaLabel={dangerCopy.actionAriaLabel}
-          confirmAriaLabel={dangerCopy.confirmAriaLabel}
+          confirmAriaLabel={
+            dangerConfirmAriaLabel ?? dangerCopy.confirmAriaLabel
+          }
           confirmButtonLabel={dangerCopy.confirmButtonLabel}
-          confirmLabel={dangerCopy.confirmLabel}
+          confirmLabel={dangerConfirmLabel ?? dangerCopy.confirmLabel}
           icon={<Trash2 />}
           isConfirming={isConfirming}
           label={dangerCopy.label}

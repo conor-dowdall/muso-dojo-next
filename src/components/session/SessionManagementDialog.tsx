@@ -21,6 +21,7 @@ import {
   sessionSummaryMatchesSession,
   type SessionManagementSnapshot,
 } from "./sessionManagementFormatting";
+import { countArrangementsUsingSession } from "@/components/arrangement/arrangementLibraryFormatting";
 
 interface SessionManagementDialogProps {
   onClose: () => void;
@@ -86,6 +87,8 @@ export function SessionManagementDialog({
   const { activeSessionId, sessions: sessionList } = useAppStore(
     selectSessionManagementSnapshot,
   );
+  const arrangementRecord = useAppStore((state) => state.arrangements);
+  const arrangements = Object.values(arrangementRecord);
   const setActiveSessionId = useAppStore((state) => state.setActiveSessionId);
   const addSession = useAppStore((state) => state.addSession);
   const cloneSession = useAppStore((state) => state.cloneSession);
@@ -162,11 +165,7 @@ export function SessionManagementDialog({
 
   return (
     <>
-      <DialogHeader
-        icon={<LibraryBig />}
-        title="Session Library"
-        onClose={onClose}
-      />
+      <DialogHeader icon={<LibraryBig />} title="Library" onClose={onClose} />
       <DialogContent menuRhythm="standard">
         <DialogContentSection ariaLabel="Session choices">
           <DisclosureList grouped groupGap="section">
@@ -188,6 +187,10 @@ export function SessionManagementDialog({
                 sessionList.map((session) => (
                   <SessionManagementRow
                     key={session.id}
+                    arrangementReferenceCount={countArrangementsUsingSession(
+                      arrangements,
+                      session.id,
+                    )}
                     isActive={session.id === activeSession?.id}
                     isDeleteConfirming={
                       deleteConfirmationSessionId === session.id

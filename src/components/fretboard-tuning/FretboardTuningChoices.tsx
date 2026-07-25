@@ -5,7 +5,7 @@ import {
   type StringInstrumentKey,
   type StringInstrumentTuningKey,
 } from "@musodojo/music-theory-data";
-import { ListChevronsUpDown } from "lucide-react";
+import { Bookmark } from "lucide-react";
 import {
   DisclosureList,
   DisclosureListAction,
@@ -18,6 +18,7 @@ import {
 } from "@/components/instrument-creation/options";
 
 interface FretboardTuningChoicesProps {
+  customSelected?: boolean;
   instrument: StringInstrumentKey;
   onManage: () => void;
   onNamedSelect: (tuningKey: StringInstrumentTuningKey) => void;
@@ -25,6 +26,7 @@ interface FretboardTuningChoicesProps {
 }
 
 export function FretboardTuningChoices({
+  customSelected = false,
   instrument,
   onManage,
   onNamedSelect,
@@ -36,8 +38,10 @@ export function FretboardTuningChoices({
     <DisclosureList grouped>
       <DisclosureListGroup aria-label="Custom tuning library">
         <DisclosureListAction
-          icon={<ListChevronsUpDown />}
-          label="Custom Tunings"
+          icon={<Bookmark />}
+          label="My Tunings"
+          selected={customSelected}
+          subtitle="Choose, create, or edit"
           onClick={onManage}
         />
       </DisclosureListGroup>
