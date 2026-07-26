@@ -40,6 +40,11 @@
   display: none;
 }
 
+.backupError {
+  padding-inline: var(--space-3);
+  color: var(--color-danger);
+}
+
 @media (prefers-color-scheme: light) {
   .themeSwatchSystemDark {
     display: none;

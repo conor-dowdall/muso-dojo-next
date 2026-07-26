@@ -4,6 +4,7 @@ import { PaintbrushVertical, Settings2 } from "lucide-react";
 import {
   DialogCloseFooter,
   DialogContent,
+  DialogContentSection,
   DialogHeader,
 } from "@/components/ui/dialog/Dialog";
 import { NoteColorSettings } from "@/components/note-colors/NoteColorSettings";
@@ -24,6 +25,7 @@ import {
   type AppThemeOption,
 } from "@/data/appThemes";
 import { useAppStore } from "@/stores/appStore";
+import { DojoBackupSettings } from "./DojoBackupSettings";
 import styles from "./DojoSettingsDialog.module.css";
 
 interface DojoSettingsDialogProps {
@@ -50,44 +52,50 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
         title="Dojo Settings"
         onClose={onClose}
       />
-      <DialogContent menuRhythm="compact">
-        <DisclosureList grouped groupGap="section">
-          <DisclosureListGroup>
-            <DisclosureListItem
-              ariaLabel={`Theme. Current: ${appThemeLabel}`}
-              icon={<PaintbrushVertical />}
-              isOpen={isOpen("theme")}
-              label="Theme"
-              panelVariant="menu"
-              preview={
-                <ThemeSwatch option={getAppThemeOption(appThemeChoice)} />
-              }
-              subtitle={appThemeLabel}
-              onToggle={() => toggleChoice("theme")}
-            >
-              <DisclosureList>
-                {appThemeOptions.map((option) => (
-                  <DisclosureListChoice
-                    key={option.id}
-                    aria-label={getAppThemeAriaLabel(option)}
-                    label={option.label}
-                    preview={<ThemeSwatch option={option} />}
-                    selected={option.id === appThemeChoice}
-                    onClick={() => setAppTheme(option.id)}
-                  />
-                ))}
-              </DisclosureList>
-            </DisclosureListItem>
+      <DialogContent layout="stack" menuRhythm="compact">
+        <DialogContentSection ariaLabel="Appearance settings" menuGroup>
+          <DisclosureList grouped groupGap="section">
+            <DisclosureListGroup>
+              <DisclosureListItem
+                ariaLabel={`Theme. Current: ${appThemeLabel}`}
+                icon={<PaintbrushVertical />}
+                isOpen={isOpen("theme")}
+                label="Theme"
+                panelVariant="menu"
+                preview={
+                  <ThemeSwatch option={getAppThemeOption(appThemeChoice)} />
+                }
+                subtitle={appThemeLabel}
+                onToggle={() => toggleChoice("theme")}
+              >
+                <DisclosureList>
+                  {appThemeOptions.map((option) => (
+                    <DisclosureListChoice
+                      key={option.id}
+                      aria-label={getAppThemeAriaLabel(option)}
+                      label={option.label}
+                      preview={<ThemeSwatch option={option} />}
+                      selected={option.id === appThemeChoice}
+                      onClick={() => setAppTheme(option.id)}
+                    />
+                  ))}
+                </DisclosureList>
+              </DisclosureListItem>
 
-            <NoteColorSettings
-              isOpen={isOpen("note-colors")}
-              value={noteColorConfig}
-              onClose={() => closeChoice("note-colors")}
-              onToggle={() => toggleChoice("note-colors")}
-              onChange={setNoteColorConfig}
-            />
-          </DisclosureListGroup>
-        </DisclosureList>
+              <NoteColorSettings
+                isOpen={isOpen("note-colors")}
+                value={noteColorConfig}
+                onClose={() => closeChoice("note-colors")}
+                onToggle={() => toggleChoice("note-colors")}
+                onChange={setNoteColorConfig}
+              />
+            </DisclosureListGroup>
+          </DisclosureList>
+        </DialogContentSection>
+
+        <DialogContentSection ariaLabel="Backups" menuGroup>
+          <DojoBackupSettings onRestoreComplete={onClose} />
+        </DialogContentSection>
       </DialogContent>
       <DialogCloseFooter onClose={onClose} />
     </>
