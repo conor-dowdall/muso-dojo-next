@@ -5,10 +5,10 @@ import {
   Ellipsis,
   GalleryThumbnails,
   Gauge,
+  Infinity,
   LibraryBig,
   ListVideo,
   PanelTopBottomDashed,
-  Repeat2,
   Rows3,
   Settings2,
   Square,
@@ -149,7 +149,7 @@ export function ArrangementHeader({
             <IconButton
               aria-label={`Loop arrangement. ${arrangement.playbackMode === "loop" ? "On" : "Off"}`}
               aria-pressed={arrangement.playbackMode === "loop"}
-              icon={<Repeat2 />}
+              icon={<Infinity />}
               selected={arrangement.playbackMode === "loop"}
               size="sm"
               onClick={() =>
@@ -215,6 +215,8 @@ export function ArrangementHeader({
             onRename={(name) => renameArrangement(arrangementId, name)}
             onToggle={() => setRenameOpen((open) => !open)}
           />
+        </DisclosureListGroup>
+        <DisclosureListGroup>
           <DisclosureListAction
             icon={<LibraryBig />}
             label="Library"

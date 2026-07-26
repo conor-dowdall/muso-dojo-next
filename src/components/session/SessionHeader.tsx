@@ -298,6 +298,8 @@ export function SessionHeader({
               onToggle={() => toggleMenuSection("rename")}
             />
           ) : null}
+        </DisclosureListGroup>
+        <DisclosureListGroup>
           <DisclosureListAction
             icon={<LibraryBig />}
             label="Library"
