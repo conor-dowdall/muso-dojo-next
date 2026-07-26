@@ -140,11 +140,18 @@ export function ArrangementWorkspace({
     if (selectedEntryId === entryId) setSelectedEntryId(nextSelection);
     if (openSessionEntryId === entryId) setOpenSessionEntryId(undefined);
   };
-  const addDefaultSection = () => {
+  const addDefaultSection = (revealSection: boolean) => {
     if (!defaultSession) return;
     stopForMutation();
     const result = actions.addSection(arrangementId, defaultSession.id);
-    if (result) selectNewEntry(result.entryId);
+    if (!result) return;
+
+    if (revealSection) {
+      selectNewEntry(result.entryId);
+    } else {
+      setSelectedEntryId(result.entryId);
+      setOpenSessionEntryId(undefined);
+    }
   };
 
   return (
@@ -152,8 +159,10 @@ export function ArrangementWorkspace({
       <div className={styles.workspace}>
         <ArrangementHeader
           arrangementId={arrangementId}
+          canAddSection={defaultSession !== undefined}
           transport={transport}
           viewMode={resolvedViewMode}
+          onAddSection={() => addDefaultSection(false)}
           onOpenLibrary={onOpenLibrary}
           onViewModeChange={setViewMode}
         />
@@ -355,7 +364,7 @@ export function ArrangementWorkspace({
                   icon={<Plus />}
                   label="Add First Section"
                   size="sm"
-                  onClick={addDefaultSection}
+                  onClick={() => addDefaultSection(true)}
                 />
               </div>
             ) : (
@@ -365,7 +374,7 @@ export function ArrangementWorkspace({
                   icon={<Plus />}
                   label="Add Section"
                   size="sm"
-                  onClick={addDefaultSection}
+                  onClick={() => addDefaultSection(true)}
                 />
               </div>
             )}

@@ -9,6 +9,7 @@ import {
   LibraryBig,
   ListVideo,
   PanelTopBottomDashed,
+  Plus,
   Rows3,
   Settings2,
   Square,
@@ -17,6 +18,7 @@ import {
   ControlHeader,
   ControlHeaderCluster,
 } from "@/components/ui/control-header/ControlHeader";
+import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { Heading } from "@/components/ui/typography/Heading";
 import {
@@ -43,12 +45,16 @@ import styles from "./ArrangementWorkspace.module.css";
 
 export function ArrangementHeader({
   arrangementId,
+  canAddSection,
+  onAddSection,
   onOpenLibrary,
   transport,
   viewMode,
   onViewModeChange,
 }: {
   arrangementId: string;
+  canAddSection: boolean;
+  onAddSection: () => void;
   onOpenLibrary: () => void;
   onViewModeChange: (mode: "build" | "chart") => void;
   transport: ReturnType<typeof useArrangementTransport>;
@@ -136,6 +142,15 @@ export function ArrangementHeader({
         }
         actions={
           <ControlHeaderCluster aria-label="Arrangement actions" role="group">
+            {viewMode === "build" ? (
+              <Button
+                disabled={!canAddSection}
+                icon={<Plus />}
+                label="Add Section"
+                size="sm"
+                onClick={onAddSection}
+              />
+            ) : null}
             <IconButton
               aria-label={
                 transport.isActive ? "Stop Arrangement" : "Play Arrangement"

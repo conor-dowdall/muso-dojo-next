@@ -29,6 +29,7 @@ import {
   DisclosureListPanelActions,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { NamedLibraryItemSaveField } from "@/components/ui/named-library-item/NamedLibraryItemSaveField";
+import { Heading } from "@/components/ui/typography/Heading";
 import { ChordQualityPicker } from "./ChordQualityPicker";
 import {
   CUSTOM_CHORD_PROGRESSION_MAX_BARS,
@@ -570,6 +571,24 @@ export function CustomChordProgressionEditor({
 
   return (
     <form className={styles.editor} onSubmit={handleSubmit}>
+      <ControlHeader
+        className={styles.editorHeader}
+        primary={
+          <Heading as="h3" size="xs" variant="muted">
+            Bars
+          </Heading>
+        }
+        actions={
+          <Button
+            disabled={bars.length >= CUSTOM_CHORD_PROGRESSION_MAX_BARS}
+            icon={<Plus />}
+            label="Add Bar"
+            size="sm"
+            onClick={addBar}
+          />
+        }
+      />
+
       {bars.length === 0 ? (
         <div className={styles.emptyState}>
           <Button

@@ -13,6 +13,10 @@
   gap: var(--space-4);
 }
 
+.editorHeader {
+  min-inline-size: 0;
+}
+
 .barList {
   gap: var(--space-3);
 }
