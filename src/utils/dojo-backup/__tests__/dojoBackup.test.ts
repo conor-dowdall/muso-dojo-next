@@ -153,7 +153,36 @@ describe("Dojo JSON backups", () => {
       () =>
         parseDojoBackup(
           editSerializedBackup(source, (document) => {
+            document.exportedAt = "July 26, 2026";
+          }),
+        ),
+      "invalid-backup",
+    );
+    expectSyncBackupError(
+      () =>
+        parseDojoBackup(
+          editSerializedBackup(source, (document) => {
             document.data = { sessions: {} };
+          }),
+        ),
+      "invalid-backup",
+    );
+    expectSyncBackupError(
+      () =>
+        parseDojoBackup(
+          editSerializedBackup(source, (document) => {
+            const data = document.data as Record<string, unknown>;
+            const arrangements = data.arrangements as Record<
+              string,
+              Record<string, unknown>
+            >;
+            const arrangement = Object.values(arrangements)[0];
+            const sections = arrangement?.sections as
+              Record<string, unknown>[] | undefined;
+
+            if (sections?.[0]) {
+              sections[0].parts = [{ id: "part", modules: "not-an-array" }];
+            }
           }),
         ),
       "invalid-backup",
@@ -289,6 +318,49 @@ describe("Dojo JSON backups", () => {
       () => downloadDojoBackupFile(createCompleteSnapshot(), { exportedAt }),
       "download-unavailable",
     );
+  });
+
+  it("normalizes object URL creation failures as download errors", () => {
+    vi.stubGlobal("document", {
+      body: { append: vi.fn() },
+      createElement: vi.fn(),
+    });
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn(() => {
+        throw new Error("Object URLs are blocked");
+      }),
+      revokeObjectURL: vi.fn(),
+    });
+
+    expectSyncBackupError(
+      () => downloadDojoBackupFile(createCompleteSnapshot(), { exportedAt }),
+      "download-unavailable",
+    );
+  });
+
+  it("releases an object URL when browser download setup fails", () => {
+    vi.useFakeTimers();
+    const revokeObjectURL = vi.fn();
+
+    vi.stubGlobal("document", {
+      body: { append: vi.fn() },
+      createElement: vi.fn(() => {
+        throw new Error("Anchor creation is blocked");
+      }),
+    });
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn(() => "blob:dojo-backup"),
+      revokeObjectURL,
+    });
+
+    expectSyncBackupError(
+      () => downloadDojoBackupFile(createCompleteSnapshot(), { exportedAt }),
+      "download-unavailable",
+    );
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+
+    vi.runAllTimers();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:dojo-backup");
   });
 
   it("restores a complete snapshot atomically while retaining store actions", () => {

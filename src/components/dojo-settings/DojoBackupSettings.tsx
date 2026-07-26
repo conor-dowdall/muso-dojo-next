@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { Heading } from "@/components/ui/typography/Heading";
 import { Text } from "@/components/ui/typography/Text";
+import { stopAllAudioPlayback } from "@/audio";
 import { useAppStore } from "@/stores/appStore";
 import {
   DojoBackupError,
@@ -87,6 +88,7 @@ export function DojoBackupSettings({
       return;
     }
 
+    stopAllAudioPlayback();
     restoreDojoSnapshot(pendingBackup.snapshot);
     setPendingBackup(null);
     onRestoreComplete();

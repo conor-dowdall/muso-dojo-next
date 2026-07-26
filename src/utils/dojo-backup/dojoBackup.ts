@@ -78,20 +78,35 @@ function hasOwn(value: Record<string, unknown>, property: string) {
 }
 
 function isValidDateString(value: unknown): value is string {
-  return typeof value === "string" && !Number.isNaN(Date.parse(value));
+  if (typeof value !== "string") {
+    return false;
+  }
+
+  const date = new Date(value);
+
+  return !Number.isNaN(date.getTime()) && date.toISOString() === value;
 }
 
 function isRecordArray(value: unknown): value is Record<string, unknown>[] {
   return Array.isArray(value) && value.every(isRecord);
 }
 
-function hasSessionStructure(value: unknown) {
-  if (!isRecord(value) || !isRecordArray(value.parts)) {
-    return false;
-  }
+function hasMusicPartArrayStructure(value: unknown) {
+  return (
+    isRecordArray(value) &&
+    value.every(
+      (part) => isRecordArray(part.modules) && typeof part.id === "string",
+    )
+  );
+}
 
-  return value.parts.every(
-    (part) => isRecordArray(part.modules) && typeof part.id === "string",
+function hasSessionStructure(value: unknown) {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.name === "string" &&
+    typeof value.lastModified === "string" &&
+    hasMusicPartArrayStructure(value.parts)
   );
 }
 
@@ -104,8 +119,20 @@ function hasArrangementStructure(value: unknown) {
     return false;
   }
 
-  return value.sections.every(
-    (section) => isRecordArray(section.parts) && isRecord(section.source),
+  return (
+    typeof value.id === "string" &&
+    typeof value.name === "string" &&
+    typeof value.lastModified === "string" &&
+    value.sections.every(
+      (section) =>
+        typeof section.id === "string" &&
+        hasMusicPartArrayStructure(section.parts) &&
+        isRecord(section.source),
+    ) &&
+    value.entries.every(
+      (entry) =>
+        typeof entry.id === "string" && typeof entry.sectionId === "string",
+    )
   );
 }
 
@@ -118,9 +145,7 @@ function hasActiveWorkspaceStructure(value: unknown) {
   );
 }
 
-function assertSnapshotStructure(
-  value: unknown,
-): asserts value is AppStoreSnapshot {
+function assertSnapshotStructure(value: unknown) {
   if (!isRecord(value)) {
     invalidBackup("The backup does not contain Dojo data.");
   }
@@ -244,6 +269,7 @@ export function parseDojoBackup(json: string): ParsedDojoBackup {
   }
 
   if (
+    typeof value.formatVersion !== "number" ||
     !Number.isInteger(value.formatVersion) ||
     value.formatVersion !== DOJO_BACKUP_FORMAT_VERSION
   ) {
@@ -253,11 +279,15 @@ export function parseDojoBackup(json: string): ParsedDojoBackup {
     );
   }
 
-  if (!Number.isInteger(value.dataVersion) || Number(value.dataVersion) < 0) {
+  if (
+    typeof value.dataVersion !== "number" ||
+    !Number.isInteger(value.dataVersion) ||
+    value.dataVersion < 0
+  ) {
     invalidBackup("The backup contains an invalid data version.");
   }
 
-  const dataVersion = Number(value.dataVersion);
+  const dataVersion = value.dataVersion;
 
   if (dataVersion > APP_STORE_VERSION) {
     throw new DojoBackupError(
@@ -346,15 +376,17 @@ export function downloadDojoBackupFile(
   }
 
   const backupFile = createDojoBackupFile(snapshot, options);
-  const objectUrl = URL.createObjectURL(backupFile.blob);
-  const link = document.createElement("a");
-
-  link.href = objectUrl;
-  link.download = backupFile.fileName;
-  link.rel = "noopener";
-  link.hidden = true;
+  const objectUrlApi = URL;
+  let link: HTMLAnchorElement | undefined;
+  let objectUrl: string | undefined;
 
   try {
+    objectUrl = objectUrlApi.createObjectURL(backupFile.blob);
+    link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = backupFile.fileName;
+    link.rel = "noopener";
+    link.hidden = true;
     document.body.append(link);
     link.click();
   } catch (error) {
@@ -364,8 +396,12 @@ export function downloadDojoBackupFile(
       { cause: error },
     );
   } finally {
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+    link?.remove();
+
+    if (objectUrl !== undefined) {
+      const objectUrlToRevoke = objectUrl;
+      setTimeout(() => objectUrlApi.revokeObjectURL(objectUrlToRevoke), 0);
+    }
   }
 
   return backupFile;

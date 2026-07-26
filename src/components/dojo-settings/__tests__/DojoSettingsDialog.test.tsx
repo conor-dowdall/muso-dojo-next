@@ -14,7 +14,9 @@ describe("DojoSettingsDialog", () => {
     expect(appearanceIndex).toBeGreaterThanOrEqual(0);
     expect(backupsIndex).toBeGreaterThan(appearanceIndex);
     expect(markup).toContain("Save Dojo Backup");
+    expect(markup).toContain("Save current Dojo as a JSON file");
     expect(markup).toContain("Load Dojo Backup");
+    expect(markup).toContain("Replace current Dojo with a JSON backup");
     expect(markup).toContain('accept=".json,application/json"');
   });
 });
