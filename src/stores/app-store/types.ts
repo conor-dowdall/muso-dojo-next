@@ -58,6 +58,10 @@ export type PartSettingsPatch = Partial<
   Omit<MusicPartConfig, "id" | "modules">
 >;
 
+export interface DojoDataActions {
+  restoreDojoSnapshot: (snapshot: AppStoreSnapshot) => void;
+}
+
 export type DroneSettingsPatch = Partial<
   Omit<DronePartModuleConfig, "id" | "type">
 >;
@@ -392,6 +396,7 @@ export interface RhythmActions {
 // Action slices follow the product hierarchy: Dojo -> Session -> Part ->
 // Module -> Instrument.
 export type AppStoreActions = DojoSettingsActions &
+  DojoDataActions &
   WorkspaceActions &
   ArrangementActions &
   SessionActions &

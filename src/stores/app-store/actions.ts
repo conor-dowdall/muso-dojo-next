@@ -1,3 +1,4 @@
+import { createDojoDataActions } from "./dojoDataActions";
 import { createDojoSettingsActions } from "./dojoSettingsActions";
 import { createDroneActions } from "./droneActions";
 import { createExerciseLooperActions } from "./exerciseLooperActions";
@@ -19,6 +20,7 @@ export function createAppStoreActions(
   get: AppStoreGet,
 ): AppStoreActions {
   return {
+    ...createDojoDataActions(set),
     ...createWorkspaceActions(set),
     ...createArrangementActions(set, get),
     ...createDojoSettingsActions(set),
