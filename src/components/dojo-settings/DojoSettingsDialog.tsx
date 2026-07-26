@@ -52,7 +52,11 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
         title="Dojo Settings"
         onClose={onClose}
       />
-      <DialogContent layout="stack" menuRhythm="compact">
+      <DialogContent
+        className={styles.settingsContent}
+        layout="stack"
+        menuRhythm="compact"
+      >
         <DialogContentSection ariaLabel="Appearance settings" menuGroup>
           <DisclosureList grouped groupGap="section">
             <DisclosureListGroup>

@@ -1,3 +1,7 @@
+.settingsContent.settingsContent[data-menu-rhythm="compact"] {
+  --dialog-menu-section-gap: var(--space-5);
+}
+
 .themeSwatch {
   position: relative;
   container-type: size;
