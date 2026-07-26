@@ -105,21 +105,21 @@ export function DojoBackupSettings({
         <DisclosureListGroup>
           <DisclosureListAction
             icon={<Save />}
-            label="Save Dojo Backup"
+            label="Save the Set"
             shouldYield={false}
-            subtitle="Save current Dojo as a JSON file"
+            subtitle="Save a portable copy of your current Dojo"
             onClick={exportBackup}
           />
 
           {pendingBackup ? (
             <DisclosureListConfirmAction
-              actionAriaLabel="Load Dojo backup"
+              actionAriaLabel="Recall a Set"
               confirmAriaLabel={restoreConfirmation}
               confirmButtonLabel="Replace"
               confirmLabel={restoreConfirmation}
               icon={<FolderOpen />}
               isConfirming
-              label="Load Dojo Backup"
+              label="Recall a Set"
               tone="danger"
               onCancel={cancelRestore}
               onConfirm={restoreBackup}
@@ -127,14 +127,14 @@ export function DojoBackupSettings({
             />
           ) : (
             <DisclosureListAction
-              aria-label="Choose a Dojo backup JSON file to load"
+              aria-label="Choose a saved Dojo JSON file to recall"
               disabled={isReadingBackup}
               icon={<FolderOpen />}
               label={
-                isReadingBackup ? "Reading Dojo Backup…" : "Load Dojo Backup"
+                isReadingBackup ? "Reading Saved Set…" : "Recall a Set"
               }
               shouldYield={false}
-              subtitle="Replace current Dojo with a JSON backup"
+              subtitle="Replace your current Dojo with a saved set"
               onClick={chooseBackupFile}
             />
           )}

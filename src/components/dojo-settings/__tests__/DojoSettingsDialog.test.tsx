@@ -13,10 +13,10 @@ describe("DojoSettingsDialog", () => {
     expect(markup).toContain('data-layout="stack"');
     expect(appearanceIndex).toBeGreaterThanOrEqual(0);
     expect(backupsIndex).toBeGreaterThan(appearanceIndex);
-    expect(markup).toContain("Save Dojo Backup");
-    expect(markup).toContain("Save current Dojo as a JSON file");
-    expect(markup).toContain("Load Dojo Backup");
-    expect(markup).toContain("Replace current Dojo with a JSON backup");
+    expect(markup).toContain("Save the Set");
+    expect(markup).toContain("Save a portable copy of your current Dojo");
+    expect(markup).toContain("Recall a Set");
+    expect(markup).toContain("Replace your current Dojo with a saved set");
     expect(markup).toContain('accept=".json,application/json"');
   });
 });
