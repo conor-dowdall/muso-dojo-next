@@ -33,6 +33,7 @@ import {
   getBackingNotesSummary,
   getBackingRhythmSummary,
   getBandChoosesRhythmSummary,
+  getSessionBandCoverageSummary,
 } from "./backingBandSummaries";
 
 type MainChoice = "backing-notes" | "count-in" | "rhythm";
@@ -68,15 +69,19 @@ export function SessionBackingBandDialog({
   const backingBand = getSessionBackingBandConfig(session?.backingBand);
   const backingNotesPreview = backingBand.looper.enabled ? "On" : "Off";
   const backingNotesSummary = getBackingNotesSummary(backingBand.looper);
-  const bandChoosesSummary = getBandChoosesRhythmSummary(session?.parts ?? []);
+  const parts = session?.parts ?? [];
+  const backingNotesCoverage = getSessionBandCoverageSummary(
+    parts,
+    "backingNotes",
+  );
+  const rhythmCoverage = getSessionBandCoverageSummary(parts, "rhythm");
+  const bandChoosesSummary = getBandChoosesRhythmSummary(parts);
   const customRhythmRecipe = getRhythmSelectionRecipe(
     backingBand.rhythm.selection,
   );
-  const sessionRhythmConstraint = getSessionRhythmBarConstraint(
-    session?.parts ?? [],
-  );
+  const sessionRhythmConstraint = getSessionRhythmBarConstraint(parts);
   const customRhythmPreservesSplitBars = sessionRhythmBeatsPreserveAuthoredBars(
-    session?.parts ?? [],
+    parts,
     customRhythmRecipe.beats,
   );
   const rhythmBeatCountConstraint =
@@ -110,12 +115,13 @@ export function SessionBackingBandDialog({
     >
       <DisclosureListGroup>
         <DisclosureListItem
-          ariaLabel={`Backing Notes. Current: ${backingNotesPreview}`}
+          ariaLabel={`Backing Notes. Current: ${backingNotesPreview}. ${backingNotesCoverage}`}
           icon={<Music2 />}
           isOpen={mainDisclosure.isOpen("backing-notes")}
           label="Backing Notes"
           panelVariant="menu"
           preview={backingNotesPreview}
+          subtitle={backingNotesCoverage}
           onToggle={() => mainDisclosure.toggleChoice("backing-notes")}
         >
           <DisclosureList density="compact">
@@ -188,12 +194,13 @@ export function SessionBackingBandDialog({
         </DisclosureListItem>
 
         <DisclosureListItem
-          ariaLabel={`Rhythm. Current: ${rhythmPreview}`}
+          ariaLabel={`Rhythm. Current: ${rhythmPreview}. ${rhythmCoverage}`}
           icon={<Drum />}
           isOpen={mainDisclosure.isOpen("rhythm")}
           label="Rhythm"
           panelVariant="menu"
           preview={rhythmPreview}
+          subtitle={rhythmCoverage}
           onToggle={() => mainDisclosure.toggleChoice("rhythm")}
         >
           <DisclosureList density="compact">

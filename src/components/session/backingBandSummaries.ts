@@ -8,6 +8,7 @@ import {
   type AutomaticRhythmStyle,
   type ExerciseLooperPartModuleConfig,
   type MusicPartConfig,
+  type PartBandRole,
   type SessionBackingBandConfig,
 } from "@/types/session";
 import { DEFAULT_EXERCISE_OCTAVE_OFFSET } from "@/utils/exercise-looper/exerciseConfig";
@@ -34,6 +35,48 @@ export function getBackingRhythmSummary(
   selection: SessionBackingBandConfig["rhythm"]["selection"],
 ) {
   return getRhythmRecipeCreationSummary(getRhythmSelectionRecipe(selection));
+}
+
+function formatCount(count: number, singular: string, plural: string) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+export function getSessionBandCoverageSummary(
+  parts: readonly MusicPartConfig[],
+  role: PartBandRole,
+) {
+  if (parts.length === 0) {
+    return "No Parts in Session";
+  }
+
+  const counts = {
+    module: 0,
+    off: 0,
+    session: 0,
+  };
+
+  parts.forEach((part) => {
+    counts[getPartBandSource(part, role).mode] += 1;
+  });
+
+  const appliesTo =
+    counts.session === parts.length && parts.length > 1
+      ? `Applies to all ${formatCount(parts.length, "Part", "Parts")}`
+      : `Applies to ${formatCount(counts.session, "Part", "Parts")}`;
+  const localModule =
+    role === "backingNotes"
+      ? formatCount(counts.module, "local Looper", "local Loopers")
+      : formatCount(counts.module, "local Rhythm", "local Rhythms");
+  const off =
+    role === "backingNotes"
+      ? formatCount(counts.off, "Backing Notes Off", "Backing Notes Off")
+      : formatCount(counts.off, "Rhythm Off", "Rhythm Off");
+
+  return formatValueSummary([
+    appliesTo,
+    counts.module > 0 ? localModule : undefined,
+    counts.off > 0 ? off : undefined,
+  ]);
 }
 
 function joinAlternatives(values: readonly (string | undefined)[]) {
