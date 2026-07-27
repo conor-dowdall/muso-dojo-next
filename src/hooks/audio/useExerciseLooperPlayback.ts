@@ -208,11 +208,14 @@ export function useExerciseLooperPlayback({
       return;
     }
 
+    const tempoChanged = submittedRequest.current.tempoBpm !== request.tempoBpm;
     setActiveStepIndex(undefined);
     submittedRequest.current = request;
 
     if (!isBandOwned) {
-      void beatTransportCoordinator.startExercise(request);
+      void (tempoChanged
+        ? beatTransportCoordinator.retimeExercise(request)
+        : beatTransportCoordinator.startExercise(request));
     }
   }, [isActive, isBandOwned, request]);
 

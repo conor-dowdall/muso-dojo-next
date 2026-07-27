@@ -52,6 +52,7 @@ export interface RhythmPlaybackStartOptions {
   originTime?: number;
   owner?: PlaybackOwner;
   prepared?: boolean;
+  replacementTime?: number;
 }
 
 interface RhythmSchedulerHit extends RhythmHit {
@@ -417,11 +418,12 @@ export class RhythmPlaybackCoordinator {
     const secondsPerBeat = 60 / normalizeTempo(request.tempoBpm);
     const originTime =
       options.originTime ?? currentTime + AUDIO_PLAYBACK_START_LEAD_SECONDS;
+    const replacementTime = options.replacementTime ?? originTime;
     this.active.forEach((playback, id) =>
       this.stopPlayback(
         id,
         playback,
-        originTime > currentTime ? originTime : undefined,
+        replacementTime > currentTime ? replacementTime : undefined,
       ),
     );
 

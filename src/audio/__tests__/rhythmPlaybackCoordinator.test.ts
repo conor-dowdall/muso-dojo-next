@@ -98,6 +98,24 @@ describe("RhythmPlaybackCoordinator", () => {
     expect(coordinator.getSnapshot().playbacks.b).toBeDefined();
   });
 
+  it("can retire queued playback before a later replacement origin", async () => {
+    const { cancelPlaybackGroup, coordinator, setCurrentTime } =
+      createHarness();
+    await coordinator.start(createRequest("a"));
+    setCurrentTime(10.2);
+
+    await coordinator.start(createRequest("a", { tempoBpm: 120 }), {
+      handoff: true,
+      originTime: 12,
+      replacementTime: 11,
+    });
+
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
+      atTime: 11,
+    });
+    expect(coordinator.getSnapshot().playbacks.a?.originTime).toBe(12);
+  });
+
   it("restarts the current Rhythm when its pattern changes", async () => {
     const { cancelPlaybackGroup, coordinator } = createHarness();
     await coordinator.start(createRequest("a"));

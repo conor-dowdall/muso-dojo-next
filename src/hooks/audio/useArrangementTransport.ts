@@ -47,6 +47,8 @@ export function useArrangementTransport(arrangementId: string) {
 
     if (reconciliation === "stop") {
       partSequenceCoordinator.stop();
+    } else if (reconciliation === "retime" && plan) {
+      void partSequenceCoordinator.retimeCurrentPart(plan);
     } else if (reconciliation === "restart" && plan) {
       void partSequenceCoordinator.restartCurrentPart(plan);
     } else if (reconciliation === "update" && plan) {

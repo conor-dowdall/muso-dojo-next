@@ -30,7 +30,10 @@ function createPattern(): RhythmPattern {
   };
 }
 
-function createExerciseRequest(id: string): ExercisePlaybackRequest {
+function createExerciseRequest(
+  id: string,
+  settings: Partial<ExercisePlaybackRequest> = {},
+): ExercisePlaybackRequest {
   return {
     countInBeats: 0,
     events: [{ durationBeats: 1, midi: 60, offsetBeats: 0, stepIndex: 0 }],
@@ -38,11 +41,15 @@ function createExerciseRequest(id: string): ExercisePlaybackRequest {
     metronomeEnabled: false,
     presetId: "piano",
     tempoBpm: 60,
+    ...settings,
   };
 }
 
-function createRhythmRequest(id: string): RhythmPlaybackRequest {
-  return { id, pattern: createPattern(), tempoBpm: 60 };
+function createRhythmRequest(
+  id: string,
+  settings: Partial<RhythmPlaybackRequest> = {},
+): RhythmPlaybackRequest {
+  return { id, pattern: createPattern(), tempoBpm: 60, ...settings };
 }
 
 function createDeferred<T>() {
@@ -227,6 +234,64 @@ describe("BeatTransportCoordinator", () => {
       group: "count-in",
       startTime: 11.58,
     });
+  });
+
+  it("restarts a manual Looper count-in when its tempo changes", async () => {
+    const { exercise, setCurrentTime, transport } = createHarness();
+    await transport.startExercise(
+      createExerciseRequest("exercise", { countInBeats: 4 }),
+    );
+    setCurrentTime(11);
+
+    await transport.retimeExercise(
+      createExerciseRequest("exercise", { tempoBpm: 120 }),
+    );
+
+    expect(exercise.getSnapshot().playbacks.exercise).toMatchObject({
+      countInBeats: 4,
+      countInStartTime: 11.08,
+      originTime: 13.08,
+      secondsPerBeat: 0.5,
+    });
+  });
+
+  it("replaces an active count-in and queued Part on one future pulse", async () => {
+    const { countInAudio, exercise, rhythm, setCurrentTime, transport } =
+      createHarness();
+    await transport.startPart({
+      countIn: { durationBeats: 4, pulses: 4 },
+      exercises: [createExerciseRequest("exercise")],
+      rhythms: [createRhythmRequest("rhythm")],
+      source: "part-sequence",
+    });
+    setCurrentTime(11);
+
+    const result = await transport.startPart({
+      countIn: { durationBeats: 4, pulses: 4 },
+      exercises: [createExerciseRequest("exercise", { tempoBpm: 120 })],
+      originTime: 13.08,
+      replacementTime: 11.08,
+      rhythms: [createRhythmRequest("rhythm", { tempoBpm: 120 })],
+      source: "part-sequence",
+      tempoBpm: 120,
+    });
+
+    expect(result).toEqual({ originTime: 13.08, started: true });
+    expect(countInAudio.cancelPlaybackGroup).toHaveBeenCalledWith("count-in", {
+      atTime: 11.08,
+    });
+    expect(countInAudio.scheduleMetronomeClick).toHaveBeenNthCalledWith(5, {
+      accent: true,
+      group: "count-in",
+      startTime: 11.08,
+    });
+    expect(countInAudio.scheduleMetronomeClick).toHaveBeenNthCalledWith(8, {
+      accent: false,
+      group: "count-in",
+      startTime: 12.58,
+    });
+    expect(exercise.getSnapshot().playbacks.exercise?.originTime).toBe(13.08);
+    expect(rhythm.getSnapshot().playbacks.rhythm?.originTime).toBe(13.08);
   });
 
   it("plays the count-in even when both backing lanes are silent", async () => {

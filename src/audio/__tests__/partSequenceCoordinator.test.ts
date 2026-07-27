@@ -156,7 +156,34 @@ function createDeferred<T>() {
   return { promise, resolve };
 }
 
-function createHarness() {
+function createTempoPlan(
+  plan: PartSequencePlaybackPlan,
+  tempoBpm: number,
+): PartSequencePlaybackPlan {
+  const parts = plan.parts.map((part) => ({
+    ...part,
+    exerciseRequests: part.exerciseRequests.map((request) => ({
+      ...request,
+      tempoBpm,
+    })),
+    rhythmRequests: part.rhythmRequests.map((request) => ({
+      ...request,
+      tempoBpm,
+    })),
+  }));
+
+  return {
+    ...plan,
+    parts,
+    signature: `${tempoBpm}:${plan.contentSignature}`,
+    tempoBpm,
+    updateSignature: `${tempoBpm}:update`,
+  };
+}
+
+function createHarness({
+  includeCountInInOrigin = false,
+}: { includeCountInInOrigin?: boolean } = {}) {
   vi.useFakeTimers();
   vi.setSystemTime(0);
   let audioClockOffsetSeconds = 0;
@@ -164,7 +191,14 @@ function createHarness() {
     async (request: Parameters<BeatTransportCoordinator["startPart"]>[0]) => ({
       originTime:
         request.originTime ??
-        10 + Date.now() / 1000 + audioClockOffsetSeconds + 0.08,
+        10 +
+          Date.now() / 1000 +
+          audioClockOffsetSeconds +
+          0.08 +
+          (includeCountInInOrigin
+            ? (request.countIn?.durationBeats ?? 0) *
+              (60 / (request.tempoBpm ?? 60))
+            : 0),
       started: true,
     }),
   );
@@ -569,6 +603,146 @@ describe("PartSequenceCoordinator", () => {
           }),
         ],
         handoff: true,
+      }),
+    );
+  });
+
+  it("restarts active content on the next quarter-note boundary", async () => {
+    const { advanceAudioClock, coordinator, startPart } = createHarness();
+    const currentPlan = createPlan();
+    const nextPlan: PartSequencePlaybackPlan = {
+      ...currentPlan,
+      contentSignature: "content-next",
+      partResetSignatures: ["part-a-reset-next", "part-b-reset"],
+      parts: [
+        {
+          ...currentPlan.parts[0]!,
+          resetSignature: "part-a-reset-next",
+          updateSignature: "part-a-update-next",
+        },
+        currentPlan.parts[1]!,
+      ],
+      signature: "60:content-next",
+      updateSignature: "60:update-next",
+    };
+
+    await coordinator.start(currentPlan);
+    advanceAudioClock(1.2);
+    await coordinator.restartCurrentPart(nextPlan);
+
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        handoff: true,
+        originTime: 12.08,
+        replacementTime: 12.08,
+      }),
+    );
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 0,
+      pendingIndex: 0,
+      pendingKind: "restart",
+    });
+  });
+
+  it("applies tempo on the next outgoing beat instead of the Part boundary", async () => {
+    const { advanceAudioClock, coordinator, startPart } = createHarness();
+    const currentPlan = createPlan();
+    const nextPlan = createTempoPlan(currentPlan, 120);
+
+    await coordinator.start(currentPlan);
+    advanceAudioClock(1.2);
+    await coordinator.retimeCurrentPart(nextPlan);
+
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        handoff: true,
+        originTime: 12.08,
+        replacementTime: 12.08,
+        tempoBpm: 120,
+      }),
+    );
+  });
+
+  it("preempts a queued Part handoff when tempo changes", async () => {
+    const { coordinator, startPart } = createHarness();
+    const currentPlan = createPlan();
+
+    await coordinator.start(currentPlan);
+    await vi.advanceTimersByTimeAsync(2_830);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 0,
+      pendingIndex: 1,
+      pendingKind: "handoff",
+    });
+
+    await coordinator.retimeCurrentPart(createTempoPlan(currentPlan, 120));
+
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        handoff: true,
+        originTime: 13.08,
+        replacementTime: 13.08,
+        tempoBpm: 120,
+      }),
+    );
+  });
+
+  it("keeps an active count-in when Part content changes", async () => {
+    const { advanceAudioClock, coordinator, startPart } = createHarness({
+      includeCountInInOrigin: true,
+    });
+    const currentPlan = {
+      ...createPlan(),
+      countIn: { durationBeats: 4, pulses: 4 },
+    };
+    const nextPlan: PartSequencePlaybackPlan = {
+      ...currentPlan,
+      partResetSignatures: ["part-a-reset-next", "part-b-reset"],
+      parts: [
+        {
+          ...currentPlan.parts[0]!,
+          resetSignature: "part-a-reset-next",
+          updateSignature: "part-a-update-next",
+        },
+        currentPlan.parts[1]!,
+      ],
+      updateSignature: "60:update-next",
+    };
+
+    await coordinator.start(currentPlan);
+    advanceAudioClock(1);
+    await coordinator.restartCurrentPart(nextPlan);
+
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        countIn: undefined,
+        handoff: true,
+        originTime: 14.08,
+        replacementTime: 14.08,
+      }),
+    );
+  });
+
+  it("restarts a complete count-in at the new tempo on its next pulse", async () => {
+    const { advanceAudioClock, coordinator, startPart } = createHarness({
+      includeCountInInOrigin: true,
+    });
+    const currentPlan = {
+      ...createPlan(),
+      countIn: { durationBeats: 4, pulses: 4 },
+    };
+
+    await coordinator.start(currentPlan);
+    advanceAudioClock(1);
+    await coordinator.retimeCurrentPart(createTempoPlan(currentPlan, 120));
+
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        countIn: { durationBeats: 4, pulses: 4 },
+        handoff: false,
+        originTime: 13.08,
+        replacementTime: 11.08,
+        tempoBpm: 120,
       }),
     );
   });

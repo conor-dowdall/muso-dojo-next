@@ -47,6 +47,7 @@ export interface BeatTransportPartStartRequest {
   handoff?: boolean;
   originTime?: number;
   preserveRhythms?: boolean;
+  replacementTime?: number;
   rhythms?: readonly RhythmPlaybackRequest[];
   source?: BeatTransportStartSource;
   stopMissing?: boolean;
@@ -59,7 +60,10 @@ export interface BeatTransportCountIn {
 }
 
 export interface CountInPlaybackAudioEngine extends CountInSchedulerAudioEngine {
-  cancelPlaybackGroup: (group: PlaybackGroupHandle) => void;
+  cancelPlaybackGroup: (
+    group: PlaybackGroupHandle,
+    options?: { atTime?: number },
+  ) => void;
   createPlaybackGroup: () => PlaybackGroupHandle;
   prime: () => Promise<boolean>;
 }
@@ -151,25 +155,31 @@ export class BeatTransportCoordinator {
     private readonly countInAudio: CountInPlaybackAudioEngine = musoAudioEngine,
   ) {}
 
-  private stopCountIn() {
+  private stopCountIn(atTime?: number) {
     if (!this.countInGroup) {
       return;
     }
 
-    this.countInAudio.cancelPlaybackGroup(this.countInGroup);
+    if (atTime === undefined) {
+      this.countInAudio.cancelPlaybackGroup(this.countInGroup);
+    } else {
+      this.countInAudio.cancelPlaybackGroup(this.countInGroup, { atTime });
+    }
     this.countInGroup = undefined;
   }
 
   private scheduleCountIn({
     countIn,
     originTime,
+    replacementTime,
     secondsPerBeat,
   }: {
     countIn: BeatTransportCountIn;
     originTime: number;
+    replacementTime?: number;
     secondsPerBeat: number;
   }) {
-    this.stopCountIn();
+    this.stopCountIn(replacementTime);
     const group = this.countInAudio.createPlaybackGroup();
     const startTime = originTime - countIn.durationBeats * secondsPerBeat;
     this.countInGroup = group;
@@ -243,6 +253,45 @@ export class BeatTransportCoordinator {
     return started;
   }
 
+  async retimeExercise(request: ExercisePlaybackRequest) {
+    const active = this.exercise.getSnapshot().playbacks[request.id];
+    const currentTime = this.getCurrentTime();
+
+    if (
+      !active ||
+      active.owner !== "manual" ||
+      currentTime === undefined ||
+      currentTime >= active.originTime ||
+      active.countInBeats <= 0
+    ) {
+      return this.startExercise(request);
+    }
+
+    this.notifyManualControl({ kind: "start", target: "exercise" });
+    this.revision += 1;
+    const replacementTime = getNextBeatOrigin({
+      currentTime,
+      grid: {
+        originTime: active.countInStartTime,
+        secondsPerBeat: active.secondsPerBeat,
+      },
+    });
+    const nextRequest = {
+      ...request,
+      countInBeats: active.countInBeats,
+    };
+    const originTime =
+      replacementTime +
+      active.countInBeats * (60 / normalizeTempo(request.tempoBpm));
+
+    return this.exercise.start(nextRequest, {
+      handoff: true,
+      originTime,
+      owner: "manual",
+      replacementTime,
+    });
+  }
+
   async startRhythm(
     request: RhythmPlaybackRequest,
     options: { source?: BeatTransportStartSource } = {},
@@ -272,6 +321,7 @@ export class BeatTransportCoordinator {
     handoff = false,
     originTime,
     preserveRhythms = false,
+    replacementTime,
     rhythms = [],
     source = "manual",
     stopMissing = true,
@@ -349,6 +399,14 @@ export class BeatTransportCoordinator {
             },
           })
         : requestedOrigin;
+    const countInStartTime =
+      resolvedCountIn &&
+      resolvedOriginTime !== undefined &&
+      secondsPerBeat !== undefined
+        ? resolvedOriginTime - resolvedCountIn.durationBeats * secondsPerBeat
+        : undefined;
+    const resolvedReplacementTime =
+      replacementTime ?? countInStartTime ?? resolvedOriginTime;
     const originWasRebased =
       requestedOrigin !== undefined &&
       resolvedOriginTime !== undefined &&
@@ -369,6 +427,7 @@ export class BeatTransportCoordinator {
       this.scheduleCountIn({
         countIn: resolvedCountIn,
         originTime: resolvedOriginTime,
+        replacementTime: resolvedReplacementTime,
         secondsPerBeat,
       });
     } else if (!handoff) {
@@ -379,13 +438,13 @@ export class BeatTransportCoordinator {
       this.exercise
         .getActiveIds(owner)
         .forEach((id) =>
-          this.exercise.stop(id, { atTime: resolvedOriginTime }),
+          this.exercise.stop(id, { atTime: resolvedReplacementTime }),
         );
       if (!canPreserveRhythms) {
         this.rhythm
           .getActiveIds(owner)
           .forEach((id) =>
-            this.rhythm.stop(id, { atTime: resolvedOriginTime }),
+            this.rhythm.stop(id, { atTime: resolvedReplacementTime }),
           );
       }
     }
@@ -397,6 +456,7 @@ export class BeatTransportCoordinator {
           owner,
           originTime: resolvedOriginTime,
           prepared: preparesFreshOrigin,
+          replacementTime: resolvedReplacementTime,
         }),
       ),
       ...rhythmsToStart.map((request) =>
@@ -405,6 +465,7 @@ export class BeatTransportCoordinator {
           owner,
           originTime: resolvedOriginTime,
           prepared: preparesFreshOrigin,
+          replacementTime: resolvedReplacementTime,
         }),
       ),
     ]);

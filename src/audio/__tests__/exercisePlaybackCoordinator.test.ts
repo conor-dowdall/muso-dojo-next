@@ -153,6 +153,25 @@ describe("ExercisePlaybackCoordinator", () => {
     expect(coordinator.getActiveRequest("a")?.presetId).toBe("bowed-strings");
   });
 
+  it("can retire queued playback before a later replacement origin", async () => {
+    const { cancelPlaybackGroup, coordinator, setCurrentTime } =
+      createHarness();
+    await coordinator.start(createRequest("a"));
+    setCurrentTime(10.2);
+
+    await coordinator.start(createRequest("a", { tempoBpm: 120 }), {
+      handoff: true,
+      originTime: 12,
+      replacementTime: 11,
+    });
+
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
+      atTime: 11,
+      releaseSeconds: 0.08,
+    });
+    expect(coordinator.getSnapshot().playbacks.a?.originTime).toBe(12);
+  });
+
   it("keeps the outgoing visual step active until a same-Looper handoff", async () => {
     vi.useFakeTimers();
     const { coordinator, setCurrentTime } = createHarness();

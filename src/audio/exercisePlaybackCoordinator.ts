@@ -72,6 +72,7 @@ export interface ExercisePlaybackStartOptions {
   originTime?: number;
   owner?: PlaybackOwner;
   prepared?: boolean;
+  replacementTime?: number;
 }
 
 interface ActiveExercisePlayback {
@@ -544,7 +545,8 @@ export class ExercisePlaybackCoordinator {
       options.originTime ??
       countInStartTime + request.countInBeats * secondsPerBeat;
     const replacementTime =
-      request.countInBeats > 0 ? countInStartTime : originTime;
+      options.replacementTime ??
+      (request.countInBeats > 0 ? countInStartTime : originTime);
     const visualPredecessor =
       options.handoff === true && originTime > currentTime
         ? this.active.get(request.id)?.snapshot

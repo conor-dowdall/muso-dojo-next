@@ -74,19 +74,22 @@ describe("Part sequence plan reconciliation", () => {
     ).toBe("update");
   });
 
-  it("restarts when the active Part reset signature or tempo changes", () => {
+  it("restarts when the active Part reset signature changes", () => {
     expect(
       getPartSequencePlanReconciliation(
         createSnapshot(),
         createPlan({ partResetSignatures: ["reset-a-next"] }),
       ),
     ).toBe("restart");
+  });
+
+  it("retimes immediately even when a Part handoff is already queued", () => {
     expect(
       getPartSequencePlanReconciliation(
-        createSnapshot(),
+        createSnapshot({ pendingIndex: 0, pendingKind: "handoff" }),
         createPlan({ tempoBpm: 90 }),
       ),
-    ).toBe("restart");
+    ).toBe("retime");
   });
 
   it("defers content reconciliation across a scheduled handoff", () => {
@@ -96,6 +99,15 @@ describe("Part sequence plan reconciliation", () => {
         createPlan(),
       ),
     ).toBe("defer");
+  });
+
+  it("can replace a queued restart when the active content changes again", () => {
+    expect(
+      getPartSequencePlanReconciliation(
+        createSnapshot({ pendingIndex: 0, pendingKind: "restart" }),
+        createPlan({ partResetSignatures: ["reset-a-next"] }),
+      ),
+    ).toBe("restart");
   });
 
   it("stops when the sequence structure changes or disappears", () => {

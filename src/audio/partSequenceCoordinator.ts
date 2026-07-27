@@ -18,6 +18,9 @@ const PART_SEQUENCE_HANDOFF_LEAD_SECONDS = AUDIO_SCHEDULER_HORIZON_SECONDS;
 const PART_SEQUENCE_COMMIT_LEAD_SECONDS = 0.01;
 const PART_SEQUENCE_RECOVERY_LEAD_SECONDS =
   AUDIO_PLAYBACK_START_LEAD_SECONDS + PART_SEQUENCE_COMMIT_LEAD_SECONDS;
+const BEAT_GRID_EPSILON = 1e-6;
+
+export type PartSequencePendingKind = "handoff" | "restart";
 
 export interface PartSequenceSnapshot {
   activeArrangementContext?: ArrangementStepContext;
@@ -33,6 +36,7 @@ export interface PartSequenceSnapshot {
   partCount: number;
   partResetSignatures?: readonly string[];
   pendingIndex?: number;
+  pendingKind?: PartSequencePendingKind;
   pendingPartId?: string;
   pendingArrangementContext?: ArrangementStepContext;
   pendingStepId?: string;
@@ -61,6 +65,24 @@ function normalizeTempo(tempoBpm: number) {
 
 function getSecondsPerBeat(tempoBpm: number) {
   return 60 / normalizeTempo(tempoBpm);
+}
+
+function getNextBeatBoundary({
+  currentTime,
+  originTime,
+  tempoBpm,
+}: {
+  currentTime: number;
+  originTime: number;
+  tempoBpm: number;
+}) {
+  const secondsPerBeat = getSecondsPerBeat(tempoBpm);
+  const minimumStartTime = currentTime + AUDIO_PLAYBACK_START_LEAD_SECONDS;
+  const elapsedBeats = (minimumStartTime - originTime) / secondsPerBeat;
+
+  return (
+    originTime + Math.ceil(elapsedBeats - BEAT_GRID_EPSILON) * secondsPerBeat
+  );
 }
 
 function getPartIndex(plan: PartSequencePlaybackPlan, occurrence: number) {
@@ -133,6 +155,7 @@ function rhythmContinuesThroughOccurrences({
 
 export class PartSequenceCoordinator {
   private activeOccurrence: number | undefined;
+  private committedPlan: PartSequencePlaybackPlan | undefined;
   private listeners = new Set<() => void>();
   private plan: PartSequencePlaybackPlan | undefined;
   private revision = 0;
@@ -295,6 +318,7 @@ export class PartSequenceCoordinator {
       this.setSequenceOriginForOccurrence({ occurrence, originTime, plan });
     }
     this.activeOccurrence = occurrence;
+    this.committedPlan = plan;
 
     this.snapshot = {
       activeArrangementContext: part.arrangement,
@@ -410,7 +434,9 @@ export class PartSequenceCoordinator {
     handoff,
     occurrence,
     originTime,
+    pendingKind,
     plan,
+    replacementTime,
     resetTimeline = false,
     revision,
   }: {
@@ -418,7 +444,9 @@ export class PartSequenceCoordinator {
     handoff: boolean;
     occurrence: number;
     originTime?: number;
+    pendingKind?: PartSequencePendingKind;
     plan: PartSequencePlaybackPlan;
+    replacementTime?: number;
     resetTimeline?: boolean;
     revision: number;
   }) {
@@ -435,6 +463,8 @@ export class PartSequenceCoordinator {
     }
 
     this.clearTimer();
+    const resolvedPendingKind =
+      pendingKind ?? (handoff ? "handoff" : undefined);
     this.snapshot = {
       ...this.snapshot,
       completionPolicy: plan.completionPolicy ?? "loop",
@@ -442,6 +472,9 @@ export class PartSequenceCoordinator {
       partCount: plan.parts.length,
       partResetSignatures: plan.partResetSignatures,
       pendingIndex: index,
+      ...(resolvedPendingKind === undefined
+        ? {}
+        : { pendingKind: resolvedPendingKind }),
       pendingPartId: part.partId,
       pendingArrangementContext: part.arrangement,
       pendingStepId: part.stepId ?? part.partId,
@@ -464,6 +497,7 @@ export class PartSequenceCoordinator {
       handoff,
       originTime,
       preserveRhythms,
+      replacementTime,
       rhythms: part.rhythmRequests,
       source: "part-sequence",
       stopMissing: true,
@@ -564,12 +598,94 @@ export class PartSequenceCoordinator {
     this.clearTimer();
     const revision = ++this.revision;
     this.plan = plan;
+    const currentTime = this.transport.getCurrentTime();
+    const activeOriginTime = this.snapshot.originTime;
+    const committedTempoBpm =
+      this.committedPlan?.tempoBpm ?? this.snapshot.tempoBpm;
+    const nextBeatBoundary =
+      currentTime === undefined ||
+      activeOriginTime === undefined ||
+      committedTempoBpm === undefined
+        ? undefined
+        : getNextBeatBoundary({
+            currentTime,
+            originTime: activeOriginTime,
+            tempoBpm: committedTempoBpm,
+          });
+    // Content edited during an intro can replace the already-queued Part at
+    // its original downbeat without disturbing the count-in.
+    const replacementTime =
+      nextBeatBoundary !== undefined &&
+      activeOriginTime !== undefined &&
+      nextBeatBoundary < activeOriginTime
+        ? activeOriginTime
+        : nextBeatBoundary;
 
     return this.startPartAtOccurrence({
       forceRhythmRestart: true,
       handoff: true,
       occurrence: Math.min(currentIndex, plan.parts.length - 1),
+      originTime: replacementTime,
+      pendingKind: "restart",
       plan,
+      replacementTime,
+      resetTimeline: true,
+      revision,
+    });
+  }
+
+  async retimeCurrentPart(plan: PartSequencePlaybackPlan) {
+    const currentIndex = this.snapshot.activeIndex;
+
+    if (!this.snapshot.playing || plan.parts.length === 0) {
+      return this.start(plan);
+    }
+
+    if (currentIndex === undefined) {
+      this.stop();
+      return this.start(plan);
+    }
+
+    const currentTime = this.transport.getCurrentTime();
+    const activeOriginTime = this.snapshot.originTime;
+    const committedTempoBpm =
+      this.committedPlan?.tempoBpm ?? this.snapshot.tempoBpm;
+
+    if (
+      currentTime === undefined ||
+      activeOriginTime === undefined ||
+      committedTempoBpm === undefined
+    ) {
+      return this.restartCurrentPart(plan);
+    }
+
+    const replacementTime = getNextBeatBoundary({
+      currentTime,
+      originTime: activeOriginTime,
+      tempoBpm: committedTempoBpm,
+    });
+    const countIn = this.startCountIn ?? plan.countIn;
+    const shouldRestartCountIn =
+      replacementTime < activeOriginTime &&
+      countIn.durationBeats > 0 &&
+      countIn.pulses > 0;
+    const originTime = shouldRestartCountIn
+      ? replacementTime +
+        countIn.durationBeats * getSecondsPerBeat(plan.tempoBpm)
+      : replacementTime;
+
+    this.clearTimer();
+    const revision = ++this.revision;
+    this.plan = plan;
+
+    return this.startPartAtOccurrence({
+      forceRhythmRestart: true,
+      handoff: !shouldRestartCountIn,
+      occurrence: Math.min(currentIndex, plan.parts.length - 1),
+      originTime,
+      pendingKind: "restart",
+      plan,
+      replacementTime,
       resetTimeline: true,
       revision,
     });
@@ -599,6 +715,7 @@ export class PartSequenceCoordinator {
     this.clearTimer();
     const revision = ++this.revision;
     this.plan = plan;
+    this.committedPlan = plan;
     const occurrence =
       plan.completionPolicy === "stop-at-end"
         ? currentIndex
@@ -656,6 +773,7 @@ export class PartSequenceCoordinator {
   stop({ stopPlayback = true }: PartSequenceStopOptions = {}) {
     this.clearTimer();
     this.activeOccurrence = undefined;
+    this.committedPlan = undefined;
     this.plan = undefined;
     this.revision += 1;
     this.sequenceOriginTime = undefined;
