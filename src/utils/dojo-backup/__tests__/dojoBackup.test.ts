@@ -130,9 +130,7 @@ describe("Dojo JSON backups", () => {
     const backupFile = createDojoBackupFile(source, { exportedAt });
     const parsed = await readDojoBackupFile(backupFile.blob);
 
-    expect(backupFile.fileName).toBe(
-      "muso-dojo-set-2026-07-26-143022Z.json",
-    );
+    expect(backupFile.fileName).toBe("muso-dojo-set-2026-07-26-143022Z.json");
     expect(backupFile.exportedAt).toBe(exportedAt.toISOString());
     expect(backupFile.blob.type).toBe(DOJO_BACKUP_CONTENT_TYPE);
     expect(parsed.exportedAt).toBe(exportedAt.toISOString());

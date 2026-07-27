@@ -130,9 +130,7 @@ export function DojoBackupSettings({
               aria-label="Choose a saved Dojo JSON file to recall"
               disabled={isReadingBackup}
               icon={<FolderOpen />}
-              label={
-                isReadingBackup ? "Reading Saved Set…" : "Recall a Set"
-              }
+              label={isReadingBackup ? "Reading Saved Set…" : "Recall a Set"}
               shouldYield={false}
               subtitle="Replace your current Dojo with a saved set"
               onClick={chooseBackupFile}
