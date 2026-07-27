@@ -128,6 +128,7 @@ export function createWebAudioEngine(): AudioEngine {
   let nextVoiceId = 0;
   let nextDroneId = 0;
   let playbackActive = false;
+  let stopRevision = 0;
   let masterContext: AudioContext | undefined;
   let masterInput: GainNode | undefined;
 
@@ -512,24 +513,6 @@ export function createWebAudioEngine(): AudioEngine {
         ) + PLAYBACK_GROUP_CLEANUP_SECONDS,
       );
     },
-    clearPlaybackGroupCancellation: (handle) => {
-      const group = playbackGroups.get(handle);
-
-      if (
-        !group ||
-        group.cancelAtTime === undefined ||
-        !context ||
-        group.cancelAtTime <= context.currentTime ||
-        !clearGroupGainAutomation(group)
-      ) {
-        return false;
-      }
-
-      clearPlaybackGroupCancelTimer(group);
-      delete group.cancelAtTime;
-      delete group.releaseSeconds;
-      return true;
-    },
     createPlaybackGroup: () => {
       const handle = createPlaybackGroupHandle((nextGroupId += 1));
       const destination = context ? getMasterInput(context) : undefined;
@@ -580,10 +563,12 @@ export function createWebAudioEngine(): AudioEngine {
       return loadAllSamplePacks(audioContext);
     },
     playNote: async (request) => {
+      const requestStopRevision = stopRevision;
       const preset = getPresetForRequest(request);
       const audioContext = await getReadyAudioContext();
 
       if (
+        requestStopRevision !== stopRevision ||
         request.signal?.aborted ||
         !audioContext ||
         !isPlayableMidiNote(request.midiNote)
@@ -596,7 +581,11 @@ export function createWebAudioEngine(): AudioEngine {
         preset.samplePackId,
       );
 
-      if (!loaded || request.signal?.aborted) {
+      if (
+        requestStopRevision !== stopRevision ||
+        !loaded ||
+        request.signal?.aborted
+      ) {
         return undefined;
       }
 
@@ -792,6 +781,7 @@ export function createWebAudioEngine(): AudioEngine {
       };
     },
     createDrone: async (request: DroneRequest) => {
+      const requestStopRevision = stopRevision;
       const notes = request.notes.filter((note) =>
         isPlayableMidiNote(note.midiNote),
       );
@@ -806,7 +796,7 @@ export function createWebAudioEngine(): AudioEngine {
         use: request.use ?? "drone",
       });
 
-      if (!audioContext) {
+      if (!audioContext || requestStopRevision !== stopRevision) {
         return undefined;
       }
 
@@ -815,7 +805,7 @@ export function createWebAudioEngine(): AudioEngine {
         preset.samplePackId,
       );
 
-      if (!loaded) {
+      if (!loaded || requestStopRevision !== stopRevision) {
         return undefined;
       }
 
@@ -954,6 +944,7 @@ export function createWebAudioEngine(): AudioEngine {
       return true;
     },
     stopAll: () => {
+      stopRevision += 1;
       Array.from(playbackGroups.entries()).forEach(([groupHandle, group]) => {
         clearGroupGainAutomation(group);
         group.hits.forEach((hit) => hit.stop());

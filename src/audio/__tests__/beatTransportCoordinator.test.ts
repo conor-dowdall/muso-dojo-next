@@ -45,7 +45,21 @@ function createRhythmRequest(id: string): RhythmPlaybackRequest {
   return { id, pattern: createPattern(), tempoBpm: 60 };
 }
 
-function createHarness() {
+function createDeferred<T>() {
+  let resolve: (value: T) => void = () => undefined;
+  const promise = new Promise<T>((nextResolve) => {
+    resolve = nextResolve;
+  });
+  return { promise, resolve };
+}
+
+function createHarness({
+  exercisePrime = async () => true,
+  rhythmPrime = async () => true,
+}: {
+  exercisePrime?: ExercisePlaybackAudioEngine["prime"];
+  rhythmPrime?: RhythmPlaybackAudioEngine["prime"];
+} = {}) {
   let currentTime = 10;
   let exerciseGroup = 0;
   let rhythmGroup = 0;
@@ -54,7 +68,7 @@ function createHarness() {
     createPlaybackGroup: () =>
       `exercise-${exerciseGroup++}` as PlaybackGroupHandle,
     getCurrentTime: () => currentTime,
-    prime: async () => true,
+    prime: exercisePrime,
     scheduleMetronomeClick: vi.fn(() => true),
     scheduleNote: vi.fn(),
     subscribeToStopAll: () => () => undefined,
@@ -63,7 +77,7 @@ function createHarness() {
     cancelPlaybackGroup: vi.fn(),
     createPlaybackGroup: () => `rhythm-${rhythmGroup++}` as PlaybackGroupHandle,
     getCurrentTime: () => currentTime,
-    prime: async () => true,
+    prime: rhythmPrime,
     schedulePercussionHit: vi.fn(() => true),
     subscribeToStopAll: () => () => undefined,
   };
@@ -355,5 +369,36 @@ describe("BeatTransportCoordinator", () => {
 
     expect(exercise.getSnapshot().playbacks["band-exercise"]).toBeUndefined();
     expect(rhythm.getSnapshot().playbacks["band-rhythm"]).toBeUndefined();
+  });
+
+  it("cancels pending Part layers when the sequence stops", async () => {
+    const exerciseReady = createDeferred<boolean>();
+    const rhythmReady = createDeferred<boolean>();
+    const { exercise, rhythm, transport } = createHarness({
+      exercisePrime: () => exerciseReady.promise,
+      rhythmPrime: () => rhythmReady.promise,
+    });
+    const start = transport.startPart({
+      exercises: [createExerciseRequest("band-exercise")],
+      originTime: 24,
+      rhythms: [createRhythmRequest("band-rhythm")],
+      source: "part-sequence",
+    });
+
+    expect(exercise.getPendingIds("part-sequence")).toEqual(["band-exercise"]);
+    expect(rhythm.getPendingIds("part-sequence")).toEqual(["band-rhythm"]);
+
+    transport.stopPartPlayback();
+    exerciseReady.resolve(true);
+    rhythmReady.resolve(true);
+
+    await expect(start).resolves.toEqual({
+      originTime: 24,
+      started: false,
+    });
+    expect(exercise.getSnapshot().pendingIds).toEqual([]);
+    expect(rhythm.getSnapshot().pendingIds).toEqual([]);
+    expect(exercise.getSnapshot().playbacks).toEqual({});
+    expect(rhythm.getSnapshot().playbacks).toEqual({});
   });
 });

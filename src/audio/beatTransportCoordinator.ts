@@ -7,6 +7,7 @@ import {
 } from "./exercisePlaybackCoordinator";
 import {
   getRhythmPlaybackOwner,
+  rhythmPatternsAreEqual,
   rhythmPlaybackCoordinator,
   type RhythmPlaybackCoordinator,
   type RhythmPlaybackRequest,
@@ -134,26 +135,7 @@ function rhythmRequestsAreEquivalent(
     return false;
   }
 
-  const left = active.pattern;
-  const right = expected.pattern;
-  return (
-    left.ppq === right.ppq &&
-    left.cycleTicks === right.cycleTicks &&
-    left.meter.beats === right.meter.beats &&
-    left.meter.beatUnit === right.meter.beatUnit &&
-    left.swing?.ratio === right.swing?.ratio &&
-    left.swing?.unitTicks === right.swing?.unitTicks &&
-    left.hits.length === right.hits.length &&
-    left.hits.every((hit, index) => {
-      const candidate = right.hits[index];
-      return (
-        candidate !== undefined &&
-        hit.atTicks === candidate.atTicks &&
-        hit.sampleId === candidate.sampleId &&
-        hit.velocity === candidate.velocity
-      );
-    })
-  );
+  return rhythmPatternsAreEqual(active.pattern, expected.pattern);
 }
 
 export class BeatTransportCoordinator {
@@ -491,6 +473,12 @@ export class BeatTransportCoordinator {
   ) {
     this.revision += 1;
     this.stopCountIn();
+    this.exercise
+      .getPendingIds(owner)
+      .forEach((id) => this.exercise.cancelPendingStart(id));
+    this.rhythm
+      .getPendingIds(owner)
+      .forEach((id) => this.rhythm.cancelPendingStart(id));
     this.exercise
       .getActiveIds(owner)
       .forEach((id) => this.exercise.stop(id, options));

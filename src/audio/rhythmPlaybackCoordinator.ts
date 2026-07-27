@@ -81,8 +81,7 @@ export type RhythmPlaybackAudioEngine = Pick<
   | "prime"
   | "schedulePercussionHit"
   | "subscribeToStopAll"
-> &
-  Partial<Pick<AudioEngine, "clearPlaybackGroupCancellation">>;
+>;
 
 export type RhythmSchedulerFactory = (
   options: LookaheadSchedulerOptions<RhythmSchedulerHit>,
@@ -96,6 +95,30 @@ const idleSnapshot: RhythmPlaybackSnapshot = {
 
 function normalizeTempo(tempoBpm: number) {
   return Math.min(300, Math.max(30, Math.round(tempoBpm)));
+}
+
+export function rhythmPatternsAreEqual(
+  left: RhythmPattern,
+  right: RhythmPattern,
+) {
+  return (
+    left.ppq === right.ppq &&
+    left.cycleTicks === right.cycleTicks &&
+    left.meter.beats === right.meter.beats &&
+    left.meter.beatUnit === right.meter.beatUnit &&
+    left.swing?.ratio === right.swing?.ratio &&
+    left.swing?.unitTicks === right.swing?.unitTicks &&
+    left.hits.length === right.hits.length &&
+    left.hits.every((hit, index) => {
+      const candidate = right.hits[index];
+      return (
+        candidate !== undefined &&
+        hit.atTicks === candidate.atTicks &&
+        hit.sampleId === candidate.sampleId &&
+        hit.velocity === candidate.velocity
+      );
+    })
+  );
 }
 
 function getCycleDurationSeconds(
@@ -260,6 +283,11 @@ export class RhythmPlaybackCoordinator {
         ([, playback]) =>
           owner === undefined || playback.snapshot.owner === owner,
       )
+      .map(([id]) => id);
+
+  getPendingIds = (owner?: PlaybackOwner) =>
+    [...this.pending]
+      .filter(([, pending]) => owner === undefined || pending.owner === owner)
       .map(([id]) => id);
 
   getCurrentTime = () => this.audioEngine.getCurrentTime();
@@ -438,7 +466,10 @@ export class RhythmPlaybackCoordinator {
 
   setPattern(id: string, pattern: RhythmPattern) {
     const playback = this.active.get(id);
-    if (!playback || playback.request.pattern === pattern) {
+    if (
+      !playback ||
+      rhythmPatternsAreEqual(playback.request.pattern, pattern)
+    ) {
       return false;
     }
 

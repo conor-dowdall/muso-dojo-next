@@ -4,7 +4,7 @@ import { AudioWaveform, SwatchBook, Waves, WavesArrowUp } from "lucide-react";
 import {
   audioPresets,
   ensureAudioReady,
-  musoAudioEngine,
+  presetAuditionController,
   type AudioPresetId,
 } from "@/audio";
 import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
@@ -45,7 +45,7 @@ interface DroneOptionsDialogProps {
 
 function auditionAudioPreset(audioPresetId: AudioPresetId) {
   void ensureAudioReady();
-  void musoAudioEngine.playNote({
+  void presetAuditionController.audition({
     midiNote: 48,
     presetId: audioPresetId,
     use: "drone",

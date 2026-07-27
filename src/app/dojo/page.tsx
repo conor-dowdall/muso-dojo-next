@@ -340,6 +340,12 @@ function HydratedDojoSessionPage() {
     () => sessionWorkspaceViewMode,
   );
   const [viewModeTransitionPending, startViewModeTransition] = useTransition();
+  useEffect(
+    () => () => {
+      stopAllAudioPlayback();
+    },
+    [],
+  );
   const handleSessionViewModeChange = useCallback(
     (mode: SessionViewMode) => {
       const resolvedMode = isSessionWorkspaceViewMode(mode)

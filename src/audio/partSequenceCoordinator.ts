@@ -578,6 +578,7 @@ export class PartSequenceCoordinator {
   updatePlan(plan: PartSequencePlaybackPlan) {
     const currentIndex = this.snapshot.activeIndex;
     const originTime = this.snapshot.originTime;
+    const previousPlan = this.plan;
 
     if (
       !this.snapshot.playing ||
@@ -604,10 +605,17 @@ export class PartSequenceCoordinator {
         : (this.activeOccurrence ?? currentIndex);
     this.activeOccurrence = occurrence;
     this.setSequenceOriginForOccurrence({ occurrence, originTime, plan });
-    this.transport.updatePartLive({
-      exercises: part.exerciseRequests,
-      rhythms: part.rhythmRequests,
-    });
+    const previousPart = previousPlan?.parts[currentIndex];
+    if (
+      !previousPart ||
+      previousPart.partId !== part.partId ||
+      previousPart.updateSignature !== part.updateSignature
+    ) {
+      this.transport.updatePartLive({
+        exercises: part.exerciseRequests,
+        rhythms: part.rhythmRequests,
+      });
+    }
 
     const durationSeconds =
       part.durationBeats * getSecondsPerBeat(plan.tempoBpm);

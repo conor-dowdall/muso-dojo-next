@@ -13,10 +13,9 @@ import { ListVideo, Square } from "lucide-react";
 import {
   createPartSequencePlaybackPlan,
   ensureAudioReady,
+  getPartSequencePlanReconciliation,
   partSequenceCoordinator,
   stopTransportPlayback,
-  type PartSequencePlaybackPlan,
-  type PartSequenceSnapshot,
 } from "@/audio";
 import { useAppStore } from "@/stores/appStore";
 import { IconButton } from "@/components/ui/buttons/IconButton";
@@ -75,27 +74,6 @@ function createPartReadout({
     identityLabel: identity.label,
     positionLabel: barPlan.positionLabel,
   };
-}
-
-function currentPartNeedsRestart(
-  snapshot: PartSequenceSnapshot,
-  plan: PartSequencePlaybackPlan,
-) {
-  if (snapshot.pendingIndex !== undefined) {
-    return true;
-  }
-
-  const activeIndex = snapshot.activeIndex;
-
-  if (activeIndex === undefined) {
-    return true;
-  }
-
-  return (
-    snapshot.tempoBpm !== plan.tempoBpm ||
-    snapshot.partResetSignatures?.[activeIndex] !==
-      plan.partResetSignatures[activeIndex]
-  );
 }
 
 export interface PracticeBandTransportState {
@@ -166,27 +144,19 @@ export function usePracticeBandTransport(
       return;
     }
 
-    if (!plan) {
+    const reconciliation = getPartSequencePlanReconciliation(
+      currentSnapshot,
+      plan,
+    );
+
+    if (reconciliation === "stop") {
       partSequenceCoordinator.stop();
-      return;
-    }
-
-    if (currentSnapshot.sourceSignature !== plan.sourceSignature) {
-      partSequenceCoordinator.stop();
-      return;
-    }
-
-    if (currentSnapshot.updateSignature === plan.updateSignature) {
-      return;
-    }
-
-    if (currentPartNeedsRestart(currentSnapshot, plan)) {
+    } else if (reconciliation === "restart" && plan) {
       void partSequenceCoordinator.restartCurrentPart(plan);
-      return;
+    } else if (reconciliation === "update" && plan) {
+      partSequenceCoordinator.updatePlan(plan);
     }
-
-    partSequenceCoordinator.updatePlan(plan);
-  }, [plan, sessionId]);
+  }, [plan, sessionId, snapshot]);
 
   const togglePlayback = useCallback(() => {
     if (!canPlay || !plan) {

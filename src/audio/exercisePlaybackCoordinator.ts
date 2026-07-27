@@ -102,8 +102,7 @@ export type ExercisePlaybackAudioEngine = Pick<
   | "scheduleMetronomeClick"
   | "scheduleNote"
   | "subscribeToStopAll"
-> &
-  Partial<Pick<AudioEngine, "clearPlaybackGroupCancellation">>;
+>;
 
 export type ExerciseSchedulerFactory = (
   options: LookaheadSchedulerOptions<ExercisePlaybackEvent>,
@@ -275,6 +274,11 @@ export class ExercisePlaybackCoordinator {
         ([, playback]) =>
           owner === undefined || playback.snapshot.owner === owner,
       )
+      .map(([id]) => id);
+
+  getPendingIds = (owner?: PlaybackOwner) =>
+    [...this.pending]
+      .filter(([, pending]) => owner === undefined || pending.owner === owner)
       .map(([id]) => id);
 
   getCurrentTime = () => this.audioEngine.getCurrentTime();

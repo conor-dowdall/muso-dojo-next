@@ -47,6 +47,10 @@ export {
   type PartSequenceStopOptions,
 } from "./partSequenceCoordinator";
 export {
+  getPartSequencePlanReconciliation,
+  type PartSequencePlanReconciliation,
+} from "./partSequenceReconciliation";
+export {
   beatTransportCoordinator,
   BeatTransportCoordinator,
   type BeatTransportCountIn,
@@ -65,6 +69,7 @@ export {
 export {
   getRhythmPlaybackOwner,
   isRhythmPlaybackActive,
+  rhythmPatternsAreEqual,
   rhythmPlaybackCoordinator,
   type RhythmPlaybackRequest,
   type RhythmPlaybackSnapshot,
@@ -76,6 +81,12 @@ export {
   type ExerciseAuditionNote,
   type ExerciseAuditionRequest,
 } from "./exerciseAuditionController";
+export {
+  presetAuditionController,
+  PresetAuditionController,
+  type PresetAuditionAudioEngine,
+  type PresetAuditionRequest,
+} from "./presetAuditionController";
 export {
   DEFAULT_CONCERT_PITCH_HZ,
   MIDI_A4,

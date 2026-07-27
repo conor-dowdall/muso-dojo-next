@@ -18,7 +18,7 @@ import { useState } from "react";
 import {
   audioPresets,
   ensureAudioReady,
-  musoAudioEngine,
+  presetAuditionController,
   type AudioPresetId,
 } from "@/audio";
 import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
@@ -148,7 +148,7 @@ const instrumentSizeLabels = Object.fromEntries(
 
 function auditionAudioPreset(audioPresetId: AudioPresetId) {
   void ensureAudioReady();
-  void musoAudioEngine.playNote({
+  void presetAuditionController.audition({
     midiNote: 60,
     presetId: audioPresetId,
     use: "preview",

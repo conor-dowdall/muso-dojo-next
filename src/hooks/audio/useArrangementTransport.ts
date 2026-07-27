@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import {
   createArrangementPlaybackRequest,
   ensureAudioReady,
+  getPartSequencePlanReconciliation,
   partSequenceCoordinator,
   stopTransportPlayback,
 } from "@/audio";
@@ -41,23 +42,17 @@ export function useArrangementTransport(arrangementId: string) {
     ) {
       return;
     }
-    if (!request || current.sourceSignature !== request.plan.sourceSignature) {
+    const plan = request?.plan;
+    const reconciliation = getPartSequencePlanReconciliation(current, plan);
+
+    if (reconciliation === "stop") {
       partSequenceCoordinator.stop();
-      return;
+    } else if (reconciliation === "restart" && plan) {
+      void partSequenceCoordinator.restartCurrentPart(plan);
+    } else if (reconciliation === "update" && plan) {
+      partSequenceCoordinator.updatePlan(plan);
     }
-    if (current.updateSignature === request.plan.updateSignature) return;
-    const index = current.activeIndex;
-    if (
-      index === undefined ||
-      current.pendingIndex !== undefined ||
-      current.partResetSignatures?.[index] !==
-        request.plan.partResetSignatures[index]
-    ) {
-      void partSequenceCoordinator.restartCurrentPart(request.plan);
-      return;
-    }
-    partSequenceCoordinator.updatePlan(request.plan);
-  }, [arrangementId, request]);
+  }, [arrangementId, request, snapshot]);
 
   const togglePlayback = useCallback(() => {
     if (isActive) {

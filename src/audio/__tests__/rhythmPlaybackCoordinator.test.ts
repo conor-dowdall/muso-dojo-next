@@ -110,6 +110,17 @@ describe("RhythmPlaybackCoordinator", () => {
     });
   });
 
+  it("keeps the current Rhythm when a fresh pattern object is equivalent", async () => {
+    const { cancelPlaybackGroup, coordinator, schedulers } = createHarness();
+    await coordinator.start(createRequest("a"));
+
+    expect(coordinator.setPattern("a", createPattern())).toBe(false);
+    await Promise.resolve();
+
+    expect(cancelPlaybackGroup).not.toHaveBeenCalled();
+    expect(schedulers).toHaveLength(1);
+  });
+
   it("schedules a future stop on the audio clock", async () => {
     vi.useFakeTimers();
     const { cancelPlaybackGroup, coordinator, schedulers } = createHarness();

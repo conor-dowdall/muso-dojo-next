@@ -403,6 +403,66 @@ describe("createWebAudioEngine", () => {
     decodeSpy.mockRestore();
   });
 
+  it("does not start a pending note preview after all audio is stopped", async () => {
+    installMockAudioWindow();
+
+    let resolveDecode: (buffer: AudioBuffer) => void = () => undefined;
+    const decodeSpy = vi
+      .spyOn(MockAudioContext.prototype, "decodeAudioData")
+      .mockImplementation(
+        () =>
+          new Promise<AudioBuffer>((resolve) => {
+            resolveDecode = resolve;
+          }),
+      );
+    const engine = createWebAudioEngine();
+    const preview = engine.playNote({
+      midiNote: 60,
+      presetId: "piano",
+      use: "preview",
+    });
+
+    engine.stopAll();
+    resolveDecode(
+      new MockAudioBuffer(1, 8 * 60 * 48_000, 48_000) as unknown as AudioBuffer,
+    );
+
+    await expect(preview).resolves.toBeUndefined();
+    expect(MockAudioContext.bufferSourceStartCalls).toHaveLength(0);
+
+    decodeSpy.mockRestore();
+  });
+
+  it("does not start a pending Drone after all audio is stopped", async () => {
+    installMockAudioWindow();
+
+    let resolveDecode: (buffer: AudioBuffer) => void = () => undefined;
+    const decodeSpy = vi
+      .spyOn(MockAudioContext.prototype, "decodeAudioData")
+      .mockImplementation(
+        () =>
+          new Promise<AudioBuffer>((resolve) => {
+            resolveDecode = resolve;
+          }),
+      );
+    const engine = createWebAudioEngine();
+    const drone = engine.createDrone({
+      notes: [{ id: "root", midiNote: 48 }],
+      presetId: "bowed-strings",
+      use: "drone",
+    });
+
+    engine.stopAll();
+    resolveDecode(
+      new MockAudioBuffer(1, 8 * 60 * 48_000, 48_000) as unknown as AudioBuffer,
+    );
+
+    await expect(drone).resolves.toBeUndefined();
+    expect(MockAudioContext.bufferSourceStartCalls).toHaveLength(0);
+
+    decodeSpy.mockRestore();
+  });
+
   it("plays notes through their mapped sample pack", async () => {
     installMockAudioWindow();
 
@@ -608,47 +668,6 @@ describe("createWebAudioEngine", () => {
     expect(clickScheduled).toBe(true);
     expect(noteSource.stopCalls).toContainEqual({ time: 1.5 });
     expect(clickSource.stopCalls).toContainEqual({ time: 1.5 });
-  });
-
-  it("can clear a future group cancellation before its audio boundary", async () => {
-    vi.useFakeTimers();
-    installMockAudioWindow();
-
-    const engine = createWebAudioEngine();
-    await engine.prime();
-    MockAudioContext.lastInstance!.currentTime = 1;
-    const group = engine.createPlaybackGroup();
-    const groupGain = MockAudioContext.gainNodes.at(-1)!
-      .gain as unknown as MockAudioParam;
-
-    engine.cancelPlaybackGroup(group, { atTime: 1.5, releaseSeconds: 0.02 });
-    MockAudioContext.lastInstance!.currentTime = 1.25;
-
-    expect(engine.clearPlaybackGroupCancellation(group)).toBe(true);
-    expect(groupGain.events).toContainEqual({ time: 1.25, type: "cancel" });
-    expect(groupGain.events).toContainEqual({
-      time: 1.25,
-      type: "set",
-      value: 1,
-    });
-    expect(
-      engine.scheduleNote({
-        durationSeconds: 1,
-        group,
-        midiNote: 60,
-        startTime: 1.6,
-        use: "exercise",
-      }),
-    ).toBeDefined();
-
-    await vi.advanceTimersByTimeAsync(1_000);
-
-    expect(
-      engine.scheduleMetronomeClick({
-        group,
-        startTime: 2.5,
-      }),
-    ).toBe(true);
   });
 
   it("lets an immediate group cancellation preempt a scheduled future cancellation", async () => {

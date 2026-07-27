@@ -521,6 +521,58 @@ describe("PartSequenceCoordinator", () => {
     );
   });
 
+  it("updates a future Part without touching live playback", async () => {
+    const { coordinator, startPart, updatePartLive } = createHarness();
+    const currentPlan = createPlan();
+    const futureExercise = {
+      ...currentPlan.parts[1]!.exerciseRequests[0]!,
+      events: [
+        {
+          durationBeats: 1,
+          midi: 72,
+          offsetBeats: 0,
+          stepIndex: 0,
+        },
+      ],
+    };
+    const nextFuturePart = {
+      ...currentPlan.parts[1]!,
+      exerciseRequests: [futureExercise],
+      resetSignature: "part-b-reset-next",
+      updateSignature: "part-b-update-next",
+    };
+    const nextPlan: PartSequencePlaybackPlan = {
+      ...currentPlan,
+      contentSignature: "content-next",
+      partResetSignatures: [
+        currentPlan.parts[0]!.resetSignature,
+        nextFuturePart.resetSignature,
+      ],
+      parts: [currentPlan.parts[0]!, nextFuturePart],
+      signature: "60:content-next",
+      updateSignature: "60:update-next",
+    };
+
+    await coordinator.start(currentPlan);
+
+    expect(coordinator.updatePlan(nextPlan)).toBe(true);
+    expect(updatePartLive).not.toHaveBeenCalled();
+    expect(startPart).toHaveBeenCalledOnce();
+
+    await vi.advanceTimersByTimeAsync(4000);
+
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        exercises: [
+          expect.objectContaining({
+            events: [expect.objectContaining({ midi: 72 })],
+          }),
+        ],
+        handoff: true,
+      }),
+    );
+  });
+
   it("ignores stale starts after the sequence is stopped", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(0);

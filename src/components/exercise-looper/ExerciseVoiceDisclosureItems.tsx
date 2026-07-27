@@ -4,7 +4,7 @@ import { AudioWaveform, WavesArrowUp } from "lucide-react";
 import {
   audioPresets,
   ensureAudioReady,
-  musoAudioEngine,
+  presetAuditionController,
   type AudioPresetId,
 } from "@/audio";
 import { AudioPresetChoiceList } from "@/components/audio/AudioPresetChoiceList";
@@ -63,7 +63,7 @@ export function ExercisePlaybackSoundDisclosure({
           onChange(nextPresetId);
           if (!isPlaybackActive && previewMidiNote !== undefined) {
             void ensureAudioReady();
-            void musoAudioEngine.playNote({
+            void presetAuditionController.audition({
               midiNote: previewMidiNote,
               presetId: nextPresetId,
               use: "exercise",
