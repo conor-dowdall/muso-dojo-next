@@ -126,7 +126,6 @@ export function SessionHeader({
   const workspaceViewModeLabel = sessionViewModeConfig[workspaceViewMode].label;
   const canUsePartViews = activeSessionPartCount > 0;
   const isFocusHeader = isSessionFocusViewMode(viewMode);
-  const isAlternateView = viewMode !== "session";
   const titleText = isFocusHeader ? viewModeLabel : sessionName;
   const titleReadout = practiceBandTransport.isActive
     ? practiceBandTransport.readout
@@ -244,7 +243,6 @@ export function SessionHeader({
               aria-label={`Choose view. Current: ${viewModeLabel}`}
               disabled={!hasActiveSession || viewModeTransitionPending}
               icon={<GalleryThumbnails />}
-              selected={isAlternateView}
               size="sm"
               shouldYield={false}
               onClick={openViewDialog}
