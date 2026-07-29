@@ -126,7 +126,6 @@ export function SessionHeader({
   const workspaceViewModeLabel = sessionViewModeConfig[workspaceViewMode].label;
   const canUsePartViews = activeSessionPartCount > 0;
   const isFocusHeader = isSessionFocusViewMode(viewMode);
-  const titleText = isFocusHeader ? viewModeLabel : sessionName;
   const titleReadout = practiceBandTransport.isActive
     ? practiceBandTransport.readout
     : null;
@@ -206,7 +205,7 @@ export function SessionHeader({
                   readout={titleReadout}
                 />
               ) : (
-                <span className={styles.titleText}>{titleText}</span>
+                <span className={styles.titleText}>{sessionName}</span>
               )}
             </Heading>
           </div>
