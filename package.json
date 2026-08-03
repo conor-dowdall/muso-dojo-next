@@ -7,7 +7,7 @@
   "packageManager": "pnpm@11.19.0",
   "engines": {
     "node": "24.x",
-    "pnpm": "11.11.0"
+    "pnpm": "11.19.0"
   },
   "scripts": {
     "dev": "concurrently -p none 'serwist build --watch' 'next dev'",
