@@ -36,11 +36,12 @@ export function clonePartModuleConfig(
 export function cloneMusicPartConfig(
   part: MusicPartConfig,
   existingPartIds: Iterable<string>,
+  existingModuleIds: Iterable<string>,
 ): MusicPartConfig {
-  const existingModuleIds = part.modules.map((module) => module.id);
+  const reservedModuleIds = new Set(existingModuleIds);
   const clonedModules = part.modules.map((module) => {
-    const clone = clonePartModuleConfig(module, existingModuleIds);
-    existingModuleIds.push(clone.id);
+    const clone = clonePartModuleConfig(module, reservedModuleIds);
+    reservedModuleIds.add(clone.id);
     return clone;
   });
   const moduleIdMap = new Map(
@@ -74,9 +75,17 @@ export function cloneSessionConfig(
   existingSessionNames: Iterable<string>,
 ): SessionConfig {
   const existingPartIds = session.parts.map((part) => part.id);
+  const existingModuleIds = session.parts.flatMap((part) =>
+    part.modules.map((module) => module.id),
+  );
   const clonedParts = session.parts.map((part) => {
-    const clone = cloneMusicPartConfig(part, existingPartIds);
+    const clone = cloneMusicPartConfig(
+      part,
+      existingPartIds,
+      existingModuleIds,
+    );
     existingPartIds.push(clone.id);
+    existingModuleIds.push(...clone.modules.map((module) => module.id));
     return clone;
   });
 

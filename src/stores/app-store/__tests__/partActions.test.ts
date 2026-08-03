@@ -87,4 +87,36 @@ describe("Part actions", () => {
       rhythm: { mode: "module", moduleId: clonedRhythm?.id },
     });
   });
+
+  it("keeps module IDs unique when the same Part is cloned repeatedly", () => {
+    const store = createTestStore();
+    const originalPartId = store.getState().sessions[sessionId]?.parts[0]?.id;
+
+    if (!originalPartId) {
+      throw new Error("Expected an original Part");
+    }
+
+    store
+      .getState()
+      .addPartModule(sessionId, originalPartId, { type: "exercise-looper" });
+    store
+      .getState()
+      .addPartModule(sessionId, originalPartId, { type: "rhythm" });
+
+    const firstCloneId = store.getState().clonePart(sessionId, originalPartId);
+    const secondCloneId = store.getState().clonePart(sessionId, originalPartId);
+    const parts = store.getState().sessions[sessionId]?.parts ?? [];
+    const moduleIds = parts.flatMap((part) =>
+      part.modules.map((module) => module.id),
+    );
+    const firstClone = parts.find((part) => part.id === firstCloneId);
+    const secondClone = parts.find((part) => part.id === secondCloneId);
+
+    expect(new Set(moduleIds).size).toBe(moduleIds.length);
+    expect(firstCloneId).toBeDefined();
+    expect(secondCloneId).toBeDefined();
+    expect(firstClone?.modules.map((module) => module.id)).not.toEqual(
+      secondClone?.modules.map((module) => module.id),
+    );
+  });
 });

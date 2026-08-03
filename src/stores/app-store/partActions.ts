@@ -130,6 +130,9 @@ export function createPartActions(
       const clonedPart = cloneMusicPartConfig(
         part,
         session.parts.map((candidatePart) => candidatePart.id),
+        session.parts.flatMap((candidatePart) =>
+          candidatePart.modules.map((module) => module.id),
+        ),
       );
 
       set((state) =>
