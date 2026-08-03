@@ -187,6 +187,60 @@ describe("BeatTransportCoordinator", () => {
     expect(rhythm.getSnapshot().playbacks.rhythm?.originTime).toBe(12.08);
   });
 
+  it("fails atomically when preparation rejects before choosing an origin", async () => {
+    const { exercise, rhythm, transport } = createHarness({
+      exercisePrime: async () => {
+        throw new Error("preparation failed");
+      },
+    });
+
+    await expect(
+      transport.startPart({
+        exercises: [createExerciseRequest("exercise")],
+        rhythms: [createRhythmRequest("rhythm")],
+        source: "part-sequence",
+      }),
+    ).resolves.toEqual({ originTime: undefined, started: false });
+    expect(exercise.getSnapshot().playbacks).toEqual({});
+    expect(rhythm.getSnapshot().playbacks).toEqual({});
+  });
+
+  it("rolls back a prepared layer when its companion cannot start", async () => {
+    const { countInAudio, exercise, rhythm, transport } = createHarness({
+      rhythmPrime: async () => false,
+    });
+
+    await expect(
+      transport.startPart({
+        countIn: { durationBeats: 4, pulses: 4 },
+        exercises: [createExerciseRequest("exercise")],
+        originTime: 24,
+        rhythms: [createRhythmRequest("rhythm")],
+        source: "part-sequence",
+      }),
+    ).resolves.toEqual({ originTime: 24, started: false });
+    expect(countInAudio.cancelPlaybackGroup).toHaveBeenCalledWith("count-in");
+    expect(exercise.getSnapshot().playbacks).toEqual({});
+    expect(rhythm.getSnapshot().playbacks).toEqual({});
+  });
+
+  it("rolls back a Rhythm when its exercise companion cannot start", async () => {
+    const { exercise, rhythm, transport } = createHarness({
+      exercisePrime: async () => false,
+    });
+
+    await expect(
+      transport.startPart({
+        exercises: [createExerciseRequest("exercise")],
+        originTime: 24,
+        rhythms: [createRhythmRequest("rhythm")],
+        source: "part-sequence",
+      }),
+    ).resolves.toEqual({ originTime: 24, started: false });
+    expect(exercise.getSnapshot().playbacks).toEqual({});
+    expect(rhythm.getSnapshot().playbacks).toEqual({});
+  });
+
   it("schedules one count-in bar before the shared downbeat", async () => {
     const { countInAudio, exercise, rhythm, transport } = createHarness();
     const result = await transport.startPart({

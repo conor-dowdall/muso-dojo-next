@@ -131,6 +131,7 @@ class MockAudioContext {
   static disconnectionCount = 0;
   static gainNodes: MockGainNode[] = [];
   static initialState: AudioContextState = "running";
+  static instanceCount = 0;
   static lastInstance: MockAudioContext | undefined;
   static lastOptions: AudioContextOptions | undefined;
   static resumeCount = 0;
@@ -143,6 +144,7 @@ class MockAudioContext {
   state: AudioContextState;
 
   constructor(options?: AudioContextOptions) {
+    MockAudioContext.instanceCount += 1;
     this.state = MockAudioContext.initialState;
     MockAudioContext.lastInstance = this;
     MockAudioContext.lastOptions = options;
@@ -157,6 +159,7 @@ class MockAudioContext {
     MockAudioContext.disconnectionCount = 0;
     MockAudioContext.gainNodes = [];
     MockAudioContext.initialState = "running";
+    MockAudioContext.instanceCount = 0;
     MockAudioContext.lastInstance = undefined;
     MockAudioContext.lastOptions = undefined;
     MockAudioContext.resumeCount = 0;
@@ -337,6 +340,64 @@ describe("createWebAudioEngine", () => {
     const engine = createWebAudioEngine();
 
     await Promise.all([loadSamplePackAsset("piano"), engine.prime()]);
+
+    expect(fetch).toHaveBeenCalledTimes(SAMPLE_PACK_IDS.length);
+    expect(MockAudioContext.decodeCount).toBe(SAMPLE_PACK_IDS.length);
+  });
+
+  it("can retry after resuming a suspended context fails", async () => {
+    installMockAudioWindow();
+    MockAudioContext.initialState = "suspended";
+    vi.spyOn(MockAudioContext.prototype, "resume").mockRejectedValueOnce(
+      new Error("resume blocked"),
+    );
+    const engine = createWebAudioEngine();
+
+    await expect(engine.prime()).resolves.toBe(false);
+    await expect(engine.prime()).resolves.toBe(true);
+
+    expect(MockAudioContext.resumeCount).toBe(1);
+    expect(MockAudioContext.instanceCount).toBe(1);
+  });
+
+  it("recreates a closed context on the next preparation", async () => {
+    installMockAudioWindow();
+    const engine = createWebAudioEngine();
+    await expect(engine.prime()).resolves.toBe(true);
+    const firstContext = MockAudioContext.lastInstance;
+
+    if (firstContext) {
+      firstContext.state = "closed";
+    }
+
+    await expect(engine.prime()).resolves.toBe(true);
+
+    expect(MockAudioContext.instanceCount).toBe(2);
+    expect(MockAudioContext.lastInstance).not.toBe(firstContext);
+  });
+
+  it("retries a sample asset after a transient fetch failure", async () => {
+    installMockAudioWindow();
+    vi.mocked(fetch).mockRejectedValueOnce(new Error("network interrupted"));
+    const engine = createWebAudioEngine();
+
+    await expect(engine.prime()).resolves.toBe(false);
+    await expect(engine.prime()).resolves.toBe(true);
+
+    expect(fetch).toHaveBeenCalledTimes(SAMPLE_PACK_IDS.length + 1);
+    expect(MockAudioContext.decodeCount).toBe(SAMPLE_PACK_IDS.length);
+  });
+
+  it("retries a sample pack after a transient decode failure", async () => {
+    installMockAudioWindow();
+    vi.spyOn(
+      MockAudioContext.prototype,
+      "decodeAudioData",
+    ).mockRejectedValueOnce(new Error("decode interrupted"));
+    const engine = createWebAudioEngine();
+
+    await expect(engine.prime()).resolves.toBe(false);
+    await expect(engine.prime()).resolves.toBe(true);
 
     expect(fetch).toHaveBeenCalledTimes(SAMPLE_PACK_IDS.length);
     expect(MockAudioContext.decodeCount).toBe(SAMPLE_PACK_IDS.length);
@@ -628,14 +689,21 @@ describe("createWebAudioEngine", () => {
         durationSeconds: 1,
         group,
         midiNote: 60,
-        startTime: 1.6,
+        startTime: 1.5,
         use: "exercise",
       }),
     ).toBeUndefined();
     expect(
       engine.scheduleMetronomeClick({
         group,
-        startTime: 1.6,
+        startTime: 1.5,
+      }),
+    ).toBe(false);
+    expect(
+      engine.schedulePercussionHit({
+        group,
+        sampleId: "kick",
+        startTime: 1.5,
       }),
     ).toBe(false);
   });

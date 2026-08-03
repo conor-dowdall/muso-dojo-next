@@ -185,7 +185,7 @@ export function createLookaheadScheduler<TPayload>({
 
     const currentTime = getCurrentTime();
 
-    if (currentTime === undefined) {
+    if (currentTime === undefined || !Number.isFinite(currentTime)) {
       running = false;
       return;
     }
@@ -256,7 +256,10 @@ export function createLookaheadScheduler<TPayload>({
       nextEventIndex = 0;
       previousTickTime = undefined;
       running =
-        Number.isFinite(startTime) && events.length > 0 && cycleDuration > 0;
+        Number.isFinite(startTime) &&
+        Number.isFinite(cycleDuration) &&
+        events.length > 0 &&
+        cycleDuration > 0;
 
       if (running) {
         recordDiagnostics({

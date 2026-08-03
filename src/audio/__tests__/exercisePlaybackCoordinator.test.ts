@@ -230,6 +230,46 @@ describe("ExercisePlaybackCoordinator", () => {
     expect(coordinator.getSnapshot().playbacks.second).toBeDefined();
   });
 
+  it("cancels a pending Looper when it is stopped before preparation", async () => {
+    const ready = createDeferred<boolean>();
+    const { coordinator } = createHarness(() => ready.promise);
+    const start = coordinator.start(createRequest("a"));
+
+    coordinator.stop("a");
+    ready.resolve(true);
+
+    await expect(start).resolves.toBe(false);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      pendingIds: [],
+      playbacks: {},
+      playing: false,
+    });
+  });
+
+  it("clears pending state when audio preparation is unavailable", async () => {
+    const { coordinator } = createHarness(async () => false);
+
+    await expect(coordinator.start(createRequest("a"))).resolves.toBe(false);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      pendingIds: [],
+      playbacks: {},
+      playing: false,
+    });
+  });
+
+  it("recovers pending state when audio preparation rejects", async () => {
+    const { coordinator } = createHarness(async () => {
+      throw new Error("preparation failed");
+    });
+
+    await expect(coordinator.start(createRequest("a"))).resolves.toBe(false);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      pendingIds: [],
+      playbacks: {},
+      playing: false,
+    });
+  });
+
   it("schedules a precise future stop on the audio clock", async () => {
     vi.useFakeTimers();
     const { cancelPlaybackGroup, coordinator, noteSchedulers } =
@@ -243,6 +283,19 @@ describe("ExercisePlaybackCoordinator", () => {
     await vi.advanceTimersByTimeAsync(2_000);
     expect(noteSchedulers[0]?.stop).toHaveBeenCalledOnce();
     expect(coordinator.getSnapshot().playbacks.a).toBeUndefined();
+  });
+
+  it("does not let a scheduled retirement finish a replacement with the same id", async () => {
+    vi.useFakeTimers();
+    const { coordinator, noteSchedulers } = createHarness();
+    await coordinator.start(createRequest("a"));
+    await coordinator.start(createRequest("a", { tempoBpm: 120 }));
+
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(coordinator.getSnapshot().playbacks.a).toBeDefined();
+    expect(noteSchedulers[0]?.stop).toHaveBeenCalledOnce();
+    expect(noteSchedulers[1]?.stop).not.toHaveBeenCalled();
   });
 
   it("hands the metronome lane to the replacement Looper", async () => {

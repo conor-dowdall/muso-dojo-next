@@ -361,15 +361,20 @@ export class BeatTransportCoordinator {
         resolvedCountIn !== undefined);
 
     if (preparesFreshOrigin) {
-      const prepared = await Promise.all([
-        selectedExercises.length > 0
-          ? this.exercise.prepare()
-          : Promise.resolve(true),
-        rhythmsInitiallyRequiringStart.length > 0
-          ? this.rhythm.prepare()
-          : Promise.resolve(true),
-        resolvedCountIn ? this.countInAudio.prime() : Promise.resolve(true),
-      ]);
+      let prepared: boolean[];
+      try {
+        prepared = await Promise.all([
+          selectedExercises.length > 0
+            ? this.exercise.prepare()
+            : Promise.resolve(true),
+          rhythmsInitiallyRequiringStart.length > 0
+            ? this.rhythm.prepare()
+            : Promise.resolve(true),
+          resolvedCountIn ? this.countInAudio.prime() : Promise.resolve(true),
+        ]);
+      } catch {
+        return { originTime: undefined, started: false };
+      }
       if (revision !== this.revision || prepared.some((ready) => !ready)) {
         return { originTime: undefined, started: false };
       }
@@ -469,10 +474,26 @@ export class BeatTransportCoordinator {
         }),
       ),
     ]);
+    const isCurrent = revision === this.revision;
+    const started = isCurrent && results.every(Boolean);
+
+    if (isCurrent && !started) {
+      this.stopCountIn();
+      selectedExercises.forEach((request, index) => {
+        if (results[index]) {
+          this.exercise.stop(request.id);
+        }
+      });
+      rhythmsToStart.forEach((request, index) => {
+        if (results[selectedExercises.length + index]) {
+          this.rhythm.stop(request.id);
+        }
+      });
+    }
 
     return {
       originTime: resolvedOriginTime,
-      started: revision === this.revision && results.every(Boolean),
+      started,
     };
   }
 

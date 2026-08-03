@@ -32,7 +32,15 @@ function createScheduler() {
   } satisfies LookaheadScheduler;
 }
 
-function createHarness() {
+function createDeferred<T>() {
+  let resolve: (value: T) => void = () => undefined;
+  const promise = new Promise<T>((nextResolve) => {
+    resolve = nextResolve;
+  });
+  return { promise, resolve };
+}
+
+function createHarness(prime: () => Promise<boolean> = async () => true) {
   let currentTime = 10;
   let groupIndex = 0;
   let stopAllListener: () => void = () => undefined;
@@ -42,7 +50,7 @@ function createHarness() {
     cancelPlaybackGroup,
     createPlaybackGroup: () => `group-${groupIndex++}` as PlaybackGroupHandle,
     getCurrentTime: () => currentTime,
-    prime: async () => true,
+    prime,
     schedulePercussionHit: vi.fn(() => true),
     subscribeToStopAll: (listener) => {
       stopAllListener = listener;
@@ -139,6 +147,46 @@ describe("RhythmPlaybackCoordinator", () => {
     expect(schedulers).toHaveLength(1);
   });
 
+  it("cancels a pending Rhythm when it is stopped before preparation", async () => {
+    const ready = createDeferred<boolean>();
+    const { coordinator } = createHarness(() => ready.promise);
+    const start = coordinator.start(createRequest("a"));
+
+    coordinator.stop("a");
+    ready.resolve(true);
+
+    await expect(start).resolves.toBe(false);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      pendingIds: [],
+      playbacks: {},
+      playing: false,
+    });
+  });
+
+  it("clears pending state when audio preparation is unavailable", async () => {
+    const { coordinator } = createHarness(async () => false);
+
+    await expect(coordinator.start(createRequest("a"))).resolves.toBe(false);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      pendingIds: [],
+      playbacks: {},
+      playing: false,
+    });
+  });
+
+  it("recovers pending state when audio preparation rejects", async () => {
+    const { coordinator } = createHarness(async () => {
+      throw new Error("preparation failed");
+    });
+
+    await expect(coordinator.start(createRequest("a"))).resolves.toBe(false);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      pendingIds: [],
+      playbacks: {},
+      playing: false,
+    });
+  });
+
   it("schedules a future stop on the audio clock", async () => {
     vi.useFakeTimers();
     const { cancelPlaybackGroup, coordinator, schedulers } = createHarness();
@@ -151,6 +199,19 @@ describe("RhythmPlaybackCoordinator", () => {
     await vi.advanceTimersByTimeAsync(2_000);
     expect(schedulers[0]?.stop).toHaveBeenCalledOnce();
     expect(coordinator.getSnapshot().playbacks.a).toBeUndefined();
+  });
+
+  it("does not let a scheduled retirement finish a replacement with the same id", async () => {
+    vi.useFakeTimers();
+    const { coordinator, schedulers } = createHarness();
+    await coordinator.start(createRequest("a"));
+    await coordinator.start(createRequest("a", { tempoBpm: 120 }));
+
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(coordinator.getSnapshot().playbacks.a).toBeDefined();
+    expect(schedulers[0]?.stop).toHaveBeenCalledOnce();
+    expect(schedulers[1]?.stop).not.toHaveBeenCalled();
   });
 
   it("resets all Rhythms when the engine stops all audio", async () => {

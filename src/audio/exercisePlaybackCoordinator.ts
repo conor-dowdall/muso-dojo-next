@@ -513,8 +513,14 @@ export class ExercisePlaybackCoordinator {
     this.latestId = request.id;
     this.emit();
 
-    const prepared =
-      options.prepared === true ? true : await this.audioEngine.prime();
+    let prepared = options.prepared === true;
+    if (!prepared) {
+      try {
+        prepared = await this.audioEngine.prime();
+      } catch {
+        prepared = false;
+      }
+    }
     const currentTime = this.audioEngine.getCurrentTime();
 
     if (
