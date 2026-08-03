@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import array
+import hashlib
 import json
 import math
 import os
@@ -1179,6 +1180,147 @@ def require_string(value: dict[str, Any], key: str) -> str:
     return result
 
 
+def require_sha256(value: dict[str, Any], key: str) -> str:
+    result = require_string(value, key).lower()
+    if re.fullmatch(r"[0-9a-f]{64}", result) is None:
+        raise Sf2Error(f"Field {key} must be a SHA-256 hex digest")
+    return result
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    try:
+        with path.open("rb") as source_file:
+            for chunk in iter(lambda: source_file.read(1024 * 1024), b""):
+                digest.update(chunk)
+    except FileNotFoundError as error:
+        raise Sf2Error(f"Required file not found: {path}") from error
+    return digest.hexdigest()
+
+
+def file_record(path: Path) -> dict[str, Any]:
+    try:
+        size_bytes = path.stat().st_size
+    except FileNotFoundError as error:
+        raise Sf2Error(f"Required file not found: {path}") from error
+    return {"sha256": sha256_file(path), "sizeBytes": size_bytes}
+
+
+def repo_relative_path(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(Path.cwd().resolve()).as_posix()
+    except ValueError as error:
+        raise Sf2Error(f"Expected a repository-local path, got {path}") from error
+
+
+def file_record_map(paths: Iterable[Path]) -> dict[str, dict[str, Any]]:
+    records = {
+        repo_relative_path(path): file_record(path)
+        for path in sorted(paths, key=lambda item: item.as_posix())
+    }
+    return dict(sorted(records.items()))
+
+
+def load_json_object(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as error:
+        raise Sf2Error(f"Required file not found: {path}") from error
+    except json.JSONDecodeError as error:
+        raise Sf2Error(f"Invalid JSON in {path}: {error}") from error
+    if not isinstance(payload, dict):
+        raise Sf2Error(f"Expected a JSON object in {path}")
+    return payload
+
+
+def validate_source(recipe_path: Path, recipe: dict[str, Any]) -> tuple[Path, str]:
+    source_sf2 = resolve_input_path(require_string(recipe, "sourceSf2"), recipe_path)
+    expected_sha256 = require_sha256(recipe, "sourceSha256")
+    actual_sha256 = sha256_file(source_sf2)
+    if actual_sha256 != expected_sha256:
+        raise Sf2Error(
+            f"SoundFont checksum mismatch for {source_sf2}: "
+            f"expected {expected_sha256}, got {actual_sha256}"
+        )
+    return source_sf2, expected_sha256
+
+
+def expected_audio_paths(
+    recipe: dict[str, Any], attribution: dict[str, Any]
+) -> list[Path]:
+    output_dir = Path(recipe.get("outputDir", "public/audio/v1"))
+    packs = attribution.get("packs")
+    if not isinstance(packs, list) or not packs:
+        raise Sf2Error("Attribution must contain a non-empty packs array")
+
+    paths: list[Path] = []
+    for pack in packs:
+        if not isinstance(pack, dict):
+            raise Sf2Error("Attribution packs must be objects")
+        pack_id = require_string(pack, "id")
+        delivery_formats = parse_delivery_formats(pack.get("deliveryFormats"))
+        paths.extend(
+            output_dir / f"{pack_id}.{audio_format}"
+            for audio_format in delivery_formats
+        )
+
+    return sorted(paths, key=lambda path: path.as_posix())
+
+
+def validated_audio_paths(
+    recipe: dict[str, Any], attribution: dict[str, Any]
+) -> list[Path]:
+    expected_paths = expected_audio_paths(recipe, attribution)
+    output_dir = Path(recipe.get("outputDir", "public/audio/v1"))
+    if not output_dir.is_dir():
+        raise Sf2Error(f"Audio output directory not found: {output_dir}")
+
+    actual_paths = sorted(
+        (
+            path
+            for path in output_dir.iterdir()
+            if path.is_file()
+            and path.suffix.removeprefix(".") in SUPPORTED_DELIVERY_FORMATS
+        ),
+        key=lambda path: path.as_posix(),
+    )
+    if actual_paths != expected_paths:
+        expected = [path.as_posix() for path in expected_paths]
+        actual = [path.as_posix() for path in actual_paths]
+        raise Sf2Error(f"Audio asset set is stale; expected={expected}, actual={actual}")
+
+    return expected_paths
+
+
+def verify_record_group(
+    provenance: dict[str, Any], key: str, expected_paths: Iterable[Path]
+) -> None:
+    stored_records = provenance.get(key)
+    if not isinstance(stored_records, dict):
+        raise Sf2Error(f"Audio provenance is missing the {key} file records")
+
+    current_records = file_record_map(expected_paths)
+    if stored_records == current_records:
+        return
+
+    stored_paths = set(stored_records)
+    current_paths = set(current_records)
+    if stored_paths != current_paths:
+        missing = sorted(current_paths - stored_paths)
+        unexpected = sorted(stored_paths - current_paths)
+        raise Sf2Error(
+            f"Audio provenance {key} paths are stale; "
+            f"missing={missing}, unexpected={unexpected}"
+        )
+
+    changed = sorted(
+        path
+        for path in current_paths
+        if stored_records.get(path) != current_records[path]
+    )
+    raise Sf2Error(f"Audio provenance is stale for {', '.join(changed)}")
+
+
 def write_ts_manifest(path: Path, packs: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     content = (
@@ -1193,7 +1335,7 @@ def write_ts_manifest(path: Path, packs: dict[str, Any]) -> None:
 def run_build(args: argparse.Namespace) -> None:
     recipe_path = Path(args.recipe)
     recipe = load_recipe(recipe_path)
-    source_sf2 = resolve_input_path(str(recipe.get("sourceSf2", "")), recipe_path)
+    source_sf2, source_sha256 = validate_source(recipe_path, recipe)
 
     target_sample_rate = int(recipe.get("targetSampleRate", 48000))
     recipe_delivery_formats = parse_delivery_formats(
@@ -1207,7 +1349,9 @@ def run_build(args: argparse.Namespace) -> None:
     if ogg_quality < -1 or ogg_quality > 10:
         raise Sf2Error("oggQuality must be between -1 and 10")
     output_dir = Path(recipe.get("outputDir", "public/audio/v1"))
-    manifest_path = Path(recipe.get("manifestPath", "src/audio/samplePacks.generated.ts"))
+    manifest_path = Path(
+        recipe.get("manifestPath", "src/audio/samplePacks.generated.ts")
+    )
     attribution_path = Path(recipe.get("attributionPath", "public/audio/v1/attribution.json"))
     packs_config = recipe.get("packs")
     if not isinstance(packs_config, list) or not packs_config:
@@ -1216,7 +1360,8 @@ def run_build(args: argparse.Namespace) -> None:
     soundfont = SoundFont(source_sf2)
     built_packs: dict[str, Any] = {}
     attribution: dict[str, Any] = {
-        "sourceSf2": str(source_sf2),
+        "sourceSf2": source_sf2.name,
+        "sourceSha256": source_sha256,
         "targetSampleRate": target_sample_rate,
         "deliveryFormats": recipe_delivery_formats,
         "preferredDeliveryFormat": recipe_preferred_delivery_format,
@@ -1278,6 +1423,94 @@ def run_build(args: argparse.Namespace) -> None:
     print(f"wrote {attribution_path}")
 
 
+def run_provenance(args: argparse.Namespace) -> None:
+    recipe_path = Path(args.recipe)
+    recipe = load_recipe(recipe_path)
+    source_sf2, source_sha256 = validate_source(recipe_path, recipe)
+    manifest_path = Path(recipe.get("manifestPath", "src/audio/samplePacks.generated.ts"))
+    attribution_path = Path(
+        recipe.get("attributionPath", "public/audio/v1/attribution.json")
+    )
+    provenance_path = Path(
+        recipe.get("provenancePath", "tools/audio/sample-packs.provenance.json")
+    )
+    attribution = load_json_object(attribution_path)
+
+    if attribution.get("sourceSf2") != source_sf2.name:
+        raise Sf2Error("Attribution SoundFont name is stale; run pnpm audio:build")
+    if attribution.get("sourceSha256") != source_sha256:
+        raise Sf2Error("Attribution SoundFont checksum is stale; run pnpm audio:build")
+
+    audio_paths = validated_audio_paths(recipe, attribution)
+    provenance = {
+        "schemaVersion": 1,
+        "source": {
+            "fileName": source_sf2.name,
+            "sha256": source_sha256,
+            "sizeBytes": source_sf2.stat().st_size,
+        },
+        "inputFiles": file_record_map([Path(__file__), recipe_path]),
+        "metadataFiles": file_record_map([manifest_path, attribution_path]),
+        "audioFiles": file_record_map(audio_paths),
+    }
+    provenance_path.parent.mkdir(parents=True, exist_ok=True)
+    provenance_path.write_text(
+        json.dumps(provenance, indent=2) + "\n", encoding="utf-8"
+    )
+    print(f"wrote {provenance_path}")
+
+
+def run_verify(args: argparse.Namespace) -> None:
+    recipe_path = Path(args.recipe)
+    recipe = load_recipe(recipe_path)
+    source_path = resolve_input_path(require_string(recipe, "sourceSf2"), recipe_path)
+    source_sha256 = require_sha256(recipe, "sourceSha256")
+    manifest_path = Path(
+        recipe.get("manifestPath", "src/audio/samplePacks.generated.ts")
+    )
+    attribution_path = Path(
+        recipe.get("attributionPath", "public/audio/v1/attribution.json")
+    )
+    provenance_path = Path(
+        recipe.get("provenancePath", "tools/audio/sample-packs.provenance.json")
+    )
+    attribution = load_json_object(attribution_path)
+    provenance = load_json_object(provenance_path)
+
+    if provenance.get("schemaVersion") != 1:
+        raise Sf2Error("Unsupported or missing audio provenance schema version")
+    if attribution.get("sourceSf2") != source_path.name:
+        raise Sf2Error("Attribution SoundFont name does not match the recipe")
+    if attribution.get("sourceSha256") != source_sha256:
+        raise Sf2Error("Attribution SoundFont checksum does not match the recipe")
+
+    stored_source = provenance.get("source")
+    expected_source = {"fileName": source_path.name, "sha256": source_sha256}
+    if not isinstance(stored_source, dict) or any(
+        stored_source.get(key) != value for key, value in expected_source.items()
+    ):
+        raise Sf2Error("Audio provenance SoundFont identity does not match the recipe")
+
+    if source_path.exists():
+        actual_source = file_record(source_path)
+        if actual_source.get("sha256") != source_sha256:
+            raise Sf2Error("Local SoundFont checksum does not match the recipe")
+        if stored_source.get("sizeBytes") != actual_source.get("sizeBytes"):
+            raise Sf2Error("Audio provenance SoundFont size is stale")
+
+    audio_paths = validated_audio_paths(recipe, attribution)
+
+    verify_record_group(provenance, "inputFiles", [Path(__file__), recipe_path])
+    verify_record_group(
+        provenance, "metadataFiles", [manifest_path, attribution_path]
+    )
+    verify_record_group(provenance, "audioFiles", audio_paths)
+    print(
+        f"verified generated audio metadata and {len(audio_paths)} audio assets "
+        f"against {provenance_path}"
+    )
+
+
 def run_inspect(args: argparse.Namespace) -> None:
     soundfont = SoundFont(Path(args.sf2).resolve())
     if args.samples:
@@ -1318,7 +1551,7 @@ def create_parser() -> argparse.ArgumentParser:
     build.add_argument(
         "recipe",
         nargs="?",
-        default="tools/audio/sample-packs.example.json",
+        default="tools/audio/sample-packs.json",
         help="sample pack recipe JSON",
     )
     build.add_argument(
@@ -1327,6 +1560,28 @@ def create_parser() -> argparse.ArgumentParser:
         help="emit planned manifests without writing audio/TS/JSON outputs",
     )
     build.set_defaults(func=run_build)
+
+    provenance = subparsers.add_parser(
+        "provenance", help="record checksums for generated audio artifacts"
+    )
+    provenance.add_argument(
+        "recipe",
+        nargs="?",
+        default="tools/audio/sample-packs.json",
+        help="sample pack recipe JSON",
+    )
+    provenance.set_defaults(func=run_provenance)
+
+    verify = subparsers.add_parser(
+        "verify", help="verify generated audio metadata and asset checksums"
+    )
+    verify.add_argument(
+        "recipe",
+        nargs="?",
+        default="tools/audio/sample-packs.json",
+        help="sample pack recipe JSON",
+    )
+    verify.set_defaults(func=run_verify)
 
     return parser
 

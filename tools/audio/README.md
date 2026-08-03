@@ -26,6 +26,13 @@ Dry-run the example recipe without writing WAV files:
 pnpm audio:build:dry
 ```
 
+Verify the committed metadata and every generated audio asset without requiring
+the source SoundFont. This is the fast check run in CI:
+
+```sh
+pnpm audio:verify
+```
+
 Build sprites and generated metadata. The default recipe writes both WAV and
 Ogg Vorbis sprites, and uses Ogg as the normal runtime URL. WAV files remain
 available as local reference assets and manual browser audition targets:
@@ -34,13 +41,21 @@ available as local reference assets and manual browser audition targets:
 pnpm audio:build
 ```
 
+The build validates the SoundFont against the SHA-256 pinned in
+`sample-packs.json`, writes the audio and metadata, formats the TypeScript
+manifest, and refreshes `sample-packs.provenance.json`. The provenance file
+records checksums for the recipe, generator, metadata, attribution, and every
+WAV/Ogg output. Do not refresh provenance independently to bypass a failed
+verification; perform a full audio build after intentional generator, recipe,
+or source changes.
+
 To audition a specific format in the browser after building, open the app with
 `?audioFormat=ogg` or `?audioFormat=wav`, for example `/dojo?audioFormat=wav`.
 Without a query parameter, the app uses the recipe's preferred format.
 
 ## Recipe Notes
 
-`sample-packs.example.json` chooses a few root notes per pack. Each root can be
+`sample-packs.json` chooses a few root notes per pack. Each root can be
 an integer MIDI note or an object:
 
 ```json

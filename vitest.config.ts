@@ -8,6 +8,17 @@ export default defineConfig({
     },
   },
   test: {
+    coverage: {
+      exclude: [
+        "src/**/*.d.ts",
+        "src/**/__tests__/**",
+        "src/audio/samplePacks.generated.ts",
+      ],
+      include: ["src/**/*.{ts,tsx}"],
+      provider: "v8",
+      reporter: ["text", "json-summary", "html", "lcov"],
+      reportsDirectory: "coverage",
+    },
     environment: "node",
     globals: false,
   },

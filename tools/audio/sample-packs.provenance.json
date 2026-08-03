@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "fileName": "FluidR3_GM.sf2",
+    "sha256": "74594e8f4250680adf590507a306655a299935343583256f3b722c48a1bc1cb0",
+    "sizeBytes": 148398306
+  },
+  "inputFiles": {
+    "tools/audio/build_sample_packs.py": {
+      "sha256": "eeeead11a37d0ad6fe3a8457e428c213dd75a21f216316661c0eb84de64ef866",
+      "sizeBytes": 56530
+    },
+    "tools/audio/sample-packs.json": {
+      "sha256": "f72a1f2e5fe5f2e5302594e8b765d0e86ee5e9f0a38323449c5b1b28bc2ef750",
+      "sizeBytes": 5559
+    }
+  },
+  "metadataFiles": {
+    "public/audio/v1/attribution.json": {
+      "sha256": "d3470becc8ac51b471e3ace5c03e496448023fc69b5e5d213f65873b2feb6e79",
+      "sizeBytes": 100606
+    },
+    "src/audio/samplePacks.generated.ts": {
+      "sha256": "cfc9b4304c3ac701468c9014b513657f7245020b7ac4d78f53e17c8ff4cd8f72",
+      "sizeBytes": 60114
+    }
+  },
+  "audioFiles": {
+    "public/audio/v1/acoustic-bass.ogg": {
+      "sha256": "62e76faff4074b61e315049cb4d40434bfff2daaa625855bfdcb1cff735296d1",
+      "sizeBytes": 125592
+    },
+    "public/audio/v1/acoustic-bass.wav": {
+      "sha256": "b32f456b2d7ee6194eeee67a12641f0808afa45b2a75e055b030ac97816f4fa0",
+      "sizeBytes": 1025580
+    },
+    "public/audio/v1/bowed-strings.ogg": {
+      "sha256": "d46e7b5e8b86a8d68bc7965293d4769926e1e939bbf7b13ce4f23786bae74fcb",
+      "sizeBytes": 622212
+    },
+    "public/audio/v1/bowed-strings.wav": {
+      "sha256": "0b568db1db371e0339624e49754870309fecdec8bf23b2b8f7929be19ed99073",
+      "sizeBytes": 4184732
+    },
+    "public/audio/v1/percussion.ogg": {
+      "sha256": "98113781dc67046770671eb3e5f0187f6f851db0b8e54c5e7745b8f4b3dde6a2",
+      "sizeBytes": 279666
+    },
+    "public/audio/v1/percussion.wav": {
+      "sha256": "2c8d44598bdd0886118e23ce09b2a24d84ed66f7f8c4f7dffc61aafc540103fb",
+      "sizeBytes": 1912580
+    },
+    "public/audio/v1/piano.ogg": {
+      "sha256": "fc6f3ee5b11227d4cdd373fd1f48b7c99c4f01e7719dc05363edf635d21a924d",
+      "sizeBytes": 823684
+    },
+    "public/audio/v1/piano.wav": {
+      "sha256": "19384c3d03a58b735374485e6bc3ef470dcd27c910e70b2df12ed572f8beefb4",
+      "sizeBytes": 5890648
+    },
+    "public/audio/v1/plucked-string.ogg": {
+      "sha256": "11b4900f42706eebcd63f2e65dd6dc4db6559cea41bf770a42c3fd5db0c07c9a",
+      "sizeBytes": 219588
+    },
+    "public/audio/v1/plucked-string.wav": {
+      "sha256": "c58b0e4566594123d06e6b9a3af10d6eae52b8f35fdc41a0684f9348a8d943c0",
+      "sizeBytes": 1851376
+    }
+  }
+}

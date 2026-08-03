@@ -1,5 +1,6 @@
 {
   "sourceSf2": "sf2/FluidR3_GM.sf2",
+  "sourceSha256": "74594e8f4250680adf590507a306655a299935343583256f3b722c48a1bc1cb0",
   "targetSampleRate": 48000,
   "deliveryFormats": ["wav", "ogg"],
   "preferredDeliveryFormat": "ogg",
@@ -7,6 +8,7 @@
   "outputDir": "public/audio/v1",
   "manifestPath": "src/audio/samplePacks.generated.ts",
   "attributionPath": "public/audio/v1/attribution.json",
+  "provenancePath": "tools/audio/sample-packs.provenance.json",
   "packs": [
     {
       "id": "piano",
@@ -112,7 +114,11 @@
       "gain": 0.88,
       "paddingSeconds": 0.02,
       "keys": [
-        { "id": "metronome-click", "midi": 33, "sampleName": "Metronome Click" },
+        {
+          "id": "metronome-click",
+          "midi": 33,
+          "sampleName": "Metronome Click"
+        },
         { "id": "kick", "midi": 36 },
         { "id": "side-stick", "midi": 37 },
         { "id": "snare", "midi": 38 },
