@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
+  getConcertPitchHz,
   getLoopEndSeconds,
   getLoopStartSeconds,
   getRegionEndSeconds,
   getScheduledOffset,
 } from "@/audio/samplePackLibrary";
 import { samplePacks } from "@/audio/samplePacks.generated";
+import { DEFAULT_CONCERT_PITCH_HZ } from "@/audio/pitch";
+
+describe("getConcertPitchHz", () => {
+  it("falls back to the default for a negative frequency", () => {
+    expect(getConcertPitchHz(-440)).toBe(DEFAULT_CONCERT_PITCH_HZ);
+  });
+});
 
 describe("getScheduledOffset", () => {
   it("advances a late non-looped voice by its playback rate", () => {

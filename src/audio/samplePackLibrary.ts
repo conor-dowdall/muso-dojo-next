@@ -44,7 +44,9 @@ export function getSamplePackIdFromUnknown(value: unknown): SamplePackId {
 }
 
 export function getConcertPitchHz(concertPitchHz: number | undefined) {
-  return concertPitchHz && Number.isFinite(concertPitchHz)
+  return concertPitchHz !== undefined &&
+    Number.isFinite(concertPitchHz) &&
+    concertPitchHz > 0
     ? concertPitchHz
     : DEFAULT_CONCERT_PITCH_HZ;
 }
