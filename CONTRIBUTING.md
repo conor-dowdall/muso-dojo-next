@@ -1,39 +1,39 @@
-# Contributing to this Muso Dojo Project
+# Contributing to Muso Dojo
 
-Thank you for your interest in **Muso Dojo**! We appreciate the community's support and enthusiasm for building better tools for music education.
+Thank you for taking an interest in **Muso Dojo** and in better tools for music
+education.
 
-## Our Current Phase
+## Contribution Policy
 
-**At this time, we are not accepting external code contributions or Pull Requests.**
+**Please do not open a pull request without arranging the contribution first.**
 
-This project is currently in an active, early-stage development phase. Our internal roadmap and core architecture are evolving rapidly. To maintain development velocity and ensure a cohesive vision during this foundational period, the project is being developed exclusively by its core maintainers.
+Muso Dojo is developed and maintained as a solo project. Code contributions may
+be possible, but an appropriate contributor agreement or other inbound
+licensing arrangement would need to be put in place before third-party code
+could be accepted. There is not yet a standard form or process for this.
 
-## Maintainer Quality Checks
+If a specific contribution seems worthwhile, open an issue before starting work
+so that its scope and the necessary arrangement can be discussed. Bug reports,
+ideas, and feedback from real use are always welcome.
 
-The supported Node.js runtime matches production on Vercel and is declared in
-`.nvmrc` and `package.json`. With nvm, install and activate it from the repository
-root with `nvm install` and `nvm use`; both commands read `.nvmrc`. The exact
-pnpm version is pinned in the `packageManager` field in `package.json`. Install
-that declared version locally and confirm `pnpm --version` matches it; Corepack
-is not required. Python is pinned in `.python-version` for the audio verification
-tooling and can be installed and selected with pyenv.
+## Ways to Help
 
-From a clean checkout, reproduce the GitHub Actions quality baseline with:
+Several kinds of participation are especially useful:
 
-```sh
-pnpm install --frozen-lockfile
-pnpm check:ci
-```
+1. **Report bugs.** If something is broken, [open an issue](https://github.com/conor-dowdall/muso-dojo-next/issues)
+   with clear reproduction steps, the browser and device involved, and any
+   relevant screenshots or error messages.
+2. **Suggest features.** Ideas for interactive tools, practice workflows, or
+   musical visualizations can be proposed in a feature-request issue. A short
+   description of the musical or educational problem is more useful than a
+   detailed implementation proposal.
+3. **Discuss a possible code contribution.** Open an issue with the proposed
+   scope before preparing a patch or pull request. This leaves time to decide
+   whether the change fits and to arrange its licensing.
+4. **Use and share Muso Dojo.** Feedback from musicians, students, and teachers
+   helps reveal which tools are useful in practice and where the experience can
+   improve.
 
-The check covers formatting, strict linting, TypeScript, unit-test coverage,
-generated audio provenance, and the production plus service-worker build.
-Coverage is reported diagnostically in `coverage/`; repository-wide percentage
-thresholds are intentionally not enforced yet.
-
-## How You Can Help
-
-While we aren't merging PRs yet, your feedback is still incredibly valuable to us:
-
-1.  **Bug Reports**: If you find something broken, please [open an issue](https://github.com/conor-dowdall/muso-dojo-next/issues). Be as descriptive as possible, including steps to reproduce the issue.
-2.  **Feature Suggestions**: Have an idea for a new interactive tool or musical visualization? Open a "Feature Request" issue to start a discussion.
-3.  **Spread the Word**: Use the tools, share them with your students or teachers, and let us know what you think!
+Because the project has a single maintainer, issue triage and response times may
+vary. Focused reports with enough context to reproduce or understand the request
+are the easiest to act on.
