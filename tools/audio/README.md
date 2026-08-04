@@ -43,10 +43,10 @@ pnpm audio:build
 
 The build validates the SoundFont against the SHA-256 pinned in
 `sample-packs.json`, writes the audio and metadata, formats the TypeScript
-manifest, and refreshes `sample-packs.provenance.json`. The provenance file
-records checksums for the recipe, generator, metadata, attribution, and every
-WAV/Ogg output. Do not refresh provenance independently to bypass a failed
-verification; perform a full audio build after intentional generator, recipe,
+manifest, and records `sample-packs.provenance.json` as its final step. The
+provenance file records checksums for the recipe, generator, metadata,
+attribution, and every WAV/Ogg output. Provenance cannot be refreshed
+independently: perform a full audio build after intentional generator, recipe,
 or source changes.
 
 To audition a specific format in the browser after building, open the app with
