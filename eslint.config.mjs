@@ -20,6 +20,7 @@ export const baseConfig = defineConfig([
     "next-env.d.ts",
     "serwist.config.js",
     "public/sw.js",
+    "coverage/**",
   ]),
   {
     rules: {
