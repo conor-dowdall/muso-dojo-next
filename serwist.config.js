@@ -1,6 +1,10 @@
 // @ts-check
 import crypto from "node:crypto";
 import { serwist } from "@serwist/next/config";
+import {
+  isAudioPrecacheManifestEntry,
+  shouldPrecacheAudioManifestEntry,
+} from "./src/audio/audioCachePolicy.js";
 
 const deploymentRevision =
   process.env.VERCEL_GIT_COMMIT_SHA ??
@@ -29,12 +33,6 @@ function isExplicitPrecacheEntry(url) {
   );
 }
 
-function isAudioPrecacheEntry(url) {
-  const normalizedUrl = url.startsWith("/") ? url : `/${url}`;
-
-  return normalizedUrl.startsWith("/audio/");
-}
-
 export default serwist({
   swSrc: "src/app/sw.ts",
   swDest: "public/sw.js",
@@ -42,10 +40,16 @@ export default serwist({
   maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
   manifestTransforms: [
     (manifestEntries) => ({
-      manifest: manifestEntries.filter(
-        ({ url }) =>
-          !isExplicitPrecacheEntry(url) && !isAudioPrecacheEntry(url),
-      ),
+      manifest: manifestEntries.filter(({ url }) => {
+        if (isExplicitPrecacheEntry(url)) {
+          return false;
+        }
+
+        return (
+          !isAudioPrecacheManifestEntry(url) ||
+          shouldPrecacheAudioManifestEntry(url)
+        );
+      }),
       warnings: [],
     }),
   ],

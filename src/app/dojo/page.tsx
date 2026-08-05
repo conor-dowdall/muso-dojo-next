@@ -163,6 +163,8 @@ function HydratedSession({
       return;
     }
 
+    // Sample-pack fetches wait for service-worker control, so this warm-up
+    // cannot race the worker's Ogg precache on a first visit.
     void musoAudioEngine.warm();
   }, [activeWorkspace]);
 

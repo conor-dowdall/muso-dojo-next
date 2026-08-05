@@ -1,6 +1,7 @@
 import { DEFAULT_CONCERT_PITCH_HZ } from "./pitch";
 import { samplePacks } from "./samplePacks.generated";
 import { type SamplePackId } from "./types";
+import { waitForServiceWorkerControl } from "./waitForServiceWorkerControl";
 
 type SamplePackDeliveryFormat = "wav" | "ogg";
 type SamplePackAssetKey = `${SamplePackId}:${string}`;
@@ -31,6 +32,7 @@ const loadingSamplePackAssets = new Map<
   SamplePackAssetKey,
   Promise<ArrayBuffer | undefined>
 >();
+let oggServiceWorkerControlPromise: Promise<boolean> | undefined;
 const SAMPLE_PACK_AUDIO_FORMAT_QUERY_KEYS = [
   "audioFormat",
   "sampleFormat",
@@ -44,7 +46,9 @@ export function getSamplePackIdFromUnknown(value: unknown): SamplePackId {
 }
 
 export function getConcertPitchHz(concertPitchHz: number | undefined) {
-  return concertPitchHz && Number.isFinite(concertPitchHz)
+  return concertPitchHz !== undefined &&
+    Number.isFinite(concertPitchHz) &&
+    concertPitchHz > 0
     ? concertPitchHz
     : DEFAULT_CONCERT_PITCH_HZ;
 }
@@ -245,7 +249,11 @@ function loadSamplePackAssetRequest(request: SamplePackAssetRequest) {
     return Promise.resolve(undefined);
   }
 
-  const loadPromise = fetch(request.url)
+  const waitForCacheOwner = request.url.endsWith(".ogg")
+    ? (oggServiceWorkerControlPromise ??= waitForServiceWorkerControl())
+    : Promise.resolve(false);
+  const loadPromise = waitForCacheOwner
+    .then(() => fetch(request.url))
     .then((response) => (response.ok ? response.arrayBuffer() : undefined))
     .then((arrayBuffer) => {
       if (arrayBuffer) {
@@ -276,6 +284,7 @@ function releaseSamplePackAsset(key: SamplePackAssetKey) {
 export function clearSamplePackAssetCacheForTests() {
   samplePackAssets.clear();
   loadingSamplePackAssets.clear();
+  oggServiceWorkerControlPromise = undefined;
 }
 
 export function createSamplePackLoader() {

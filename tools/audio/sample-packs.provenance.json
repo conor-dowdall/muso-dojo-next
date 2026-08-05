@@ -7,8 +7,8 @@
   },
   "inputFiles": {
     "tools/audio/build_sample_packs.py": {
-      "sha256": "eeeead11a37d0ad6fe3a8457e428c213dd75a21f216316661c0eb84de64ef866",
-      "sizeBytes": 56530
+      "sha256": "a6fc1bba9e418fa8879b1581dfe49a07a785853e5a1c5de6e890670ca3883cb9",
+      "sizeBytes": 56706
     },
     "tools/audio/sample-packs.json": {
       "sha256": "f72a1f2e5fe5f2e5302594e8b765d0e86ee5e9f0a38323449c5b1b28bc2ef750",

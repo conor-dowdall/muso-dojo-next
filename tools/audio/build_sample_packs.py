@@ -1332,6 +1332,61 @@ def write_ts_manifest(path: Path, packs: dict[str, Any]) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def format_ts_manifest(path: Path) -> None:
+    try:
+        subprocess.run(
+            ["pnpm", "exec", "prettier", "--write", str(path)],
+            check=True,
+        )
+    except FileNotFoundError as error:
+        raise Sf2Error(
+            "pnpm is required to format the generated TypeScript manifest"
+        ) from error
+    except subprocess.CalledProcessError as error:
+        raise Sf2Error(f"Prettier failed while formatting {path}") from error
+
+
+def write_provenance(
+    recipe_path: Path,
+    recipe: dict[str, Any],
+    source_sf2: Path,
+    source_sha256: str,
+) -> None:
+    manifest_path = Path(
+        recipe.get("manifestPath", "src/audio/samplePacks.generated.ts")
+    )
+    attribution_path = Path(
+        recipe.get("attributionPath", "public/audio/v1/attribution.json")
+    )
+    provenance_path = Path(
+        recipe.get("provenancePath", "tools/audio/sample-packs.provenance.json")
+    )
+    attribution = load_json_object(attribution_path)
+
+    if attribution.get("sourceSf2") != source_sf2.name:
+        raise Sf2Error("Generated attribution SoundFont name is inconsistent")
+    if attribution.get("sourceSha256") != source_sha256:
+        raise Sf2Error("Generated attribution SoundFont checksum is inconsistent")
+
+    audio_paths = validated_audio_paths(recipe, attribution)
+    provenance = {
+        "schemaVersion": 1,
+        "source": {
+            "fileName": source_sf2.name,
+            "sha256": source_sha256,
+            "sizeBytes": source_sf2.stat().st_size,
+        },
+        "inputFiles": file_record_map([Path(__file__), recipe_path]),
+        "metadataFiles": file_record_map([manifest_path, attribution_path]),
+        "audioFiles": file_record_map(audio_paths),
+    }
+    provenance_path.parent.mkdir(parents=True, exist_ok=True)
+    provenance_path.write_text(
+        json.dumps(provenance, indent=2) + "\n", encoding="utf-8"
+    )
+    print(f"wrote {provenance_path}")
+
+
 def run_build(args: argparse.Namespace) -> None:
     recipe_path = Path(args.recipe)
     recipe = load_recipe(recipe_path)
@@ -1421,43 +1476,8 @@ def run_build(args: argparse.Namespace) -> None:
     attribution_path.write_text(json.dumps(attribution, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {manifest_path}")
     print(f"wrote {attribution_path}")
-
-
-def run_provenance(args: argparse.Namespace) -> None:
-    recipe_path = Path(args.recipe)
-    recipe = load_recipe(recipe_path)
-    source_sf2, source_sha256 = validate_source(recipe_path, recipe)
-    manifest_path = Path(recipe.get("manifestPath", "src/audio/samplePacks.generated.ts"))
-    attribution_path = Path(
-        recipe.get("attributionPath", "public/audio/v1/attribution.json")
-    )
-    provenance_path = Path(
-        recipe.get("provenancePath", "tools/audio/sample-packs.provenance.json")
-    )
-    attribution = load_json_object(attribution_path)
-
-    if attribution.get("sourceSf2") != source_sf2.name:
-        raise Sf2Error("Attribution SoundFont name is stale; run pnpm audio:build")
-    if attribution.get("sourceSha256") != source_sha256:
-        raise Sf2Error("Attribution SoundFont checksum is stale; run pnpm audio:build")
-
-    audio_paths = validated_audio_paths(recipe, attribution)
-    provenance = {
-        "schemaVersion": 1,
-        "source": {
-            "fileName": source_sf2.name,
-            "sha256": source_sha256,
-            "sizeBytes": source_sf2.stat().st_size,
-        },
-        "inputFiles": file_record_map([Path(__file__), recipe_path]),
-        "metadataFiles": file_record_map([manifest_path, attribution_path]),
-        "audioFiles": file_record_map(audio_paths),
-    }
-    provenance_path.parent.mkdir(parents=True, exist_ok=True)
-    provenance_path.write_text(
-        json.dumps(provenance, indent=2) + "\n", encoding="utf-8"
-    )
-    print(f"wrote {provenance_path}")
+    format_ts_manifest(manifest_path)
+    write_provenance(recipe_path, recipe, source_sf2, source_sha256)
 
 
 def run_verify(args: argparse.Namespace) -> None:
@@ -1560,17 +1580,6 @@ def create_parser() -> argparse.ArgumentParser:
         help="emit planned manifests without writing audio/TS/JSON outputs",
     )
     build.set_defaults(func=run_build)
-
-    provenance = subparsers.add_parser(
-        "provenance", help="record checksums for generated audio artifacts"
-    )
-    provenance.add_argument(
-        "recipe",
-        nargs="?",
-        default="tools/audio/sample-packs.json",
-        help="sample pack recipe JSON",
-    )
-    provenance.set_defaults(func=run_provenance)
 
     verify = subparsers.add_parser(
         "verify", help="verify generated audio metadata and asset checksums"
