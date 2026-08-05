@@ -11,6 +11,7 @@ const strictConfig = defineConfig([
           allowDefaultProject: [
             "eslint.config.mjs",
             "eslint.strict.config.mjs",
+            "tools/verify_service_worker_audio_cache.mjs",
           ],
         },
         tsconfigRootDir: fileURLToPath(new URL(".", import.meta.url)),
