@@ -56,6 +56,16 @@ pnpm check:ci
 This checks formatting, strict linting, TypeScript, Vitest coverage, generated
 audio provenance, and the production and service-worker builds.
 
+The browser acceptance suite covers the small set of behaviors that require a
+real browser: hydration and persistence, a complete authoring journey, native
+dialog and input behavior, sampled-audio readiness, and PWA offline support.
+Install Chromium once and run it with:
+
+```sh
+pnpm exec playwright install chromium
+pnpm test:e2e
+```
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the current contribution policy and
