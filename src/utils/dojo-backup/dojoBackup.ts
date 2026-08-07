@@ -226,7 +226,7 @@ function formatBackupFileName(exportedAt: string) {
     .replaceAll(":", "")
     .replace("T", "-");
 
-  return `muso-dojo-set-${timestamp}.json`;
+  return `muso-dojo-backup-${timestamp}.json`;
 }
 
 export function createDojoBackupDocument(

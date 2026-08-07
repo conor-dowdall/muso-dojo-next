@@ -94,32 +94,35 @@ export function DojoBackupSettings({
     onRestoreComplete();
   };
 
-  const restoreConfirmation = "Replace current Dojo?";
+  const restoreConfirmation = "Replace your Dojo?";
 
   return (
     <>
       <Heading as="h3" size="xs" variant="muted">
-        Backups
+        Data &amp; Backups
       </Heading>
+      <Text as="p" size="sm" variant="muted">
+        Everything in your Dojo is saved automatically on this device.
+      </Text>
       <DisclosureList>
         <DisclosureListGroup>
           <DisclosureListAction
             icon={<Save />}
-            label="Save the Set"
+            label="Download Dojo Backup"
             shouldYield={false}
-            subtitle="Save a portable copy of your current Dojo"
+            subtitle="Save a portable copy of your Sessions, Arrangements, personal library, and preferences."
             onClick={exportBackup}
           />
 
           {pendingBackup ? (
             <DisclosureListConfirmAction
-              actionAriaLabel="Recall a Set"
+              actionAriaLabel="Restore Dojo Backup"
               confirmAriaLabel={restoreConfirmation}
               confirmButtonLabel="Replace"
               confirmLabel={restoreConfirmation}
               icon={<FolderOpen />}
               isConfirming
-              label="Recall a Set"
+              label="Restore Dojo Backup"
               tone="danger"
               onCancel={cancelRestore}
               onConfirm={restoreBackup}
@@ -127,12 +130,14 @@ export function DojoBackupSettings({
             />
           ) : (
             <DisclosureListAction
-              aria-label="Choose a saved Dojo JSON file to recall"
+              aria-label="Choose a Dojo backup JSON file to restore"
               disabled={isReadingBackup}
               icon={<FolderOpen />}
-              label={isReadingBackup ? "Reading Saved Set…" : "Recall a Set"}
+              label={
+                isReadingBackup ? "Reading Backup…" : "Restore Dojo Backup"
+              }
               shouldYield={false}
-              subtitle="Replace your current Dojo with a saved set"
+              subtitle="Replace everything in your Dojo with a backup file."
               onClick={chooseBackupFile}
             />
           )}

@@ -97,7 +97,7 @@ export function DojoSettingsDialog({ onClose }: DojoSettingsDialogProps) {
           </DisclosureList>
         </DialogContentSection>
 
-        <DialogContentSection ariaLabel="Backups" menuGroup>
+        <DialogContentSection ariaLabel="Data & Backups" menuGroup>
           <DojoBackupSettings onRestoreComplete={onClose} />
         </DialogContentSection>
       </DialogContent>
