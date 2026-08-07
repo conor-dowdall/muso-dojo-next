@@ -312,10 +312,12 @@ export function DisclosureListChoiceItem({
 }
 
 interface DisclosureListConfirmActionProps {
+  actionTone?: OptionButtonProps["tone"];
   actionAriaLabel?: string;
   cancelLabel?: string;
   className?: string;
   confirmAriaLabel: string;
+  confirmDetails?: ReactNode;
   confirmLabel: ReactNode;
   confirmLabelClassName?: string;
   confirmButtonLabel?: string;
@@ -326,14 +328,18 @@ interface DisclosureListConfirmActionProps {
   onCancel: () => void;
   onConfirm: () => void;
   onRequestConfirm: () => void;
+  secondaryAction?: ReactNode;
+  subtitle?: ReactNode;
   tone?: OptionButtonProps["tone"];
 }
 
 export function DisclosureListConfirmAction({
   actionAriaLabel,
+  actionTone,
   cancelLabel = "Cancel",
   className = "",
   confirmAriaLabel,
+  confirmDetails,
   confirmLabel,
   confirmLabelClassName = "",
   confirmButtonLabel = "Confirm",
@@ -344,6 +350,8 @@ export function DisclosureListConfirmAction({
   onCancel,
   onConfirm,
   onRequestConfirm,
+  secondaryAction,
+  subtitle,
   tone = "neutral",
 }: DisclosureListConfirmActionProps) {
   const clusterClasses = cx(styles.itemCluster, containerClassName);
@@ -357,7 +365,8 @@ export function DisclosureListConfirmAction({
         containerClassName={containerClassName}
         icon={icon}
         label={label}
-        tone={tone}
+        subtitle={subtitle}
+        tone={actionTone ?? tone}
         onClick={onRequestConfirm}
       />
     );
@@ -379,8 +388,12 @@ export function DisclosureListConfirmAction({
           ) : null}
           <span className={labelClasses}>{confirmLabel}</span>
         </span>
+        {confirmDetails !== undefined ? (
+          <div className={styles.confirmationDetails}>{confirmDetails}</div>
+        ) : null}
         <span className={styles.confirmationActions}>
           <Button label={cancelLabel} size="sm" onClick={onCancel} />
+          {secondaryAction}
           <Button
             label={confirmButtonLabel}
             preventConcurrentClicks

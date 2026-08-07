@@ -53,6 +53,8 @@ function HydratedSession({
   const [addDialogKey, setAddDialogKey] = useState(0);
   const [isSessionLibraryOpen, setIsSessionLibraryOpen] = useState(false);
   const [isSessionTempoOpen, setIsSessionTempoOpen] = useState(false);
+  const [sessionLibraryReturnFocusTo, setSessionLibraryReturnFocusTo] =
+    useState<HTMLElement | null>(null);
   const [sessionDialogKey, setSessionDialogKey] = useState(0);
   const [sessionDialogTempoId, setSessionDialogTempoId] = useState<
     string | null
@@ -88,7 +90,8 @@ function HydratedSession({
     setAddDialogKey((currentKey) => currentKey + 1);
     setIsAddDialogOpen(true);
   };
-  const openSessionLibrary = () => {
+  const openSessionLibrary = (returnFocusTo?: HTMLElement | null) => {
+    setSessionLibraryReturnFocusTo(returnFocusTo ?? null);
     setIsAddDialogOpen(false);
     setSessionDialogKey((currentKey) => currentKey + 1);
     setSessionDialogTempoId(null);
@@ -216,6 +219,7 @@ function HydratedSession({
         <Dialog
           isOpen={isSessionLibraryOpen}
           onClose={() => setIsSessionLibraryOpen(false)}
+          returnFocusTo={sessionLibraryReturnFocusTo}
           size="standard"
         >
           <WorkspaceLibraryDialog
@@ -254,6 +258,7 @@ function HydratedSession({
       <Dialog
         isOpen={isSessionLibraryOpen}
         onClose={() => setIsSessionLibraryOpen(false)}
+        returnFocusTo={sessionLibraryReturnFocusTo}
         size="standard"
       >
         <WorkspaceLibraryDialog

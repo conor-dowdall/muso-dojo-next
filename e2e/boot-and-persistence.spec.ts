@@ -11,7 +11,7 @@ test("enters the Dojo and restores a user-visible change after reload", async ({
   await expect(page).toHaveURL(/\/dojo$/);
   await expect(page.getByRole("heading", { name: "My Session" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("button", { name: "Session menu" }).click();
   await expect(
     page.getByRole("heading", { name: "Session Menu" }),
   ).toBeVisible();

@@ -1,0 +1,8 @@
+.importError,
+.importStatus {
+  padding: var(--space-2) var(--space-3);
+}
+
+.importError {
+  color: var(--color-danger);
+}

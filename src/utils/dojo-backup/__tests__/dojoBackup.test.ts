@@ -130,13 +130,28 @@ describe("Dojo JSON backups", () => {
     const backupFile = createDojoBackupFile(source, { exportedAt });
     const parsed = await readDojoBackupFile(backupFile.blob);
 
-    expect(backupFile.fileName).toBe("muso-dojo-set-2026-07-26-143022Z.json");
+    expect(backupFile.fileName).toBe(
+      "muso-dojo-backup-2026-07-26-143022Z.json",
+    );
     expect(backupFile.exportedAt).toBe(exportedAt.toISOString());
     expect(backupFile.blob.type).toBe(DOJO_BACKUP_CONTENT_TYPE);
     expect(parsed.exportedAt).toBe(exportedAt.toISOString());
     expect(
       parsed.snapshot.dojoSettings.customChordProgressions?.[0]?.name,
     ).toBe("My Changes");
+  });
+
+  it("continues reading backups with the legacy set filename", async () => {
+    const legacyBackup = new File(
+      [serializeDojoBackup(createCompleteSnapshot(), { exportedAt })],
+      "muso-dojo-set-2026-07-26-143022Z.json",
+      { type: DOJO_BACKUP_CONTENT_TYPE },
+    );
+
+    const parsed = await readDojoBackupFile(legacyBackup);
+
+    expect(parsed.exportedAt).toBe(exportedAt.toISOString());
+    expect(parsed.snapshot.sessions).toHaveProperty(sessionId);
   });
 
   it("rejects malformed JSON and documents that are not complete backups", () => {

@@ -1,8 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { LibraryBig, PanelTopBottomDashed, PanelsTopLeft } from "lucide-react";
+import {
+  FileInput,
+  LibraryBig,
+  List,
+  PanelTopBottomDashed,
+  PanelsTopLeft,
+  SlidersVertical,
+} from "lucide-react";
 import {
   DialogCloseFooter,
   DialogContent,
@@ -28,12 +35,109 @@ import {
   countArrangementsUsingSession,
   getArrangementLibrarySubtitle,
 } from "@/components/arrangement/arrangementLibraryFormatting";
+import { CustomTuningsDialog } from "@/components/fretboard-tuning/CustomTuningsDialog";
+import { CustomChordProgressionsDialog } from "@/components/music-theory/CustomChordProgressionsDialog";
+import { DojoResourceImportDialog } from "@/components/workspace/DojoResourceImportDialog";
+import {
+  DojoBackupError,
+  readDojoBackupFile,
+  type ParsedDojoBackup,
+} from "@/utils/dojo-backup/dojoBackup";
+import { createDojoResourceImportCatalog } from "@/utils/dojo-backup/dojoResourceImport";
+import styles from "./WorkspaceLibraryDialog.module.css";
+
+function formatSavedCount(count: number) {
+  return `${count} saved`;
+}
+
+export function WorkspaceLibraryResources({
+  feedback,
+  isReadingBackup = false,
+  progressionCount,
+  tuningCount,
+  onImportResources,
+  onOpenProgressions,
+  onOpenTunings,
+}: {
+  feedback?: { message: string; tone: "error" | "status" } | null;
+  isReadingBackup?: boolean;
+  progressionCount: number;
+  tuningCount: number;
+  onImportResources: () => void;
+  onOpenProgressions: () => void;
+  onOpenTunings: () => void;
+}) {
+  return (
+    <DialogContentSection ariaLabel="Resources" menuGroup>
+      <Heading as="h3" size="xs" variant="muted">
+        Resources
+      </Heading>
+      <DisclosureList grouped groupGap="section">
+        <DisclosureListGroup>
+          <DisclosureListAction
+            icon={<SlidersVertical />}
+            label="My Tunings"
+            preview={formatSavedCount(tuningCount)}
+            onClick={onOpenTunings}
+          />
+          <DisclosureListAction
+            icon={<List />}
+            label="My Progressions"
+            preview={formatSavedCount(progressionCount)}
+            onClick={onOpenProgressions}
+          />
+        </DisclosureListGroup>
+        <DisclosureListGroup>
+          <DisclosureListAction
+            aria-label="Choose a Dojo backup JSON file to import resources from"
+            disabled={isReadingBackup}
+            icon={<FileInput />}
+            label={
+              isReadingBackup
+                ? "Reading Backup…"
+                : "Import Resources from Backup"
+            }
+            shouldYield={false}
+            subtitle="Add Custom Tunings and Custom Chord Progressions without replacing your Dojo."
+            onClick={onImportResources}
+          />
+          {feedback ? (
+            <Text
+              as="p"
+              className={
+                feedback.tone === "error"
+                  ? styles.importError
+                  : styles.importStatus
+              }
+              role={feedback.tone === "error" ? "alert" : "status"}
+              size="sm"
+            >
+              {feedback.message}
+            </Text>
+          ) : null}
+        </DisclosureListGroup>
+      </DisclosureList>
+    </DialogContentSection>
+  );
+}
 
 export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
+  const resourceBackupInputRef = useRef<HTMLInputElement>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [renameId, setRenameId] = useState<string | null>(null);
   const [tempoId, setTempoId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [openResource, setOpenResource] = useState<
+    "tunings" | "progressions" | null
+  >(null);
+  const [isReadingResourceBackup, setIsReadingResourceBackup] = useState(false);
+  const [isResourceImportOpen, setIsResourceImportOpen] = useState(false);
+  const [pendingResourceBackup, setPendingResourceBackup] =
+    useState<ParsedDojoBackup | null>(null);
+  const [resourceImportFeedback, setResourceImportFeedback] = useState<{
+    message: string;
+    tone: "error" | "status";
+  } | null>(null);
   const activeWorkspace = useAppStore((state) => state.activeWorkspace);
   const sessionRecord = useAppStore((state) => state.sessions);
   const sessions = useMemo(
@@ -51,12 +155,30 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
     () => Object.values(arrangementRecord),
     [arrangementRecord],
   );
+  const tuningCount = useAppStore(
+    (state) => state.dojoSettings.customFretboardTunings?.length ?? 0,
+  );
+  const progressionCount = useAppStore(
+    (state) => state.dojoSettings.customChordProgressions?.length ?? 0,
+  );
+  const dojoSettings = useAppStore((state) => state.dojoSettings);
+  const resourceImportCatalog = useMemo(
+    () =>
+      pendingResourceBackup
+        ? createDojoResourceImportCatalog(
+            dojoSettings,
+            pendingResourceBackup.snapshot.dojoSettings,
+          )
+        : null,
+    [dojoSettings, pendingResourceBackup],
+  );
   const actions = useAppStore(
     useShallow((state) => ({
       addArrangement: state.addArrangement,
       addSession: state.addSession,
       cloneArrangement: state.cloneArrangement,
       cloneSession: state.cloneSession,
+      importDojoBackupResources: state.importDojoBackupResources,
       removeArrangement: state.removeArrangement,
       removeSession: state.removeSession,
       renameArrangement: state.renameArrangement,
@@ -77,41 +199,81 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
     resetMenus();
     onClose();
   };
+  const chooseResourceBackup = () => {
+    setOpenResource(null);
+    setResourceImportFeedback(null);
+    resourceBackupInputRef.current?.click();
+  };
+  const readResourceBackup = async (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    setResourceImportFeedback(null);
+    setIsReadingResourceBackup(true);
+
+    try {
+      setPendingResourceBackup(await readDojoBackupFile(file));
+      setIsResourceImportOpen(true);
+    } catch (error) {
+      setIsResourceImportOpen(false);
+      setPendingResourceBackup(null);
+      setResourceImportFeedback({
+        message:
+          error instanceof DojoBackupError
+            ? error.message
+            : "The backup could not be read.",
+        tone: "error",
+      });
+    } finally {
+      setIsReadingResourceBackup(false);
+    }
+  };
+  const importResources = (selectedKeys: readonly string[]) => {
+    if (!pendingResourceBackup) {
+      return;
+    }
+
+    const result = actions.importDojoBackupResources(
+      pendingResourceBackup.snapshot,
+      selectedKeys,
+    );
+    setIsResourceImportOpen(false);
+    setResourceImportFeedback({
+      message: `Imported ${result.imported} ${
+        result.imported === 1 ? "resource" : "resources"
+      }. Skipped ${result.skipped} ${
+        result.skipped === 1 ? "resource" : "resources"
+      }.`,
+      tone: "status",
+    });
+  };
 
   return (
     <>
       <DialogHeader icon={<LibraryBig />} title="Library" onClose={onClose} />
       <DialogContent layout="stack" menuRhythm="standard">
-        <DialogContentSection ariaLabel="Create workspace" menuGroup>
-          <DisclosureList grouped>
+        <DialogContentSection ariaLabel="Sessions" menuGroup>
+          <Heading as="h3" size="xs" variant="muted">
+            Sessions
+          </Heading>
+          <DisclosureList grouped groupGap="section">
             <DisclosureListGroup>
               <DisclosureListAction
                 icon={<PanelsTopLeft />}
                 label="New Session"
                 preventConcurrentClicks
+                subtitle="Build and play music in Parts with Instruments, Loopers and more."
                 onClick={() => {
                   actions.addSession();
                   onClose();
                 }}
               />
-              <DisclosureListAction
-                icon={<PanelTopBottomDashed />}
-                label="New Arrangement"
-                preventConcurrentClicks
-                onClick={() => {
-                  actions.addArrangement();
-                  onClose();
-                }}
-              />
             </DisclosureListGroup>
-          </DisclosureList>
-        </DialogContentSection>
-
-        <DialogContentSection ariaLabel="Sessions" menuGroup>
-          <Heading as="h3" size="xs" variant="muted">
-            Sessions
-          </Heading>
-          <DisclosureList grouped>
             <DisclosureListGroup>
               {sessions.length === 0 ? (
                 <Text as="p" size="sm" variant="muted">
@@ -179,7 +341,19 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
           <Heading as="h3" size="xs" variant="muted">
             Arrangements
           </Heading>
-          <DisclosureList grouped>
+          <DisclosureList grouped groupGap="section">
+            <DisclosureListGroup>
+              <DisclosureListAction
+                icon={<PanelTopBottomDashed />}
+                label="New Arrangement"
+                preventConcurrentClicks
+                subtitle="Build a playable arrangement by capturing your Sessions as Sections."
+                onClick={() => {
+                  actions.addArrangement();
+                  onClose();
+                }}
+              />
+            </DisclosureListGroup>
             <DisclosureListGroup>
               {arrangements.length === 0 ? (
                 <Text as="p" size="sm" variant="muted">
@@ -291,8 +465,44 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
             </DisclosureListGroup>
           </DisclosureList>
         </DialogContentSection>
+
+        <WorkspaceLibraryResources
+          feedback={resourceImportFeedback}
+          isReadingBackup={isReadingResourceBackup}
+          progressionCount={progressionCount}
+          tuningCount={tuningCount}
+          onImportResources={chooseResourceBackup}
+          onOpenProgressions={() => setOpenResource("progressions")}
+          onOpenTunings={() => setOpenResource("tunings")}
+        />
       </DialogContent>
       <DialogCloseFooter onClose={onClose} />
+      <CustomTuningsDialog
+        isOpen={openResource === "tunings"}
+        mode="manage"
+        onClose={() => setOpenResource(null)}
+      />
+      <CustomChordProgressionsDialog
+        isOpen={openResource === "progressions"}
+        mode="manage"
+        onClose={() => setOpenResource(null)}
+      />
+      {pendingResourceBackup && resourceImportCatalog ? (
+        <DojoResourceImportDialog
+          catalog={resourceImportCatalog}
+          exportedAt={pendingResourceBackup.exportedAt}
+          isOpen={isResourceImportOpen}
+          onClose={() => setIsResourceImportOpen(false)}
+          onImport={importResources}
+        />
+      ) : null}
+      <input
+        ref={resourceBackupInputRef}
+        hidden
+        accept=".json,application/json"
+        type="file"
+        onChange={readResourceBackup}
+      />
     </>
   );
 }

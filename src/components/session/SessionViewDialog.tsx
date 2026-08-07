@@ -14,16 +14,23 @@ export function SessionViewDialog({
   isOpen,
   onClose,
   onSelect,
+  returnFocusTo,
   viewMode,
 }: {
   canUsePartViews: boolean;
   isOpen: boolean;
   onClose: () => void;
   onSelect: (mode: SessionViewMode) => void;
+  returnFocusTo?: HTMLElement | null;
   viewMode: SessionViewMode;
 }) {
   return (
-    <Dialog isOpen={isOpen} onClose={onClose} size="compact">
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      returnFocusTo={returnFocusTo}
+      size="compact"
+    >
       <DialogHeader
         icon={<GalleryThumbnails />}
         title="View"

@@ -108,6 +108,11 @@
   animation: fadeOut var(--transition-medium) var(--ease-out) forwards;
 }
 
+.dialog[data-handoff]:not([data-state="closing"]),
+.dialog[data-handoff]:not([data-state="closing"])::backdrop {
+  animation: none;
+}
+
 .dialogHeader {
   --dialog-header-control-size: calc(
     var(--text-sm) + (var(--space-2) * 2) + (var(--border-width-base) * 2)
@@ -273,5 +278,14 @@
 
   .dialogFooterActionGroup > * {
     flex: 1 1 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog,
+  .dialog::backdrop,
+  .dialog[data-state="closing"],
+  .dialog[data-state="closing"]::backdrop {
+    animation: none;
   }
 }

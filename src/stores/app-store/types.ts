@@ -17,6 +17,7 @@ import { type InstrumentSize } from "@/types/instrument-layout";
 import { type NoteColorConfig } from "@/types/note-colors";
 import { type SettingValue } from "@/types/state";
 import { type SessionWorkspaceViewMode } from "@/types/session-view";
+import { type DojoResourceImportResult } from "@/utils/dojo-backup/dojoResourceImport";
 import {
   type ActiveWorkspaceRef,
   type ArrangementPlaybackMode,
@@ -59,7 +60,12 @@ export type PartSettingsPatch = Partial<
 >;
 
 export interface DojoDataActions {
+  importDojoBackupResources: (
+    snapshot: AppStoreSnapshot,
+    selectedKeys: readonly string[],
+  ) => DojoResourceImportResult;
   restoreDojoSnapshot: (snapshot: AppStoreSnapshot) => void;
+  startFreshDojo: () => void;
 }
 
 export type DroneSettingsPatch = Partial<

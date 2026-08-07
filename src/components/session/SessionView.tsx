@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { partSequenceCoordinator } from "@/audio";
 import { NoteColorProvider } from "@/components/note-colors/NoteColorProvider";
 import { Button } from "@/components/ui/buttons/Button";
+import { WorkspaceEmptyState } from "@/components/workspace/WorkspaceEmptyState";
 import { useAppStore } from "@/stores/appStore";
 import { type MusicPartConfig } from "@/types/session";
 import { getPartLeadSheetSummary } from "@/utils/music-part/partLeadSheet";
@@ -83,15 +84,20 @@ export function SessionView({
   return (
     <NoteColorProvider config={noteColorConfig}>
       {partIds.length === 0 && onOpenAddDialog ? (
-        <div className={styles.emptySession}>
-          <Button
-            icon={<Plus />}
-            label="Add to Session"
-            size="md"
-            variant="outline"
-            onClick={onOpenAddDialog}
-          />
-        </div>
+        <WorkspaceEmptyState
+          action={
+            <Button
+              icon={<Plus />}
+              label="Add to Session"
+              size="sm"
+              variant="outline"
+              onClick={onOpenAddDialog}
+            />
+          }
+        >
+          Add individual Parts or a Chord Progression to start building this
+          Session.
+        </WorkspaceEmptyState>
       ) : showChart ? (
         <SessionChartView activePartId={activePartId} sessionId={sessionId} />
       ) : showPartsView ? (

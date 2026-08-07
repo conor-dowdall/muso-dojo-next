@@ -1,4 +1,15 @@
-import { useRef, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+  type ReactNode,
+} from "react";
 import { X } from "lucide-react";
 import styles from "./Dialog.module.css";
 import { Button, type ButtonProps } from "@/components/ui/buttons/Button";
@@ -12,6 +23,8 @@ function cx(...classes: Array<string | false | null | undefined>) {
 let lockedDialogCount = 0;
 let previousBodyOverflow = "";
 let previousBodyPaddingInlineEnd = "";
+let dialogHandoffPending = false;
+const DialogTitleIdContext = createContext<string | undefined>(undefined);
 
 function supportsStableScrollbarGutter() {
   return typeof CSS !== "undefined" && CSS.supports("scrollbar-gutter: stable");
@@ -62,6 +75,12 @@ interface DialogProps {
   children: ReactNode;
   size?: DialogSize;
   className?: string;
+  /** Close the native modal without an exit animation during a dialog handoff. */
+  closeImmediately?: boolean;
+  onAfterClose?: () => void;
+  restoreFocusOnClose?: boolean;
+  returnFocusRef?: RefObject<HTMLElement | null>;
+  returnFocusTo?: HTMLElement | null;
 }
 
 export function Dialog({
@@ -70,8 +89,17 @@ export function Dialog({
   children,
   size = "standard",
   className = "",
+  closeImmediately = false,
+  onAfterClose,
+  restoreFocusOnClose = true,
+  returnFocusRef,
+  returnFocusTo,
 }: DialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const dialogTitleId = useId();
+  const dialogWasOpenedRef = useRef(false);
+  const focusReturnElementRef = useRef<HTMLElement | null>(null);
+  const unlockBodyScrollRef = useRef<(() => void) | null>(null);
 
   // We persist the children to ensure the dialog stays "full" during
   // its final frame on screen, before the exit animation closes it.
@@ -89,35 +117,87 @@ export function Dialog({
     setPersistedSize(size);
   }
 
-  useEffect(() => {
+  const finishClose = useCallback(() => {
+    if (!dialogWasOpenedRef.current) {
+      return;
+    }
+
+    dialogWasOpenedRef.current = false;
+    unlockBodyScrollRef.current?.();
+    unlockBodyScrollRef.current = null;
+    onAfterClose?.();
+
+    if (restoreFocusOnClose && focusReturnElementRef.current?.isConnected) {
+      focusReturnElementRef.current.focus();
+    }
+  }, [onAfterClose, restoreFocusOnClose]);
+
+  useLayoutEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
 
     if (isOpen) {
       if (!dialog.open) {
+        const inactiveDialogs = document.querySelectorAll<HTMLDialogElement>(
+          "dialog[open][inert]",
+        );
+        const isHandoff = inactiveDialogs.length > 0 || dialogHandoffPending;
+        dialog.toggleAttribute("data-handoff", isHandoff);
+        inactiveDialogs.forEach((inactiveDialog) => inactiveDialog.close());
+        dialogHandoffPending = false;
+        focusReturnElementRef.current =
+          returnFocusRef?.current ??
+          returnFocusTo ??
+          (document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null);
         dialog.showModal();
+        dialogWasOpenedRef.current = true;
+        unlockBodyScrollRef.current ??= lockBodyScroll();
       }
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
       return;
     }
 
-    return lockBodyScroll();
-  }, [isOpen]);
+    if (
+      dialog.open &&
+      (closeImmediately ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+    ) {
+      if (closeImmediately) {
+        dialogHandoffPending = true;
+      }
+      dialog.close();
+    }
+  }, [closeImmediately, isOpen, returnFocusRef, returnFocusTo]);
+
+  useEffect(
+    () => () => {
+      unlockBodyScrollRef.current?.();
+      unlockBodyScrollRef.current = null;
+    },
+    [],
+  );
 
   return (
     <dialog
       ref={dialogRef}
+      aria-labelledby={dialogTitleId}
       className={cx(styles.dialog, className)}
       inert={isOpen ? undefined : true}
       onClose={(event) => {
         event.stopPropagation();
+        if (isOpen) {
+          onClose();
+        }
+        finishClose();
+      }}
+      onCancel={(event) => {
+        event.stopPropagation();
+        event.preventDefault();
         onClose();
       }}
       onClick={(e) => {
+        e.stopPropagation();
         if (e.target === dialogRef.current) {
           onClose();
         }
@@ -134,7 +214,9 @@ export function Dialog({
       data-state={isOpen ? undefined : "closing"}
       data-size={isOpen ? size : persistedSize}
     >
-      {isOpen ? children : persistedChildren}
+      <DialogTitleIdContext.Provider value={dialogTitleId}>
+        {isOpen ? children : persistedChildren}
+      </DialogTitleIdContext.Provider>
     </dialog>
   );
 }
@@ -157,9 +239,16 @@ export function DialogHeader({
   onClose,
   className = "",
 }: DialogHeaderProps) {
+  const dialogTitleId = useContext(DialogTitleIdContext);
+
   return (
     <header className={cx(styles.dialogHeader, className)}>
-      <Heading as="h2" className={styles.dialogTitle} leading="none">
+      <Heading
+        as="h2"
+        className={styles.dialogTitle}
+        id={dialogTitleId}
+        leading="none"
+      >
         <span className={styles.dialogIdentity}>
           {icon !== undefined ? (
             <span aria-hidden="true" className={styles.dialogIdentityIcon}>

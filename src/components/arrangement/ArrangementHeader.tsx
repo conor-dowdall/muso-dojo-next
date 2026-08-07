@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Ellipsis,
   GalleryThumbnails,
   Gauge,
   Infinity,
-  LibraryBig,
   ListVideo,
   PanelTopBottomDashed,
   Plus,
@@ -14,6 +13,7 @@ import {
   Settings2,
   Square,
 } from "lucide-react";
+import { WorkspaceLibraryMenuAction } from "@/components/workspace/WorkspaceLibraryMenuAction";
 import {
   ControlHeader,
   ControlHeaderCluster,
@@ -55,7 +55,7 @@ export function ArrangementHeader({
   arrangementId: string;
   canAddSection: boolean;
   onAddSection: () => void;
-  onOpenLibrary: () => void;
+  onOpenLibrary: (returnFocusTo?: HTMLElement | null) => void;
   onViewModeChange: (mode: "build" | "chart") => void;
   transport: ReturnType<typeof useArrangementTransport>;
   viewMode: "build" | "chart";
@@ -65,6 +65,12 @@ export function ArrangementHeader({
   const [tempoOpen, setTempoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [menuDestination, setMenuDestination] = useState<
+    "library" | "settings" | "view" | null
+  >(null);
+  const [viewReturnFocusTo, setViewReturnFocusTo] =
+    useState<HTMLElement | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const arrangement = useAppStore((state) => state.arrangements[arrangementId]);
   const arrangements = useAppStore((state) => state.arrangements);
   const sessions = useAppStore((state) => state.sessions);
@@ -114,7 +120,24 @@ export function ArrangementHeader({
   const openViewDialog = () => {
     setMenuOpen(false);
     setRenameOpen(false);
+    setViewReturnFocusTo(null);
     setViewOpen(true);
+  };
+  const requestMenuHandoff = (
+    destination: NonNullable<typeof menuDestination>,
+  ) => {
+    setMenuOpen(false);
+    setRenameOpen(false);
+    setMenuDestination(destination);
+
+    if (destination === "library") {
+      onOpenLibrary(menuButtonRef.current);
+    } else if (destination === "settings") {
+      setSettingsOpen(true);
+    } else if (destination === "view") {
+      setViewReturnFocusTo(menuButtonRef.current);
+      setViewOpen(true);
+    }
   };
 
   return (
@@ -188,15 +211,23 @@ export function ArrangementHeader({
               onClick={openViewDialog}
             />
             <OverflowMenuButton
+              ref={menuButtonRef}
               aria-label="Arrangement menu"
-              onClick={() => setMenuOpen(true)}
+              onClick={() => {
+                setMenuDestination(null);
+                setMenuOpen(true);
+              }}
             />
           </ControlHeaderCluster>
         }
       />
       <ObjectMenuDialog
+        closeImmediately={menuDestination !== null}
         icon={<Ellipsis />}
         isOpen={menuOpen}
+        onAfterClose={() => setMenuDestination(null)}
+        restoreFocusOnClose={menuDestination === null}
+        returnFocusRef={menuButtonRef}
         title="Arrangement Menu"
         onClose={() => {
           setMenuOpen(false);
@@ -209,7 +240,7 @@ export function ArrangementHeader({
             icon={<GalleryThumbnails />}
             label="View"
             preview={viewModeLabel}
-            onClick={openViewDialog}
+            onClick={() => requestMenuHandoff("view")}
           />
           <InlineRenameActionItem
             ariaLabel={`Rename arrangement. Current name: ${arrangement.name}`}
@@ -232,29 +263,20 @@ export function ArrangementHeader({
           />
         </DisclosureListGroup>
         <DisclosureListGroup>
-          <DisclosureListAction
-            icon={<LibraryBig />}
-            label="Library"
-            onClick={() => {
-              setMenuOpen(false);
-              setRenameOpen(false);
-              onOpenLibrary();
-            }}
+          <WorkspaceLibraryMenuAction
+            onClick={() => requestMenuHandoff("library")}
           />
           <DisclosureListAction
             icon={<Settings2 />}
             label="Dojo Settings"
-            onClick={() => {
-              setMenuOpen(false);
-              setRenameOpen(false);
-              setSettingsOpen(true);
-            }}
+            onClick={() => requestMenuHandoff("settings")}
           />
         </DisclosureListGroup>
       </ObjectMenuDialog>
       <ObjectMenuDialog
         icon={<GalleryThumbnails />}
         isOpen={viewOpen}
+        returnFocusTo={viewReturnFocusTo}
         size="compact"
         title="View"
         onClose={() => setViewOpen(false)}
@@ -299,6 +321,7 @@ export function ArrangementHeader({
         isOpen={settingsOpen}
         size="standard"
         onClose={() => setSettingsOpen(false)}
+        returnFocusRef={menuButtonRef}
       >
         <DojoSettingsDialog onClose={() => setSettingsOpen(false)} />
       </Dialog>

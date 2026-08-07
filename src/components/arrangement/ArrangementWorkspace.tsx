@@ -2,7 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { Copy, ListEnd, ListStart, Plus, Trash2 } from "lucide-react";
+import {
+  Copy,
+  LibraryBig,
+  ListEnd,
+  ListStart,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { partSequenceCoordinator } from "@/audio";
 import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
@@ -14,6 +21,7 @@ import {
 import { NumericStepper } from "@/components/ui/numeric-stepper/NumericStepper";
 import { SelectionPreviewLabel } from "@/components/ui/selection-preview";
 import { Text } from "@/components/ui/typography/Text";
+import { WorkspaceEmptyState } from "@/components/workspace/WorkspaceEmptyState";
 import { NoteColorProvider } from "@/components/note-colors/NoteColorProvider";
 import { SessionChart } from "@/components/session/SessionView";
 import { useArrangementTransport } from "@/hooks/audio/useArrangementTransport";
@@ -49,7 +57,7 @@ export function ArrangementWorkspace({
   onOpenLibrary,
 }: {
   arrangementId: string;
-  onOpenLibrary: () => void;
+  onOpenLibrary: (returnFocusTo?: HTMLElement | null) => void;
 }) {
   const arrangement = useAppStore((state) => state.arrangements[arrangementId]);
   const sessions = useAppStore((state) => state.sessions);
@@ -358,15 +366,35 @@ export function ArrangementWorkspace({
             ) : null}
 
             {arrangement.entries.length === 0 ? (
-              <div className={styles.emptyBuild}>
-                <Button
-                  disabled={!defaultSession}
-                  icon={<Plus />}
-                  label="Add First Section"
-                  size="sm"
-                  onClick={() => addDefaultSection(true)}
-                />
-              </div>
+              defaultSession ? (
+                <WorkspaceEmptyState
+                  action={
+                    <Button
+                      icon={<Plus />}
+                      label="Add First Section"
+                      size="sm"
+                      onClick={() => addDefaultSection(true)}
+                    />
+                  }
+                >
+                  Adding a Session captures its current Parts and backing. If
+                  the Session changes, you can update the Section later.
+                </WorkspaceEmptyState>
+              ) : (
+                <WorkspaceEmptyState
+                  action={
+                    <Button
+                      icon={<LibraryBig />}
+                      label="Open Library"
+                      size="sm"
+                      onClick={() => onOpenLibrary()}
+                    />
+                  }
+                >
+                  Arrangements are built from Sessions. Add at least one Part to
+                  a Session first.
+                </WorkspaceEmptyState>
+              )
             ) : (
               <div className={styles.addSectionAction}>
                 <Button

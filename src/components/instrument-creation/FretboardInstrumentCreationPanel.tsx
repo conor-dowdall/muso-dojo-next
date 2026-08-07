@@ -367,6 +367,7 @@ export function FretboardInstrumentCreationPanel({
       <CustomTuningsDialog
         instrument={value.instrument}
         isOpen={isCustomTuningsOpen}
+        mode="choose"
         seedOpenMidiNotes={selectedOpenMidiNotes}
         selected={
           value.tuning
