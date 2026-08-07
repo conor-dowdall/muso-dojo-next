@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState, type ChangeEvent } from "react";
-import { FolderOpen, Save } from "lucide-react";
+import { useShallow } from "zustand/react/shallow";
+import { FolderOpen, RotateCcw, Save } from "lucide-react";
+import { Button } from "@/components/ui/buttons/Button";
 import {
   DisclosureList,
   DisclosureListAction,
@@ -21,7 +23,74 @@ import {
 import styles from "./DojoSettingsDialog.module.css";
 
 interface DojoBackupSettingsProps {
-  onRestoreComplete: () => void;
+  onDojoReplaceComplete: () => void;
+}
+
+interface DojoContentCounts {
+  arrangements: number;
+  progressions: number;
+  sessions: number;
+  tunings: number;
+}
+
+function formatCount(count: number, singular: string, plural: string) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+export function DojoStartFreshAction({
+  counts,
+  isConfirming,
+  onCancel,
+  onConfirm,
+  onDownloadBackup,
+  onRequestConfirm,
+}: {
+  counts: DojoContentCounts;
+  isConfirming: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+  onDownloadBackup: () => void;
+  onRequestConfirm: () => void;
+}) {
+  const sessionCount = formatCount(counts.sessions, "Session", "Sessions");
+  const arrangementCount = formatCount(
+    counts.arrangements,
+    "Arrangement",
+    "Arrangements",
+  );
+  const tuningCount = formatCount(counts.tunings, "Tuning", "Tunings");
+  const progressionCount = formatCount(
+    counts.progressions,
+    "Progression",
+    "Progressions",
+  );
+
+  return (
+    <DisclosureListConfirmAction
+      actionAriaLabel="Start Fresh"
+      actionTone="neutral"
+      confirmAriaLabel="Confirm starting fresh"
+      confirmButtonLabel="Start Fresh"
+      confirmLabel={`Replace ${sessionCount} and ${arrangementCount} with one new empty Session. Your ${tuningCount}, ${progressionCount}, and preferences will remain.`}
+      icon={<RotateCcw />}
+      isConfirming={isConfirming}
+      label="Start Fresh"
+      secondaryAction={
+        <Button
+          icon={<Save />}
+          label="Download Backup"
+          shouldYield={false}
+          size="sm"
+          onClick={onDownloadBackup}
+        />
+      }
+      subtitle="Replace all Sessions and Arrangements with a new empty Session. Your Tunings, Progressions, and preferences will remain."
+      tone="danger"
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+      onRequestConfirm={onRequestConfirm}
+    />
+  );
 }
 
 function getBackupErrorMessage(error: unknown) {
@@ -31,15 +100,25 @@ function getBackupErrorMessage(error: unknown) {
 }
 
 export function DojoBackupSettings({
-  onRestoreComplete,
+  onDojoReplaceComplete,
 }: DojoBackupSettingsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isReadingBackup, setIsReadingBackup] = useState(false);
+  const [isStartFreshConfirming, setIsStartFreshConfirming] = useState(false);
   const [pendingBackup, setPendingBackup] = useState<ParsedDojoBackup | null>(
     null,
   );
   const restoreDojoSnapshot = useAppStore((state) => state.restoreDojoSnapshot);
+  const startFreshDojo = useAppStore((state) => state.startFreshDojo);
+  const counts = useAppStore(
+    useShallow((state): DojoContentCounts => ({
+      arrangements: Object.keys(state.arrangements).length,
+      progressions: state.dojoSettings.customChordProgressions?.length ?? 0,
+      sessions: Object.keys(state.sessions).length,
+      tunings: state.dojoSettings.customFretboardTunings?.length ?? 0,
+    })),
+  );
 
   const exportBackup = () => {
     setErrorMessage(null);
@@ -53,6 +132,7 @@ export function DojoBackupSettings({
 
   const chooseBackupFile = () => {
     setErrorMessage(null);
+    setIsStartFreshConfirming(false);
     fileInputRef.current?.click();
   };
 
@@ -91,7 +171,20 @@ export function DojoBackupSettings({
     stopAllAudioPlayback();
     restoreDojoSnapshot(pendingBackup.snapshot);
     setPendingBackup(null);
-    onRestoreComplete();
+    onDojoReplaceComplete();
+  };
+
+  const requestStartFresh = () => {
+    setErrorMessage(null);
+    setPendingBackup(null);
+    setIsStartFreshConfirming(true);
+  };
+
+  const startFresh = () => {
+    stopAllAudioPlayback();
+    startFreshDojo();
+    setIsStartFreshConfirming(false);
+    onDojoReplaceComplete();
   };
 
   const restoreConfirmation = "Replace your Dojo?";
@@ -104,7 +197,7 @@ export function DojoBackupSettings({
       <Text as="p" size="sm" variant="muted">
         Everything in your Dojo is saved automatically on this device.
       </Text>
-      <DisclosureList>
+      <DisclosureList grouped groupGap="section">
         <DisclosureListGroup>
           <DisclosureListAction
             icon={<Save />}
@@ -147,6 +240,16 @@ export function DojoBackupSettings({
               {errorMessage}
             </Text>
           ) : null}
+        </DisclosureListGroup>
+        <DisclosureListGroup>
+          <DojoStartFreshAction
+            counts={counts}
+            isConfirming={isStartFreshConfirming}
+            onCancel={() => setIsStartFreshConfirming(false)}
+            onConfirm={startFresh}
+            onDownloadBackup={exportBackup}
+            onRequestConfirm={requestStartFresh}
+          />
         </DisclosureListGroup>
       </DisclosureList>
       <input

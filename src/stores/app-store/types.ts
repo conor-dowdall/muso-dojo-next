@@ -60,6 +60,7 @@ export type PartSettingsPatch = Partial<
 
 export interface DojoDataActions {
   restoreDojoSnapshot: (snapshot: AppStoreSnapshot) => void;
+  startFreshDojo: () => void;
 }
 
 export type DroneSettingsPatch = Partial<
