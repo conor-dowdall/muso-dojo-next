@@ -1,7 +1,7 @@
 "use client";
 
 import { type ChordProgression } from "@musodojo/music-theory-data";
-import { Bookmark, Copy, Pencil, Plus, Trash2 } from "lucide-react";
+import { Copy, List, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   Dialog,
@@ -121,11 +121,7 @@ export function CustomChordProgressionsDialog({
 
   return (
     <Dialog isOpen={isOpen} onClose={onClose} size="wide">
-      <DialogHeader
-        icon={<Bookmark />}
-        title="My Progressions"
-        onClose={onClose}
-      />
+      <DialogHeader icon={<List />} title="My Progressions" onClose={onClose} />
       <DialogContent menuRhythm="standard">
         <DialogContentSection
           ariaLabel={

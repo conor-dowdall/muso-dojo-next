@@ -13,7 +13,7 @@ import {
   DisclosureListItem,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
-import { Bookmark } from "lucide-react";
+import { List } from "lucide-react";
 import { getChordProgressionDisplayLabels } from "@/utils/music-theory/chordProgressions";
 import styles from "./ChordProgressionPicker.module.css";
 
@@ -45,7 +45,7 @@ export function ChordProgressionPicker({
     <DisclosureList grouped>
       <DisclosureListGroup aria-label="Custom progression library">
         <DisclosureListAction
-          icon={<Bookmark />}
+          icon={<List />}
           label="My Progressions"
           selected={customSelected}
           subtitle="Choose, create, or edit"

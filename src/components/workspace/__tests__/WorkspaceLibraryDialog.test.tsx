@@ -20,6 +20,12 @@ describe("WorkspaceLibraryDialog", () => {
     expect(markup).toContain(
       "Build a playable arrangement by capturing your Sessions as Sections.",
     );
+    expect(markup.indexOf("Sessions")).toBeLessThan(
+      markup.indexOf("New Session"),
+    );
+    expect(markup.indexOf("Arrangements")).toBeLessThan(
+      markup.indexOf("New Arrangement"),
+    );
     expect(markup).not.toContain("Editable musical material built from Parts");
     expect(markup).not.toContain(
       "Playable sequences of captured Session content.",
@@ -41,6 +47,7 @@ describe("WorkspaceLibraryDialog", () => {
       <WorkspaceLibraryResources
         progressionCount={1}
         tuningCount={2}
+        onImportResources={() => undefined}
         onOpenProgressions={() => undefined}
         onOpenTunings={() => undefined}
       />,
@@ -52,7 +59,12 @@ describe("WorkspaceLibraryDialog", () => {
     expect(markup).toContain("lucide-sliders-vertical");
     expect(markup).toContain("My Progressions");
     expect(markup).toContain("1 saved");
-    expect(markup).toContain("lucide-bookmark");
+    expect(markup).toContain("lucide-list");
+    expect(markup).toContain("Import Resources from Backup");
+    expect(markup).toContain(
+      "Add Custom Tunings and Custom Chord Progressions without replacing your Dojo.",
+    );
+    expect(markup).toContain("lucide-file-input");
     expect(markup).not.toContain("My Library");
   });
 });

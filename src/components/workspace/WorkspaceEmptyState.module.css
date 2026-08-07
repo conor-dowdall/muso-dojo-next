@@ -9,4 +9,5 @@
 .description {
   max-inline-size: 48ch;
   text-align: center;
+  text-wrap: balance;
 }

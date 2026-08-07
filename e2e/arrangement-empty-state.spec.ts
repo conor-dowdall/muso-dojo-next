@@ -11,7 +11,7 @@ test("an empty Arrangement directs the user to add a Part to a Session", async (
   await expect(page.getByRole("heading", { name: "My Session" })).toBeVisible();
 
   await page.getByRole("button", { name: "Session menu", exact: true }).click();
-  await page.getByRole("button", { name: "Library", exact: true }).click();
+  await page.getByRole("button", { name: /^Library/ }).click();
 
   const library = page.getByRole("dialog");
   await expect(library.getByRole("heading", { name: "Library" })).toBeVisible();
