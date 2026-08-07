@@ -39,11 +39,9 @@
   margin-inline: auto;
 }
 
-.emptyBuild {
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  padding-block: var(--space-2);
+.captureExplanation {
+  max-inline-size: 48ch;
+  text-align: center;
 }
 
 .sectionList {

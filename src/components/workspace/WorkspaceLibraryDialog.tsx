@@ -89,6 +89,7 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
                 icon={<PanelsTopLeft />}
                 label="New Session"
                 preventConcurrentClicks
+                subtitle="Build and play music in Parts with instruments, loopers and more."
                 onClick={() => {
                   actions.addSession();
                   onClose();
@@ -98,6 +99,7 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
                 icon={<PanelTopBottomDashed />}
                 label="New Arrangement"
                 preventConcurrentClicks
+                subtitle="Build a playable arrangement by capturing your Sessions as Sections."
                 onClick={() => {
                   actions.addArrangement();
                   onClose();

@@ -1,0 +1,12 @@
+.emptyState {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+}
+
+.description {
+  max-inline-size: 48ch;
+  text-align: center;
+}

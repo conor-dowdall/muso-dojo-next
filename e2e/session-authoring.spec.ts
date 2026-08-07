@@ -5,6 +5,11 @@ test("creates a playable module and moves through session views", async ({
 }) => {
   await page.goto("/dojo");
   await expect(page.getByRole("heading", { name: "My Session" })).toBeVisible();
+  await expect(
+    page.getByText(
+      "Add individual Parts or a Chord Progression to start building this Session.",
+    ),
+  ).toBeVisible();
 
   await page
     .getByRole("button", { name: "Add to session", exact: true })
