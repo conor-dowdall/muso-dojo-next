@@ -10,11 +10,13 @@ reviewed on its own before starting the next one.
   current device.
 - **Session:** editable musical material made from Parts and modules.
 - **Arrangement:** an ordered sequence of captured Session content.
-- **My Library:** reusable musical resources, initially Custom Tunings and
-  Custom Chord Progressions.
+- **Resources:** reusable musical material, initially Custom Tunings and Custom
+  Chord Progressions.
 - **Dojo Backup:** a portable file containing the complete Dojo.
-- Do not use **Set** as a synonym for a backup. In a musical product, that term
-  can be mistaken for a setlist and overlaps with the role of an Arrangement.
+- Do not use **Set** as a synonym for a backup. A Set has a valid musical
+  meaning as a list of songs, whereas the current Set actions operate on the
+  complete Dojo. The problem is the inaccurate scope of the label, not a clash
+  between Set and Arrangement.
 
 ## Group 1: Clarify backup terminology
 
@@ -50,7 +52,7 @@ This group improves first-use comprehension without changing either data
 model.
 
 - Add descriptive subtitles to the Library creation actions:
-  - **New Session** — **Build and practise Parts, instruments, rhythms, and
+  - **New Session** — **Build and play Parts with instruments, rhythms, and
     backing.**
   - **New Arrangement** — **Sequence captured Sessions into sections.**
 - Add brief descriptions beneath the **Sessions** and **Arrangements** section
@@ -105,30 +107,36 @@ hard-won reusable resources and preferences.
 - Verify that personal resources survive and the result feels like a clean
   first-run workspace.
 
-## Group 4: Make the central Library easier to reach
+## Group 4: Make the central Library easier to recognize
 
-- Treat Library as primary workspace navigation rather than only an item in a
-  contextual overflow menu.
-- Add a direct Library action to Session and Arrangement headers when space is
-  available.
-- Retain Library in the overflow menu on compact layouts.
-- Use the same icon, label, dialog, and current-item treatment in both
-  workspaces.
-- Check header density at desktop, tablet, and phone breakpoints before
-  finalizing which existing actions remain directly visible.
+- Keep Library in the Session and Arrangement overflow menus at every screen
+  size.
+- Give the Library menu item the subtitle **Sessions, Arrangements, and
+  Resources** so its scope is visible before opening it.
+- Use the same icon, label, subtitle, dialog, and current-item treatment in
+  both workspaces.
+- Change the generic Session overflow-button accessible label from **Menu** to
+  **Session menu**, matching **Arrangement menu**.
+- Keep Library visually grouped with other Dojo-level navigation rather than
+  the actions that edit the current Session or Arrangement.
 
 ### Review checkpoint
 
-- Verify that switching between a Session and an Arrangement no longer feels
-  hidden.
-- Confirm that the header remains usable and uncluttered at every supported
-  width.
+- Verify that users understand what Library contains after opening the menu.
+- Confirm that Library occupies the same predictable location in Session and
+  Arrangement menus at every supported width.
 
-## Group 5: Bring reusable resources into Library
+## Group 5: Bring reusable musical resources into Library
 
 This group makes the Dojo's contents visible as one coherent system.
 
-- Add a **My Library** or **Resources** section to the central Library.
+- Keep **Library** as the single umbrella for all saved musical content. Do not
+  place a second **My Library** inside it.
+- Add **Resources** as a peer section alongside **Sessions** and
+  **Arrangements**.
+- Prefer **Resources** over **My Resources**. Sessions, Arrangements, Tunings,
+  and Progressions all belong to the user already, so adding **My** to only one
+  category would create an unnecessary distinction.
 - Add entries for:
   - **My Tunings**, with a saved-item count.
   - **My Progressions**, with a saved-item count.
@@ -228,7 +236,7 @@ Fresh**.
 1. Clarify backup terminology.
 2. Explain Sessions and Arrangements.
 3. Add **Start Fresh**.
-4. Make Library easier to reach.
+4. Make Library easier to recognize.
 5. Add reusable resources to Library.
 6. Show backup contents before restoring.
 7. Import personal resources from a backup.
