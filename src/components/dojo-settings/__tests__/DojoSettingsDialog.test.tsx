@@ -1,7 +1,68 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { DojoSettingsDialog } from "@/components/dojo-settings/DojoSettingsDialog";
-import { DojoStartFreshAction } from "@/components/dojo-settings/DojoBackupSettings";
+import {
+  DojoRestoreAction,
+  DojoStartFreshAction,
+} from "@/components/dojo-settings/DojoBackupSettings";
+import { APP_STORE_VERSION } from "@/stores/app-store/persistence";
+import { createStoreSnapshot } from "@/stores/app-store/__tests__/appStoreTestUtils";
+
+function createRestoreBackup() {
+  const snapshot = createStoreSnapshot();
+  const firstSession = snapshot.sessions["session-1"];
+
+  if (!firstSession) {
+    throw new Error("Expected the restore fixture Session to exist");
+  }
+
+  snapshot.sessions["session-2"] = {
+    ...firstSession,
+    id: "session-2",
+    name: "Second Session",
+  };
+  snapshot.arrangements["arrangement-1"] = {
+    entries: [],
+    id: "arrangement-1",
+    lastModified: "2026-07-26T14:30:22.000Z",
+    name: "Arrangement",
+    playbackMode: "once",
+    sections: [],
+    tempoBpm: 80,
+  };
+  snapshot.dojoSettings.customFretboardTunings = Array.from(
+    { length: 3 },
+    (_, index) => ({
+      id: `tuning-${index + 1}`,
+      instrument: "guitar" as const,
+      name: `Tuning ${index + 1}`,
+      openMidiNotes: [40, 45, 50, 55, 59, 64],
+    }),
+  );
+  snapshot.dojoSettings.customChordProgressions = Array.from(
+    { length: 4 },
+    (_, index) => ({
+      id: `progression-${index + 1}`,
+      name: `Progression ${index + 1}`,
+      progression: {
+        chords: [
+          {
+            chordCollectionKey: "major" as const,
+            degree: "1" as const,
+            durationInBars: 1,
+          },
+        ],
+      },
+    }),
+  );
+
+  return {
+    dataVersion: APP_STORE_VERSION,
+    exportedAt: "2026-07-26T14:30:22.000Z",
+    formatVersion: 1 as const,
+    snapshot,
+  };
+}
 
 describe("DojoSettingsDialog", () => {
   it("places backup controls in a separated section after appearance settings", () => {
@@ -42,9 +103,7 @@ describe("DojoSettingsDialog", () => {
       <DojoStartFreshAction
         counts={{
           arrangements: 1,
-          progressions: 4,
           sessions: 2,
-          tunings: 3,
         }}
         isConfirming
         onCancel={() => undefined}
@@ -54,8 +113,12 @@ describe("DojoSettingsDialog", () => {
       />,
     );
 
+    expect(markup).toContain("Start fresh?");
+    expect(markup).toContain("2 Sessions • 1 Arrangement");
+    expect(markup).toContain("Replaced by one new empty Session.");
+    expect(markup).not.toContain("Custom Tunings •");
     expect(markup).toContain(
-      "Replace 2 Sessions and 1 Arrangement with one new empty Session. Your 3 Tunings, 4 Progressions, and preferences will remain.",
+      "Your Custom Tunings, Custom Chord Progressions, and preferences will remain.",
     );
     expect(markup).toContain("Cancel");
     expect(markup).toContain("Download Backup");
@@ -68,9 +131,7 @@ describe("DojoSettingsDialog", () => {
       <DojoStartFreshAction
         counts={{
           arrangements: 1,
-          progressions: 4,
           sessions: 2,
-          tunings: 3,
         }}
         isConfirming={false}
         onCancel={() => undefined}
@@ -82,5 +143,30 @@ describe("DojoSettingsDialog", () => {
 
     expect(markup).toContain('data-tone="neutral"');
     expect(markup).not.toContain('data-tone="danger"');
+  });
+
+  it("summarizes the contents and impact of a pending restore", () => {
+    const backup = createRestoreBackup();
+    const formattedExportDate = new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(backup.exportedAt));
+    const markup = renderToStaticMarkup(
+      <DojoRestoreAction
+        backup={backup}
+        onCancel={() => undefined}
+        onChooseBackup={() => undefined}
+        onConfirm={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain("Restore this Dojo backup?");
+    expect(markup).toContain(`Exported: ${formattedExportDate}`);
+    expect(markup).toContain("2 Sessions • 1 Arrangement");
+    expect(markup).toContain("3 Custom Tunings • 4 Custom Chord Progressions");
+    expect(markup).toContain("Your preferences will also be replaced.");
+    expect(markup).toContain("Cancel");
+    expect(markup).toContain("Restore Backup");
+    expect(markup).toContain('data-tone="danger"');
   });
 });

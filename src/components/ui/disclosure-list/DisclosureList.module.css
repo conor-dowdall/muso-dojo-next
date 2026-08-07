@@ -280,6 +280,14 @@
   line-height: var(--leading-tight);
 }
 
+.confirmationDetails {
+  min-inline-size: 0;
+  flex: 1 0 100%;
+  color: var(--disclosure-list-confirmation-text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
 .confirmationActions {
   display: flex;
   min-inline-size: 0;

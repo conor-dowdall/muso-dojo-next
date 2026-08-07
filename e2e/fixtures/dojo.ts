@@ -3,6 +3,8 @@ import { type AppStoreSnapshot } from "../../src/types/session";
 
 const APP_STORE_STORAGE_KEY = "muso-dojo-app-store";
 const APP_STORE_VERSION = 12;
+const DOJO_BACKUP_FORMAT_VERSION = 1;
+const DOJO_BACKUP_KIND = "muso-dojo-backup";
 
 const backingBand = {
   countInBeats: 4,
@@ -62,6 +64,19 @@ export function createKeyboardWorkspaceSnapshot(): AppStoreSnapshot {
       },
     },
   };
+}
+
+export function createDojoBackupJson(
+  snapshot: AppStoreSnapshot,
+  exportedAt = "2026-07-26T14:30:22.000Z",
+) {
+  return JSON.stringify({
+    data: snapshot,
+    dataVersion: APP_STORE_VERSION,
+    exportedAt,
+    formatVersion: DOJO_BACKUP_FORMAT_VERSION,
+    kind: DOJO_BACKUP_KIND,
+  });
 }
 
 export async function seedDojoWorkspace(

@@ -28,13 +28,83 @@ interface DojoBackupSettingsProps {
 
 interface DojoContentCounts {
   arrangements: number;
-  progressions: number;
   sessions: number;
-  tunings: number;
 }
 
 function formatCount(count: number, singular: string, plural: string) {
   return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function formatBackupExportDate(exportedAt: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(exportedAt));
+}
+
+export function DojoRestoreAction({
+  backup,
+  onCancel,
+  onConfirm,
+  onChooseBackup,
+}: {
+  backup: ParsedDojoBackup;
+  onCancel: () => void;
+  onConfirm: () => void;
+  onChooseBackup: () => void;
+}) {
+  const snapshot = backup.snapshot;
+  const sessionCount = formatCount(
+    Object.keys(snapshot.sessions).length,
+    "Session",
+    "Sessions",
+  );
+  const arrangementCount = formatCount(
+    Object.keys(snapshot.arrangements).length,
+    "Arrangement",
+    "Arrangements",
+  );
+  const tuningCount = formatCount(
+    snapshot.dojoSettings.customFretboardTunings?.length ?? 0,
+    "Custom Tuning",
+    "Custom Tunings",
+  );
+  const progressionCount = formatCount(
+    snapshot.dojoSettings.customChordProgressions?.length ?? 0,
+    "Custom Chord Progression",
+    "Custom Chord Progressions",
+  );
+  const confirmation = "Restore this Dojo backup?";
+
+  return (
+    <DisclosureListConfirmAction
+      actionAriaLabel="Restore Dojo Backup"
+      confirmAriaLabel={confirmation}
+      confirmButtonLabel="Restore Backup"
+      confirmDetails={
+        <span className={styles.confirmationSummary}>
+          <span>Exported: {formatBackupExportDate(backup.exportedAt)}</span>
+          <span>
+            {sessionCount} • {arrangementCount}
+          </span>
+          <span>
+            {tuningCount} • {progressionCount}
+          </span>
+          <span className={styles.confirmationImpactStatement}>
+            Your preferences will also be replaced.
+          </span>
+        </span>
+      }
+      confirmLabel={confirmation}
+      icon={<FolderOpen />}
+      isConfirming
+      label="Restore Dojo Backup"
+      tone="danger"
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+      onRequestConfirm={onChooseBackup}
+    />
+  );
 }
 
 export function DojoStartFreshAction({
@@ -58,20 +128,27 @@ export function DojoStartFreshAction({
     "Arrangement",
     "Arrangements",
   );
-  const tuningCount = formatCount(counts.tunings, "Tuning", "Tunings");
-  const progressionCount = formatCount(
-    counts.progressions,
-    "Progression",
-    "Progressions",
-  );
+  const confirmation = "Start fresh?";
 
   return (
     <DisclosureListConfirmAction
       actionAriaLabel="Start Fresh"
       actionTone="neutral"
-      confirmAriaLabel="Confirm starting fresh"
+      confirmAriaLabel={confirmation}
       confirmButtonLabel="Start Fresh"
-      confirmLabel={`Replace ${sessionCount} and ${arrangementCount} with one new empty Session. Your ${tuningCount}, ${progressionCount}, and preferences will remain.`}
+      confirmDetails={
+        <span className={styles.confirmationSummary}>
+          <span>
+            {sessionCount} • {arrangementCount}
+          </span>
+          <span>Replaced by one new empty Session.</span>
+          <span className={styles.confirmationImpactStatement}>
+            Your Custom Tunings, Custom Chord Progressions, and preferences will
+            remain.
+          </span>
+        </span>
+      }
+      confirmLabel={confirmation}
       icon={<RotateCcw />}
       isConfirming={isConfirming}
       label="Start Fresh"
@@ -114,9 +191,7 @@ export function DojoBackupSettings({
   const counts = useAppStore(
     useShallow((state): DojoContentCounts => ({
       arrangements: Object.keys(state.arrangements).length,
-      progressions: state.dojoSettings.customChordProgressions?.length ?? 0,
       sessions: Object.keys(state.sessions).length,
-      tunings: state.dojoSettings.customFretboardTunings?.length ?? 0,
     })),
   );
 
@@ -187,8 +262,6 @@ export function DojoBackupSettings({
     onDojoReplaceComplete();
   };
 
-  const restoreConfirmation = "Replace your Dojo?";
-
   return (
     <>
       <Heading as="h3" size="xs" variant="muted">
@@ -208,18 +281,11 @@ export function DojoBackupSettings({
           />
 
           {pendingBackup ? (
-            <DisclosureListConfirmAction
-              actionAriaLabel="Restore Dojo Backup"
-              confirmAriaLabel={restoreConfirmation}
-              confirmButtonLabel="Replace"
-              confirmLabel={restoreConfirmation}
-              icon={<FolderOpen />}
-              isConfirming
-              label="Restore Dojo Backup"
-              tone="danger"
+            <DojoRestoreAction
+              backup={pendingBackup}
               onCancel={cancelRestore}
+              onChooseBackup={chooseBackupFile}
               onConfirm={restoreBackup}
-              onRequestConfirm={chooseBackupFile}
             />
           ) : (
             <DisclosureListAction

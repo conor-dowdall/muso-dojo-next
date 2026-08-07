@@ -10,7 +10,7 @@ test("an empty Arrangement directs the user to add a Part to a Session", async (
   await page.goto("/dojo");
   await expect(page.getByRole("heading", { name: "My Session" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  await page.getByRole("button", { name: "Session menu", exact: true }).click();
   await page.getByRole("button", { name: "Library", exact: true }).click();
 
   const library = page.getByRole("dialog");

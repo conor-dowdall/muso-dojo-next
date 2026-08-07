@@ -49,6 +49,16 @@
   color: var(--color-danger);
 }
 
+.confirmationSummary {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.confirmationImpactStatement {
+  color: var(--color-text);
+  font-weight: var(--font-medium);
+}
+
 @media (prefers-color-scheme: light) {
   .themeSwatchSystemDark {
     display: none;

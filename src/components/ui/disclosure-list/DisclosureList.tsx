@@ -317,6 +317,7 @@ interface DisclosureListConfirmActionProps {
   cancelLabel?: string;
   className?: string;
   confirmAriaLabel: string;
+  confirmDetails?: ReactNode;
   confirmLabel: ReactNode;
   confirmLabelClassName?: string;
   confirmButtonLabel?: string;
@@ -338,6 +339,7 @@ export function DisclosureListConfirmAction({
   cancelLabel = "Cancel",
   className = "",
   confirmAriaLabel,
+  confirmDetails,
   confirmLabel,
   confirmLabelClassName = "",
   confirmButtonLabel = "Confirm",
@@ -386,6 +388,9 @@ export function DisclosureListConfirmAction({
           ) : null}
           <span className={labelClasses}>{confirmLabel}</span>
         </span>
+        {confirmDetails !== undefined ? (
+          <div className={styles.confirmationDetails}>{confirmDetails}</div>
+        ) : null}
         <span className={styles.confirmationActions}>
           <Button label={cancelLabel} size="sm" onClick={onCancel} />
           {secondaryAction}
