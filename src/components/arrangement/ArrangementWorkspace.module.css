@@ -39,11 +39,6 @@
   margin-inline: auto;
 }
 
-.captureExplanation {
-  max-inline-size: 48ch;
-  text-align: center;
-}
-
 .sectionList {
   display: flex;
   min-inline-size: 0;

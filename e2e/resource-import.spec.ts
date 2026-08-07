@@ -102,7 +102,14 @@ async function openLibrary(page: Page) {
 }
 
 async function chooseResourceBackup(library: Locator, contents: string) {
-  await library.locator('input[type="file"]').setInputFiles({
+  const fileChooserPromise = library.page().waitForEvent("filechooser");
+  await library
+    .getByRole("button", {
+      name: "Choose a Dojo backup JSON file to import resources from",
+    })
+    .click();
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles({
     buffer: Buffer.from(contents),
     mimeType: "application/json",
     name: "muso-dojo-backup-resources.json",
@@ -146,6 +153,7 @@ test("imports selected resources, keeps both on collision, and preserves the Doj
 
   await importDialog.getByRole("button", { name: "Cancel" }).click();
   await expect(importDialog).toHaveCount(0);
+  await expect(library).toBeVisible();
   await expectWorkspacePersisted(
     page,
     (snapshot) =>
@@ -153,11 +161,6 @@ test("imports selected resources, keeps both on collision, and preserves the Doj
       snapshot.dojoSettings.customChordProgressions?.length === 1,
   );
 
-  await library
-    .getByRole("button", {
-      name: "Choose a Dojo backup JSON file to import resources from",
-    })
-    .click();
   await chooseResourceBackup(library, backupJson);
   importDialog = page
     .getByRole("dialog")

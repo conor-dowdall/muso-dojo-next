@@ -57,7 +57,7 @@ export function ArrangementWorkspace({
   onOpenLibrary,
 }: {
   arrangementId: string;
-  onOpenLibrary: () => void;
+  onOpenLibrary: (returnFocusTo?: HTMLElement | null) => void;
 }) {
   const arrangement = useAppStore((state) => state.arrangements[arrangementId]);
   const sessions = useAppStore((state) => state.sessions);
@@ -80,7 +80,6 @@ export function ArrangementWorkspace({
   const [openSessionEntryId, setOpenSessionEntryId] = useState<
     string | undefined
   >();
-  const [showCaptureExplanation, setShowCaptureExplanation] = useState(false);
   const chartTileRefs = useRef(new Map<string, HTMLLIElement>());
   const cardRefs = useRef(new Map<string, HTMLElement>());
   const transport = useArrangementTransport(arrangementId);
@@ -151,14 +150,9 @@ export function ArrangementWorkspace({
   };
   const addDefaultSection = (revealSection: boolean) => {
     if (!defaultSession) return;
-    const isFirstSection = arrangement.entries.length === 0;
     stopForMutation();
     const result = actions.addSection(arrangementId, defaultSession.id);
     if (!result) return;
-
-    if (isFirstSection) {
-      setShowCaptureExplanation(true);
-    }
 
     if (revealSection) {
       selectNewEntry(result.entryId);
@@ -186,20 +180,6 @@ export function ArrangementWorkspace({
             aria-label="Arrangement Sections"
             className={styles.buildSurface}
           >
-            {arrangement.entries.length > 0 && showCaptureExplanation ? (
-              <Text
-                as="p"
-                className={styles.captureExplanation}
-                role="status"
-                size="sm"
-                variant="muted"
-              >
-                This Section captured the Session&apos;s current Parts and
-                backing. If the Session changes, use Update to refresh this
-                Section.
-              </Text>
-            ) : null}
-
             {arrangement.entries.length > 0 ? (
               <div className={styles.sectionList}>
                 {arrangement.entries.map((entry, entryIndex) => {
@@ -407,7 +387,7 @@ export function ArrangementWorkspace({
                       icon={<LibraryBig />}
                       label="Open Library"
                       size="sm"
-                      onClick={onOpenLibrary}
+                      onClick={() => onOpenLibrary()}
                     />
                   }
                 >

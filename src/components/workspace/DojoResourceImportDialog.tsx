@@ -136,6 +136,7 @@ export function DojoResourceImportDialog({
     () => formatImportLabel(selectedCount),
     [selectedCount],
   );
+
   const changeSelection = (key: string, selected: boolean) => {
     setSelectedKeys((current) => {
       const next = new Set(current);
@@ -149,13 +150,22 @@ export function DojoResourceImportDialog({
       return next;
     });
   };
+  const closeDialog = () => {
+    setSelectedKeys(new Set());
+    onClose();
+  };
+  const importResources = () => {
+    const keys = [...selectedKeys];
+    setSelectedKeys(new Set());
+    onImport(keys);
+  };
 
   return (
-    <Dialog isOpen={isOpen} onClose={onClose}>
+    <Dialog isOpen={isOpen} onClose={closeDialog}>
       <DialogHeader
         icon={<FileInput />}
         title="Import Resources"
-        onClose={onClose}
+        onClose={closeDialog}
       />
       <DialogContent layout="stack">
         <Text as="p" size="sm" variant="muted">
@@ -186,7 +196,7 @@ export function DojoResourceImportDialog({
       <DialogFooter>
         <DialogFooterActionBar ariaLabel="Import actions">
           <DialogFooterActionGroup placement="secondary">
-            <Button label="Cancel" size="lg" onClick={onClose} />
+            <Button label="Cancel" size="lg" onClick={closeDialog} />
           </DialogFooterActionGroup>
           <DialogFooterActionGroup>
             <Button
@@ -194,7 +204,7 @@ export function DojoResourceImportDialog({
               label={importLabel}
               preventConcurrentClicks
               size="lg"
-              onClick={() => onImport([...selectedKeys])}
+              onClick={importResources}
             />
           </DialogFooterActionGroup>
         </DialogFooterActionBar>

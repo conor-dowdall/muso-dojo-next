@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Gauge,
   GalleryThumbnails,
@@ -47,7 +47,7 @@ import { SessionRenameActionItem } from "./SessionRenameActionItem";
 interface SessionHeaderProps {
   onOpenAddDialog: () => void;
   onOpenSessionTempo: (sessionId: string) => void;
-  onOpenSessionsDialog: () => void;
+  onOpenSessionsDialog: (returnFocusTo?: HTMLElement | null) => void;
   onViewModeChange: (mode: SessionViewMode) => void;
   onViewModeExit?: () => void;
   viewMode: SessionViewMode;
@@ -56,6 +56,7 @@ interface SessionHeaderProps {
 }
 
 type SessionMenuSection = "rename";
+type SessionMenuDestination = "library" | "settings" | "view";
 
 type SessionNameSummary = {
   id: string;
@@ -102,7 +103,12 @@ export function SessionHeader({
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
   const [isBackingBandDialogOpen, setIsBackingBandDialogOpen] = useState(false);
+  const [menuDestination, setMenuDestination] =
+    useState<SessionMenuDestination | null>(null);
+  const [viewReturnFocusTo, setViewReturnFocusTo] =
+    useState<HTMLElement | null>(null);
   const [dialogKey, setDialogKey] = useState(0);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
   const sessionNameSummaries = useAppStore(selectSessionNameSummaries);
   const renameSession = useAppStore((state) => state.renameSession);
@@ -130,28 +136,37 @@ export function SessionHeader({
     ? practiceBandTransport.readout
     : null;
 
-  const openSettingsDialog = () => {
+  const requestMenuHandoff = (destination: SessionMenuDestination) => {
     setIsMenuOpen(false);
     setOpenMenuSection(null);
-    setDialogKey((currentKey) => currentKey + 1);
-    setIsSettingsDialogOpen(true);
+    setMenuDestination(destination);
+
+    if (destination === "library") {
+      onOpenSessionsDialog(menuButtonRef.current);
+    } else if (destination === "settings") {
+      setDialogKey((currentKey) => currentKey + 1);
+      setIsSettingsDialogOpen(true);
+    } else if (destination === "view") {
+      setViewReturnFocusTo(menuButtonRef.current);
+      setIsViewDialogOpen(true);
+    }
   };
 
   const closeSettingsDialog = () => setIsSettingsDialogOpen(false);
   const openSessionMenu = () => {
     setIsViewDialogOpen(false);
     setOpenMenuSection(null);
+    setMenuDestination(null);
     setIsMenuOpen(true);
   };
   const openViewDialog = () => {
     setIsMenuOpen(false);
     setOpenMenuSection(null);
+    setViewReturnFocusTo(null);
     setIsViewDialogOpen(true);
   };
   const openSessionsDialog = () => {
-    setIsMenuOpen(false);
-    setOpenMenuSection(null);
-    onOpenSessionsDialog();
+    requestMenuHandoff("library");
   };
   const openSessionTempo = () => {
     if (!activeSessionId) {
@@ -248,6 +263,7 @@ export function SessionHeader({
             />
             {isFocusHeader ? null : (
               <OverflowMenuButton
+                ref={menuButtonRef}
                 aria-label="Session menu"
                 disabled={viewModeTransitionPending}
                 onClick={openSessionMenu}
@@ -269,10 +285,14 @@ export function SessionHeader({
       />
 
       <ObjectMenuDialog
+        closeImmediately={menuDestination !== null}
         icon={<Ellipsis />}
         isOpen={isMenuOpen}
+        onAfterClose={() => setMenuDestination(null)}
         title="Session Menu"
         onClose={() => setIsMenuOpen(false)}
+        restoreFocusOnClose={menuDestination === null}
+        returnFocusRef={menuButtonRef}
       >
         <DisclosureListGroup>
           <DisclosureListAction
@@ -281,7 +301,7 @@ export function SessionHeader({
             icon={<GalleryThumbnails />}
             label="View"
             preview={viewModeLabel}
-            onClick={openViewDialog}
+            onClick={() => requestMenuHandoff("view")}
           />
           {activeSessionNameSummary ? (
             <SessionRenameActionItem
@@ -301,7 +321,7 @@ export function SessionHeader({
           <DisclosureListAction
             icon={<Settings2 />}
             label="Dojo Settings"
-            onClick={openSettingsDialog}
+            onClick={() => requestMenuHandoff("settings")}
           />
         </DisclosureListGroup>
       </ObjectMenuDialog>
@@ -309,6 +329,7 @@ export function SessionHeader({
       <SessionViewDialog
         canUsePartViews={canUsePartViews}
         isOpen={isViewDialogOpen}
+        returnFocusTo={viewReturnFocusTo}
         viewMode={viewMode}
         onClose={() => setIsViewDialogOpen(false)}
         onSelect={selectViewMode}
@@ -317,6 +338,7 @@ export function SessionHeader({
       <Dialog
         isOpen={isSettingsDialogOpen}
         onClose={closeSettingsDialog}
+        returnFocusRef={menuButtonRef}
         size="standard"
       >
         <DojoSettingsDialog key={dialogKey} onClose={closeSettingsDialog} />

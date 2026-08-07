@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
   createDojoBackupJson,
   createKeyboardWorkspaceSnapshot,
@@ -82,8 +82,8 @@ async function openDojoSettings(page: Page) {
   return settings;
 }
 
-async function chooseBackupFile(page: Page, contents: string) {
-  await page.locator('input[type="file"]').setInputFiles({
+async function chooseBackupFile(settings: Locator, contents: string) {
+  await settings.locator('input[type="file"]').setInputFiles({
     buffer: Buffer.from(contents),
     mimeType: "application/json",
     name: "muso-dojo-backup-test.json",
@@ -103,7 +103,7 @@ test("summarizes a backup and cancellation leaves the Dojo unchanged", async ({
 }) => {
   const settings = await openDojoSettings(page);
   await chooseBackupFile(
-    page,
+    settings,
     createDojoBackupJson(createReplacementSnapshot(), exportedAt),
   );
 
@@ -146,7 +146,7 @@ test("rejects an invalid backup without showing confirmation", async ({
   page,
 }) => {
   const settings = await openDojoSettings(page);
-  await chooseBackupFile(page, "{not-json");
+  await chooseBackupFile(settings, "{not-json");
 
   await expect(settings.getByRole("alert")).toHaveText(
     "The selected file is not valid JSON.",
@@ -164,7 +164,7 @@ test("rejects an invalid backup without showing confirmation", async ({
 test("restores the backup as a complete replacement", async ({ page }) => {
   const settings = await openDojoSettings(page);
   await chooseBackupFile(
-    page,
+    settings,
     createDojoBackupJson(createReplacementSnapshot(), exportedAt),
   );
 

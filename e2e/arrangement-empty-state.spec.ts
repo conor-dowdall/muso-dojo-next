@@ -82,7 +82,7 @@ test("an Arrangement without Sessions offers one route through the Library", asy
   ).toBeVisible();
 });
 
-test("the first Section explains its captured Session content", async ({
+test("the first Section replaces the instructional empty state", async ({
   page,
 }) => {
   const snapshot = createKeyboardWorkspaceSnapshot();
@@ -112,10 +112,10 @@ test("the first Section explains its captured Session content", async ({
 
   await page.getByRole("button", { name: "Add First Section" }).click();
 
-  await expect(
-    page.getByRole("status").filter({ hasText: "This Section captured" }),
-  ).toHaveText(
-    "This Section captured the Session's current Parts and backing. If the Session changes, use Update to refresh this Section.",
-  );
   await expect(page.getByRole("region", { name: "Section 1" })).toBeVisible();
+  await expect(
+    page.getByText(
+      "This Section captured the Session's current Parts and backing.",
+    ),
+  ).toHaveCount(0);
 });

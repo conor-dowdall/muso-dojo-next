@@ -131,6 +131,7 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
     "tunings" | "progressions" | null
   >(null);
   const [isReadingResourceBackup, setIsReadingResourceBackup] = useState(false);
+  const [isResourceImportOpen, setIsResourceImportOpen] = useState(false);
   const [pendingResourceBackup, setPendingResourceBackup] =
     useState<ParsedDojoBackup | null>(null);
   const [resourceImportFeedback, setResourceImportFeedback] = useState<{
@@ -200,7 +201,6 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
   };
   const chooseResourceBackup = () => {
     setOpenResource(null);
-    setPendingResourceBackup(null);
     setResourceImportFeedback(null);
     resourceBackupInputRef.current?.click();
   };
@@ -218,7 +218,9 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
 
     try {
       setPendingResourceBackup(await readDojoBackupFile(file));
+      setIsResourceImportOpen(true);
     } catch (error) {
+      setIsResourceImportOpen(false);
       setPendingResourceBackup(null);
       setResourceImportFeedback({
         message:
@@ -240,7 +242,7 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
       pendingResourceBackup.snapshot,
       selectedKeys,
     );
-    setPendingResourceBackup(null);
+    setIsResourceImportOpen(false);
     setResourceImportFeedback({
       message: `Imported ${result.imported} ${
         result.imported === 1 ? "resource" : "resources"
@@ -489,8 +491,8 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
         <DojoResourceImportDialog
           catalog={resourceImportCatalog}
           exportedAt={pendingResourceBackup.exportedAt}
-          isOpen
-          onClose={() => setPendingResourceBackup(null)}
+          isOpen={isResourceImportOpen}
+          onClose={() => setIsResourceImportOpen(false)}
           onImport={importResources}
         />
       ) : null}
