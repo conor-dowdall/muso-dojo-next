@@ -6,7 +6,6 @@ import {
   GalleryThumbnails,
   Gauge,
   Infinity,
-  LibraryBig,
   ListVideo,
   PanelTopBottomDashed,
   Plus,
@@ -14,6 +13,7 @@ import {
   Settings2,
   Square,
 } from "lucide-react";
+import { WorkspaceLibraryMenuAction } from "@/components/workspace/WorkspaceLibraryMenuAction";
 import {
   ControlHeader,
   ControlHeaderCluster,
@@ -232,9 +232,7 @@ export function ArrangementHeader({
           />
         </DisclosureListGroup>
         <DisclosureListGroup>
-          <DisclosureListAction
-            icon={<LibraryBig />}
-            label="Library"
+          <WorkspaceLibraryMenuAction
             onClick={() => {
               setMenuOpen(false);
               setRenameOpen(false);

@@ -431,6 +431,7 @@ export function InstrumentMenuDialog({
         <CustomTuningsDialog
           instrument={fretboardTuning.instrument}
           isOpen={isCustomTuningsOpen}
+          mode="choose"
           seedOpenMidiNotes={fretboardOpenMidiNotes}
           selected={
             fretboardTuning.tuningName

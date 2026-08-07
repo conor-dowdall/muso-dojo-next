@@ -1,6 +1,10 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { WorkspaceLibraryDialog } from "@/components/workspace/WorkspaceLibraryDialog";
+import {
+  WorkspaceLibraryDialog,
+  WorkspaceLibraryResources,
+} from "@/components/workspace/WorkspaceLibraryDialog";
+import { WorkspaceLibraryMenuAction } from "@/components/workspace/WorkspaceLibraryMenuAction";
 
 describe("WorkspaceLibraryDialog", () => {
   it("explains the distinction between Sessions and Arrangements", () => {
@@ -20,5 +24,35 @@ describe("WorkspaceLibraryDialog", () => {
     expect(markup).not.toContain(
       "Playable sequences of captured Session content.",
     );
+  });
+
+  it("presents the same recognizable Library action in either workspace", () => {
+    const markup = renderToStaticMarkup(
+      <WorkspaceLibraryMenuAction onClick={() => undefined} />,
+    );
+
+    expect(markup).toContain("Library");
+    expect(markup).toContain("Sessions, Arrangements, and Resources");
+    expect(markup).toContain("lucide-library-big");
+  });
+
+  it("shows reusable resources with saved-item counts", () => {
+    const markup = renderToStaticMarkup(
+      <WorkspaceLibraryResources
+        progressionCount={1}
+        tuningCount={2}
+        onOpenProgressions={() => undefined}
+        onOpenTunings={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('aria-label="Resources"');
+    expect(markup).toContain("My Tunings");
+    expect(markup).toContain("2 saved");
+    expect(markup).toContain("lucide-sliders-vertical");
+    expect(markup).toContain("My Progressions");
+    expect(markup).toContain("1 saved");
+    expect(markup).toContain("lucide-bookmark");
+    expect(markup).not.toContain("My Library");
   });
 });

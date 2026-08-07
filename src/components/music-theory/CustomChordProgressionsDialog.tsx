@@ -28,13 +28,28 @@ import { savedChordProgressionNameIsAvailable } from "@/utils/music-theory/custo
 import { CustomChordProgressionEditor } from "./CustomChordProgressionEditor";
 import styles from "./CustomChordProgressionsDialog.module.css";
 
-interface CustomChordProgressionsDialogProps {
+interface CustomChordProgressionsDialogBaseProps {
   isOpen: boolean;
-  selectedId?: string;
   onClose: () => void;
+}
+
+interface CustomChordProgressionsChooseDialogProps extends CustomChordProgressionsDialogBaseProps {
+  mode: "choose";
+  selectedId?: string;
   onDeleteSelected: () => void;
   onSelect: (progression: SavedChordProgression) => void;
 }
+
+interface CustomChordProgressionsManageDialogProps extends CustomChordProgressionsDialogBaseProps {
+  mode: "manage";
+  selectedId?: never;
+  onDeleteSelected?: never;
+  onSelect?: never;
+}
+
+type CustomChordProgressionsDialogProps =
+  | CustomChordProgressionsChooseDialogProps
+  | CustomChordProgressionsManageDialogProps;
 
 function formatProgressionSummary(progression: ChordProgression) {
   return getChordProgressionRomanBarLabels(progression).join(
@@ -44,6 +59,7 @@ function formatProgressionSummary(progression: ChordProgression) {
 
 export function CustomChordProgressionsDialog({
   isOpen,
+  mode,
   selectedId,
   onClose,
   onDeleteSelected,
@@ -92,10 +108,14 @@ export function CustomChordProgressionsDialog({
     const id = addProgression({ name, progression });
     if (!id) return false;
 
-    onSelect({ id, name, progression });
     setIsNewOpen(false);
     setNewEditorVersion((version) => version + 1);
-    onClose();
+
+    if (mode === "choose") {
+      onSelect?.({ id, name, progression });
+      onClose();
+    }
+
     return true;
   };
 
@@ -107,7 +127,13 @@ export function CustomChordProgressionsDialog({
         onClose={onClose}
       />
       <DialogContent menuRhythm="standard">
-        <DialogContentSection ariaLabel="Custom progression choices">
+        <DialogContentSection
+          ariaLabel={
+            mode === "choose"
+              ? "Custom progression choices"
+              : "Manage custom progressions"
+          }
+        >
           <DisclosureList grouped groupGap="section">
             <DisclosureListGroup>
               <DisclosureListActionItem
@@ -138,8 +164,16 @@ export function CustomChordProgressionsDialog({
             {progressions.length > 0 ? (
               <DisclosureListGroup aria-label="Saved custom progressions">
                 {progressions.map((progression) => {
-                  const selected = selectedId === progression.id;
+                  const selected =
+                    mode === "choose" && selectedId === progression.id;
                   const isActionsOpen = openProgressionId === progression.id;
+                  const toggleActions = () => {
+                    setOpenProgressionId((current) =>
+                      current === progression.id ? null : progression.id,
+                    );
+                    setIsNewOpen(false);
+                    closeRowEditors();
+                  };
 
                   return (
                     <SelectableOverflowRow
@@ -148,7 +182,11 @@ export function CustomChordProgressionsDialog({
                       isActionsOpen={isActionsOpen}
                       label={progression.name}
                       selected={selected}
-                      selectAriaLabel={`Use ${progression.name}`}
+                      selectAriaLabel={
+                        mode === "choose"
+                          ? `Use ${progression.name}`
+                          : `Manage ${progression.name}`
+                      }
                       selectedAriaLabel={`Current progression: ${progression.name}`}
                       subtitle={
                         <span className={styles.summary}>
@@ -156,18 +194,17 @@ export function CustomChordProgressionsDialog({
                         </span>
                       }
                       onSelect={() => {
-                        onSelect(progression);
+                        if (mode === "manage") {
+                          toggleActions();
+                          return;
+                        }
+
+                        onSelect?.(progression);
                         setOpenProgressionId(null);
                         closeRowEditors();
                         onClose();
                       }}
-                      onToggleActions={() => {
-                        setOpenProgressionId((current) =>
-                          current === progression.id ? null : progression.id,
-                        );
-                        setIsNewOpen(false);
-                        closeRowEditors();
-                      }}
+                      onToggleActions={toggleActions}
                     >
                       <DisclosureList grouped groupGap="section">
                         <DisclosureListGroup>
@@ -241,7 +278,7 @@ export function CustomChordProgressionsDialog({
                             onCancel={() => setDeleteProgressionId(null)}
                             onConfirm={() => {
                               removeProgression(progression.id);
-                              if (selected) onDeleteSelected();
+                              if (selected) onDeleteSelected?.();
                               setOpenProgressionId(null);
                               closeRowEditors();
                             }}

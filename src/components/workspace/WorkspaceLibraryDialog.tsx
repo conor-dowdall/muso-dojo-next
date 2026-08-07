@@ -2,7 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { LibraryBig, PanelTopBottomDashed, PanelsTopLeft } from "lucide-react";
+import {
+  Bookmark,
+  LibraryBig,
+  PanelTopBottomDashed,
+  PanelsTopLeft,
+  SlidersVertical,
+} from "lucide-react";
 import {
   DialogCloseFooter,
   DialogContent,
@@ -28,12 +34,57 @@ import {
   countArrangementsUsingSession,
   getArrangementLibrarySubtitle,
 } from "@/components/arrangement/arrangementLibraryFormatting";
+import { CustomTuningsDialog } from "@/components/fretboard-tuning/CustomTuningsDialog";
+import { CustomChordProgressionsDialog } from "@/components/music-theory/CustomChordProgressionsDialog";
+
+function formatSavedCount(count: number) {
+  return `${count} saved`;
+}
+
+export function WorkspaceLibraryResources({
+  progressionCount,
+  tuningCount,
+  onOpenProgressions,
+  onOpenTunings,
+}: {
+  progressionCount: number;
+  tuningCount: number;
+  onOpenProgressions: () => void;
+  onOpenTunings: () => void;
+}) {
+  return (
+    <DialogContentSection ariaLabel="Resources" menuGroup>
+      <Heading as="h3" size="xs" variant="muted">
+        Resources
+      </Heading>
+      <DisclosureList grouped>
+        <DisclosureListGroup>
+          <DisclosureListAction
+            icon={<SlidersVertical />}
+            label="My Tunings"
+            preview={formatSavedCount(tuningCount)}
+            onClick={onOpenTunings}
+          />
+          <DisclosureListAction
+            icon={<Bookmark />}
+            label="My Progressions"
+            preview={formatSavedCount(progressionCount)}
+            onClick={onOpenProgressions}
+          />
+        </DisclosureListGroup>
+      </DisclosureList>
+    </DialogContentSection>
+  );
+}
 
 export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [renameId, setRenameId] = useState<string | null>(null);
   const [tempoId, setTempoId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [openResource, setOpenResource] = useState<
+    "tunings" | "progressions" | null
+  >(null);
   const activeWorkspace = useAppStore((state) => state.activeWorkspace);
   const sessionRecord = useAppStore((state) => state.sessions);
   const sessions = useMemo(
@@ -50,6 +101,12 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
   const arrangements = useMemo(
     () => Object.values(arrangementRecord),
     [arrangementRecord],
+  );
+  const tuningCount = useAppStore(
+    (state) => state.dojoSettings.customFretboardTunings?.length ?? 0,
+  );
+  const progressionCount = useAppStore(
+    (state) => state.dojoSettings.customChordProgressions?.length ?? 0,
   );
   const actions = useAppStore(
     useShallow((state) => ({
@@ -293,8 +350,25 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
             </DisclosureListGroup>
           </DisclosureList>
         </DialogContentSection>
+
+        <WorkspaceLibraryResources
+          progressionCount={progressionCount}
+          tuningCount={tuningCount}
+          onOpenProgressions={() => setOpenResource("progressions")}
+          onOpenTunings={() => setOpenResource("tunings")}
+        />
       </DialogContent>
       <DialogCloseFooter onClose={onClose} />
+      <CustomTuningsDialog
+        isOpen={openResource === "tunings"}
+        mode="manage"
+        onClose={() => setOpenResource(null)}
+      />
+      <CustomChordProgressionsDialog
+        isOpen={openResource === "progressions"}
+        mode="manage"
+        onClose={() => setOpenResource(null)}
+      />
     </>
   );
 }

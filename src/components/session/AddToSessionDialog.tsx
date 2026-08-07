@@ -544,6 +544,7 @@ export function AddToSessionDialog({
       </DialogFooter>
       <CustomChordProgressionsDialog
         isOpen={isCustomProgressionsOpen}
+        mode="choose"
         selectedId={
           effectiveProgressionSelection.kind === "custom"
             ? effectiveProgressionSelection.progressionId

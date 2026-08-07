@@ -1,10 +1,12 @@
 "use client";
 
 import {
+  stringInstruments,
+  stringInstrumentTunings,
   type OpenStringMidiNotes,
   type StringInstrumentKey,
 } from "@musodojo/music-theory-data";
-import { Bookmark, Copy, Pencil, Plus, Trash2 } from "lucide-react";
+import { Copy, Pencil, Plus, SlidersVertical, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   Dialog,
@@ -17,8 +19,10 @@ import {
   DisclosureList,
   DisclosureListAction,
   DisclosureListActionItem,
+  DisclosureListChoice,
   DisclosureListConfirmAction,
   DisclosureListGroup,
+  DisclosureListItem,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { SelectableOverflowRow } from "@/components/ui/selectable-overflow-row";
 import { useAppStore } from "@/stores/appStore";
@@ -28,6 +32,8 @@ import {
   savedTuningNameIsAvailable,
   tuningNotesAreEqual,
 } from "@/utils/fretboard/customFretboardTunings";
+import { fretboardInstrumentGroups } from "@/components/instrument-creation/options";
+import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import { CustomTuningEditor } from "./CustomTuningEditor";
 
 interface SelectedCustomTuning {
@@ -35,18 +41,39 @@ interface SelectedCustomTuning {
   openMidiNotes: readonly number[];
 }
 
-interface CustomTuningsDialogProps {
-  instrument: StringInstrumentKey;
+interface CustomTuningsDialogBaseProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+interface CustomTuningsChooseDialogProps extends CustomTuningsDialogBaseProps {
+  instrument: StringInstrumentKey;
+  mode: "choose";
   onSelect: (tuning: SavedFretboardTuning) => void;
   seedOpenMidiNotes: readonly number[];
   selected?: SelectedCustomTuning;
 }
 
+interface CustomTuningsManageDialogProps extends CustomTuningsDialogBaseProps {
+  instrument?: never;
+  mode: "manage";
+  onSelect?: never;
+  seedOpenMidiNotes?: never;
+  selected?: never;
+}
+
+type CustomTuningsDialogProps =
+  CustomTuningsChooseDialogProps | CustomTuningsManageDialogProps;
+
+function getDefaultOpenMidiNotes(instrument: StringInstrumentKey) {
+  return stringInstrumentTunings[stringInstruments[instrument].defaultTuning]
+    .openMidiNotes;
+}
+
 export function CustomTuningsDialog({
   instrument,
   isOpen,
+  mode,
   onClose,
   onSelect,
   seedOpenMidiNotes,
@@ -65,16 +92,41 @@ export function CustomTuningsDialog({
   );
   const [isNewOpen, setIsNewOpen] = useState(false);
   const [newEditorVersion, setNewEditorVersion] = useState(0);
+  const [newTuningInstrument, setNewTuningInstrument] =
+    useState<StringInstrumentKey>("guitar");
+  const [isNewInstrumentOpen, setIsNewInstrumentOpen] = useState(false);
   const [openTuningId, setOpenTuningId] = useState<string | null>(null);
   const [editTuningId, setEditTuningId] = useState<string | null>(null);
   const [deleteTuningId, setDeleteTuningId] = useState<string | null>(null);
   const tunings = useMemo(
     () =>
       (allTunings ?? [])
-        .filter((tuning) => tuning.instrument === instrument)
-        .sort((left, right) => left.name.localeCompare(right.name)),
-    [allTunings, instrument],
+        .filter(
+          (tuning) => mode === "manage" || tuning.instrument === instrument,
+        )
+        .sort((left, right) => {
+          if (mode === "manage") {
+            const instrumentOrder = stringInstruments[
+              left.instrument
+            ].primaryName.localeCompare(
+              stringInstruments[right.instrument].primaryName,
+            );
+
+            if (instrumentOrder !== 0) {
+              return instrumentOrder;
+            }
+          }
+
+          return left.name.localeCompare(right.name);
+        }),
+    [allTunings, instrument, mode],
   );
+  const creationInstrument =
+    mode === "choose" ? (instrument ?? "guitar") : newTuningInstrument;
+  const creationOpenMidiNotes =
+    mode === "choose" && seedOpenMidiNotes
+      ? seedOpenMidiNotes
+      : getDefaultOpenMidiNotes(creationInstrument);
 
   const closeRowEditors = () => {
     setEditTuningId(null);
@@ -84,6 +136,7 @@ export function CustomTuningsDialog({
   const handleNewToggle = () => {
     setIsNewOpen((current) => !current);
     setOpenTuningId(null);
+    setIsNewInstrumentOpen(false);
     closeRowEditors();
   };
 
@@ -92,41 +145,90 @@ export function CustomTuningsDialog({
       return;
     }
 
-    const input = { instrument, name, openMidiNotes };
+    const input = { instrument: creationInstrument, name, openMidiNotes };
     const id = addTuning(input);
 
     if (!id) {
       return;
     }
 
-    onSelect({ id, ...input });
     setIsNewOpen(false);
     setNewEditorVersion((version) => version + 1);
-    onClose();
+
+    if (mode === "choose") {
+      onSelect?.({ id, ...input });
+      onClose();
+    }
   };
 
   return (
     <Dialog isOpen={isOpen} onClose={onClose} size="standard">
-      <DialogHeader icon={<Bookmark />} title="My Tunings" onClose={onClose} />
+      <DialogHeader
+        icon={<SlidersVertical />}
+        title="My Tunings"
+        onClose={onClose}
+      />
       <DialogContent menuRhythm="standard">
-        <DialogContentSection ariaLabel="Custom tuning choices">
+        <DialogContentSection
+          ariaLabel={
+            mode === "choose"
+              ? "Custom tuning choices"
+              : "Manage custom tunings"
+          }
+        >
           <DisclosureList grouped groupGap="section">
             <DisclosureListGroup>
               <DisclosureListActionItem
-                ariaLabel="Create a custom tuning"
+                ariaLabel={`Create a custom tuning using the ${stringInstruments[creationInstrument].primaryName} instrument template`}
                 icon={<Plus />}
                 isOpen={isNewOpen}
                 keepMounted
                 label="New Tuning"
+                preview={`Using ${stringInstruments[creationInstrument].primaryName} as Template`}
                 onToggle={handleNewToggle}
               >
+                {mode === "manage" ? (
+                  <DisclosureList grouped>
+                    <DisclosureListGroup>
+                      <DisclosureListItem
+                        ariaLabel={`Choose instrument template. Current: ${stringInstruments[newTuningInstrument].primaryName}`}
+                        isOpen={isNewInstrumentOpen}
+                        label="Instrument Template"
+                        preview={
+                          stringInstruments[newTuningInstrument].primaryName
+                        }
+                        onToggle={() =>
+                          setIsNewInstrumentOpen((current) => !current)
+                        }
+                      >
+                        <DisclosureList grouped>
+                          {fretboardInstrumentGroups.map((group) => (
+                            <DisclosureListGroup key={group.title}>
+                              {group.options.map((option) => (
+                                <DisclosureListChoice
+                                  key={option.id}
+                                  label={option.title}
+                                  selected={newTuningInstrument === option.id}
+                                  onClick={() => {
+                                    setNewTuningInstrument(option.id);
+                                    setIsNewInstrumentOpen(false);
+                                  }}
+                                />
+                              ))}
+                            </DisclosureListGroup>
+                          ))}
+                        </DisclosureList>
+                      </DisclosureListItem>
+                    </DisclosureListGroup>
+                  </DisclosureList>
+                ) : null}
                 <CustomTuningEditor
-                  key={`${instrument}-${newEditorVersion}-${seedOpenMidiNotes.join("-")}`}
-                  initialOpenMidiNotes={seedOpenMidiNotes}
+                  key={`${creationInstrument}-${newEditorVersion}-${creationOpenMidiNotes.join("-")}`}
+                  initialOpenMidiNotes={creationOpenMidiNotes}
                   isNameAvailable={(name) =>
                     savedTuningNameIsAvailable(
                       allTunings ?? [],
-                      instrument,
+                      creationInstrument,
                       name,
                     )
                   }
@@ -140,12 +242,20 @@ export function CustomTuningsDialog({
               <DisclosureListGroup aria-label="Saved custom tunings">
                 {tunings.map((tuning) => {
                   const isSelected =
+                    mode === "choose" &&
                     selected?.name === tuning.name &&
                     tuningNotesAreEqual(
                       selected.openMidiNotes,
                       tuning.openMidiNotes,
                     );
                   const isActionsOpen = openTuningId === tuning.id;
+                  const toggleActions = () => {
+                    setOpenTuningId((current) =>
+                      current === tuning.id ? null : tuning.id,
+                    );
+                    setIsNewOpen(false);
+                    closeRowEditors();
+                  };
 
                   return (
                     <SelectableOverflowRow
@@ -154,25 +264,30 @@ export function CustomTuningsDialog({
                       isActionsOpen={isActionsOpen}
                       label={tuning.name}
                       selected={isSelected}
-                      selectAriaLabel={`Use ${tuning.name} tuning`}
+                      selectAriaLabel={
+                        mode === "choose"
+                          ? `Use ${tuning.name} tuning`
+                          : `Manage ${tuning.name} tuning`
+                      }
                       selectedAriaLabel={`Current tuning: ${tuning.name}`}
-                      subtitle={formatCustomOpenStringNotes(
-                        tuning.openMidiNotes,
-                      )}
+                      subtitle={`${
+                        mode === "manage"
+                          ? `${stringInstruments[tuning.instrument].primaryName}${DISPLAY_VALUE_SEPARATOR}`
+                          : ""
+                      }${formatCustomOpenStringNotes(tuning.openMidiNotes)}`}
                       onSelect={() => {
-                        onSelect(tuning);
+                        if (mode === "manage") {
+                          toggleActions();
+                          return;
+                        }
+
+                        onSelect?.(tuning);
                         setIsNewOpen(false);
                         setOpenTuningId(null);
                         closeRowEditors();
                         onClose();
                       }}
-                      onToggleActions={() => {
-                        setOpenTuningId((current) =>
-                          current === tuning.id ? null : tuning.id,
-                        );
-                        setIsNewOpen(false);
-                        closeRowEditors();
-                      }}
+                      onToggleActions={toggleActions}
                     >
                       <DisclosureList grouped groupGap="section">
                         <DisclosureListGroup>
@@ -196,7 +311,7 @@ export function CustomTuningsDialog({
                               isNameAvailable={(name) =>
                                 savedTuningNameIsAvailable(
                                   allTunings ?? [],
-                                  instrument,
+                                  tuning.instrument,
                                   name,
                                   tuning.id,
                                 )
@@ -208,7 +323,7 @@ export function CustomTuningsDialog({
                                 }
 
                                 updateTuning(tuning.id, {
-                                  instrument,
+                                  instrument: tuning.instrument,
                                   name,
                                   openMidiNotes,
                                 });

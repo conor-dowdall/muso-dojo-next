@@ -5,7 +5,7 @@ import {
   type StringInstrumentKey,
   type StringInstrumentTuningKey,
 } from "@musodojo/music-theory-data";
-import { Bookmark } from "lucide-react";
+import { SlidersVertical } from "lucide-react";
 import {
   DisclosureList,
   DisclosureListAction,
@@ -38,7 +38,7 @@ export function FretboardTuningChoices({
     <DisclosureList grouped>
       <DisclosureListGroup aria-label="Custom tuning library">
         <DisclosureListAction
-          icon={<Bookmark />}
+          icon={<SlidersVertical />}
           label="My Tunings"
           selected={customSelected}
           subtitle="Choose, create, or edit"

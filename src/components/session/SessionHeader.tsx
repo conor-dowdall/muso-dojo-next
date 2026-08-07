@@ -6,11 +6,11 @@ import {
   GalleryThumbnails,
   Disc3,
   Ellipsis,
-  LibraryBig,
   Plus,
   Settings2,
   X,
 } from "lucide-react";
+import { WorkspaceLibraryMenuAction } from "@/components/workspace/WorkspaceLibraryMenuAction";
 import { Heading } from "@/components/ui/typography/Heading";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import {
@@ -248,7 +248,7 @@ export function SessionHeader({
             />
             {isFocusHeader ? null : (
               <OverflowMenuButton
-                aria-label="Menu"
+                aria-label="Session menu"
                 disabled={viewModeTransitionPending}
                 onClick={openSessionMenu}
               />
@@ -297,11 +297,7 @@ export function SessionHeader({
           ) : null}
         </DisclosureListGroup>
         <DisclosureListGroup>
-          <DisclosureListAction
-            icon={<LibraryBig />}
-            label="Library"
-            onClick={openSessionsDialog}
-          />
+          <WorkspaceLibraryMenuAction onClick={openSessionsDialog} />
           <DisclosureListAction
             icon={<Settings2 />}
             label="Dojo Settings"
