@@ -10,7 +10,7 @@ describe("WorkspaceLibraryDialog", () => {
 
     expect(markup).toContain("New Session");
     expect(markup).toContain(
-      "Build and play music in Parts with instruments, loopers and more.",
+      "Build and play music in Parts with Instruments, Loopers and more.",
     );
     expect(markup).toContain("New Arrangement");
     expect(markup).toContain(

@@ -89,7 +89,7 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
                 icon={<PanelsTopLeft />}
                 label="New Session"
                 preventConcurrentClicks
-                subtitle="Build and play music in Parts with instruments, loopers and more."
+                subtitle="Build and play music in Parts with Instruments, Loopers and more."
                 onClick={() => {
                   actions.addSession();
                   onClose();

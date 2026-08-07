@@ -17,7 +17,7 @@ test("an empty Arrangement directs the user to add a Part to a Session", async (
   await expect(library.getByRole("heading", { name: "Library" })).toBeVisible();
   await expect(
     library.getByText(
-      "Build and play music in Parts with instruments, loopers and more.",
+      "Build and play music in Parts with Instruments, Loopers and more.",
     ),
   ).toBeVisible();
   await expect(
