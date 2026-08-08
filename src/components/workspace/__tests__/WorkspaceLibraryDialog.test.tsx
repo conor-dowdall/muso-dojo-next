@@ -14,11 +14,11 @@ describe("WorkspaceLibraryDialog", () => {
 
     expect(markup).toContain("New Session");
     expect(markup).toContain(
-      "Build and play music in Parts with Instruments, Loopers and more.",
+      "Build and play music with Parts, Instruments, Loopers, and more.",
     );
     expect(markup).toContain("New Arrangement");
     expect(markup).toContain(
-      "Build a playable arrangement by capturing your Sessions as Sections.",
+      "Build and play a sequence of Sections from your Sessions.",
     );
     expect(markup.indexOf("Sessions")).toBeLessThan(
       markup.indexOf("New Session"),

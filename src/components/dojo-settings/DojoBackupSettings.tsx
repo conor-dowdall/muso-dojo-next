@@ -2,7 +2,7 @@
 
 import { useRef, useState, type ChangeEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { FolderOpen, RotateCcw, Save } from "lucide-react";
+import { Broom, FolderOpen, Save } from "lucide-react";
 import { Button } from "@/components/ui/buttons/Button";
 import {
   DisclosureList,
@@ -78,7 +78,7 @@ export function DojoRestoreAction({
 
   return (
     <DisclosureListConfirmAction
-      actionAriaLabel="Restore Dojo Backup"
+      actionAriaLabel="Restore Dojo"
       confirmAriaLabel={confirmation}
       confirmButtonLabel="Restore Backup"
       confirmDetails={
@@ -98,7 +98,7 @@ export function DojoRestoreAction({
       confirmLabel={confirmation}
       icon={<FolderOpen />}
       isConfirming
-      label="Restore Dojo Backup"
+      label="Restore Dojo"
       tone="danger"
       onCancel={onCancel}
       onConfirm={onConfirm}
@@ -128,14 +128,14 @@ export function DojoStartFreshAction({
     "Arrangement",
     "Arrangements",
   );
-  const confirmation = "Start fresh?";
+  const confirmation = "Clear Sessions & Arrangements?";
 
   return (
     <DisclosureListConfirmAction
-      actionAriaLabel="Start Fresh"
+      actionAriaLabel="Clear Sessions & Arrangements"
       actionTone="neutral"
       confirmAriaLabel={confirmation}
-      confirmButtonLabel="Start Fresh"
+      confirmButtonLabel="Clear Sessions & Arrangements"
       confirmDetails={
         <span className={styles.confirmationSummary}>
           <span>
@@ -149,9 +149,9 @@ export function DojoStartFreshAction({
         </span>
       }
       confirmLabel={confirmation}
-      icon={<RotateCcw />}
+      icon={<Broom />}
       isConfirming={isConfirming}
-      label="Start Fresh"
+      label="Clear Sessions & Arrangements"
       secondaryAction={
         <Button
           icon={<Save />}
@@ -161,7 +161,7 @@ export function DojoStartFreshAction({
           onClick={onDownloadBackup}
         />
       }
-      subtitle="Replace all Sessions and Arrangements with a new empty Session. Your Tunings, Progressions, and preferences will remain."
+      subtitle="Remove all Sessions and Arrangements. Your personal library and preferences will remain."
       tone="danger"
       onCancel={onCancel}
       onConfirm={onConfirm}
@@ -274,9 +274,9 @@ export function DojoBackupSettings({
         <DisclosureListGroup>
           <DisclosureListAction
             icon={<Save />}
-            label="Download Dojo Backup"
+            label="Back Up Dojo"
             shouldYield={false}
-            subtitle="Save a portable copy of your Sessions, Arrangements, personal library, and preferences."
+            subtitle="Save all Dojo data as a backup file."
             onClick={exportBackup}
           />
 
@@ -292,11 +292,9 @@ export function DojoBackupSettings({
               aria-label="Choose a Dojo backup JSON file to restore"
               disabled={isReadingBackup}
               icon={<FolderOpen />}
-              label={
-                isReadingBackup ? "Reading Backup…" : "Restore Dojo Backup"
-              }
+              label={isReadingBackup ? "Reading Backup…" : "Restore Dojo"}
               shouldYield={false}
-              subtitle="Replace everything in your Dojo with a backup file."
+              subtitle="Restore all Dojo data from a backup file."
               onClick={chooseBackupFile}
             />
           )}

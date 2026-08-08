@@ -80,18 +80,13 @@ describe("DojoSettingsDialog", () => {
     expect(markup).toContain(
       "Everything in your Dojo is saved automatically on this device.",
     );
-    expect(markup).toContain("Download Dojo Backup");
+    expect(markup).toContain("Back Up Dojo");
+    expect(markup).toContain("Save all Dojo data as a backup file.");
+    expect(markup).toContain("Restore Dojo");
+    expect(markup).toContain("Restore all Dojo data from a backup file.");
+    expect(markup).toContain("Clear Sessions &amp; Arrangements");
     expect(markup).toContain(
-      "Save a portable copy of your Sessions, Arrangements, personal library, and preferences.",
-    );
-    expect(markup).toContain("Restore Dojo Backup");
-    expect(markup).toContain(
-      "Replace everything in your Dojo with a backup file.",
-    );
-    expect(markup).toContain("Start Fresh");
-    expect(markup).not.toContain("Start Fresh…");
-    expect(markup).toContain(
-      "Replace all Sessions and Arrangements with a new empty Session. Your Tunings, Progressions, and preferences will remain.",
+      "Remove all Sessions and Arrangements. Your personal library and preferences will remain.",
     );
     expect(markup).not.toContain("Save the Set");
     expect(markup).not.toContain("Recall a Set");
@@ -99,7 +94,7 @@ describe("DojoSettingsDialog", () => {
     expect(markup).toContain('accept=".json,application/json"');
   });
 
-  it("shows the complete Start Fresh impact in its confirmation", () => {
+  it("shows the complete clear action impact in its confirmation", () => {
     const markup = renderToStaticMarkup(
       <DojoStartFreshAction
         counts={{
@@ -114,7 +109,7 @@ describe("DojoSettingsDialog", () => {
       />,
     );
 
-    expect(markup).toContain("Start fresh?");
+    expect(markup).toContain("Clear Sessions &amp; Arrangements?");
     expect(markup).toContain("2 Sessions • 1 Arrangement");
     expect(markup).toContain("Replaced by one new empty Session.");
     expect(markup).not.toContain("Custom Tunings •");
@@ -123,11 +118,11 @@ describe("DojoSettingsDialog", () => {
     );
     expect(markup).toContain("Cancel");
     expect(markup).toContain("Download Backup");
-    expect(markup).toContain("Start Fresh");
+    expect(markup).toContain("Clear Sessions &amp; Arrangements");
     expect(markup).toContain('data-tone="danger"');
   });
 
-  it("keeps the Start Fresh action neutral until confirmation", () => {
+  it("keeps the clear action neutral until confirmation", () => {
     const markup = renderToStaticMarkup(
       <DojoStartFreshAction
         counts={{

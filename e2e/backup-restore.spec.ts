@@ -318,10 +318,12 @@ test("leaves ambiguous persisted data untouched and shows recovery guidance", as
   );
 
   const settings = await openDojoSettings(page);
-  await settings.getByRole("button", { name: "Start Fresh" }).click();
   await settings
-    .getByRole("group", { name: "Start fresh?" })
-    .getByRole("button", { name: "Start Fresh" })
+    .getByRole("button", { name: "Clear Sessions & Arrangements" })
+    .click();
+  await settings
+    .getByRole("group", { name: "Clear Sessions & Arrangements?" })
+    .getByRole("button", { name: "Clear Sessions & Arrangements" })
     .click();
 
   await expect(
