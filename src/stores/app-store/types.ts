@@ -61,12 +61,12 @@ export type PartSettingsPatch = Partial<
 >;
 
 export interface DojoDataActions {
+  clearDojo: () => void;
   importDojoBackupResources: (
     snapshot: AppStoreSnapshot,
     selectedKeys: readonly string[],
   ) => DojoResourceImportResult;
   restoreDojoSnapshot: (snapshot: AppStoreSnapshot) => void;
-  startFreshDojo: () => void;
 }
 
 export interface AppStoreRuntimeState {

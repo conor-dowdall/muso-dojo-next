@@ -2,8 +2,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { DojoSettingsDialog } from "@/components/dojo-settings/DojoSettingsDialog";
 import {
+  DojoClearAction,
   DojoRestoreAction,
-  DojoStartFreshAction,
 } from "@/components/dojo-settings/DojoBackupSettings";
 import { APP_STORE_VERSION } from "@/stores/app-store/persistence";
 import { createStoreSnapshot } from "@/stores/app-store/__tests__/appStoreTestUtils";
@@ -84,9 +84,9 @@ describe("DojoSettingsDialog", () => {
     expect(markup).toContain("Save all Dojo data as a backup file.");
     expect(markup).toContain("Restore Dojo");
     expect(markup).toContain("Restore all Dojo data from a backup file.");
-    expect(markup).toContain("Clear Sessions &amp; Arrangements");
+    expect(markup).toContain("Clear Dojo");
     expect(markup).toContain(
-      "Remove all Sessions and Arrangements. Your personal library and preferences will remain.",
+      "Remove all Dojo data and reset your preferences.",
     );
     expect(markup).not.toContain("Save the Set");
     expect(markup).not.toContain("Recall a Set");
@@ -96,10 +96,12 @@ describe("DojoSettingsDialog", () => {
 
   it("shows the complete clear action impact in its confirmation", () => {
     const markup = renderToStaticMarkup(
-      <DojoStartFreshAction
+      <DojoClearAction
         counts={{
           arrangements: 1,
+          chordProgressions: 4,
           sessions: 2,
+          tunings: 3,
         }}
         isConfirming
         onCancel={() => undefined}
@@ -109,25 +111,25 @@ describe("DojoSettingsDialog", () => {
       />,
     );
 
-    expect(markup).toContain("Clear Sessions &amp; Arrangements?");
+    expect(markup).toContain("Clear Dojo?");
     expect(markup).toContain("2 Sessions • 1 Arrangement");
-    expect(markup).toContain("Replaced by one new empty Session.");
-    expect(markup).not.toContain("Custom Tunings •");
-    expect(markup).toContain(
-      "Your Custom Tunings, Custom Chord Progressions, and preferences will remain.",
-    );
+    expect(markup).toContain("3 Custom Tunings • 4 Custom Chord Progressions");
+    expect(markup).toContain("Your preferences will be reset.");
+    expect(markup).toContain("One new empty Session will be created.");
     expect(markup).toContain("Cancel");
     expect(markup).toContain("Download Backup");
-    expect(markup).toContain("Clear Sessions &amp; Arrangements");
+    expect(markup).toContain("Clear Dojo");
     expect(markup).toContain('data-tone="danger"');
   });
 
   it("keeps the clear action neutral until confirmation", () => {
     const markup = renderToStaticMarkup(
-      <DojoStartFreshAction
+      <DojoClearAction
         counts={{
           arrangements: 1,
+          chordProgressions: 4,
           sessions: 2,
+          tunings: 3,
         }}
         isConfirming={false}
         onCancel={() => undefined}

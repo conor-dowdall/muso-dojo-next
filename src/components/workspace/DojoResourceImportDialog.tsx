@@ -36,6 +36,14 @@ function formatImportLabel(count: number) {
   return `Import ${count} ${count === 1 ? "Resource" : "Resources"}`;
 }
 
+function createDefaultSelectedKeys(catalog: DojoResourceImportCatalog) {
+  return new Set(
+    [...catalog.tunings, ...catalog.progressions]
+      .filter(({ collision }) => !collision)
+      .map(({ key }) => key),
+  );
+}
+
 function ResourceImportRow({
   candidate,
   selected,
@@ -46,21 +54,31 @@ function ResourceImportRow({
   onChange: (selected: boolean) => void;
 }) {
   const resourceKind = candidate.kind === "tuning" ? "tuning" : "progression";
+  const collisionImportLabel = candidate.keepBothName
+    ? `Include backup ${candidate.name} ${resourceKind} as ${candidate.keepBothName}`
+    : undefined;
 
   return (
     <DisclosureListChoice
-      aria-label={`Include ${candidate.name} ${resourceKind}`}
+      aria-label={
+        selected
+          ? `Skip ${candidate.name} ${resourceKind}`
+          : (collisionImportLabel ??
+            `Include ${candidate.name} ${resourceKind}`)
+      }
       label={candidate.name}
-      preview={!selected && candidate.collision ? "Skip" : undefined}
+      preview={!selected ? "Skip" : undefined}
       selected={selected}
       selectedPreviewKind="included"
+      selectedPreviewLabel={candidate.collision ? "KEEP BOTH" : undefined}
       shouldYield={false}
       subtitle={
         <span className={styles.resourceDetails}>
           <span>{candidate.subtitle}</span>
-          {candidate.collision ? (
+          {candidate.collision && candidate.keepBothName ? (
             <span>
-              Keep Both imports this resource as “{candidate.keepBothName}”.
+              A resource with this name is already in your Dojo. If included,
+              the backup version will be imported as “{candidate.keepBothName}”.
             </span>
           ) : null}
         </span>
@@ -126,9 +144,18 @@ export function DojoResourceImportDialog({
   onClose: () => void;
   onImport: (selectedKeys: readonly string[]) => void;
 }) {
-  const [selectedKeys, setSelectedKeys] = useState<ReadonlySet<string>>(
-    () => new Set(),
+  const defaultSelectedKeys = useMemo(
+    () => createDefaultSelectedKeys(catalog),
+    [catalog],
   );
+  const [selectionState, setSelectionState] = useState<{
+    catalog: DojoResourceImportCatalog;
+    selectedKeys: ReadonlySet<string>;
+  }>(() => ({ catalog, selectedKeys: defaultSelectedKeys }));
+  const selectedKeys =
+    selectionState.catalog === catalog
+      ? selectionState.selectedKeys
+      : defaultSelectedKeys;
   const totalResources = catalog.tunings.length + catalog.progressions.length;
   const selectedCount = selectedKeys.size;
 
@@ -138,8 +165,12 @@ export function DojoResourceImportDialog({
   );
 
   const changeSelection = (key: string, selected: boolean) => {
-    setSelectedKeys((current) => {
-      const next = new Set(current);
+    setSelectionState((current) => {
+      const currentKeys =
+        current.catalog === catalog
+          ? current.selectedKeys
+          : defaultSelectedKeys;
+      const next = new Set(currentKeys);
 
       if (selected) {
         next.add(key);
@@ -147,16 +178,16 @@ export function DojoResourceImportDialog({
         next.delete(key);
       }
 
-      return next;
+      return { catalog, selectedKeys: next };
     });
   };
   const closeDialog = () => {
-    setSelectedKeys(new Set());
+    setSelectionState({ catalog, selectedKeys: defaultSelectedKeys });
     onClose();
   };
   const importResources = () => {
     const keys = [...selectedKeys];
-    setSelectedKeys(new Set());
+    setSelectionState({ catalog, selectedKeys: defaultSelectedKeys });
     onImport(keys);
   };
 
@@ -169,8 +200,9 @@ export function DojoResourceImportDialog({
       />
       <DialogContent layout="stack">
         <Text as="p" size="sm" variant="muted">
-          Backup exported {formatBackupExportDate(exportedAt)}. Select the
-          resources to add to your Dojo.
+          Backup exported {formatBackupExportDate(exportedAt)}. Resources
+          without name conflicts are included automatically. Review any
+          conflicts before importing.
         </Text>
         {totalResources === 0 ? (
           <Text as="p" size="sm" variant="muted">

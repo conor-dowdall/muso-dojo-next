@@ -14,6 +14,19 @@ import {
 
 export function createDojoDataActions(set: AppStoreSet): DojoDataActions {
   return {
+    clearDojo: () => {
+      const session = createFallbackSessionConfig();
+
+      resolvePersistenceLoadFailure();
+      set((state) => ({
+        activeWorkspace: { kind: "session", id: session.id },
+        activeSessionId: session.id,
+        arrangements: {},
+        dojoSettings: {},
+        sessions: { [session.id]: session },
+        workspaceMountRevision: state.workspaceMountRevision + 1,
+      }));
+    },
     importDojoBackupResources: (snapshot, selectedKeys) => {
       let result: DojoResourceImportResult | undefined;
 
@@ -40,18 +53,6 @@ export function createDojoDataActions(set: AppStoreSet): DojoDataActions {
       resolvePersistenceLoadFailure();
       set((state) => ({
         ...partializeAppStoreSnapshot(snapshot),
-        workspaceMountRevision: state.workspaceMountRevision + 1,
-      }));
-    },
-    startFreshDojo: () => {
-      const session = createFallbackSessionConfig();
-
-      resolvePersistenceLoadFailure();
-      set((state) => ({
-        activeWorkspace: { kind: "session", id: session.id },
-        activeSessionId: session.id,
-        arrangements: {},
-        sessions: { [session.id]: session },
         workspaceMountRevision: state.workspaceMountRevision + 1,
       }));
     },
