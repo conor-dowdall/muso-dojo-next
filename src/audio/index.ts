@@ -5,6 +5,12 @@ export {
   stopTransportPlayback,
 } from "./stopAllAudioPlayback";
 export {
+  audioWorkspaceScopesAreEqual,
+  WorkspaceAudioTransitionPolicy,
+  type AudioWorkspaceIdentity,
+  type AudioWorkspaceScope,
+} from "./workspaceAudioTransitionPolicy";
+export {
   audioReadiness,
   createAudioReadinessController,
   ensureAudioReady,

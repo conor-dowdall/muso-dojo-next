@@ -1,3 +1,4 @@
+import { beatTransportCoordinator } from "./beatTransportCoordinator";
 import { exercisePlaybackCoordinator } from "./exercisePlaybackCoordinator";
 import { musoAudioEngine } from "./createWebAudioEngine";
 import { partSequenceCoordinator } from "./partSequenceCoordinator";
@@ -21,8 +22,7 @@ export function isAudioPlaybackActive() {
 /** Stops scheduled/looping transports without interrupting Drones or auditions. */
 export function stopTransportPlayback() {
   partSequenceCoordinator.stop({ stopPlayback: false });
-  exercisePlaybackCoordinator.stop();
-  rhythmPlaybackCoordinator.stop();
+  beatTransportCoordinator.stopAllPlayback();
 }
 
 export function stopAllAudioPlayback() {

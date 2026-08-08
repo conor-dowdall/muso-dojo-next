@@ -133,6 +133,67 @@ export function createCollidingFretboardWorkspaceSnapshot(): AppStoreSnapshot {
   };
 }
 
+export function createCollidingLooperWorkspaceSnapshot(): AppStoreSnapshot {
+  const cMajorSessionId = "c-major-looper-session";
+  const aMinorSessionId = "a-minor-looper-session";
+  const sharedPartId = "shared-looper-part";
+  const sharedModuleId = "shared-looper-module";
+
+  const createSession = ({
+    id,
+    name,
+    noteCollectionKey,
+    rootNote,
+  }: {
+    id: string;
+    name: string;
+    noteCollectionKey: "major" | "minor";
+    rootNote: "A" | "C";
+  }) => ({
+    backingBand,
+    id,
+    lastModified: "2026-01-01T00:00:00.000Z",
+    name,
+    workspaceViewMode: "session" as const,
+    parts: [
+      {
+        automaticRhythm: { style: "standard" as const },
+        id: sharedPartId,
+        modules: [
+          {
+            audioPresetId: "piano" as const,
+            id: sharedModuleId,
+            type: "exercise-looper" as const,
+          },
+        ],
+        noteCollectionKey,
+        rootNote,
+      },
+    ],
+  });
+
+  return {
+    activeSessionId: cMajorSessionId,
+    activeWorkspace: { id: cMajorSessionId, kind: "session" },
+    arrangements: {},
+    dojoSettings: {},
+    sessions: {
+      [aMinorSessionId]: createSession({
+        id: aMinorSessionId,
+        name: "A Minor Looper Session",
+        noteCollectionKey: "minor",
+        rootNote: "A",
+      }),
+      [cMajorSessionId]: createSession({
+        id: cMajorSessionId,
+        name: "C Major Looper Session",
+        noteCollectionKey: "major",
+        rootNote: "C",
+      }),
+    },
+  };
+}
+
 export function createDojoBackupJson(
   snapshot: AppStoreSnapshot,
   exportedAt = "2026-07-26T14:30:22.000Z",

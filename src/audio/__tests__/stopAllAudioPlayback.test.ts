@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { musoAudioEngine } from "@/audio/createWebAudioEngine";
-import { exercisePlaybackCoordinator } from "@/audio/exercisePlaybackCoordinator";
+import { beatTransportCoordinator } from "@/audio/beatTransportCoordinator";
 import { partSequenceCoordinator } from "@/audio/partSequenceCoordinator";
-import { rhythmPlaybackCoordinator } from "@/audio/rhythmPlaybackCoordinator";
 import {
   stopAllAudioPlayback,
   stopTransportPlayback,
@@ -15,14 +14,11 @@ describe("audio playback stopping", () => {
 
   function spyOnPlaybackStops() {
     return {
-      exercise: vi
-        .spyOn(exercisePlaybackCoordinator, "stop")
+      beatTransport: vi
+        .spyOn(beatTransportCoordinator, "stopAllPlayback")
         .mockImplementation(() => undefined),
       partSequence: vi
         .spyOn(partSequenceCoordinator, "stop")
-        .mockImplementation(() => undefined),
-      rhythm: vi
-        .spyOn(rhythmPlaybackCoordinator, "stop")
         .mockImplementation(() => undefined),
       stopAll: vi
         .spyOn(musoAudioEngine, "stopAll")
@@ -36,8 +32,7 @@ describe("audio playback stopping", () => {
     stopTransportPlayback();
 
     expect(stops.partSequence).toHaveBeenCalledWith({ stopPlayback: false });
-    expect(stops.exercise).toHaveBeenCalledOnce();
-    expect(stops.rhythm).toHaveBeenCalledOnce();
+    expect(stops.beatTransport).toHaveBeenCalledOnce();
     expect(stops.stopAll).not.toHaveBeenCalled();
   });
 
@@ -47,8 +42,7 @@ describe("audio playback stopping", () => {
     stopAllAudioPlayback();
 
     expect(stops.partSequence).toHaveBeenCalledWith({ stopPlayback: false });
-    expect(stops.exercise).toHaveBeenCalledOnce();
-    expect(stops.rhythm).toHaveBeenCalledOnce();
+    expect(stops.beatTransport).toHaveBeenCalledOnce();
     expect(stops.stopAll).toHaveBeenCalledOnce();
   });
 });
