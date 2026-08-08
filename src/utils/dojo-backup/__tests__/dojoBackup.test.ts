@@ -242,6 +242,40 @@ describe("Dojo JSON backups", () => {
               string,
               Record<string, unknown>
             >;
+            sessions[sessionId]!.id = "different-session-id";
+          }),
+        ),
+      "invalid-backup",
+    );
+
+    expectSyncBackupError(
+      () =>
+        parseDojoBackup(
+          editSerializedBackup(source, (document) => {
+            const data = document.data as Record<string, unknown>;
+            const arrangements = data.arrangements as Record<
+              string,
+              Record<string, unknown>
+            >;
+            const arrangement = Object.values(arrangements)[0]!;
+            const sections = arrangement.sections as Record<string, unknown>[];
+            const entries = arrangement.entries as Record<string, unknown>[];
+            sections[0]!.id = "";
+            entries[0]!.sectionId = "";
+          }),
+        ),
+      "invalid-backup",
+    );
+
+    expectSyncBackupError(
+      () =>
+        parseDojoBackup(
+          editSerializedBackup(source, (document) => {
+            const data = document.data as Record<string, unknown>;
+            const sessions = data.sessions as Record<
+              string,
+              Record<string, unknown>
+            >;
             sessions.duplicate = structuredClone(sessions[sessionId]!);
           }),
         ),

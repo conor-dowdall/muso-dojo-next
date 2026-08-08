@@ -1,4 +1,7 @@
-import { partializeAppStoreSnapshot } from "./persistence";
+import {
+  partializeAppStoreSnapshot,
+  resolvePersistenceLoadFailure,
+} from "./persistence";
 import { type AppStoreSet, type DojoDataActions } from "./types";
 import {
   createEntityId,
@@ -34,6 +37,7 @@ export function createDojoDataActions(set: AppStoreSet): DojoDataActions {
       return result;
     },
     restoreDojoSnapshot: (snapshot) => {
+      resolvePersistenceLoadFailure();
       set((state) => ({
         ...partializeAppStoreSnapshot(snapshot),
         workspaceMountRevision: state.workspaceMountRevision + 1,
@@ -42,6 +46,7 @@ export function createDojoDataActions(set: AppStoreSet): DojoDataActions {
     startFreshDojo: () => {
       const session = createFallbackSessionConfig();
 
+      resolvePersistenceLoadFailure();
       set((state) => ({
         activeWorkspace: { kind: "session", id: session.id },
         activeSessionId: session.id,

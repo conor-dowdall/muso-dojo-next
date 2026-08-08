@@ -231,7 +231,6 @@ function HydratedSession({
           />
         </Dialog>
         <AudioStatusViewport />
-        <PersistenceStatusViewport />
       </>
     );
   }
@@ -333,7 +332,6 @@ function HydratedSession({
         />
       </Dialog>
       <AudioStatusViewport />
-      <PersistenceStatusViewport />
     </>
   );
 }
@@ -342,16 +340,34 @@ function SessionLoadingFallback() {
   return <SessionLoader />;
 }
 
-function HydratedDojoSessionPage() {
+function HydratedDojoSessionPage({
+  persistenceLoadError,
+}: {
+  persistenceLoadError?: string;
+}) {
   const sessionWorkspaceViewMode = useAppStore(
     (state) => state.sessionWorkspaceViewMode,
+  );
+  const workspaceMountRevision = useAppStore(
+    (state) => state.workspaceMountRevision,
   );
   const persistSessionWorkspaceViewMode = useAppStore(
     (state) => state.setSessionWorkspaceViewMode,
   );
-  const [sessionViewMode, setSessionViewMode] = useState<SessionViewMode>(
-    () => sessionWorkspaceViewMode,
-  );
+  const [sessionViewState, setSessionViewState] = useState(() => ({
+    mode: sessionWorkspaceViewMode as SessionViewMode,
+    workspaceMountRevision,
+  }));
+  let sessionViewMode = sessionViewState.mode;
+
+  if (sessionViewState.workspaceMountRevision !== workspaceMountRevision) {
+    sessionViewMode = sessionWorkspaceViewMode;
+    setSessionViewState({
+      mode: sessionWorkspaceViewMode,
+      workspaceMountRevision,
+    });
+  }
+
   const [viewModeTransitionPending, startViewModeTransition] = useTransition();
   useEffect(
     () => () => {
@@ -369,35 +385,45 @@ function HydratedDojoSessionPage() {
       // that work across tasks so the main-thread audio lookahead can keep
       // scheduling while the view changes. Only Session and Chart are persisted;
       // Live and Clean return to that underlying workspace when closed.
-      startViewModeTransition(() => setSessionViewMode(resolvedMode));
+      startViewModeTransition(() =>
+        setSessionViewState({
+          mode: resolvedMode,
+          workspaceMountRevision,
+        }),
+      );
     },
-    [persistSessionWorkspaceViewMode],
+    [persistSessionWorkspaceViewMode, workspaceMountRevision],
   );
   const isFocusViewMode = isSessionFocusViewMode(sessionViewMode);
 
   return (
-    <main className={styles.main}>
-      <div
-        className={`${styles.container} ${styles.hydrated}`}
-        data-session-focus-mode={isFocusViewMode ? true : undefined}
-        data-session-view-mode={sessionViewMode}
-      >
-        <HydratedSession
-          sessionViewMode={sessionViewMode}
-          sessionWorkspaceViewMode={sessionWorkspaceViewMode}
-          onSessionViewModeChange={handleSessionViewModeChange}
-          viewModeTransitionPending={viewModeTransitionPending}
-        />
-      </div>
-    </main>
+    <>
+      <main className={styles.main}>
+        <div
+          className={`${styles.container} ${styles.hydrated}`}
+          data-session-focus-mode={isFocusViewMode ? true : undefined}
+          data-session-view-mode={sessionViewMode}
+        >
+          <HydratedSession
+            sessionViewMode={sessionViewMode}
+            sessionWorkspaceViewMode={sessionWorkspaceViewMode}
+            onSessionViewModeChange={handleSessionViewModeChange}
+            viewModeTransitionPending={viewModeTransitionPending}
+          />
+        </div>
+      </main>
+      <PersistenceStatusViewport loadError={persistenceLoadError} />
+    </>
   );
 }
 
 export default function DojoSessionPage() {
-  const hasHydrated = useHydrateAppStore();
+  const { hasHydrated, persistenceLoadError } = useHydrateAppStore();
 
   if (hasHydrated) {
-    return <HydratedDojoSessionPage />;
+    return (
+      <HydratedDojoSessionPage persistenceLoadError={persistenceLoadError} />
+    );
   }
 
   return (

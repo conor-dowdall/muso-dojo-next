@@ -66,6 +66,7 @@ function createReplacementSnapshot() {
       },
     ],
   };
+  snapshot.sessionWorkspaceViewMode = "chart";
 
   return snapshot;
 }
@@ -104,6 +105,41 @@ function createSameIdFretboardSnapshot({
           }
         : part,
     ),
+  };
+
+  return snapshot;
+}
+
+function createAmbiguousPersistedSnapshot() {
+  const snapshot = createKeyboardWorkspaceSnapshot();
+  const session = snapshot.sessions["e2e-session"]!;
+  const section = {
+    backingBand: session.backingBand!,
+    id: "duplicate-section",
+    parts: [],
+    source: {
+      capturedAt: "2026-07-26T14:30:22.000Z",
+      sessionId: session.id,
+      sessionLastModified: session.lastModified,
+      sessionName: session.name,
+      sessionTempoBpm: 80,
+    },
+  };
+
+  snapshot.arrangements["ambiguous-arrangement"] = {
+    entries: [
+      {
+        id: "entry",
+        playCount: 1,
+        sectionId: "duplicate-section",
+      },
+    ],
+    id: "ambiguous-arrangement",
+    lastModified: "2026-07-26T14:30:22.000Z",
+    name: "Ambiguous Arrangement",
+    playbackMode: "once",
+    sections: [section, structuredClone(section)],
+    tempoBpm: 80,
   };
 
   return snapshot;
@@ -213,6 +249,7 @@ test("restores the backup as a complete replacement", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Restored Session" }),
   ).toBeVisible();
+  await expect(page.locator('[data-session-view-mode="chart"]')).toBeVisible();
   await expectWorkspacePersisted(
     page,
     (snapshot) =>
@@ -221,7 +258,8 @@ test("restores the backup as a complete replacement", async ({ page }) => {
       snapshot.sessions["e2e-session"]?.name === "Restored Session" &&
       snapshot.dojoSettings.appTheme === "purple" &&
       snapshot.dojoSettings.customFretboardTunings?.length === 2 &&
-      snapshot.dojoSettings.customChordProgressions?.length === 1,
+      snapshot.dojoSettings.customChordProgressions?.length === 1 &&
+      snapshot.sessionWorkspaceViewMode === "chart",
   );
 });
 
@@ -258,4 +296,41 @@ test("preserves restored custom notes when the replacement reuses entity ids", a
       partModule.instrument.noteEmphasis === "hidden"
     );
   });
+});
+
+test("leaves ambiguous persisted data untouched and shows recovery guidance", async ({
+  page,
+}) => {
+  await seedDojoWorkspace(page, createAmbiguousPersistedSnapshot());
+  await page.reload();
+
+  await expect(
+    page.getByRole("alert").filter({
+      hasText: "Saved Dojo data could not be loaded safely",
+    }),
+  ).toBeVisible();
+  await expectWorkspacePersisted(
+    page,
+    (snapshot) =>
+      snapshot.arrangements["ambiguous-arrangement"]?.sections.length === 2,
+  );
+
+  const settings = await openDojoSettings(page);
+  await settings.getByRole("button", { name: "Start Fresh" }).click();
+  await settings
+    .getByRole("group", { name: "Start fresh?" })
+    .getByRole("button", { name: "Start Fresh" })
+    .click();
+
+  await expect(
+    page.getByRole("alert").filter({
+      hasText: "Saved Dojo data could not be loaded safely",
+    }),
+  ).toHaveCount(0);
+  await expectWorkspacePersisted(
+    page,
+    (snapshot) =>
+      Object.keys(snapshot.arrangements).length === 0 &&
+      Object.keys(snapshot.sessions).length === 1,
+  );
 });

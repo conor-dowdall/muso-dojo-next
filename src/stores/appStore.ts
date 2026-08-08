@@ -1,20 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import {
-  createAppStoreSnapshot,
-  normalizeAppStoreSnapshot,
-} from "@/utils/session/normalizeAppStoreSnapshot";
+import { createAppStoreSnapshot } from "@/utils/session/normalizeAppStoreSnapshot";
 import { createFallbackSessionConfig } from "@/utils/session/createSessionEntities";
 import {
   APP_STORE_VERSION,
   APP_STORE_STORAGE_KEY,
   type AppStorePersistedSnapshot,
   createDebouncedAppStoreStorage,
+  getPersistenceLoadError,
   normalizePersistedAppStoreSnapshot,
   partializeAppStoreSnapshot,
+  reportPersistenceLoadFailure,
+  subscribeToPersistenceLoadError,
 } from "@/stores/app-store/persistence";
 import { createAppStoreInitializer } from "@/stores/app-store/storeInitializer";
 import { type AppStore } from "@/stores/app-store/types";
@@ -46,8 +46,16 @@ export const useAppStore = create<AppStore>()(
           normalizePersistedAppStoreSnapshot(persistedState, initialSnapshot),
         merge: (persistedState, currentState) => ({
           ...currentState,
-          ...normalizeAppStoreSnapshot(persistedState, initialSnapshot),
+          ...normalizePersistedAppStoreSnapshot(
+            persistedState,
+            initialSnapshot,
+          ),
         }),
+        onRehydrateStorage: () => (_state, error) => {
+          if (error) {
+            reportPersistenceLoadFailure();
+          }
+        },
         skipHydration: true,
       },
     ),
@@ -59,7 +67,12 @@ export const useAppStore = create<AppStore>()(
 );
 
 export function useHydrateAppStore() {
-  const [hasHydrated, setHasHydrated] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(hasCompletedHydration);
+  const persistenceLoadError = useSyncExternalStore(
+    subscribeToPersistenceLoadError,
+    getPersistenceLoadError,
+    getPersistenceLoadError,
+  );
 
   useEffect(() => {
     let isSubscribed = true;
@@ -69,6 +82,10 @@ export function useHydrateAppStore() {
       if (isSubscribed) {
         setHasHydrated(true);
       }
+    };
+    const markHydrationFailed = () => {
+      reportPersistenceLoadFailure();
+      markHydrated();
     };
     const unsubscribeFromHydrationFinish =
       useAppStore.persist.onFinishHydration(markHydrated);
@@ -88,10 +105,10 @@ export function useHydrateAppStore() {
       try {
         void Promise.resolve(useAppStore.persist.rehydrate()).then(
           markHydrated,
-          markHydrated,
+          markHydrationFailed,
         );
       } catch {
-        markHydrated();
+        markHydrationFailed();
       }
     }
 
@@ -101,5 +118,5 @@ export function useHydrateAppStore() {
     };
   }, []);
 
-  return hasHydrated;
+  return { hasHydrated, persistenceLoadError };
 }

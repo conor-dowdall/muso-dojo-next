@@ -12,6 +12,8 @@ import {
   APP_STORE_VERSION,
   type AppStorePersistedSnapshot,
   createDebouncedAppStoreStorage,
+  reportPersistenceLoadFailure,
+  resolvePersistenceLoadFailure,
   normalizePersistedAppStoreSnapshot,
   partializeAppStoreSnapshot,
 } from "@/stores/app-store/persistence";
@@ -27,6 +29,7 @@ import {
 import { type NoteColorConfig } from "@/types/note-colors";
 import { sessionWorkspaceViewModes } from "@/types/session-view";
 import { createDefaultSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
+import { SnapshotIdentityIntegrityError } from "@/utils/session/assertSnapshotIdentityIntegrity";
 
 const fallbackSnapshot = createAppStoreSnapshot({
   id: "fallback-session",
@@ -145,7 +148,10 @@ function createPersistedTestStore(
           normalizePersistedAppStoreSnapshot(persistedState, fallbackSnapshot),
         merge: (persistedState, currentState) => ({
           ...currentState,
-          ...normalizeAppStoreSnapshot(persistedState, fallbackSnapshot),
+          ...normalizePersistedAppStoreSnapshot(
+            persistedState,
+            fallbackSnapshot,
+          ),
         }),
         skipHydration: true,
       },
@@ -154,8 +160,48 @@ function createPersistedTestStore(
 }
 
 describe("app store persistence", () => {
+  it("rejects ambiguous persisted identity before normalization", () => {
+    expect(() =>
+      normalizePersistedAppStoreSnapshot(
+        {
+          arrangements: {
+            arrangement: {
+              entries: [{ id: "entry", sectionId: "section" }],
+              id: "arrangement",
+              sections: [{ id: "section" }, { id: "section" }],
+            },
+          },
+          sessions: {},
+        },
+        fallbackSnapshot,
+      ),
+    ).toThrow(SnapshotIdentityIntegrityError);
+  });
+
   afterEach(() => {
+    resolvePersistenceLoadFailure();
     vi.useRealTimers();
+  });
+
+  it("suspends writes until persistence recovery is explicit", () => {
+    vi.useFakeTimers();
+    const stateStorage = new MemoryStateStorage();
+    const storage = createDebouncedAppStoreStorage(() => stateStorage, {
+      debounceMs: 100,
+      maxWaitMs: 300,
+    });
+    const persistedValue = createPersistedValue("protected-session");
+
+    storage?.setItem("store", persistedValue);
+    reportPersistenceLoadFailure();
+    storage?.setItem("store", persistedValue);
+    resolvePersistenceLoadFailure();
+    vi.advanceTimersByTime(300);
+    expect(stateStorage.setItemCount).toBe(0);
+
+    storage?.setItem("store", persistedValue);
+    vi.advanceTimersByTime(100);
+    expect(stateStorage.setItemCount).toBe(1);
   });
 
   it("declares the current persisted store version", () => {
@@ -886,7 +932,7 @@ describe("app store persistence", () => {
         state: {
           activeSessionId: "missing-session",
           sessions: {
-            stored: {
+            "current-session": {
               id: "current-session",
               name: "Current Session",
               lastModified: "2026-01-04T00:00:00.000Z",
