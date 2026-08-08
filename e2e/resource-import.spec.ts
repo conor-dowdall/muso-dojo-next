@@ -147,9 +147,12 @@ test("imports selected resources, keeps both on collision, and preserves the Doj
   ).toBeVisible();
   await expect(importDialog.getByText("Open D Copy")).toBeVisible();
   await expect(importDialog.getByText("Skip", { exact: true })).toHaveCount(2);
+  await expect(importDialog.getByText("INCLUDED", { exact: true })).toHaveCount(
+    2,
+  );
   await expect(
-    importDialog.getByRole("button", { name: "Import 0 Resources" }),
-  ).toBeDisabled();
+    importDialog.getByRole("button", { name: "Import 2 Resources" }),
+  ).toBeEnabled();
 
   await importDialog.getByRole("button", { name: "Cancel" }).click();
   await expect(importDialog).toHaveCount(0);
@@ -170,30 +173,36 @@ test("imports selected resources, keeps both on collision, and preserves the Doj
     .last();
 
   await importDialog
-    .getByRole("button", { name: "Include Open D tuning" })
-    .click();
-  await importDialog
-    .getByRole("button", { name: "Include Turnaround progression" })
+    .getByRole("button", {
+      name: "Include backup Open D tuning as Open D Copy",
+    })
     .click();
   await expect(importDialog.getByText("INCLUDED", { exact: true })).toHaveCount(
     2,
   );
+  await expect(
+    importDialog.getByText("KEEP BOTH", { exact: true }),
+  ).toHaveCount(1);
+  await expect(importDialog.getByText("Skip", { exact: true })).toHaveCount(1);
   await importDialog
-    .getByRole("button", { name: "Import 2 Resources" })
+    .getByRole("button", { name: "Import 3 Resources" })
     .click();
 
   await expect(importDialog).toHaveCount(0);
   await expect(library.getByRole("status")).toHaveText(
-    "Imported 2 resources. Skipped 2 resources.",
+    "Imported 3 resources. Skipped 1 resource.",
   );
   await expectWorkspacePersisted(
     page,
     (snapshot) =>
       snapshot.sessions["e2e-session"]?.name === "Browser Session" &&
       snapshot.dojoSettings.appTheme === "ocean" &&
-      snapshot.dojoSettings.customFretboardTunings?.length === 2 &&
+      snapshot.dojoSettings.customFretboardTunings?.length === 3 &&
       snapshot.dojoSettings.customFretboardTunings.some(
         ({ id, name }) => id !== "backup-open-d" && name === "Open D Copy",
+      ) &&
+      snapshot.dojoSettings.customFretboardTunings.some(
+        ({ id, name }) => id !== "backup-dadgad" && name === "DADGAD",
       ) &&
       snapshot.dojoSettings.customChordProgressions?.length === 2 &&
       snapshot.dojoSettings.customChordProgressions.some(

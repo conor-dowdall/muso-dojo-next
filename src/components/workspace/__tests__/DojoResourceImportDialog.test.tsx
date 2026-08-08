@@ -57,17 +57,24 @@ describe("DojoResourceImportDialog", () => {
     );
 
     expect(markup).toContain("Import Resources");
-    expect(markup).toContain("Select the resources to add to your Dojo.");
+    expect(markup).toContain(
+      "Resources without name conflicts are included automatically. Review any conflicts before importing.",
+    );
     expect(markup).toContain("Custom Tunings");
     expect(markup).toContain("Custom Chord Progressions");
-    expect(markup).toContain('aria-label="Include Open D tuning"');
-    expect(markup).toContain('aria-label="Include Turnaround progression"');
+    expect(markup).toContain(
+      'aria-label="Include backup Open D tuning as Open D Copy"',
+    );
+    expect(markup).toContain('aria-label="Skip Turnaround progression"');
     expect(markup).toContain("Open D Copy");
-    expect(markup).toContain("Keep Both");
+    expect(markup).toContain(
+      "A resource with this name is already in your Dojo. If included, the backup version will be imported as “Open D Copy”.",
+    );
     expect(markup).toContain("Skip");
+    expect(markup).toContain("INCLUDED");
+    expect(markup).not.toContain("KEEP BOTH");
     expect(markup).not.toContain('type="checkbox"');
-    expect(markup).toContain("Import 0 Resources");
-    expect(markup).toContain("disabled");
+    expect(markup).toContain("Import 1 Resource");
     expect(markup).not.toContain("Sessions");
     expect(markup).not.toContain("Arrangements");
   });
