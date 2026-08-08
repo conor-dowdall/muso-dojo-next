@@ -18,12 +18,12 @@ test("an empty Arrangement directs the user to add a Part to a Session", async (
   await expect(library.getByRole("heading", { name: "Library" })).toBeVisible();
   await expect(
     library.getByText(
-      "Build and play music in Parts with Instruments, Loopers and more.",
+      "Build and play music with Parts, Instruments, Loopers, and more.",
     ),
   ).toBeVisible();
   await expect(
     library.getByText(
-      "Build a playable arrangement by capturing your Sessions as Sections.",
+      "Build and play a sequence of Sections from your Sessions.",
     ),
   ).toBeVisible();
 
