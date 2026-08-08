@@ -248,7 +248,10 @@ function HydratedSession({
         />
       </div>
       {activeSessionId ? (
+        // Keep stateful Part and Module hooks scoped to one Session even when
+        // imported or copied Sessions contain overlapping nested entity IDs.
         <SessionView
+          key={activeSessionId}
           sessionId={activeSessionId}
           viewMode={sessionViewMode}
           onOpenAddDialog={isFocusViewMode ? undefined : openAddDialog}

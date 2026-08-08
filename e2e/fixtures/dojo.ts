@@ -66,6 +66,72 @@ export function createKeyboardWorkspaceSnapshot(): AppStoreSnapshot {
   };
 }
 
+export function createCollidingFretboardWorkspaceSnapshot(): AppStoreSnapshot {
+  const customSessionId = "custom-fretboard-session";
+  const otherSessionId = "other-fretboard-session";
+  const sharedPartId = "shared-part";
+  const sharedModuleId = "shared-module";
+
+  return {
+    activeSessionId: customSessionId,
+    activeWorkspace: { id: customSessionId, kind: "session" },
+    arrangements: {},
+    dojoSettings: {},
+    sessionWorkspaceViewMode: "session",
+    sessions: {
+      [customSessionId]: {
+        backingBand,
+        id: customSessionId,
+        lastModified: "2026-01-01T00:00:00.000Z",
+        name: "Custom Fretboard Session",
+        parts: [
+          {
+            automaticRhythm: { style: "standard" },
+            id: sharedPartId,
+            modules: [
+              {
+                id: sharedModuleId,
+                instrument: {
+                  activeNotes: {
+                    "0-1": { emphasis: "large", midi: 65 },
+                    "0-3": { emphasis: "small", midi: 67 },
+                  },
+                  noteEmphasis: "hidden",
+                  type: "fretboard",
+                },
+                type: "instrument",
+              },
+            ],
+            noteCollectionKey: "major",
+            rootNote: "C",
+          },
+        ],
+      },
+      [otherSessionId]: {
+        backingBand,
+        id: otherSessionId,
+        lastModified: "2026-01-01T00:00:00.000Z",
+        name: "Other Fretboard Session",
+        parts: [
+          {
+            automaticRhythm: { style: "standard" },
+            id: sharedPartId,
+            modules: [
+              {
+                id: sharedModuleId,
+                instrument: { type: "fretboard" },
+                type: "instrument",
+              },
+            ],
+            noteCollectionKey: "major",
+            rootNote: "D",
+          },
+        ],
+      },
+    },
+  };
+}
+
 export function createDojoBackupJson(
   snapshot: AppStoreSnapshot,
   exportedAt = "2026-07-26T14:30:22.000Z",
