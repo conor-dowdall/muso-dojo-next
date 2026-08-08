@@ -83,13 +83,15 @@ export function createPartModuleActions(
       const part = findPartById(session, partId);
       const partModule = findPartModuleById(session, partId, moduleId);
 
-      if (!part || !partModule) {
+      if (!session || !part || !partModule) {
         return undefined;
       }
 
       const clonedModule = clonePartModuleConfig(
         partModule,
-        part.modules.map((candidateModule) => candidateModule.id),
+        session.parts.flatMap((candidatePart) =>
+          candidatePart.modules.map((candidateModule) => candidateModule.id),
+        ),
       );
 
       set((state) =>

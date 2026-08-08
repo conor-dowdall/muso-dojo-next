@@ -44,4 +44,49 @@ describe("normalizeSessionConfig", () => {
 
     expect(session).not.toHaveProperty("practiceBand");
   });
+
+  it("repairs Module ids across Parts and remaps local band references", () => {
+    const session = normalizeSessionConfig({
+      id: "session-1",
+      lastModified: "2026-06-07T00:00:00.000Z",
+      name: "Practice",
+      parts: [
+        {
+          band: {
+            backingNotes: { mode: "session" },
+            rhythm: { mode: "module", moduleId: "shared-module" },
+          },
+          id: "part-1",
+          modules: [
+            {
+              id: "shared-module",
+              rhythm: { source: "recipe" },
+              type: "rhythm",
+            },
+          ],
+        },
+        {
+          band: {
+            backingNotes: { mode: "session" },
+            rhythm: { mode: "module", moduleId: "shared-module" },
+          },
+          id: "part-2",
+          modules: [
+            {
+              id: "shared-module",
+              rhythm: { source: "recipe" },
+              type: "rhythm",
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(session.parts[0]?.modules[0]?.id).toBe("shared-module");
+    expect(session.parts[1]?.modules[0]?.id).toBe("shared-module-copy");
+    expect(session.parts[1]?.band?.rhythm).toEqual({
+      mode: "module",
+      moduleId: "shared-module-copy",
+    });
+  });
 });

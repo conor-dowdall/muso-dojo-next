@@ -8,6 +8,7 @@ export function createAppStoreInitializer(
 ): StateCreator<AppStore> {
   return (set, get) => ({
     ...initialSnapshot,
+    workspaceMountRevision: 0,
     ...createAppStoreActions(set, get),
   });
 }

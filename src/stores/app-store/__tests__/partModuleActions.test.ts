@@ -1,7 +1,29 @@
 import { describe, expect, it } from "vitest";
-import { createTestStore, partId, sessionId } from "./appStoreTestUtils";
+import {
+  createTestStore,
+  moduleId,
+  partId,
+  sessionId,
+} from "./appStoreTestUtils";
 
 describe("part module app store actions", () => {
+  it("keeps Module ids unique when Part and Module cloning are mixed", () => {
+    const store = createTestStore();
+
+    store.getState().clonePart(sessionId, partId);
+    const clonedModuleId = store
+      .getState()
+      .clonePartModule(sessionId, partId, moduleId);
+    const moduleIds = store
+      .getState()
+      .sessions[sessionId]?.parts.flatMap((part) =>
+        part.modules.map((module) => module.id),
+      );
+
+    expect(clonedModuleId).toBe("module-1-copy-2");
+    expect(new Set(moduleIds).size).toBe(moduleIds?.length);
+  });
+
   it("adds a module from a correlated creation request", () => {
     const store = createTestStore();
 

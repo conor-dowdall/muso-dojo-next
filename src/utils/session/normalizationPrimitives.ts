@@ -25,7 +25,7 @@ export function normalizeId(value: unknown, fallback: string): string {
   return normalizeString(value) ?? fallback;
 }
 
-function reserveUniqueId(preferredId: string, usedIds: Set<string>) {
+export function reserveUniqueId(preferredId: string, usedIds: Set<string>) {
   const baseId = preferredId.trim() || "item";
 
   if (!usedIds.has(baseId)) {

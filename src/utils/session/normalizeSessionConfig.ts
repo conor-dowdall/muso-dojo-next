@@ -1,4 +1,5 @@
 import { type MusicPartConfig, type SessionConfig } from "@/types/session";
+import { ensureUniqueMusicPartModuleIds } from "@/utils/session/ensureUniqueMusicPartModuleIds";
 import { normalizeMusicPartConfig } from "@/utils/session/normalizeMusicPartConfig";
 import {
   ensureUniqueIds,
@@ -21,12 +22,14 @@ export function normalizeSessionConfig(value: unknown): SessionConfig {
         .filter((part): part is MusicPartConfig => Boolean(part))
     : [];
 
+  const uniqueParts = ensureUniqueIds(parts);
+
   return {
     backingBand: normalizeSessionBackingBandConfig(input.backingBand),
     id: normalizeId(input.id, FALLBACK_SESSION_ID),
     name: normalizeString(input.name) ?? DEFAULT_SESSION_NAME,
     lastModified: normalizeString(input.lastModified) ?? FALLBACK_LAST_MODIFIED,
-    parts: ensureUniqueIds(parts),
+    parts: ensureUniqueMusicPartModuleIds(uniqueParts),
     ...(typeof input.tempoBpm === "number" &&
     Number.isInteger(input.tempoBpm) &&
     input.tempoBpm >= 30 &&

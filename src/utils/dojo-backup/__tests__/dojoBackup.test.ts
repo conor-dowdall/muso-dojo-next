@@ -120,6 +120,7 @@ describe("Dojo JSON backups", () => {
       customFretboardTunings: [{ name: "Open D" }],
     });
     expect(document.data).not.toHaveProperty("restoreDojoSnapshot");
+    expect(document.data).not.toHaveProperty("workspaceMountRevision");
     expect(parsed.snapshot).toEqual(
       normalizeAppStoreSnapshot(document.data, document.data),
     );
@@ -206,6 +207,59 @@ describe("Dojo JSON backups", () => {
           editSerializedBackup(source, (document) => {
             const data = document.data as Record<string, unknown>;
             data.sessions = { broken: { parts: "not-an-array" } };
+          }),
+        ),
+      "invalid-backup",
+    );
+  });
+
+  it("rejects ambiguous or dangling referenced identifiers", () => {
+    const source = createCompleteSnapshot();
+
+    expectSyncBackupError(
+      () =>
+        parseDojoBackup(
+          editSerializedBackup(source, (document) => {
+            const data = document.data as Record<string, unknown>;
+            const arrangements = data.arrangements as Record<
+              string,
+              Record<string, unknown>
+            >;
+            const arrangement = Object.values(arrangements)[0]!;
+            const sections = arrangement.sections as Record<string, unknown>[];
+            sections.push(structuredClone(sections[0]!));
+          }),
+        ),
+      "invalid-backup",
+    );
+
+    expectSyncBackupError(
+      () =>
+        parseDojoBackup(
+          editSerializedBackup(source, (document) => {
+            const data = document.data as Record<string, unknown>;
+            const sessions = data.sessions as Record<
+              string,
+              Record<string, unknown>
+            >;
+            sessions.duplicate = structuredClone(sessions[sessionId]!);
+          }),
+        ),
+      "invalid-backup",
+    );
+
+    expectSyncBackupError(
+      () =>
+        parseDojoBackup(
+          editSerializedBackup(source, (document) => {
+            const data = document.data as Record<string, unknown>;
+            const arrangements = data.arrangements as Record<
+              string,
+              Record<string, unknown>
+            >;
+            const arrangement = Object.values(arrangements)[0]!;
+            const entries = arrangement.entries as Record<string, unknown>[];
+            entries[0]!.sectionId = "missing-section";
           }),
         ),
       "invalid-backup",
@@ -384,6 +438,8 @@ describe("Dojo JSON backups", () => {
       dojoSettings: { appTheme: "purple" },
     });
     const originalRestoreAction = target.getState().restoreDojoSnapshot;
+    const originalWorkspaceMountRevision =
+      target.getState().workspaceMountRevision;
 
     target.getState().restoreDojoSnapshot(parsed.snapshot);
 
@@ -396,6 +452,9 @@ describe("Dojo JSON backups", () => {
     expect(restored.activeSessionId).toBe(parsed.snapshot.activeSessionId);
     expect(restored.sessionWorkspaceViewMode).toBe(
       parsed.snapshot.sessionWorkspaceViewMode,
+    );
+    expect(restored.workspaceMountRevision).toBe(
+      originalWorkspaceMountRevision + 1,
     );
   });
 });

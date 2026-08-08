@@ -61,6 +61,9 @@ function HydratedSession({
   >(null);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
   const activeWorkspace = useAppStore((state) => state.activeWorkspace);
+  const workspaceMountRevision = useAppStore(
+    (state) => state.workspaceMountRevision,
+  );
   const instrumentCreationRangeContextSignature = useAppStore(
     useShallow((state) =>
       createInstrumentCreationRangeContextSignature(
@@ -212,7 +215,7 @@ function HydratedSession({
     return (
       <>
         <ArrangementWorkspace
-          key={activeWorkspace.id}
+          key={`${workspaceMountRevision}:${activeWorkspace.id}`}
           arrangementId={activeWorkspace.id}
           onOpenLibrary={openSessionLibrary}
         />
@@ -248,10 +251,10 @@ function HydratedSession({
         />
       </div>
       {activeSessionId ? (
-        // Keep stateful Part and Module hooks scoped to one Session even when
-        // imported or copied Sessions contain overlapping nested entity IDs.
+        // Keep stateful Part and Module hooks scoped to one Session and one
+        // complete Dojo graph, even when IDs are reused by copies or backups.
         <SessionView
-          key={activeSessionId}
+          key={`${workspaceMountRevision}:${activeSessionId}`}
           sessionId={activeSessionId}
           viewMode={sessionViewMode}
           onOpenAddDialog={isFocusViewMode ? undefined : openAddDialog}

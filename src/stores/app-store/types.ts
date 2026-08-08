@@ -68,6 +68,15 @@ export interface DojoDataActions {
   startFreshDojo: () => void;
 }
 
+export interface AppStoreRuntimeState {
+  /**
+   * Changes whenever the complete Dojo graph is replaced. This is deliberately
+   * not persisted: consumers use it to discard component-local state that
+   * belongs to the previous graph, even when restored entities reuse IDs.
+   */
+  workspaceMountRevision: number;
+}
+
 export type DroneSettingsPatch = Partial<
   Omit<DronePartModuleConfig, "id" | "type">
 >;
@@ -412,6 +421,8 @@ export type AppStoreActions = DojoSettingsActions &
   ExerciseLooperActions &
   RhythmActions &
   InstrumentActions;
-export type AppStore = AppStoreSnapshot & AppStoreActions;
+export type AppStore = AppStoreSnapshot &
+  AppStoreRuntimeState &
+  AppStoreActions;
 export type AppStoreSet = Parameters<StateCreator<AppStore>>[0];
 export type AppStoreGet = Parameters<StateCreator<AppStore>>[1];

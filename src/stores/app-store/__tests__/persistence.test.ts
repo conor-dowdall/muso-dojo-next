@@ -103,6 +103,10 @@ function expectValidSnapshotInvariants(snapshot: AppStoreSnapshot) {
     expect(new Set(session.parts.map((part) => part.id)).size).toBe(
       session.parts.length,
     );
+    const sessionModuleIds = session.parts.flatMap((part) =>
+      part.modules.map((partModule) => partModule.id),
+    );
+    expect(new Set(sessionModuleIds).size).toBe(sessionModuleIds.length);
 
     session.parts.forEach((part) => {
       expect(new Set(part.modules.map((module) => module.id)).size).toBe(
@@ -722,6 +726,59 @@ describe("app store persistence", () => {
       '["C","major","guitar"]',
     );
     expectValidSnapshotInvariants(normalized);
+    expect(normalizeAppStoreSnapshot(normalized, fallbackSnapshot)).toEqual(
+      normalized,
+    );
+  });
+
+  it("normalizes duplicate Session and Arrangement names within their namespaces", () => {
+    const normalized = normalizeAppStoreSnapshot(
+      {
+        activeSessionId: "session-a",
+        activeWorkspace: { kind: "session", id: "session-a" },
+        arrangements: {
+          first: {
+            entries: [],
+            id: "arrangement-a",
+            lastModified: "2026-01-03T00:00:00.000Z",
+            name: "Set List",
+            sections: [],
+          },
+          second: {
+            entries: [],
+            id: "arrangement-b",
+            lastModified: "2026-01-03T00:00:00.000Z",
+            name: " set list ",
+            sections: [],
+          },
+        },
+        dojoSettings: {},
+        sessionWorkspaceViewMode: "session",
+        sessions: {
+          first: {
+            id: "session-a",
+            lastModified: "2026-01-03T00:00:00.000Z",
+            name: "Practice",
+            parts: [],
+          },
+          second: {
+            id: "session-b",
+            lastModified: "2026-01-03T00:00:00.000Z",
+            name: " practice ",
+            parts: [],
+          },
+        },
+      },
+      fallbackSnapshot,
+    );
+
+    expect(Object.values(normalized.sessions).map(({ name }) => name)).toEqual([
+      "Practice",
+      "practice 2",
+    ]);
+    expect(
+      Object.values(normalized.arrangements).map(({ name }) => name),
+    ).toEqual(["Set List", "set list 2"]);
     expect(normalizeAppStoreSnapshot(normalized, fallbackSnapshot)).toEqual(
       normalized,
     );

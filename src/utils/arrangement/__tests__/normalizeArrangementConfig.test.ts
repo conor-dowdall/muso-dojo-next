@@ -36,4 +36,69 @@ describe("normalizeArrangementConfig", () => {
 
     expect(arrangement.sections[0]).not.toHaveProperty("name");
   });
+
+  it("repairs Module collisions across a captured Section graph", () => {
+    const arrangement = normalizeArrangementConfig({
+      sections: [
+        {
+          id: "section",
+          parts: [
+            {
+              id: "part-1",
+              modules: [
+                {
+                  id: "shared-module",
+                  rhythm: { source: "recipe" },
+                  type: "rhythm",
+                },
+              ],
+            },
+            {
+              band: {
+                rhythm: { mode: "module", moduleId: "shared-module" },
+              },
+              id: "part-2",
+              modules: [
+                {
+                  id: "shared-module",
+                  rhythm: { source: "recipe" },
+                  type: "rhythm",
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: "section-2",
+          parts: [
+            {
+              id: "part-1",
+              modules: [
+                {
+                  id: "shared-module",
+                  instrument: { type: "keyboard" },
+                  type: "instrument",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      entries: [
+        { id: "entry", sectionId: "section" },
+        { id: "entry-2", sectionId: "section-2" },
+      ],
+    });
+    const parts = arrangement.sections[0]?.parts;
+    const secondSectionPart = arrangement.sections[1]?.parts[0];
+
+    expect(parts?.[0]?.modules[0]?.id).toBe("shared-module");
+    expect(parts?.[1]?.modules[0]?.id).toBe("shared-module-copy");
+    expect(parts?.[1]?.band?.rhythm).toEqual({
+      mode: "module",
+      moduleId: "shared-module-copy",
+    });
+    expect(secondSectionPart?.id).toBe("part-1-copy");
+    expect(secondSectionPart?.modules[0]?.id).toBe("shared-module-copy-2");
+  });
 });

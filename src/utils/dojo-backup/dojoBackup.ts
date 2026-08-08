@@ -145,6 +145,61 @@ function hasActiveWorkspaceStructure(value: unknown) {
   );
 }
 
+function normalizedIdentifier(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function hasDuplicateIdentifiers(values: readonly Record<string, unknown>[]) {
+  const ids = values.map((value) => normalizedIdentifier(value.id));
+  return new Set(ids).size !== ids.length;
+}
+
+function assertSnapshotGraphIntegrity(value: Record<string, unknown>) {
+  const sessionRecord = value.sessions as Record<
+    string,
+    Record<string, unknown>
+  >;
+  const arrangementRecord = value.arrangements as Record<
+    string,
+    Record<string, unknown>
+  >;
+  const sessions = Object.values(sessionRecord);
+  const arrangements = Object.values(arrangementRecord);
+
+  if (hasDuplicateIdentifiers(sessions)) {
+    invalidBackup("The backup contains conflicting Session identifiers.");
+  }
+
+  if (hasDuplicateIdentifiers(arrangements)) {
+    invalidBackup("The backup contains conflicting Arrangement identifiers.");
+  }
+
+  arrangements.forEach((arrangement) => {
+    const sections = arrangement.sections as Record<string, unknown>[];
+
+    if (hasDuplicateIdentifiers(sections)) {
+      invalidBackup(
+        "The backup contains conflicting Arrangement Section identifiers.",
+      );
+    }
+
+    const sectionIds = new Set(
+      sections.map((section) => normalizedIdentifier(section.id)),
+    );
+    const entries = arrangement.entries as Record<string, unknown>[];
+
+    if (
+      entries.some(
+        (entry) => !sectionIds.has(normalizedIdentifier(entry.sectionId)),
+      )
+    ) {
+      invalidBackup(
+        "The backup contains an Arrangement Entry with no matching Section.",
+      );
+    }
+  });
+}
+
 function assertSnapshotStructure(value: unknown) {
   if (!isRecord(value)) {
     invalidBackup("The backup does not contain Dojo data.");
@@ -195,6 +250,8 @@ function assertSnapshotStructure(value: unknown) {
   if (!isSessionWorkspaceViewMode(value.sessionWorkspaceViewMode)) {
     invalidBackup("The backup contains an invalid workspace view.");
   }
+
+  assertSnapshotGraphIntegrity(value);
 }
 
 function resolveExportedAt(exportedAt = new Date()) {

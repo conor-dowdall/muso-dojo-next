@@ -70,6 +70,45 @@ function createReplacementSnapshot() {
   return snapshot;
 }
 
+function createSameIdFretboardSnapshot({
+  restored = false,
+}: {
+  restored?: boolean;
+} = {}) {
+  const snapshot = createKeyboardWorkspaceSnapshot();
+  const session = snapshot.sessions["e2e-session"]!;
+
+  snapshot.sessions["e2e-session"] = {
+    ...session,
+    name: restored ? "Same ID Restored" : "Same ID Before Restore",
+    parts: session.parts.map((part, partIndex) =>
+      partIndex === 0
+        ? {
+            ...part,
+            rootNote: restored ? "D" : "C",
+            modules: [
+              {
+                id: "e2e-keyboard",
+                instrument: restored
+                  ? {
+                      activeNotes: {
+                        "0-1": { emphasis: "large", midi: 65 },
+                      },
+                      noteEmphasis: "hidden",
+                      type: "fretboard",
+                    }
+                  : { type: "fretboard" },
+                type: "instrument",
+              },
+            ],
+          }
+        : part,
+    ),
+  };
+
+  return snapshot;
+}
+
 async function openDojoSettings(page: Page) {
   await page.getByRole("button", { name: "Session menu" }).click();
   await page.getByRole("button", { name: "Dojo Settings" }).click();
@@ -184,4 +223,39 @@ test("restores the backup as a complete replacement", async ({ page }) => {
       snapshot.dojoSettings.customFretboardTunings?.length === 2 &&
       snapshot.dojoSettings.customChordProgressions?.length === 1,
   );
+});
+
+test("preserves restored custom notes when the replacement reuses entity ids", async ({
+  page,
+}) => {
+  await seedDojoWorkspace(page, createSameIdFretboardSnapshot());
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "Same ID Before Restore" }),
+  ).toBeVisible();
+
+  const settings = await openDojoSettings(page);
+  await chooseBackupFile(
+    settings,
+    createDojoBackupJson(
+      createSameIdFretboardSnapshot({ restored: true }),
+      exportedAt,
+    ),
+  );
+  await settings.getByRole("button", { name: "Restore Backup" }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Same ID Restored" }),
+  ).toBeVisible();
+  await expect(
+    page.locator('[data-instrument="fretboard"] [data-emphasis="large"]'),
+  ).toHaveCount(1);
+  await expectWorkspacePersisted(page, (snapshot) => {
+    const partModule = snapshot.sessions["e2e-session"]?.parts[0]?.modules[0];
+    return (
+      partModule?.type === "instrument" &&
+      partModule.instrument.activeNotes?.["0-1"]?.emphasis === "large" &&
+      partModule.instrument.noteEmphasis === "hidden"
+    );
+  });
 });
