@@ -28,7 +28,9 @@ interface DojoBackupSettingsProps {
 
 interface DojoContentCounts {
   arrangements: number;
+  chordProgressions: number;
   sessions: number;
+  tunings: number;
 }
 
 function formatCount(count: number, singular: string, plural: string) {
@@ -107,7 +109,7 @@ export function DojoRestoreAction({
   );
 }
 
-export function DojoStartFreshAction({
+export function DojoClearAction({
   counts,
   isConfirming,
   onCancel,
@@ -128,30 +130,42 @@ export function DojoStartFreshAction({
     "Arrangement",
     "Arrangements",
   );
-  const confirmation = "Clear Sessions & Arrangements?";
+  const tuningCount = formatCount(
+    counts.tunings,
+    "Custom Tuning",
+    "Custom Tunings",
+  );
+  const progressionCount = formatCount(
+    counts.chordProgressions,
+    "Custom Chord Progression",
+    "Custom Chord Progressions",
+  );
+  const confirmation = "Clear Dojo?";
 
   return (
     <DisclosureListConfirmAction
-      actionAriaLabel="Clear Sessions & Arrangements"
+      actionAriaLabel="Clear Dojo"
       actionTone="neutral"
       confirmAriaLabel={confirmation}
-      confirmButtonLabel="Clear Sessions & Arrangements"
+      confirmButtonLabel="Clear Dojo"
       confirmDetails={
         <span className={styles.confirmationSummary}>
           <span>
             {sessionCount} • {arrangementCount}
           </span>
-          <span>Replaced by one new empty Session.</span>
-          <span className={styles.confirmationImpactStatement}>
-            Your Custom Tunings, Custom Chord Progressions, and preferences will
-            remain.
+          <span>
+            {tuningCount} • {progressionCount}
           </span>
+          <span className={styles.confirmationImpactStatement}>
+            Your preferences will be reset.
+          </span>
+          <span>One new empty Session will be created.</span>
         </span>
       }
       confirmLabel={confirmation}
       icon={<Broom />}
       isConfirming={isConfirming}
-      label="Clear Sessions & Arrangements"
+      label="Clear Dojo"
       secondaryAction={
         <Button
           icon={<Save />}
@@ -161,7 +175,7 @@ export function DojoStartFreshAction({
           onClick={onDownloadBackup}
         />
       }
-      subtitle="Remove all Sessions and Arrangements. Your personal library and preferences will remain."
+      subtitle="Remove all Dojo data and reset your preferences."
       tone="danger"
       onCancel={onCancel}
       onConfirm={onConfirm}
@@ -182,16 +196,19 @@ export function DojoBackupSettings({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isReadingBackup, setIsReadingBackup] = useState(false);
-  const [isStartFreshConfirming, setIsStartFreshConfirming] = useState(false);
+  const [isClearDojoConfirming, setIsClearDojoConfirming] = useState(false);
   const [pendingBackup, setPendingBackup] = useState<ParsedDojoBackup | null>(
     null,
   );
   const restoreDojoSnapshot = useAppStore((state) => state.restoreDojoSnapshot);
-  const startFreshDojo = useAppStore((state) => state.startFreshDojo);
+  const clearDojo = useAppStore((state) => state.clearDojo);
   const counts = useAppStore(
     useShallow((state): DojoContentCounts => ({
       arrangements: Object.keys(state.arrangements).length,
+      chordProgressions:
+        state.dojoSettings.customChordProgressions?.length ?? 0,
       sessions: Object.keys(state.sessions).length,
+      tunings: state.dojoSettings.customFretboardTunings?.length ?? 0,
     })),
   );
 
@@ -207,7 +224,7 @@ export function DojoBackupSettings({
 
   const chooseBackupFile = () => {
     setErrorMessage(null);
-    setIsStartFreshConfirming(false);
+    setIsClearDojoConfirming(false);
     fileInputRef.current?.click();
   };
 
@@ -249,16 +266,16 @@ export function DojoBackupSettings({
     onDojoReplaceComplete();
   };
 
-  const requestStartFresh = () => {
+  const requestClearDojo = () => {
     setErrorMessage(null);
     setPendingBackup(null);
-    setIsStartFreshConfirming(true);
+    setIsClearDojoConfirming(true);
   };
 
-  const startFresh = () => {
+  const clearAllDojoData = () => {
     stopAllAudioPlayback();
-    startFreshDojo();
-    setIsStartFreshConfirming(false);
+    clearDojo();
+    setIsClearDojoConfirming(false);
     onDojoReplaceComplete();
   };
 
@@ -306,13 +323,13 @@ export function DojoBackupSettings({
           ) : null}
         </DisclosureListGroup>
         <DisclosureListGroup>
-          <DojoStartFreshAction
+          <DojoClearAction
             counts={counts}
-            isConfirming={isStartFreshConfirming}
-            onCancel={() => setIsStartFreshConfirming(false)}
-            onConfirm={startFresh}
+            isConfirming={isClearDojoConfirming}
+            onCancel={() => setIsClearDojoConfirming(false)}
+            onConfirm={clearAllDojoData}
             onDownloadBackup={exportBackup}
-            onRequestConfirm={requestStartFresh}
+            onRequestConfirm={requestClearDojo}
           />
         </DisclosureListGroup>
       </DisclosureList>

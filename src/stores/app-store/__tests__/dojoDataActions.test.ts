@@ -94,7 +94,7 @@ describe("Dojo data app store actions", () => {
     expect(persisted.dojoSettings.customFretboardTunings).toHaveLength(1);
   });
 
-  it("starts fresh while preserving personal resources and preferences", () => {
+  it("clears all Dojo data and preferences before creating one Session", () => {
     const dojoSettings: DojoSettings = {
       appTheme: "ocean",
       customChordProgressions: [
@@ -165,12 +165,11 @@ describe("Dojo data app store actions", () => {
         },
       },
     });
-    const originalStartFreshAction = store.getState().startFreshDojo;
-    const preservedSettings = store.getState().dojoSettings;
+    const originalClearAction = store.getState().clearDojo;
     const originalWorkspaceMountRevision =
       store.getState().workspaceMountRevision;
 
-    store.getState().startFreshDojo();
+    store.getState().clearDojo();
 
     const fresh = store.getState();
     const freshSession = createFallbackSessionConfig();
@@ -183,9 +182,8 @@ describe("Dojo data app store actions", () => {
     });
     expect(fresh.activeSessionId).toBe(freshSession.id);
     expect(fresh.sessions[freshSession.id]?.workspaceViewMode).toBe("session");
-    expect(fresh.dojoSettings).toBe(preservedSettings);
-    expect(fresh.dojoSettings).toEqual(dojoSettings);
-    expect(fresh.startFreshDojo).toBe(originalStartFreshAction);
+    expect(fresh.dojoSettings).toEqual({});
+    expect(fresh.clearDojo).toBe(originalClearAction);
     expect(fresh.workspaceMountRevision).toBe(
       originalWorkspaceMountRevision + 1,
     );
