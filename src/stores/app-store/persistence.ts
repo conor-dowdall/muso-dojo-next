@@ -7,7 +7,7 @@ import { type AppStoreSnapshot } from "@/types/session";
 import { assertSnapshotIdentityIntegrity } from "@/utils/session/assertSnapshotIdentityIntegrity";
 import { normalizeAppStoreSnapshot } from "@/utils/session/normalizeAppStoreSnapshot";
 
-export const APP_STORE_VERSION = 12;
+export const APP_STORE_VERSION = 13;
 export const APP_STORE_STORAGE_KEY = "muso-dojo-app-store";
 export const APP_STORE_PERSISTENCE_DEBOUNCE_MS = 600;
 export const APP_STORE_PERSISTENCE_MAX_WAIT_MS = 3000;
@@ -72,7 +72,6 @@ export function partializeAppStoreSnapshot(
     arrangements: state.arrangements,
     activeSessionId: state.activeSessionId,
     dojoSettings: state.dojoSettings,
-    sessionWorkspaceViewMode: state.sessionWorkspaceViewMode,
     sessions: state.sessions,
   };
 }

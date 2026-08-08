@@ -26,10 +26,3 @@ export function isSessionFocusViewMode(
 export function requiresSessionParts(mode: SessionViewMode) {
   return mode !== "session";
 }
-
-export function resolveAvailableSessionWorkspaceViewMode(
-  mode: SessionWorkspaceViewMode,
-  partCount: number,
-): SessionWorkspaceViewMode {
-  return requiresSessionParts(mode) && partCount === 0 ? "session" : mode;
-}

@@ -29,6 +29,7 @@ function createRestoreBackup() {
     playbackMode: "once",
     sections: [],
     tempoBpm: 80,
+    workspaceViewMode: "build",
   };
   snapshot.dojoSettings.customFretboardTunings = Array.from(
     { length: 3 },

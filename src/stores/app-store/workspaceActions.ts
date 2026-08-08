@@ -1,11 +1,28 @@
-import {
-  resolveAvailableSessionWorkspaceViewMode,
-  type SessionWorkspaceViewMode,
-} from "@/types/session-view";
+import { type ArrangementWorkspaceViewMode } from "@/types/arrangement";
+import { type SessionWorkspaceViewMode } from "@/types/session-view";
 import { type AppStoreSet, type WorkspaceActions } from "./types";
 
 export function createWorkspaceActions(set: AppStoreSet): WorkspaceActions {
   return {
+    setArrangementWorkspaceViewMode: (
+      arrangementId: string,
+      mode: ArrangementWorkspaceViewMode,
+    ) => {
+      set((state) => {
+        const arrangement = state.arrangements[arrangementId];
+
+        if (!arrangement || arrangement.workspaceViewMode === mode) {
+          return state;
+        }
+
+        return {
+          arrangements: {
+            ...state.arrangements,
+            [arrangementId]: { ...arrangement, workspaceViewMode: mode },
+          },
+        };
+      });
+    },
     setActiveWorkspace: (workspace) => {
       set((state) => {
         const valid =
@@ -25,24 +42,26 @@ export function createWorkspaceActions(set: AppStoreSet): WorkspaceActions {
           : { activeWorkspace: workspace, activeSessionId };
       });
     },
-    setSessionWorkspaceViewMode: (mode: SessionWorkspaceViewMode) => {
-      let resolvedMode: SessionWorkspaceViewMode = "session";
-
+    setSessionWorkspaceViewMode: (
+      sessionId: string,
+      mode: SessionWorkspaceViewMode,
+    ) => {
       set((state) => {
-        const activePartCount = state.activeSessionId
-          ? (state.sessions[state.activeSessionId]?.parts.length ?? 0)
-          : 0;
-        resolvedMode = resolveAvailableSessionWorkspaceViewMode(
-          mode,
-          activePartCount,
-        );
+        const session = state.sessions[sessionId];
 
-        return resolvedMode === state.sessionWorkspaceViewMode
-          ? state
-          : { sessionWorkspaceViewMode: resolvedMode };
+        if (!session || session.workspaceViewMode === mode) {
+          return state;
+        }
+
+        return {
+          sessions: {
+            ...state.sessions,
+            [sessionId]: { ...session, workspaceViewMode: mode },
+          },
+        };
       });
 
-      return resolvedMode;
+      return mode;
     },
   };
 }

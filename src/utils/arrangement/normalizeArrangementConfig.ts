@@ -1,6 +1,7 @@
 import {
   MAX_ARRANGEMENT_ENTRY_PLAY_COUNT,
   MIN_ARRANGEMENT_ENTRY_PLAY_COUNT,
+  isArrangementWorkspaceViewMode,
   type ArrangementConfig,
   type ArrangementEntryConfig,
   type ArrangementPlaybackMode,
@@ -124,5 +125,8 @@ export function normalizeArrangementConfig(
       referencedSectionIds.has(section.id),
     ),
     entries,
+    workspaceViewMode: isArrangementWorkspaceViewMode(input.workspaceViewMode)
+      ? input.workspaceViewMode
+      : "build",
   };
 }

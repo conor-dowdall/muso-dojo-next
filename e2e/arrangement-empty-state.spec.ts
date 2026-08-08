@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import {
   createKeyboardWorkspaceSnapshot,
+  expectWorkspacePersisted,
   seedDojoWorkspace,
 } from "./fixtures/dojo";
 
@@ -63,6 +64,7 @@ test("an Arrangement without Sessions offers one route through the Library", asy
       playbackMode: "once",
       sections: [],
       tempoBpm: 80,
+      workspaceViewMode: "build",
     },
   };
 
@@ -98,6 +100,7 @@ test("the first Section replaces the instructional empty state", async ({
       playbackMode: "once",
       sections: [],
       tempoBpm: 80,
+      workspaceViewMode: "build",
     },
   };
 
@@ -118,4 +121,79 @@ test("the first Section replaces the instructional empty state", async ({
       "This Section captured the Session's current Parts and backing.",
     ),
   ).toHaveCount(0);
+});
+
+test("each Arrangement retains its own workspace view across switching and reload", async ({
+  page,
+}) => {
+  await page.goto("/dojo");
+  await page
+    .getByRole("button", { name: "Add to session", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Add Keyboard module" }).click();
+  await page.getByRole("button", { name: "Add Part" }).click();
+  await expect(page.locator('[data-instrument="keyboard"]')).toBeVisible();
+
+  await page.getByRole("button", { name: "Session menu", exact: true }).click();
+  await page.getByRole("button", { name: /^Library/ }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: /New Arrangement/ })
+    .click();
+  await page.getByRole("button", { name: "Add First Section" }).click();
+
+  await page
+    .getByRole("button", { name: "Choose view. Current: Arrangement" })
+    .click();
+  await page.getByRole("button", { name: "Use Chart view" }).click();
+  await expect(
+    page.getByRole("region", { name: "Arrangement Chart" }),
+  ).toBeVisible();
+  await expectWorkspacePersisted(page, (snapshot) =>
+    Object.values(snapshot.arrangements).some(
+      (arrangement) => arrangement.workspaceViewMode === "chart",
+    ),
+  );
+
+  await page.getByRole("button", { name: "Arrangement menu" }).click();
+  await page.getByRole("button", { name: /^Library/ }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: /New Arrangement/ })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "My Arrangement 2" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Add First Section" }).click();
+  await expect(
+    page.getByRole("button", { name: "Choose view. Current: Arrangement" }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Arrangement menu" }).click();
+  await page.getByRole("button", { name: /^Library/ }).click();
+  await page
+    .getByRole("button", { name: "Use My Arrangement arrangement" })
+    .click();
+  await expect(
+    page.getByRole("region", { name: "Arrangement Chart" }),
+  ).toBeVisible();
+  await expectWorkspacePersisted(page, (snapshot) => {
+    const arrangements = Object.values(snapshot.arrangements);
+
+    return (
+      arrangements.find(({ name }) => name === "My Arrangement")
+        ?.workspaceViewMode === "chart" &&
+      arrangements.find(({ name }) => name === "My Arrangement 2")
+        ?.workspaceViewMode === "build"
+    );
+  });
+
+  await page.reload();
+
+  await expect(
+    page.getByRole("region", { name: "Arrangement Chart" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Choose view. Current: Chart" }),
+  ).toBeVisible();
 });

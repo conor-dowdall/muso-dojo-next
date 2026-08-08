@@ -74,6 +74,7 @@ function createSectionSteps({
     name: section.source.sessionName,
     parts: section.parts,
     tempoBpm: arrangement.tempoBpm,
+    workspaceViewMode: "session",
   });
   const namespace = `${arrangement.id}:${entryId}:${playIndex + 1}`;
   return sectionPlan.parts.map((step, sectionPartIndex) =>

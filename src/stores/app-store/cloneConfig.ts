@@ -97,5 +97,6 @@ export function cloneSessionConfig(
       existingSessionNames,
     ),
     parts: clonedParts,
+    workspaceViewMode: "session",
   });
 }

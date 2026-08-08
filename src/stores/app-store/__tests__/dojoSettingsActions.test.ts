@@ -327,6 +327,7 @@ describe("dojo settings app store actions", () => {
       name: "Imported Session",
       lastModified: "2026-01-02T00:00:00.000Z",
       parts: [],
+      workspaceViewMode: "chart" as const,
     };
 
     const clonedSessionId = store.getState().cloneSession(sessionId);

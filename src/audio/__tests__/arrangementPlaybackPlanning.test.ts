@@ -12,6 +12,7 @@ function createArrangement(): ArrangementConfig {
     lastModified: "2026-07-23T00:00:00.000Z",
     tempoBpm: 120,
     playbackMode: "once",
+    workspaceViewMode: "build",
     sections: [
       {
         id: "a",

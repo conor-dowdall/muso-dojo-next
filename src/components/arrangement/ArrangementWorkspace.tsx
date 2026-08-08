@@ -35,8 +35,6 @@ import { ArrangementHeader } from "./ArrangementHeader";
 import { ArrangementSectionPicker } from "./ArrangementSectionPicker";
 import styles from "./ArrangementWorkspace.module.css";
 
-type ArrangementViewMode = "build" | "chart";
-
 function formatSectionNumber(entryIndex: number) {
   return String(entryIndex + 1).padStart(2, "0");
 }
@@ -64,6 +62,9 @@ export function ArrangementWorkspace({
   const noteColorConfig = useAppStore(
     (state) => state.dojoSettings.noteColorConfig,
   );
+  const viewMode = useAppStore(
+    (state) => state.arrangements[arrangementId]?.workspaceViewMode ?? "build",
+  );
   const actions = useAppStore(
     useShallow((state) => ({
       addSection: state.addArrangementSectionFromSession,
@@ -71,9 +72,9 @@ export function ArrangementWorkspace({
       moveEntry: state.moveArrangementEntry,
       removeEntry: state.removeArrangementEntry,
       setPlayCount: state.setArrangementEntryPlayCount,
+      setViewMode: state.setArrangementWorkspaceViewMode,
     })),
   );
-  const [viewMode, setViewMode] = useState<ArrangementViewMode>("build");
   const [selectedEntryId, setSelectedEntryId] = useState<string | undefined>(
     () => arrangement?.entries[0]?.id,
   );
@@ -172,7 +173,7 @@ export function ArrangementWorkspace({
           viewMode={resolvedViewMode}
           onAddSection={() => addDefaultSection(false)}
           onOpenLibrary={onOpenLibrary}
-          onViewModeChange={setViewMode}
+          onViewModeChange={(mode) => actions.setViewMode(arrangementId, mode)}
         />
 
         {resolvedViewMode === "build" ? (

@@ -150,10 +150,10 @@ describe("Dojo data app store actions", () => {
           playbackMode: "once",
           sections: [],
           tempoBpm: 80,
+          workspaceViewMode: "chart",
         },
       },
       dojoSettings,
-      sessionWorkspaceViewMode: "chart",
       sessions: {
         ...originalSnapshot.sessions,
         "session-2": {
@@ -161,6 +161,7 @@ describe("Dojo data app store actions", () => {
           lastModified: "2026-01-02T00:00:00.000Z",
           name: "Second Session",
           parts: [],
+          workspaceViewMode: "chart",
         },
       },
     });
@@ -181,7 +182,7 @@ describe("Dojo data app store actions", () => {
       kind: "session",
     });
     expect(fresh.activeSessionId).toBe(freshSession.id);
-    expect(fresh.sessionWorkspaceViewMode).toBe("session");
+    expect(fresh.sessions[freshSession.id]?.workspaceViewMode).toBe("session");
     expect(fresh.dojoSettings).toBe(preservedSettings);
     expect(fresh.dojoSettings).toEqual(dojoSettings);
     expect(fresh.startFreshDojo).toBe(originalStartFreshAction);

@@ -54,6 +54,7 @@ describe("arrangement app store actions", () => {
   it("duplicates every owned identity while retaining shared Section references", () => {
     const store = createTestStore();
     const arrangementId = store.getState().addArrangement();
+    store.getState().setArrangementWorkspaceViewMode(arrangementId, "chart");
     const capture = store
       .getState()
       .addArrangementSectionFromSession(arrangementId, sessionId)!;
@@ -66,6 +67,8 @@ describe("arrangement app store actions", () => {
     const clone = store.getState().arrangements[cloneId]!;
 
     expect(clone.id).not.toBe(source.id);
+    expect(source.workspaceViewMode).toBe("chart");
+    expect(clone.workspaceViewMode).toBe("build");
     expect(clone.sections[0]?.id).not.toBe(source.sections[0]?.id);
     expect(clone.sections[0]?.parts[0]?.id).not.toBe(
       source.sections[0]?.parts[0]?.id,

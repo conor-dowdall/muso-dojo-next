@@ -9,10 +9,6 @@ import {
   normalizeString,
 } from "@/utils/session/normalizationPrimitives";
 import {
-  isSessionWorkspaceViewMode,
-  resolveAvailableSessionWorkspaceViewMode,
-} from "@/types/session-view";
-import {
   createUniqueArrangementName,
   createUniqueSessionName,
 } from "@/stores/app-store/entityIds";
@@ -55,7 +51,6 @@ export function createAppStoreSnapshot(
     arrangements: {},
     activeSessionId: normalizedActiveSessionId,
     dojoSettings: {},
-    sessionWorkspaceViewMode: "session",
     sessions: {
       [normalizedSession.id]: normalizedSession,
     },
@@ -127,25 +122,11 @@ export function normalizeAppStoreSnapshot(
   }
   const activeSessionId =
     activeWorkspace?.kind === "session" ? activeWorkspace.id : null;
-  const requestedSessionWorkspaceViewMode = isSessionWorkspaceViewMode(
-    value.sessionWorkspaceViewMode,
-  )
-    ? value.sessionWorkspaceViewMode
-    : "session";
-  const activeSessionPartCount = activeSessionId
-    ? (sessions[activeSessionId]?.parts.length ?? 0)
-    : 0;
-  const sessionWorkspaceViewMode = resolveAvailableSessionWorkspaceViewMode(
-    requestedSessionWorkspaceViewMode,
-    activeSessionPartCount,
-  );
-
   return {
     activeWorkspace,
     arrangements,
     activeSessionId,
     dojoSettings: normalizeDojoSettings(value.dojoSettings),
-    sessionWorkspaceViewMode,
     sessions,
   };
 }

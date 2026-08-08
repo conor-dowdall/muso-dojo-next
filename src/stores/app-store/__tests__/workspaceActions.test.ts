@@ -2,19 +2,57 @@ import { describe, expect, it } from "vitest";
 import { createStoreSnapshot, createTestStore } from "./appStoreTestUtils";
 
 describe("workspace app store actions", () => {
-  it("stores the selected available Session view", () => {
+  it("stores the selected Arrangement view", () => {
     const store = createTestStore();
+    const arrangementId = store.getState().addArrangement();
+    const otherArrangementId = store.getState().addArrangement();
+    const lastModified =
+      store.getState().arrangements[arrangementId]?.lastModified;
 
-    expect(store.getState().setSessionWorkspaceViewMode("chart")).toBe("chart");
-    expect(store.getState().sessionWorkspaceViewMode).toBe("chart");
-
-    expect(store.getState().setSessionWorkspaceViewMode("session")).toBe(
-      "session",
+    store.getState().setArrangementWorkspaceViewMode(arrangementId, "chart");
+    expect(
+      store.getState().arrangements[arrangementId]?.workspaceViewMode,
+    ).toBe("chart");
+    expect(
+      store.getState().arrangements[otherArrangementId]?.workspaceViewMode,
+    ).toBe("build");
+    expect(store.getState().arrangements[arrangementId]?.lastModified).toBe(
+      lastModified,
     );
-    expect(store.getState().sessionWorkspaceViewMode).toBe("session");
+
+    store.getState().setArrangementWorkspaceViewMode(arrangementId, "build");
+    expect(
+      store.getState().arrangements[arrangementId]?.workspaceViewMode,
+    ).toBe("build");
   });
 
-  it("falls back to Session when the active Session has no Parts", () => {
+  it("stores the selected view on one Session", () => {
+    const store = createTestStore();
+    const otherSessionId = store.getState().addSession();
+    const lastModified = store.getState().sessions["session-1"]?.lastModified;
+
+    expect(
+      store.getState().setSessionWorkspaceViewMode("session-1", "chart"),
+    ).toBe("chart");
+    expect(store.getState().sessions["session-1"]?.workspaceViewMode).toBe(
+      "chart",
+    );
+    expect(store.getState().sessions[otherSessionId]?.workspaceViewMode).toBe(
+      "session",
+    );
+    expect(store.getState().sessions["session-1"]?.lastModified).toBe(
+      lastModified,
+    );
+
+    expect(
+      store.getState().setSessionWorkspaceViewMode("session-1", "session"),
+    ).toBe("session");
+    expect(store.getState().sessions["session-1"]?.workspaceViewMode).toBe(
+      "session",
+    );
+  });
+
+  it("retains a Session Chart preference while it has no Parts", () => {
     const snapshot = createStoreSnapshot();
     const activeSession = snapshot.sessions[snapshot.activeSessionId ?? ""];
     if (!activeSession) {
@@ -23,20 +61,24 @@ describe("workspace app store actions", () => {
     activeSession.parts = [];
     const store = createTestStore(snapshot);
 
-    expect(store.getState().setSessionWorkspaceViewMode("chart")).toBe(
-      "session",
+    expect(
+      store.getState().setSessionWorkspaceViewMode("session-1", "chart"),
+    ).toBe("chart");
+    expect(store.getState().sessions["session-1"]?.workspaceViewMode).toBe(
+      "chart",
     );
-    expect(store.getState().sessionWorkspaceViewMode).toBe("session");
   });
 
   it("does not notify subscribers when the selected view is unchanged", () => {
     const store = createTestStore();
+    const arrangementId = store.getState().addArrangement();
     let notificationCount = 0;
     const unsubscribe = store.subscribe(() => {
       notificationCount += 1;
     });
 
-    store.getState().setSessionWorkspaceViewMode("session");
+    store.getState().setSessionWorkspaceViewMode("session-1", "session");
+    store.getState().setArrangementWorkspaceViewMode(arrangementId, "build");
 
     unsubscribe();
     expect(notificationCount).toBe(0);

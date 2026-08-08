@@ -13,6 +13,7 @@ import {
   FALLBACK_SESSION_ID,
 } from "@/utils/session/sessionDefaults";
 import { normalizeSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
+import { isSessionWorkspaceViewMode } from "@/types/session-view";
 
 export function normalizeSessionConfig(value: unknown): SessionConfig {
   const input = isRecord(value) ? value : {};
@@ -30,6 +31,9 @@ export function normalizeSessionConfig(value: unknown): SessionConfig {
     name: normalizeString(input.name) ?? DEFAULT_SESSION_NAME,
     lastModified: normalizeString(input.lastModified) ?? FALLBACK_LAST_MODIFIED,
     parts: ensureUniqueMusicPartModuleIds(uniqueParts),
+    workspaceViewMode: isSessionWorkspaceViewMode(input.workspaceViewMode)
+      ? input.workspaceViewMode
+      : "session",
     ...(typeof input.tempoBpm === "number" &&
     Number.isInteger(input.tempoBpm) &&
     input.tempoBpm >= 30 &&

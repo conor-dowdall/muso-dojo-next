@@ -2,7 +2,7 @@ import { expect, type Page } from "@playwright/test";
 import { type AppStoreSnapshot } from "../../src/types/session";
 
 const APP_STORE_STORAGE_KEY = "muso-dojo-app-store";
-const APP_STORE_VERSION = 12;
+const APP_STORE_VERSION = 13;
 const DOJO_BACKUP_FORMAT_VERSION = 1;
 const DOJO_BACKUP_KIND = "muso-dojo-backup";
 
@@ -39,13 +39,13 @@ export function createKeyboardWorkspaceSnapshot(): AppStoreSnapshot {
     activeWorkspace: { id: sessionId, kind: "session" },
     arrangements: {},
     dojoSettings: {},
-    sessionWorkspaceViewMode: "session",
     sessions: {
       [sessionId]: {
         backingBand,
         id: sessionId,
         lastModified: "2026-01-01T00:00:00.000Z",
         name: "Browser Session",
+        workspaceViewMode: "session",
         parts: [
           {
             automaticRhythm: { style: "standard" },
@@ -77,13 +77,13 @@ export function createCollidingFretboardWorkspaceSnapshot(): AppStoreSnapshot {
     activeWorkspace: { id: customSessionId, kind: "session" },
     arrangements: {},
     dojoSettings: {},
-    sessionWorkspaceViewMode: "session",
     sessions: {
       [customSessionId]: {
         backingBand,
         id: customSessionId,
         lastModified: "2026-01-01T00:00:00.000Z",
         name: "Custom Fretboard Session",
+        workspaceViewMode: "session",
         parts: [
           {
             automaticRhythm: { style: "standard" },
@@ -112,6 +112,7 @@ export function createCollidingFretboardWorkspaceSnapshot(): AppStoreSnapshot {
         id: otherSessionId,
         lastModified: "2026-01-01T00:00:00.000Z",
         name: "Other Fretboard Session",
+        workspaceViewMode: "session",
         parts: [
           {
             automaticRhythm: { style: "standard" },

@@ -3,6 +3,7 @@ import {
   partializeAppStoreSnapshot,
 } from "@/stores/app-store/persistence";
 import { type AppStoreSnapshot } from "@/types/session";
+import { isArrangementWorkspaceViewMode } from "@/types/arrangement";
 import { isSessionWorkspaceViewMode } from "@/types/session-view";
 import { normalizeAppStoreSnapshot } from "@/utils/session/normalizeAppStoreSnapshot";
 import {
@@ -69,7 +70,6 @@ const emptyDojoSnapshot: AppStoreSnapshot = {
   arrangements: {},
   activeSessionId: null,
   dojoSettings: {},
-  sessionWorkspaceViewMode: "session",
   sessions: {},
 };
 
@@ -110,6 +110,8 @@ function hasSessionStructure(value: unknown) {
     typeof value.id === "string" &&
     typeof value.name === "string" &&
     typeof value.lastModified === "string" &&
+    (!hasOwn(value, "workspaceViewMode") ||
+      isSessionWorkspaceViewMode(value.workspaceViewMode)) &&
     hasMusicPartArrayStructure(value.parts)
   );
 }
@@ -127,6 +129,8 @@ function hasArrangementStructure(value: unknown) {
     typeof value.id === "string" &&
     typeof value.name === "string" &&
     typeof value.lastModified === "string" &&
+    (!hasOwn(value, "workspaceViewMode") ||
+      isArrangementWorkspaceViewMode(value.workspaceViewMode)) &&
     value.sections.every(
       (section) =>
         typeof section.id === "string" &&
@@ -159,7 +163,6 @@ function assertSnapshotStructure(value: unknown) {
     "arrangements",
     "activeSessionId",
     "dojoSettings",
-    "sessionWorkspaceViewMode",
     "sessions",
   ];
 
@@ -194,10 +197,6 @@ function assertSnapshotStructure(value: unknown) {
 
   if (!hasActiveWorkspaceStructure(value.activeWorkspace)) {
     invalidBackup("The backup contains an invalid active workspace.");
-  }
-
-  if (!isSessionWorkspaceViewMode(value.sessionWorkspaceViewMode)) {
-    invalidBackup("The backup contains an invalid workspace view.");
   }
 
   try {
