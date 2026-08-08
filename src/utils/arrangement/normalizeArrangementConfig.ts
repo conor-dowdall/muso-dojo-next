@@ -8,6 +8,7 @@ import {
 } from "@/types/arrangement";
 import { type MusicPartConfig } from "@/types/session";
 import { normalizeMusicPartConfig } from "@/utils/session/normalizeMusicPartConfig";
+import { ensureUniqueMusicPartModuleIds } from "@/utils/session/ensureUniqueMusicPartModuleIds";
 import {
   ensureUniqueIds,
   isRecord,
@@ -56,8 +57,29 @@ function normalizeSection(
       capturedAt: normalizeString(source.capturedAt) ?? FALLBACK_LAST_MODIFIED,
     },
     backingBand: normalizeSessionBackingBandConfig(input.backingBand),
-    parts: ensureUniqueIds(parts),
+    parts,
   };
+}
+
+function ensureUniqueArrangementPartGraphIds(
+  sections: ArrangementSectionConfig[],
+) {
+  const parts = sections.flatMap((section) => section.parts);
+  const uniqueParts = ensureUniqueMusicPartModuleIds(ensureUniqueIds(parts));
+
+  if (uniqueParts.every((part, index) => part === parts[index])) {
+    return sections;
+  }
+
+  let partIndex = 0;
+  return sections.map((section) => {
+    const sectionParts = uniqueParts.slice(
+      partIndex,
+      partIndex + section.parts.length,
+    );
+    partIndex += section.parts.length;
+    return { ...section, parts: sectionParts };
+  });
 }
 
 function normalizeEntry(value: unknown, index: number): ArrangementEntryConfig {
@@ -79,8 +101,12 @@ export function normalizeArrangementConfig(
   fallbackId = "arrangement",
 ): ArrangementConfig {
   const input = isRecord(value) ? value : {};
-  const sections = ensureUniqueIds(
-    (Array.isArray(input.sections) ? input.sections : []).map(normalizeSection),
+  const sections = ensureUniqueArrangementPartGraphIds(
+    ensureUniqueIds(
+      (Array.isArray(input.sections) ? input.sections : []).map(
+        normalizeSection,
+      ),
+    ),
   );
   const sectionIds = new Set(sections.map((section) => section.id));
   const entries = ensureUniqueIds(

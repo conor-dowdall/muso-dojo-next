@@ -1,4 +1,7 @@
-import { partializeAppStoreSnapshot } from "./persistence";
+import {
+  partializeAppStoreSnapshot,
+  resolvePersistenceLoadFailure,
+} from "./persistence";
 import { type AppStoreSet, type DojoDataActions } from "./types";
 import {
   createEntityId,
@@ -34,18 +37,24 @@ export function createDojoDataActions(set: AppStoreSet): DojoDataActions {
       return result;
     },
     restoreDojoSnapshot: (snapshot) => {
-      set(partializeAppStoreSnapshot(snapshot));
+      resolvePersistenceLoadFailure();
+      set((state) => ({
+        ...partializeAppStoreSnapshot(snapshot),
+        workspaceMountRevision: state.workspaceMountRevision + 1,
+      }));
     },
     startFreshDojo: () => {
       const session = createFallbackSessionConfig();
 
-      set({
+      resolvePersistenceLoadFailure();
+      set((state) => ({
         activeWorkspace: { kind: "session", id: session.id },
         activeSessionId: session.id,
         arrangements: {},
         sessionWorkspaceViewMode: "session",
         sessions: { [session.id]: session },
-      });
+        workspaceMountRevision: state.workspaceMountRevision + 1,
+      }));
     },
   };
 }

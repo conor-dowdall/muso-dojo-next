@@ -4,6 +4,7 @@ import {
   type StorageValue,
 } from "zustand/middleware";
 import { type AppStoreSnapshot } from "@/types/session";
+import { assertSnapshotIdentityIntegrity } from "@/utils/session/assertSnapshotIdentityIntegrity";
 import { normalizeAppStoreSnapshot } from "@/utils/session/normalizeAppStoreSnapshot";
 
 export const APP_STORE_VERSION = 12;
@@ -21,6 +22,39 @@ interface DebouncedAppStoreStorageOptions {
 
 export const APP_STORE_PERSISTENCE_STATUS_EVENT =
   "muso-dojo:persistence-status";
+export const PERSISTENCE_LOAD_ERROR_MESSAGE =
+  "Saved Dojo data could not be loaded safely and has been left untouched. Restore a backup or start fresh in Dojo Settings.";
+
+let persistenceLoadError: string | undefined;
+let persistenceWritesSuspended = false;
+let persistenceWriteGeneration = 0;
+const persistenceLoadErrorListeners = new Set<() => void>();
+
+export function getPersistenceLoadError() {
+  return persistenceLoadError;
+}
+
+export function subscribeToPersistenceLoadError(listener: () => void) {
+  persistenceLoadErrorListeners.add(listener);
+  return () => persistenceLoadErrorListeners.delete(listener);
+}
+
+export function reportPersistenceLoadFailure() {
+  persistenceLoadError = PERSISTENCE_LOAD_ERROR_MESSAGE;
+  persistenceWritesSuspended = true;
+  persistenceWriteGeneration += 1;
+  persistenceLoadErrorListeners.forEach((listener) => listener());
+}
+
+export function resolvePersistenceLoadFailure() {
+  if (!persistenceLoadError && !persistenceWritesSuspended) {
+    return;
+  }
+
+  persistenceLoadError = undefined;
+  persistenceWritesSuspended = false;
+  persistenceLoadErrorListeners.forEach((listener) => listener());
+}
 
 function reportPersistenceStatus(status: "failed" | "saved") {
   if (typeof window !== "undefined") {
@@ -47,6 +81,7 @@ export function normalizePersistedAppStoreSnapshot(
   persistedState: unknown,
   fallbackSnapshot: AppStoreSnapshot,
 ): AppStorePersistedSnapshot {
+  assertSnapshotIdentityIntegrity(persistedState);
   return normalizeAppStoreSnapshot(persistedState, fallbackSnapshot);
 }
 
@@ -110,6 +145,7 @@ export function createDebouncedAppStoreStorage(
   const resolvedMaxWaitMs = Math.max(maxWaitMs, debounceMs);
   let pendingName: string | undefined;
   let pendingValue: AppStorePersistedValue | undefined;
+  let pendingWriteGeneration: number | undefined;
   let debounceTimeout: ReturnType<typeof setTimeout> | undefined;
   let maxWaitTimeout: ReturnType<typeof setTimeout> | undefined;
 
@@ -130,12 +166,21 @@ export function createDebouncedAppStoreStorage(
   const clearPendingWrite = () => {
     pendingName = undefined;
     pendingValue = undefined;
+    pendingWriteGeneration = undefined;
     clearDebounceTimeout();
     clearMaxWaitTimeout();
   };
 
   const flush = () => {
     if (pendingName === undefined || pendingValue === undefined) {
+      return;
+    }
+
+    if (
+      persistenceWritesSuspended ||
+      pendingWriteGeneration !== persistenceWriteGeneration
+    ) {
+      clearPendingWrite();
       return;
     }
 
@@ -187,8 +232,13 @@ export function createDebouncedAppStoreStorage(
       }
     },
     setItem: (name, value) => {
+      if (persistenceWritesSuspended) {
+        return;
+      }
+
       pendingName = name;
       pendingValue = value;
+      pendingWriteGeneration = persistenceWriteGeneration;
       scheduleFlush();
     },
     removeItem: (name) => {

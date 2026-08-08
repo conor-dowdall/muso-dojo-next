@@ -12,6 +12,8 @@ import {
   APP_STORE_VERSION,
   type AppStorePersistedSnapshot,
   createDebouncedAppStoreStorage,
+  reportPersistenceLoadFailure,
+  resolvePersistenceLoadFailure,
   normalizePersistedAppStoreSnapshot,
   partializeAppStoreSnapshot,
 } from "@/stores/app-store/persistence";
@@ -27,6 +29,7 @@ import {
 import { type NoteColorConfig } from "@/types/note-colors";
 import { sessionWorkspaceViewModes } from "@/types/session-view";
 import { createDefaultSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
+import { SnapshotIdentityIntegrityError } from "@/utils/session/assertSnapshotIdentityIntegrity";
 
 const fallbackSnapshot = createAppStoreSnapshot({
   id: "fallback-session",
@@ -103,6 +106,10 @@ function expectValidSnapshotInvariants(snapshot: AppStoreSnapshot) {
     expect(new Set(session.parts.map((part) => part.id)).size).toBe(
       session.parts.length,
     );
+    const sessionModuleIds = session.parts.flatMap((part) =>
+      part.modules.map((partModule) => partModule.id),
+    );
+    expect(new Set(sessionModuleIds).size).toBe(sessionModuleIds.length);
 
     session.parts.forEach((part) => {
       expect(new Set(part.modules.map((module) => module.id)).size).toBe(
@@ -141,7 +148,10 @@ function createPersistedTestStore(
           normalizePersistedAppStoreSnapshot(persistedState, fallbackSnapshot),
         merge: (persistedState, currentState) => ({
           ...currentState,
-          ...normalizeAppStoreSnapshot(persistedState, fallbackSnapshot),
+          ...normalizePersistedAppStoreSnapshot(
+            persistedState,
+            fallbackSnapshot,
+          ),
         }),
         skipHydration: true,
       },
@@ -150,8 +160,48 @@ function createPersistedTestStore(
 }
 
 describe("app store persistence", () => {
+  it("rejects ambiguous persisted identity before normalization", () => {
+    expect(() =>
+      normalizePersistedAppStoreSnapshot(
+        {
+          arrangements: {
+            arrangement: {
+              entries: [{ id: "entry", sectionId: "section" }],
+              id: "arrangement",
+              sections: [{ id: "section" }, { id: "section" }],
+            },
+          },
+          sessions: {},
+        },
+        fallbackSnapshot,
+      ),
+    ).toThrow(SnapshotIdentityIntegrityError);
+  });
+
   afterEach(() => {
+    resolvePersistenceLoadFailure();
     vi.useRealTimers();
+  });
+
+  it("suspends writes until persistence recovery is explicit", () => {
+    vi.useFakeTimers();
+    const stateStorage = new MemoryStateStorage();
+    const storage = createDebouncedAppStoreStorage(() => stateStorage, {
+      debounceMs: 100,
+      maxWaitMs: 300,
+    });
+    const persistedValue = createPersistedValue("protected-session");
+
+    storage?.setItem("store", persistedValue);
+    reportPersistenceLoadFailure();
+    storage?.setItem("store", persistedValue);
+    resolvePersistenceLoadFailure();
+    vi.advanceTimersByTime(300);
+    expect(stateStorage.setItemCount).toBe(0);
+
+    storage?.setItem("store", persistedValue);
+    vi.advanceTimersByTime(100);
+    expect(stateStorage.setItemCount).toBe(1);
   });
 
   it("declares the current persisted store version", () => {
@@ -727,6 +777,59 @@ describe("app store persistence", () => {
     );
   });
 
+  it("normalizes duplicate Session and Arrangement names within their namespaces", () => {
+    const normalized = normalizeAppStoreSnapshot(
+      {
+        activeSessionId: "session-a",
+        activeWorkspace: { kind: "session", id: "session-a" },
+        arrangements: {
+          first: {
+            entries: [],
+            id: "arrangement-a",
+            lastModified: "2026-01-03T00:00:00.000Z",
+            name: "Set List",
+            sections: [],
+          },
+          second: {
+            entries: [],
+            id: "arrangement-b",
+            lastModified: "2026-01-03T00:00:00.000Z",
+            name: " set list ",
+            sections: [],
+          },
+        },
+        dojoSettings: {},
+        sessionWorkspaceViewMode: "session",
+        sessions: {
+          first: {
+            id: "session-a",
+            lastModified: "2026-01-03T00:00:00.000Z",
+            name: "Practice",
+            parts: [],
+          },
+          second: {
+            id: "session-b",
+            lastModified: "2026-01-03T00:00:00.000Z",
+            name: " practice ",
+            parts: [],
+          },
+        },
+      },
+      fallbackSnapshot,
+    );
+
+    expect(Object.values(normalized.sessions).map(({ name }) => name)).toEqual([
+      "Practice",
+      "practice 2",
+    ]);
+    expect(
+      Object.values(normalized.arrangements).map(({ name }) => name),
+    ).toEqual(["Set List", "set list 2"]);
+    expect(normalizeAppStoreSnapshot(normalized, fallbackSnapshot)).toEqual(
+      normalized,
+    );
+  });
+
   it("normalizes locked instruments with no recoverable active notes to unlocked instruments", () => {
     const normalized = normalizeAppStoreSnapshot(
       {
@@ -829,7 +932,7 @@ describe("app store persistence", () => {
         state: {
           activeSessionId: "missing-session",
           sessions: {
-            stored: {
+            "current-session": {
               id: "current-session",
               name: "Current Session",
               lastModified: "2026-01-04T00:00:00.000Z",

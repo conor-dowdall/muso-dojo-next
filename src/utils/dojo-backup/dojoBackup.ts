@@ -5,6 +5,10 @@ import {
 import { type AppStoreSnapshot } from "@/types/session";
 import { isSessionWorkspaceViewMode } from "@/types/session-view";
 import { normalizeAppStoreSnapshot } from "@/utils/session/normalizeAppStoreSnapshot";
+import {
+  assertSnapshotIdentityIntegrity,
+  SnapshotIdentityIntegrityError,
+} from "@/utils/session/assertSnapshotIdentityIntegrity";
 import { isRecord } from "@/utils/session/normalizationPrimitives";
 
 export const DOJO_BACKUP_KIND = "muso-dojo-backup";
@@ -194,6 +198,16 @@ function assertSnapshotStructure(value: unknown) {
 
   if (!isSessionWorkspaceViewMode(value.sessionWorkspaceViewMode)) {
     invalidBackup("The backup contains an invalid workspace view.");
+  }
+
+  try {
+    assertSnapshotIdentityIntegrity(value);
+  } catch (error) {
+    if (error instanceof SnapshotIdentityIntegrityError) {
+      invalidBackup(error.message);
+    }
+
+    throw error;
   }
 }
 

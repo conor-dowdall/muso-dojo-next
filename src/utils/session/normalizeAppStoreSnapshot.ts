@@ -12,6 +12,32 @@ import {
   isSessionWorkspaceViewMode,
   resolveAvailableSessionWorkspaceViewMode,
 } from "@/types/session-view";
+import {
+  createUniqueArrangementName,
+  createUniqueSessionName,
+} from "@/stores/app-store/entityIds";
+
+function ensureUniqueSessionNames<T extends { name: string }>(sessions: T[]) {
+  const usedNames: string[] = [];
+
+  return sessions.map((session) => {
+    const name = createUniqueSessionName(session.name, usedNames);
+    usedNames.push(name);
+    return name === session.name ? session : { ...session, name };
+  });
+}
+
+function ensureUniqueArrangementNames<T extends { name: string }>(
+  arrangements: T[],
+) {
+  const usedNames: string[] = [];
+
+  return arrangements.map((arrangement) => {
+    const name = createUniqueArrangementName(arrangement.name, usedNames);
+    usedNames.push(name);
+    return arrangement.name === name ? arrangement : { ...arrangement, name };
+  });
+}
 
 export function createAppStoreSnapshot(
   session: unknown,
@@ -50,7 +76,9 @@ export function normalizeAppStoreSnapshot(
         normalizeSessionConfig(session),
       )
     : [];
-  const uniqueSessions = ensureUniqueIds(normalizedSessions);
+  const uniqueSessions = ensureUniqueSessionNames(
+    ensureUniqueIds(normalizedSessions),
+  );
   const sessions = sessionRecord
     ? Object.fromEntries(uniqueSessions.map((session) => [session.id, session]))
     : fallbackSnapshot.sessions;
@@ -62,7 +90,9 @@ export function normalizeAppStoreSnapshot(
         normalizeArrangementConfig(arrangement, key),
       )
     : [];
-  const uniqueArrangements = ensureUniqueIds(normalizedArrangements);
+  const uniqueArrangements = ensureUniqueArrangementNames(
+    ensureUniqueIds(normalizedArrangements),
+  );
   const arrangements = arrangementRecord
     ? Object.fromEntries(
         uniqueArrangements.map((arrangement) => [arrangement.id, arrangement]),

@@ -166,6 +166,8 @@ describe("Dojo data app store actions", () => {
     });
     const originalStartFreshAction = store.getState().startFreshDojo;
     const preservedSettings = store.getState().dojoSettings;
+    const originalWorkspaceMountRevision =
+      store.getState().workspaceMountRevision;
 
     store.getState().startFreshDojo();
 
@@ -183,5 +185,8 @@ describe("Dojo data app store actions", () => {
     expect(fresh.dojoSettings).toBe(preservedSettings);
     expect(fresh.dojoSettings).toEqual(dojoSettings);
     expect(fresh.startFreshDojo).toBe(originalStartFreshAction);
+    expect(fresh.workspaceMountRevision).toBe(
+      originalWorkspaceMountRevision + 1,
+    );
   });
 });

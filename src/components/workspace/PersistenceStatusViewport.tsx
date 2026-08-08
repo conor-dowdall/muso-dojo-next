@@ -5,7 +5,11 @@ import { SaveOff } from "lucide-react";
 import { APP_STORE_PERSISTENCE_STATUS_EVENT } from "@/stores/app-store/persistence";
 import styles from "./PersistenceStatusViewport.module.css";
 
-export function PersistenceStatusViewport() {
+export function PersistenceStatusViewport({
+  loadError,
+}: {
+  loadError?: string;
+}) {
   const [failed, setFailed] = useState(false);
   useEffect(() => {
     const handleStatus = (event: Event) => {
@@ -18,11 +22,14 @@ export function PersistenceStatusViewport() {
         handleStatus,
       );
   }, []);
-  return failed ? (
+  const message =
+    loadError ?? (failed ? "Changes could not be saved on this device" : null);
+
+  return message ? (
     <div className={styles.viewport}>
       <div className={styles.pill} role="alert">
         <SaveOff aria-hidden="true" />
-        <span>Changes could not be saved on this device</span>
+        <span>{message}</span>
       </div>
     </div>
   ) : null;

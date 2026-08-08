@@ -66,6 +66,81 @@ function createReplacementSnapshot() {
       },
     ],
   };
+  snapshot.sessionWorkspaceViewMode = "chart";
+
+  return snapshot;
+}
+
+function createSameIdFretboardSnapshot({
+  restored = false,
+}: {
+  restored?: boolean;
+} = {}) {
+  const snapshot = createKeyboardWorkspaceSnapshot();
+  const session = snapshot.sessions["e2e-session"]!;
+
+  snapshot.sessions["e2e-session"] = {
+    ...session,
+    name: restored ? "Same ID Restored" : "Same ID Before Restore",
+    parts: session.parts.map((part, partIndex) =>
+      partIndex === 0
+        ? {
+            ...part,
+            rootNote: restored ? "D" : "C",
+            modules: [
+              {
+                id: "e2e-keyboard",
+                instrument: restored
+                  ? {
+                      activeNotes: {
+                        "0-1": { emphasis: "large", midi: 65 },
+                      },
+                      noteEmphasis: "hidden",
+                      type: "fretboard",
+                    }
+                  : { type: "fretboard" },
+                type: "instrument",
+              },
+            ],
+          }
+        : part,
+    ),
+  };
+
+  return snapshot;
+}
+
+function createAmbiguousPersistedSnapshot() {
+  const snapshot = createKeyboardWorkspaceSnapshot();
+  const session = snapshot.sessions["e2e-session"]!;
+  const section = {
+    backingBand: session.backingBand!,
+    id: "duplicate-section",
+    parts: [],
+    source: {
+      capturedAt: "2026-07-26T14:30:22.000Z",
+      sessionId: session.id,
+      sessionLastModified: session.lastModified,
+      sessionName: session.name,
+      sessionTempoBpm: 80,
+    },
+  };
+
+  snapshot.arrangements["ambiguous-arrangement"] = {
+    entries: [
+      {
+        id: "entry",
+        playCount: 1,
+        sectionId: "duplicate-section",
+      },
+    ],
+    id: "ambiguous-arrangement",
+    lastModified: "2026-07-26T14:30:22.000Z",
+    name: "Ambiguous Arrangement",
+    playbackMode: "once",
+    sections: [section, structuredClone(section)],
+    tempoBpm: 80,
+  };
 
   return snapshot;
 }
@@ -174,6 +249,7 @@ test("restores the backup as a complete replacement", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Restored Session" }),
   ).toBeVisible();
+  await expect(page.locator('[data-session-view-mode="chart"]')).toBeVisible();
   await expectWorkspacePersisted(
     page,
     (snapshot) =>
@@ -182,6 +258,79 @@ test("restores the backup as a complete replacement", async ({ page }) => {
       snapshot.sessions["e2e-session"]?.name === "Restored Session" &&
       snapshot.dojoSettings.appTheme === "purple" &&
       snapshot.dojoSettings.customFretboardTunings?.length === 2 &&
-      snapshot.dojoSettings.customChordProgressions?.length === 1,
+      snapshot.dojoSettings.customChordProgressions?.length === 1 &&
+      snapshot.sessionWorkspaceViewMode === "chart",
+  );
+});
+
+test("preserves restored custom notes when the replacement reuses entity ids", async ({
+  page,
+}) => {
+  await seedDojoWorkspace(page, createSameIdFretboardSnapshot());
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "Same ID Before Restore" }),
+  ).toBeVisible();
+
+  const settings = await openDojoSettings(page);
+  await chooseBackupFile(
+    settings,
+    createDojoBackupJson(
+      createSameIdFretboardSnapshot({ restored: true }),
+      exportedAt,
+    ),
+  );
+  await settings.getByRole("button", { name: "Restore Backup" }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Same ID Restored" }),
+  ).toBeVisible();
+  await expect(
+    page.locator('[data-instrument="fretboard"] [data-emphasis="large"]'),
+  ).toHaveCount(1);
+  await expectWorkspacePersisted(page, (snapshot) => {
+    const partModule = snapshot.sessions["e2e-session"]?.parts[0]?.modules[0];
+    return (
+      partModule?.type === "instrument" &&
+      partModule.instrument.activeNotes?.["0-1"]?.emphasis === "large" &&
+      partModule.instrument.noteEmphasis === "hidden"
+    );
+  });
+});
+
+test("leaves ambiguous persisted data untouched and shows recovery guidance", async ({
+  page,
+}) => {
+  await seedDojoWorkspace(page, createAmbiguousPersistedSnapshot());
+  await page.reload();
+
+  await expect(
+    page.getByRole("alert").filter({
+      hasText: "Saved Dojo data could not be loaded safely",
+    }),
+  ).toBeVisible();
+  await expectWorkspacePersisted(
+    page,
+    (snapshot) =>
+      snapshot.arrangements["ambiguous-arrangement"]?.sections.length === 2,
+  );
+
+  const settings = await openDojoSettings(page);
+  await settings.getByRole("button", { name: "Start Fresh" }).click();
+  await settings
+    .getByRole("group", { name: "Start fresh?" })
+    .getByRole("button", { name: "Start Fresh" })
+    .click();
+
+  await expect(
+    page.getByRole("alert").filter({
+      hasText: "Saved Dojo data could not be loaded safely",
+    }),
+  ).toHaveCount(0);
+  await expectWorkspacePersisted(
+    page,
+    (snapshot) =>
+      Object.keys(snapshot.arrangements).length === 0 &&
+      Object.keys(snapshot.sessions).length === 1,
   );
 });
