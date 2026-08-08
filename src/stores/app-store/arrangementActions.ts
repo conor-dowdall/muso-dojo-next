@@ -75,6 +75,7 @@ export function createArrangementActions(
         playbackMode: "once",
         sections: [],
         entries: [],
+        workspaceViewMode: "build",
       };
       set((current) => ({
         activeWorkspace: { kind: "arrangement", id },
@@ -103,6 +104,7 @@ export function createArrangementActions(
           Object.values(state.arrangements).map(({ name }) => name),
         ),
         lastModified: now(),
+        workspaceViewMode: "build",
         sections: source.sections.map((section) => ({
           ...copySerializable(section),
           id: sectionIds.get(section.id)!,

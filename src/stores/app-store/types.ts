@@ -21,6 +21,7 @@ import { type DojoResourceImportResult } from "@/utils/dojo-backup/dojoResourceI
 import {
   type ActiveWorkspaceRef,
   type ArrangementPlaybackMode,
+  type ArrangementWorkspaceViewMode,
 } from "@/types/arrangement";
 import {
   type AppStoreSnapshot,
@@ -118,7 +119,12 @@ export interface DojoSettingsActions {
 
 export interface WorkspaceActions {
   setActiveWorkspace: (workspace: ActiveWorkspaceRef) => void;
+  setArrangementWorkspaceViewMode: (
+    arrangementId: string,
+    mode: ArrangementWorkspaceViewMode,
+  ) => void;
   setSessionWorkspaceViewMode: (
+    sessionId: string,
     mode: SessionWorkspaceViewMode,
   ) => SessionWorkspaceViewMode;
 }

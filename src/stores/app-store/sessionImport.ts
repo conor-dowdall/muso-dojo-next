@@ -18,5 +18,6 @@ export function createImportedSessionConfig(
       ? createCopyId(importedSession.id, existingSessionIds)
       : importedSession.id,
     name: createUniqueSessionName(importedSession.name, existingSessionNames),
+    workspaceViewMode: "session",
   };
 }

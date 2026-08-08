@@ -69,6 +69,7 @@ describe("session app store actions", () => {
     };
 
     store.getState().setSessionBackingBand(sessionId, backingBand);
+    store.getState().setSessionWorkspaceViewMode(sessionId, "chart");
     const cloneId = store.getState().cloneSession(sessionId);
 
     expect(store.getState().sessions[sessionId]?.backingBand).toEqual(
@@ -78,5 +79,13 @@ describe("session app store actions", () => {
     expect(
       cloneId ? store.getState().sessions[cloneId]?.backingBand : undefined,
     ).toEqual(backingBand);
+    expect(store.getState().sessions[sessionId]?.workspaceViewMode).toBe(
+      "chart",
+    );
+    expect(
+      cloneId
+        ? store.getState().sessions[cloneId]?.workspaceViewMode
+        : undefined,
+    ).toBe("session");
   });
 });

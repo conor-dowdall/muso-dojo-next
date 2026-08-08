@@ -24,12 +24,12 @@ export function createStoreSnapshot(
     arrangements: {},
     activeSessionId: sessionId,
     dojoSettings: {},
-    sessionWorkspaceViewMode: "session",
     sessions: {
       [sessionId]: {
         id: sessionId,
         name: "Store Test Session",
         lastModified: "2026-01-01T00:00:00.000Z",
+        workspaceViewMode: "session",
         parts: [
           {
             id: partId,

@@ -48,6 +48,7 @@ function createArrangementSnapshot() {
       playbackMode: "once",
       sections: [],
       tempoBpm: 80,
+      workspaceViewMode: "build",
     },
   };
 

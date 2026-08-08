@@ -26,6 +26,7 @@ function createSession(parts: MusicPartConfig[]): SessionConfig {
     name: "Session",
     parts,
     tempoBpm: 120,
+    workspaceViewMode: "session",
   };
 }
 

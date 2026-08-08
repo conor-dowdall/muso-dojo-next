@@ -27,6 +27,7 @@ import {
   type InstrumentPartModuleConfig,
 } from "@/types/session";
 import { type NoteColorConfig } from "@/types/note-colors";
+import { arrangementWorkspaceViewModes } from "@/types/arrangement";
 import { sessionWorkspaceViewModes } from "@/types/session-view";
 import { createDefaultSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 import { SnapshotIdentityIntegrityError } from "@/utils/session/assertSnapshotIdentityIntegrity";
@@ -44,7 +45,6 @@ function createPersistedSnapshot(sessionId: string): AppStoreSnapshot {
     arrangements: {},
     activeSessionId: sessionId,
     dojoSettings: {},
-    sessionWorkspaceViewMode: "session",
     sessions: {
       [sessionId]: {
         backingBand: createDefaultSessionBackingBandConfig(),
@@ -52,6 +52,7 @@ function createPersistedSnapshot(sessionId: string): AppStoreSnapshot {
         name: "Persisted Session",
         lastModified: "2026-01-02T00:00:00.000Z",
         parts: [],
+        workspaceViewMode: "session",
       },
     },
   };
@@ -88,21 +89,15 @@ function createPersistedValue(
 
 function expectValidSnapshotInvariants(snapshot: AppStoreSnapshot) {
   expect(snapshot.dojoSettings).toEqual(expect.any(Object));
-  expect(sessionWorkspaceViewModes).toContain(
-    snapshot.sessionWorkspaceViewMode,
-  );
 
   if (snapshot.activeSessionId !== null) {
     const activeSession = snapshot.sessions[snapshot.activeSessionId];
     expect(activeSession).toBeDefined();
-
-    if (snapshot.sessionWorkspaceViewMode !== "session") {
-      expect(activeSession?.parts.length).toBeGreaterThan(0);
-    }
   }
 
   Object.entries(snapshot.sessions).forEach(([sessionKey, session]) => {
     expect(session.id).toBe(sessionKey);
+    expect(sessionWorkspaceViewModes).toContain(session.workspaceViewMode);
     expect(new Set(session.parts.map((part) => part.id)).size).toBe(
       session.parts.length,
     );
@@ -131,6 +126,15 @@ function expectValidSnapshotInvariants(snapshot: AppStoreSnapshot) {
       });
     });
   });
+
+  Object.entries(snapshot.arrangements).forEach(
+    ([arrangementKey, arrangement]) => {
+      expect(arrangement.id).toBe(arrangementKey);
+      expect(arrangementWorkspaceViewModes).toContain(
+        arrangement.workspaceViewMode,
+      );
+    },
+  );
 }
 
 function createPersistedTestStore(
@@ -205,7 +209,7 @@ describe("app store persistence", () => {
   });
 
   it("declares the current persisted store version", () => {
-    expect(APP_STORE_VERSION).toBe(12);
+    expect(APP_STORE_VERSION).toBe(13);
   });
 
   it("falls back when persisted state is not an object snapshot", () => {
@@ -231,10 +235,16 @@ describe("app store persistence", () => {
       throw new Error("Expected test storage to be available");
     }
 
+    const legacySnapshot = createPersistedSnapshot("persisted-session");
+    delete (
+      legacySnapshot.sessions["persisted-session"] as Partial<
+        AppStoreSnapshot["sessions"][string]
+      >
+    ).workspaceViewMode;
     stateStorage.items.set(
       "store",
       JSON.stringify({
-        state: createPersistedSnapshot("persisted-session"),
+        state: legacySnapshot,
         version: APP_STORE_VERSION - 1,
       }),
     );
@@ -337,48 +347,91 @@ describe("app store persistence", () => {
     ).toEqual({});
   });
 
-  it("normalizes the persisted workspace view against the active Session", () => {
+  it("normalizes each persisted Session workspace view independently", () => {
     const persistedState = createPersistedSnapshot("persisted-session");
-    persistedState.sessions["persisted-session"]?.parts.push({
-      id: "part-1",
-      rootNote: "C",
-      noteCollectionKey: "major",
-      modules: [],
-    });
+    const session = persistedState.sessions["persisted-session"]!;
 
     expect(
       normalizeAppStoreSnapshot(
-        { ...persistedState, sessionWorkspaceViewMode: "chart" },
+        {
+          ...persistedState,
+          sessions: {
+            "persisted-session": { ...session, workspaceViewMode: "chart" },
+          },
+        },
         fallbackSnapshot,
-      ).sessionWorkspaceViewMode,
+      ).sessions["persisted-session"]?.workspaceViewMode,
     ).toBe("chart");
     expect(
       normalizeAppStoreSnapshot(
-        { ...persistedState, sessionWorkspaceViewMode: "not-a-view" },
+        {
+          ...persistedState,
+          sessions: {
+            "persisted-session": { ...session, workspaceViewMode: "live" },
+          },
+        },
         fallbackSnapshot,
-      ).sessionWorkspaceViewMode,
-    ).toBe("session");
-    expect(
-      normalizeAppStoreSnapshot(
-        { ...persistedState, sessionWorkspaceViewMode: "live" },
-        fallbackSnapshot,
-      ).sessionWorkspaceViewMode,
+      ).sessions["persisted-session"]?.workspaceViewMode,
     ).toBe("session");
     expect(
       normalizeAppStoreSnapshot(
         {
           ...persistedState,
-          sessionWorkspaceViewMode: "chart",
           sessions: {
             "persisted-session": {
-              ...persistedState.sessions["persisted-session"],
-              parts: [],
+              ...session,
+              workspaceViewMode: undefined,
             },
           },
         },
         fallbackSnapshot,
-      ).sessionWorkspaceViewMode,
+      ).sessions["persisted-session"]?.workspaceViewMode,
     ).toBe("session");
+  });
+
+  it("normalizes each persisted Arrangement workspace view independently", () => {
+    const persistedState = createPersistedSnapshot("persisted-session");
+    const arrangement = {
+      entries: [],
+      id: "arrangement",
+      lastModified: "2026-01-02T00:00:00.000Z",
+      name: "Arrangement",
+      playbackMode: "once",
+      sections: [],
+      tempoBpm: 80,
+    };
+
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          arrangements: {
+            arrangement: { ...arrangement, workspaceViewMode: "chart" },
+          },
+        },
+        fallbackSnapshot,
+      ).arrangements.arrangement?.workspaceViewMode,
+    ).toBe("chart");
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          arrangements: {
+            arrangement: { ...arrangement, workspaceViewMode: "live" },
+          },
+        },
+        fallbackSnapshot,
+      ).arrangements.arrangement?.workspaceViewMode,
+    ).toBe("build");
+    expect(
+      normalizeAppStoreSnapshot(
+        {
+          ...persistedState,
+          arrangements: { arrangement },
+        },
+        fallbackSnapshot,
+      ).arrangements.arrangement?.workspaceViewMode,
+    ).toBe("build");
   });
 
   it("normalizes valid custom dojo note colors", () => {
@@ -799,7 +852,6 @@ describe("app store persistence", () => {
           },
         },
         dojoSettings: {},
-        sessionWorkspaceViewMode: "session",
         sessions: {
           first: {
             id: "session-a",

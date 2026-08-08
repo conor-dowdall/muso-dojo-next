@@ -40,6 +40,7 @@ import { InlineRenameActionItem } from "@/components/ui/inline-rename/InlineRena
 import { useAppStore } from "@/stores/appStore";
 import { normalizeEntityNameForComparison } from "@/stores/app-store/entityIds";
 import { type useArrangementTransport } from "@/hooks/audio/useArrangementTransport";
+import { type ArrangementWorkspaceViewMode } from "@/types/arrangement";
 import { ArrangementTempoDialog } from "./ArrangementTempoDialog";
 import styles from "./ArrangementWorkspace.module.css";
 
@@ -56,9 +57,9 @@ export function ArrangementHeader({
   canAddSection: boolean;
   onAddSection: () => void;
   onOpenLibrary: (returnFocusTo?: HTMLElement | null) => void;
-  onViewModeChange: (mode: "build" | "chart") => void;
+  onViewModeChange: (mode: ArrangementWorkspaceViewMode) => void;
   transport: ReturnType<typeof useArrangementTransport>;
-  viewMode: "build" | "chart";
+  viewMode: ArrangementWorkspaceViewMode;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);

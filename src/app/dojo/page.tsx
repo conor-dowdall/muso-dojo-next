@@ -345,8 +345,18 @@ function HydratedDojoSessionPage({
 }: {
   persistenceLoadError?: string;
 }) {
+  const activeSessionId = useAppStore((state) => state.activeSessionId);
   const sessionWorkspaceViewMode = useAppStore(
-    (state) => state.sessionWorkspaceViewMode,
+    (state) =>
+      (state.activeSessionId
+        ? state.sessions[state.activeSessionId]?.workspaceViewMode
+        : undefined) ?? "session",
+  );
+  const activeSessionPartCount = useAppStore(
+    (state) =>
+      (state.activeSessionId
+        ? state.sessions[state.activeSessionId]?.parts.length
+        : 0) ?? 0,
   );
   const workspaceMountRevision = useAppStore(
     (state) => state.workspaceMountRevision,
@@ -356,16 +366,38 @@ function HydratedDojoSessionPage({
   );
   const [sessionViewState, setSessionViewState] = useState(() => ({
     mode: sessionWorkspaceViewMode as SessionViewMode,
+    sessionId: activeSessionId,
     workspaceMountRevision,
   }));
   let sessionViewMode = sessionViewState.mode;
 
-  if (sessionViewState.workspaceMountRevision !== workspaceMountRevision) {
+  if (
+    sessionViewState.workspaceMountRevision !== workspaceMountRevision ||
+    sessionViewState.sessionId !== activeSessionId
+  ) {
     sessionViewMode = sessionWorkspaceViewMode;
     setSessionViewState({
       mode: sessionWorkspaceViewMode,
+      sessionId: activeSessionId,
       workspaceMountRevision,
     });
+  } else if (
+    activeSessionPartCount === 0 &&
+    isSessionFocusViewMode(sessionViewState.mode)
+  ) {
+    sessionViewMode = requiresSessionParts(sessionWorkspaceViewMode)
+      ? "session"
+      : sessionWorkspaceViewMode;
+    setSessionViewState({
+      mode: sessionWorkspaceViewMode,
+      sessionId: activeSessionId,
+      workspaceMountRevision,
+    });
+  } else if (
+    !activeSessionId ||
+    (activeSessionPartCount === 0 && requiresSessionParts(sessionViewMode))
+  ) {
+    sessionViewMode = "session";
   }
 
   const [viewModeTransitionPending, startViewModeTransition] = useTransition();
@@ -377,9 +409,10 @@ function HydratedDojoSessionPage({
   );
   const handleSessionViewModeChange = useCallback(
     (mode: SessionViewMode) => {
-      const resolvedMode = isSessionWorkspaceViewMode(mode)
-        ? persistSessionWorkspaceViewMode(mode)
-        : mode;
+      const resolvedMode =
+        isSessionWorkspaceViewMode(mode) && activeSessionId
+          ? persistSessionWorkspaceViewMode(activeSessionId, mode)
+          : mode;
 
       // Session views can contain several complex instruments. Let React split
       // that work across tasks so the main-thread audio lookahead can keep
@@ -388,11 +421,12 @@ function HydratedDojoSessionPage({
       startViewModeTransition(() =>
         setSessionViewState({
           mode: resolvedMode,
+          sessionId: activeSessionId,
           workspaceMountRevision,
         }),
       );
     },
-    [persistSessionWorkspaceViewMode, workspaceMountRevision],
+    [activeSessionId, persistSessionWorkspaceViewMode, workspaceMountRevision],
   );
   const isFocusViewMode = isSessionFocusViewMode(sessionViewMode);
 

@@ -33,6 +33,7 @@ function createReplacementSnapshot() {
     playbackMode: "once",
     sections: [],
     tempoBpm: 80,
+    workspaceViewMode: "build",
   };
   snapshot.dojoSettings = {
     appTheme: "purple",
@@ -66,7 +67,7 @@ function createReplacementSnapshot() {
       },
     ],
   };
-  snapshot.sessionWorkspaceViewMode = "chart";
+  snapshot.sessions["e2e-session"]!.workspaceViewMode = "chart";
 
   return snapshot;
 }
@@ -140,6 +141,7 @@ function createAmbiguousPersistedSnapshot() {
     playbackMode: "once",
     sections: [section, structuredClone(section)],
     tempoBpm: 80,
+    workspaceViewMode: "build",
   };
 
   return snapshot;
@@ -259,7 +261,7 @@ test("restores the backup as a complete replacement", async ({ page }) => {
       snapshot.dojoSettings.appTheme === "purple" &&
       snapshot.dojoSettings.customFretboardTunings?.length === 2 &&
       snapshot.dojoSettings.customChordProgressions?.length === 1 &&
-      snapshot.sessionWorkspaceViewMode === "chart",
+      snapshot.sessions["e2e-session"]?.workspaceViewMode === "chart",
   );
 });
 

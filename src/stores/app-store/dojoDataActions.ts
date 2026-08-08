@@ -51,7 +51,6 @@ export function createDojoDataActions(set: AppStoreSet): DojoDataActions {
         activeWorkspace: { kind: "session", id: session.id },
         activeSessionId: session.id,
         arrangements: {},
-        sessionWorkspaceViewMode: "session",
         sessions: { [session.id]: session },
         workspaceMountRevision: state.workspaceMountRevision + 1,
       }));

@@ -47,6 +47,8 @@ function createCompleteSnapshot() {
   const arrangementId = store.getState().addArrangement({ name: "Whole Song" });
   store.getState().addArrangementSectionFromSession(arrangementId, sessionId);
   store.getState().setArrangementPlaybackMode(arrangementId, "loop");
+  store.getState().setArrangementWorkspaceViewMode(arrangementId, "chart");
+  store.getState().setSessionWorkspaceViewMode(sessionId, "chart");
 
   return store.getState();
 }
@@ -177,6 +179,34 @@ describe("Dojo JSON backups", () => {
         parseDojoBackup(
           editSerializedBackup(source, (document) => {
             document.data = { sessions: {} };
+          }),
+        ),
+      "invalid-backup",
+    );
+    expectSyncBackupError(
+      () =>
+        parseDojoBackup(
+          editSerializedBackup(source, (document) => {
+            const data = document.data as Record<string, unknown>;
+            const arrangements = data.arrangements as Record<
+              string,
+              Record<string, unknown>
+            >;
+            Object.values(arrangements)[0]!.workspaceViewMode = "live";
+          }),
+        ),
+      "invalid-backup",
+    );
+    expectSyncBackupError(
+      () =>
+        parseDojoBackup(
+          editSerializedBackup(source, (document) => {
+            const data = document.data as Record<string, unknown>;
+            const sessions = data.sessions as Record<
+              string,
+              Record<string, unknown>
+            >;
+            sessions[sessionId]!.workspaceViewMode = "clean";
           }),
         ),
       "invalid-backup",
@@ -335,6 +365,12 @@ describe("Dojo JSON backups", () => {
           string,
           Record<string, unknown>
         >;
+        const arrangements = data.arrangements as Record<
+          string,
+          Record<string, unknown>
+        >;
+        delete sessions[sessionId]?.workspaceViewMode;
+        delete Object.values(arrangements)[0]?.workspaceViewMode;
         const parts = sessions[sessionId]?.parts as Record<string, unknown>[];
 
         if (parts[0]) {
@@ -348,6 +384,12 @@ describe("Dojo JSON backups", () => {
     expect(parsed.snapshot.activeWorkspace?.kind).toBe("session");
     expect(parsed.snapshot.activeWorkspace?.id).toBe(sessionId);
     expect(parsed.snapshot.activeSessionId).toBe(sessionId);
+    expect(parsed.snapshot.sessions[sessionId]?.workspaceViewMode).toBe(
+      "session",
+    );
+    expect(
+      Object.values(parsed.snapshot.arrangements)[0]?.workspaceViewMode,
+    ).toBe("build");
   });
 
   it("reports oversized and unreadable files without attempting an import", async () => {
@@ -484,9 +526,6 @@ describe("Dojo JSON backups", () => {
     expect(restored.dojoSettings).toEqual(parsed.snapshot.dojoSettings);
     expect(restored.activeWorkspace).toEqual(parsed.snapshot.activeWorkspace);
     expect(restored.activeSessionId).toBe(parsed.snapshot.activeSessionId);
-    expect(restored.sessionWorkspaceViewMode).toBe(
-      parsed.snapshot.sessionWorkspaceViewMode,
-    );
     expect(restored.workspaceMountRevision).toBe(
       originalWorkspaceMountRevision + 1,
     );

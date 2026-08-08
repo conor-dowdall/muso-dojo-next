@@ -283,6 +283,7 @@ export interface SessionConfig {
   lastModified: string;
   parts: MusicPartConfig[];
   tempoBpm?: number;
+  workspaceViewMode: SessionWorkspaceViewMode;
 }
 
 /**
@@ -308,6 +309,5 @@ export interface AppStoreSnapshot {
    */
   activeSessionId: string | null;
   dojoSettings: DojoSettings;
-  sessionWorkspaceViewMode: SessionWorkspaceViewMode;
   sessions: Record<string, SessionConfig>;
 }
