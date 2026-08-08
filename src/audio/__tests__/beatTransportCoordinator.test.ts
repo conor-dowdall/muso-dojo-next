@@ -520,4 +520,44 @@ describe("BeatTransportCoordinator", () => {
     expect(exercise.getSnapshot().playbacks).toEqual({});
     expect(rhythm.getSnapshot().playbacks).toEqual({});
   });
+
+  it("does not let a preparing Part start resurrect after a global transport stop", async () => {
+    const exerciseReady = createDeferred<boolean>();
+    const rhythmReady = createDeferred<boolean>();
+    const { exercise, rhythm, transport } = createHarness({
+      exercisePrime: () => exerciseReady.promise,
+      rhythmPrime: () => rhythmReady.promise,
+    });
+    const start = transport.startPart({
+      exercises: [createExerciseRequest("old-session-exercise")],
+      rhythms: [createRhythmRequest("old-session-rhythm")],
+      source: "part-sequence",
+    });
+
+    transport.stopAllPlayback();
+    exerciseReady.resolve(true);
+    rhythmReady.resolve(true);
+
+    await expect(start).resolves.toEqual({
+      originTime: undefined,
+      started: false,
+    });
+    expect(exercise.getSnapshot().pendingIds).toEqual([]);
+    expect(rhythm.getSnapshot().pendingIds).toEqual([]);
+    expect(exercise.getSnapshot().playbacks).toEqual({});
+    expect(rhythm.getSnapshot().playbacks).toEqual({});
+  });
+
+  it("stops all active manual beat lanes at a workspace boundary", async () => {
+    const { exercise, rhythm, transport } = createHarness();
+    await transport.startExercise(createExerciseRequest("manual-exercise"));
+    await transport.startRhythm(createRhythmRequest("manual-rhythm"));
+
+    transport.stopAllPlayback();
+
+    expect(exercise.getSnapshot().pendingIds).toEqual([]);
+    expect(rhythm.getSnapshot().pendingIds).toEqual([]);
+    expect(exercise.getSnapshot().playbacks).toEqual({});
+    expect(rhythm.getSnapshot().playbacks).toEqual({});
+  });
 });

@@ -568,6 +568,20 @@ export class BeatTransportCoordinator {
       .getActiveIds(owner)
       .forEach((id) => this.rhythm.stop(id, options));
   }
+
+  /**
+   * Cancels every beat-based lane, including work that is still preparing.
+   *
+   * This is intentionally broader than `stopPartPlayback`: workspace and
+   * document lifecycle boundaries must retire both manual module playback and
+   * band-owned playback, as well as a count-in that has no active lane yet.
+   */
+  stopAllPlayback() {
+    this.revision += 1;
+    this.stopCountIn();
+    this.exercise.stop();
+    this.rhythm.stop();
+  }
 }
 
 export const beatTransportCoordinator = new BeatTransportCoordinator();
