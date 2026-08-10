@@ -1,4 +1,7 @@
-import { useInstrumentNavigation } from "@/hooks/instrument/useInstrumentNavigation";
+import {
+  type InstrumentNavigationDirection,
+  useInstrumentNavigation,
+} from "@/hooks/instrument/useInstrumentNavigation";
 import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import { useEffect } from "react";
 
@@ -24,6 +27,48 @@ function parseFocusedKey(key: string): readonly [number, number] | undefined {
     : undefined;
 }
 
+export function getNextFretboardKey({
+  currentKey,
+  direction,
+  fretRange,
+  leftHanded = false,
+  stringCount,
+}: {
+  currentKey: string;
+  direction: InstrumentNavigationDirection;
+  fretRange: readonly [number, number];
+  leftHanded?: boolean;
+  stringCount: number;
+}) {
+  const [startFret, endFret] = fretRange;
+  const [stringIndex, fretNumber] = parseFocusedKey(currentKey) ?? [
+    0,
+    startFret,
+  ];
+  const boundedStringIndex = Math.min(
+    Math.max(0, stringCount - 1),
+    Math.max(0, stringIndex),
+  );
+  const boundedFretNumber = Math.min(endFret, Math.max(startFret, fretNumber));
+  let nextString = boundedStringIndex;
+  let nextFret = boundedFretNumber;
+
+  if (direction === "up") {
+    nextString = Math.max(0, boundedStringIndex - 1);
+  } else if (direction === "down") {
+    nextString = Math.min(Math.max(0, stringCount - 1), boundedStringIndex + 1);
+  } else {
+    const moveDirection =
+      (direction === "left" ? -1 : 1) * (leftHanded ? -1 : 1);
+    nextFret = Math.min(
+      endFret,
+      Math.max(startFret, boundedFretNumber + moveDirection),
+    );
+  }
+
+  return `${nextString}-${nextFret}`;
+}
+
 /**
  * Specialized hook for Fretboard navigation.
  */
@@ -34,7 +79,7 @@ export function useFretboardNavigation<T extends HTMLElement>({
   onInteract,
 }: UseFretboardNavigationParams) {
   const startFret = fretRange[0];
-  const numFrets = fretRange[1] - fretRange[0] + 1;
+  const numFrets = fretRange[1] - startFret + 1;
   const initialFocusedKey = `0-${startFret}`;
 
   const getMidiForKey = (key: string) => {
@@ -44,30 +89,15 @@ export function useFretboardNavigation<T extends HTMLElement>({
 
   const onNavigate = (
     currentKey: string,
-    direction: "up" | "down" | "left" | "right",
-  ) => {
-    const [stringIndex, fretNumber] = parseFocusedKey(currentKey) ?? [
-      0,
-      startFret,
-    ];
-    let nextString = stringIndex;
-    let nextFret = fretNumber;
-
-    if (direction === "up") {
-      nextString = Math.max(0, stringIndex - 1);
-    } else if (direction === "down") {
-      nextString = Math.min(tuning.length - 1, stringIndex + 1);
-    } else if (direction === "left" || direction === "right") {
-      const moveDirection =
-        (direction === "left" ? -1 : 1) * (leftHanded ? -1 : 1);
-      nextFret = Math.min(
-        startFret + numFrets - 1,
-        Math.max(startFret, fretNumber + moveDirection),
-      );
-    }
-
-    return `${nextString}-${nextFret}`;
-  };
+    direction: InstrumentNavigationDirection,
+  ) =>
+    getNextFretboardKey({
+      currentKey,
+      direction,
+      fretRange,
+      leftHanded,
+      stringCount: tuning.length,
+    });
 
   const navigation = useInstrumentNavigation<T>({
     initialFocusedKey,

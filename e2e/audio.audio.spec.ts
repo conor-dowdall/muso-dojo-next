@@ -39,11 +39,7 @@ test("a browser gesture prepares samples and gives consistent note playback feed
     );
   }
 
-  keyboardModule.instrument.noteEmphasis = "hidden";
-  keyboardModule.instrument.activeNotes = {
-    "48": { emphasis: "small", midi: 48 },
-    "50": { midi: 50 },
-  };
+  keyboardModule.instrument.noteEmphasis = "small";
 
   await seedDojoWorkspace(page, snapshot);
   const failedAudioResponses: string[] = [];
@@ -67,6 +63,9 @@ test("a browser gesture prepares samples and gives consistent note playback feed
     name: /Play White key, MIDI 48/,
   });
   const hiddenNote = page.getByRole("button", {
+    name: /Play White key, MIDI 52/,
+  });
+  const outOfCollectionNote = page.getByRole("button", {
     name: /Play White key, MIDI 50/,
   });
 
@@ -77,6 +76,9 @@ test("a browser gesture prepares samples and gives consistent note playback feed
   await expect(smallNote).not.toHaveAttribute("data-note-highlighted", "true");
   await expectNotePresentation(smallNote, { opacity: 0.7, scale: 0.7 });
 
+  await page
+    .getByRole("button", { name: "Change note size. Current: Small" })
+    .click();
   await expectNotePresentation(hiddenNote, { opacity: 0, scale: 0 });
   await hiddenNote.click();
   await expect(hiddenNote).toHaveAttribute("data-note-highlighted", "true");
@@ -84,7 +86,92 @@ test("a browser gesture prepares samples and gives consistent note playback feed
   await expect(hiddenNote).not.toHaveAttribute("data-note-highlighted", "true");
   await expectNotePresentation(hiddenNote, { opacity: 0, scale: 0 });
 
+  await expectNotePresentation(outOfCollectionNote, { opacity: 0, scale: 0 });
+  await outOfCollectionNote.click();
+  await expect(outOfCollectionNote).toHaveAttribute(
+    "data-note-highlighted",
+    "true",
+  );
+  await expectNotePresentation(outOfCollectionNote, { opacity: 1, scale: 1 });
+  await expect(outOfCollectionNote).not.toHaveAttribute(
+    "data-note-highlighted",
+    "true",
+  );
+  await expectNotePresentation(outOfCollectionNote, { opacity: 0, scale: 0 });
+
   expect(failedAudioResponses).toEqual([]);
+});
+
+test("fretboard notes share the playback presentation contract", async ({
+  context,
+  page,
+}) => {
+  const snapshot = createKeyboardWorkspaceSnapshot();
+  const part = snapshot.sessions["e2e-session"]?.parts[0];
+
+  if (!part) {
+    throw new Error("Expected the browser test fixture to contain a Part");
+  }
+
+  part.modules = [
+    {
+      id: "e2e-fretboard",
+      instrument: {
+        audioPresetId: "piano",
+        config: {
+          fretRange: [0, 2],
+          instrument: "guitar",
+          tuning: [60],
+          tuningName: "Test tuning",
+        },
+        noteEmphasis: "small",
+        type: "fretboard",
+      },
+      type: "instrument",
+    },
+  ];
+
+  await seedDojoWorkspace(page, snapshot);
+  const pianoResponse = context.waitForEvent("response", {
+    predicate: (response) =>
+      response.url().endsWith("/audio/v1/piano.ogg") && response.ok(),
+    timeout: 120_000,
+  });
+
+  await page.goto("/dojo");
+  await waitForServiceWorkerControl(page);
+  await pianoResponse;
+
+  await page.getByRole("button", { name: "Play notes" }).click();
+  const collectionNote = page.getByRole("button", {
+    name: /Play String 1, Fret 0/,
+  });
+  const outOfCollectionNote = page.getByRole("button", {
+    name: /Play String 1, Fret 1/,
+  });
+
+  await expectNotePresentation(collectionNote, { opacity: 0.7, scale: 0.7 });
+  await collectionNote.click();
+  await expect(collectionNote).toHaveAttribute("data-note-highlighted", "true");
+  await expectNotePresentation(collectionNote, { opacity: 1, scale: 1 });
+  await expect(collectionNote).not.toHaveAttribute(
+    "data-note-highlighted",
+    "true",
+  );
+  await expectNotePresentation(collectionNote, { opacity: 0.7, scale: 0.7 });
+
+  await expectNotePresentation(outOfCollectionNote, { opacity: 0, scale: 0 });
+  await outOfCollectionNote.click();
+  await expect(outOfCollectionNote).toHaveAttribute(
+    "data-note-highlighted",
+    "true",
+  );
+  await expectNotePresentation(outOfCollectionNote, { opacity: 1, scale: 1 });
+  await expect(outOfCollectionNote).not.toHaveAttribute(
+    "data-note-highlighted",
+    "true",
+  );
+  await expectNotePresentation(outOfCollectionNote, { opacity: 0, scale: 0 });
 });
 
 test("switching Sessions retires Looper audio and UI state even when module IDs collide", async ({
