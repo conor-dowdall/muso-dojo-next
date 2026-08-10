@@ -156,9 +156,9 @@
 .noteCell[data-note-highlighted="true"] .note {
   border-color: var(--interactive-surface-focus-ring-color);
   box-shadow: var(--interactive-surface-highlight-shadow);
-}
 
-.noteCell[data-note-highlighted="true"] .note[data-emphasis="hidden"] {
+  /* Playback feedback temporarily takes precedence over both inherited and
+     per-note emphasis. The resting emphasis resumes when the highlight ends. */
   visibility: visible !important;
   opacity: var(--note-opacity-large) !important;
   --note-scale: var(--note-scale-large) !important;
