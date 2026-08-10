@@ -220,6 +220,21 @@ export async function seedDojoWorkspace(
   );
 }
 
+export async function seedDojoWorkspaceOnce(
+  page: Page,
+  snapshot = createKeyboardWorkspaceSnapshot(),
+) {
+  await page.goto("/dojo");
+  await page.evaluate(
+    ({ key, value }) => window.localStorage.setItem(key, value),
+    {
+      key: APP_STORE_STORAGE_KEY,
+      value: JSON.stringify({ state: snapshot, version: APP_STORE_VERSION }),
+    },
+  );
+  await page.reload();
+}
+
 export async function expectWorkspacePersisted(
   page: Page,
   assertion: (

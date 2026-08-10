@@ -1,10 +1,27 @@
-import { useInstrumentNavigation } from "@/hooks/instrument/useInstrumentNavigation";
+import {
+  type InstrumentNavigationDirection,
+  useInstrumentNavigation,
+} from "@/hooks/instrument/useInstrumentNavigation";
 import { type InstrumentNoteInteractionTarget } from "@/types/instrument";
 import { useEffect } from "react";
 
 interface UseKeyboardNavigationParams {
   midiRange: readonly [number, number];
   onInteract: (target: InstrumentNoteInteractionTarget) => void;
+}
+
+export function getNextKeyboardKey(
+  currentKey: string,
+  direction: InstrumentNavigationDirection,
+  midiRange: readonly [number, number],
+) {
+  const [startMidi, endMidi] = midiRange;
+  const parsedMidi = Number(currentKey);
+  const midi = Number.isInteger(parsedMidi) ? parsedMidi : startMidi;
+
+  if (direction === "left") return String(Math.max(startMidi, midi - 1));
+  if (direction === "right") return String(Math.min(endMidi, midi + 1));
+  return String(Math.min(endMidi, Math.max(startMidi, midi)));
 }
 
 /**
@@ -21,13 +38,8 @@ export function useKeyboardNavigation<T extends HTMLElement>({
 
   const onNavigate = (
     currentKey: string,
-    direction: "up" | "down" | "left" | "right",
-  ) => {
-    const midi = Number(currentKey);
-    if (direction === "left") return String(Math.max(startMidi, midi - 1));
-    if (direction === "right") return String(Math.min(endMidi, midi + 1));
-    return currentKey;
-  };
+    direction: InstrumentNavigationDirection,
+  ) => getNextKeyboardKey(currentKey, direction, midiRange);
 
   const navigation = useInstrumentNavigation<T>({
     initialFocusedKey,

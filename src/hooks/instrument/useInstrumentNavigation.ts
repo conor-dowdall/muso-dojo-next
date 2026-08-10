@@ -17,9 +17,11 @@ interface UseInstrumentNavigationParams {
   getMidiForKey: (key: string) => number;
   onNavigate?: (
     currentKey: string,
-    direction: "up" | "down" | "left" | "right",
+    direction: InstrumentNavigationDirection,
   ) => string | undefined;
 }
+
+export type InstrumentNavigationDirection = "up" | "down" | "left" | "right";
 
 /**
  * Handles instrument keyboard navigation and focus management with roving tabindex.
@@ -85,7 +87,7 @@ export function useInstrumentNavigation<T extends HTMLElement>({
         return;
       }
 
-      const directionMap: Record<string, "up" | "down" | "left" | "right"> = {
+      const directionMap: Record<string, InstrumentNavigationDirection> = {
         ArrowUp: "up",
         ArrowDown: "down",
         ArrowLeft: "left",
