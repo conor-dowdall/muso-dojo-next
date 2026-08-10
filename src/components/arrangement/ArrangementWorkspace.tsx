@@ -419,6 +419,10 @@ export function ArrangementWorkspace({
                 const displayed =
                   transport.isActive &&
                   chartCue.presentation?.entryId === entry.id;
+                const current =
+                  displayed && chartCue.presentation?.kind === "current";
+                const upcoming =
+                  displayed && chartCue.presentation?.kind === "upcoming";
                 return (
                   <li
                     key={entry.id}
@@ -432,8 +436,8 @@ export function ArrangementWorkspace({
                       aria-disabled={
                         transport.isActive || unavailable ? true : undefined
                       }
-                      aria-current={displayed ? "step" : undefined}
-                      aria-label={`Section ${entryIndex + 1}, plays ${entry.playCount} ${entry.playCount === 1 ? "time" : "times"}${displayed ? ", chart displayed" : ""}${transport.isActive ? ", chart follows playback" : ""}`}
+                      aria-current={current ? "step" : undefined}
+                      aria-label={`Section ${entryIndex + 1}, plays ${entry.playCount} ${entry.playCount === 1 ? "time" : "times"}${current ? ", current chart displayed" : ""}${upcoming ? ", up next chart displayed" : ""}${transport.isActive ? ", chart follows playback" : ""}`}
                       className={styles.entryTile}
                       data-active={displayed || undefined}
                       disabled={unavailable}

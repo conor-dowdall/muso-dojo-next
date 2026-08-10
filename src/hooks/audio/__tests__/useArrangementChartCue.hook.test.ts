@@ -157,6 +157,35 @@ describe("useArrangementChartCue", () => {
     expect(result.current.presentation?.kind).toBe("current");
   });
 
+  it("returns from an upcoming preview to the live Section at its boundary", () => {
+    mocks.setSnapshot(activeSnapshot());
+    mocks.deriveArrangementChartCueTarget.mockReturnValue({
+      boundaryTime: 7,
+      cueTime: 6,
+      effectiveLeadSeconds: 1,
+      entryId: "entry-section-b",
+      fromOccurrence: 2,
+      sectionId: "section-b",
+      sourceSignature: "source-1",
+    });
+    const { result } = renderHook(() =>
+      useArrangementChartCue(plan, undefined),
+    );
+    act(() => vi.advanceTimersByTime(0));
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(result.current.presentation?.kind).toBe("upcoming");
+
+    act(() => {
+      mocks.setSnapshot(activeSnapshot("section-b"));
+      mocks.emit();
+    });
+
+    expect(result.current.presentation).toMatchObject({
+      kind: "current",
+      sectionId: "section-b",
+    });
+  });
+
   it("clears scheduled cues on unmount", () => {
     mocks.setSnapshot(activeSnapshot());
     mocks.deriveArrangementChartCueTarget.mockReturnValue({

@@ -151,8 +151,13 @@ describe("useRhythmPlayback", () => {
     expect(mocks.beatTransportCoordinator.startRhythm).not.toHaveBeenCalled();
   });
 
-  it("does not restart band-owned playback when module settings change", () => {
-    mocks.setSnapshot(activeSnapshot("part-sequence"));
+  it("replaces a pending manual start with the latest settings", () => {
+    mocks.setSnapshot({
+      pendingIds: ["rhythm"],
+      pendingOwners: { rhythm: "manual" },
+      playbacks: {},
+      playing: false,
+    });
     const { rerender } = renderHook(
       ({ tempoBpm }) =>
         useRhythmPlayback({
@@ -163,7 +168,28 @@ describe("useRhythmPlayback", () => {
       { initialProps: { tempoBpm: 120 } },
     );
 
-    rerender({ tempoBpm: 140 });
+    rerender({ tempoBpm: 132 });
+
+    expect(mocks.beatTransportCoordinator.startRhythm).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "rhythm", tempoBpm: 132 }),
+    );
+  });
+
+  it("leaves all band-owned setting updates to the band transport", () => {
+    mocks.setSnapshot(activeSnapshot("part-sequence"));
+    const initialRhythm = withTimekeeperSound("hat");
+    const { rerender } = renderHook(
+      ({ rhythm, tempoBpm }) =>
+        useRhythmPlayback({
+          id: "rhythm",
+          rhythm,
+          tempoBpm,
+        }),
+      { initialProps: { rhythm: initialRhythm, tempoBpm: 120 } },
+    );
+
+    rerender({ rhythm: withTimekeeperSound("ride"), tempoBpm: 120 });
+    rerender({ rhythm: initialRhythm, tempoBpm: 140 });
 
     expect(mocks.beatTransportCoordinator.startRhythm).not.toHaveBeenCalled();
     expect(mocks.rhythmPlaybackCoordinator.setPattern).not.toHaveBeenCalled();

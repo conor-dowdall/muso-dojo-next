@@ -252,17 +252,22 @@ describe("useExerciseLooperPlayback", () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("does not replace band-owned playback when module settings change", () => {
+  it("leaves all band-owned setting updates to the band transport", () => {
     mocks.setSnapshot(activeSnapshot("part-sequence"));
     const { rerender } = renderPlayback();
+    mocks.exercisePlaybackCoordinator.setMetronomeEnabled.mockClear();
     mocks.restartRequestsAreEqual.mockReturnValue(false);
 
+    rerender({ props: { metronomeEnabled: true } });
     rerender({ props: { tempoBpm: 140 } });
 
     expect(
       mocks.beatTransportCoordinator.retimeExercise,
     ).not.toHaveBeenCalled();
     expect(mocks.beatTransportCoordinator.startExercise).not.toHaveBeenCalled();
+    expect(
+      mocks.exercisePlaybackCoordinator.setMetronomeEnabled,
+    ).not.toHaveBeenCalled();
   });
 
   it("updates live metronome state and exposes count-in status", () => {

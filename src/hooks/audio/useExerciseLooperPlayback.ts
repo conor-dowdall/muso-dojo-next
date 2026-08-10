@@ -220,13 +220,13 @@ export function useExerciseLooperPlayback({
   }, [isActive, isBandOwned, request]);
 
   useLayoutEffect(() => {
-    if (!isPlaying) {
+    if (!isPlaying || isBandOwned) {
       return;
     }
 
     exercisePlaybackCoordinator.setMetronomeEnabled(id, metronomeEnabled);
     submittedRequest.current = request;
-  }, [id, isPlaying, metronomeEnabled, request]);
+  }, [id, isBandOwned, isPlaying, metronomeEnabled, request]);
 
   useEffect(() => {
     if (!isPlaying || document.visibilityState === "hidden") {

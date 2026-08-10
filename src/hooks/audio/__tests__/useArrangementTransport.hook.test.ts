@@ -228,9 +228,26 @@ describe("useArrangementTransport", () => {
       ),
     );
     expect(mocks.coordinator.start).not.toHaveBeenCalled();
+    dialog.remove();
+
+    const searchbox = document.createElement("div");
+    searchbox.setAttribute("role", "searchbox");
+    document.body.append(searchbox);
+    act(() =>
+      searchbox.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          bubbles: true,
+          cancelable: true,
+          code: "Space",
+          key: " ",
+          shiftKey: true,
+        }),
+      ),
+    );
+    expect(mocks.coordinator.start).not.toHaveBeenCalled();
+    searchbox.remove();
 
     unmount();
-    dialog.remove();
     act(() =>
       window.dispatchEvent(
         new KeyboardEvent("keydown", {

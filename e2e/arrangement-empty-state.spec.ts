@@ -117,6 +117,9 @@ test("the first Section replaces the instructional empty state", async ({
 
   await expect(page.getByRole("region", { name: "Section 1" })).toBeVisible();
   await expect(
+    page.getByRole("button", { name: "Play Arrangement" }),
+  ).toHaveAttribute("aria-keyshortcuts", "Shift+Space");
+  await expect(
     page.getByText(
       "This Section captured the Session's current Parts and backing.",
     ),
