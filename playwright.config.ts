@@ -2,6 +2,26 @@ import { defineConfig, devices } from "@playwright/test";
 
 const port = 3100;
 const baseURL = `http://127.0.0.1:${port}`;
+const coreTestIgnore = [
+  /\.audio\.spec\.ts$/,
+  /\.mobile\.spec\.ts$/,
+  /\.pwa\.spec\.ts$/,
+];
+const snapWebKitEnvironment =
+  process.env.SNAP_NAME === "code"
+    ? (Object.fromEntries(
+        Object.entries(process.env).filter(
+          ([key]) =>
+            !key.startsWith("SNAP") &&
+            ![
+              "GIO_MODULE_DIR",
+              "GTK_EXE_PREFIX",
+              "GTK_IM_MODULE_FILE",
+              "GTK_PATH",
+            ].includes(key),
+        ),
+      ) as Record<string, string>)
+    : undefined;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -34,13 +54,28 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      testIgnore: [
-        /\.audio\.spec\.ts$/,
-        /\.mobile\.spec\.ts$/,
-        /\.pwa\.spec\.ts$/,
-      ],
+      testIgnore: coreTestIgnore,
       use: {
         ...devices["Desktop Chrome"],
+        serviceWorkers: "block",
+      },
+    },
+    {
+      name: "firefox",
+      testIgnore: coreTestIgnore,
+      use: {
+        ...devices["Desktop Firefox"],
+        serviceWorkers: "block",
+      },
+    },
+    {
+      name: "webkit",
+      testIgnore: coreTestIgnore,
+      use: {
+        ...devices["Desktop Safari"],
+        ...(snapWebKitEnvironment
+          ? { launchOptions: { env: snapWebKitEnvironment } }
+          : {}),
         serviceWorkers: "block",
       },
     },

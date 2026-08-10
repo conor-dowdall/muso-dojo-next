@@ -73,7 +73,7 @@ export function useArrangementTransport(arrangementId: string) {
       const editable =
         target instanceof Element &&
         target.closest(
-          "input, select, textarea, [contenteditable], [role='slider'], [role='spinbutton'], [role='textbox']",
+          "input, select, textarea, [contenteditable], [role='combobox'], [role='listbox'], [role='searchbox'], [role='slider'], [role='spinbutton'], [role='textbox']",
         );
       if (
         event.defaultPrevented ||

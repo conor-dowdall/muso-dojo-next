@@ -179,6 +179,9 @@ export function ArrangementHeader({
               aria-label={
                 transport.isActive ? "Stop Arrangement" : "Play Arrangement"
               }
+              aria-keyshortcuts={
+                transport.isActive ? "Space Escape Shift+Space" : "Shift+Space"
+              }
               disabled={!transport.canPlay}
               icon={transport.isActive ? <Square /> : <ListVideo />}
               selected={transport.isActive}

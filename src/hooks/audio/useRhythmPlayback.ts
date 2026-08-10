@@ -66,6 +66,11 @@ export function useRhythmPlayback({
 
   useLayoutEffect(() => {
     const submitted = submittedRequest.current;
+    const restartFieldsChanged =
+      submitted.id !== request.id ||
+      submitted.tempoBpm !== request.tempoBpm ||
+      !rhythmResetFieldsAreEqual(submittedRecipe.current, recipe);
+    const patternChanged = submitted.pattern !== request.pattern;
 
     if (!isActive) {
       submittedRequest.current = request;
@@ -74,14 +79,18 @@ export function useRhythmPlayback({
     }
 
     if (!isPlaying) {
+      if (restartFieldsChanged || patternChanged) {
+        submittedRequest.current = request;
+        submittedRecipe.current = recipe;
+
+        if (!isBandOwned) {
+          void beatTransportCoordinator.startRhythm(request);
+        }
+      }
       return;
     }
 
-    if (
-      submitted.id !== request.id ||
-      submitted.tempoBpm !== request.tempoBpm ||
-      !rhythmResetFieldsAreEqual(submittedRecipe.current, recipe)
-    ) {
+    if (restartFieldsChanged) {
       submittedRequest.current = request;
       submittedRecipe.current = recipe;
       if (!isBandOwned) {
@@ -90,7 +99,7 @@ export function useRhythmPlayback({
       return;
     }
 
-    if (submitted.pattern !== request.pattern) {
+    if (patternChanged && !isBandOwned) {
       rhythmPlaybackCoordinator.setPattern(id, request.pattern);
     }
 

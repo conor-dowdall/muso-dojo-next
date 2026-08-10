@@ -16,10 +16,13 @@ instruments, harmony, rhythm, and musical patterns.
 
 ## Project Status
 
-Muso Dojo is a mature version 1 application, actively developed and maintained
-as a solo project. Issues, feature suggestions, and feedback from real musical
-or educational use are welcome. External pull requests are not currently being
-accepted.
+Muso Dojo is a fully functional application that provides useful tools for
+everyday musical practice and education. Future updates will be made when they
+are useful and practical, without a fixed development or release schedule.
+
+Bug reports, feature suggestions, and feedback are welcome. Anyone interested
+in contributing code is invited to open an issue first so the idea, scope, and
+contribution process can be discussed before implementation begins.
 
 ## Running Locally
 
@@ -47,24 +50,65 @@ sample-pack generation, format selection, attribution, and provenance details.
 
 ## Quality Checks
 
-Run the same quality baseline used by GitHub Actions with:
+The GitHub Actions quality gate has two layers: code and production-build
+checks, followed by browser acceptance tests.
+
+### Code and build checks
+
+Run the complete non-browser baseline with:
 
 ```sh
 pnpm check:ci
 ```
 
-This checks formatting, strict linting, TypeScript, Vitest coverage, generated
-audio provenance, and the production and service-worker builds.
+This checks formatting, strict linting, TypeScript, Vitest coverage thresholds,
+audio sample integrity and provenance, and the production and service-worker
+builds. During development, the narrower commands are useful for faster
+feedback:
+
+```sh
+pnpm check          # Lint and TypeScript
+pnpm test           # Vitest suite
+pnpm test:coverage  # Vitest suite with coverage thresholds
+pnpm test:watch     # Interactive Vitest watch mode
+```
+
+### Browser acceptance tests
 
 The browser acceptance suite covers the small set of behaviors that require a
 real browser: hydration and persistence, a complete authoring journey, native
 dialog and input behavior, sampled-audio readiness, and PWA offline support.
-Install Chromium once and run it with:
+
+Install the pinned Playwright browser builds once, then run the complete
+matrix:
 
 ```sh
-pnpm exec playwright install chromium
+pnpm exec playwright install chromium firefox webkit
 pnpm test:e2e
 ```
+
+The matrix is divided by responsibility:
+
+| Project           | Coverage                                           |
+| ----------------- | -------------------------------------------------- |
+| `chromium`        | Core desktop journeys                              |
+| `firefox`         | Core desktop journeys in Firefox                   |
+| `webkit`          | Core desktop journeys in Playwright WebKit         |
+| `mobile-chromium` | Touch interaction and phone layout                 |
+| `audio-chromium`  | Real sampled-audio readiness and playback feedback |
+| `pwa-chromium`    | Service-worker installation and offline behavior   |
+
+Run one project while investigating a browser-specific failure:
+
+```sh
+pnpm exec playwright test --project=firefox
+pnpm exec playwright test --project=webkit
+pnpm exec playwright test --project=audio-chromium
+```
+
+Playwright WebKit provides WebKit engine coverage but is not branded Safari.
+Actual Safari and installed iOS Home Screen behavior require a macOS or iOS
+Safari test environment.
 
 ## Contributing
 
