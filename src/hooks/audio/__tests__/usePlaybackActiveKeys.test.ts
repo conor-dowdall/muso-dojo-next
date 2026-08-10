@@ -71,4 +71,23 @@ describe("createPlaybackActiveKeysController", () => {
     vi.advanceTimersByTime(1);
     expect(controller.getActiveKeys().has("fallback")).toBe(false);
   });
+
+  it("releases subscriptions and ignores fallbacks after disposal", () => {
+    vi.useFakeTimers();
+    const unsubscribe = vi.fn();
+    const snapshots: string[][] = [];
+    const controller = createPlaybackActiveKeysController<string>({
+      onActiveKeysChange: (keys) => snapshots.push([...keys]),
+      subscribeToEnd: () => unsubscribe,
+    });
+    const token = controller.begin("note-c4");
+    controller.attach("note-c4", token, "voice-1", 0.5);
+
+    controller.dispose();
+    vi.runAllTimers();
+
+    expect(unsubscribe).toHaveBeenCalledOnce();
+    expect(controller.getActiveKeys()).toStrictEqual(new Set());
+    expect(snapshots).toStrictEqual([["note-c4"]]);
+  });
 });
