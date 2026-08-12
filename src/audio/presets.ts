@@ -80,6 +80,8 @@ export const audioPresets = {
     },
     gain: 0.82,
     id: "acoustic-bass",
+    // Instrument previews add the 0.12s release, for a 0.88s total voice.
+    instrumentPreviewDurationSeconds: 0.76,
     label: "Acoustic Bass",
   }),
   "bowed-strings": createSamplePreset({

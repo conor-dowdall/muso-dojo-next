@@ -102,11 +102,15 @@ describe("audio presets", () => {
     expect(audioPresets["bowed-strings"].instrumentPreviewDurationSeconds).toBe(
       0.77,
     );
+    expect(audioPresets["acoustic-bass"].instrumentPreviewDurationSeconds).toBe(
+      0.76,
+    );
     expect(
       audioPresets["plucked-string"].instrumentPreviewDurationSeconds,
     ).toBeUndefined();
 
     expect(audioPresets.piano.defaultDurationSeconds).toBe(1.08);
+    expect(audioPresets["acoustic-bass"].defaultDurationSeconds).toBe(0.9);
     expect(audioPresets["bowed-strings"].defaultDurationSeconds).toBe(1.2);
   });
 
