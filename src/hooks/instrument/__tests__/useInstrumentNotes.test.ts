@@ -10,7 +10,15 @@ const audioMocks = vi.hoisted(() => ({
   ensureAudioReady: vi.fn(),
   getDefaultAudioPresetId: vi.fn(() => "piano"),
   playNote: vi.fn(),
-  resolveAudioPreset: vi.fn(() => ({ defaultDurationSeconds: 1.25 })),
+  resolveAudioPreset: vi.fn(
+    (): {
+      defaultDurationSeconds: number;
+      instrumentPreviewDurationSeconds?: number;
+    } => ({
+      defaultDurationSeconds: 1.08,
+      instrumentPreviewDurationSeconds: 0.74,
+    }),
+  ),
 }));
 
 const playbackMocks = vi.hoisted(() => ({
@@ -96,6 +104,7 @@ describe("useInstrumentNotes", () => {
 
     expect(playbackMocks.begin).toHaveBeenCalledWith("c4");
     expect(audioMocks.playNote).toHaveBeenCalledWith({
+      durationSeconds: 0.74,
       midiNote: 60,
       presetId: "piano",
       signal: undefined,
@@ -107,7 +116,7 @@ describe("useInstrumentNotes", () => {
         "c4",
         1,
         { id: "voice-1" },
-        1.25,
+        0.74,
       ),
     );
     expect(setActiveNotesSourceKey).toHaveBeenCalledWith(
@@ -144,7 +153,7 @@ describe("useInstrumentNotes", () => {
         "d4",
         2,
         { id: "voice-2" },
-        1.25,
+        0.74,
       ),
     );
 
@@ -156,6 +165,29 @@ describe("useInstrumentNotes", () => {
       expect.anything(),
       expect.anything(),
       expect.anything(),
+    );
+  });
+
+  it("keeps the preset default when no shorter instrument preview is set", async () => {
+    audioMocks.resolveAudioPreset.mockReturnValueOnce({
+      defaultDurationSeconds: 0.62,
+    });
+    const { result } = renderInstrumentNotes({
+      previewAudioPresetId: "plucked-string",
+    });
+
+    act(() => result.current.handleInteract(c4));
+
+    expect(audioMocks.playNote).toHaveBeenCalledWith(
+      expect.objectContaining({ durationSeconds: 0.62 }),
+    );
+    await waitFor(() =>
+      expect(playbackMocks.attach).toHaveBeenCalledWith(
+        "c4",
+        1,
+        { id: "voice-1" },
+        0.62,
+      ),
     );
   });
 

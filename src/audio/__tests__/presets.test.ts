@@ -97,6 +97,19 @@ describe("audio presets", () => {
     ).toBeGreaterThan(audioPresets["plucked-string"].defaultDurationSeconds);
   });
 
+  it("shortens sustained sounds only for direct instrument previews", () => {
+    expect(audioPresets.piano.instrumentPreviewDurationSeconds).toBe(0.74);
+    expect(audioPresets["bowed-strings"].instrumentPreviewDurationSeconds).toBe(
+      0.77,
+    );
+    expect(
+      audioPresets["plucked-string"].instrumentPreviewDurationSeconds,
+    ).toBeUndefined();
+
+    expect(audioPresets.piano.defaultDurationSeconds).toBe(1.08);
+    expect(audioPresets["bowed-strings"].defaultDurationSeconds).toBe(1.2);
+  });
+
   it("uses plucked string samples as the exercise default", () => {
     expect(getDefaultAudioPresetId("exercise")).toBe("plucked-string");
   });

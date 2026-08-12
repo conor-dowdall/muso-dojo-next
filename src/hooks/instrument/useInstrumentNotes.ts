@@ -194,6 +194,9 @@ export function useInstrumentNotes({
           previewAudioPresetId,
           getDefaultAudioPresetId("preview"),
         );
+        const previewDurationSeconds =
+          preset.instrumentPreviewDurationSeconds ??
+          preset.defaultDurationSeconds;
 
         clearPendingPreview();
 
@@ -212,6 +215,7 @@ export function useInstrumentNotes({
 
         void musoAudioEngine
           .playNote({
+            durationSeconds: previewDurationSeconds,
             midiNote: target.midi,
             use: "preview",
             presetId: previewAudioPresetId,
@@ -238,12 +242,7 @@ export function useInstrumentNotes({
               return;
             }
 
-            attachPreview(
-              target.key,
-              token,
-              handle,
-              preset.defaultDurationSeconds,
-            );
+            attachPreview(target.key, token, handle, previewDurationSeconds);
           })
           .catch(() => {
             if (controller && pendingPreviewRef.current?.token === token) {
