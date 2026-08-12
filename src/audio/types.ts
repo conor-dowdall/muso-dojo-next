@@ -38,6 +38,7 @@ export interface AudioPreset {
   envelope: SampleEnvelopeConfig;
   gain: number;
   id: AudioPresetId;
+  instrumentPreviewDurationSeconds?: number;
   label: string;
   samplePackId: SamplePackId;
 }

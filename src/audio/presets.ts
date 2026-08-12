@@ -13,6 +13,7 @@ function createSamplePreset({
   envelope,
   gain,
   id,
+  instrumentPreviewDurationSeconds,
   label,
 }: {
   attackSecondsByUse?: Partial<Record<AudioUse, number>>;
@@ -21,6 +22,7 @@ function createSamplePreset({
   envelope: SampleEnvelopeConfig;
   gain: number;
   id: AudioPresetId;
+  instrumentPreviewDurationSeconds?: number;
   label: string;
 }) {
   return {
@@ -30,6 +32,9 @@ function createSamplePreset({
     envelope,
     gain,
     id,
+    ...(instrumentPreviewDurationSeconds === undefined
+      ? {}
+      : { instrumentPreviewDurationSeconds }),
     label,
     samplePackId: id,
   } as const satisfies AudioPreset;
@@ -47,6 +52,8 @@ export const audioPresets = {
     },
     gain: 0.7,
     id: "piano",
+    // Instrument previews add the 0.16s release, for a 0.90s total voice.
+    instrumentPreviewDurationSeconds: 0.74,
     label: "Piano",
   }),
   "plucked-string": createSamplePreset({
@@ -73,6 +80,8 @@ export const audioPresets = {
     },
     gain: 0.82,
     id: "acoustic-bass",
+    // Instrument previews add the 0.12s release, for a 0.88s total voice.
+    instrumentPreviewDurationSeconds: 0.76,
     label: "Acoustic Bass",
   }),
   "bowed-strings": createSamplePreset({
@@ -87,6 +96,8 @@ export const audioPresets = {
     },
     gain: 0.6,
     id: "bowed-strings",
+    // Instrument previews add the 0.28s release, for a 1.05s total voice.
+    instrumentPreviewDurationSeconds: 0.77,
     label: "Bowed Strings",
   }),
 } as const satisfies Record<AudioPresetId, AudioPreset>;
