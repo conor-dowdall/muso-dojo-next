@@ -217,15 +217,7 @@ function BandSessionView({
   bars: SessionChartBar[];
 }) {
   return (
-    <section
-      className={styles.bandView}
-      aria-label={ariaLabel}
-      style={
-        {
-          "--chart-bar-units": PART_DURATION_CHART_BAR_UNITS,
-        } as CSSProperties
-      }
-    >
+    <section className={styles.bandView} aria-label={ariaLabel}>
       <ol className={styles.bandGrid}>
         {bars.map((bar) => (
           <li
@@ -239,7 +231,21 @@ function BandSessionView({
                 <span className={styles.bandBarMeter}>{bar.meterLabel}</span>
               ) : null}
             </div>
-            <div className={styles.bandBarSegments}>
+            <div
+              className={styles.bandBarSegments}
+              style={
+                {
+                  "--chart-unused-span": Math.max(
+                    0,
+                    PART_DURATION_CHART_BAR_UNITS -
+                      bar.parts.reduce(
+                        (total, part) => total + part.chartSpanUnits,
+                        0,
+                      ),
+                  ),
+                } as CSSProperties
+              }
+            >
               {bar.parts.map((part) => {
                 const isActive = activePartId === part.id;
 
