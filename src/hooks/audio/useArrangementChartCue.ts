@@ -38,7 +38,8 @@ function targetsMatch(
     left?.sectionId === right?.sectionId &&
     left?.entryId === right?.entryId &&
     left?.boundaryTime === right?.boundaryTime &&
-    left?.sourceSignature === right?.sourceSignature
+    left?.sourceSignature === right?.sourceSignature &&
+    left?.tempoSignature === right?.tempoSignature
   );
 }
 
@@ -55,7 +56,7 @@ export function useArrangementChartCue(
   );
   const activeContext = snapshot.activeArrangementContext;
   const [sectionRun, setSectionRun] = useState<{
-    sectionId?: string;
+    entryId?: string;
     startedAt?: number;
   }>({});
   const visibleTarget = useRef<ArrangementChartCueTarget | undefined>(
@@ -66,17 +67,17 @@ export function useArrangementChartCue(
   >(undefined);
 
   useEffect(() => {
-    const nextSectionId =
+    const nextEntryId =
       snapshot.playing && snapshot.mode === "arrangement"
-        ? activeContext?.sectionId
+        ? activeContext?.entryId
         : undefined;
-    if (nextSectionId === sectionRun.sectionId) return;
+    if (nextEntryId === sectionRun.entryId) return;
     const timer = globalThis.setTimeout(() => {
       visibleTarget.current = undefined;
       setSectionRun(
-        nextSectionId
+        nextEntryId
           ? {
-              sectionId: nextSectionId,
+              entryId: nextEntryId,
               startedAt:
                 snapshot.originTime ?? partSequenceCoordinator.getClockTime(),
             }
@@ -85,8 +86,8 @@ export function useArrangementChartCue(
     }, 0);
     return () => globalThis.clearTimeout(timer);
   }, [
-    activeContext?.sectionId,
-    sectionRun.sectionId,
+    activeContext?.entryId,
+    sectionRun.entryId,
     snapshot.mode,
     snapshot.originTime,
     snapshot.playing,
@@ -96,7 +97,8 @@ export function useArrangementChartCue(
     if (
       !plan ||
       sectionRun.startedAt === undefined ||
-      snapshot.sourceSignature !== plan.sourceSignature
+      snapshot.sourceSignature !== plan.sourceSignature ||
+      snapshot.tempoSignature !== plan.tempoSignature
     ) {
       return undefined;
     }
@@ -123,8 +125,9 @@ export function useArrangementChartCue(
         live.playing &&
         live.mode === "arrangement" &&
         live.sourceSignature === target.sourceSignature &&
+        live.tempoSignature === target.tempoSignature &&
         live.activeOccurrence === target.fromOccurrence &&
-        live.activeArrangementContext?.sectionId !== target.sectionId
+        live.activeArrangementContext?.entryId !== target.entryId
       ) {
         visibleTarget.current = target;
         setUpcoming(target);
@@ -147,7 +150,7 @@ export function useArrangementChartCue(
     targetsMatch(upcoming, target) &&
     snapshot.playing &&
     snapshot.mode === "arrangement" &&
-    snapshot.activeArrangementContext?.sectionId !== upcoming.sectionId
+    snapshot.activeArrangementContext?.entryId !== upcoming.entryId
   ) {
     return {
       presentation: {

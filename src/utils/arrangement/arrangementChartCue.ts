@@ -19,6 +19,7 @@ export interface ArrangementChartCueTarget {
   entryId: string;
   sectionId: string;
   sourceSignature: string;
+  tempoSignature: string;
   fromOccurrence: number;
 }
 
@@ -29,13 +30,13 @@ export function deriveArrangementChartCueTarget({
 }: ArrangementChartCueInput): ArrangementChartCueTarget | undefined {
   const activeOccurrence = snapshot.activeOccurrence;
   const cycleEndTime = snapshot.cycleEndTime;
-  const activeSectionId = snapshot.activeArrangementContext?.sectionId;
+  const activeEntryId = snapshot.activeArrangementContext?.entryId;
   if (
     !snapshot.playing ||
     snapshot.mode !== "arrangement" ||
     activeOccurrence === undefined ||
     cycleEndTime === undefined ||
-    !activeSectionId ||
+    !activeEntryId ||
     plan.parts.length === 0
   ) {
     return undefined;
@@ -54,7 +55,7 @@ export function deriveArrangementChartCueTarget({
     const context = step?.arrangement;
     if (!step || !context) return undefined;
 
-    if (context.sectionId !== activeSectionId) {
+    if (context.entryId !== activeEntryId) {
       const sectionDisplayDurationSeconds = Math.max(
         0,
         boundaryTime - currentSectionStartedAt,
@@ -73,11 +74,12 @@ export function deriveArrangementChartCueTarget({
         entryId: context.entryId,
         sectionId: context.sectionId,
         sourceSignature: plan.sourceSignature,
+        tempoSignature: plan.tempoSignature,
         fromOccurrence: activeOccurrence,
       };
     }
 
-    boundaryTime += step.durationBeats * (60 / plan.tempoBpm);
+    boundaryTime += step.durationBeats * (60 / step.tempoBpm);
   }
 
   return undefined;

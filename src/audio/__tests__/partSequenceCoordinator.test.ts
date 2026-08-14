@@ -23,6 +23,7 @@ function createPlan(): PartSequencePlaybackPlan {
     signature: "60:content",
     sourceSignature: "source",
     tempoBpm: 60,
+    tempoSignature: "tempo-60",
     updateSignature: "60:update",
     parts: [
       {
@@ -39,6 +40,7 @@ function createPlan(): PartSequencePlaybackPlan {
             tempoBpm: 60,
           },
         ],
+        tempoBpm: 60,
         updateSignature: "part-a-update",
       },
       {
@@ -65,6 +67,7 @@ function createPlan(): PartSequencePlaybackPlan {
         partId: "part-b",
         resetSignature: "part-b-reset",
         rhythmRequests: [],
+        tempoBpm: 60,
         updateSignature: "part-b-update",
       },
     ],
@@ -109,6 +112,7 @@ function createSplitBarPlan(): PartSequencePlaybackPlan {
             tempoBpm: 60,
           },
         ],
+        tempoBpm: 60,
         updateSignature: "split-a-update",
       },
       {
@@ -141,6 +145,7 @@ function createSplitBarPlan(): PartSequencePlaybackPlan {
             tempoBpm: 60,
           },
         ],
+        tempoBpm: 60,
         updateSignature: "split-b-update",
       },
     ],
@@ -170,6 +175,7 @@ function createTempoPlan(
       ...request,
       tempoBpm,
     })),
+    tempoBpm,
   }));
 
   return {
@@ -177,6 +183,7 @@ function createTempoPlan(
     parts,
     signature: `${tempoBpm}:${plan.contentSignature}`,
     tempoBpm,
+    tempoSignature: `tempo-${tempoBpm}`,
     updateSignature: `${tempoBpm}:update`,
   };
 }
@@ -338,6 +345,63 @@ describe("PartSequenceCoordinator", () => {
     expect(coordinator.getSnapshot().playing).toBe(false);
     expect(stopPartPlayback).toHaveBeenCalledOnce();
     expect(startPart).toHaveBeenCalledOnce();
+  });
+
+  it("uses step tempos exclusively for mixed-tempo boundaries and committed pending state", async () => {
+    const { coordinator, startPart, stopPartPlayback } = createHarness();
+    const base = createPlan();
+    const plan: PartSequencePlaybackPlan = {
+      ...base,
+      completionPolicy: "stop-at-end",
+      tempoBpm: 300,
+      tempoSignature: "mixed-tempo",
+      parts: [
+        {
+          ...base.parts[0]!,
+          rhythmRequests: base.parts[0]!.rhythmRequests.map((request) => ({
+            ...request,
+            tempoBpm: 120,
+          })),
+          tempoBpm: 120,
+        },
+        {
+          ...base.parts[1]!,
+          exerciseRequests: base.parts[1]!.exerciseRequests.map((request) => ({
+            ...request,
+            tempoBpm: 30,
+          })),
+          tempoBpm: 30,
+        },
+      ],
+    };
+
+    await coordinator.start(plan);
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({ tempoBpm: 120 }),
+    );
+    expect(coordinator.getSnapshot()).toMatchObject({ tempoBpm: 120 });
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({ originTime: 12.08, tempoBpm: 30 }),
+    );
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activePartId: "part-a",
+      pendingPartId: "part-b",
+      pendingTempoBpm: 30,
+      tempoBpm: 120,
+    });
+
+    await vi.advanceTimersByTimeAsync(80);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activePartId: "part-b",
+      cycleEndTime: 16.08,
+      tempoBpm: 30,
+    });
+    expect(coordinator.getSnapshot().pendingTempoBpm).toBeUndefined();
+    expect(stopPartPlayback).toHaveBeenCalledWith("part-sequence", {
+      atTime: 16.08,
+    });
   });
 
   it("registers the boundary before a short finite part ends", async () => {

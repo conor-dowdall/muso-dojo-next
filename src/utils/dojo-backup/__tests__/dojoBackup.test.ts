@@ -45,7 +45,22 @@ function createCompleteSnapshot() {
   });
 
   const arrangementId = store.getState().addArrangement({ name: "Whole Song" });
-  store.getState().addArrangementSectionFromSession(arrangementId, sessionId);
+  const capture = store
+    .getState()
+    .addArrangementSectionFromSession(arrangementId, sessionId)!;
+  store
+    .getState()
+    .setArrangementEntryTempoOverrideBpm(
+      arrangementId,
+      capture.entryId,
+      store.getState().arrangements[arrangementId]!.tempoBpm,
+    );
+  const duplicateId = store
+    .getState()
+    .cloneArrangementEntry(arrangementId, capture.entryId)!;
+  store
+    .getState()
+    .setArrangementEntryTempoOverrideBpm(arrangementId, duplicateId, 133);
   store.getState().setArrangementPlaybackMode(arrangementId, "loop");
   store.getState().setArrangementWorkspaceViewMode(arrangementId, "chart");
   store.getState().setSessionWorkspaceViewMode(sessionId, "chart");
@@ -116,6 +131,11 @@ describe("Dojo JSON backups", () => {
     });
     expect(document.data.sessions).toHaveProperty(sessionId);
     expect(Object.values(document.data.arrangements)).toHaveLength(1);
+    expect(
+      Object.values(document.data.arrangements)[0]?.entries.map(
+        ({ tempoOverrideBpm }) => tempoOverrideBpm,
+      ),
+    ).toEqual([80, 133]);
     expect(document.data.dojoSettings).toMatchObject({
       appTheme: "ocean",
       customChordProgressions: [{ name: "My Changes" }],

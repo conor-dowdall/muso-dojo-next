@@ -37,6 +37,20 @@ describe("normalizeArrangementConfig", () => {
     expect(arrangement.sections[0]).not.toHaveProperty("name");
   });
 
+  it("retains only strict integer Entry tempo overrides", () => {
+    const normalizeOverride = (tempoOverrideBpm: unknown) =>
+      normalizeArrangementConfig({
+        sections: [{ id: "section", parts: [] }],
+        entries: [{ id: "entry", sectionId: "section", tempoOverrideBpm }],
+      }).entries[0]?.tempoOverrideBpm;
+
+    expect(normalizeOverride(30)).toBe(30);
+    expect(normalizeOverride(300)).toBe(300);
+    expect(normalizeOverride(79.6)).toBeUndefined();
+    expect(normalizeOverride(301)).toBeUndefined();
+    expect(normalizeOverride("120")).toBeUndefined();
+  });
+
   it("repairs Module collisions across a captured Section graph", () => {
     const arrangement = normalizeArrangementConfig({
       sections: [

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import {
   Copy,
+  Disc3,
   LibraryBig,
   ListEnd,
   ListStart,
@@ -33,6 +34,7 @@ import {
 } from "@/types/arrangement";
 import { ArrangementHeader } from "./ArrangementHeader";
 import { ArrangementSectionPicker } from "./ArrangementSectionPicker";
+import { ArrangementSectionPlaybackDialog } from "./ArrangementSectionPlaybackDialog";
 import styles from "./ArrangementWorkspace.module.css";
 
 function formatSectionNumber(entryIndex: number) {
@@ -79,6 +81,9 @@ export function ArrangementWorkspace({
     () => arrangement?.entries[0]?.id,
   );
   const [openSessionEntryId, setOpenSessionEntryId] = useState<
+    string | undefined
+  >();
+  const [openPlaybackEntryId, setOpenPlaybackEntryId] = useState<
     string | undefined
   >();
   const chartTileRefs = useRef(new Map<string, HTMLLIElement>());
@@ -134,6 +139,7 @@ export function ArrangementWorkspace({
   const selectNewEntry = (entryId: string) => {
     setSelectedEntryId(entryId);
     setOpenSessionEntryId(undefined);
+    setOpenPlaybackEntryId(undefined);
     globalThis.setTimeout(() => {
       cardRefs.current
         .get(entryId)
@@ -148,6 +154,25 @@ export function ArrangementWorkspace({
     actions.removeEntry(arrangementId, entryId);
     if (selectedEntryId === entryId) setSelectedEntryId(nextSelection);
     if (openSessionEntryId === entryId) setOpenSessionEntryId(undefined);
+    if (openPlaybackEntryId === entryId) setOpenPlaybackEntryId(undefined);
+    globalThis.setTimeout(() => {
+      const target = Array.from(
+        document.querySelectorAll<HTMLButtonElement>(
+          "button[data-arrangement-entry-playback-id]",
+        ),
+      ).find(
+        (button) => button.dataset.arrangementEntryPlaybackId === nextSelection,
+      );
+      if (target) {
+        target.focus();
+      } else {
+        document
+          .querySelector<HTMLElement>(
+            '[aria-label="Arrangement actions"] button:not(:disabled)',
+          )
+          ?.focus();
+      }
+    }, 0);
   };
   const addDefaultSection = (revealSection: boolean) => {
     if (!defaultSession) return;
@@ -200,6 +225,18 @@ export function ArrangementWorkspace({
                   const active = transport.activeEntryId === entry.id;
                   const pending =
                     !active && transport.pendingEntryId === entry.id;
+                  const effectiveTempo =
+                    entry.tempoOverrideBpm ?? arrangement.tempoBpm;
+                  const tempoStatus =
+                    entry.tempoOverrideBpm === undefined
+                      ? "inherited from Arrangement Tempo"
+                      : "Section override";
+                  const loopActive =
+                    transport.snapshot.mode === "arrangement-entry-loop" &&
+                    (transport.activeEntryId === entry.id ||
+                      transport.pendingEntryId === entry.id);
+                  const formattedSectionNumber =
+                    formatSectionNumber(entryIndex);
 
                   return (
                     <section
@@ -222,6 +259,17 @@ export function ArrangementWorkspace({
                         }
                         actions={
                           <ControlHeaderCluster gap="cluster">
+                            <IconButton
+                              aria-label={`Playback options for Section ${formattedSectionNumber}. ${effectiveTempo} bpm, ${tempoStatus}. ${loopActive ? "This Section loop is active." : "This Section loop is inactive."}`}
+                              data-arrangement-entry-playback-id={entry.id}
+                              icon={<Disc3 />}
+                              selected={loopActive}
+                              size="sm"
+                              onClick={() => {
+                                setSelectedEntryId(entry.id);
+                                setOpenPlaybackEntryId(entry.id);
+                              }}
+                            />
                             <ControlHeaderCluster
                               aria-label={`Reorder Section ${sectionNumber}`}
                               role="group"
@@ -267,6 +315,9 @@ export function ArrangementWorkspace({
                                 size="sm"
                                 onClick={() => {
                                   stopForMutation();
+                                  if (openPlaybackEntryId === entry.id) {
+                                    setOpenPlaybackEntryId(undefined);
+                                  }
                                   const id = actions.cloneEntry(
                                     arrangementId,
                                     entry.id,
@@ -360,6 +411,13 @@ export function ArrangementWorkspace({
                           {sourceSession.name} has no Parts to update
                         </Text>
                       ) : null}
+                      <ArrangementSectionPlaybackDialog
+                        arrangementId={arrangementId}
+                        entryId={entry.id}
+                        isOpen={openPlaybackEntryId === entry.id}
+                        sectionNumber={formattedSectionNumber}
+                        onClose={() => setOpenPlaybackEntryId(undefined)}
+                      />
                     </section>
                   );
                 })}

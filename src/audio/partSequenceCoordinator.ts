@@ -40,6 +40,7 @@ export interface PartSequenceSnapshot {
   pendingPartId?: string;
   pendingArrangementContext?: ArrangementStepContext;
   pendingStepId?: string;
+  pendingTempoBpm?: number;
   playing: boolean;
   mode?: PartSequencePlaybackPlan["mode"];
   owner?: PlaybackSequenceOwner;
@@ -47,6 +48,7 @@ export interface PartSequenceSnapshot {
   signature?: string;
   sourceSignature?: string;
   tempoBpm?: number;
+  tempoSignature?: string;
   updateSignature?: string;
 }
 
@@ -91,10 +93,15 @@ function getPartIndex(plan: PartSequencePlaybackPlan, occurrence: number) {
     : occurrence % plan.parts.length;
 }
 
+function getStepDurationSeconds(
+  step: PartSequencePlaybackPlan["parts"][number],
+) {
+  return step.durationBeats * getSecondsPerBeat(step.tempoBpm);
+}
+
 function getSequenceDurationSeconds(plan: PartSequencePlaybackPlan) {
-  const secondsPerBeat = getSecondsPerBeat(plan.tempoBpm);
   return plan.parts.reduce(
-    (duration, part) => duration + part.durationBeats * secondsPerBeat,
+    (duration, part) => duration + getStepDurationSeconds(part),
     0,
   );
 }
@@ -109,14 +116,10 @@ function getOccurrenceOffsetSeconds(
       ? 0
       : Math.floor(occurrence / partCount);
   const index = getPartIndex(plan, occurrence);
-  const secondsPerBeat = getSecondsPerBeat(plan.tempoBpm);
   const cycleDuration = getSequenceDurationSeconds(plan);
   const partOffset = plan.parts
     .slice(0, index)
-    .reduce(
-      (duration, part) => duration + part.durationBeats * secondsPerBeat,
-      0,
-    );
+    .reduce((duration, part) => duration + getStepDurationSeconds(part), 0);
 
   return cycle * cycleDuration + partOffset;
 }
@@ -155,7 +158,6 @@ function rhythmContinuesThroughOccurrences({
 
 export class PartSequenceCoordinator {
   private activeOccurrence: number | undefined;
-  private committedPlan: PartSequencePlaybackPlan | undefined;
   private listeners = new Set<() => void>();
   private plan: PartSequencePlaybackPlan | undefined;
   private revision = 0;
@@ -306,8 +308,7 @@ export class PartSequenceCoordinator {
       return;
     }
 
-    const durationSeconds =
-      part.durationBeats * getSecondsPerBeat(plan.tempoBpm);
+    const durationSeconds = getStepDurationSeconds(part);
     const cycleEndTime =
       originTime === undefined ? undefined : originTime + durationSeconds;
 
@@ -318,7 +319,6 @@ export class PartSequenceCoordinator {
       this.setSequenceOriginForOccurrence({ occurrence, originTime, plan });
     }
     this.activeOccurrence = occurrence;
-    this.committedPlan = plan;
 
     this.snapshot = {
       activeArrangementContext: part.arrangement,
@@ -339,7 +339,8 @@ export class PartSequenceCoordinator {
       sessionId: plan.sessionId,
       signature: plan.signature,
       sourceSignature: plan.sourceSignature,
-      tempoBpm: plan.tempoBpm,
+      tempoBpm: part.tempoBpm,
+      tempoSignature: plan.tempoSignature,
       updateSignature: plan.updateSignature,
     };
     this.emit();
@@ -366,8 +367,9 @@ export class PartSequenceCoordinator {
       nextOccurrence >= plan.parts.length
     ) {
       const currentPart = plan.parts[occurrence];
-      const durationSeconds =
-        (currentPart?.durationBeats ?? 0) * getSecondsPerBeat(plan.tempoBpm);
+      const durationSeconds = currentPart
+        ? getStepDurationSeconds(currentPart)
+        : 0;
       const endTime =
         nextOriginTime ??
         (this.snapshot.originTime === undefined
@@ -389,9 +391,9 @@ export class PartSequenceCoordinator {
       );
       return;
     }
-    const durationSeconds =
-      plan.parts[getPartIndex(plan, occurrence)]!.durationBeats *
-      getSecondsPerBeat(plan.tempoBpm);
+    const durationSeconds = getStepDurationSeconds(
+      plan.parts[getPartIndex(plan, occurrence)]!,
+    );
     const delayMilliseconds =
       nextOriginTime === undefined
         ? durationSeconds * 1000
@@ -478,13 +480,15 @@ export class PartSequenceCoordinator {
       pendingPartId: part.partId,
       pendingArrangementContext: part.arrangement,
       pendingStepId: part.stepId ?? part.partId,
+      pendingTempoBpm: part.tempoBpm,
       playing: true,
       mode: plan.mode,
       owner: plan.owner ?? { kind: "session", id: plan.sessionId },
       sessionId: plan.sessionId,
       signature: plan.signature,
       sourceSignature: plan.sourceSignature,
-      tempoBpm: plan.tempoBpm,
+      tempoBpm: this.snapshot.tempoBpm ?? part.tempoBpm,
+      tempoSignature: plan.tempoSignature,
       updateSignature: plan.updateSignature,
     };
     this.emit();
@@ -501,7 +505,7 @@ export class PartSequenceCoordinator {
       rhythms: part.rhythmRequests,
       source: "part-sequence",
       stopMissing: true,
-      tempoBpm: plan.tempoBpm,
+      tempoBpm: part.tempoBpm,
     });
 
     if (revision !== this.revision || this.plan !== plan) {
@@ -600,8 +604,7 @@ export class PartSequenceCoordinator {
     this.plan = plan;
     const currentTime = this.transport.getCurrentTime();
     const activeOriginTime = this.snapshot.originTime;
-    const committedTempoBpm =
-      this.committedPlan?.tempoBpm ?? this.snapshot.tempoBpm;
+    const committedTempoBpm = this.snapshot.tempoBpm;
     const nextBeatBoundary =
       currentTime === undefined ||
       activeOriginTime === undefined ||
@@ -648,8 +651,7 @@ export class PartSequenceCoordinator {
 
     const currentTime = this.transport.getCurrentTime();
     const activeOriginTime = this.snapshot.originTime;
-    const committedTempoBpm =
-      this.committedPlan?.tempoBpm ?? this.snapshot.tempoBpm;
+    const committedTempoBpm = this.snapshot.tempoBpm;
 
     if (
       currentTime === undefined ||
@@ -671,7 +673,10 @@ export class PartSequenceCoordinator {
       countIn.pulses > 0;
     const originTime = shouldRestartCountIn
       ? replacementTime +
-        countIn.durationBeats * getSecondsPerBeat(plan.tempoBpm)
+        countIn.durationBeats *
+          getSecondsPerBeat(
+            plan.parts[Math.min(currentIndex, plan.parts.length - 1)]!.tempoBpm,
+          )
       : replacementTime;
 
     this.clearTimer();
@@ -715,7 +720,6 @@ export class PartSequenceCoordinator {
     this.clearTimer();
     const revision = ++this.revision;
     this.plan = plan;
-    this.committedPlan = plan;
     const occurrence =
       plan.completionPolicy === "stop-at-end"
         ? currentIndex
@@ -734,8 +738,7 @@ export class PartSequenceCoordinator {
       });
     }
 
-    const durationSeconds =
-      part.durationBeats * getSecondsPerBeat(plan.tempoBpm);
+    const durationSeconds = getStepDurationSeconds(part);
     const cycleEndTime = originTime + durationSeconds;
 
     this.snapshot = {
@@ -758,7 +761,8 @@ export class PartSequenceCoordinator {
       sessionId: plan.sessionId,
       signature: plan.signature,
       sourceSignature: plan.sourceSignature,
-      tempoBpm: plan.tempoBpm,
+      tempoBpm: part.tempoBpm,
+      tempoSignature: plan.tempoSignature,
       updateSignature: plan.updateSignature,
     };
     this.emit();
@@ -773,7 +777,6 @@ export class PartSequenceCoordinator {
   stop({ stopPlayback = true }: PartSequenceStopOptions = {}) {
     this.clearTimer();
     this.activeOccurrence = undefined;
-    this.committedPlan = undefined;
     this.plan = undefined;
     this.revision += 1;
     this.sequenceOriginTime = undefined;

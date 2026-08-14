@@ -18,6 +18,7 @@ function createStep(
     partId,
     resetSignature,
     rhythmRequests: [],
+    tempoBpm: 80,
     updateSignature: `${resetSignature}:update`,
   };
 }
@@ -36,6 +37,7 @@ function createPlan(
     signature: "80:content",
     sourceSignature: "source",
     tempoBpm: 80,
+    tempoSignature: "tempo-80",
     updateSignature: "80:update",
     ...settings,
   };
@@ -51,6 +53,7 @@ function createSnapshot(
     playing: true,
     sourceSignature: "source",
     tempoBpm: 80,
+    tempoSignature: "tempo-80",
     updateSignature: "80:update-before",
     ...settings,
   };
@@ -87,9 +90,18 @@ describe("Part sequence plan reconciliation", () => {
     expect(
       getPartSequencePlanReconciliation(
         createSnapshot({ pendingIndex: 0, pendingKind: "handoff" }),
-        createPlan({ tempoBpm: 90 }),
+        createPlan({ tempoBpm: 90, tempoSignature: "tempo-90" }),
       ),
     ).toBe("retime");
+  });
+
+  it("stops Arrangement playback when its effective tempo map changes", () => {
+    expect(
+      getPartSequencePlanReconciliation(
+        createSnapshot(),
+        createPlan({ mode: "arrangement", tempoSignature: "tempo-90" }),
+      ),
+    ).toBe("stop");
   });
 
   it("defers content reconciliation across a scheduled handoff", () => {

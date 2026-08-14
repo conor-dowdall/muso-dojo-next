@@ -126,6 +126,85 @@ test("the first Section replaces the instructional empty state", async ({
   ).toHaveCount(0);
 });
 
+test("Section playback options persist independent tempo overrides", async ({
+  page,
+}) => {
+  await page.goto("/dojo");
+  await page
+    .getByRole("button", { name: "Add to session", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Add Keyboard module" }).click();
+  await page.getByRole("button", { name: "Add Part" }).click();
+  await page.getByRole("button", { name: "Session menu", exact: true }).click();
+  await page.getByRole("button", { name: /^Library/ }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: /New Arrangement/ })
+    .click();
+  await page.getByRole("button", { name: "Add First Section" }).click();
+
+  const firstPlayback = page.getByRole("button", {
+    name: /Playback options for Section 01.*80 bpm.*inherited/i,
+  });
+  await firstPlayback.click();
+  const firstDialog = page.getByRole("dialog", {
+    name: "Playback for Section 01",
+  });
+  await expect(
+    firstDialog.getByText("Arrangement Tempo · 80 BPM"),
+  ).toBeVisible();
+  await firstDialog
+    .getByRole("button", { name: /^Tempo for Section 01/ })
+    .click();
+  await firstDialog.getByRole("button", { name: /^Override/ }).click();
+  await firstDialog
+    .getByRole("spinbutton", { name: "Exact tempo in beats per minute" })
+    .fill("126");
+  await firstDialog.getByRole("button", { name: "Close", exact: true }).click();
+
+  await expect(
+    page.getByRole("button", {
+      name: /Playback options for Section 01.*126 bpm.*override/i,
+    }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Duplicate Section 1" }).click();
+  const secondPlayback = page.getByRole("button", {
+    name: /Playback options for Section 02.*126 bpm.*override/i,
+  });
+  await secondPlayback.click();
+  const secondDialog = page.getByRole("dialog", {
+    name: "Playback for Section 02",
+  });
+  await secondDialog
+    .getByRole("button", { name: /^Tempo for Section 02/ })
+    .click();
+  await secondDialog
+    .getByRole("spinbutton", { name: "Exact tempo in beats per minute" })
+    .fill("140");
+  await secondDialog
+    .getByRole("button", { name: "Close", exact: true })
+    .click();
+
+  await expectWorkspacePersisted(page, (snapshot) => {
+    const entries = Object.values(snapshot.arrangements)[0]?.entries;
+    return (
+      entries?.[0]?.tempoOverrideBpm === 126 &&
+      entries?.[1]?.tempoOverrideBpm === 140
+    );
+  });
+  await page.reload();
+  await expect(
+    page.getByRole("button", {
+      name: /Playback options for Section 01.*126 bpm.*override/i,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", {
+      name: /Playback options for Section 02.*140 bpm.*override/i,
+    }),
+  ).toBeVisible();
+});
+
 test("each Arrangement retains its own workspace view across switching and reload", async ({
   page,
 }) => {

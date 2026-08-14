@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import {
+  createArrangementEntryLoopPlaybackRequest,
   createArrangementPlaybackRequest,
   ensureAudioReady,
   getPartSequencePlanReconciliation,
@@ -18,16 +19,31 @@ export function useArrangementTransport(arrangementId: string) {
     partSequenceCoordinator.getSnapshot,
     partSequenceCoordinator.getSnapshot,
   );
-  const request = useMemo(
+  const fullRequest = useMemo(
     () =>
       arrangement ? createArrangementPlaybackRequest(arrangement) : undefined,
     [arrangement],
+  );
+  const entryLoopId =
+    snapshot.playing &&
+    snapshot.owner?.kind === "arrangement" &&
+    snapshot.owner.id === arrangementId &&
+    snapshot.mode === "arrangement-entry-loop"
+      ? (snapshot.activeArrangementContext?.entryId ??
+        snapshot.pendingArrangementContext?.entryId)
+      : undefined;
+  const request = useMemo(
+    () =>
+      arrangement && entryLoopId
+        ? createArrangementEntryLoopPlaybackRequest(arrangement, entryLoopId)
+        : fullRequest,
+    [arrangement, entryLoopId, fullRequest],
   );
   const isActive =
     snapshot.playing &&
     snapshot.owner?.kind === "arrangement" &&
     snapshot.owner.id === arrangementId;
-  const canPlay = Boolean(request);
+  const canPlay = Boolean(fullRequest);
   const shortcuts = useScopedTransportShortcuts({
     isActive,
     onStop: () => partSequenceCoordinator.stop(),
@@ -61,11 +77,11 @@ export function useArrangementTransport(arrangementId: string) {
       partSequenceCoordinator.stop();
       return;
     }
-    if (!request) return;
+    if (!fullRequest) return;
     stopTransportPlayback();
     void ensureAudioReady();
-    void partSequenceCoordinator.start(request.plan, request.start);
-  }, [isActive, request]);
+    void partSequenceCoordinator.start(fullRequest.plan, fullRequest.start);
+  }, [fullRequest, isActive]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

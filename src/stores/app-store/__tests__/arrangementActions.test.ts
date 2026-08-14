@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createTestStore, partId, sessionId } from "./appStoreTestUtils";
 
 describe("arrangement app store actions", () => {
+  afterEach(() => vi.useRealTimers());
+
   it("creates, captures, reuses, and removes owned Sections", () => {
     const store = createTestStore();
     const arrangementId = store.getState().addArrangement();
@@ -182,5 +184,93 @@ describe("arrangement app store actions", () => {
     expect(store.getState().arrangements[arrangementId]?.sections).toEqual(
       capturedSections,
     );
+  });
+
+  it("stores strict independent Entry tempo overrides and preserves them through copies and refreshes", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-14T10:00:00.000Z"));
+    const store = createTestStore();
+    const arrangementId = store.getState().addArrangement();
+    const capture = store
+      .getState()
+      .addArrangementSectionFromSession(arrangementId, sessionId)!;
+    const initial = store.getState().arrangements[arrangementId]!;
+
+    expect(initial.entries[0]).not.toHaveProperty("tempoOverrideBpm");
+    vi.setSystemTime(new Date("2026-08-14T10:01:00.000Z"));
+    store
+      .getState()
+      .setArrangementEntryTempoOverrideBpm(
+        arrangementId,
+        capture.entryId,
+        initial.tempoBpm,
+      );
+    const overridden = store.getState().arrangements[arrangementId]!;
+    expect(overridden.entries[0]?.tempoOverrideBpm).toBe(initial.tempoBpm);
+    expect(overridden.lastModified).not.toBe(initial.lastModified);
+
+    store.getState().setArrangementTempoBpm(arrangementId, 135);
+    expect(
+      store.getState().arrangements[arrangementId]?.entries[0]
+        ?.tempoOverrideBpm,
+    ).toBe(initial.tempoBpm);
+
+    const duplicateId = store
+      .getState()
+      .cloneArrangementEntry(arrangementId, capture.entryId)!;
+    store
+      .getState()
+      .setArrangementEntryTempoOverrideBpm(arrangementId, duplicateId, 160);
+    expect(
+      store
+        .getState()
+        .arrangements[arrangementId]?.entries.map(
+          ({ tempoOverrideBpm }) => tempoOverrideBpm,
+        ),
+    ).toEqual([initial.tempoBpm, 160]);
+
+    const beforeInvalid = store.getState().arrangements[arrangementId]!;
+    store
+      .getState()
+      .setArrangementEntryTempoOverrideBpm(arrangementId, duplicateId, 160.5);
+    store
+      .getState()
+      .setArrangementEntryTempoOverrideBpm(arrangementId, "missing", 120);
+    expect(store.getState().arrangements[arrangementId]).toBe(beforeInvalid);
+
+    store
+      .getState()
+      .replaceArrangementSectionFromSession(
+        arrangementId,
+        capture.sectionId,
+        sessionId,
+      );
+    expect(
+      store
+        .getState()
+        .arrangements[arrangementId]?.entries.map(
+          ({ tempoOverrideBpm }) => tempoOverrideBpm,
+        ),
+    ).toEqual([initial.tempoBpm, 160]);
+
+    const cloneId = store.getState().cloneArrangement(arrangementId)!;
+    expect(
+      store
+        .getState()
+        .arrangements[cloneId]?.entries.map(
+          ({ tempoOverrideBpm }) => tempoOverrideBpm,
+        ),
+    ).toEqual([initial.tempoBpm, 160]);
+
+    store
+      .getState()
+      .setArrangementEntryTempoOverrideBpm(
+        arrangementId,
+        capture.entryId,
+        undefined,
+      );
+    expect(
+      store.getState().arrangements[arrangementId]?.entries[0],
+    ).not.toHaveProperty("tempoOverrideBpm");
   });
 });

@@ -35,6 +35,7 @@ export {
 export {
   type ArrangementStepContext,
   createPartSequencePlaybackPlan,
+  createPartSequenceTempoSignature,
   type PartSequenceStartOptions,
   type PlaybackCompletionPolicy,
   type PlaybackSequenceOwner,
@@ -44,6 +45,7 @@ export {
 } from "./partSequencePlanning";
 export {
   createArrangementPlaybackRequest,
+  createArrangementEntryLoopPlaybackRequest,
   type ArrangementPlaybackRequest,
 } from "./arrangementPlaybackPlanning";
 export {

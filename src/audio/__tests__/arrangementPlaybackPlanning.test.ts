@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createArrangementPlaybackRequest } from "@/audio";
+import {
+  createArrangementEntryLoopPlaybackRequest,
+  createArrangementPlaybackRequest,
+} from "@/audio";
 import { type ArrangementConfig } from "@/types/arrangement";
 import { createDefaultSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 
@@ -91,5 +94,51 @@ describe("createArrangementPlaybackRequest", () => {
     ).toBe("loop");
     arrangement.sections[1]!.parts = [];
     expect(createArrangementPlaybackRequest(arrangement)).toBeUndefined();
+  });
+
+  it("applies each Entry effective tempo to every expanded step and request", () => {
+    const arrangement = createArrangement();
+    arrangement.entries[0]!.tempoOverrideBpm = 90;
+    const plan = createArrangementPlaybackRequest(arrangement)!.plan;
+
+    expect(plan.tempoBpm).toBe(120);
+    expect(plan.parts.map(({ tempoBpm }) => tempoBpm)).toEqual([90, 90, 120]);
+    expect(
+      plan.parts.flatMap(({ exerciseRequests }) =>
+        exerciseRequests.map(({ tempoBpm }) => tempoBpm),
+      ),
+    ).toEqual([90, 90, 120]);
+    expect(
+      plan.parts.flatMap(({ rhythmRequests }) =>
+        rhythmRequests.map(({ tempoBpm }) => tempoBpm),
+      ),
+    ).toEqual([90, 90, 120]);
+    expect(plan.signature).toContain(plan.tempoSignature);
+    expect(plan.sourceSignature).not.toContain("90");
+  });
+
+  it("creates an Arrangement-owned loop for one visible Entry only once", () => {
+    const arrangement = createArrangement();
+    arrangement.entries[0]!.tempoOverrideBpm = 95;
+    const request = createArrangementEntryLoopPlaybackRequest(
+      arrangement,
+      "entry-a",
+    )!;
+
+    expect(request.plan).toMatchObject({
+      completionPolicy: "loop",
+      mode: "arrangement-entry-loop",
+      owner: { kind: "arrangement", id: "arrangement" },
+    });
+    expect(request.plan.parts).toHaveLength(1);
+    expect(request.plan.parts[0]).toMatchObject({
+      arrangement: {
+        entryId: "entry-a",
+        playCount: 1,
+        playIndex: 0,
+      },
+      tempoBpm: 95,
+    });
+    expect(request.start.countIn).toEqual({ durationBeats: 2, pulses: 2 });
   });
 });

@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => {
       } as Record<string, unknown>,
     },
     coordinator,
+    createArrangementEntryLoopPlaybackRequest: vi.fn(),
     createArrangementPlaybackRequest: vi.fn(),
     emit: () => listeners.forEach((listener) => listener()),
     ensureAudioReady: vi.fn(),
@@ -33,6 +34,10 @@ const mocks = vi.hoisted(() => {
     request: {
       plan: { sourceSignature: "plan-1", steps: [] },
       start: { owner: { id: "arrangement-1", kind: "arrangement" } },
+    },
+    loopRequest: {
+      plan: { mode: "arrangement-entry-loop", sourceSignature: "entry-loop" },
+      start: { startIndex: 0 },
     },
     setSnapshot(snapshot: unknown) {
       coordinator.getSnapshot.mockReturnValue(snapshot);
@@ -42,6 +47,8 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock("@/audio", () => ({
+  createArrangementEntryLoopPlaybackRequest:
+    mocks.createArrangementEntryLoopPlaybackRequest,
   createArrangementPlaybackRequest: mocks.createArrangementPlaybackRequest,
   ensureAudioReady: mocks.ensureAudioReady,
   getPartSequencePlanReconciliation: mocks.getPartSequencePlanReconciliation,
@@ -74,6 +81,9 @@ beforeEach(() => {
     "arrangement-1": { id: "arrangement-1", name: "Set List" },
   };
   mocks.createArrangementPlaybackRequest.mockReturnValue(mocks.request);
+  mocks.createArrangementEntryLoopPlaybackRequest.mockReturnValue(
+    mocks.loopRequest,
+  );
   mocks.ensureAudioReady.mockResolvedValue(true);
   mocks.getPartSequencePlanReconciliation.mockReturnValue("none");
   mocks.coordinator.start.mockResolvedValue(undefined);
@@ -180,6 +190,29 @@ describe("useArrangementTransport", () => {
       mocks.emit();
     });
     expect(mocks.coordinator.stop).toHaveBeenCalledOnce();
+  });
+
+  it("reconciles an active Entry loop against its Entry-loop plan", () => {
+    const snapshot = {
+      ...activeSnapshot(),
+      mode: "arrangement-entry-loop",
+    };
+    mocks.setSnapshot(snapshot);
+    const { result } = renderHook(() =>
+      useArrangementTransport("arrangement-1"),
+    );
+
+    expect(
+      mocks.createArrangementEntryLoopPlaybackRequest,
+    ).toHaveBeenCalledWith(
+      mocks.appState.arrangements["arrangement-1"],
+      "entry-2",
+    );
+    expect(mocks.getPartSequencePlanReconciliation).toHaveBeenCalledWith(
+      snapshot,
+      mocks.loopRequest.plan,
+    );
+    expect(result.current.plan).toBe(mocks.loopRequest.plan);
   });
 
   it("handles Shift+Space outside editable and modal contexts and cleans up", () => {
