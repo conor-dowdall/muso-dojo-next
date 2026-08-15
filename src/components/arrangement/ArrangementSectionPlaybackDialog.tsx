@@ -17,7 +17,6 @@ import {
   DisclosureListItem,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { ObjectMenuDialog } from "@/components/ui/object-menu";
-import { Text } from "@/components/ui/typography/Text";
 import { useArrangementEntryLoopTransport } from "@/hooks/audio/useArrangementEntryLoopTransport";
 import { useAppStore } from "@/stores/appStore";
 
@@ -99,9 +98,6 @@ export function ArrangementSectionPlaybackDialog({
           preview={`${hasOverride ? "Override" : "Arrangement Tempo"} · ${effectiveTempo} BPM`}
           onToggle={() => setTempoOpen((open) => !open)}
         >
-          <Text as="p" size="sm" variant="muted">
-            Sections inherit the Arrangement Tempo unless overridden.
-          </Text>
           <DisclosureList density="compact">
             <DisclosureListChoice
               label="Arrangement Tempo"
