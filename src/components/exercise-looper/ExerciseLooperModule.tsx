@@ -378,7 +378,9 @@ export function ExerciseLooperModule({
         headerPrimary={
           <InstrumentIdentity
             accessory={
-              isBandSource ? <PartModuleBandSourceIndicator /> : undefined
+              isBandSource ? (
+                <PartModuleBandSourceIndicator label="Backing Notes Source" />
+              ) : undefined
             }
             label="Looper"
           />

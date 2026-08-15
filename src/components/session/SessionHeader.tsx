@@ -238,7 +238,7 @@ export function SessionHeader({
             )}
             <PracticeBandPlayButton transport={practiceBandTransport} />
             <IconButton
-              aria-label="Session Backing Band"
+              aria-label="Playback options for Session"
               disabled={!hasActiveSession}
               icon={<Disc3 />}
               size="sm"
