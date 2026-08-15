@@ -52,6 +52,50 @@ function SectionMarker({ entryIndex }: { entryIndex: number }) {
   );
 }
 
+export function ArrangementChartEntryTile({
+  current,
+  entryIndex,
+  playCount,
+  playbackActive,
+  selected,
+  unavailable,
+  upcoming,
+  onSelect,
+}: {
+  current: boolean;
+  entryIndex: number;
+  playCount: number;
+  playbackActive: boolean;
+  selected: boolean;
+  unavailable: boolean;
+  upcoming: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <OptionButton
+      aria-disabled={playbackActive || unavailable ? true : undefined}
+      aria-current={current ? "step" : undefined}
+      aria-label={`Section ${entryIndex + 1}, plays ${playCount} ${playCount === 1 ? "time" : "times"}${current ? ", currently playing" : ""}${upcoming ? ", up next chart displayed" : ""}${playbackActive ? ", chart follows playback" : ""}`}
+      className={styles.entryTile}
+      data-active={current || undefined}
+      data-upcoming={upcoming || undefined}
+      disabled={unavailable}
+      label={
+        <span className={styles.sectionTileLabel}>
+          <SectionMarker entryIndex={entryIndex} />
+          {playCount > 1 ? <span>×{playCount}</span> : null}
+        </span>
+      }
+      presentation="tile"
+      selected={!playbackActive && selected}
+      tabIndex={playbackActive ? -1 : undefined}
+      onClick={() => {
+        if (!playbackActive) onSelect();
+      }}
+    />
+  );
+}
+
 export function ArrangementWorkspace({
   arrangementId,
   onOpenLibrary,
@@ -83,9 +127,10 @@ export function ArrangementWorkspace({
   const [openSessionEntryId, setOpenSessionEntryId] = useState<
     string | undefined
   >();
-  const [openPlaybackEntryId, setOpenPlaybackEntryId] = useState<
+  const [playbackDialogEntryId, setPlaybackDialogEntryId] = useState<
     string | undefined
   >();
+  const [playbackDialogOpen, setPlaybackDialogOpen] = useState(false);
   const chartTileRefs = useRef(new Map<string, HTMLLIElement>());
   const cardRefs = useRef(new Map<string, HTMLElement>());
   const transport = useArrangementTransport(arrangementId);
@@ -133,13 +178,17 @@ export function ArrangementWorkspace({
   const defaultSession = Object.values(sessions).find(
     ({ parts }) => parts.length > 0,
   );
+  const openPlaybackEntryIndex = arrangement.entries.findIndex(
+    ({ id }) => id === playbackDialogEntryId,
+  );
+  const openPlaybackEntry = arrangement.entries[openPlaybackEntryIndex];
   const stopForMutation = () => {
     if (transport.isActive) partSequenceCoordinator.stop();
   };
   const selectNewEntry = (entryId: string) => {
     setSelectedEntryId(entryId);
     setOpenSessionEntryId(undefined);
-    setOpenPlaybackEntryId(undefined);
+    setPlaybackDialogOpen(false);
     globalThis.setTimeout(() => {
       cardRefs.current
         .get(entryId)
@@ -154,7 +203,7 @@ export function ArrangementWorkspace({
     actions.removeEntry(arrangementId, entryId);
     if (selectedEntryId === entryId) setSelectedEntryId(nextSelection);
     if (openSessionEntryId === entryId) setOpenSessionEntryId(undefined);
-    if (openPlaybackEntryId === entryId) setOpenPlaybackEntryId(undefined);
+    if (playbackDialogEntryId === entryId) setPlaybackDialogOpen(false);
     globalThis.setTimeout(() => {
       const target = Array.from(
         document.querySelectorAll<HTMLButtonElement>(
@@ -223,8 +272,6 @@ export function ArrangementWorkspace({
                     sourceSession?.name ?? section.source.sessionName;
                   const sectionNumber = entryIndex + 1;
                   const active = transport.activeEntryId === entry.id;
-                  const pending =
-                    !active && transport.pendingEntryId === entry.id;
                   const effectiveTempo =
                     entry.tempoOverrideBpm ?? arrangement.tempoBpm;
                   const tempoStatus =
@@ -248,7 +295,6 @@ export function ArrangementWorkspace({
                       aria-label={`Section ${sectionNumber}`}
                       className={styles.sectionCard}
                       data-active={active || undefined}
-                      data-pending={pending || undefined}
                     >
                       <ControlHeader
                         className={styles.sectionCardHeader}
@@ -267,7 +313,8 @@ export function ArrangementWorkspace({
                               size="sm"
                               onClick={() => {
                                 setSelectedEntryId(entry.id);
-                                setOpenPlaybackEntryId(entry.id);
+                                setPlaybackDialogEntryId(entry.id);
+                                setPlaybackDialogOpen(true);
                               }}
                             />
                             <ControlHeaderCluster
@@ -315,8 +362,8 @@ export function ArrangementWorkspace({
                                 size="sm"
                                 onClick={() => {
                                   stopForMutation();
-                                  if (openPlaybackEntryId === entry.id) {
-                                    setOpenPlaybackEntryId(undefined);
+                                  if (playbackDialogEntryId === entry.id) {
+                                    setPlaybackDialogOpen(false);
                                   }
                                   const id = actions.cloneEntry(
                                     arrangementId,
@@ -411,17 +458,21 @@ export function ArrangementWorkspace({
                           {sourceSession.name} has no Parts to update
                         </Text>
                       ) : null}
-                      <ArrangementSectionPlaybackDialog
-                        arrangementId={arrangementId}
-                        entryId={entry.id}
-                        isOpen={openPlaybackEntryId === entry.id}
-                        sectionNumber={formattedSectionNumber}
-                        onClose={() => setOpenPlaybackEntryId(undefined)}
-                      />
                     </section>
                   );
                 })}
               </div>
+            ) : null}
+
+            {openPlaybackEntry ? (
+              <ArrangementSectionPlaybackDialog
+                key={openPlaybackEntry.id}
+                arrangementId={arrangementId}
+                entryId={openPlaybackEntry.id}
+                isOpen={playbackDialogOpen}
+                sectionNumber={formatSectionNumber(openPlaybackEntryIndex)}
+                onClose={() => setPlaybackDialogOpen(false)}
+              />
             ) : null}
 
             {arrangement.entries.length === 0 ? (
@@ -474,13 +525,12 @@ export function ArrangementWorkspace({
                   ({ id }) => id === entry.sectionId,
                 );
                 const unavailable = (section?.parts.length ?? 0) === 0;
-                const displayed =
-                  transport.isActive &&
-                  chartCue.presentation?.entryId === entry.id;
                 const current =
-                  displayed && chartCue.presentation?.kind === "current";
+                  transport.isActive && transport.activeEntryId === entry.id;
                 const upcoming =
-                  displayed && chartCue.presentation?.kind === "upcoming";
+                  transport.isActive &&
+                  chartCue.presentation?.kind === "upcoming" &&
+                  chartCue.presentation?.entryId === entry.id;
                 return (
                   <li
                     key={entry.id}
@@ -490,30 +540,15 @@ export function ArrangementWorkspace({
                     }}
                     className={styles.entryHost}
                   >
-                    <OptionButton
-                      aria-disabled={
-                        transport.isActive || unavailable ? true : undefined
-                      }
-                      aria-current={current ? "step" : undefined}
-                      aria-label={`Section ${entryIndex + 1}, plays ${entry.playCount} ${entry.playCount === 1 ? "time" : "times"}${current ? ", current chart displayed" : ""}${upcoming ? ", up next chart displayed" : ""}${transport.isActive ? ", chart follows playback" : ""}`}
-                      className={styles.entryTile}
-                      data-active={displayed || undefined}
-                      disabled={unavailable}
-                      label={
-                        <span className={styles.sectionTileLabel}>
-                          <SectionMarker entryIndex={entryIndex} />
-                          {entry.playCount > 1 ? (
-                            <span>×{entry.playCount}</span>
-                          ) : null}
-                        </span>
-                      }
-                      presentation="tile"
-                      selected={
-                        !transport.isActive && entry.id === selectedEntry?.id
-                      }
-                      tabIndex={transport.isActive ? -1 : undefined}
-                      onClick={() => {
-                        if (transport.isActive) return;
+                    <ArrangementChartEntryTile
+                      current={current}
+                      entryIndex={entryIndex}
+                      playbackActive={transport.isActive}
+                      playCount={entry.playCount}
+                      selected={entry.id === selectedEntry?.id}
+                      unavailable={unavailable}
+                      upcoming={upcoming}
+                      onSelect={() => {
                         setSelectedEntryId(entry.id);
                       }}
                     />
@@ -523,27 +558,20 @@ export function ArrangementWorkspace({
             </ol>
 
             {presentationSection && chartCue.presentation ? (
-              <>
-                <SessionChart
-                  activePartId={
-                    chartCue.presentation.kind === "current"
-                      ? chartCue.presentation.activeSourcePartId
-                      : undefined
-                  }
-                  ariaLabel={
-                    chartCue.presentation.kind === "upcoming"
-                      ? `Up Next, ${presentationSectionLabel}`
-                      : `${presentationSectionLabel} Chart`
-                  }
-                  backingBand={presentationSection.backingBand}
-                  parts={presentationSection.parts}
-                />
-                <span aria-live="polite" className={styles.srOnly}>
-                  {chartCue.presentation.kind === "upcoming"
-                    ? `Up next, ${presentationSectionLabel}`
-                    : ""}
-                </span>
-              </>
+              <SessionChart
+                activePartId={
+                  chartCue.presentation.kind === "current"
+                    ? chartCue.presentation.activeSourcePartId
+                    : undefined
+                }
+                ariaLabel={
+                  chartCue.presentation.kind === "upcoming"
+                    ? `Up Next, ${presentationSectionLabel}`
+                    : `${presentationSectionLabel} Chart`
+                }
+                backingBand={presentationSection.backingBand}
+                parts={presentationSection.parts}
+              />
             ) : null}
           </section>
         )}

@@ -308,10 +308,18 @@
 :root,
 [data-theme] {
   --color-chart-item-background: var(--color-panel-background);
-  --color-chart-item-active-background: color-mix(
+  --color-playback-current-background: color-mix(
     in srgb,
     var(--color-accent) 7%,
     var(--color-panel-background)
+  );
+  --color-playback-upcoming-background: color-mix(
+    in srgb,
+    var(--color-accent) 3%,
+    var(--color-panel-background)
+  );
+  --color-chart-item-active-background: var(
+    --color-playback-current-background
   );
 }
 

@@ -110,7 +110,7 @@ export function SessionBackingBandDialog({
       icon={<Disc3 />}
       isOpen={isOpen}
       size="standard"
-      title="Session Backing Band"
+      title="Playback for Session"
       onClose={onClose}
     >
       <DisclosureListGroup>

@@ -310,11 +310,14 @@ describe("PartSequenceCoordinator", () => {
     );
   });
 
-  it("starts at a selected index and stops a finite plan at its exact end", async () => {
+  it("starts an Arrangement from a selected index and stops at its exact end", async () => {
     const { coordinator, startPart, stopPartPlayback } = createHarness();
     const plan = {
       ...createPlan(),
       completionPolicy: "stop-at-end" as const,
+      mode: "arrangement-from-entry" as const,
+      owner: { kind: "arrangement" as const, id: "arrangement" },
+      sessionId: "arrangement",
     };
 
     await coordinator.start(plan, {
@@ -345,6 +348,61 @@ describe("PartSequenceCoordinator", () => {
     expect(coordinator.getSnapshot().playing).toBe(false);
     expect(stopPartPlayback).toHaveBeenCalledOnce();
     expect(startPart).toHaveBeenCalledOnce();
+  });
+
+  it("starts a Session from a selected Part and loops without repeating its count-in", async () => {
+    const { coordinator, startPart, stopPartPlayback } = createHarness();
+    const plan = {
+      ...createPlan(),
+      mode: "session-from-part" as const,
+    };
+
+    await coordinator.start(plan, {
+      startIndex: 1,
+      countIn: { durationBeats: 3, pulses: 3 },
+    });
+
+    expect(startPart).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        countIn: { durationBeats: 3, pulses: 3 },
+        exercises: [expect.objectContaining({ id: "exercise-b" })],
+        handoff: false,
+      }),
+    );
+
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    expect(startPart).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        countIn: undefined,
+        handoff: true,
+        originTime: 12.08,
+        rhythms: [expect.objectContaining({ id: "rhythm-a" })],
+      }),
+    );
+
+    await vi.advanceTimersByTimeAsync(4_080);
+
+    expect(startPart).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        countIn: undefined,
+        exercises: [expect.objectContaining({ id: "exercise-b" })],
+        handoff: true,
+        originTime: 16.08,
+      }),
+    );
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 1,
+      activeOccurrence: 3,
+      activePartId: "part-b",
+      completionPolicy: "loop",
+      mode: "session-from-part",
+      playing: true,
+    });
+    expect(stopPartPlayback).not.toHaveBeenCalled();
   });
 
   it("uses step tempos exclusively for mixed-tempo boundaries and committed pending state", async () => {

@@ -23,6 +23,10 @@ export interface ArrangementChartCueTarget {
   fromOccurrence: number;
 }
 
+function isArrangementSequenceMode(mode: PartSequenceSnapshot["mode"]) {
+  return mode === "arrangement" || mode === "arrangement-from-entry";
+}
+
 export function deriveArrangementChartCueTarget({
   plan,
   snapshot,
@@ -33,7 +37,7 @@ export function deriveArrangementChartCueTarget({
   const activeEntryId = snapshot.activeArrangementContext?.entryId;
   if (
     !snapshot.playing ||
-    snapshot.mode !== "arrangement" ||
+    !isArrangementSequenceMode(snapshot.mode) ||
     activeOccurrence === undefined ||
     cycleEndTime === undefined ||
     !activeEntryId ||

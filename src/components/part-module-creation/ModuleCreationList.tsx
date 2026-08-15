@@ -47,7 +47,6 @@ import { getDroneBaseOctave } from "@/utils/drone/droneNotes";
 import { DEFAULT_EXERCISE_OCTAVE_OFFSET } from "@/utils/exercise-looper/exerciseConfig";
 import { audioPresets, getDefaultAudioPresetId } from "@/audio";
 import { formatValueSummary } from "@/utils/valueSummary";
-import { PartModuleBandSourceIndicator } from "@/components/part-module/PartModuleBandSource";
 import { getExerciseBaseOctave } from "@/utils/exercise-looper/exerciseSequence";
 import { getModuleCreationKindsForContext } from "@/utils/instrument-creation/moduleCreationDefaults";
 import { areRangesEqual } from "@/utils/range/numberRange";
@@ -423,7 +422,7 @@ export function ModuleCreationList({
     <DisclosureList>
       {MODULE_CREATION_OPTIONS.map((option) => {
         const selected = includesKind(moduleKinds, option.kind);
-        const isBackingBandSource =
+        const isPlaybackSource =
           selected &&
           (option.kind === "exercise-looper" || option.kind === "rhythm");
         const hasSettings = hasCreationSettings(option.kind);
@@ -446,12 +445,7 @@ export function ModuleCreationList({
             icon={option.icon}
             isActionOpen={isSettingsOpen}
             keepPanelMounted={hasSettings}
-            label={
-              <>
-                {option.label}
-                {isBackingBandSource ? <PartModuleBandSourceIndicator /> : null}
-              </>
-            }
+            label={option.label}
             selected={selected}
             selectedAriaLabel={`Remove ${option.label} module`}
             selectedPreviewKind="included"
@@ -459,7 +453,11 @@ export function ModuleCreationList({
             selectAriaLabel={`Add ${option.label} module`}
             subtitle={formatValueSummary([
               summary,
-              isBackingBandSource ? "Backing Band" : undefined,
+              isPlaybackSource
+                ? option.kind === "exercise-looper"
+                  ? "Backing Notes Source"
+                  : "Rhythm Source"
+                : undefined,
             ])}
             onAction={
               hasSettings ? () => toggleSettingsKind(option.kind) : undefined

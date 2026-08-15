@@ -28,6 +28,7 @@ const mocks = vi.hoisted(() => {
     coordinator,
     createArrangementEntryLoopPlaybackRequest: vi.fn(),
     createArrangementPlaybackRequest: vi.fn(),
+    createArrangementPlaybackRequestFromEntry: vi.fn(),
     emit: () => listeners.forEach((listener) => listener()),
     ensureAudioReady: vi.fn(),
     getPartSequencePlanReconciliation: vi.fn(),
@@ -38,6 +39,10 @@ const mocks = vi.hoisted(() => {
     loopRequest: {
       plan: { mode: "arrangement-entry-loop", sourceSignature: "entry-loop" },
       start: { startIndex: 0 },
+    },
+    fromEntryRequest: {
+      plan: { mode: "arrangement-from-entry", sourceSignature: "from-entry" },
+      start: { startIndex: 1 },
     },
     setSnapshot(snapshot: unknown) {
       coordinator.getSnapshot.mockReturnValue(snapshot);
@@ -50,6 +55,8 @@ vi.mock("@/audio", () => ({
   createArrangementEntryLoopPlaybackRequest:
     mocks.createArrangementEntryLoopPlaybackRequest,
   createArrangementPlaybackRequest: mocks.createArrangementPlaybackRequest,
+  createArrangementPlaybackRequestFromEntry:
+    mocks.createArrangementPlaybackRequestFromEntry,
   ensureAudioReady: mocks.ensureAudioReady,
   getPartSequencePlanReconciliation: mocks.getPartSequencePlanReconciliation,
   partSequenceCoordinator: mocks.coordinator,
@@ -83,6 +90,9 @@ beforeEach(() => {
   mocks.createArrangementPlaybackRequest.mockReturnValue(mocks.request);
   mocks.createArrangementEntryLoopPlaybackRequest.mockReturnValue(
     mocks.loopRequest,
+  );
+  mocks.createArrangementPlaybackRequestFromEntry.mockReturnValue(
+    mocks.fromEntryRequest,
   );
   mocks.ensureAudioReady.mockResolvedValue(true);
   mocks.getPartSequencePlanReconciliation.mockReturnValue("none");
@@ -213,6 +223,29 @@ describe("useArrangementTransport", () => {
       mocks.loopRequest.plan,
     );
     expect(result.current.plan).toBe(mocks.loopRequest.plan);
+  });
+
+  it("reconciles Play From Here against its Arrangement-from-Entry plan", () => {
+    const snapshot = {
+      ...activeSnapshot(),
+      mode: "arrangement-from-entry",
+    };
+    mocks.setSnapshot(snapshot);
+    const { result } = renderHook(() =>
+      useArrangementTransport("arrangement-1"),
+    );
+
+    expect(
+      mocks.createArrangementPlaybackRequestFromEntry,
+    ).toHaveBeenCalledWith(
+      mocks.appState.arrangements["arrangement-1"],
+      "entry-2",
+    );
+    expect(mocks.getPartSequencePlanReconciliation).toHaveBeenCalledWith(
+      snapshot,
+      mocks.fromEntryRequest.plan,
+    );
+    expect(result.current.plan).toBe(mocks.fromEntryRequest.plan);
   });
 
   it("handles Shift+Space outside editable and modal contexts and cleans up", () => {

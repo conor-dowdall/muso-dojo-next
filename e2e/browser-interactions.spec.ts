@@ -37,6 +37,60 @@ test("native dialogs contain global shortcuts and release page scrolling", async
   ).toBeVisible();
 });
 
+test("Part playback options expose Session and Part-loop transports", async ({
+  page,
+}) => {
+  await page
+    .getByRole("button", { name: /Playback options for Part/ })
+    .first()
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Playback for Part" });
+
+  await expect(
+    dialog.getByRole("button", { name: /^Backing Notes/ }),
+  ).toBeVisible();
+  await expect(
+    dialog.getByRole("button", { name: /^Rhythm source/ }),
+  ).toBeVisible();
+  await dialog
+    .getByRole("button", { name: "Play Session from this Part" })
+    .click();
+  await expect(
+    dialog.getByRole("button", { name: "Stop Session" }),
+  ).toBeVisible();
+  await dialog.getByRole("button", { name: "Stop Session" }).click();
+  await dialog.getByRole("button", { name: "Loop Part" }).click();
+  await expect(
+    dialog.getByRole("button", { name: "Stop Part Loop" }),
+  ).toBeVisible();
+  await dialog.getByRole("button", { name: "Stop Part Loop" }).click();
+  await dialog.getByRole("button", { name: "Close", exact: true }).click();
+});
+
+test("Playback surfaces and new module sources use scoped language", async ({
+  page,
+}) => {
+  await page
+    .getByRole("button", { name: "Playback options for Session" })
+    .click();
+  const playbackDialog = page.getByRole("dialog", {
+    name: "Playback for Session",
+  });
+  await expect(playbackDialog).toBeVisible();
+  await playbackDialog
+    .getByRole("button", { name: "Close", exact: true })
+    .click();
+
+  await page
+    .getByRole("button", { name: "Add to session", exact: true })
+    .click();
+  const addDialog = page.getByRole("dialog", { name: "Add to Session" });
+  await addDialog.getByRole("button", { name: "Add Looper module" }).click();
+  await expect(addDialog.getByText(/Backing Notes Source/)).toBeVisible();
+  await addDialog.getByRole("button", { name: "Add Rhythm module" }).click();
+  await expect(addDialog.getByText(/Rhythm Source/)).toBeVisible();
+});
+
 test("keyboard notes use roving focus and respond to keyboard activation", async ({
   page,
 }) => {

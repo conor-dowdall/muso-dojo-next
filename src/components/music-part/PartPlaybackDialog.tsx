@@ -1,9 +1,10 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { Disc3, Drum, Music2 } from "lucide-react";
+import { Disc3, Drum, Infinity, ListVideo, Music2, Square } from "lucide-react";
 import {
   DisclosureList,
+  DisclosureListAction,
   DisclosureListChoice,
   DisclosureListGroup,
   DisclosureListItem,
@@ -11,12 +12,9 @@ import {
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { ObjectMenuDialog } from "@/components/ui/object-menu";
 import {
-  DialogFooter,
-  DialogFooterActionBar,
-  DialogFooterActionGroup,
-} from "@/components/ui/dialog/Dialog";
-import { Button } from "@/components/ui/buttons/Button";
-import { usePartBandLoopTransport } from "@/components/session/PracticeBandTransport";
+  usePartBandLoopTransport,
+  usePartBandPlayFromHereTransport,
+} from "@/components/session/PracticeBandTransport";
 import {
   getBackingNotesSummary,
   getBackingRhythmSummary,
@@ -47,6 +45,10 @@ export function PartPlaybackDialog({
 }) {
   const part = useMusicPart();
   const loopTransport = usePartBandLoopTransport(part.sessionId, part.partId);
+  const playFromHereTransport = usePartBandPlayFromHereTransport(
+    part.sessionId,
+    part.partId,
+  );
   const { isOpen: isChoiceOpen, toggleChoice } =
     useDisclosureList<PlaybackChoice>(null);
   const automaticRhythmSummary = getBackingRhythmSummary(
@@ -74,28 +76,10 @@ export function PartPlaybackDialog({
 
   return (
     <ObjectMenuDialog
-      footer={
-        <DialogFooter>
-          <DialogFooterActionBar ariaLabel="Backing Band actions">
-            <DialogFooterActionGroup placement="secondary">
-              <Button
-                disabled={!loopTransport.canPlay}
-                label={loopTransport.isActive ? "Stop" : "Loop This Part"}
-                selected={loopTransport.isActive}
-                size="lg"
-                onClick={loopTransport.togglePlayback}
-              />
-            </DialogFooterActionGroup>
-            <DialogFooterActionGroup placement="primary">
-              <Button label="Close" size="lg" onClick={onClose} />
-            </DialogFooterActionGroup>
-          </DialogFooterActionBar>
-        </DialogFooter>
-      }
       icon={<Disc3 />}
       isOpen={isOpen}
       size="standard"
-      title="Backing Band for Part"
+      title="Playback for Part"
       onClose={onClose}
     >
       <DisclosureListGroup>
@@ -118,6 +102,30 @@ export function PartPlaybackDialog({
           sessionSubtitle={sessionRhythmSummary}
           onChoose={chooseSource}
           onToggle={() => toggleChoice("rhythm")}
+        />
+      </DisclosureListGroup>
+      <DisclosureListGroup aria-label="Playback" role="group">
+        <DisclosureListAction
+          aria-label={
+            playFromHereTransport.isActive
+              ? "Stop Session"
+              : "Play Session from this Part"
+          }
+          disabled={!playFromHereTransport.canPlay}
+          icon={playFromHereTransport.isActive ? <Square /> : <ListVideo />}
+          label={
+            playFromHereTransport.isActive ? "Stop Session" : "Play From Here"
+          }
+          selected={playFromHereTransport.isActive}
+          onClick={playFromHereTransport.togglePlayback}
+        />
+        <DisclosureListAction
+          aria-label={loopTransport.isActive ? "Stop Part Loop" : "Loop Part"}
+          disabled={!loopTransport.canPlay}
+          icon={loopTransport.isActive ? <Square /> : <Infinity />}
+          label={loopTransport.isActive ? "Stop Part Loop" : "Loop This Part"}
+          selected={loopTransport.isActive}
+          onClick={loopTransport.togglePlayback}
         />
       </DisclosureListGroup>
     </ObjectMenuDialog>

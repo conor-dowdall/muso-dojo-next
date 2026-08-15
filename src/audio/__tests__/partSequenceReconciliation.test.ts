@@ -104,6 +104,18 @@ describe("Part sequence plan reconciliation", () => {
     ).toBe("stop");
   });
 
+  it("retimes Play From Here Session playback", () => {
+    expect(
+      getPartSequencePlanReconciliation(
+        createSnapshot(),
+        createPlan({
+          mode: "session-from-part",
+          tempoSignature: "tempo-90",
+        }),
+      ),
+    ).toBe("retime");
+  });
+
   it("defers content reconciliation across a scheduled handoff", () => {
     expect(
       getPartSequencePlanReconciliation(

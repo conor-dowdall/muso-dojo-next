@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createArrangementEntryLoopPlaybackRequest,
   createArrangementPlaybackRequest,
+  createArrangementPlaybackRequestFromEntry,
 } from "@/audio";
 import { type ArrangementConfig } from "@/types/arrangement";
 import { createDefaultSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
@@ -140,5 +141,31 @@ describe("createArrangementPlaybackRequest", () => {
       tempoBpm: 95,
     });
     expect(request.start.countIn).toEqual({ durationBeats: 2, pulses: 2 });
+  });
+
+  it("starts from a visible Entry and retains the Arrangement completion setting", () => {
+    const arrangement = createArrangement();
+    arrangement.playbackMode = "loop";
+    arrangement.sections[1]!.backingBand.countInBeats = 3;
+    const request = createArrangementPlaybackRequestFromEntry(
+      arrangement,
+      "entry-b",
+    )!;
+
+    expect(request.start).toEqual({
+      countIn: { durationBeats: 3, pulses: 3 },
+      startIndex: 2,
+    });
+    expect(request.plan).toMatchObject({
+      completionPolicy: "loop",
+      mode: "arrangement-from-entry",
+      owner: { kind: "arrangement", id: "arrangement" },
+    });
+    expect(
+      request.plan.parts[request.start.startIndex]?.arrangement,
+    ).toMatchObject({ entryId: "entry-b", playIndex: 0 });
+    expect(
+      createArrangementPlaybackRequestFromEntry(arrangement, "missing"),
+    ).toBeUndefined();
   });
 });

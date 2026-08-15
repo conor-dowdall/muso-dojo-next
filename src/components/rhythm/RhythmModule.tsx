@@ -147,7 +147,9 @@ export function RhythmModule({
         headerPrimary={
           <InstrumentIdentity
             accessory={
-              isBandSource ? <PartModuleBandSourceIndicator /> : undefined
+              isBandSource ? (
+                <PartModuleBandSourceIndicator label="Rhythm Source" />
+              ) : undefined
             }
             label="Rhythm"
           />

@@ -20,7 +20,9 @@ export function getPartSequencePlanReconciliation(
   // A tempo-map change must preempt an already queued handoff. Arrangement
   // transports stop; Session transports preserve their live retiming behavior.
   if (snapshot.tempoSignature !== plan.tempoSignature) {
-    return plan.mode === "session" || plan.mode === "part-loop"
+    return plan.mode === "session" ||
+      plan.mode === "session-from-part" ||
+      plan.mode === "part-loop"
       ? "retime"
       : "stop";
   }

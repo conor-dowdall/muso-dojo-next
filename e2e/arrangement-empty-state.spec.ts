@@ -116,6 +116,11 @@ test("the first Section replaces the instructional empty state", async ({
   await page.getByRole("button", { name: "Add First Section" }).click();
 
   await expect(page.getByRole("region", { name: "Section 1" })).toBeVisible();
+  const headerAddSection = page
+    .getByRole("group", { name: "Arrangement actions" })
+    .getByRole("button", { name: "Add Section" });
+  await expect(headerAddSection).toBeVisible();
+  await expect(headerAddSection).toHaveText("");
   await expect(
     page.getByRole("button", { name: "Play Arrangement" }),
   ).toHaveAttribute("aria-keyshortcuts", "Shift+Space");
@@ -153,6 +158,18 @@ test("Section playback options persist independent tempo overrides", async ({
   await expect(
     firstDialog.getByText("Arrangement Tempo · 80 BPM"),
   ).toBeVisible();
+  await firstDialog
+    .getByRole("button", { name: "Play Arrangement from Section 01" })
+    .click();
+  await expect(
+    firstDialog.getByRole("button", { name: "Stop Arrangement" }),
+  ).toBeVisible();
+  await firstDialog.getByRole("button", { name: "Stop Arrangement" }).click();
+  await firstDialog.getByRole("button", { name: "Loop Section 01" }).click();
+  await expect(
+    firstDialog.getByRole("button", { name: "Stop Section Loop" }),
+  ).toBeVisible();
+  await firstDialog.getByRole("button", { name: "Stop Section Loop" }).click();
   await firstDialog
     .getByRole("button", { name: /^Tempo for Section 01/ })
     .click();
