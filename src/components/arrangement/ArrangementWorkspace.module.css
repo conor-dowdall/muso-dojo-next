@@ -48,18 +48,15 @@
 
 .sectionCard {
   overflow: hidden;
-  border: var(--border-width-base) solid var(--color-border);
+  border: var(--border-width-base) solid var(--color-border-subtle);
   border-radius: var(--radius-control);
   background: var(--color-panel-background);
 }
 
 .sectionCard[data-active="true"] {
   border-color: var(--color-accent);
+  background: var(--color-playback-current-background);
   box-shadow: inset 0 0 0 var(--border-width-base) var(--color-accent);
-}
-
-.sectionCard[data-pending="true"] {
-  border-style: dashed;
 }
 
 .sectionCardHeader {
@@ -185,18 +182,13 @@
 }
 
 .entryTile[data-active="true"] {
-  background: var(--color-chart-item-active-background);
+  background: var(--color-playback-current-background);
   border-color: var(--color-accent);
   box-shadow: inset 0 0 0 var(--space-px) var(--color-accent);
 }
 
-.srOnly {
-  position: absolute;
-  overflow: hidden;
-  inline-size: 1px;
-  block-size: 1px;
-  clip-path: inset(50%);
-  white-space: nowrap;
+.entryTile[data-upcoming="true"] {
+  background: var(--color-playback-upcoming-background);
 }
 
 @container (width < 18rem) {
