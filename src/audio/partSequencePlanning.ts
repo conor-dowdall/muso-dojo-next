@@ -72,6 +72,7 @@ export interface PartSequencePlaybackPlan {
   contentSignature: string;
   mode:
     | "session"
+    | "session-from-part"
     | "part-loop"
     | "arrangement"
     | "arrangement-from-entry"
@@ -89,7 +90,7 @@ export interface PartSequencePlaybackPlan {
 }
 
 export interface PartSequencePlaybackPlanOptions {
-  mode?: "session" | "part-loop";
+  mode?: "session" | "session-from-part" | "part-loop";
   partId?: string;
 }
 
@@ -394,7 +395,7 @@ export function createPartSequencePlaybackPlan(
   >();
   const authoredResolvedBands = new Map<string, ResolvedPartBackingBand>();
 
-  if (mode === "session") {
+  if (mode === "session" || mode === "session-from-part") {
     const barPlan = createSessionBarPlan(session.parts, backingBand);
     if (barPlan.layout === "authored") {
       let activeRun:
@@ -526,5 +527,27 @@ export function createPartSequencePlaybackPlan(
     tempoBpm,
     tempoSignature,
     updateSignature: `${tempoSignature}:${updateSignature}`,
+  };
+}
+
+export function createSessionPlaybackRequestFromPart(
+  session: SessionConfig,
+  partId: string,
+):
+  | { plan: PartSequencePlaybackPlan; start: PartSequenceStartOptions }
+  | undefined {
+  const startIndex = session.parts.findIndex(({ id }) => id === partId);
+  if (startIndex < 0) return undefined;
+
+  const plan = createPartSequencePlaybackPlan(session, {
+    mode: "session-from-part",
+  });
+  const countIn = getPartCountIn(
+    session.parts[startIndex],
+    getSessionBackingBandConfig(session.backingBand),
+  );
+  return {
+    plan: { ...plan, countIn },
+    start: { countIn, startIndex },
   };
 }

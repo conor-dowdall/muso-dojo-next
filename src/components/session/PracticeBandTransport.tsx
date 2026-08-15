@@ -12,6 +12,7 @@ import {
 import { ListVideo, Square } from "lucide-react";
 import {
   createPartSequencePlaybackPlan,
+  createSessionPlaybackRequestFromPart,
   ensureAudioReady,
   getPartSequencePlanReconciliation,
   partSequenceCoordinator,
@@ -100,14 +101,20 @@ export function usePracticeBandTransport(
       return undefined;
     }
 
-    return snapshot.playing &&
-      snapshot.sessionId === sessionId &&
-      snapshot.mode === "part-loop"
-      ? createPartSequencePlaybackPlan(session, {
+    if (snapshot.playing && snapshot.sessionId === sessionId) {
+      if (snapshot.mode === "part-loop") {
+        return createPartSequencePlaybackPlan(session, {
           mode: "part-loop",
           partId: snapshot.activePartId ?? snapshot.pendingPartId,
-        })
-      : createPartSequencePlaybackPlan(session);
+        });
+      }
+      if (snapshot.mode === "session-from-part") {
+        return createPartSequencePlaybackPlan(session, {
+          mode: "session-from-part",
+        });
+      }
+    }
+    return createPartSequencePlaybackPlan(session);
   }, [
     session,
     sessionId,
@@ -228,6 +235,46 @@ export function usePartBandLoopTransport(
     void ensureAudioReady();
     void partSequenceCoordinator.start(plan);
   }, [canPlay, isActive, plan]);
+
+  return { canPlay, isActive, togglePlayback };
+}
+
+export function usePartBandPlayFromHereTransport(
+  sessionId: string | undefined,
+  partId: string,
+) {
+  const session = useAppStore((state) =>
+    sessionId ? state.sessions[sessionId] : undefined,
+  );
+  const snapshot = useSyncExternalStore(
+    partSequenceCoordinator.subscribe,
+    partSequenceCoordinator.getSnapshot,
+    partSequenceCoordinator.getSnapshot,
+  );
+  const request = useMemo(
+    () =>
+      session
+        ? createSessionPlaybackRequestFromPart(session, partId)
+        : undefined,
+    [partId, session],
+  );
+  const isActive =
+    Boolean(sessionId) &&
+    snapshot.playing &&
+    snapshot.sessionId === sessionId &&
+    snapshot.mode === "session-from-part";
+  const canPlay = Boolean(request?.plan.parts.length);
+
+  const togglePlayback = useCallback(() => {
+    if (isActive) {
+      partSequenceCoordinator.stop();
+      return;
+    }
+    if (!request || !canPlay) return;
+    stopTransportPlayback();
+    void ensureAudioReady();
+    void partSequenceCoordinator.start(request.plan, request.start);
+  }, [canPlay, isActive, request]);
 
   return { canPlay, isActive, togglePlayback };
 }

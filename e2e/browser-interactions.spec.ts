@@ -37,6 +37,36 @@ test("native dialogs contain global shortcuts and release page scrolling", async
   ).toBeVisible();
 });
 
+test("Part playback options expose Session and Part-loop transports", async ({
+  page,
+}) => {
+  await page
+    .getByRole("button", { name: /Backing Band options/ })
+    .first()
+    .click();
+  const dialog = page.getByRole("dialog", { name: "Playback for Part" });
+
+  await expect(
+    dialog.getByRole("button", { name: /^Backing Notes/ }),
+  ).toBeVisible();
+  await expect(
+    dialog.getByRole("button", { name: /^Rhythm source/ }),
+  ).toBeVisible();
+  await dialog
+    .getByRole("button", { name: "Play Session from this Part" })
+    .click();
+  await expect(
+    dialog.getByRole("button", { name: "Stop Session" }),
+  ).toBeVisible();
+  await dialog.getByRole("button", { name: "Stop Session" }).click();
+  await dialog.getByRole("button", { name: "Loop Part" }).click();
+  await expect(
+    dialog.getByRole("button", { name: "Stop Part Loop" }),
+  ).toBeVisible();
+  await dialog.getByRole("button", { name: "Stop Part Loop" }).click();
+  await dialog.getByRole("button", { name: "Close", exact: true }).click();
+});
+
 test("keyboard notes use roving focus and respond to keyboard activation", async ({
   page,
 }) => {

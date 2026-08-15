@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createPartSequencePlaybackPlan } from "@/audio/partSequencePlanning";
+import {
+  createPartSequencePlaybackPlan,
+  createSessionPlaybackRequestFromPart,
+} from "@/audio/partSequencePlanning";
 import { RHYTHM_PPQ } from "@/data/rhythmPresets";
 import { DEFAULT_RHYTHM_SELECTION } from "@/utils/rhythm/rhythmConfig";
 import { type MusicPartConfig, type SessionConfig } from "@/types/session";
@@ -512,6 +515,38 @@ describe("createPartSequencePlaybackPlan", () => {
     expect(plan.mode).toBe("part-loop");
     expect(plan.parts).toHaveLength(1);
     expect(plan.parts[0]).toMatchObject({ index: 1, partId: "second" });
+  });
+
+  it("starts from a selected Part and keeps the full Session looping", () => {
+    const session = createSession([
+      createPart("first"),
+      createPart("second"),
+      createPart("third"),
+    ]);
+    session.backingBand = {
+      countInBeats: 2,
+      looper: { audioPresetId: "piano", enabled: false, octaveOffset: 0 },
+      rhythm: { mode: "off", selection: DEFAULT_RHYTHM_SELECTION },
+    };
+    const request = createSessionPlaybackRequestFromPart(session, "second")!;
+
+    expect(request.start).toEqual({
+      countIn: { durationBeats: 2, pulses: 2 },
+      startIndex: 1,
+    });
+    expect(request.plan).toMatchObject({
+      completionPolicy: "loop",
+      mode: "session-from-part",
+      owner: { kind: "session", id: "session" },
+    });
+    expect(request.plan.parts.map(({ partId }) => partId)).toEqual([
+      "first",
+      "second",
+      "third",
+    ]);
+    expect(
+      createSessionPlaybackRequestFromPart(session, "missing"),
+    ).toBeUndefined();
   });
 
   it("uses a custom Session Rhythm recipe and length for inherited Parts", () => {
