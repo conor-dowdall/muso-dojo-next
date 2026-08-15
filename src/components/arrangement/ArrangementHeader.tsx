@@ -18,7 +18,6 @@ import {
   ControlHeader,
   ControlHeaderCluster,
 } from "@/components/ui/control-header/ControlHeader";
-import { Button } from "@/components/ui/buttons/Button";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { Heading } from "@/components/ui/typography/Heading";
 import {
@@ -168,10 +167,10 @@ export function ArrangementHeader({
         actions={
           <ControlHeaderCluster aria-label="Arrangement actions" role="group">
             {viewMode === "build" ? (
-              <Button
+              <IconButton
+                aria-label="Add Section"
                 disabled={!canAddSection}
                 icon={<Plus />}
-                label="Add Section"
                 size="sm"
                 onClick={onAddSection}
               />

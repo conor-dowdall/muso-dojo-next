@@ -116,6 +116,11 @@ test("the first Section replaces the instructional empty state", async ({
   await page.getByRole("button", { name: "Add First Section" }).click();
 
   await expect(page.getByRole("region", { name: "Section 1" })).toBeVisible();
+  const headerAddSection = page
+    .getByRole("group", { name: "Arrangement actions" })
+    .getByRole("button", { name: "Add Section" });
+  await expect(headerAddSection).toBeVisible();
+  await expect(headerAddSection).toHaveText("");
   await expect(
     page.getByRole("button", { name: "Play Arrangement" }),
   ).toHaveAttribute("aria-keyshortcuts", "Shift+Space");
