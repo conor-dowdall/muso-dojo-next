@@ -2,7 +2,7 @@ import { expect, type Page } from "@playwright/test";
 import { type AppStoreSnapshot } from "../../src/types/session";
 
 const APP_STORE_STORAGE_KEY = "muso-dojo-app-store";
-const APP_STORE_VERSION = 13;
+const APP_STORE_VERSION = 14;
 const DOJO_BACKUP_FORMAT_VERSION = 1;
 const DOJO_BACKUP_KIND = "muso-dojo-backup";
 

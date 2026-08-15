@@ -330,6 +330,35 @@ export function createArrangementActions(
         },
       }));
     },
+    setArrangementEntryTempoOverrideBpm: (arrangementId, entryId, tempoBpm) => {
+      const arrangement = get().arrangements[arrangementId];
+      const entry = arrangement?.entries.find(({ id }) => id === entryId);
+      if (
+        !arrangement ||
+        !entry ||
+        (tempoBpm !== undefined &&
+          (!Number.isInteger(tempoBpm) || tempoBpm < 30 || tempoBpm > 300)) ||
+        entry.tempoOverrideBpm === tempoBpm
+      ) {
+        return;
+      }
+      set((state) => ({
+        arrangements: {
+          ...state.arrangements,
+          [arrangementId]: touchArrangement(arrangement, {
+            entries: arrangement.entries.map((candidate) => {
+              if (candidate.id !== entryId) return candidate;
+              if (tempoBpm === undefined) {
+                const { tempoOverrideBpm: _removed, ...inheritedEntry } =
+                  candidate;
+                return inheritedEntry;
+              }
+              return { ...candidate, tempoOverrideBpm: tempoBpm };
+            }),
+          }),
+        },
+      }));
+    },
     removeArrangementEntry: (arrangementId, entryId) => {
       const arrangement = get().arrangements[arrangementId];
       if (!arrangement?.entries.some(({ id }) => id === entryId)) return;

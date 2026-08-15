@@ -14,7 +14,7 @@ function createPlan(
 ): PartSequencePlaybackPlan {
   const parts = sections.map((sectionId, index) => ({
     arrangement: {
-      entryId: `entry-${index}`,
+      entryId: `entry-${sectionId}`,
       entryIndex: index,
       sectionId,
       playIndex: 0,
@@ -28,6 +28,7 @@ function createPlan(
     partId: `part-${index}`,
     resetSignature: `reset-${index}`,
     rhythmRequests: [],
+    tempoBpm: 60,
     updateSignature: `update-${index}`,
   }));
   return {
@@ -42,6 +43,7 @@ function createPlan(
     signature: "signature",
     sourceSignature: "source",
     tempoBpm: 60,
+    tempoSignature: "tempo",
     updateSignature: "update",
   };
 }
@@ -59,6 +61,7 @@ function createSnapshot(
     partCount: plan.parts.length,
     playing: true,
     sourceSignature: plan.sourceSignature,
+    tempoSignature: plan.tempoSignature,
   };
 }
 
@@ -114,5 +117,31 @@ describe("deriveArrangementChartCueTarget", () => {
         currentSectionStartedAt: 10,
       })?.sectionId,
     ).toBe("a");
+  });
+
+  it("uses visible Entry identity and each intervening step tempo", () => {
+    const duplicate = createPlan(["shared", "shared"]);
+    duplicate.parts[1]!.arrangement!.entryId = "entry-duplicate";
+    expect(
+      deriveArrangementChartCueTarget({
+        plan: duplicate,
+        snapshot: createSnapshot(duplicate),
+        currentSectionStartedAt: 10,
+      }),
+    ).toMatchObject({
+      boundaryTime: 14,
+      entryId: "entry-duplicate",
+      sectionId: "shared",
+    });
+
+    const mixed = createPlan(["a", "a", "b"]);
+    mixed.parts[1]!.tempoBpm = 120;
+    expect(
+      deriveArrangementChartCueTarget({
+        plan: mixed,
+        snapshot: createSnapshot(mixed),
+        currentSectionStartedAt: 10,
+      }),
+    ).toMatchObject({ boundaryTime: 16, sectionId: "b" });
   });
 });

@@ -41,6 +41,7 @@ import { useAppStore } from "@/stores/appStore";
 import { normalizeEntityNameForComparison } from "@/stores/app-store/entityIds";
 import { type useArrangementTransport } from "@/hooks/audio/useArrangementTransport";
 import { type ArrangementWorkspaceViewMode } from "@/types/arrangement";
+import { partSequenceCoordinator } from "@/audio";
 import { ArrangementTempoDialog } from "./ArrangementTempoDialog";
 import styles from "./ArrangementWorkspace.module.css";
 
@@ -206,7 +207,10 @@ export function ArrangementHeader({
               disabled={arrangement.entries.length === 0}
               icon={<Gauge />}
               size="sm"
-              onClick={() => setTempoOpen(true)}
+              onClick={() => {
+                if (transport.isActive) partSequenceCoordinator.stop();
+                setTempoOpen(true);
+              }}
             />
             <IconButton
               aria-label={`Choose view. Current: ${viewModeLabel}`}

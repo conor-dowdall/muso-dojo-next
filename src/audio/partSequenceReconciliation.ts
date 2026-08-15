@@ -17,10 +17,12 @@ export function getPartSequencePlanReconciliation(
     return "stop";
   }
 
-  // Tempo is an interactive preview control. It must preempt a queued handoff
-  // instead of waiting for the next Part boundary.
-  if (snapshot.tempoBpm !== plan.tempoBpm) {
-    return "retime";
+  // A tempo-map change must preempt an already queued handoff. Arrangement
+  // transports stop; Session transports preserve their live retiming behavior.
+  if (snapshot.tempoSignature !== plan.tempoSignature) {
+    return plan.mode === "session" || plan.mode === "part-loop"
+      ? "retime"
+      : "stop";
   }
 
   if (snapshot.updateSignature === plan.updateSignature) {

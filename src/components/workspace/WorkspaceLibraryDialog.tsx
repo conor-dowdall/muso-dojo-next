@@ -31,6 +31,7 @@ import { useAppStore } from "@/stores/appStore";
 import { normalizeEntityNameForComparison } from "@/stores/app-store/entityIds";
 import { SessionManagementRow } from "@/components/session/SessionManagementRow";
 import { createSessionPartSummary } from "@/components/session/sessionManagementFormatting";
+import { partSequenceCoordinator } from "@/audio";
 import {
   countArrangementsUsingSession,
   getArrangementLibrarySubtitle,
@@ -398,6 +399,17 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
                             entityKind="arrangement"
                             isOpen={tempoId === arrangement.id}
                             item={arrangement}
+                            onBeforeOpen={() => {
+                              const snapshot =
+                                partSequenceCoordinator.getSnapshot();
+                              if (
+                                snapshot.playing &&
+                                snapshot.owner?.kind === "arrangement" &&
+                                snapshot.owner.id === arrangement.id
+                              ) {
+                                partSequenceCoordinator.stop();
+                              }
+                            }}
                             onTempoBpmChange={actions.setArrangementTempoBpm}
                             onToggle={() => {
                               setTempoId(

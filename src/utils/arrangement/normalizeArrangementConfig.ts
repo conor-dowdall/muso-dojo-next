@@ -85,6 +85,7 @@ function ensureUniqueArrangementPartGraphIds(
 
 function normalizeEntry(value: unknown, index: number): ArrangementEntryConfig {
   const input = isRecord(value) ? value : {};
+  const tempoOverrideBpm = input.tempoOverrideBpm;
   return {
     id: normalizeId(input.id, `entry-${index + 1}`),
     sectionId: normalizeString(input.sectionId) ?? "",
@@ -94,6 +95,12 @@ function normalizeEntry(value: unknown, index: number): ArrangementEntryConfig {
       MIN_ARRANGEMENT_ENTRY_PLAY_COUNT,
       MAX_ARRANGEMENT_ENTRY_PLAY_COUNT,
     ),
+    ...(typeof tempoOverrideBpm === "number" &&
+    Number.isInteger(tempoOverrideBpm) &&
+    tempoOverrideBpm >= 30 &&
+    tempoOverrideBpm <= 300
+      ? { tempoOverrideBpm }
+      : {}),
   };
 }
 

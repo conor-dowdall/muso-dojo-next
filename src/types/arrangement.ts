@@ -37,6 +37,7 @@ export interface ArrangementEntryConfig {
   id: string;
   sectionId: string;
   playCount: number;
+  tempoOverrideBpm?: number;
 }
 
 export interface ArrangementConfig {

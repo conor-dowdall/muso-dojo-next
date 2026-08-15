@@ -62,6 +62,7 @@ export interface PartSequenceStepPlan {
   stepId?: string;
   resetSignature: string;
   rhythmRequests: readonly RhythmPlaybackRequest[];
+  tempoBpm: number;
   updateSignature: string;
 }
 
@@ -69,7 +70,7 @@ export interface PartSequencePlaybackPlan {
   completionPolicy?: PlaybackCompletionPolicy;
   countIn: BeatTransportCountIn;
   contentSignature: string;
-  mode: "session" | "part-loop" | "arrangement";
+  mode: "session" | "part-loop" | "arrangement" | "arrangement-entry-loop";
   owner?: PlaybackSequenceOwner;
   partResetSignatures: readonly string[];
   parts: readonly PartSequenceStepPlan[];
@@ -78,6 +79,7 @@ export interface PartSequencePlaybackPlan {
   signature: string;
   sourceSignature: string;
   tempoBpm: number;
+  tempoSignature: string;
   updateSignature: string;
 }
 
@@ -355,6 +357,21 @@ function createSourceSignature(
   });
 }
 
+function normalizeStepTempo(tempoBpm: number) {
+  return Math.min(300, Math.max(30, Math.round(tempoBpm)));
+}
+
+export function createPartSequenceTempoSignature(
+  parts: readonly PartSequenceStepPlan[],
+) {
+  return JSON.stringify(
+    parts.map((part) => ({
+      stepId: part.stepId ?? part.partId,
+      tempoBpm: normalizeStepTempo(part.tempoBpm),
+    })),
+  );
+}
+
 export function createPartSequencePlaybackPlan(
   session: SessionConfig,
   options: PartSequencePlaybackPlanOptions = {},
@@ -471,6 +488,7 @@ export function createPartSequencePlaybackPlan(
       durationBeats,
       exerciseRequests,
       rhythmRequests,
+      tempoBpm,
     };
 
     return {
@@ -486,6 +504,7 @@ export function createPartSequencePlaybackPlan(
   const contentSignature = createContentSignature(parts);
   const sourceSignature = createSourceSignature(session, mode, parts);
   const updateSignature = createUpdateSignature(parts);
+  const tempoSignature = createPartSequenceTempoSignature(parts);
 
   return {
     completionPolicy: "loop",
@@ -497,9 +516,10 @@ export function createPartSequencePlaybackPlan(
     parts,
     steps: parts,
     sessionId: session.id,
-    signature: `${tempoBpm}:${contentSignature}`,
+    signature: `${tempoSignature}:${contentSignature}`,
     sourceSignature,
     tempoBpm,
-    updateSignature: `${tempoBpm}:${updateSignature}`,
+    tempoSignature,
+    updateSignature: `${tempoSignature}:${updateSignature}`,
   };
 }

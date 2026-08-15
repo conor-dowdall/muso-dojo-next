@@ -9,6 +9,7 @@ export function TempoActionItem({
   item,
   isOpen,
   onTempoBpmChange,
+  onBeforeOpen,
   onToggle,
 }: {
   entityKind: "arrangement" | "session";
@@ -19,6 +20,7 @@ export function TempoActionItem({
   };
   isOpen: boolean;
   onTempoBpmChange: (id: string, tempoBpm: number) => void;
+  onBeforeOpen?: () => void;
   onToggle: () => void;
 }) {
   return (
@@ -29,7 +31,10 @@ export function TempoActionItem({
       keepMounted
       label="Set Tempo"
       preview={`${item.tempoBpm} bpm`}
-      onToggle={onToggle}
+      onToggle={() => {
+        if (!isOpen) onBeforeOpen?.();
+        onToggle();
+      }}
     >
       <SessionTempoEditor
         label={`Tempo (BPM) for ${item.name}`}

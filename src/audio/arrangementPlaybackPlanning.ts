@@ -4,6 +4,7 @@ import {
 } from "@/types/arrangement";
 import {
   createPartSequencePlaybackPlan,
+  createPartSequenceTempoSignature,
   type PartSequencePlaybackPlan,
   type PartSequenceStartOptions,
   type PartSequenceStepPlan,
@@ -59,6 +60,7 @@ function createSectionSteps({
   playCount,
   playIndex,
   section,
+  tempoBpm,
 }: {
   arrangement: ArrangementConfig;
   entryId: string;
@@ -66,6 +68,7 @@ function createSectionSteps({
   playCount: number;
   playIndex: number;
   section: ArrangementSectionConfig;
+  tempoBpm: number;
 }) {
   const sectionPlan = createPartSequencePlaybackPlan({
     backingBand: section.backingBand,
@@ -73,7 +76,7 @@ function createSectionSteps({
     lastModified: arrangement.lastModified,
     name: section.source.sessionName,
     parts: section.parts,
-    tempoBpm: arrangement.tempoBpm,
+    tempoBpm,
     workspaceViewMode: "session",
   });
   const namespace = `${arrangement.id}:${entryId}:${playIndex + 1}`;
@@ -120,6 +123,7 @@ export function createArrangementPlaybackRequest(
         playCount: entry.playCount,
         playIndex,
         section,
+        tempoBpm: entry.tempoOverrideBpm ?? arrangement.tempoBpm,
       });
       steps.push(
         ...sectionSteps.map((step) => ({
@@ -146,7 +150,8 @@ export function createArrangementPlaybackRequest(
   const contentSignature = JSON.stringify(
     steps.map(({ stepId, resetSignature }) => ({ stepId, resetSignature })),
   );
-  const updateSignature = `${arrangement.tempoBpm}:${arrangement.playbackMode}:${JSON.stringify(
+  const tempoSignature = createPartSequenceTempoSignature(steps);
+  const updateSignature = `${tempoSignature}:${arrangement.playbackMode}:${JSON.stringify(
     steps.map(({ stepId, updateSignature }) => ({ stepId, updateSignature })),
   )}`;
   const completionPolicy =
@@ -161,10 +166,70 @@ export function createArrangementPlaybackRequest(
     parts: steps,
     steps,
     sessionId: arrangement.id,
-    signature: `${arrangement.tempoBpm}:${completionPolicy}:${contentSignature}`,
+    signature: `${tempoSignature}:${completionPolicy}:${contentSignature}`,
     sourceSignature,
     tempoBpm: arrangement.tempoBpm,
+    tempoSignature,
     updateSignature,
+  };
+  return { plan, start: { startIndex: 0, countIn } };
+}
+
+export function createArrangementEntryLoopPlaybackRequest(
+  arrangement: ArrangementConfig,
+  entryId: string,
+): ArrangementPlaybackRequest | undefined {
+  const entryIndex = arrangement.entries.findIndex(({ id }) => id === entryId);
+  const entry = arrangement.entries[entryIndex];
+  const section = arrangement.sections.find(
+    ({ id }) => id === entry?.sectionId,
+  );
+  if (!entry || !section || section.parts.length === 0) return undefined;
+
+  const steps = createSectionSteps({
+    arrangement,
+    entryId: entry.id,
+    entryIndex,
+    playCount: 1,
+    playIndex: 0,
+    section,
+    tempoBpm: entry.tempoOverrideBpm ?? arrangement.tempoBpm,
+  });
+  const countIn = {
+    durationBeats: section.backingBand.countInBeats,
+    pulses: section.backingBand.countInBeats,
+  };
+  const sourceSignature = JSON.stringify({
+    owner: arrangement.id,
+    mode: "arrangement-entry-loop",
+    steps: steps.map((step) => ({
+      stepId: step.stepId,
+      sourcePartId: step.sourcePartId,
+      arrangement: step.arrangement,
+    })),
+  });
+  const contentSignature = JSON.stringify(
+    steps.map(({ stepId, resetSignature }) => ({ stepId, resetSignature })),
+  );
+  const tempoSignature = createPartSequenceTempoSignature(steps);
+  const stepUpdateSignature = JSON.stringify(
+    steps.map(({ stepId, updateSignature }) => ({ stepId, updateSignature })),
+  );
+  const plan: PartSequencePlaybackPlan = {
+    completionPolicy: "loop",
+    countIn,
+    contentSignature,
+    mode: "arrangement-entry-loop",
+    owner: { kind: "arrangement", id: arrangement.id },
+    partResetSignatures: steps.map(({ resetSignature }) => resetSignature),
+    parts: steps,
+    steps,
+    sessionId: arrangement.id,
+    signature: `${tempoSignature}:loop:${contentSignature}`,
+    sourceSignature,
+    tempoBpm: arrangement.tempoBpm,
+    tempoSignature,
+    updateSignature: `${tempoSignature}:loop:${stepUpdateSignature}`,
   };
   return { plan, start: { startIndex: 0, countIn } };
 }

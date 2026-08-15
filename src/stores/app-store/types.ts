@@ -166,6 +166,11 @@ export interface ArrangementActions {
     entryId: string,
     playCount: number,
   ) => void;
+  setArrangementEntryTempoOverrideBpm: (
+    arrangementId: string,
+    entryId: string,
+    tempoBpm: number | undefined,
+  ) => void;
   removeArrangementEntry: (arrangementId: string, entryId: string) => void;
 }
 

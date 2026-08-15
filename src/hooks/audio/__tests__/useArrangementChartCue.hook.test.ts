@@ -46,6 +46,7 @@ const plan = {
   signature: "signature",
   sourceSignature: "source-1",
   tempoBpm: 120,
+  tempoSignature: "tempo-1",
   updateSignature: "update",
 } as PartSequencePlaybackPlan;
 
@@ -61,6 +62,7 @@ function activeSnapshot(sectionId = "section-a") {
     originTime: 4,
     playing: true,
     sourceSignature: "source-1",
+    tempoSignature: "tempo-1",
   };
 }
 
@@ -117,6 +119,7 @@ describe("useArrangementChartCue", () => {
       fromOccurrence: 2,
       sectionId: "section-b",
       sourceSignature: "source-1",
+      tempoSignature: "tempo-1",
     });
     const { result } = renderHook(() =>
       useArrangementChartCue(plan, undefined),
@@ -145,6 +148,7 @@ describe("useArrangementChartCue", () => {
       fromOccurrence: 2,
       sectionId: "section-b",
       sourceSignature: "source-1",
+      tempoSignature: "tempo-1",
     });
     const { result } = renderHook(() =>
       useArrangementChartCue(plan, undefined),
@@ -167,6 +171,7 @@ describe("useArrangementChartCue", () => {
       fromOccurrence: 2,
       sectionId: "section-b",
       sourceSignature: "source-1",
+      tempoSignature: "tempo-1",
     });
     const { result } = renderHook(() =>
       useArrangementChartCue(plan, undefined),
@@ -196,6 +201,7 @@ describe("useArrangementChartCue", () => {
       fromOccurrence: 2,
       sectionId: "section-b",
       sourceSignature: "source-1",
+      tempoSignature: "tempo-1",
     });
     const clearTimeoutSpy = vi.spyOn(globalThis, "clearTimeout");
     const { unmount } = renderHook(() =>
