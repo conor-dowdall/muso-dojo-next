@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Disc3, Gauge, ListVideo, Repeat2, Square } from "lucide-react";
+import { Disc3, Gauge, Infinity, ListVideo, Square } from "lucide-react";
 import { partSequenceCoordinator } from "@/audio";
 import { SessionTempoEditor } from "@/components/session/SessionTempoEditor";
 import {
@@ -12,7 +12,6 @@ import {
   DisclosureListItem,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { ObjectMenuDialog } from "@/components/ui/object-menu";
-import { Heading } from "@/components/ui/typography/Heading";
 import { useArrangementEntryLoopTransport } from "@/hooks/audio/useArrangementEntryLoopTransport";
 import { useArrangementPlayFromEntryTransport } from "@/hooks/audio/useArrangementPlayFromEntryTransport";
 import { useAppStore } from "@/stores/appStore";
@@ -107,9 +106,6 @@ export function ArrangementSectionPlaybackDialog({
         </DisclosureListItem>
       </DisclosureListGroup>
       <DisclosureListGroup aria-label="Playback" role="group">
-        <Heading as="h3" size="xs" variant="muted">
-          Playback
-        </Heading>
         <DisclosureListAction
           aria-label={
             playFromHereTransport.isActive
@@ -133,7 +129,7 @@ export function ArrangementSectionPlaybackDialog({
               : `Loop Section ${sectionNumber}`
           }
           disabled={!loopTransport.canPlay}
-          icon={loopTransport.isActive ? <Square /> : <Repeat2 />}
+          icon={loopTransport.isActive ? <Square /> : <Infinity />}
           label={
             loopTransport.isActive ? "Stop Section Loop" : "Loop This Section"
           }
