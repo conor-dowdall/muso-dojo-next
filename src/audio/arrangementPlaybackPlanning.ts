@@ -15,6 +15,25 @@ export interface ArrangementPlaybackRequest {
   start: PartSequenceStartOptions;
 }
 
+function createArrangementSourceSignature(
+  arrangementId: string,
+  mode: Extract<
+    PartSequencePlaybackPlan["mode"],
+    "arrangement" | "arrangement-from-entry" | "arrangement-entry-loop"
+  >,
+  steps: readonly PartSequenceStepPlan[],
+) {
+  return JSON.stringify({
+    owner: arrangementId,
+    mode,
+    steps: steps.map((step) => ({
+      stepId: step.stepId,
+      sourcePartId: step.sourcePartId,
+      arrangement: step.arrangement,
+    })),
+  });
+}
+
 function namespaceStep(
   step: PartSequenceStepPlan,
   namespace: string,
@@ -138,15 +157,11 @@ export function createArrangementPlaybackRequest(
     durationBeats: firstSection.backingBand.countInBeats,
     pulses: firstSection.backingBand.countInBeats,
   };
-  const sourceSignature = JSON.stringify({
-    owner: arrangement.id,
-    mode: "arrangement",
-    steps: steps.map((step) => ({
-      stepId: step.stepId,
-      sourcePartId: step.sourcePartId,
-      arrangement: step.arrangement,
-    })),
-  });
+  const sourceSignature = createArrangementSourceSignature(
+    arrangement.id,
+    "arrangement",
+    steps,
+  );
   const contentSignature = JSON.stringify(
     steps.map(({ stepId, resetSignature }) => ({ stepId, resetSignature })),
   );
@@ -175,6 +190,50 @@ export function createArrangementPlaybackRequest(
   return { plan, start: { startIndex: 0, countIn } };
 }
 
+export function createArrangementPlaybackRequestFromEntry(
+  arrangement: ArrangementConfig,
+  entryId: string,
+): ArrangementPlaybackRequest | undefined {
+  const request = createArrangementPlaybackRequest(arrangement);
+  const entry = arrangement.entries.find(({ id }) => id === entryId);
+  const section = arrangement.sections.find(
+    ({ id }) => id === entry?.sectionId,
+  );
+  const startIndex = request?.plan.parts.findIndex(
+    (step) => step.arrangement?.entryId === entryId,
+  );
+  if (
+    !request ||
+    !entry ||
+    !section ||
+    startIndex === undefined ||
+    startIndex < 0
+  ) {
+    return undefined;
+  }
+
+  const countIn = {
+    durationBeats: section.backingBand.countInBeats,
+    pulses: section.backingBand.countInBeats,
+  };
+  const plan: PartSequencePlaybackPlan = {
+    ...request.plan,
+    countIn,
+    mode: "arrangement-from-entry",
+    signature: `arrangement-from-entry:${request.plan.signature}`,
+    sourceSignature: createArrangementSourceSignature(
+      arrangement.id,
+      "arrangement-from-entry",
+      request.plan.parts,
+    ),
+    updateSignature: `arrangement-from-entry:${request.plan.updateSignature}`,
+  };
+  return {
+    plan,
+    start: { countIn, startIndex },
+  };
+}
+
 export function createArrangementEntryLoopPlaybackRequest(
   arrangement: ArrangementConfig,
   entryId: string,
@@ -199,15 +258,11 @@ export function createArrangementEntryLoopPlaybackRequest(
     durationBeats: section.backingBand.countInBeats,
     pulses: section.backingBand.countInBeats,
   };
-  const sourceSignature = JSON.stringify({
-    owner: arrangement.id,
-    mode: "arrangement-entry-loop",
-    steps: steps.map((step) => ({
-      stepId: step.stepId,
-      sourcePartId: step.sourcePartId,
-      arrangement: step.arrangement,
-    })),
-  });
+  const sourceSignature = createArrangementSourceSignature(
+    arrangement.id,
+    "arrangement-entry-loop",
+    steps,
+  );
   const contentSignature = JSON.stringify(
     steps.map(({ stepId, resetSignature }) => ({ stepId, resetSignature })),
   );

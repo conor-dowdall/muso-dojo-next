@@ -45,6 +45,7 @@ export {
 } from "./partSequencePlanning";
 export {
   createArrangementPlaybackRequest,
+  createArrangementPlaybackRequestFromEntry,
   createArrangementEntryLoopPlaybackRequest,
   type ArrangementPlaybackRequest,
 } from "./arrangementPlaybackPlanning";

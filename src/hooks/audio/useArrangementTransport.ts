@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import {
   createArrangementEntryLoopPlaybackRequest,
   createArrangementPlaybackRequest,
+  createArrangementPlaybackRequestFromEntry,
   ensureAudioReady,
   getPartSequencePlanReconciliation,
   partSequenceCoordinator,
@@ -32,12 +33,22 @@ export function useArrangementTransport(arrangementId: string) {
       ? (snapshot.activeArrangementContext?.entryId ??
         snapshot.pendingArrangementContext?.entryId)
       : undefined;
+  const fromEntryId =
+    snapshot.playing &&
+    snapshot.owner?.kind === "arrangement" &&
+    snapshot.owner.id === arrangementId &&
+    snapshot.mode === "arrangement-from-entry"
+      ? (snapshot.activeArrangementContext?.entryId ??
+        snapshot.pendingArrangementContext?.entryId)
+      : undefined;
   const request = useMemo(
     () =>
       arrangement && entryLoopId
         ? createArrangementEntryLoopPlaybackRequest(arrangement, entryLoopId)
-        : fullRequest,
-    [arrangement, entryLoopId, fullRequest],
+        : arrangement && fromEntryId
+          ? createArrangementPlaybackRequestFromEntry(arrangement, fromEntryId)
+          : fullRequest,
+    [arrangement, entryLoopId, fromEntryId, fullRequest],
   );
   const isActive =
     snapshot.playing &&

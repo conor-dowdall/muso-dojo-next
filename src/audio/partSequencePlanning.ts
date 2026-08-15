@@ -70,7 +70,12 @@ export interface PartSequencePlaybackPlan {
   completionPolicy?: PlaybackCompletionPolicy;
   countIn: BeatTransportCountIn;
   contentSignature: string;
-  mode: "session" | "part-loop" | "arrangement" | "arrangement-entry-loop";
+  mode:
+    | "session"
+    | "part-loop"
+    | "arrangement"
+    | "arrangement-from-entry"
+    | "arrangement-entry-loop";
   owner?: PlaybackSequenceOwner;
   partResetSignatures: readonly string[];
   parts: readonly PartSequenceStepPlan[];

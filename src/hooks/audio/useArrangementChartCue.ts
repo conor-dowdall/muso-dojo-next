@@ -43,6 +43,12 @@ function targetsMatch(
   );
 }
 
+function isArrangementSequenceMode(
+  mode: PartSequencePlaybackPlan["mode"] | undefined,
+) {
+  return mode === "arrangement" || mode === "arrangement-from-entry";
+}
+
 export function useArrangementChartCue(
   plan: PartSequencePlaybackPlan | undefined,
   fallback: { entryId: string; sectionId: string } | undefined,
@@ -68,7 +74,7 @@ export function useArrangementChartCue(
 
   useEffect(() => {
     const nextEntryId =
-      snapshot.playing && snapshot.mode === "arrangement"
+      snapshot.playing && isArrangementSequenceMode(snapshot.mode)
         ? activeContext?.entryId
         : undefined;
     if (nextEntryId === sectionRun.entryId) return;
@@ -110,7 +116,11 @@ export function useArrangementChartCue(
   }, [plan, sectionRun.startedAt, snapshot]);
 
   useEffect(() => {
-    if (!snapshot.playing || snapshot.mode !== "arrangement" || !target) {
+    if (
+      !snapshot.playing ||
+      !isArrangementSequenceMode(snapshot.mode) ||
+      !target
+    ) {
       return;
     }
     if (targetsMatch(visibleTarget.current, target)) {
@@ -123,7 +133,7 @@ export function useArrangementChartCue(
       const live = partSequenceCoordinator.getSnapshot();
       if (
         live.playing &&
-        live.mode === "arrangement" &&
+        isArrangementSequenceMode(live.mode) &&
         live.sourceSignature === target.sourceSignature &&
         live.tempoSignature === target.tempoSignature &&
         live.activeOccurrence === target.fromOccurrence &&
@@ -149,7 +159,7 @@ export function useArrangementChartCue(
     target &&
     targetsMatch(upcoming, target) &&
     snapshot.playing &&
-    snapshot.mode === "arrangement" &&
+    isArrangementSequenceMode(snapshot.mode) &&
     snapshot.activeArrangementContext?.entryId !== upcoming.entryId
   ) {
     return {

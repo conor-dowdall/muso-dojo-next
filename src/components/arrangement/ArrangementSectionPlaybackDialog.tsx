@@ -1,23 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Disc3, Gauge } from "lucide-react";
+import { Disc3, Gauge, ListVideo, Repeat2, Square } from "lucide-react";
 import { partSequenceCoordinator } from "@/audio";
 import { SessionTempoEditor } from "@/components/session/SessionTempoEditor";
-import { Button } from "@/components/ui/buttons/Button";
-import {
-  DialogFooter,
-  DialogFooterActionBar,
-  DialogFooterActionGroup,
-} from "@/components/ui/dialog/Dialog";
 import {
   DisclosureList,
+  DisclosureListAction,
   DisclosureListChoice,
   DisclosureListGroup,
   DisclosureListItem,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { ObjectMenuDialog } from "@/components/ui/object-menu";
+import { Heading } from "@/components/ui/typography/Heading";
 import { useArrangementEntryLoopTransport } from "@/hooks/audio/useArrangementEntryLoopTransport";
+import { useArrangementPlayFromEntryTransport } from "@/hooks/audio/useArrangementPlayFromEntryTransport";
 import { useAppStore } from "@/stores/appStore";
 
 export function ArrangementSectionPlaybackDialog({
@@ -39,6 +36,10 @@ export function ArrangementSectionPlaybackDialog({
     (state) => state.setArrangementEntryTempoOverrideBpm,
   );
   const loopTransport = useArrangementEntryLoopTransport(
+    arrangementId,
+    entryId,
+  );
+  const playFromHereTransport = useArrangementPlayFromEntryTransport(
     arrangementId,
     entryId,
   );
@@ -65,24 +66,6 @@ export function ArrangementSectionPlaybackDialog({
 
   return (
     <ObjectMenuDialog
-      footer={
-        <DialogFooter>
-          <DialogFooterActionBar ariaLabel="Section playback actions">
-            <DialogFooterActionGroup placement="secondary">
-              <Button
-                disabled={!loopTransport.canPlay}
-                label={loopTransport.isActive ? "Stop" : "Loop This Section"}
-                selected={loopTransport.isActive}
-                size="lg"
-                onClick={loopTransport.togglePlayback}
-              />
-            </DialogFooterActionGroup>
-            <DialogFooterActionGroup placement="primary">
-              <Button label="Close" size="lg" onClick={onClose} />
-            </DialogFooterActionGroup>
-          </DialogFooterActionBar>
-        </DialogFooter>
-      }
       icon={<Disc3 />}
       isOpen={isOpen}
       size="standard"
@@ -122,6 +105,41 @@ export function ArrangementSectionPlaybackDialog({
             />
           ) : null}
         </DisclosureListItem>
+      </DisclosureListGroup>
+      <DisclosureListGroup aria-label="Playback" role="group">
+        <Heading as="h3" size="xs" variant="muted">
+          Playback
+        </Heading>
+        <DisclosureListAction
+          aria-label={
+            playFromHereTransport.isActive
+              ? "Stop Arrangement"
+              : `Play Arrangement from Section ${sectionNumber}`
+          }
+          disabled={!playFromHereTransport.canPlay}
+          icon={playFromHereTransport.isActive ? <Square /> : <ListVideo />}
+          label={
+            playFromHereTransport.isActive
+              ? "Stop Arrangement"
+              : "Play From Here"
+          }
+          selected={playFromHereTransport.isActive}
+          onClick={playFromHereTransport.togglePlayback}
+        />
+        <DisclosureListAction
+          aria-label={
+            loopTransport.isActive
+              ? "Stop Section Loop"
+              : `Loop Section ${sectionNumber}`
+          }
+          disabled={!loopTransport.canPlay}
+          icon={loopTransport.isActive ? <Square /> : <Repeat2 />}
+          label={
+            loopTransport.isActive ? "Stop Section Loop" : "Loop This Section"
+          }
+          selected={loopTransport.isActive}
+          onClick={loopTransport.togglePlayback}
+        />
       </DisclosureListGroup>
     </ObjectMenuDialog>
   );

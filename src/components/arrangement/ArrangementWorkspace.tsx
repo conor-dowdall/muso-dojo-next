@@ -83,9 +83,10 @@ export function ArrangementWorkspace({
   const [openSessionEntryId, setOpenSessionEntryId] = useState<
     string | undefined
   >();
-  const [openPlaybackEntryId, setOpenPlaybackEntryId] = useState<
+  const [playbackDialogEntryId, setPlaybackDialogEntryId] = useState<
     string | undefined
   >();
+  const [playbackDialogOpen, setPlaybackDialogOpen] = useState(false);
   const chartTileRefs = useRef(new Map<string, HTMLLIElement>());
   const cardRefs = useRef(new Map<string, HTMLElement>());
   const transport = useArrangementTransport(arrangementId);
@@ -133,13 +134,17 @@ export function ArrangementWorkspace({
   const defaultSession = Object.values(sessions).find(
     ({ parts }) => parts.length > 0,
   );
+  const openPlaybackEntryIndex = arrangement.entries.findIndex(
+    ({ id }) => id === playbackDialogEntryId,
+  );
+  const openPlaybackEntry = arrangement.entries[openPlaybackEntryIndex];
   const stopForMutation = () => {
     if (transport.isActive) partSequenceCoordinator.stop();
   };
   const selectNewEntry = (entryId: string) => {
     setSelectedEntryId(entryId);
     setOpenSessionEntryId(undefined);
-    setOpenPlaybackEntryId(undefined);
+    setPlaybackDialogOpen(false);
     globalThis.setTimeout(() => {
       cardRefs.current
         .get(entryId)
@@ -154,7 +159,7 @@ export function ArrangementWorkspace({
     actions.removeEntry(arrangementId, entryId);
     if (selectedEntryId === entryId) setSelectedEntryId(nextSelection);
     if (openSessionEntryId === entryId) setOpenSessionEntryId(undefined);
-    if (openPlaybackEntryId === entryId) setOpenPlaybackEntryId(undefined);
+    if (playbackDialogEntryId === entryId) setPlaybackDialogOpen(false);
     globalThis.setTimeout(() => {
       const target = Array.from(
         document.querySelectorAll<HTMLButtonElement>(
@@ -267,7 +272,8 @@ export function ArrangementWorkspace({
                               size="sm"
                               onClick={() => {
                                 setSelectedEntryId(entry.id);
-                                setOpenPlaybackEntryId(entry.id);
+                                setPlaybackDialogEntryId(entry.id);
+                                setPlaybackDialogOpen(true);
                               }}
                             />
                             <ControlHeaderCluster
@@ -315,8 +321,8 @@ export function ArrangementWorkspace({
                                 size="sm"
                                 onClick={() => {
                                   stopForMutation();
-                                  if (openPlaybackEntryId === entry.id) {
-                                    setOpenPlaybackEntryId(undefined);
+                                  if (playbackDialogEntryId === entry.id) {
+                                    setPlaybackDialogOpen(false);
                                   }
                                   const id = actions.cloneEntry(
                                     arrangementId,
@@ -411,17 +417,21 @@ export function ArrangementWorkspace({
                           {sourceSession.name} has no Parts to update
                         </Text>
                       ) : null}
-                      <ArrangementSectionPlaybackDialog
-                        arrangementId={arrangementId}
-                        entryId={entry.id}
-                        isOpen={openPlaybackEntryId === entry.id}
-                        sectionNumber={formattedSectionNumber}
-                        onClose={() => setOpenPlaybackEntryId(undefined)}
-                      />
                     </section>
                   );
                 })}
               </div>
+            ) : null}
+
+            {openPlaybackEntry ? (
+              <ArrangementSectionPlaybackDialog
+                key={openPlaybackEntry.id}
+                arrangementId={arrangementId}
+                entryId={openPlaybackEntry.id}
+                isOpen={playbackDialogOpen}
+                sectionNumber={formatSectionNumber(openPlaybackEntryIndex)}
+                onClose={() => setPlaybackDialogOpen(false)}
+              />
             ) : null}
 
             {arrangement.entries.length === 0 ? (

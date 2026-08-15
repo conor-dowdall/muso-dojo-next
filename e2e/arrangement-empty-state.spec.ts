@@ -154,6 +154,18 @@ test("Section playback options persist independent tempo overrides", async ({
     firstDialog.getByText("Arrangement Tempo · 80 BPM"),
   ).toBeVisible();
   await firstDialog
+    .getByRole("button", { name: "Play Arrangement from Section 01" })
+    .click();
+  await expect(
+    firstDialog.getByRole("button", { name: "Stop Arrangement" }),
+  ).toBeVisible();
+  await firstDialog.getByRole("button", { name: "Stop Arrangement" }).click();
+  await firstDialog.getByRole("button", { name: "Loop Section 01" }).click();
+  await expect(
+    firstDialog.getByRole("button", { name: "Stop Section Loop" }),
+  ).toBeVisible();
+  await firstDialog.getByRole("button", { name: "Stop Section Loop" }).click();
+  await firstDialog
     .getByRole("button", { name: /^Tempo for Section 01/ })
     .click();
   await firstDialog.getByRole("button", { name: /^Override/ }).click();

@@ -144,4 +144,21 @@ describe("deriveArrangementChartCueTarget", () => {
       }),
     ).toMatchObject({ boundaryTime: 16, sectionId: "b" });
   });
+
+  it("continues Chart cues for Play From Here transport", () => {
+    const plan = createPlan(["a", "b"]);
+    plan.mode = "arrangement-from-entry";
+    const snapshot = {
+      ...createSnapshot(plan),
+      mode: "arrangement-from-entry" as const,
+    };
+
+    expect(
+      deriveArrangementChartCueTarget({
+        plan,
+        snapshot,
+        currentSectionStartedAt: 10,
+      }),
+    ).toMatchObject({ entryId: "entry-b", sectionId: "b" });
+  });
 });
