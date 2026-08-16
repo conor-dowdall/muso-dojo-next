@@ -653,10 +653,7 @@ describe("PartSequenceCoordinator", () => {
     const plan = {
       ...basePlan,
       completionPolicy: "stop-at-end" as const,
-      parts: [
-        basePlan.parts[0]!,
-        { ...basePlan.parts[1]!, durationBeats: 1 },
-      ],
+      parts: [basePlan.parts[0]!, { ...basePlan.parts[1]!, durationBeats: 1 }],
     };
 
     await coordinator.start(plan);
