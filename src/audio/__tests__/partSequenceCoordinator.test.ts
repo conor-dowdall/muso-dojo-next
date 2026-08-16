@@ -647,6 +647,30 @@ describe("PartSequenceCoordinator", () => {
     expect(coordinator.getSnapshot().playing).toBe(false);
   });
 
+  it("registers a queued final Part boundary before its visual handoff", async () => {
+    const { coordinator, stopPartPlayback } = createHarness();
+    const basePlan = createPlan();
+    const plan = {
+      ...basePlan,
+      completionPolicy: "stop-at-end" as const,
+      parts: [
+        basePlan.parts[0]!,
+        { ...basePlan.parts[1]!, durationBeats: 1 },
+      ],
+    };
+
+    await coordinator.start(plan);
+    await vi.advanceTimersByTimeAsync(2_830);
+
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 0,
+      pendingIndex: 1,
+    });
+    expect(stopPartPlayback).toHaveBeenCalledWith("part-sequence", {
+      atTime: 15.08,
+    });
+  });
+
   it("keeps one parent-bar Rhythm running through a fractional Part handoff", async () => {
     const { coordinator, startPart } = createHarness();
 

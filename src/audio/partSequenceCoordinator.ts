@@ -299,12 +299,14 @@ export class PartSequenceCoordinator {
   }
 
   private commitPart({
+    boundaryRegistered = false,
     occurrence,
     originTime,
     plan,
     resetTimeline = false,
     revision,
   }: {
+    boundaryRegistered?: boolean;
     occurrence: number;
     originTime?: number;
     plan: PartSequencePlaybackPlan;
@@ -362,6 +364,7 @@ export class PartSequenceCoordinator {
     };
     this.emit();
     this.scheduleNextPart({
+      boundaryRegistered,
       occurrence,
       plan,
       revision,
@@ -369,10 +372,12 @@ export class PartSequenceCoordinator {
   }
 
   private scheduleNextPart({
+    boundaryRegistered = false,
     occurrence,
     plan,
     revision,
   }: {
+    boundaryRegistered?: boolean;
     occurrence: number;
     plan: PartSequencePlaybackPlan;
     revision: number;
@@ -395,7 +400,7 @@ export class PartSequenceCoordinator {
         (this.snapshot.originTime === undefined
           ? undefined
           : this.snapshot.originTime + durationSeconds);
-      if (endTime !== undefined) {
+      if (endTime !== undefined && !boundaryRegistered) {
         // Register the finite boundary with the audio engine before the
         // lookahead schedulers can queue a hit on the next downbeat.
         this.transport.stopPartPlayback("part-sequence", {
@@ -541,6 +546,25 @@ export class PartSequenceCoordinator {
     }
 
     const startedOriginTime = result.originTime ?? originTime;
+    const isFinalFinitePart =
+      plan.completionPolicy === "stop-at-end" &&
+      occurrence + 1 >= getPartSequencePlaybackPartCount(plan);
+    const finalBoundaryTime =
+      isFinalFinitePart && startedOriginTime !== undefined
+        ? startedOriginTime + getStepDurationSeconds(part)
+        : undefined;
+    const boundaryRegistered = finalBoundaryTime !== undefined;
+
+    if (finalBoundaryTime !== undefined) {
+      const releaseSeconds = getStepReleaseSeconds(part);
+      // Audio for a handoff is queued ahead of its visual commit. Register a
+      // finite boundary at the same time so a delayed main-thread commit can
+      // never expose the first attack of the Rhythm's next cycle.
+      this.transport.stopPartPlayback("part-sequence", {
+        atTime: finalBoundaryTime,
+        ...(releaseSeconds > 0 ? { releaseSeconds } : {}),
+      });
+    }
     const currentTime = this.transport.getCurrentTime();
     const shouldCommitLater =
       handoff &&
@@ -550,6 +574,7 @@ export class PartSequenceCoordinator {
 
     if (!shouldCommitLater) {
       this.commitPart({
+        boundaryRegistered,
         occurrence,
         originTime: startedOriginTime,
         plan,
@@ -562,6 +587,7 @@ export class PartSequenceCoordinator {
     this.timer = globalThis.setTimeout(
       () =>
         this.commitPart({
+          boundaryRegistered,
           occurrence,
           originTime: startedOriginTime,
           plan,
