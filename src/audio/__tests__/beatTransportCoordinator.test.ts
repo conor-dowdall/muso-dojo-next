@@ -108,8 +108,10 @@ function createHarness({
 
   return {
     exercise,
+    exerciseEngine,
     countInAudio,
     rhythm,
+    rhythmEngine,
     setCurrentTime: (value: number) => {
       currentTime = value;
     },
@@ -264,6 +266,25 @@ describe("BeatTransportCoordinator", () => {
       group: "count-in",
       startTime: 13.08,
     });
+
+    transport.stopPartPlayback();
+    expect(countInAudio.cancelPlaybackGroup).toHaveBeenCalledWith("count-in");
+  });
+
+  it("keeps a final short Part's count-in when registering its future boundary", async () => {
+    const { countInAudio, transport } = createHarness();
+    const result = await transport.startPart({
+      countIn: { durationBeats: 4, pulses: 4 },
+      rhythms: [createRhythmRequest("one-beat-ending")],
+      source: "part-sequence",
+    });
+
+    transport.stopPartPlayback("part-sequence", {
+      atTime: result.originTime! + 1,
+    });
+
+    expect(countInAudio.scheduleMetronomeClick).toHaveBeenCalledTimes(4);
+    expect(countInAudio.cancelPlaybackGroup).not.toHaveBeenCalled();
 
     transport.stopPartPlayback();
     expect(countInAudio.cancelPlaybackGroup).toHaveBeenCalledWith("count-in");
@@ -488,6 +509,29 @@ describe("BeatTransportCoordinator", () => {
 
     expect(exercise.getSnapshot().playbacks["band-exercise"]).toBeUndefined();
     expect(rhythm.getSnapshot().playbacks["band-rhythm"]).toBeUndefined();
+  });
+
+  it("forwards a musical release to every Part playback layer", async () => {
+    const { exerciseEngine, rhythmEngine, transport } = createHarness();
+    await transport.startPart({
+      exercises: [createExerciseRequest("ending-note")],
+      rhythms: [createRhythmRequest("ending-percussion")],
+      source: "part-sequence",
+    });
+
+    transport.stopPartPlayback("part-sequence", {
+      atTime: 12,
+      releaseSeconds: 1.4,
+    });
+
+    expect(exerciseEngine.cancelPlaybackGroup).toHaveBeenCalledWith(
+      "exercise-0",
+      { atTime: 12, releaseSeconds: 1.4 },
+    );
+    expect(rhythmEngine.cancelPlaybackGroup).toHaveBeenCalledWith("rhythm-0", {
+      atTime: 12,
+      releaseSeconds: 1.4,
+    });
   });
 
   it("cancels pending Part layers when the sequence stops", async () => {

@@ -83,6 +83,7 @@ function createArrangementPlan(
     durationBeats: 4,
     index: 2,
     partId: "ending",
+    releaseSeconds: 1.4,
     resetSignature: "ending-reset",
     stepId: "ending",
     updateSignature: "ending-update",
@@ -383,9 +384,12 @@ describe("PartSequenceCoordinator", () => {
     });
     expect(stopPartPlayback).toHaveBeenLastCalledWith("part-sequence", {
       atTime: 26.08,
+      releaseSeconds: 1.4,
     });
 
     await vi.advanceTimersByTimeAsync(4_000);
+    expect(coordinator.getSnapshot().playing).toBe(true);
+    await vi.advanceTimersByTimeAsync(1_400);
     expect(coordinator.getSnapshot().playing).toBe(false);
   });
 
@@ -449,10 +453,16 @@ describe("PartSequenceCoordinator", () => {
     });
 
     await vi.advanceTimersByTimeAsync(4_000);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 2,
+      activePartId: "ending",
+      playing: true,
+    });
+    await vi.advanceTimersByTimeAsync(1_400);
     expect(startPart).toHaveBeenLastCalledWith(
       expect.objectContaining({
         handoff: true,
-        originTime: 20.08,
+        originTime: expect.closeTo(21.48, 5),
         rhythms: [expect.objectContaining({ id: "rhythm-a" })],
       }),
     );

@@ -150,15 +150,25 @@ describe("createArrangementPlaybackRequest", () => {
     expect(ending.exerciseRequests).toMatchObject([
       {
         countInBeats: 0,
-        events: [{ durationBeats: 4, midi: 38, offsetBeats: 0 }],
+        events: [
+          {
+            durationBeats: 4,
+            gateRatio: 1,
+            midi: 38,
+            offsetBeats: 0,
+            sustainTailSeconds: 1.4,
+            velocity: 0.72,
+          },
+        ],
         metronomeEnabled: false,
         presetId: "bowed-strings",
         tempoBpm: 96,
       },
     ]);
+    expect(ending.releaseSeconds).toBe(1.4);
     expect(ending.rhythmRequests[0]?.pattern.hits).toEqual([
-      { atTicks: 0, sampleId: "kick", velocity: 0.82 },
-      { atTicks: 0, sampleId: "crash", velocity: 0.86 },
+      { atTicks: 0, sampleId: "kick", velocity: 0.8 },
+      { atTicks: 0, sampleId: "crash", velocity: 0.56 },
     ]);
 
     const contentSignature = request.plan.contentSignature;

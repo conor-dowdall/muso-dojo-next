@@ -62,6 +62,7 @@ export interface PartSequenceStepPlan {
   stepId?: string;
   resetSignature: string;
   rhythmRequests: readonly RhythmPlaybackRequest[];
+  releaseSeconds?: number;
   tempoBpm: number;
   updateSignature: string;
 }

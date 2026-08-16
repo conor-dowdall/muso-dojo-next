@@ -3,9 +3,13 @@ import {
   ExercisePlaybackCoordinator,
   isExercisePlaybackActive,
   type ExercisePlaybackAudioEngine,
+  type ExercisePlaybackEvent,
   type ExercisePlaybackRequest,
 } from "@/audio/exercisePlaybackCoordinator";
-import { type LookaheadScheduler } from "@/audio/lookaheadScheduler";
+import {
+  type LookaheadScheduler,
+  type LookaheadSchedulerOptions,
+} from "@/audio/lookaheadScheduler";
 import { type PlaybackGroupHandle } from "@/audio/types";
 
 function createRequest(
@@ -51,7 +55,10 @@ function createHarness(prime: () => Promise<boolean> = async () => true) {
   let groupIndex = 0;
   let stopAllListener: () => void = () => undefined;
   const cancelPlaybackGroup = vi.fn();
+  const scheduleNote = vi.fn();
   const noteSchedulers: LookaheadScheduler[] = [];
+  const noteSchedulerOptions: LookaheadSchedulerOptions<ExercisePlaybackEvent>[] =
+    [];
   const metronomeSchedulers: LookaheadScheduler[] = [];
   const audioEngine: ExercisePlaybackAudioEngine = {
     cancelPlaybackGroup,
@@ -59,7 +66,7 @@ function createHarness(prime: () => Promise<boolean> = async () => true) {
     getCurrentTime: () => currentTime,
     prime,
     scheduleMetronomeClick: vi.fn(() => true),
-    scheduleNote: vi.fn(),
+    scheduleNote,
     subscribeToStopAll: (listener) => {
       stopAllListener = listener;
       return () => undefined;
@@ -67,7 +74,8 @@ function createHarness(prime: () => Promise<boolean> = async () => true) {
   };
   const coordinator = new ExercisePlaybackCoordinator(
     audioEngine,
-    () => {
+    (options) => {
+      noteSchedulerOptions.push(options);
       const scheduler = createScheduler();
       noteSchedulers.push(scheduler);
       return scheduler;
@@ -83,7 +91,9 @@ function createHarness(prime: () => Promise<boolean> = async () => true) {
     cancelPlaybackGroup,
     coordinator,
     metronomeSchedulers,
+    noteSchedulerOptions,
     noteSchedulers,
+    scheduleNote,
     setCurrentTime: (value: number) => {
       currentTime = value;
     },
@@ -105,6 +115,36 @@ describe("ExercisePlaybackCoordinator", () => {
 
     expect(isExercisePlaybackActive(snapshot, "pending")).toBe(true);
     expect(isExercisePlaybackActive(snapshot, "other")).toBe(false);
+  });
+
+  it("honors event-specific note sustain and velocity", async () => {
+    const { coordinator, noteSchedulerOptions, scheduleNote } = createHarness();
+    await coordinator.start(
+      createRequest("ending", {
+        events: [
+          {
+            durationBeats: 2,
+            gateRatio: 1,
+            midi: 48,
+            offsetBeats: 0,
+            stepIndex: 0,
+            sustainTailSeconds: 1.4,
+            velocity: 0.72,
+          },
+        ],
+      }),
+    );
+
+    const options = noteSchedulerOptions[0]!;
+    options.onSchedule(options.events[0]!, 10.08, 0, 0);
+
+    expect(scheduleNote).toHaveBeenCalledWith(
+      expect.objectContaining({
+        durationSeconds: 3.4,
+        midiNote: 48,
+        velocity: 0.72,
+      }),
+    );
   });
 
   it("retires the previous Looper when another starts", async () => {
@@ -283,6 +323,27 @@ describe("ExercisePlaybackCoordinator", () => {
     await vi.advanceTimersByTimeAsync(2_000);
     expect(noteSchedulers[0]?.stop).toHaveBeenCalledOnce();
     expect(coordinator.getSnapshot().playbacks.a).toBeUndefined();
+  });
+
+  it("keeps a scheduled Looper active through an explicit release", async () => {
+    vi.useFakeTimers();
+    const { cancelPlaybackGroup, coordinator } = createHarness();
+    await coordinator.start(createRequest("ending"));
+
+    coordinator.stop("ending", {
+      atTime: 12,
+      releaseSeconds: 1.4,
+      retainActiveThroughRelease: true,
+    });
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
+      atTime: 12,
+      releaseSeconds: 1.4,
+    });
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(coordinator.getSnapshot().playbacks.ending).toBeDefined();
+    await vi.advanceTimersByTimeAsync(1_400);
+    expect(coordinator.getSnapshot().playbacks.ending).toBeUndefined();
   });
 
   it("does not let a scheduled retirement finish a replacement with the same id", async () => {

@@ -95,6 +95,17 @@ function getStepDurationSeconds(
   return step.durationBeats * getSecondsPerBeat(step.tempoBpm);
 }
 
+function getStepReleaseSeconds(
+  step: PartSequencePlaybackPlan["parts"][number],
+) {
+  const releaseSeconds = step.releaseSeconds;
+  return typeof releaseSeconds === "number" &&
+    Number.isFinite(releaseSeconds) &&
+    releaseSeconds > 0
+    ? releaseSeconds
+    : 0;
+}
+
 function getSequenceDurationSeconds(plan: PartSequencePlaybackPlan) {
   return plan.parts
     .slice(0, getPartSequencePlaybackPartCount(plan))
@@ -314,7 +325,9 @@ export class PartSequenceCoordinator {
 
     const durationSeconds = getStepDurationSeconds(part);
     const cycleEndTime =
-      originTime === undefined ? undefined : originTime + durationSeconds;
+      originTime === undefined
+        ? undefined
+        : originTime + durationSeconds + getStepReleaseSeconds(part);
 
     if (
       originTime !== undefined &&
@@ -374,6 +387,9 @@ export class PartSequenceCoordinator {
       const durationSeconds = currentPart
         ? getStepDurationSeconds(currentPart)
         : 0;
+      const releaseSeconds = currentPart
+        ? getStepReleaseSeconds(currentPart)
+        : 0;
       const endTime =
         nextOriginTime ??
         (this.snapshot.originTime === undefined
@@ -384,14 +400,17 @@ export class PartSequenceCoordinator {
         // lookahead schedulers can queue a hit on the next downbeat.
         this.transport.stopPartPlayback("part-sequence", {
           atTime: endTime,
+          ...(releaseSeconds > 0 ? { releaseSeconds } : {}),
         });
       }
+      const completionTime =
+        endTime === undefined ? undefined : endTime + releaseSeconds;
       this.clearTimer();
       this.timer = globalThis.setTimeout(
         () => this.stop({ stopPlayback: endTime === undefined }),
-        endTime === undefined
-          ? durationSeconds * 1000
-          : this.getTimerDelayMilliseconds(endTime),
+        completionTime === undefined
+          ? (durationSeconds + releaseSeconds) * 1000
+          : this.getTimerDelayMilliseconds(completionTime),
       );
       return;
     }
@@ -729,7 +748,8 @@ export class PartSequenceCoordinator {
     const revision = ++this.revision;
     this.plan = plan;
     const durationSeconds = getStepDurationSeconds(part);
-    const cycleEndTime = originTime + durationSeconds;
+    const cycleEndTime =
+      originTime + durationSeconds + getStepReleaseSeconds(part);
     const activePartIsExcludedFromLoop = currentIndex >= playbackPartCount;
 
     if (activePartIsExcludedFromLoop) {

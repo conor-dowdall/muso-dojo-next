@@ -26,6 +26,11 @@ export interface ArrangementPlaybackRequest {
   start: PartSequenceStartOptions;
 }
 
+const ARRANGEMENT_ENDING_NOTE_VELOCITY = 0.72;
+const ARRANGEMENT_ENDING_KICK_VELOCITY = 0.8;
+const ARRANGEMENT_ENDING_CRASH_VELOCITY = 0.56;
+const ARRANGEMENT_ENDING_RELEASE_SECONDS = 1.4;
+
 function createArrangementSourceSignature(
   arrangementId: string,
   mode: Extract<
@@ -157,9 +162,12 @@ function createEndingStep({
       events: [
         {
           durationBeats,
+          gateRatio: 1,
           midi: getArrangementEndingMidi(ending),
           offsetBeats: 0,
           stepIndex: 0,
+          sustainTailSeconds: ARRANGEMENT_ENDING_RELEASE_SECONDS,
+          velocity: ARRANGEMENT_ENDING_NOTE_VELOCITY,
         },
       ],
       id: `${stepId}:note`,
@@ -171,8 +179,16 @@ function createEndingStep({
   const endingPattern: RhythmPattern = {
     cycleTicks: durationBeats * RHYTHM_PPQ,
     hits: [
-      { atTicks: 0, sampleId: "kick" as const, velocity: 0.82 },
-      { atTicks: 0, sampleId: "crash" as const, velocity: 0.86 },
+      {
+        atTicks: 0,
+        sampleId: "kick" as const,
+        velocity: ARRANGEMENT_ENDING_KICK_VELOCITY,
+      },
+      {
+        atTicks: 0,
+        sampleId: "crash" as const,
+        velocity: ARRANGEMENT_ENDING_CRASH_VELOCITY,
+      },
     ],
     meter: { beatUnit: 4, beats: durationBeats },
     ppq: RHYTHM_PPQ,
@@ -205,6 +221,7 @@ function createEndingStep({
     ...signatureInput,
     index,
     partId: stepId,
+    releaseSeconds: ARRANGEMENT_ENDING_RELEASE_SECONDS,
     sourcePartId: finalPart.id,
     stepId,
     resetSignature,
