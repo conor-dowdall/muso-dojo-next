@@ -56,7 +56,7 @@ interface SessionHeaderProps {
 }
 
 type SessionMenuSection = "rename";
-type SessionMenuDestination = "library" | "settings" | "view";
+type SessionMenuDestination = "library" | "settings";
 
 type SessionNameSummary = {
   id: string;
@@ -105,8 +105,6 @@ export function SessionHeader({
   const [isBackingBandDialogOpen, setIsBackingBandDialogOpen] = useState(false);
   const [menuDestination, setMenuDestination] =
     useState<SessionMenuDestination | null>(null);
-  const [viewReturnFocusTo, setViewReturnFocusTo] =
-    useState<HTMLElement | null>(null);
   const [dialogKey, setDialogKey] = useState(0);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
@@ -146,9 +144,6 @@ export function SessionHeader({
     } else if (destination === "settings") {
       setDialogKey((currentKey) => currentKey + 1);
       setIsSettingsDialogOpen(true);
-    } else if (destination === "view") {
-      setViewReturnFocusTo(menuButtonRef.current);
-      setIsViewDialogOpen(true);
     }
   };
 
@@ -162,7 +157,6 @@ export function SessionHeader({
   const openViewDialog = () => {
     setIsMenuOpen(false);
     setOpenMenuSection(null);
-    setViewReturnFocusTo(null);
     setIsViewDialogOpen(true);
   };
   const openSessionsDialog = () => {
@@ -295,14 +289,6 @@ export function SessionHeader({
         returnFocusRef={menuButtonRef}
       >
         <DisclosureListGroup>
-          <DisclosureListAction
-            aria-label={`Choose view. Current: ${viewModeLabel}`}
-            disabled={!hasActiveSession || viewModeTransitionPending}
-            icon={<GalleryThumbnails />}
-            label="View"
-            preview={viewModeLabel}
-            onClick={() => requestMenuHandoff("view")}
-          />
           {activeSessionNameSummary ? (
             <SessionRenameActionItem
               isOpen={openMenuSection === "rename"}
@@ -329,7 +315,6 @@ export function SessionHeader({
       <SessionViewDialog
         canUsePartViews={canUsePartViews}
         isOpen={isViewDialogOpen}
-        returnFocusTo={viewReturnFocusTo}
         viewMode={viewMode}
         onClose={() => setIsViewDialogOpen(false)}
         onSelect={selectViewMode}

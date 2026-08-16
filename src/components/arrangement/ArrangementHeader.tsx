@@ -69,10 +69,8 @@ export function ArrangementHeader({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [menuDestination, setMenuDestination] = useState<
-    "library" | "settings" | "view" | null
+    "library" | "settings" | null
   >(null);
-  const [viewReturnFocusTo, setViewReturnFocusTo] =
-    useState<HTMLElement | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const arrangement = useAppStore((state) => state.arrangements[arrangementId]);
   const arrangements = useAppStore((state) => state.arrangements);
@@ -124,7 +122,6 @@ export function ArrangementHeader({
     setMenuOpen(false);
     setRenameOpen(false);
     setEndingOpen(false);
-    setViewReturnFocusTo(null);
     setViewOpen(true);
   };
   const requestMenuHandoff = (
@@ -139,9 +136,6 @@ export function ArrangementHeader({
       onOpenLibrary(menuButtonRef.current);
     } else if (destination === "settings") {
       setSettingsOpen(true);
-    } else if (destination === "view") {
-      setViewReturnFocusTo(menuButtonRef.current);
-      setViewOpen(true);
     }
   };
 
@@ -248,13 +242,6 @@ export function ArrangementHeader({
         }}
       >
         <DisclosureListGroup>
-          <DisclosureListAction
-            aria-label={`Choose view. Current: ${viewModeLabel}`}
-            icon={<GalleryThumbnails />}
-            label="View"
-            preview={viewModeLabel}
-            onClick={() => requestMenuHandoff("view")}
-          />
           <ArrangementEndingDisclosure
             arrangementId={arrangementId}
             isOpen={endingOpen}
@@ -301,7 +288,6 @@ export function ArrangementHeader({
       <ObjectMenuDialog
         icon={<GalleryThumbnails />}
         isOpen={viewOpen}
-        returnFocusTo={viewReturnFocusTo}
         size="compact"
         title="View"
         onClose={() => setViewOpen(false)}
