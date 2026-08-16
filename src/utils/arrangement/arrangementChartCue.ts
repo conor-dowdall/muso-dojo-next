@@ -1,4 +1,6 @@
 import {
+  getPartSequencePartIndex,
+  getPartSequencePlaybackPartCount,
   type PartSequencePlaybackPlan,
   type PartSequenceSnapshot,
 } from "@/audio";
@@ -41,21 +43,22 @@ export function deriveArrangementChartCueTarget({
     activeOccurrence === undefined ||
     cycleEndTime === undefined ||
     !activeEntryId ||
-    plan.parts.length === 0
+    getPartSequencePlaybackPartCount(plan) === 0
   ) {
     return undefined;
   }
 
   let boundaryTime = cycleEndTime;
-  for (let offset = 1; offset <= plan.parts.length; offset += 1) {
+  const playbackPartCount = getPartSequencePlaybackPartCount(plan);
+  for (let offset = 1; offset <= playbackPartCount; offset += 1) {
     const occurrence = activeOccurrence + offset;
     if (
       plan.completionPolicy === "stop-at-end" &&
-      occurrence >= plan.parts.length
+      occurrence >= playbackPartCount
     ) {
       return undefined;
     }
-    const step = plan.parts[occurrence % plan.parts.length];
+    const step = plan.parts[getPartSequencePartIndex(plan, occurrence)];
     const context = step?.arrangement;
     if (!step || !context) return undefined;
 

@@ -77,6 +77,24 @@ describe("Part sequence plan reconciliation", () => {
     ).toBe("update");
   });
 
+  it("updates a live completion-mode change and defers it across a queued handoff", () => {
+    const loopPlan = createPlan({
+      completionPolicy: "loop",
+      loopPartCount: 1,
+      updateSignature: "80:loop",
+    });
+
+    expect(getPartSequencePlanReconciliation(createSnapshot(), loopPlan)).toBe(
+      "update",
+    );
+    expect(
+      getPartSequencePlanReconciliation(
+        createSnapshot({ pendingIndex: 0, pendingKind: "handoff" }),
+        loopPlan,
+      ),
+    ).toBe("defer");
+  });
+
   it("restarts when the active Part reset signature changes", () => {
     expect(
       getPartSequencePlanReconciliation(

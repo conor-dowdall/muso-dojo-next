@@ -20,6 +20,7 @@ import { type SessionWorkspaceViewMode } from "@/types/session-view";
 import { type DojoResourceImportResult } from "@/utils/dojo-backup/dojoResourceImport";
 import {
   type ActiveWorkspaceRef,
+  type ArrangementEndingConfig,
   type ArrangementPlaybackMode,
   type ArrangementWorkspaceViewMode,
 } from "@/types/arrangement";
@@ -138,6 +139,10 @@ export interface ArrangementActions {
   setArrangementPlaybackMode: (
     arrangementId: string,
     mode: ArrangementPlaybackMode,
+  ) => void;
+  setArrangementEnding: (
+    arrangementId: string,
+    ending: ArrangementEndingConfig | undefined,
   ) => void;
   addArrangementSectionFromSession: (
     arrangementId: string,

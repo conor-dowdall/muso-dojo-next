@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Palette } from "lucide-react";
+import { Palette, SlidersHorizontal } from "lucide-react";
 import {
   colorCollections,
   type ColorCollectionKey,
@@ -10,11 +10,11 @@ import { Button } from "@/components/ui/buttons/Button";
 import {
   DisclosureList,
   DisclosureListChoice,
-  DisclosureListChoiceItem,
   DisclosureListItem,
   DisclosureListPanelActions,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
+import { SelectableActionRow } from "@/components/ui/selectable-overflow-row";
 import {
   DEFAULT_NOTE_COLOR_CONFIG,
   NOTE_COLOR_INDEXES,
@@ -231,24 +231,28 @@ export function NoteColorSettings({
             );
           })}
 
-          <DisclosureListChoiceItem
-            ariaLabel={`Choose custom note colors. ${getModeLabel(
-              customConfig.mode,
-            )}.`}
+          <SelectableActionRow
+            actionDisabled={!isCustomSelected}
+            actionIcon={<SlidersHorizontal />}
+            actionLabel="Custom Note Colors settings"
             density="compact"
-            isOpen={isCustomOpen}
-            keepMounted
+            isActionOpen={isCustomOpen}
+            keepPanelMounted
             label="Custom"
             preview={<NoteColorPreview colors={customConfig.colors} />}
             selected={isCustomSelected}
+            selectedAriaLabel={`Custom Note Colors selected. ${getModeLabel(
+              customConfig.mode,
+            )}.`}
+            selectAriaLabel={`Use Custom Note Colors. ${getModeLabel(
+              customConfig.mode,
+            )}.`}
             subtitle={getModeLabel(customConfig.mode)}
-            onToggle={() => {
-              if (isCustomSelected) {
-                setIsCustomEditorOpen((currentValue) => !currentValue);
-                return;
-              }
-
-              setIsCustomEditorOpen(true);
+            onAction={() =>
+              setIsCustomEditorOpen((currentValue) => !currentValue)
+            }
+            onSelect={() => {
+              setIsCustomEditorOpen(false);
               onChange(customConfig);
             }}
           >
@@ -394,7 +398,7 @@ export function NoteColorSettings({
                 </div>
               </div>
             </div>
-          </DisclosureListChoiceItem>
+          </SelectableActionRow>
         </DisclosureList>
 
         <DisclosureListPanelActions>

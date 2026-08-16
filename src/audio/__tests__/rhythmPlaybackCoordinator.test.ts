@@ -201,6 +201,27 @@ describe("RhythmPlaybackCoordinator", () => {
     expect(coordinator.getSnapshot().playbacks.a).toBeUndefined();
   });
 
+  it("applies an explicit release to a scheduled Rhythm boundary", async () => {
+    vi.useFakeTimers();
+    const { cancelPlaybackGroup, coordinator } = createHarness();
+    await coordinator.start(createRequest("ending"));
+
+    coordinator.stop("ending", {
+      atTime: 12,
+      releaseSeconds: 1.4,
+      retainActiveThroughRelease: true,
+    });
+
+    expect(cancelPlaybackGroup).toHaveBeenCalledWith("group-0", {
+      atTime: 12,
+      releaseSeconds: 1.4,
+    });
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(coordinator.getSnapshot().playbacks.ending).toBeDefined();
+    await vi.advanceTimersByTimeAsync(1_400);
+    expect(coordinator.getSnapshot().playbacks.ending).toBeUndefined();
+  });
+
   it("does not let a scheduled retirement finish a replacement with the same id", async () => {
     vi.useFakeTimers();
     const { coordinator, schedulers } = createHarness();

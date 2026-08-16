@@ -1,9 +1,20 @@
 import {
   type ArrangementConfig,
+  type ArrangementEndingConfig,
   type ArrangementSectionConfig,
 } from "@/types/arrangement";
 import {
+  RHYTHM_PPQ,
+  getRhythmRecipeBarBeatCount,
+  type RhythmPattern,
+} from "@/data/rhythmPresets";
+import { getArrangementEndingMidi } from "@/utils/arrangement/arrangementEnding";
+import { resolvePartBackingBand } from "@/utils/music-part/resolvePartBackingBand";
+import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
+import {
   createPartSequencePlaybackPlan,
+  createPartSequenceStepResetSignature,
+  createPartSequenceStepUpdateSignature,
   createPartSequenceTempoSignature,
   type PartSequencePlaybackPlan,
   type PartSequenceStartOptions,
@@ -14,6 +25,11 @@ export interface ArrangementPlaybackRequest {
   plan: PartSequencePlaybackPlan;
   start: PartSequenceStartOptions;
 }
+
+const ARRANGEMENT_ENDING_NOTE_VELOCITY = 0.72;
+const ARRANGEMENT_ENDING_KICK_VELOCITY = 0.8;
+const ARRANGEMENT_ENDING_CRASH_VELOCITY = 0.56;
+const ARRANGEMENT_ENDING_RELEASE_SECONDS = 1.4;
 
 function createArrangementSourceSignature(
   arrangementId: string,
@@ -116,6 +132,104 @@ function createSectionSteps({
   );
 }
 
+function createEndingStep({
+  arrangement,
+  ending,
+  finalSection,
+  index,
+}: {
+  arrangement: ArrangementConfig;
+  ending: ArrangementEndingConfig;
+  finalSection: ArrangementSectionConfig;
+  index: number;
+}): PartSequenceStepPlan {
+  const finalEntryIndex = arrangement.entries.length - 1;
+  const finalEntry = arrangement.entries[finalEntryIndex]!;
+  const finalPart = finalSection.parts.at(-1)!;
+  const tempoBpm = finalEntry.tempoOverrideBpm ?? arrangement.tempoBpm;
+  const resolvedBand = resolvePartBackingBand(
+    finalPart,
+    finalSection.backingBand,
+  );
+  const finalRhythmRecipe = getRhythmSelectionRecipe(
+    resolvedBand.rhythm.selection,
+  );
+  const durationBeats = getRhythmRecipeBarBeatCount(finalRhythmRecipe);
+  const stepId = `${arrangement.id}:ending`;
+  const exerciseRequests = [
+    {
+      countInBeats: 0 as const,
+      events: [
+        {
+          durationBeats,
+          gateRatio: 1,
+          midi: getArrangementEndingMidi(ending),
+          offsetBeats: 0,
+          stepIndex: 0,
+          sustainTailSeconds: ARRANGEMENT_ENDING_RELEASE_SECONDS,
+          velocity: ARRANGEMENT_ENDING_NOTE_VELOCITY,
+        },
+      ],
+      id: `${stepId}:note`,
+      metronomeEnabled: false,
+      presetId: ending.audioPresetId,
+      tempoBpm,
+    },
+  ];
+  const endingPattern: RhythmPattern = {
+    cycleTicks: durationBeats * RHYTHM_PPQ,
+    hits: [
+      {
+        atTicks: 0,
+        sampleId: "kick" as const,
+        velocity: ARRANGEMENT_ENDING_KICK_VELOCITY,
+      },
+      {
+        atTicks: 0,
+        sampleId: "crash" as const,
+        velocity: ARRANGEMENT_ENDING_CRASH_VELOCITY,
+      },
+    ],
+    meter: { beatUnit: 4, beats: durationBeats },
+    ppq: RHYTHM_PPQ,
+  };
+  const rhythmRequests = [
+    {
+      id: `${stepId}:percussion`,
+      pattern: endingPattern,
+      tempoBpm,
+    },
+  ];
+  const signatureInput = {
+    continueRhythm: false,
+    durationBeats,
+    exerciseRequests,
+    rhythmRequests,
+  };
+  const resetSignature = createPartSequenceStepResetSignature(signatureInput);
+  const updateSignature = createPartSequenceStepUpdateSignature(signatureInput);
+
+  return {
+    arrangement: {
+      entryId: finalEntry.id,
+      entryIndex: finalEntryIndex,
+      sectionId: finalSection.id,
+      playIndex: finalEntry.playCount - 1,
+      playCount: finalEntry.playCount,
+      sourcePartId: finalPart.id,
+    },
+    ...signatureInput,
+    index,
+    partId: stepId,
+    releaseSeconds: ARRANGEMENT_ENDING_RELEASE_SECONDS,
+    sourcePartId: finalPart.id,
+    stepId,
+    resetSignature,
+    tempoBpm,
+    updateSignature,
+  };
+}
+
 export function createArrangementPlaybackRequest(
   arrangement: ArrangementConfig,
 ): ArrangementPlaybackRequest | undefined {
@@ -152,6 +266,19 @@ export function createArrangementPlaybackRequest(
       );
     }
   });
+  const loopPartCount = steps.length;
+  if (arrangement.ending) {
+    const finalEntry = arrangement.entries.at(-1)!;
+    const finalSection = sectionById.get(finalEntry.sectionId)!;
+    steps.push(
+      createEndingStep({
+        arrangement,
+        ending: arrangement.ending,
+        finalSection,
+        index: steps.length,
+      }),
+    );
+  }
   const firstSection = sectionById.get(arrangement.entries[0]!.sectionId)!;
   const countIn = {
     durationBeats: firstSection.backingBand.countInBeats,
@@ -176,6 +303,7 @@ export function createArrangementPlaybackRequest(
     countIn,
     contentSignature,
     mode: "arrangement",
+    loopPartCount,
     owner: { kind: "arrangement", id: arrangement.id },
     partResetSignatures: steps.map(({ resetSignature }) => resetSignature),
     parts: steps,

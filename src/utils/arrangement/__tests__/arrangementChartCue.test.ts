@@ -4,6 +4,8 @@ import {
   ARRANGEMENT_CHART_CUE_LEAD_SECONDS,
 } from "@/utils/arrangement/arrangementChartCue";
 import {
+  getPartSequencePartIndex,
+  getPartSequencePlaybackPartCount,
   type PartSequencePlaybackPlan,
   type PartSequenceSnapshot,
 } from "@/audio";
@@ -54,11 +56,11 @@ function createSnapshot(
 ): PartSequenceSnapshot {
   return {
     activeArrangementContext:
-      plan.parts[activeOccurrence % plan.parts.length]?.arrangement,
+      plan.parts[getPartSequencePartIndex(plan, activeOccurrence)]?.arrangement,
     activeOccurrence,
     cycleEndTime: 14,
     mode: "arrangement",
-    partCount: plan.parts.length,
+    partCount: getPartSequencePlaybackPartCount(plan),
     playing: true,
     sourceSignature: plan.sourceSignature,
     tempoSignature: plan.tempoSignature,
@@ -114,6 +116,16 @@ describe("deriveArrangementChartCueTarget", () => {
       deriveArrangementChartCueTarget({
         plan: loop,
         snapshot: createSnapshot(loop, 1),
+        currentSectionStartedAt: 10,
+      })?.sectionId,
+    ).toBe("a");
+
+    const loopWithEnding = createPlan(["a", "b", "ending"], "loop");
+    loopWithEnding.loopPartCount = 2;
+    expect(
+      deriveArrangementChartCueTarget({
+        plan: loopWithEnding,
+        snapshot: createSnapshot(loopWithEnding, 1),
         currentSectionStartedAt: 10,
       })?.sectionId,
     ).toBe("a");

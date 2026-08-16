@@ -74,6 +74,41 @@ function createPlan(): PartSequencePlaybackPlan {
   };
 }
 
+function createArrangementPlan(
+  completionPolicy: "loop" | "stop-at-end",
+): PartSequencePlaybackPlan {
+  const base = createPlan();
+  const ending = {
+    ...base.parts[1]!,
+    durationBeats: 4,
+    index: 2,
+    partId: "ending",
+    releaseSeconds: 1.4,
+    resetSignature: "ending-reset",
+    stepId: "ending",
+    updateSignature: "ending-update",
+  };
+
+  return {
+    ...base,
+    completionPolicy,
+    contentSignature: "arrangement-content",
+    loopPartCount: 2,
+    mode: "arrangement",
+    owner: { kind: "arrangement", id: "arrangement" },
+    partResetSignatures: [
+      base.parts[0]!.resetSignature,
+      base.parts[1]!.resetSignature,
+      ending.resetSignature,
+    ],
+    parts: [...base.parts, ending],
+    sessionId: "arrangement",
+    signature: `arrangement:${completionPolicy}`,
+    sourceSignature: "arrangement-source",
+    updateSignature: `arrangement:${completionPolicy}:update`,
+  };
+}
+
 function createSplitBarPlan(): PartSequencePlaybackPlan {
   return {
     ...createPlan(),
@@ -310,6 +345,136 @@ describe("PartSequenceCoordinator", () => {
     );
   });
 
+  it("turns looping off live, finishes the current pass, and plays the ending", async () => {
+    const { coordinator, startPart, stopPartPlayback } = createHarness();
+    const loopPlan = createArrangementPlan("loop");
+    const finitePlan = createArrangementPlan("stop-at-end");
+
+    await coordinator.start(loopPlan);
+    await vi.advanceTimersByTimeAsync(4_080);
+    await vi.advanceTimersByTimeAsync(2_000);
+    await vi.advanceTimersByTimeAsync(4_080);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 1,
+      activeOccurrence: 3,
+      completionPolicy: "loop",
+      partCount: 2,
+    });
+
+    expect(coordinator.updatePlan(finitePlan)).toBe(true);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 1,
+      activeOccurrence: 1,
+      completionPolicy: "stop-at-end",
+      partCount: 3,
+    });
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        exercises: [expect.objectContaining({ id: "exercise-b" })],
+        handoff: true,
+        originTime: 22.08,
+      }),
+    );
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 2,
+      activePartId: "ending",
+      completionPolicy: "stop-at-end",
+    });
+    expect(stopPartPlayback).toHaveBeenLastCalledWith("part-sequence", {
+      atTime: 26.08,
+      releaseSeconds: 1.4,
+    });
+
+    await vi.advanceTimersByTimeAsync(4_000);
+    expect(coordinator.getSnapshot().playing).toBe(true);
+    await vi.advanceTimersByTimeAsync(1_400);
+    expect(coordinator.getSnapshot().playing).toBe(false);
+  });
+
+  it("turns looping on live and skips an ending that has not started", async () => {
+    const { coordinator, startPart } = createHarness();
+    const finitePlan = createArrangementPlan("stop-at-end");
+    const loopPlan = createArrangementPlan("loop");
+
+    await coordinator.start(finitePlan);
+    await vi.advanceTimersByTimeAsync(4_080);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 1,
+      completionPolicy: "stop-at-end",
+    });
+
+    expect(coordinator.updatePlan(loopPlan)).toBe(true);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 1,
+      completionPolicy: "loop",
+      partCount: 2,
+    });
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        handoff: true,
+        originTime: 16.08,
+        rhythms: [expect.objectContaining({ id: "rhythm-a" })],
+      }),
+    );
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 0,
+      activePartId: "part-a",
+      completionPolicy: "loop",
+      playing: true,
+    });
+  });
+
+  it("finishes an active ending before entering the newly enabled loop", async () => {
+    const { coordinator, startPart } = createHarness();
+    const finitePlan = createArrangementPlan("stop-at-end");
+    const loopPlan = createArrangementPlan("loop");
+
+    await coordinator.start(finitePlan);
+    await vi.advanceTimersByTimeAsync(4_080);
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 2,
+      activePartId: "ending",
+      completionPolicy: "stop-at-end",
+    });
+
+    expect(coordinator.updatePlan(loopPlan)).toBe(true);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 2,
+      activeOccurrence: undefined,
+      activePartId: "ending",
+      completionPolicy: "loop",
+      partCount: 2,
+      playing: true,
+    });
+
+    await vi.advanceTimersByTimeAsync(4_000);
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 2,
+      activePartId: "ending",
+      playing: true,
+    });
+    await vi.advanceTimersByTimeAsync(1_400);
+    expect(startPart).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        handoff: true,
+        originTime: expect.closeTo(21.48, 5),
+        rhythms: [expect.objectContaining({ id: "rhythm-a" })],
+      }),
+    );
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 0,
+      activeOccurrence: 0,
+      activePartId: "part-a",
+      completionPolicy: "loop",
+      playing: true,
+    });
+  });
+
   it("starts an Arrangement from a selected index and stops at its exact end", async () => {
     const { coordinator, startPart, stopPartPlayback } = createHarness();
     const plan = {
@@ -480,6 +645,27 @@ describe("PartSequenceCoordinator", () => {
     expect(coordinator.getSnapshot().playing).toBe(true);
     await vi.advanceTimersByTimeAsync(1);
     expect(coordinator.getSnapshot().playing).toBe(false);
+  });
+
+  it("registers a queued final Part boundary before its visual handoff", async () => {
+    const { coordinator, stopPartPlayback } = createHarness();
+    const basePlan = createPlan();
+    const plan = {
+      ...basePlan,
+      completionPolicy: "stop-at-end" as const,
+      parts: [basePlan.parts[0]!, { ...basePlan.parts[1]!, durationBeats: 1 }],
+    };
+
+    await coordinator.start(plan);
+    await vi.advanceTimersByTimeAsync(2_830);
+
+    expect(coordinator.getSnapshot()).toMatchObject({
+      activeIndex: 0,
+      pendingIndex: 1,
+    });
+    expect(stopPartPlayback).toHaveBeenCalledWith("part-sequence", {
+      atTime: 15.08,
+    });
   });
 
   it("keeps one parent-bar Rhythm running through a fractional Part handoff", async () => {

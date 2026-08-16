@@ -42,6 +42,7 @@ import { type useArrangementTransport } from "@/hooks/audio/useArrangementTransp
 import { type ArrangementWorkspaceViewMode } from "@/types/arrangement";
 import { partSequenceCoordinator } from "@/audio";
 import { ArrangementTempoDialog } from "./ArrangementTempoDialog";
+import { ArrangementEndingDisclosure } from "./ArrangementEndingDisclosure";
 import styles from "./ArrangementWorkspace.module.css";
 
 export function ArrangementHeader({
@@ -63,14 +64,13 @@ export function ArrangementHeader({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
+  const [endingOpen, setEndingOpen] = useState(false);
   const [tempoOpen, setTempoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [menuDestination, setMenuDestination] = useState<
-    "library" | "settings" | "view" | null
+    "library" | "settings" | null
   >(null);
-  const [viewReturnFocusTo, setViewReturnFocusTo] =
-    useState<HTMLElement | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const arrangement = useAppStore((state) => state.arrangements[arrangementId]);
   const arrangements = useAppStore((state) => state.arrangements);
@@ -121,7 +121,7 @@ export function ArrangementHeader({
   const openViewDialog = () => {
     setMenuOpen(false);
     setRenameOpen(false);
-    setViewReturnFocusTo(null);
+    setEndingOpen(false);
     setViewOpen(true);
   };
   const requestMenuHandoff = (
@@ -129,15 +129,13 @@ export function ArrangementHeader({
   ) => {
     setMenuOpen(false);
     setRenameOpen(false);
+    setEndingOpen(false);
     setMenuDestination(destination);
 
     if (destination === "library") {
       onOpenLibrary(menuButtonRef.current);
     } else if (destination === "settings") {
       setSettingsOpen(true);
-    } else if (destination === "view") {
-      setViewReturnFocusTo(menuButtonRef.current);
-      setViewOpen(true);
     }
   };
 
@@ -222,6 +220,7 @@ export function ArrangementHeader({
               aria-label="Arrangement menu"
               onClick={() => {
                 setMenuDestination(null);
+                setEndingOpen(false);
                 setMenuOpen(true);
               }}
             />
@@ -239,15 +238,18 @@ export function ArrangementHeader({
         onClose={() => {
           setMenuOpen(false);
           setRenameOpen(false);
+          setEndingOpen(false);
         }}
       >
         <DisclosureListGroup>
-          <DisclosureListAction
-            aria-label={`Choose view. Current: ${viewModeLabel}`}
-            icon={<GalleryThumbnails />}
-            label="View"
-            preview={viewModeLabel}
-            onClick={() => requestMenuHandoff("view")}
+          <ArrangementEndingDisclosure
+            arrangementId={arrangementId}
+            isOpen={endingOpen}
+            isPlaybackActive={transport.isActive}
+            onToggle={() => {
+              setRenameOpen(false);
+              setEndingOpen((open) => !open);
+            }}
           />
           <InlineRenameActionItem
             ariaLabel={`Rename arrangement. Current name: ${arrangement.name}`}
@@ -266,7 +268,10 @@ export function ArrangementHeader({
             value={arrangement.name}
             onClose={() => setRenameOpen(false)}
             onRename={(name) => renameArrangement(arrangementId, name)}
-            onToggle={() => setRenameOpen((open) => !open)}
+            onToggle={() => {
+              setEndingOpen(false);
+              setRenameOpen((open) => !open);
+            }}
           />
         </DisclosureListGroup>
         <DisclosureListGroup>
@@ -283,7 +288,6 @@ export function ArrangementHeader({
       <ObjectMenuDialog
         icon={<GalleryThumbnails />}
         isOpen={viewOpen}
-        returnFocusTo={viewReturnFocusTo}
         size="compact"
         title="View"
         onClose={() => setViewOpen(false)}

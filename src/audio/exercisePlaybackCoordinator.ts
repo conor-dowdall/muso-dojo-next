@@ -23,9 +23,12 @@ const NOTE_GATE_RATIO = 0.9;
 
 export interface ExercisePlaybackEvent {
   durationBeats: number;
+  gateRatio?: number;
   midi: number;
   offsetBeats: number;
   stepIndex: number;
+  sustainTailSeconds?: number;
+  velocity?: number;
 }
 
 export interface ExercisePlaybackRequest {
@@ -319,31 +322,47 @@ export class ExercisePlaybackCoordinator {
   private stopPlayback(
     id: string,
     playback: ActiveExercisePlayback,
-    options?: { atTime?: number; releaseSeconds?: number },
+    options?: {
+      atTime?: number;
+      releaseSeconds?: number;
+      retainActiveThroughRelease?: boolean;
+    },
   ) {
     if (playback.stopTimer) {
       globalThis.clearTimeout(playback.stopTimer);
       playback.stopTimer = undefined;
     }
 
+    const audioStopOptions = options
+      ? {
+          ...(options.atTime === undefined ? {} : { atTime: options.atTime }),
+          ...(options.releaseSeconds === undefined
+            ? {}
+            : { releaseSeconds: options.releaseSeconds }),
+        }
+      : undefined;
+
     if (options?.atTime !== undefined) {
-      this.cancelGroup(playback.countInGroup, options);
-      this.cancelGroup(playback.metronomeGroup, options);
-      this.cancelGroup(playback.noteGroup, options);
+      this.cancelGroup(playback.countInGroup, audioStopOptions);
+      this.cancelGroup(playback.metronomeGroup, audioStopOptions);
+      this.cancelGroup(playback.noteGroup, audioStopOptions);
       const currentTime = this.audioEngine.getCurrentTime();
 
       if (currentTime !== undefined && options.atTime > currentTime) {
+        const releaseSeconds = options.retainActiveThroughRelease
+          ? Math.max(0, options.releaseSeconds ?? 0)
+          : 0;
         playback.stopTimer = globalThis.setTimeout(
           () => this.finishPlayback(id, playback),
-          Math.max(0, (options.atTime - currentTime) * 1000),
+          Math.max(0, (options.atTime - currentTime + releaseSeconds) * 1000),
         );
         return;
       }
     }
 
-    this.cancelGroup(playback.countInGroup, options);
-    this.cancelGroup(playback.metronomeGroup, options);
-    this.cancelGroup(playback.noteGroup, options);
+    this.cancelGroup(playback.countInGroup, audioStopOptions);
+    this.cancelGroup(playback.metronomeGroup, audioStopOptions);
+    this.cancelGroup(playback.noteGroup, audioStopOptions);
     this.finishPlayback(id, playback);
   }
 
@@ -376,14 +395,33 @@ export class ExercisePlaybackCoordinator {
       events: toSchedulerEvents(request.events, secondsPerBeat),
       getCurrentTime: this.audioEngine.getCurrentTime,
       onSchedule: (scheduledEvent, startTime) => {
+        const requestedGateRatio = scheduledEvent.payload.gateRatio;
+        const gateRatio = Math.min(
+          1,
+          Math.max(
+            0,
+            typeof requestedGateRatio === "number" &&
+              Number.isFinite(requestedGateRatio)
+              ? requestedGateRatio
+              : NOTE_GATE_RATIO,
+          ),
+        );
+        const requestedSustainTailSeconds =
+          scheduledEvent.payload.sustainTailSeconds;
+        const sustainTailSeconds =
+          typeof requestedSustainTailSeconds === "number" &&
+          Number.isFinite(requestedSustainTailSeconds)
+            ? Math.max(0, requestedSustainTailSeconds)
+            : 0;
         this.audioEngine.scheduleNote({
-          durationSeconds: scheduledEvent.duration * NOTE_GATE_RATIO,
+          durationSeconds:
+            scheduledEvent.duration * gateRatio + sustainTailSeconds,
           group,
           midiNote: scheduledEvent.payload.midi,
           presetId: request.presetId,
           startTime,
           use: "exercise",
-          velocity: 0.76,
+          velocity: scheduledEvent.payload.velocity ?? 0.76,
         });
       },
     });
@@ -611,7 +649,14 @@ export class ExercisePlaybackCoordinator {
     return true;
   }
 
-  stop(id?: string, options?: { atTime?: number; releaseSeconds?: number }) {
+  stop(
+    id?: string,
+    options?: {
+      atTime?: number;
+      releaseSeconds?: number;
+      retainActiveThroughRelease?: boolean;
+    },
+  ) {
     const ids = id === undefined ? [...this.active.keys()] : [id];
     this.cancelPendingStart(id);
     ids.forEach((activeId) => {

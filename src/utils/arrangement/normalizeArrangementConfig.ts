@@ -19,6 +19,7 @@ import {
 import { normalizeSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 import { FALLBACK_LAST_MODIFIED } from "@/utils/session/sessionDefaults";
 import { DEFAULT_ARRANGEMENT_NAME } from "@/stores/app-store/entityIds";
+import { normalizeArrangementEndingConfig } from "./arrangementEnding";
 
 function clampInteger(
   value: unknown,
@@ -121,6 +122,7 @@ export function normalizeArrangementConfig(
     (Array.isArray(input.entries) ? input.entries : []).map(normalizeEntry),
   ).filter((entry) => sectionIds.has(entry.sectionId));
   const referencedSectionIds = new Set(entries.map((entry) => entry.sectionId));
+  const ending = normalizeArrangementEndingConfig(input.ending);
 
   return {
     id: normalizeId(input.id, fallbackId),
@@ -128,6 +130,7 @@ export function normalizeArrangementConfig(
     lastModified: normalizeString(input.lastModified) ?? FALLBACK_LAST_MODIFIED,
     tempoBpm: clampInteger(input.tempoBpm, 80, 30, 300),
     playbackMode: normalizePlaybackMode(input.playbackMode),
+    ...(ending ? { ending } : {}),
     sections: sections.filter((section) =>
       referencedSectionIds.has(section.id),
     ),

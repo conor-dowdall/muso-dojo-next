@@ -2,12 +2,14 @@ import {
   MAX_ARRANGEMENT_ENTRY_PLAY_COUNT,
   MIN_ARRANGEMENT_ENTRY_PLAY_COUNT,
   type ArrangementConfig,
+  type ArrangementEndingConfig,
   type ArrangementSectionConfig,
 } from "@/types/arrangement";
 import { type SessionConfig } from "@/types/session";
 import { cloneMusicPartGraph } from "@/utils/arrangement/cloneMusicPartGraph";
 import { createEntityId } from "@/utils/session/createSessionEntities";
 import { normalizeSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
+import { normalizeArrangementEndingConfig } from "@/utils/arrangement/arrangementEnding";
 import {
   createEntityCopyName,
   createUniqueArrangementName,
@@ -202,6 +204,28 @@ export function createArrangementActions(
         arrangements: {
           ...state.arrangements,
           [arrangementId]: touchArrangement(arrangement, { playbackMode }),
+        },
+      }));
+    },
+    setArrangementEnding: (arrangementId, value) => {
+      const arrangement = get().arrangements[arrangementId];
+      if (!arrangement) return;
+
+      const ending: ArrangementEndingConfig | undefined =
+        normalizeArrangementEndingConfig(value);
+      if (JSON.stringify(arrangement.ending) === JSON.stringify(ending)) return;
+
+      let nextArrangement: ArrangementConfig;
+      if (ending) {
+        nextArrangement = touchArrangement(arrangement, { ending });
+      } else {
+        const { ending: _removed, ...withoutEnding } = arrangement;
+        nextArrangement = { ...withoutEnding, lastModified: now() };
+      }
+      set((state) => ({
+        arrangements: {
+          ...state.arrangements,
+          [arrangementId]: nextArrangement,
         },
       }));
     },

@@ -51,6 +51,36 @@ describe("normalizeArrangementConfig", () => {
     expect(normalizeOverride("120")).toBeUndefined();
   });
 
+  it("normalizes an enabled Arrangement ending and leaves missing endings off", () => {
+    expect(
+      normalizeArrangementConfig({
+        ending: {
+          audioPresetId: "bowed-strings",
+          octaveOffset: 1,
+          rootNote: "F#",
+        },
+      }).ending,
+    ).toEqual({
+      audioPresetId: "bowed-strings",
+      octaveOffset: 1,
+      rootNote: "F♯",
+    });
+    expect(
+      normalizeArrangementConfig({
+        ending: {
+          audioPresetId: "invalid",
+          octaveOffset: 100,
+          rootNote: "invalid",
+        },
+      }).ending,
+    ).toEqual({
+      audioPresetId: "acoustic-bass",
+      octaveOffset: -1,
+      rootNote: "C",
+    });
+    expect(normalizeArrangementConfig({})).not.toHaveProperty("ending");
+  });
+
   it("repairs Module collisions across a captured Section graph", () => {
     const arrangement = normalizeArrangementConfig({
       sections: [

@@ -173,7 +173,12 @@ test("Section playback options persist independent tempo overrides", async ({
   await firstDialog
     .getByRole("button", { name: /^Tempo for Section 01/ })
     .click();
-  await firstDialog.getByRole("button", { name: /^Override/ }).click();
+  await firstDialog
+    .getByRole("button", { name: /^Use a Section tempo override/ })
+    .click();
+  await firstDialog
+    .getByRole("button", { name: "Override tempo settings" })
+    .click();
   await firstDialog
     .getByRole("spinbutton", { name: "Exact tempo in beats per minute" })
     .fill("126");
@@ -194,6 +199,9 @@ test("Section playback options persist independent tempo overrides", async ({
   });
   await secondDialog
     .getByRole("button", { name: /^Tempo for Section 02/ })
+    .click();
+  await secondDialog
+    .getByRole("button", { name: "Override tempo settings" })
     .click();
   await secondDialog
     .getByRole("spinbutton", { name: "Exact tempo in beats per minute" })

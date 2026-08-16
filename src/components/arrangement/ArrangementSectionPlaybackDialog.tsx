@@ -1,17 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Disc3, Gauge, Infinity, ListVideo, Square } from "lucide-react";
+import {
+  Disc3,
+  Gauge,
+  Infinity,
+  ListVideo,
+  SlidersHorizontal,
+  Square,
+} from "lucide-react";
 import { partSequenceCoordinator } from "@/audio";
 import { SessionTempoEditor } from "@/components/session/SessionTempoEditor";
 import {
   DisclosureList,
   DisclosureListAction,
-  DisclosureListChoice,
   DisclosureListGroup,
   DisclosureListItem,
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { ObjectMenuDialog } from "@/components/ui/object-menu";
+import { SelectableActionRow } from "@/components/ui/selectable-overflow-row";
 import { useArrangementEntryLoopTransport } from "@/hooks/audio/useArrangementEntryLoopTransport";
 import { useArrangementPlayFromEntryTransport } from "@/hooks/audio/useArrangementPlayFromEntryTransport";
 import { useAppStore } from "@/stores/appStore";
@@ -30,6 +37,7 @@ export function ArrangementSectionPlaybackDialog({
   sectionNumber: string;
 }) {
   const [tempoOpen, setTempoOpen] = useState(false);
+  const [overrideSettingsOpen, setOverrideSettingsOpen] = useState(false);
   const arrangement = useAppStore((state) => state.arrangements[arrangementId]);
   const setTempoOverride = useAppStore(
     (state) => state.setArrangementEntryTempoOverrideBpm,
@@ -58,6 +66,9 @@ export function ArrangementSectionPlaybackDialog({
     }
   };
   const setOverride = (tempoBpm: number | undefined) => {
+    if (tempoBpm === undefined) {
+      setOverrideSettingsOpen(false);
+    }
     if (entry.tempoOverrideBpm === tempoBpm) return;
     stopOwnedPlayback();
     setTempoOverride(arrangementId, entryId, tempoBpm);
@@ -69,7 +80,11 @@ export function ArrangementSectionPlaybackDialog({
       isOpen={isOpen}
       size="standard"
       title={`Playback for Section ${sectionNumber}`}
-      onClose={onClose}
+      onClose={() => {
+        setTempoOpen(false);
+        setOverrideSettingsOpen(false);
+        onClose();
+      }}
     >
       <DisclosureListGroup>
         <DisclosureListItem
@@ -78,31 +93,45 @@ export function ArrangementSectionPlaybackDialog({
           isOpen={tempoOpen}
           label="Tempo"
           preview={`${hasOverride ? "Override" : "Arrangement Tempo"} · ${effectiveTempo} BPM`}
-          onToggle={() => setTempoOpen((open) => !open)}
+          onToggle={() => {
+            if (tempoOpen) setOverrideSettingsOpen(false);
+            setTempoOpen((open) => !open);
+          }}
         >
           <DisclosureList density="compact">
-            <DisclosureListChoice
+            <SelectableActionRow
               label="Arrangement Tempo"
               preview={`${arrangement.tempoBpm} BPM`}
               selected={!hasOverride}
+              selectedAriaLabel={`Arrangement Tempo selected, ${arrangement.tempoBpm} BPM`}
               selectedPreviewKind="current"
-              onClick={() => setOverride(undefined)}
+              selectAriaLabel={`Use Arrangement Tempo, ${arrangement.tempoBpm} BPM`}
+              onSelect={() => setOverride(undefined)}
             />
-            <DisclosureListChoice
+            <SelectableActionRow
+              actionDisabled={!hasOverride}
+              actionIcon={<SlidersHorizontal />}
+              actionLabel="Override tempo settings"
+              isActionOpen={Boolean(hasOverride && overrideSettingsOpen)}
+              keepPanelMounted
               label="Override"
               preview={`${effectiveTempo} BPM`}
               selected={hasOverride}
+              selectedAriaLabel={`Tempo Override selected, ${effectiveTempo} BPM`}
               selectedPreviewKind="current"
-              onClick={() => setOverride(arrangement.tempoBpm)}
-            />
+              selectAriaLabel={`Use a Section tempo override, initially ${arrangement.tempoBpm} BPM`}
+              onAction={() => setOverrideSettingsOpen((open) => !open)}
+              onSelect={() => setOverride(arrangement.tempoBpm)}
+            >
+              {hasOverride ? (
+                <SessionTempoEditor
+                  label={`Tempo (BPM) for Section ${sectionNumber}`}
+                  tempoBpm={entry.tempoOverrideBpm!}
+                  onTempoBpmChange={setOverride}
+                />
+              ) : null}
+            </SelectableActionRow>
           </DisclosureList>
-          {hasOverride ? (
-            <SessionTempoEditor
-              label={`Tempo (BPM) for Section ${sectionNumber}`}
-              tempoBpm={entry.tempoOverrideBpm!}
-              onTempoBpmChange={setOverride}
-            />
-          ) : null}
         </DisclosureListItem>
       </DisclosureListGroup>
       <DisclosureListGroup aria-label="Playback" role="group">

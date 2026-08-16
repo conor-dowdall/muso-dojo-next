@@ -17,6 +17,10 @@
   align-items: stretch;
 }
 
+.row[data-density="compact"] {
+  --selectable-overflow-row-control-size: var(--control-size-lg);
+}
+
 .selectButton {
   --option-button-list-size: var(--selectable-overflow-row-control-size);
 

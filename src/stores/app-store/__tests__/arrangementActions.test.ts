@@ -63,6 +63,11 @@ describe("arrangement app store actions", () => {
     store
       .getState()
       .appendArrangementSectionEntry(arrangementId, capture.sectionId);
+    store.getState().setArrangementEnding(arrangementId, {
+      audioPresetId: "piano",
+      octaveOffset: 0,
+      rootNote: "G",
+    });
 
     const cloneId = store.getState().cloneArrangement(arrangementId)!;
     const source = store.getState().arrangements[arrangementId]!;
@@ -78,6 +83,29 @@ describe("arrangement app store actions", () => {
     expect(new Set(clone.entries.map(({ id }) => id)).size).toBe(2);
     expect(new Set(clone.entries.map(({ sectionId }) => sectionId)).size).toBe(
       1,
+    );
+    expect(clone.ending).toEqual(source.ending);
+  });
+
+  it("stores and removes an independent Arrangement ending", () => {
+    const store = createTestStore();
+    const arrangementId = store.getState().addArrangement();
+    const ending = {
+      audioPresetId: "acoustic-bass" as const,
+      octaveOffset: -1,
+      rootNote: "D" as const,
+    };
+
+    expect(store.getState().arrangements[arrangementId]).not.toHaveProperty(
+      "ending",
+    );
+    store.getState().setArrangementEnding(arrangementId, ending);
+    expect(store.getState().arrangements[arrangementId]?.ending).toEqual(
+      ending,
+    );
+    store.getState().setArrangementEnding(arrangementId, undefined);
+    expect(store.getState().arrangements[arrangementId]).not.toHaveProperty(
+      "ending",
     );
   });
 

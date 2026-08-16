@@ -551,10 +551,22 @@ export class BeatTransportCoordinator {
 
   stopPartPlayback(
     owner: PlaybackOwner = "part-sequence",
-    options?: { atTime?: number },
+    options?: { atTime?: number; releaseSeconds?: number },
   ) {
     this.revision += 1;
-    this.stopCountIn();
+    // A scheduled Part boundary is after its pre-roll, so cancelling the
+    // count-in now would silence "Play From Here" when the selected Part is
+    // also the final Part. Keep the group addressable so an immediate user
+    // stop during the count-in can still cancel it.
+    if (options?.atTime === undefined) {
+      this.stopCountIn();
+    }
+    const layerStopOptions = options
+      ? {
+          ...options,
+          retainActiveThroughRelease: options.releaseSeconds !== undefined,
+        }
+      : undefined;
     this.exercise
       .getPendingIds(owner)
       .forEach((id) => this.exercise.cancelPendingStart(id));
@@ -563,10 +575,10 @@ export class BeatTransportCoordinator {
       .forEach((id) => this.rhythm.cancelPendingStart(id));
     this.exercise
       .getActiveIds(owner)
-      .forEach((id) => this.exercise.stop(id, options));
+      .forEach((id) => this.exercise.stop(id, layerStopOptions));
     this.rhythm
       .getActiveIds(owner)
-      .forEach((id) => this.rhythm.stop(id, options));
+      .forEach((id) => this.rhythm.stop(id, layerStopOptions));
   }
 
   /**

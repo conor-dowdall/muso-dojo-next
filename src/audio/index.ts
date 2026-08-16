@@ -36,6 +36,8 @@ export {
   type ArrangementStepContext,
   createPartSequencePlaybackPlan,
   createSessionPlaybackRequestFromPart,
+  getPartSequencePartIndex,
+  getPartSequencePlaybackPartCount,
   createPartSequenceTempoSignature,
   type PartSequenceStartOptions,
   type PlaybackCompletionPolicy,

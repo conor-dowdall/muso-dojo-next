@@ -317,26 +317,43 @@ export class RhythmPlaybackCoordinator {
   private stopPlayback(
     id: string,
     playback: ActiveRhythmPlayback,
-    atTime?: number,
+    options?: {
+      atTime?: number;
+      releaseSeconds?: number;
+      retainActiveThroughRelease?: boolean;
+    },
   ) {
     if (playback.stopTimer) {
       globalThis.clearTimeout(playback.stopTimer);
       playback.stopTimer = undefined;
     }
 
-    if (atTime !== undefined) {
-      this.audioEngine.cancelPlaybackGroup(playback.group, { atTime });
+    if (options?.atTime !== undefined) {
+      this.audioEngine.cancelPlaybackGroup(playback.group, {
+        atTime: options.atTime,
+        ...(options.releaseSeconds === undefined
+          ? {}
+          : { releaseSeconds: options.releaseSeconds }),
+      });
       const currentTime = this.audioEngine.getCurrentTime();
-      if (currentTime !== undefined && atTime > currentTime) {
+      if (currentTime !== undefined && options.atTime > currentTime) {
+        const releaseSeconds = options.retainActiveThroughRelease
+          ? Math.max(0, options.releaseSeconds ?? 0)
+          : 0;
         playback.stopTimer = globalThis.setTimeout(
           () => this.finishPlayback(id, playback),
-          Math.max(0, (atTime - currentTime) * 1000),
+          Math.max(0, (options.atTime - currentTime + releaseSeconds) * 1000),
         );
         return;
       }
     }
 
-    this.audioEngine.cancelPlaybackGroup(playback.group);
+    this.audioEngine.cancelPlaybackGroup(
+      playback.group,
+      options?.releaseSeconds === undefined
+        ? undefined
+        : { releaseSeconds: options.releaseSeconds },
+    );
     this.finishPlayback(id, playback);
   }
 
@@ -429,7 +446,7 @@ export class RhythmPlaybackCoordinator {
       this.stopPlayback(
         id,
         playback,
-        replacementTime > currentTime ? replacementTime : undefined,
+        replacementTime > currentTime ? { atTime: replacementTime } : undefined,
       ),
     );
 
@@ -461,13 +478,20 @@ export class RhythmPlaybackCoordinator {
     return true;
   }
 
-  stop(id?: string, options?: { atTime?: number }) {
+  stop(
+    id?: string,
+    options?: {
+      atTime?: number;
+      releaseSeconds?: number;
+      retainActiveThroughRelease?: boolean;
+    },
+  ) {
     const ids = id === undefined ? [...this.active.keys()] : [id];
     this.cancelPendingStart(id);
     ids.forEach((activeId) => {
       const playback = this.active.get(activeId);
       if (playback) {
-        this.stopPlayback(activeId, playback, options?.atTime);
+        this.stopPlayback(activeId, playback, options);
       }
     });
   }

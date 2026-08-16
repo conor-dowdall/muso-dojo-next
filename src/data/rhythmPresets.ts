@@ -1287,6 +1287,10 @@ function getRepeatedSimpleBarBeatCount(
     : undefined;
 }
 
+export function getRhythmRecipeBarBeatCount(recipe: RhythmRecipe) {
+  return getRepeatedSimpleBarBeatCount(recipe) ?? recipe.beats;
+}
+
 function getRhythmSubdivisionCountPerBeat(timekeeper: RhythmTimekeeperRecipe) {
   if (timekeeper.feel === "off") {
     return 0;

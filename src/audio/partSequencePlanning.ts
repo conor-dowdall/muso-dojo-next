@@ -62,6 +62,7 @@ export interface PartSequenceStepPlan {
   stepId?: string;
   resetSignature: string;
   rhythmRequests: readonly RhythmPlaybackRequest[];
+  releaseSeconds?: number;
   tempoBpm: number;
   updateSignature: string;
 }
@@ -77,6 +78,8 @@ export interface PartSequencePlaybackPlan {
     | "arrangement"
     | "arrangement-from-entry"
     | "arrangement-entry-loop";
+  /** Prefix of `parts` that repeats when completionPolicy is `loop`. */
+  loopPartCount?: number;
   owner?: PlaybackSequenceOwner;
   partResetSignatures: readonly string[];
   parts: readonly PartSequenceStepPlan[];
@@ -87,6 +90,38 @@ export interface PartSequencePlaybackPlan {
   tempoBpm: number;
   tempoSignature: string;
   updateSignature: string;
+}
+
+export function getPartSequenceLoopPartCount(
+  plan: Pick<PartSequencePlaybackPlan, "loopPartCount" | "parts">,
+) {
+  return Math.min(
+    plan.parts.length,
+    Math.max(0, Math.round(plan.loopPartCount ?? plan.parts.length)),
+  );
+}
+
+export function getPartSequencePlaybackPartCount(
+  plan: Pick<
+    PartSequencePlaybackPlan,
+    "completionPolicy" | "loopPartCount" | "parts"
+  >,
+) {
+  return plan.completionPolicy === "stop-at-end"
+    ? plan.parts.length
+    : getPartSequenceLoopPartCount(plan);
+}
+
+export function getPartSequencePartIndex(
+  plan: Pick<
+    PartSequencePlaybackPlan,
+    "completionPolicy" | "loopPartCount" | "parts"
+  >,
+  occurrence: number,
+) {
+  return plan.completionPolicy === "stop-at-end"
+    ? occurrence
+    : occurrence % getPartSequenceLoopPartCount(plan);
 }
 
 export interface PartSequencePlaybackPlanOptions {
@@ -293,7 +328,7 @@ function createRhythmResetSignature(request: RhythmPlaybackRequest) {
   };
 }
 
-function createPartResetSignature({
+export function createPartSequenceStepResetSignature({
   continueRhythm,
   durationBeats,
   exerciseRequests,
@@ -310,7 +345,7 @@ function createPartResetSignature({
   });
 }
 
-function createPartUpdateSignature({
+export function createPartSequenceStepUpdateSignature({
   continueRhythm,
   durationBeats,
   exerciseRequests,
@@ -503,8 +538,8 @@ export function createPartSequencePlaybackPlan(
       partId: part.id,
       sourcePartId: part.id,
       stepId: part.id,
-      resetSignature: createPartResetSignature(signatureInput),
-      updateSignature: createPartUpdateSignature(signatureInput),
+      resetSignature: createPartSequenceStepResetSignature(signatureInput),
+      updateSignature: createPartSequenceStepUpdateSignature(signatureInput),
     };
   });
   const contentSignature = createContentSignature(parts);
