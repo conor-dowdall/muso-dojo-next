@@ -2,7 +2,10 @@
 
 import { type ComponentPropsWithoutRef, type ReactNode, useId } from "react";
 import { MoreHorizontal } from "lucide-react";
-import { OptionButton } from "@/components/ui/buttons/OptionButton";
+import {
+  OptionButton,
+  type OptionButtonProps,
+} from "@/components/ui/buttons/OptionButton";
 import {
   DisclosureListPanel,
   type DisclosureListPanelVariant,
@@ -27,6 +30,7 @@ export interface SelectableActionRowProps {
   actionSize?: IconButtonProps["size"];
   actionVariant?: IconButtonProps["variant"];
   children?: ReactNode;
+  density?: OptionButtonProps["density"];
   icon?: ReactNode;
   isActionOpen?: boolean;
   keepPanelMounted?: boolean;
@@ -36,6 +40,7 @@ export interface SelectableActionRowProps {
   panelContentClassName?: string;
   panelId?: string;
   panelVariant?: DisclosureListPanelVariant;
+  preview?: ReactNode;
   selected: boolean;
   selectedAriaCurrent?: ComponentPropsWithoutRef<"button">["aria-current"];
   selectAriaLabel: string;
@@ -62,9 +67,10 @@ export function SelectableActionRow({
   actionIcon,
   actionLabel,
   actionSelected,
-  actionSize = "xl",
+  actionSize,
   actionVariant,
   children,
+  density,
   icon,
   isActionOpen = false,
   keepPanelMounted = false,
@@ -74,6 +80,7 @@ export function SelectableActionRow({
   panelContentClassName,
   panelId,
   panelVariant = "menu",
+  preview,
   selected,
   selectedAriaCurrent,
   selectAriaLabel,
@@ -90,6 +97,8 @@ export function SelectableActionRow({
     actionLabel !== undefined &&
     onAction !== undefined;
   const hasPanel = children !== undefined;
+  const resolvedActionSize =
+    actionSize ?? (density === "compact" ? "lg" : "xl");
   const selectDisabled = selected && selectedSelectBehavior === "disabled";
   const controlledPanelId =
     hasPanel && (isActionOpen || keepPanelMounted)
@@ -98,21 +107,24 @@ export function SelectableActionRow({
 
   return (
     <div className={styles.rowCluster}>
-      <div className={styles.row}>
+      <div className={styles.row} data-density={density}>
         <OptionButton
           aria-current={selected ? selectedAriaCurrent : undefined}
           aria-label={selected ? selectedAriaLabel : selectAriaLabel}
           aria-disabled={selectDisabled ? true : undefined}
           className={styles.selectButton}
+          density={density}
           icon={icon}
           label={label}
           presentation="list"
           preview={
-            selected ? (
+            selected && preview === undefined ? (
               <SelectionPreviewLabel kind={selectedPreviewKind}>
                 {selectedPreviewLabel}
               </SelectionPreviewLabel>
-            ) : undefined
+            ) : (
+              preview
+            )
           }
           selected={selected}
           selectionSemantics="visual"
@@ -135,7 +147,7 @@ export function SelectableActionRow({
             icon={actionIcon}
             selected={actionSelected ?? isActionOpen}
             selectionSemantics="visual"
-            size={actionSize}
+            size={resolvedActionSize}
             variant={actionVariant}
             onClick={onAction}
           />

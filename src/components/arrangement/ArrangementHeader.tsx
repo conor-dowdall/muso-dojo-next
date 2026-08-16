@@ -42,6 +42,7 @@ import { type useArrangementTransport } from "@/hooks/audio/useArrangementTransp
 import { type ArrangementWorkspaceViewMode } from "@/types/arrangement";
 import { partSequenceCoordinator } from "@/audio";
 import { ArrangementTempoDialog } from "./ArrangementTempoDialog";
+import { ArrangementEndingDisclosure } from "./ArrangementEndingDisclosure";
 import styles from "./ArrangementWorkspace.module.css";
 
 export function ArrangementHeader({
@@ -63,6 +64,7 @@ export function ArrangementHeader({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
+  const [endingOpen, setEndingOpen] = useState(false);
   const [tempoOpen, setTempoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
@@ -121,6 +123,7 @@ export function ArrangementHeader({
   const openViewDialog = () => {
     setMenuOpen(false);
     setRenameOpen(false);
+    setEndingOpen(false);
     setViewReturnFocusTo(null);
     setViewOpen(true);
   };
@@ -129,6 +132,7 @@ export function ArrangementHeader({
   ) => {
     setMenuOpen(false);
     setRenameOpen(false);
+    setEndingOpen(false);
     setMenuDestination(destination);
 
     if (destination === "library") {
@@ -222,6 +226,7 @@ export function ArrangementHeader({
               aria-label="Arrangement menu"
               onClick={() => {
                 setMenuDestination(null);
+                setEndingOpen(false);
                 setMenuOpen(true);
               }}
             />
@@ -239,6 +244,7 @@ export function ArrangementHeader({
         onClose={() => {
           setMenuOpen(false);
           setRenameOpen(false);
+          setEndingOpen(false);
         }}
       >
         <DisclosureListGroup>
@@ -248,6 +254,15 @@ export function ArrangementHeader({
             label="View"
             preview={viewModeLabel}
             onClick={() => requestMenuHandoff("view")}
+          />
+          <ArrangementEndingDisclosure
+            arrangementId={arrangementId}
+            isOpen={endingOpen}
+            isPlaybackActive={transport.isActive}
+            onToggle={() => {
+              setRenameOpen(false);
+              setEndingOpen((open) => !open);
+            }}
           />
           <InlineRenameActionItem
             ariaLabel={`Rename arrangement. Current name: ${arrangement.name}`}
@@ -266,7 +281,10 @@ export function ArrangementHeader({
             value={arrangement.name}
             onClose={() => setRenameOpen(false)}
             onRename={(name) => renameArrangement(arrangementId, name)}
-            onToggle={() => setRenameOpen((open) => !open)}
+            onToggle={() => {
+              setEndingOpen(false);
+              setRenameOpen((open) => !open);
+            }}
           />
         </DisclosureListGroup>
         <DisclosureListGroup>

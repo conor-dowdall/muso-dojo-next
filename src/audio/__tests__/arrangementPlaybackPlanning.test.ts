@@ -3,6 +3,7 @@ import {
   createArrangementEntryLoopPlaybackRequest,
   createArrangementPlaybackRequest,
   createArrangementPlaybackRequestFromEntry,
+  getPartSequencePlaybackPartCount,
 } from "@/audio";
 import { type ArrangementConfig } from "@/types/arrangement";
 import { createDefaultSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
@@ -116,6 +117,110 @@ describe("createArrangementPlaybackRequest", () => {
     ).toEqual([90, 90, 120]);
     expect(plan.signature).toContain(plan.tempoSignature);
     expect(plan.sourceSignature).not.toContain("90");
+  });
+
+  it("appends a one-bar kick, crash, and configured root to finite playback", () => {
+    const arrangement = createArrangement();
+    arrangement.ending = {
+      audioPresetId: "bowed-strings",
+      octaveOffset: -1,
+      rootNote: "D",
+    };
+    arrangement.sections[1]!.parts[0]!.durationInBars = 2;
+    arrangement.entries[1]!.tempoOverrideBpm = 96;
+    const request = createArrangementPlaybackRequest(arrangement)!;
+    const ending = request.plan.parts.at(-1)!;
+
+    expect(request.plan.parts).toHaveLength(4);
+    expect(request.plan.parts.at(-2)?.durationBeats).toBe(8);
+    expect(ending).toMatchObject({
+      arrangement: {
+        entryId: "entry-b",
+        entryIndex: 1,
+        playCount: 1,
+        playIndex: 0,
+        sectionId: "b",
+        sourcePartId: "b-part",
+      },
+      continueRhythm: false,
+      durationBeats: 4,
+      sourcePartId: "b-part",
+      tempoBpm: 96,
+    });
+    expect(ending.exerciseRequests).toMatchObject([
+      {
+        countInBeats: 0,
+        events: [{ durationBeats: 4, midi: 38, offsetBeats: 0 }],
+        metronomeEnabled: false,
+        presetId: "bowed-strings",
+        tempoBpm: 96,
+      },
+    ]);
+    expect(ending.rhythmRequests[0]?.pattern.hits).toEqual([
+      { atTicks: 0, sampleId: "kick", velocity: 0.82 },
+      { atTicks: 0, sampleId: "crash", velocity: 0.86 },
+    ]);
+
+    const contentSignature = request.plan.contentSignature;
+    arrangement.entries[1]!.tempoOverrideBpm = 97;
+    const retimedPlan = createArrangementPlaybackRequest(arrangement)!.plan;
+    expect(retimedPlan.contentSignature).toBe(contentSignature);
+    expect(retimedPlan.tempoSignature).not.toBe(request.plan.tempoSignature);
+  });
+
+  it("keeps the ending out of repeated Arrangement and Section playback", () => {
+    const arrangement = createArrangement();
+    arrangement.ending = {
+      audioPresetId: "acoustic-bass",
+      octaveOffset: -1,
+      rootNote: "C",
+    };
+    arrangement.playbackMode = "loop";
+    const arrangementPlan = createArrangementPlaybackRequest(arrangement)!.plan;
+
+    expect(arrangementPlan.parts).toHaveLength(4);
+    expect(arrangementPlan.loopPartCount).toBe(3);
+    expect(getPartSequencePlaybackPartCount(arrangementPlan)).toBe(3);
+    expect(arrangementPlan.parts.at(-1)?.stepId).toBe("arrangement:ending");
+    expect(
+      createArrangementEntryLoopPlaybackRequest(arrangement, "entry-b")?.plan
+        .parts,
+    ).toHaveLength(1);
+  });
+
+  it("keeps one plan identity when live playback changes its completion mode", () => {
+    const arrangement = createArrangement();
+    arrangement.ending = {
+      audioPresetId: "acoustic-bass",
+      octaveOffset: -1,
+      rootNote: "C",
+    };
+    const finitePlan = createArrangementPlaybackRequest(arrangement)!.plan;
+    arrangement.playbackMode = "loop";
+    const loopPlan = createArrangementPlaybackRequest(arrangement)!.plan;
+
+    expect(loopPlan.sourceSignature).toBe(finitePlan.sourceSignature);
+    expect(loopPlan.contentSignature).toBe(finitePlan.contentSignature);
+    expect(loopPlan.updateSignature).not.toBe(finitePlan.updateSignature);
+    expect(getPartSequencePlaybackPartCount(finitePlan)).toBe(4);
+    expect(getPartSequencePlaybackPartCount(loopPlan)).toBe(3);
+  });
+
+  it("includes the ending when finite playback starts from a later Entry", () => {
+    const arrangement = createArrangement();
+    arrangement.ending = {
+      audioPresetId: "acoustic-bass",
+      octaveOffset: -1,
+      rootNote: "C",
+    };
+    const request = createArrangementPlaybackRequestFromEntry(
+      arrangement,
+      "entry-b",
+    )!;
+
+    expect(request.start.startIndex).toBe(2);
+    expect(request.plan.parts).toHaveLength(4);
+    expect(request.plan.parts.at(-1)?.stepId).toBe("arrangement:ending");
   });
 
   it("creates an Arrangement-owned loop for one visible Entry only once", () => {

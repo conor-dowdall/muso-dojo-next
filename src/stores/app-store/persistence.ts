@@ -7,7 +7,7 @@ import { type AppStoreSnapshot } from "@/types/session";
 import { assertSnapshotIdentityIntegrity } from "@/utils/session/assertSnapshotIdentityIntegrity";
 import { normalizeAppStoreSnapshot } from "@/utils/session/normalizeAppStoreSnapshot";
 
-export const APP_STORE_VERSION = 14;
+export const APP_STORE_VERSION = 15;
 export const APP_STORE_STORAGE_KEY = "muso-dojo-app-store";
 export const APP_STORE_PERSISTENCE_DEBOUNCE_MS = 600;
 export const APP_STORE_PERSISTENCE_MAX_WAIT_MS = 3000;

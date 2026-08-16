@@ -91,6 +91,71 @@ test("Playback surfaces and new module sources use scoped language", async ({
   await expect(addDialog.getByText(/Rhythm Source/)).toBeVisible();
 });
 
+test("custom choices separate selection from configuration", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Session menu", exact: true }).click();
+  await page.getByRole("button", { name: "Dojo Settings" }).click();
+
+  const settingsDialog = page.getByRole("dialog", { name: "Dojo Settings" });
+  await settingsDialog
+    .getByRole("button", { name: /^Choose Note Colors/ })
+    .click();
+
+  const customColorSettings = settingsDialog.getByRole("button", {
+    name: "Custom Note Colors settings",
+  });
+  await expect(customColorSettings).toBeDisabled();
+  await settingsDialog
+    .getByRole("button", { name: /^Use Custom Note Colors/ })
+    .click();
+  await expect(customColorSettings).toBeEnabled();
+  await expect(
+    settingsDialog.getByRole("group", { name: "Custom color mode" }),
+  ).not.toBeVisible();
+  await customColorSettings.click();
+  await expect(
+    settingsDialog.getByRole("group", { name: "Custom color mode" }),
+  ).toBeVisible();
+  await settingsDialog
+    .getByRole("button", { name: "Close", exact: true })
+    .last()
+    .click();
+
+  await page
+    .getByRole("button", { name: "Add to session", exact: true })
+    .click();
+  const addDialog = page.getByRole("dialog", { name: "Add to Session" });
+  const addFretboard = addDialog.getByRole("button", {
+    name: "Add Fretboard module",
+  });
+  const removeFretboard = addDialog.getByRole("button", {
+    name: "Remove Fretboard module",
+  });
+  await expect(addFretboard.or(removeFretboard)).toBeVisible();
+  if (await addFretboard.isVisible()) {
+    await addFretboard.click();
+  }
+  await addDialog.getByRole("button", { name: "Fretboard settings" }).click();
+  await addDialog.getByRole("button", { name: /^Choose appearance/ }).click();
+
+  const customAppearanceSettings = addDialog.getByRole("button", {
+    name: "Custom Appearance settings",
+  });
+  await expect(customAppearanceSettings).toBeDisabled();
+  await addDialog
+    .getByRole("button", { name: /^Use Custom Appearance/ })
+    .click();
+  await expect(customAppearanceSettings).toBeEnabled();
+  await expect(
+    addDialog.getByRole("button", { name: /^Wood\. Current:/ }),
+  ).not.toBeVisible();
+  await customAppearanceSettings.click();
+  await expect(
+    addDialog.getByRole("button", { name: /^Wood\. Current:/ }),
+  ).toBeVisible();
+});
+
 test("keyboard notes use roving focus and respond to keyboard activation", async ({
   page,
 }) => {

@@ -2,6 +2,8 @@ import {
   type MusicPartConfig,
   type SessionBackingBandConfig,
 } from "@/types/session";
+import { type AudioPresetId } from "@/audio/types";
+import { type RootNote } from "@musodojo/music-theory-data";
 
 export type ArrangementPlaybackMode = "once" | "loop";
 
@@ -40,12 +42,19 @@ export interface ArrangementEntryConfig {
   tempoOverrideBpm?: number;
 }
 
+export interface ArrangementEndingConfig {
+  audioPresetId: AudioPresetId;
+  octaveOffset: number;
+  rootNote: RootNote;
+}
+
 export interface ArrangementConfig {
   id: string;
   name: string;
   lastModified: string;
   tempoBpm: number;
   playbackMode: ArrangementPlaybackMode;
+  ending?: ArrangementEndingConfig;
   sections: ArrangementSectionConfig[];
   entries: ArrangementEntryConfig[];
   workspaceViewMode: ArrangementWorkspaceViewMode;

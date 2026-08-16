@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SlidersHorizontal } from "lucide-react";
 import {
   stringInstrumentTunings,
   stringInstruments,
@@ -10,12 +11,12 @@ import {
 import {
   DisclosureList,
   DisclosureListChoice,
-  DisclosureListChoiceItem,
   DisclosureListGroup,
   DisclosureListItem,
   DisclosureListPanelActions,
   useDisclosureList,
 } from "@/components/ui/disclosure-list/DisclosureList";
+import { SelectableActionRow } from "@/components/ui/selectable-overflow-row";
 import { Button } from "@/components/ui/buttons/Button";
 import {
   fretboardThemes,
@@ -75,7 +76,6 @@ export function FretboardInstrumentCreationPanel({
     useDisclosureList<FretboardChoice>();
   const {
     closeAll: closeAppearanceEditors,
-    open: openAppearanceEditorChoice,
     openChoice: openAppearanceEditor,
     toggleChoice: toggleAppearanceEditor,
   } = useDisclosureList<AppearanceEditor>();
@@ -169,14 +169,9 @@ export function FretboardInstrumentCreationPanel({
     onChange({ ...value, appearanceSource: "auto" });
     closeAppearanceEditors();
   };
-  const handleAppearanceCustomToggle = () => {
-    if (value.appearanceSource !== "custom") {
-      onChange({ ...value, appearanceSource: "custom" });
-      openAppearanceEditorChoice("custom");
-      return;
-    }
-
-    toggleAppearanceEditor("custom");
+  const handleAppearanceCustomSelect = () => {
+    closeAppearanceEditors();
+    onChange({ ...value, appearanceSource: "custom" });
   };
   const handleThemeSelect = (theme: FretboardThemeName) => {
     onChange({ ...value, appearanceSource: "custom", theme });
@@ -322,19 +317,23 @@ export function FretboardInstrumentCreationPanel({
                 onClick={handleAppearanceAutoSelect}
               />
 
-              <DisclosureListChoiceItem
-                ariaLabel={`Choose custom appearance, ${customAppearanceSummary} selected`}
+              <SelectableActionRow
+                actionDisabled={value.appearanceSource !== "custom"}
+                actionIcon={<SlidersHorizontal />}
+                actionLabel="Custom Appearance settings"
                 density="compact"
-                isOpen={
+                isActionOpen={
                   value.appearanceSource === "custom" &&
                   openAppearanceEditor === "custom"
                 }
-                keepMounted
+                keepPanelMounted
                 label="Custom"
-                panelVariant="menu"
                 selected={value.appearanceSource === "custom"}
+                selectedAriaLabel={`Custom Appearance selected, ${customAppearanceSummary}`}
+                selectAriaLabel={`Use Custom Appearance, ${customAppearanceSummary}`}
                 subtitle={customAppearanceSummary}
-                onToggle={handleAppearanceCustomToggle}
+                onAction={() => toggleAppearanceEditor("custom")}
+                onSelect={handleAppearanceCustomSelect}
               >
                 <FretboardAppearanceEditor
                   allowAuto={false}
@@ -354,7 +353,7 @@ export function FretboardInstrumentCreationPanel({
                     }
                   }}
                 />
-              </DisclosureListChoiceItem>
+              </SelectableActionRow>
             </DisclosureList>
 
             <DisclosureListPanelActions>
