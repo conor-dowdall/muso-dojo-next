@@ -2,7 +2,7 @@
 
 import { useRef, useState, type ChangeEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { Broom, FolderOpen, Save } from "lucide-react";
+import { Broom, Download, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/buttons/Button";
 import {
   DisclosureList,
@@ -76,11 +76,11 @@ export function DojoRestoreAction({
     "Custom Chord Progression",
     "Custom Chord Progressions",
   );
-  const confirmation = "Restore this Dojo backup?";
+  const confirmation = "Restore this backup?";
 
   return (
     <DisclosureListConfirmAction
-      actionAriaLabel="Restore Dojo"
+      actionAriaLabel="Restore from backup"
       confirmAriaLabel={confirmation}
       confirmButtonLabel="Restore Backup"
       confirmDetails={
@@ -93,14 +93,14 @@ export function DojoRestoreAction({
             {tuningCount} • {progressionCount}
           </span>
           <span className={styles.confirmationImpactStatement}>
-            Your preferences will also be replaced.
+            All current Dojo data and preferences will be replaced.
           </span>
         </span>
       }
       confirmLabel={confirmation}
-      icon={<FolderOpen />}
+      icon={<FileUp />}
       isConfirming
-      label="Restore Dojo"
+      label="Restore from Backup"
       tone="danger"
       onCancel={onCancel}
       onConfirm={onConfirm}
@@ -140,14 +140,14 @@ export function DojoClearAction({
     "Custom Chord Progression",
     "Custom Chord Progressions",
   );
-  const confirmation = "Clear Dojo?";
+  const confirmation = "Reset Dojo?";
 
   return (
     <DisclosureListConfirmAction
-      actionAriaLabel="Clear Dojo"
+      actionAriaLabel="Reset Dojo"
       actionTone="neutral"
       confirmAriaLabel={confirmation}
-      confirmButtonLabel="Clear Dojo"
+      confirmButtonLabel="Reset Dojo"
       confirmDetails={
         <span className={styles.confirmationSummary}>
           <span>
@@ -165,17 +165,17 @@ export function DojoClearAction({
       confirmLabel={confirmation}
       icon={<Broom />}
       isConfirming={isConfirming}
-      label="Clear Dojo"
+      label="Reset Dojo"
       secondaryAction={
         <Button
-          icon={<Save />}
+          icon={<Download />}
           label="Download Backup"
           shouldYield={false}
           size="sm"
           onClick={onDownloadBackup}
         />
       }
-      subtitle="Remove all Dojo data and reset your preferences."
+      subtitle="Delete all Sessions, Arrangements, and custom resources, and reset your settings."
       tone="danger"
       onCancel={onCancel}
       onConfirm={onConfirm}
@@ -290,10 +290,10 @@ export function DojoBackupSettings({
       <DisclosureList grouped groupGap="section">
         <DisclosureListGroup>
           <DisclosureListAction
-            icon={<Save />}
-            label="Back Up Dojo"
+            icon={<Download />}
+            label="Download Backup"
             shouldYield={false}
-            subtitle="Save all Dojo data as a backup file."
+            subtitle="Save a file containing all Sessions, Arrangements, custom resources, and settings."
             onClick={exportBackup}
           />
 
@@ -308,10 +308,12 @@ export function DojoBackupSettings({
             <DisclosureListAction
               aria-label="Choose a Dojo backup JSON file to restore"
               disabled={isReadingBackup}
-              icon={<FolderOpen />}
-              label={isReadingBackup ? "Reading Backup…" : "Restore Dojo"}
+              icon={<FileUp />}
+              label={
+                isReadingBackup ? "Reading Backup…" : "Restore from Backup"
+              }
               shouldYield={false}
-              subtitle="Restore all Dojo data from a backup file."
+              subtitle="Replace everything in this Dojo with data from a backup file."
               onClick={chooseBackupFile}
             />
           )}
