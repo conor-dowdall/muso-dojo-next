@@ -185,7 +185,7 @@ test("summarizes a backup and cancellation leaves the Dojo unchanged", async ({
   );
 
   const confirmation = settings.getByRole("group", {
-    name: "Restore this Dojo backup?",
+    name: "Restore this backup?",
   });
   const formattedExportDate = await page.evaluate(
     (date) =>
@@ -202,7 +202,7 @@ test("summarizes a backup and cancellation leaves the Dojo unchanged", async ({
     "2 Custom Tunings • 1 Custom Chord Progression",
   );
   await expect(confirmation).toContainText(
-    "Your preferences will also be replaced.",
+    "All current Dojo data and settings will be replaced. This cannot be undone.",
   );
 
   await confirmation.getByRole("button", { name: "Cancel" }).click();
@@ -229,7 +229,7 @@ test("rejects an invalid backup without showing confirmation", async ({
     "The selected file is not valid JSON.",
   );
   await expect(
-    settings.getByRole("group", { name: "Restore this Dojo backup?" }),
+    settings.getByRole("group", { name: "Restore this backup?" }),
   ).toHaveCount(0);
   await expect(
     settings.getByRole("button", {
@@ -265,24 +265,24 @@ test("restores the backup as a complete replacement", async ({ page }) => {
   );
 });
 
-test("clears all Dojo data and resets preferences", async ({ page }) => {
+test("resets all Dojo data and settings", async ({ page }) => {
   await seedDojoWorkspace(page, createReplacementSnapshot());
   await page.reload();
 
   const settings = await openDojoSettings(page);
-  await settings.getByRole("button", { name: "Clear Dojo" }).click();
+  await settings.getByRole("button", { name: "Reset Dojo" }).click();
 
-  const confirmation = settings.getByRole("group", { name: "Clear Dojo?" });
+  const confirmation = settings.getByRole("group", { name: "Reset Dojo?" });
   await expect(confirmation).toContainText("2 Sessions • 1 Arrangement");
   await expect(confirmation).toContainText(
     "2 Custom Tunings • 1 Custom Chord Progression",
   );
-  await expect(confirmation).toContainText("Your preferences will be reset.");
+  await expect(confirmation).toContainText("Your settings will be reset.");
   await expect(confirmation).toContainText(
     "One new empty Session will be created.",
   );
 
-  await confirmation.getByRole("button", { name: "Clear Dojo" }).click();
+  await confirmation.getByRole("button", { name: "Reset Dojo" }).click();
 
   await expect(settings).toHaveCount(0);
   await expectWorkspacePersisted(page, (snapshot) => {
@@ -354,10 +354,10 @@ test("leaves ambiguous persisted data untouched and shows recovery guidance", as
   );
 
   const settings = await openDojoSettings(page);
-  await settings.getByRole("button", { name: "Clear Dojo" }).click();
+  await settings.getByRole("button", { name: "Reset Dojo" }).click();
   await settings
-    .getByRole("group", { name: "Clear Dojo?" })
-    .getByRole("button", { name: "Clear Dojo" })
+    .getByRole("group", { name: "Reset Dojo?" })
+    .getByRole("button", { name: "Reset Dojo" })
     .click();
 
   await expect(

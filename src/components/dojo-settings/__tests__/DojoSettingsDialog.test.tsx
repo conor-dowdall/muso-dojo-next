@@ -80,17 +80,20 @@ describe("DojoSettingsDialog", () => {
     expect(markup).toContain(
       "Everything in your Dojo is saved automatically on this device.",
     );
-    expect(markup).toContain("Back Up Dojo");
-    expect(markup).toContain("Save all Dojo data as a backup file.");
-    expect(markup).toContain("Restore Dojo");
-    expect(markup).toContain("Restore all Dojo data from a backup file.");
-    expect(markup).toContain("Clear Dojo");
+    expect(markup).toContain("Download Backup");
     expect(markup).toContain(
-      "Remove all Dojo data and reset your preferences.",
+      "Save a file containing all Sessions, Arrangements, custom resources, and settings.",
+    );
+    expect(markup).toContain("Restore from Backup");
+    expect(markup).toContain(
+      "Replace everything in this Dojo with data from a backup file.",
+    );
+    expect(markup).toContain("Reset Dojo");
+    expect(markup).toContain(
+      "Delete all Sessions, Arrangements, and custom resources, and reset your settings.",
     );
     expect(markup).not.toContain("Save the Set");
     expect(markup).not.toContain("Recall a Set");
-    expect(markup).not.toContain("current Dojo");
     expect(markup).toContain('accept=".json,application/json"');
   });
 
@@ -111,14 +114,14 @@ describe("DojoSettingsDialog", () => {
       />,
     );
 
-    expect(markup).toContain("Clear Dojo?");
+    expect(markup).toContain("Reset Dojo?");
     expect(markup).toContain("2 Sessions • 1 Arrangement");
     expect(markup).toContain("3 Custom Tunings • 4 Custom Chord Progressions");
-    expect(markup).toContain("Your preferences will be reset.");
+    expect(markup).toContain("Your settings will be reset.");
     expect(markup).toContain("One new empty Session will be created.");
     expect(markup).toContain("Cancel");
-    expect(markup).toContain("Download Backup");
-    expect(markup).toContain("Clear Dojo");
+    expect(markup).toContain("Download Current Backup");
+    expect(markup).toContain("Reset Dojo");
     expect(markup).toContain('data-tone="danger"');
   });
 
@@ -155,15 +158,19 @@ describe("DojoSettingsDialog", () => {
         onCancel={() => undefined}
         onChooseBackup={() => undefined}
         onConfirm={() => undefined}
+        onDownloadBackup={() => undefined}
       />,
     );
 
-    expect(markup).toContain("Restore this Dojo backup?");
+    expect(markup).toContain("Restore this backup?");
     expect(markup).toContain(`Exported: ${formattedExportDate}`);
     expect(markup).toContain("2 Sessions • 1 Arrangement");
     expect(markup).toContain("3 Custom Tunings • 4 Custom Chord Progressions");
-    expect(markup).toContain("Your preferences will also be replaced.");
+    expect(markup).toContain(
+      "All current Dojo data and settings will be replaced. This cannot be undone.",
+    );
     expect(markup).toContain("Cancel");
+    expect(markup).toContain("Download Current Backup");
     expect(markup).toContain("Restore Backup");
     expect(markup).toContain('data-tone="danger"');
   });

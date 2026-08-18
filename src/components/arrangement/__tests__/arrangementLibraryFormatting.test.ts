@@ -74,7 +74,7 @@ describe("getArrangementLibrarySubtitle", () => {
       getArrangementLibrarySubtitle(arrangement, {
         [session.id]: session,
       }),
-    ).toBe("1 Section • 120 BPM • 1 Session Changed");
+    ).toBe("1 Section • 120 BPM • 1 Source Session Changed");
   });
 
   it("reports unavailable and emptied changed Sessions", () => {
@@ -82,13 +82,13 @@ describe("getArrangementLibrarySubtitle", () => {
     const emptiedSession: SessionConfig = { ...session, parts: [] };
 
     expect(getArrangementLibrarySubtitle(arrangement, {})).toBe(
-      "1 Section • 120 BPM • 1 Session Unavailable",
+      "1 Section • 120 BPM • 1 Source Session Unavailable",
     );
     expect(
       getArrangementLibrarySubtitle(arrangement, {
         [session.id]: emptiedSession,
       }),
-    ).toBe("1 Section • 120 BPM • 1 Session Changed");
+    ).toBe("1 Section • 120 BPM • 1 Source Session Changed");
   });
 
   it("counts Arrangements that use a Session without counting repeated Sections", () => {

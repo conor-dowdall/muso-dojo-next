@@ -24,7 +24,7 @@ test("native dialogs contain global shortcuts and release page scrolling", async
 
   await page.keyboard.press("Shift+Space");
   await expect(
-    page.getByRole("button", { name: "Play Backing Band" }),
+    page.getByRole("button", { name: "Play Session" }),
   ).toBeVisible();
 
   await page.keyboard.press("Escape");

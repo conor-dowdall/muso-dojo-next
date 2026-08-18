@@ -423,7 +423,7 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
                           />
                           <InlineRenameActionItem
                             ariaLabel={`Rename ${arrangement.name} arrangement`}
-                            fieldLabel="Arrangement name"
+                            fieldLabel="Arrangement Name"
                             isNameAvailable={(name) =>
                               !arrangements.some(
                                 (candidate) =>
@@ -434,7 +434,7 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
                               )
                             }
                             isOpen={renameId === arrangement.id}
-                            label="Rename Arrangement"
+                            label="Rename"
                             value={arrangement.name}
                             onClose={() => setRenameId(null)}
                             onRename={(name) =>

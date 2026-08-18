@@ -15,6 +15,7 @@ describe("SessionHeader", () => {
       />,
     );
 
+    expect(markup).toContain('aria-label="Play Session"');
     expect(markup).toContain('aria-label="Session menu"');
     expect(markup).not.toContain('aria-label="Menu"');
   });

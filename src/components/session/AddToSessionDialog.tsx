@@ -507,7 +507,7 @@ export function AddToSessionDialog({
           menuGroup
         >
           <Heading as="h3" size="xs" variant="muted">
-            Modules
+            {selectedMode === "part" ? "Modules" : "Modules in Each Part"}
           </Heading>
           <ModuleCreationList
             context="session"

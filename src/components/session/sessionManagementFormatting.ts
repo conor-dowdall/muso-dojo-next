@@ -41,7 +41,7 @@ export function getSessionSubtitle(
 
   const firstPartLabel = getPartSignatureLabel(parts[0]!);
   const partPreview =
-    parts.length === 1 ? firstPartLabel : `${firstPartLabel}...`;
+    parts.length === 1 ? firstPartLabel : `Starts with ${firstPartLabel}`;
 
   return [
     getSessionPartCountLabel(parts.length),

@@ -58,11 +58,11 @@ export function getArrangementLibrarySubtitle(
     getSourceSessionStatusCounts(arrangement, sessions);
   const sourceStatus =
     unavailableSessionCount > 0
-      ? `${unavailableSessionCount} ${
+      ? `${unavailableSessionCount} Source ${
           unavailableSessionCount === 1 ? "Session" : "Sessions"
         } Unavailable`
       : changedSessionCount > 0
-        ? `${changedSessionCount} ${
+        ? `${changedSessionCount} Source ${
             changedSessionCount === 1 ? "Session" : "Sessions"
           } Changed`
         : undefined;

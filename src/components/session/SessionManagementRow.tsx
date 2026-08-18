@@ -61,8 +61,8 @@ export function SessionManagementRow({
   } session`;
   const arrangementImpact =
     arrangementReferenceCount === 1
-      ? "1 Arrangement references this session."
-      : `${arrangementReferenceCount} Arrangements reference this session.`;
+      ? "1 Arrangement uses this Session. Its existing Sections will still play, but those Sections can no longer be updated from this Session."
+      : `${arrangementReferenceCount} Arrangements use this Session. Their existing Sections will still play, but those Sections can no longer be updated from this Session.`;
   const deleteConfirmLabel =
     arrangementReferenceCount > 0
       ? `Delete ${session.name}? ${arrangementImpact}`

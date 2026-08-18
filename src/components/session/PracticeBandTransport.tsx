@@ -293,9 +293,7 @@ export function PracticeBandPlayButton({
   return (
     <IconButton
       {...props}
-      aria-label={
-        transport.isActive ? "Stop Backing Band" : "Play Backing Band"
-      }
+      aria-label={transport.isActive ? "Stop Session" : "Play Session"}
       aria-keyshortcuts={
         transport.isActive ? "Space Escape Shift+Space" : "Shift+Space"
       }

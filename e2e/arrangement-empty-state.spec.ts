@@ -109,7 +109,7 @@ test("the first Section replaces the instructional empty state", async ({
 
   await expect(
     page.getByText(
-      "Adding a Session captures its current Parts and backing. If the Session changes, you can update the Section later.",
+      "Adding a Session captures its current Parts and playback settings. If the Session changes, you can update the Section later.",
     ),
   ).toBeVisible();
 
@@ -156,7 +156,7 @@ test("Section playback options persist independent tempo overrides", async ({
     name: "Playback for Section 01",
   });
   await expect(
-    firstDialog.getByText("Arrangement Tempo · 80 BPM"),
+    firstDialog.getByText("Arrangement Tempo • 80 BPM"),
   ).toBeVisible();
   await firstDialog
     .getByRole("button", { name: "Play Arrangement from Section 01" })

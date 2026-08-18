@@ -231,7 +231,7 @@ export const rhythmGrooveOptions = [
   {
     id: "pulse",
     label: "Pulse",
-    description: "Bass drum on the counted beats.",
+    description: "Kick on the counted beats.",
   },
   {
     id: "kit",
@@ -241,7 +241,7 @@ export const rhythmGrooveOptions = [
   {
     id: "bluegrass",
     label: "Drive",
-    description: "Bass drum on the beat with snare on the offbeats.",
+    description: "Kick on the beat with snare on the offbeats.",
   },
 ] as const satisfies readonly RhythmRecipeOption<RhythmGroove>[];
 
