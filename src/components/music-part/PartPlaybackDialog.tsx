@@ -55,10 +55,14 @@ export function PartPlaybackDialog({
   isOpen,
   onClose,
   part: suppliedPart,
+  title = "Playback for Part",
+  variant = "full",
 }: {
   isOpen: boolean;
   onClose: () => void;
   part?: PartPlaybackDialogModel;
+  title?: string;
+  variant?: "full" | "transport";
 }) {
   const contextPart = useOptionalMusicPart();
   const part = suppliedPart ?? contextPart;
@@ -67,7 +71,13 @@ export function PartPlaybackDialog({
   }
 
   return (
-    <ResolvedPartPlaybackDialog isOpen={isOpen} onClose={onClose} part={part} />
+    <ResolvedPartPlaybackDialog
+      isOpen={isOpen}
+      part={part}
+      title={title}
+      variant={variant}
+      onClose={onClose}
+    />
   );
 }
 
@@ -75,10 +85,14 @@ function ResolvedPartPlaybackDialog({
   isOpen,
   onClose,
   part,
+  title,
+  variant,
 }: {
   isOpen: boolean;
   onClose: () => void;
   part: PartPlaybackDialogModel;
+  title: string;
+  variant: "full" | "transport";
 }) {
   const loopTransport = usePartBandLoopTransport(part.sessionId, part.partId);
   const playFromHereTransport = usePartBandPlayFromHereTransport(
@@ -115,33 +129,35 @@ function ResolvedPartPlaybackDialog({
       icon={<Disc3 />}
       isOpen={isOpen}
       size="standard"
-      title="Playback for Part"
+      title={title}
       onClose={onClose}
     >
-      <DisclosureListGroup>
-        <BandSourceDisclosure
-          icon={<Music2 />}
-          isOpen={isChoiceOpen("backingNotes")}
-          label="Backing Notes"
-          preview={backingNotesPreview}
-          part={part}
-          role="backingNotes"
-          sessionSubtitle={sessionBackingNotesSummary}
-          onChoose={chooseSource}
-          onToggle={() => toggleChoice("backingNotes")}
-        />
-        <BandSourceDisclosure
-          icon={<Drum />}
-          isOpen={isChoiceOpen("rhythm")}
-          label="Rhythm"
-          preview={rhythmPreview}
-          part={part}
-          role="rhythm"
-          sessionSubtitle={sessionRhythmSummary}
-          onChoose={chooseSource}
-          onToggle={() => toggleChoice("rhythm")}
-        />
-      </DisclosureListGroup>
+      {variant === "full" ? (
+        <DisclosureListGroup>
+          <BandSourceDisclosure
+            icon={<Music2 />}
+            isOpen={isChoiceOpen("backingNotes")}
+            label="Backing Notes Source"
+            preview={backingNotesPreview}
+            part={part}
+            role="backingNotes"
+            sessionSubtitle={sessionBackingNotesSummary}
+            onChoose={chooseSource}
+            onToggle={() => toggleChoice("backingNotes")}
+          />
+          <BandSourceDisclosure
+            icon={<Drum />}
+            isOpen={isChoiceOpen("rhythm")}
+            label="Rhythm Source"
+            preview={rhythmPreview}
+            part={part}
+            role="rhythm"
+            sessionSubtitle={sessionRhythmSummary}
+            onChoose={chooseSource}
+            onToggle={() => toggleChoice("rhythm")}
+          />
+        </DisclosureListGroup>
+      ) : null}
       <DisclosureListGroup aria-label="Playback" role="group">
         <DisclosureListAction
           aria-label={
@@ -212,7 +228,7 @@ function BandSourceDisclosure({
 
   return (
     <DisclosureListItem
-      ariaLabel={`${label} source. Current: ${preview}`}
+      ariaLabel={`${label}. Current: ${preview}`}
       icon={icon}
       isOpen={isOpen}
       label={label}

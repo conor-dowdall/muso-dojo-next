@@ -186,7 +186,9 @@ function SessionChartView({
       {playbackTargetPart && playbackTargetSummary ? (
         <ChartPlaybackContext
           accessibleTarget={`Part ${String(playbackTargetIndex + 1).padStart(2, "0")}, ${playbackTargetSummary.identityAccessibleLabel}`}
+          actionLabel="Part Playback"
           label={playbackTargetSummary.identityLabel}
+          showPlaybackIcon={false}
           onOpenPlayback={() => {
             setPlaybackDialogPartId(playbackTargetPartId);
             setPlaybackDialogOpen(true);

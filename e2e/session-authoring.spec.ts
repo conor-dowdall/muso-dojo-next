@@ -39,11 +39,22 @@ test("creates a playable module and moves through session views", async ({
   await page
     .getByRole("button", { name: /Playback options for Part 01/ })
     .click();
+  const partPlaybackDialog = page.getByRole("dialog", {
+    name: "Playback for Part 01",
+  });
+  await expect(partPlaybackDialog).toBeVisible();
   await expect(
-    page.getByRole("dialog", { name: "Playback for Part" }),
+    partPlaybackDialog.getByRole("button", {
+      name: "Play Session from this Part",
+    }),
   ).toBeVisible();
-  await page
-    .getByRole("dialog", { name: "Playback for Part" })
+  await expect(
+    partPlaybackDialog.getByRole("button", { name: "Loop Part" }),
+  ).toBeVisible();
+  await expect(
+    partPlaybackDialog.getByRole("button", { name: /^Backing Notes Source/ }),
+  ).toHaveCount(0);
+  await partPlaybackDialog
     .getByRole("button", { name: "Close", exact: true })
     .click();
 

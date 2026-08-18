@@ -6,15 +6,19 @@ import styles from "./ChartPlaybackContext.module.css";
 
 export function ChartPlaybackContext({
   accessibleTarget,
+  actionLabel = "Playback",
   disabled = false,
   label,
   onOpenPlayback,
+  showPlaybackIcon = true,
   subtitle,
 }: {
   accessibleTarget?: string;
+  actionLabel?: string;
   disabled?: boolean;
   label: string;
   onOpenPlayback: () => void;
+  showPlaybackIcon?: boolean;
   subtitle?: string;
 }) {
   const targetDescription =
@@ -45,10 +49,9 @@ export function ChartPlaybackContext({
         <Button
           aria-label={`Playback options for ${targetDescription}`}
           disabled={disabled}
-          icon={<Disc3 />}
-          label="Playback"
+          icon={showPlaybackIcon ? <Disc3 /> : undefined}
+          label={actionLabel}
           size="sm"
-          variant="ghost"
           onClick={onOpenPlayback}
         />
       }

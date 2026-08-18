@@ -68,8 +68,18 @@ export function SessionPartPlaybackDialog({
         setPartBandSource(sessionId, partId, role, source),
     };
   }, [partId, session, sessionId, setPartBandSource]);
+  const partIndex =
+    session?.parts.findIndex((candidate) => candidate.id === partId) ?? -1;
 
-  if (!model) return null;
+  if (!model || partIndex < 0) return null;
 
-  return <PartPlaybackDialog isOpen={isOpen} part={model} onClose={onClose} />;
+  return (
+    <PartPlaybackDialog
+      isOpen={isOpen}
+      part={model}
+      title={`Playback for Part ${String(partIndex + 1).padStart(2, "0")}`}
+      variant="transport"
+      onClose={onClose}
+    />
+  );
 }
