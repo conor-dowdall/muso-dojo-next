@@ -36,6 +36,7 @@ export function ChartPlaybackContext({
           icon={<Disc3 />}
           label="Playback"
           size="sm"
+          variant="ghost"
           onClick={onOpenPlayback}
         />
       }
