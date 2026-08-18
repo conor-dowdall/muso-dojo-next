@@ -157,6 +157,7 @@ export interface ArrangementActions {
     sectionId: string,
     sessionId: string,
   ) => boolean;
+  updateChangedArrangementSections: (arrangementId: string) => number;
   moveArrangementEntry: (
     arrangementId: string,
     entryId: string,

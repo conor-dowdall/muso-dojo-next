@@ -5,12 +5,19 @@ import {
   countArrangementsUsingSession,
   getArrangementLibrarySubtitle,
 } from "../arrangementLibraryFormatting";
+import { createDefaultMusicPartConfig } from "@/utils/session/createSessionEntities";
+import { cloneMusicPartGraph } from "@/utils/arrangement/cloneMusicPartGraph";
+import { getSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 
 const session = {
+  backingBand: undefined,
   id: "session-1",
   lastModified: "2026-01-02T00:00:00.000Z",
-  parts: [{ id: "part-1" }],
-} as SessionConfig;
+  name: "My Session",
+  parts: [createDefaultMusicPartConfig()],
+  tempoBpm: 120,
+  workspaceViewMode: "session",
+} satisfies SessionConfig;
 
 function createArrangement(
   overrides: Partial<ArrangementConfig> = {},
@@ -23,7 +30,9 @@ function createArrangement(
     playbackMode: "once",
     sections: [
       {
+        backingBand: getSessionBackingBandConfig(session.backingBand),
         id: "section-1",
+        parts: cloneMusicPartGraph(session.parts),
         source: {
           capturedAt: "2026-01-01T00:00:00.000Z",
           sessionId: session.id,
@@ -50,7 +59,6 @@ describe("getArrangementLibrarySubtitle", () => {
 
   it("shows the visible Section count and tempo", () => {
     const arrangement = createArrangement();
-    arrangement.sections[0]!.source.sessionLastModified = session.lastModified;
 
     expect(
       getArrangementLibrarySubtitle(arrangement, {
@@ -72,7 +80,10 @@ describe("getArrangementLibrarySubtitle", () => {
 
     expect(
       getArrangementLibrarySubtitle(arrangement, {
-        [session.id]: session,
+        [session.id]: {
+          ...session,
+          parts: [{ ...session.parts[0]!, rootNote: "D" }],
+        },
       }),
     ).toBe("1 Section • 120 BPM • 1 Source Session Changed");
   });

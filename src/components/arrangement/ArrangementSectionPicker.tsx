@@ -11,6 +11,7 @@ import {
 import { Text } from "@/components/ui/typography/Text";
 import { useAppStore } from "@/stores/appStore";
 import { formatValueSummary } from "@/utils/valueSummary";
+import { getArrangementSectionSourceStatus } from "@/utils/arrangement/arrangementSectionSource";
 import styles from "./ArrangementWorkspace.module.css";
 
 export function ArrangementSectionPicker({
@@ -71,9 +72,11 @@ export function ArrangementSectionPicker({
           <DisclosureListGroup>
             {sessions.map((session) => {
               const selected = section.source.sessionId === session.id;
+              const sourceStatus = selected
+                ? getArrangementSectionSourceStatus(section, session)
+                : "current";
               const sourceChanged =
-                selected &&
-                section.source.sessionLastModified !== session.lastModified;
+                sourceStatus === "changed" || sourceStatus === "empty";
               const updateAvailable = sourceChanged && session.parts.length > 0;
               const updateImpact =
                 sectionUseCount > 1

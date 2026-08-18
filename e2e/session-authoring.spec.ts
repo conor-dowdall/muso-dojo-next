@@ -36,6 +36,16 @@ test("creates a playable module and moves through session views", async ({
     .click();
   await page.getByRole("button", { name: "Use Chart view" }).click();
   await expect(page.getByRole("region", { name: "Chart View" })).toBeVisible();
+  await page
+    .getByRole("button", { name: /Playback options for Part 01/ })
+    .click();
+  await expect(
+    page.getByRole("dialog", { name: "Playback for Part" }),
+  ).toBeVisible();
+  await page
+    .getByRole("dialog", { name: "Playback for Part" })
+    .getByRole("button", { name: "Close", exact: true })
+    .click();
 
   await page
     .getByRole("button", { name: "Choose view. Current: Chart" })

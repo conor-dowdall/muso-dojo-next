@@ -1,0 +1,22 @@
+.context {
+  min-block-size: calc(var(--control-size-sm) + 2 * var(--space-2));
+  min-inline-size: 0;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width-base) solid var(--color-border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--color-panel-background);
+}
+
+.identity {
+  display: grid;
+  min-inline-size: 0;
+  gap: var(--space-1);
+}
+
+.label,
+.subtitle {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

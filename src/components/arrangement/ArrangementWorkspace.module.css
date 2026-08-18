@@ -121,10 +121,20 @@
   min-inline-size: 0;
 }
 
-.addSectionAction {
-  display: flex;
+.arrangementEditingActions {
+  display: grid;
+  min-block-size: var(--control-size-sm);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: flex-start;
+  gap: var(--space-3);
+}
+
+.arrangementEditingActions > :first-child {
+  justify-self: start;
+}
+
+.arrangementEditingActions > :last-child:not(:first-child) {
+  justify-self: end;
 }
 
 .sectionUnavailable {

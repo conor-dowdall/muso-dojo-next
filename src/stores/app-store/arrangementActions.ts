@@ -10,6 +10,7 @@ import { cloneMusicPartGraph } from "@/utils/arrangement/cloneMusicPartGraph";
 import { createEntityId } from "@/utils/session/createSessionEntities";
 import { normalizeSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 import { normalizeArrangementEndingConfig } from "@/utils/arrangement/arrangementEnding";
+import { getUpdateableArrangementSections } from "@/utils/arrangement/arrangementSectionSource";
 import {
   createEntityCopyName,
   createUniqueArrangementName,
@@ -297,6 +298,36 @@ export function createArrangementActions(
         },
       }));
       return true;
+    },
+    updateChangedArrangementSections: (arrangementId) => {
+      const state = get();
+      const arrangement = state.arrangements[arrangementId];
+      if (!arrangement) return 0;
+
+      const sections = getUpdateableArrangementSections(
+        arrangement.sections,
+        state.sessions,
+      );
+      if (sections.length === 0) return 0;
+
+      const replacementBySectionId = new Map(
+        sections.map((section) => [
+          section.id,
+          captureSection(state.sessions[section.source.sessionId]!, section.id),
+        ]),
+      );
+      set((current) => ({
+        arrangements: {
+          ...current.arrangements,
+          [arrangementId]: touchArrangement(arrangement, {
+            sections: arrangement.sections.map(
+              (section) => replacementBySectionId.get(section.id) ?? section,
+            ),
+          }),
+        },
+      }));
+
+      return sections.length;
     },
     moveArrangementEntry: (arrangementId, entryId, direction) => {
       const arrangement = get().arrangements[arrangementId];

@@ -21,9 +21,24 @@ import {
 } from "@/components/session/backingBandSummaries";
 import { getAutomaticRhythmSelection } from "@/utils/rhythm/automaticRhythm";
 import { type PartBandRole, type PartBandSourceConfig } from "@/types/session";
-import { useMusicPart } from "./MusicPartContext";
+import {
+  type MusicPartContextValue,
+  useOptionalMusicPart,
+} from "./MusicPartContext";
 
 type PlaybackChoice = "backingNotes" | "rhythm";
+
+export type PartPlaybackDialogModel = Pick<
+  MusicPartContextValue,
+  | "automaticLengthBeats"
+  | "automaticRhythm"
+  | "band"
+  | "bandModuleOptions"
+  | "partId"
+  | "sessionBackingBand"
+  | "sessionId"
+  | "setBandSource"
+>;
 
 function sourceIsSelected(
   current: PartBandSourceConfig,
@@ -39,11 +54,32 @@ function sourceIsSelected(
 export function PartPlaybackDialog({
   isOpen,
   onClose,
+  part: suppliedPart,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  part?: PartPlaybackDialogModel;
 }) {
-  const part = useMusicPart();
+  const contextPart = useOptionalMusicPart();
+  const part = suppliedPart ?? contextPart;
+  if (!part) {
+    return null;
+  }
+
+  return (
+    <ResolvedPartPlaybackDialog isOpen={isOpen} onClose={onClose} part={part} />
+  );
+}
+
+function ResolvedPartPlaybackDialog({
+  isOpen,
+  onClose,
+  part,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  part: PartPlaybackDialogModel;
+}) {
   const loopTransport = usePartBandLoopTransport(part.sessionId, part.partId);
   const playFromHereTransport = usePartBandPlayFromHereTransport(
     part.sessionId,
@@ -88,6 +124,7 @@ export function PartPlaybackDialog({
           isOpen={isChoiceOpen("backingNotes")}
           label="Backing Notes"
           preview={backingNotesPreview}
+          part={part}
           role="backingNotes"
           sessionSubtitle={sessionBackingNotesSummary}
           onChoose={chooseSource}
@@ -98,6 +135,7 @@ export function PartPlaybackDialog({
           isOpen={isChoiceOpen("rhythm")}
           label="Rhythm"
           preview={rhythmPreview}
+          part={part}
           role="rhythm"
           sessionSubtitle={sessionRhythmSummary}
           onChoose={chooseSource}
@@ -132,10 +170,7 @@ export function PartPlaybackDialog({
   );
 }
 
-function getSourcePreview(
-  part: ReturnType<typeof useMusicPart>,
-  role: PartBandRole,
-) {
+function getSourcePreview(part: PartPlaybackDialogModel, role: PartBandRole) {
   const source = part.band[role];
   if (source.mode === "session") {
     return "Session Band";
@@ -161,6 +196,7 @@ function BandSourceDisclosure({
   preview,
   role,
   sessionSubtitle,
+  part,
 }: {
   icon: ReactNode;
   isOpen: boolean;
@@ -170,8 +206,8 @@ function BandSourceDisclosure({
   preview: string;
   role: PartBandRole;
   sessionSubtitle?: string;
+  part: PartPlaybackDialogModel;
 }) {
-  const part = useMusicPart();
   const source = part.band[role];
 
   return (
