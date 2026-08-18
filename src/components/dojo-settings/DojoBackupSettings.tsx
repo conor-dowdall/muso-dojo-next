@@ -49,11 +49,13 @@ export function DojoRestoreAction({
   onCancel,
   onConfirm,
   onChooseBackup,
+  onDownloadBackup,
 }: {
   backup: ParsedDojoBackup;
   onCancel: () => void;
   onConfirm: () => void;
   onChooseBackup: () => void;
+  onDownloadBackup: () => void;
 }) {
   const snapshot = backup.snapshot;
   const sessionCount = formatCount(
@@ -93,7 +95,8 @@ export function DojoRestoreAction({
             {tuningCount} • {progressionCount}
           </span>
           <span className={styles.confirmationImpactStatement}>
-            All current Dojo data and preferences will be replaced.
+            All current Dojo data and settings will be replaced. This cannot be
+            undone.
           </span>
         </span>
       }
@@ -101,6 +104,15 @@ export function DojoRestoreAction({
       icon={<FileUp />}
       isConfirming
       label="Restore from Backup"
+      secondaryAction={
+        <Button
+          icon={<Download />}
+          label="Download Current Backup"
+          shouldYield={false}
+          size="sm"
+          onClick={onDownloadBackup}
+        />
+      }
       tone="danger"
       onCancel={onCancel}
       onConfirm={onConfirm}
@@ -157,7 +169,7 @@ export function DojoClearAction({
             {tuningCount} • {progressionCount}
           </span>
           <span className={styles.confirmationImpactStatement}>
-            Your preferences will be reset.
+            Your settings will be reset.
           </span>
           <span>One new empty Session will be created.</span>
         </span>
@@ -169,7 +181,7 @@ export function DojoClearAction({
       secondaryAction={
         <Button
           icon={<Download />}
-          label="Download Backup"
+          label="Download Current Backup"
           shouldYield={false}
           size="sm"
           onClick={onDownloadBackup}
@@ -303,6 +315,7 @@ export function DojoBackupSettings({
               onCancel={cancelRestore}
               onChooseBackup={chooseBackupFile}
               onConfirm={restoreBackup}
+              onDownloadBackup={exportBackup}
             />
           ) : (
             <DisclosureListAction

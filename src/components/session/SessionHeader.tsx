@@ -240,7 +240,7 @@ export function SessionHeader({
               onClick={() => setIsBackingBandDialogOpen(true)}
             />
             <IconButton
-              aria-label={`Set session tempo. Current tempo: ${activeSessionTempoBpm} bpm`}
+              aria-label={`Set session tempo. Current tempo: ${activeSessionTempoBpm} BPM`}
               disabled={!hasActiveSession}
               icon={<Gauge />}
               size="sm"

@@ -117,7 +117,7 @@ export function SessionTempoEditor({
     return (
       <IconButton
         key={adjustment}
-        aria-label={`${adjustment > 0 ? "Increase" : "Decrease"} tempo by ${Math.abs(adjustment)} bpm`}
+        aria-label={`${adjustment > 0 ? "Increase" : "Decrease"} tempo by ${Math.abs(adjustment)} BPM`}
         className={`${fieldStyles.adjustmentButton} ${styles.adjustmentButton}`}
         disabled={nextTempo === tempoBpm}
         icon={
@@ -143,8 +143,8 @@ export function SessionTempoEditor({
         min={MIN_TEMPO}
         step={1}
         value={sliderTempo}
-        valueLabel={`${sliderTempo} bpm`}
-        valueText={`${sliderTempo} bpm`}
+        valueLabel={`${sliderTempo} BPM`}
+        valueText={`${sliderTempo} BPM`}
         onBlur={() => commitSliderTempo()}
         onChange={(event) => {
           const nextTempo = clampTempo(event.currentTarget.valueAsNumber);
@@ -190,7 +190,7 @@ export function SessionTempoEditor({
               onKeyDown={handleNumberInputKeyDown}
             />
             <span className={fieldStyles.unit} aria-hidden="true">
-              bpm
+              BPM
             </span>
           </span>
         </label>

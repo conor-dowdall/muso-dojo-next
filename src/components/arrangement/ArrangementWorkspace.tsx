@@ -306,7 +306,7 @@ export function ArrangementWorkspace({
                         actions={
                           <ControlHeaderCluster gap="cluster">
                             <IconButton
-                              aria-label={`Playback options for Section ${formattedSectionNumber}. ${effectiveTempo} bpm, ${tempoStatus}. ${loopActive ? "This Section loop is active." : "This Section loop is inactive."}`}
+                              aria-label={`Playback options for Section ${formattedSectionNumber}. ${effectiveTempo} BPM, ${tempoStatus}. ${loopActive ? "This Section loop is active." : "This Section loop is inactive."}`}
                               data-arrangement-entry-playback-id={entry.id}
                               icon={<Disc3 />}
                               selected={loopActive}
@@ -487,8 +487,9 @@ export function ArrangementWorkspace({
                     />
                   }
                 >
-                  Adding a Session captures its current Parts and backing. If
-                  the Session changes, you can update the Section later.
+                  Adding a Session captures its current Parts and playback
+                  settings. If the Session changes, you can update the Section
+                  later.
                 </WorkspaceEmptyState>
               ) : (
                 <WorkspaceEmptyState

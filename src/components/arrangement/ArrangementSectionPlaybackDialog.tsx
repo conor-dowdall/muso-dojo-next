@@ -22,6 +22,7 @@ import { SelectableActionRow } from "@/components/ui/selectable-overflow-row";
 import { useArrangementEntryLoopTransport } from "@/hooks/audio/useArrangementEntryLoopTransport";
 import { useArrangementPlayFromEntryTransport } from "@/hooks/audio/useArrangementPlayFromEntryTransport";
 import { useAppStore } from "@/stores/appStore";
+import { formatValueSummary } from "@/utils/valueSummary";
 
 export function ArrangementSectionPlaybackDialog({
   arrangementId,
@@ -88,11 +89,14 @@ export function ArrangementSectionPlaybackDialog({
     >
       <DisclosureListGroup>
         <DisclosureListItem
-          ariaLabel={`Tempo for Section ${sectionNumber}. Current: ${hasOverride ? "Override" : "Arrangement Tempo"}, ${effectiveTempo} bpm`}
+          ariaLabel={`Tempo for Section ${sectionNumber}. Current: ${hasOverride ? "Override" : "Arrangement Tempo"}, ${effectiveTempo} BPM`}
           icon={<Gauge />}
           isOpen={tempoOpen}
           label="Tempo"
-          preview={`${hasOverride ? "Override" : "Arrangement Tempo"} · ${effectiveTempo} BPM`}
+          preview={formatValueSummary([
+            hasOverride ? "Override" : "Arrangement Tempo",
+            `${effectiveTempo} BPM`,
+          ])}
           onToggle={() => {
             if (tempoOpen) setOverrideSettingsOpen(false);
             setTempoOpen((open) => !open);

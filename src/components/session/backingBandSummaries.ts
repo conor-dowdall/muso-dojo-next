@@ -61,8 +61,10 @@ export function getSessionBandCoverageSummary(
 
   const appliesTo =
     counts.session === parts.length && parts.length > 1
-      ? `Applies to all ${formatCount(parts.length, "Part", "Parts")}`
-      : `Applies to ${formatCount(counts.session, "Part", "Parts")}`;
+      ? `Used by All Parts (${parts.length})`
+      : counts.session === parts.length
+        ? "Used by 1 Part"
+        : `Used by ${counts.session} of ${formatCount(parts.length, "Part", "Parts")}`;
   const localModule =
     role === "backingNotes"
       ? formatCount(counts.module, "local Looper", "local Loopers")

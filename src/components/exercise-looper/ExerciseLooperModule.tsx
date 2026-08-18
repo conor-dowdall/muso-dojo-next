@@ -342,8 +342,8 @@ export function ExerciseLooperModule({
     lastPosition <= higherOctaveBounds.max;
   const countInReadout =
     playback.activeCountInBeats === undefined
-      ? "No Count In"
-      : `${playback.activeCountInBeats} Beat Count In`;
+      ? "No Count-In"
+      : `${playback.activeCountInBeats}-Beat Count-In`;
   const octaveReadout = `Octave ${getExerciseBaseOctave(octaveOffset)}`;
   const soundPreviewMidiNote = sequence.steps[0]?.notes[0]?.midi;
   useEffect(() => {
@@ -460,7 +460,7 @@ export function ExerciseLooperModule({
                 </TactileControlGroup>
 
                 <TactileControlGroup
-                  aria-label="Count In"
+                  aria-label="Count-In"
                   className={controlStyles.controlGroup}
                   controlsClassName={controlStyles.buttonGroup}
                   readout={countInReadout}
@@ -501,12 +501,12 @@ export function ExerciseLooperModule({
                     aria-label="Session tempo"
                     className={styles.pulseControlGroup}
                     readout={tempoBpm}
-                    readoutAriaLabel={`Session tempo: ${tempoBpm} bpm`}
+                    readoutAriaLabel={`Session tempo: ${tempoBpm} BPM`}
                     readoutClassName={styles.pulseReadout}
                   >
                     <PartModuleControlButton
                       activationEvent="click"
-                      aria-label={`Set session tempo. Current tempo: ${tempoBpm} bpm`}
+                      aria-label={`Set session tempo. Current tempo: ${tempoBpm} BPM`}
                       icon={<Gauge />}
                       onPress={() => onOpenSessionTempo?.()}
                       unavailable={!onOpenSessionTempo}

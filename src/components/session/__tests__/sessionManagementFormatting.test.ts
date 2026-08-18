@@ -24,6 +24,6 @@ describe("getSessionSubtitle", () => {
         ],
         96,
       ),
-    ).toBe("2 Parts • C... • 96 BPM");
+    ).toBe("2 Parts • Starts with C • 96 BPM");
   });
 });

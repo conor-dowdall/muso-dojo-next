@@ -200,7 +200,7 @@ export function ArrangementHeader({
               }
             />
             <IconButton
-              aria-label={`Set arrangement tempo. Current tempo: ${arrangement.tempoBpm} bpm`}
+              aria-label={`Set arrangement tempo. Current tempo: ${arrangement.tempoBpm} BPM`}
               disabled={arrangement.entries.length === 0}
               icon={<Gauge />}
               size="sm"

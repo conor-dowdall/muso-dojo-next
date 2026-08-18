@@ -278,16 +278,16 @@ export function SessionBackingBandDialog({
         </DisclosureListItem>
 
         <DisclosureListItem
-          ariaLabel={`Count In. Current: ${formatCountIn(backingBand.countInBeats)}`}
+          ariaLabel={`Count-In. Current: ${formatCountIn(backingBand.countInBeats)}`}
           icon={<Timer />}
           isOpen={mainDisclosure.isOpen("count-in")}
-          label="Count In"
+          label="Count-In"
           panelVariant="menu"
           preview={formatCountIn(backingBand.countInBeats)}
           onToggle={() => mainDisclosure.toggleChoice("count-in")}
         >
           <NumericStepper
-            aria-label="Count In beats"
+            aria-label="Count-in beats"
             formatValue={formatCountIn}
             max={MAX_SESSION_BACKING_BAND_COUNT_IN_BEATS}
             min={MIN_SESSION_BACKING_BAND_COUNT_IN_BEATS}

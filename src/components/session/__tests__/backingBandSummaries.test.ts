@@ -83,13 +83,13 @@ describe("backing band summaries", () => {
           [createPart("only", "standard")],
           "rhythm",
         ),
-      ).toBe("Applies to 1 Part");
+      ).toBe("Used by 1 Part");
       expect(
         getSessionBandCoverageSummary(
           [createPart("first", "standard"), createPart("second", "swing")],
           "backingNotes",
         ),
-      ).toBe("Applies to all 2 Parts");
+      ).toBe("Used by All Parts (2)");
     });
 
     it("summarizes mixed Rhythm sources and omits zero counts", () => {
@@ -115,7 +115,7 @@ describe("backing band summaries", () => {
           [sessionPart, secondSessionPart, localPart, offPart],
           "rhythm",
         ),
-      ).toBe("Applies to 2 Parts • 1 local Rhythm • 1 Rhythm Off");
+      ).toBe("Used by 2 of 4 Parts • 1 local Rhythm • 1 Rhythm Off");
     });
 
     it("summarizes mixed Backing Notes sources", () => {
@@ -140,7 +140,7 @@ describe("backing band summaries", () => {
           [sessionPart, secondSessionPart, localPart, offPart],
           "backingNotes",
         ),
-      ).toBe("Applies to 2 Parts • 1 local Looper • 1 Backing Notes Off");
+      ).toBe("Used by 2 of 4 Parts • 1 local Looper • 1 Backing Notes Off");
     });
 
     it("pluralizes local modules and preserves Off capitalization", () => {
@@ -162,7 +162,7 @@ describe("backing band summaries", () => {
 
       expect(
         getSessionBandCoverageSummary([...localParts, offPart], "rhythm"),
-      ).toBe("Applies to 0 Parts • 2 local Rhythms • 1 Rhythm Off");
+      ).toBe("Used by 0 of 3 Parts • 2 local Rhythms • 1 Rhythm Off");
     });
 
     it("summarizes all-local and all-Off Backing Notes", () => {
@@ -180,10 +180,10 @@ describe("backing band summaries", () => {
       });
 
       expect(getSessionBandCoverageSummary(localParts, "backingNotes")).toBe(
-        "Applies to 0 Parts • 2 local Loopers",
+        "Used by 0 of 2 Parts • 2 local Loopers",
       );
       expect(getSessionBandCoverageSummary(offParts, "backingNotes")).toBe(
-        "Applies to 0 Parts • 2 Backing Notes Off",
+        "Used by 0 of 2 Parts • 2 Backing Notes Off",
       );
     });
 
@@ -202,7 +202,7 @@ describe("backing band summaries", () => {
       };
 
       expect(getSessionBandCoverageSummary([localPart], "rhythm")).toBe(
-        "Applies to 0 Parts • 1 local Rhythm",
+        "Used by 0 of 1 Part • 1 local Rhythm",
       );
 
       const reconciledPart = reconcilePartBandAfterModuleRemoval(
@@ -212,7 +212,7 @@ describe("backing band summaries", () => {
       reconciledPart.modules = [];
 
       expect(getSessionBandCoverageSummary([reconciledPart], "rhythm")).toBe(
-        "Applies to 1 Part",
+        "Used by 1 Part",
       );
     });
   });

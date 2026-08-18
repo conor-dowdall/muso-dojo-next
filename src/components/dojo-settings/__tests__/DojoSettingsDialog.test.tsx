@@ -117,10 +117,10 @@ describe("DojoSettingsDialog", () => {
     expect(markup).toContain("Reset Dojo?");
     expect(markup).toContain("2 Sessions • 1 Arrangement");
     expect(markup).toContain("3 Custom Tunings • 4 Custom Chord Progressions");
-    expect(markup).toContain("Your preferences will be reset.");
+    expect(markup).toContain("Your settings will be reset.");
     expect(markup).toContain("One new empty Session will be created.");
     expect(markup).toContain("Cancel");
-    expect(markup).toContain("Download Backup");
+    expect(markup).toContain("Download Current Backup");
     expect(markup).toContain("Reset Dojo");
     expect(markup).toContain('data-tone="danger"');
   });
@@ -158,6 +158,7 @@ describe("DojoSettingsDialog", () => {
         onCancel={() => undefined}
         onChooseBackup={() => undefined}
         onConfirm={() => undefined}
+        onDownloadBackup={() => undefined}
       />,
     );
 
@@ -166,9 +167,10 @@ describe("DojoSettingsDialog", () => {
     expect(markup).toContain("2 Sessions • 1 Arrangement");
     expect(markup).toContain("3 Custom Tunings • 4 Custom Chord Progressions");
     expect(markup).toContain(
-      "All current Dojo data and preferences will be replaced.",
+      "All current Dojo data and settings will be replaced. This cannot be undone.",
     );
     expect(markup).toContain("Cancel");
+    expect(markup).toContain("Download Current Backup");
     expect(markup).toContain("Restore Backup");
     expect(markup).toContain('data-tone="danger"');
   });

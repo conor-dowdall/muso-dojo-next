@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/disclosure-list/DisclosureList";
 import { Text } from "@/components/ui/typography/Text";
 import { useAppStore } from "@/stores/appStore";
+import { formatValueSummary } from "@/utils/valueSummary";
 import styles from "./ArrangementWorkspace.module.css";
 
 export function ArrangementSectionPicker({
@@ -62,7 +63,7 @@ export function ArrangementSectionPicker({
             <DisclosureListAction
               density="compact"
               icon={<Plus />}
-              label="Create Session"
+              label="New Session"
               onClick={() => addSession()}
             />
           </DisclosureListGroup>
@@ -81,18 +82,19 @@ export function ArrangementSectionPicker({
               const subtitle =
                 session.parts.length === 0
                   ? sourceChanged
-                    ? "Changed Since Added · No Parts to Update"
+                    ? formatValueSummary([
+                        "Changed Since Added",
+                        "No Parts to Update",
+                      ])
                     : "No Parts Yet"
-                  : [
+                  : formatValueSummary([
                       sourceChanged ? "Changed Since Added" : undefined,
                       updateImpact,
                       `${session.parts.length} ${
                         session.parts.length === 1 ? "Part" : "Parts"
                       }`,
                       `${session.tempoBpm ?? 80} BPM`,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ");
+                    ]);
 
               return (
                 <DisclosureListChoice

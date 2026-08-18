@@ -25,12 +25,12 @@ export function TempoActionItem({
 }) {
   return (
     <DisclosureListActionItem
-      ariaLabel={`Set tempo for ${item.name} ${entityKind}. Current: ${item.tempoBpm} bpm`}
+      ariaLabel={`Set tempo for ${item.name} ${entityKind}. Current: ${item.tempoBpm} BPM`}
       icon={<Gauge />}
       isOpen={isOpen}
       keepMounted
-      label="Set Tempo"
-      preview={`${item.tempoBpm} bpm`}
+      label="Tempo"
+      preview={`${item.tempoBpm} BPM`}
       onToggle={() => {
         if (!isOpen) onBeforeOpen?.();
         onToggle();

@@ -206,11 +206,11 @@ export function RhythmModule({
                 aria-label="Session tempo"
                 className={controlStyles.controlGroup}
                 readout={tempoBpm}
-                readoutAriaLabel={`Session tempo: ${tempoBpm} bpm`}
+                readoutAriaLabel={`Session tempo: ${tempoBpm} BPM`}
               >
                 <PartModuleControlButton
                   activationEvent="click"
-                  aria-label={`Set session tempo. Current tempo: ${tempoBpm} bpm`}
+                  aria-label={`Set session tempo. Current tempo: ${tempoBpm} BPM`}
                   icon={<Gauge />}
                   onPress={() => onOpenSessionTempo?.()}
                   unavailable={!onOpenSessionTempo}

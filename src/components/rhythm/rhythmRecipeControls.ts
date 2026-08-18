@@ -56,9 +56,9 @@ export const rhythmTimekeeperSoundChoices = [
 
 export const rhythmGrooveChoices = [
   {
-    description: "Bass drum on each counted beat",
+    description: "Kick on each counted beat",
     groove: "pulse",
-    label: "Use bass drum pulse on the counted beats",
+    label: "Use a kick pulse on the counted beats",
     text: "Pulse",
   },
   {
