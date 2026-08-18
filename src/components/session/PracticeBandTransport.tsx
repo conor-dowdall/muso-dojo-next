@@ -310,6 +310,7 @@ export function PracticeBandPlayButton({
 interface PracticeBandReadoutProps {
   prominence?: "compact" | "title";
   readout: PracticeBandReadoutModel | null;
+  showIdentity?: boolean;
 }
 
 type PracticeBandReadoutStyle = CSSProperties & {
@@ -321,6 +322,7 @@ type PracticeBandReadoutStyle = CSSProperties & {
 export function PracticeBandReadout({
   prominence = "compact",
   readout,
+  showIdentity = true,
 }: PracticeBandReadoutProps) {
   if (!readout) {
     return null;
@@ -364,6 +366,7 @@ export function PracticeBandReadout({
       aria-label={accessibleLabel}
       aria-live="polite"
       className={styles.readout}
+      data-identity={showIdentity ? "visible" : "hidden"}
       data-prominence={prominence}
       style={readoutStyle}
     >
@@ -379,9 +382,11 @@ export function PracticeBandReadout({
           <span className={styles.partTotal}>{readout.barTotalLabel}</span>
         </span>
       </span>
-      <span aria-hidden="true" className={styles.partIdentity}>
-        {readout.identityLabel}
-      </span>
+      {showIdentity ? (
+        <span aria-hidden="true" className={styles.partIdentity}>
+          {readout.identityLabel}
+        </span>
+      ) : null}
     </output>
   );
 }

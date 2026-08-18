@@ -39,10 +39,40 @@ import { ArrangementSectionPicker } from "./ArrangementSectionPicker";
 import { ArrangementSectionPlaybackDialog } from "./ArrangementSectionPlaybackDialog";
 import { ArrangementSectionUpdateDialog } from "./ArrangementSectionUpdateDialog";
 import { getArrangementSectionSourceStatus } from "@/utils/arrangement/arrangementSectionSource";
+import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import styles from "./ArrangementWorkspace.module.css";
 
 function formatSectionNumber(entryIndex: number) {
   return String(entryIndex + 1).padStart(2, "0");
+}
+
+export function formatArrangementChartPlaybackLabel({
+  entryIndex,
+  isActive,
+  isEnding,
+  playCount,
+  playIndex,
+}: {
+  entryIndex: number;
+  isActive: boolean;
+  isEnding: boolean;
+  playCount?: number;
+  playIndex?: number;
+}) {
+  const sectionLabel = `Section ${formatSectionNumber(entryIndex)}`;
+  if (
+    !isActive ||
+    isEnding ||
+    playCount === undefined ||
+    playIndex === undefined ||
+    playCount <= 1 ||
+    playIndex < 0 ||
+    playIndex >= playCount
+  ) {
+    return sectionLabel;
+  }
+
+  return `${sectionLabel}${DISPLAY_VALUE_SEPARATOR}Play ${playIndex + 1} of ${playCount}`;
 }
 
 function SectionMarker({ entryIndex }: { entryIndex: number }) {
@@ -215,6 +245,16 @@ export function ArrangementWorkspace({
     ? (sessions[chartPlaybackSection.source.sessionId]?.name ??
       chartPlaybackSection.source.sessionName)
     : undefined;
+  const chartPlaybackIsEnding =
+    transport.isActive &&
+    transport.snapshot.activeStepId === `${arrangementId}:ending`;
+  const chartPlaybackLabel = formatArrangementChartPlaybackLabel({
+    entryIndex: chartPlaybackEntryIndex,
+    isActive: transport.isActive,
+    isEnding: chartPlaybackIsEnding,
+    playCount: transport.activePlayCount,
+    playIndex: transport.activePlayIndex,
+  });
   const updateableSections = arrangement.sections.filter(
     (section) => sectionSourceStatusById.get(section.id) === "changed",
   );
@@ -621,7 +661,7 @@ export function ArrangementWorkspace({
 
             {chartPlaybackEntry && chartPlaybackSessionName ? (
               <ChartPlaybackContext
-                label={`Section ${formatSectionNumber(chartPlaybackEntryIndex)}`}
+                label={chartPlaybackLabel}
                 subtitle={chartPlaybackSessionName}
                 onOpenPlayback={() => {
                   setPlaybackDialogEntryId(chartPlaybackEntry.id);

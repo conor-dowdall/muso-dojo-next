@@ -1,6 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { ArrangementChartEntryTile } from "@/components/arrangement/ArrangementWorkspace";
+import {
+  ArrangementChartEntryTile,
+  formatArrangementChartPlaybackLabel,
+} from "@/components/arrangement/ArrangementWorkspace";
 
 function renderTile({
   current = false,
@@ -40,5 +43,44 @@ describe("Arrangement playback presentation", () => {
     expect(markup).toContain("up next chart displayed");
     expect(markup).not.toContain("data-active");
     expect(markup).not.toContain("aria-current");
+  });
+
+  it("adds finite multi-play progress to the active Section label", () => {
+    expect(
+      formatArrangementChartPlaybackLabel({
+        entryIndex: 0,
+        isActive: true,
+        isEnding: false,
+        playCount: 3,
+        playIndex: 1,
+      }),
+    ).toBe("Section 01 • Play 2 of 3");
+    expect(
+      formatArrangementChartPlaybackLabel({
+        entryIndex: 0,
+        isActive: true,
+        isEnding: false,
+        playCount: 1,
+        playIndex: 0,
+      }),
+    ).toBe("Section 01");
+    expect(
+      formatArrangementChartPlaybackLabel({
+        entryIndex: 0,
+        isActive: false,
+        isEnding: false,
+        playCount: 3,
+        playIndex: 1,
+      }),
+    ).toBe("Section 01");
+    expect(
+      formatArrangementChartPlaybackLabel({
+        entryIndex: 0,
+        isActive: true,
+        isEnding: true,
+        playCount: 3,
+        playIndex: 2,
+      }),
+    ).toBe("Section 01");
   });
 });
