@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import {
   Copy,
@@ -9,10 +9,12 @@ import {
   ListEnd,
   ListStart,
   Plus,
+  RefreshCw,
   Trash2,
 } from "lucide-react";
 import { partSequenceCoordinator } from "@/audio";
 import { Button } from "@/components/ui/buttons/Button";
+import { ChartPlaybackContext } from "@/components/chart/ChartPlaybackContext";
 import { IconButton } from "@/components/ui/buttons/IconButton";
 import { OptionButton } from "@/components/ui/buttons/OptionButton";
 import {
@@ -35,10 +37,42 @@ import {
 import { ArrangementHeader } from "./ArrangementHeader";
 import { ArrangementSectionPicker } from "./ArrangementSectionPicker";
 import { ArrangementSectionPlaybackDialog } from "./ArrangementSectionPlaybackDialog";
+import { ArrangementSectionUpdateDialog } from "./ArrangementSectionUpdateDialog";
+import { getArrangementSectionSourceStatus } from "@/utils/arrangement/arrangementSectionSource";
+import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
 import styles from "./ArrangementWorkspace.module.css";
 
 function formatSectionNumber(entryIndex: number) {
   return String(entryIndex + 1).padStart(2, "0");
+}
+
+export function formatArrangementChartPlaybackLabel({
+  entryIndex,
+  isActive,
+  isEnding,
+  playCount,
+  playIndex,
+}: {
+  entryIndex: number;
+  isActive: boolean;
+  isEnding: boolean;
+  playCount?: number;
+  playIndex?: number;
+}) {
+  const sectionLabel = `Section ${formatSectionNumber(entryIndex)}`;
+  if (
+    !isActive ||
+    isEnding ||
+    playCount === undefined ||
+    playIndex === undefined ||
+    playCount <= 1 ||
+    playIndex < 0 ||
+    playIndex >= playCount
+  ) {
+    return sectionLabel;
+  }
+
+  return `${sectionLabel}${DISPLAY_VALUE_SEPARATOR}Play ${playIndex + 1} of ${playCount}`;
 }
 
 function SectionMarker({ entryIndex }: { entryIndex: number }) {
@@ -119,6 +153,7 @@ export function ArrangementWorkspace({
       removeEntry: state.removeArrangementEntry,
       setPlayCount: state.setArrangementEntryPlayCount,
       setViewMode: state.setArrangementWorkspaceViewMode,
+      updateChangedSections: state.updateChangedArrangementSections,
     })),
   );
   const [selectedEntryId, setSelectedEntryId] = useState<string | undefined>(
@@ -131,6 +166,7 @@ export function ArrangementWorkspace({
     string | undefined
   >();
   const [playbackDialogOpen, setPlaybackDialogOpen] = useState(false);
+  const [sectionUpdateDialogOpen, setSectionUpdateDialogOpen] = useState(false);
   const chartTileRefs = useRef(new Map<string, HTMLLIElement>());
   const cardRefs = useRef(new Map<string, HTMLElement>());
   const transport = useArrangementTransport(arrangementId);
@@ -143,6 +179,19 @@ export function ArrangementWorkspace({
   const chartCue = useArrangementChartCue(transport.plan, fallback);
   const resolvedViewMode =
     arrangement?.entries.length === 0 ? "build" : viewMode;
+  const sectionSourceStatusById = useMemo(
+    () =>
+      new Map(
+        (arrangement?.sections ?? []).map((section) => [
+          section.id,
+          getArrangementSectionSourceStatus(
+            section,
+            sessions[section.source.sessionId],
+          ),
+        ]),
+      ),
+    [arrangement?.sections, sessions],
+  );
 
   useEffect(() => {
     if (!transport.activeEntryId) return;
@@ -182,6 +231,42 @@ export function ArrangementWorkspace({
     ({ id }) => id === playbackDialogEntryId,
   );
   const openPlaybackEntry = arrangement.entries[openPlaybackEntryIndex];
+  const chartPlaybackEntryId = transport.isActive
+    ? transport.activeEntryId
+    : selectedEntry?.id;
+  const chartPlaybackEntryIndex = arrangement.entries.findIndex(
+    ({ id }) => id === chartPlaybackEntryId,
+  );
+  const chartPlaybackEntry = arrangement.entries[chartPlaybackEntryIndex];
+  const chartPlaybackSection = arrangement.sections.find(
+    ({ id }) => id === chartPlaybackEntry?.sectionId,
+  );
+  const chartPlaybackSessionName = chartPlaybackSection
+    ? (sessions[chartPlaybackSection.source.sessionId]?.name ??
+      chartPlaybackSection.source.sessionName)
+    : undefined;
+  const chartPlaybackIsEnding =
+    transport.isActive &&
+    transport.snapshot.activeStepId === `${arrangementId}:ending`;
+  const chartPlaybackLabel = formatArrangementChartPlaybackLabel({
+    entryIndex: chartPlaybackEntryIndex,
+    isActive: transport.isActive,
+    isEnding: chartPlaybackIsEnding,
+    playCount: transport.activePlayCount,
+    playIndex: transport.activePlayIndex,
+  });
+  const updateableSections = arrangement.sections.filter(
+    (section) => sectionSourceStatusById.get(section.id) === "changed",
+  );
+  const updateableSourceSessionCount = new Set(
+    updateableSections.map((section) => section.source.sessionId),
+  ).size;
+  const updateableSectionIds = new Set(
+    updateableSections.map((section) => section.id),
+  );
+  const updateablePositionCount = arrangement.entries.filter((entry) =>
+    updateableSectionIds.has(entry.sectionId),
+  ).length;
   const stopForMutation = () => {
     if (transport.isActive) partSequenceCoordinator.stop();
   };
@@ -263,11 +348,10 @@ export function ArrangementWorkspace({
                   );
                   if (!section) return null;
                   const sourceSession = sessions[section.source.sessionId];
+                  const sourceStatus = sectionSourceStatusById.get(section.id);
                   const sourceChanged =
-                    sourceSession !== undefined &&
-                    sourceSession.lastModified !==
-                      section.source.sessionLastModified;
-                  const sourceUnavailable = sourceSession === undefined;
+                    sourceStatus === "changed" || sourceStatus === "empty";
+                  const sourceUnavailable = sourceStatus === "unavailable";
                   const sourceSessionName =
                     sourceSession?.name ?? section.source.sessionName;
                   const sectionNumber = entryIndex + 1;
@@ -448,7 +532,9 @@ export function ArrangementWorkspace({
                           onBeforeChange={stopForMutation}
                           onClose={() => setOpenSessionEntryId(undefined)}
                         />
-                      ) : sourceChanged && sourceSession.parts.length === 0 ? (
+                      ) : sourceChanged &&
+                        sourceSession &&
+                        sourceSession.parts.length === 0 ? (
                         <Text
                           as="div"
                           className={styles.sectionUnavailable}
@@ -462,17 +548,6 @@ export function ArrangementWorkspace({
                   );
                 })}
               </div>
-            ) : null}
-
-            {openPlaybackEntry ? (
-              <ArrangementSectionPlaybackDialog
-                key={openPlaybackEntry.id}
-                arrangementId={arrangementId}
-                entryId={openPlaybackEntry.id}
-                isOpen={playbackDialogOpen}
-                sectionNumber={formatSectionNumber(openPlaybackEntryIndex)}
-                onClose={() => setPlaybackDialogOpen(false)}
-              />
             ) : null}
 
             {arrangement.entries.length === 0 ? (
@@ -507,7 +582,11 @@ export function ArrangementWorkspace({
                 </WorkspaceEmptyState>
               )
             ) : (
-              <div className={styles.addSectionAction}>
+              <div
+                aria-label="Arrangement editing actions"
+                className={styles.arrangementEditingActions}
+                role="group"
+              >
                 <Button
                   disabled={!defaultSession}
                   icon={<Plus />}
@@ -515,8 +594,30 @@ export function ArrangementWorkspace({
                   size="sm"
                   onClick={() => addDefaultSection(true)}
                 />
+                {updateableSections.length > 0 ? (
+                  <Button
+                    icon={<RefreshCw />}
+                    label="Update All"
+                    size="sm"
+                    onClick={() => {
+                      stopForMutation();
+                      setSectionUpdateDialogOpen(true);
+                    }}
+                  />
+                ) : null}
               </div>
             )}
+            <ArrangementSectionUpdateDialog
+              isOpen={sectionUpdateDialogOpen}
+              sectionCount={updateablePositionCount}
+              sessionCount={updateableSourceSessionCount}
+              onClose={() => setSectionUpdateDialogOpen(false)}
+              onConfirm={() => {
+                actions.updateChangedSections(arrangementId);
+                setOpenSessionEntryId(undefined);
+                setSectionUpdateDialogOpen(false);
+              }}
+            />
           </section>
         ) : (
           <section aria-label="Arrangement Chart" className={styles.chartView}>
@@ -558,6 +659,17 @@ export function ArrangementWorkspace({
               })}
             </ol>
 
+            {chartPlaybackEntry && chartPlaybackSessionName ? (
+              <ChartPlaybackContext
+                label={chartPlaybackLabel}
+                subtitle={chartPlaybackSessionName}
+                onOpenPlayback={() => {
+                  setPlaybackDialogEntryId(chartPlaybackEntry.id);
+                  setPlaybackDialogOpen(true);
+                }}
+              />
+            ) : null}
+
             {presentationSection && chartCue.presentation ? (
               <SessionChart
                 activePartId={
@@ -576,6 +688,16 @@ export function ArrangementWorkspace({
             ) : null}
           </section>
         )}
+        {openPlaybackEntry ? (
+          <ArrangementSectionPlaybackDialog
+            key={openPlaybackEntry.id}
+            arrangementId={arrangementId}
+            entryId={openPlaybackEntry.id}
+            isOpen={playbackDialogOpen}
+            sectionNumber={formatSectionNumber(openPlaybackEntryIndex)}
+            onClose={() => setPlaybackDialogOpen(false)}
+          />
+        ) : null}
       </div>
     </NoteColorProvider>
   );

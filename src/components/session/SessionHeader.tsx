@@ -212,6 +212,7 @@ export function SessionHeader({
                 <PracticeBandReadout
                   prominence="title"
                   readout={titleReadout}
+                  showIdentity={viewMode !== "chart"}
                 />
               ) : (
                 <span className={styles.titleText}>{sessionName}</span>

@@ -1,10 +1,16 @@
 "use client";
 
-import { type CSSProperties, useMemo, useSyncExternalStore } from "react";
+import {
+  type CSSProperties,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useShallow } from "zustand/react/shallow";
 import { Plus } from "lucide-react";
 import { partSequenceCoordinator } from "@/audio";
 import { NoteColorProvider } from "@/components/note-colors/NoteColorProvider";
+import { ChartPlaybackContext } from "@/components/chart/ChartPlaybackContext";
 import { Button } from "@/components/ui/buttons/Button";
 import { WorkspaceEmptyState } from "@/components/workspace/WorkspaceEmptyState";
 import { useAppStore } from "@/stores/appStore";
@@ -14,6 +20,7 @@ import { PART_DURATION_CHART_BAR_UNITS } from "@/utils/music-part/partDuration";
 import { createSessionBarPlan } from "@/utils/music-part/sessionBarPlan";
 import { getSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
 import { MusicPartView } from "./MusicPartView";
+import { SessionPartPlaybackDialog } from "./SessionPartPlaybackDialog";
 import {
   showsOnlyLivePart,
   showsSessionChart,
@@ -99,7 +106,11 @@ export function SessionView({
           Session.
         </WorkspaceEmptyState>
       ) : showChart ? (
-        <SessionChartView activePartId={activePartId} sessionId={sessionId} />
+        <SessionChartView
+          activePartId={activePartId}
+          playbackActive={partSequenceIsActive}
+          sessionId={sessionId}
+        />
       ) : showPartsView ? (
         <div className={styles.partsView}>
           {partIds.map((partId) => {
@@ -132,9 +143,11 @@ export function SessionView({
 
 function SessionChartView({
   activePartId,
+  playbackActive,
   sessionId,
 }: {
   activePartId?: string;
+  playbackActive: boolean;
   sessionId: string;
 }) {
   const sessionParts = useAppStore(
@@ -147,13 +160,59 @@ function SessionChartView({
     () => getSessionBackingBandConfig(storedBackingBand),
     [storedBackingBand],
   );
+  const [selectedPartId, setSelectedPartId] = useState(
+    () => sessionParts[0]?.id,
+  );
+  const [playbackDialogPartId, setPlaybackDialogPartId] = useState<
+    string | undefined
+  >();
+  const [playbackDialogOpen, setPlaybackDialogOpen] = useState(false);
+  const resolvedSelectedPartId = sessionParts.some(
+    ({ id }) => id === selectedPartId,
+  )
+    ? selectedPartId
+    : sessionParts[0]?.id;
+  const playbackTargetPartId = activePartId ?? resolvedSelectedPartId;
+  const playbackTargetIndex = sessionParts.findIndex(
+    ({ id }) => id === playbackTargetPartId,
+  );
+  const playbackTargetPart = sessionParts[playbackTargetIndex];
+  const playbackTargetSummary = playbackTargetPart
+    ? getPartLeadSheetSummary(playbackTargetPart, backingBand)
+    : undefined;
+
   return (
-    <SessionChart
-      activePartId={activePartId}
-      ariaLabel="Chart View"
-      backingBand={backingBand}
-      parts={sessionParts}
-    />
+    <div className={styles.chartView}>
+      {playbackTargetPart && playbackTargetSummary ? (
+        <ChartPlaybackContext
+          accessibleTarget={`Part ${String(playbackTargetIndex + 1).padStart(2, "0")}, ${playbackTargetSummary.identityAccessibleLabel}`}
+          actionLabel="Part Playback"
+          label={playbackTargetSummary.identityLabel}
+          showPlaybackIcon={false}
+          onOpenPlayback={() => {
+            setPlaybackDialogPartId(playbackTargetPartId);
+            setPlaybackDialogOpen(true);
+          }}
+        />
+      ) : null}
+      <SessionChart
+        activePartId={activePartId}
+        ariaLabel="Chart View"
+        backingBand={backingBand}
+        parts={sessionParts}
+        playbackActive={playbackActive}
+        selectedPartId={resolvedSelectedPartId}
+        onSelectPart={setSelectedPartId}
+      />
+      {playbackDialogPartId ? (
+        <SessionPartPlaybackDialog
+          isOpen={playbackDialogOpen}
+          partId={playbackDialogPartId}
+          sessionId={sessionId}
+          onClose={() => setPlaybackDialogOpen(false)}
+        />
+      ) : null}
+    </div>
   );
 }
 
@@ -162,11 +221,17 @@ export function SessionChart({
   ariaLabel,
   backingBand,
   parts,
+  playbackActive = false,
+  selectedPartId,
+  onSelectPart,
 }: {
   activePartId?: string;
   ariaLabel: string;
   backingBand: ReturnType<typeof getSessionBackingBandConfig>;
   parts: readonly MusicPartConfig[];
+  playbackActive?: boolean;
+  selectedPartId?: string;
+  onSelectPart?: (partId: string) => void;
 }) {
   const bars = useMemo((): SessionChartBar[] => {
     const barPlan = createSessionBarPlan(parts, backingBand);
@@ -203,6 +268,9 @@ export function SessionChart({
       activePartId={activePartId}
       ariaLabel={ariaLabel}
       bars={bars}
+      playbackActive={playbackActive}
+      selectedPartId={selectedPartId}
+      onSelectPart={onSelectPart}
     />
   );
 }
@@ -211,10 +279,16 @@ function BandSessionView({
   activePartId,
   ariaLabel,
   bars,
+  playbackActive,
+  selectedPartId,
+  onSelectPart,
 }: {
   activePartId?: string;
   ariaLabel: string;
   bars: SessionChartBar[];
+  playbackActive: boolean;
+  selectedPartId?: string;
+  onSelectPart?: (partId: string) => void;
 }) {
   return (
     <section className={styles.bandView} aria-label={ariaLabel}>
@@ -248,8 +322,45 @@ function BandSessionView({
             >
               {bar.parts.map((part) => {
                 const isActive = activePartId === part.id;
+                const isSelected =
+                  !playbackActive && selectedPartId === part.id;
+                const content = (
+                  <span className={styles.bandPartContent}>
+                    <span className={styles.bandPartIdentity}>
+                      {part.identityLabel}
+                    </span>
+                    {part.romanAnalysis ? (
+                      <span className={styles.bandPartAnalysis}>
+                        {part.romanAnalysis}
+                      </span>
+                    ) : null}
+                  </span>
+                );
 
-                return (
+                return onSelectPart ? (
+                  <button
+                    key={part.id}
+                    aria-current={isActive ? "step" : undefined}
+                    aria-disabled={playbackActive ? true : undefined}
+                    aria-label={`${part.accessibleLabel}${isSelected ? ". Selected for playback options" : ""}${playbackActive ? ". Chart follows playback" : ""}`}
+                    aria-pressed={isSelected}
+                    className={styles.bandPart}
+                    data-part-sequence-state={isActive ? "active" : undefined}
+                    data-selected={isSelected || undefined}
+                    style={
+                      {
+                        "--chart-span": part.chartSpanUnits,
+                      } as CSSProperties
+                    }
+                    tabIndex={playbackActive ? -1 : undefined}
+                    type="button"
+                    onClick={() => {
+                      if (!playbackActive) onSelectPart(part.id);
+                    }}
+                  >
+                    {content}
+                  </button>
+                ) : (
                   <div
                     key={part.id}
                     aria-current={isActive ? "step" : undefined}
@@ -263,16 +374,7 @@ function BandSessionView({
                       } as CSSProperties
                     }
                   >
-                    <span className={styles.bandPartContent}>
-                      <span className={styles.bandPartIdentity}>
-                        {part.identityLabel}
-                      </span>
-                      {part.romanAnalysis ? (
-                        <span className={styles.bandPartAnalysis}>
-                          {part.romanAnalysis}
-                        </span>
-                      ) : null}
-                    </span>
+                    {content}
                   </div>
                 );
               })}

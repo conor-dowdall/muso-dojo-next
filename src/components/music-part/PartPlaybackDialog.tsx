@@ -21,9 +21,24 @@ import {
 } from "@/components/session/backingBandSummaries";
 import { getAutomaticRhythmSelection } from "@/utils/rhythm/automaticRhythm";
 import { type PartBandRole, type PartBandSourceConfig } from "@/types/session";
-import { useMusicPart } from "./MusicPartContext";
+import {
+  type MusicPartContextValue,
+  useOptionalMusicPart,
+} from "./MusicPartContext";
 
 type PlaybackChoice = "backingNotes" | "rhythm";
+
+export type PartPlaybackDialogModel = Pick<
+  MusicPartContextValue,
+  | "automaticLengthBeats"
+  | "automaticRhythm"
+  | "band"
+  | "bandModuleOptions"
+  | "partId"
+  | "sessionBackingBand"
+  | "sessionId"
+  | "setBandSource"
+>;
 
 function sourceIsSelected(
   current: PartBandSourceConfig,
@@ -39,11 +54,46 @@ function sourceIsSelected(
 export function PartPlaybackDialog({
   isOpen,
   onClose,
+  part: suppliedPart,
+  title = "Playback for Part",
+  variant = "full",
 }: {
   isOpen: boolean;
   onClose: () => void;
+  part?: PartPlaybackDialogModel;
+  title?: string;
+  variant?: "full" | "transport";
 }) {
-  const part = useMusicPart();
+  const contextPart = useOptionalMusicPart();
+  const part = suppliedPart ?? contextPart;
+  if (!part) {
+    return null;
+  }
+
+  return (
+    <ResolvedPartPlaybackDialog
+      isOpen={isOpen}
+      part={part}
+      title={title}
+      variant={variant}
+      onClose={onClose}
+    />
+  );
+}
+
+function ResolvedPartPlaybackDialog({
+  isOpen,
+  onClose,
+  part,
+  title,
+  variant,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  part: PartPlaybackDialogModel;
+  title: string;
+  variant: "full" | "transport";
+}) {
   const loopTransport = usePartBandLoopTransport(part.sessionId, part.partId);
   const playFromHereTransport = usePartBandPlayFromHereTransport(
     part.sessionId,
@@ -79,31 +129,35 @@ export function PartPlaybackDialog({
       icon={<Disc3 />}
       isOpen={isOpen}
       size="standard"
-      title="Playback for Part"
+      title={title}
       onClose={onClose}
     >
-      <DisclosureListGroup>
-        <BandSourceDisclosure
-          icon={<Music2 />}
-          isOpen={isChoiceOpen("backingNotes")}
-          label="Backing Notes"
-          preview={backingNotesPreview}
-          role="backingNotes"
-          sessionSubtitle={sessionBackingNotesSummary}
-          onChoose={chooseSource}
-          onToggle={() => toggleChoice("backingNotes")}
-        />
-        <BandSourceDisclosure
-          icon={<Drum />}
-          isOpen={isChoiceOpen("rhythm")}
-          label="Rhythm"
-          preview={rhythmPreview}
-          role="rhythm"
-          sessionSubtitle={sessionRhythmSummary}
-          onChoose={chooseSource}
-          onToggle={() => toggleChoice("rhythm")}
-        />
-      </DisclosureListGroup>
+      {variant === "full" ? (
+        <DisclosureListGroup>
+          <BandSourceDisclosure
+            icon={<Music2 />}
+            isOpen={isChoiceOpen("backingNotes")}
+            label="Backing Notes Source"
+            preview={backingNotesPreview}
+            part={part}
+            role="backingNotes"
+            sessionSubtitle={sessionBackingNotesSummary}
+            onChoose={chooseSource}
+            onToggle={() => toggleChoice("backingNotes")}
+          />
+          <BandSourceDisclosure
+            icon={<Drum />}
+            isOpen={isChoiceOpen("rhythm")}
+            label="Rhythm Source"
+            preview={rhythmPreview}
+            part={part}
+            role="rhythm"
+            sessionSubtitle={sessionRhythmSummary}
+            onChoose={chooseSource}
+            onToggle={() => toggleChoice("rhythm")}
+          />
+        </DisclosureListGroup>
+      ) : null}
       <DisclosureListGroup aria-label="Playback" role="group">
         <DisclosureListAction
           aria-label={
@@ -132,10 +186,7 @@ export function PartPlaybackDialog({
   );
 }
 
-function getSourcePreview(
-  part: ReturnType<typeof useMusicPart>,
-  role: PartBandRole,
-) {
+function getSourcePreview(part: PartPlaybackDialogModel, role: PartBandRole) {
   const source = part.band[role];
   if (source.mode === "session") {
     return "Session Band";
@@ -161,6 +212,7 @@ function BandSourceDisclosure({
   preview,
   role,
   sessionSubtitle,
+  part,
 }: {
   icon: ReactNode;
   isOpen: boolean;
@@ -170,13 +222,13 @@ function BandSourceDisclosure({
   preview: string;
   role: PartBandRole;
   sessionSubtitle?: string;
+  part: PartPlaybackDialogModel;
 }) {
-  const part = useMusicPart();
   const source = part.band[role];
 
   return (
     <DisclosureListItem
-      ariaLabel={`${label} source. Current: ${preview}`}
+      ariaLabel={`${label}. Current: ${preview}`}
       icon={icon}
       isOpen={isOpen}
       label={label}

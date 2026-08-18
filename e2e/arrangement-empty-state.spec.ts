@@ -256,6 +256,16 @@ test("each Arrangement retains its own workspace view across switching and reloa
   await expect(
     page.getByRole("region", { name: "Arrangement Chart" }),
   ).toBeVisible();
+  await page
+    .getByRole("button", { name: /Playback options for Section 01/ })
+    .click();
+  await expect(
+    page.getByRole("dialog", { name: "Playback for Section 01" }),
+  ).toBeVisible();
+  await page
+    .getByRole("dialog", { name: "Playback for Section 01" })
+    .getByRole("button", { name: "Close", exact: true })
+    .click();
   await expectWorkspacePersisted(page, (snapshot) =>
     Object.values(snapshot.arrangements).some(
       (arrangement) => arrangement.workspaceViewMode === "chart",
@@ -303,4 +313,75 @@ test("each Arrangement retains its own workspace view across switching and reloa
   await expect(
     page.getByRole("button", { name: "Choose view. Current: Chart" }),
   ).toBeVisible();
+});
+
+test("changed Arrangement Sections can be updated together", async ({
+  page,
+}) => {
+  const snapshot = createKeyboardWorkspaceSnapshot();
+  const session = snapshot.sessions["e2e-session"]!;
+  const arrangementId = "e2e-arrangement";
+  const sourcePart = structuredClone(session.parts[0]!);
+  const createCapturedPart = (suffix: string) => ({
+    ...structuredClone(sourcePart),
+    id: `captured-part-${suffix}`,
+    modules: sourcePart.modules.map((module, index) => ({
+      ...structuredClone(module),
+      id: `captured-module-${suffix}-${index + 1}`,
+    })),
+  });
+
+  session.parts[0]!.rootNote = "D";
+  session.lastModified = "2026-01-02T00:00:00.000Z";
+  snapshot.activeSessionId = null;
+  snapshot.activeWorkspace = { id: arrangementId, kind: "arrangement" };
+  snapshot.arrangements = {
+    [arrangementId]: {
+      entries: [
+        { id: "entry-1", sectionId: "section-1", playCount: 1 },
+        { id: "entry-2", sectionId: "section-2", playCount: 1 },
+      ],
+      id: arrangementId,
+      lastModified: "2026-01-01T00:00:00.000Z",
+      name: "Browser Arrangement",
+      playbackMode: "once",
+      sections: ["1", "2"].map((suffix) => ({
+        backingBand: structuredClone(session.backingBand!),
+        id: `section-${suffix}`,
+        parts: [createCapturedPart(suffix)],
+        source: {
+          capturedAt: "2026-01-01T00:00:00.000Z",
+          sessionId: session.id,
+          sessionLastModified: "2026-01-01T00:00:00.000Z",
+          sessionName: session.name,
+          sessionTempoBpm: session.tempoBpm ?? 80,
+        },
+      })),
+      tempoBpm: 80,
+      workspaceViewMode: "build",
+    },
+  };
+
+  await seedDojoWorkspace(page, snapshot);
+  await page.goto("/dojo");
+
+  await expect(page.getByText("Changed", { exact: true })).toHaveCount(2);
+  await page.getByRole("button", { name: "Update All" }).click();
+  const dialog = page.getByRole("dialog", {
+    name: "Update Changed Sections",
+  });
+  await expect(
+    dialog.getByText("Update 2 Sections from 1 source Session?"),
+  ).toBeVisible();
+  await dialog.getByRole("button", { name: "Update 2 Sections" }).click();
+
+  await expect(page.getByRole("button", { name: "Update All" })).toHaveCount(0);
+  await expect(page.getByText("Changed", { exact: true })).toHaveCount(0);
+  await expectWorkspacePersisted(
+    page,
+    (persisted) =>
+      Object.values(persisted.arrangements)[0]?.sections.every(
+        (section) => section.parts[0]?.rootNote === "D",
+      ) === true,
+  );
 });

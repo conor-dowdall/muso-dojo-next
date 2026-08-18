@@ -1,13 +1,14 @@
 import { type ArrangementConfig } from "@/types/arrangement";
 import { type SessionConfig } from "@/types/session";
 import { DISPLAY_VALUE_SEPARATOR } from "@/utils/valueSummary";
+import { getArrangementSectionSourceStatus } from "@/utils/arrangement/arrangementSectionSource";
 
 type ArrangementLibrarySummary = Pick<
   ArrangementConfig,
   "entries" | "sections" | "tempoBpm"
 >;
 
-type ArrangementSourceSessionSummary = Pick<SessionConfig, "lastModified">;
+type ArrangementSourceSessionSummary = SessionConfig;
 
 function getSourceSessionStatusCounts(
   arrangement: ArrangementLibrarySummary,
@@ -23,7 +24,7 @@ function getSourceSessionStatusCounts(
       return;
     }
 
-    if (session.lastModified !== section.source.sessionLastModified) {
+    if (getArrangementSectionSourceStatus(section, session) !== "current") {
       changedSessionIds.add(section.source.sessionId);
     }
   });

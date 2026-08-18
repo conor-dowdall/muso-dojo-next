@@ -25,6 +25,11 @@
   font-size: var(--text-sm);
 }
 
+.readout[data-prominence="title"][data-identity="hidden"] {
+  inline-size: fit-content;
+  grid-template-columns: max-content;
+}
+
 .partPosition {
   display: inline-flex;
   min-inline-size: var(--practice-band-position-width, 9.7ch);
@@ -79,6 +84,15 @@
 .partTotal {
   font-variant-numeric: tabular-nums;
   text-align: end;
+}
+
+.readout[data-prominence="title"] .partPosition {
+  font-size: var(--text-sm);
+}
+
+.readout[data-prominence="title"] .partNumber {
+  color: var(--color-text);
+  font-weight: var(--font-semibold);
 }
 
 .partIdentity {

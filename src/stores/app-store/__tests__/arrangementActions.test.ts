@@ -199,6 +199,28 @@ describe("arrangement app store actions", () => {
     expect(refreshedSection.parts[0]?.id).not.toBe(updatedSession.parts[0]?.id);
   });
 
+  it("updates every changed Section snapshot explicitly without changing Arrangement entries", () => {
+    const store = createTestStore();
+    const arrangementId = store.getState().addArrangement();
+    store.getState().addArrangementSectionFromSession(arrangementId, sessionId);
+    store.getState().addArrangementSectionFromSession(arrangementId, sessionId);
+    const entries = store.getState().arrangements[arrangementId]!.entries;
+
+    store.getState().setPartRootNote(sessionId, partId, "D");
+
+    expect(
+      store.getState().updateChangedArrangementSections(arrangementId),
+    ).toBe(2);
+    const arrangement = store.getState().arrangements[arrangementId]!;
+    expect(arrangement.entries).toEqual(entries);
+    expect(
+      arrangement.sections.map((section) => section.parts[0]?.rootNote),
+    ).toEqual(["D", "D"]);
+    expect(
+      store.getState().updateChangedArrangementSections(arrangementId),
+    ).toBe(0);
+  });
+
   it("keeps captured Sections intact when their source Session is deleted", () => {
     const store = createTestStore();
     const arrangementId = store.getState().addArrangement();

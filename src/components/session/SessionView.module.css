@@ -1,3 +1,10 @@
+.chartView {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .bandView {
   container-type: inline-size;
 }
@@ -61,11 +68,32 @@
   border: var(--border-width-base) solid transparent;
   background: var(--color-chart-item-background);
   color: var(--color-text);
+  font: inherit;
   overflow: hidden;
+  text-align: inherit;
   transition:
     background-color var(--transition-fast) var(--ease-out),
     border-color var(--transition-fast) var(--ease-out),
     box-shadow var(--transition-fast) var(--ease-out);
+}
+
+button.bandPart {
+  appearance: none;
+  cursor: pointer;
+}
+
+button.bandPart:hover:not([aria-disabled="true"]):not([data-selected="true"]) {
+  background: var(--color-surface-hover);
+}
+
+button.bandPart:focus-visible {
+  border-color: var(--color-focus-ring);
+  outline: var(--border-width-base) solid var(--color-focus-ring);
+  outline-offset: var(--space-px);
+}
+
+.bandPart[data-selected="true"] {
+  background: var(--color-chart-item-active-background);
 }
 
 .bandPart:not(:last-child) {

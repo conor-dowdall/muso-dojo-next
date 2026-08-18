@@ -47,10 +47,10 @@ test("Part playback options expose Session and Part-loop transports", async ({
   const dialog = page.getByRole("dialog", { name: "Playback for Part" });
 
   await expect(
-    dialog.getByRole("button", { name: /^Backing Notes/ }),
+    dialog.getByRole("button", { name: /^Backing Notes Source/ }),
   ).toBeVisible();
   await expect(
-    dialog.getByRole("button", { name: /^Rhythm source/ }),
+    dialog.getByRole("button", { name: /^Rhythm Source/ }),
   ).toBeVisible();
   await dialog
     .getByRole("button", { name: "Play Session from this Part" })
