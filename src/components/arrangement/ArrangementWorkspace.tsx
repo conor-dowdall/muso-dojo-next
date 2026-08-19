@@ -130,6 +130,57 @@ export function ArrangementChartEntryTile({
   );
 }
 
+export function ArrangementChartSourceNotice({
+  unavailableCount,
+  updateCount,
+  onReview,
+}: {
+  unavailableCount: number;
+  updateCount: number;
+  onReview: () => void;
+}) {
+  const updateLabel =
+    updateCount > 0
+      ? `${updateCount} Section update${updateCount === 1 ? "" : "s"} available`
+      : undefined;
+  const unavailableLabel =
+    unavailableCount > 0
+      ? `${unavailableCount} ${unavailableCount === 1 ? "Section" : "Sections"} cannot currently be updated`
+      : undefined;
+  const label = [updateLabel, unavailableLabel]
+    .filter((value) => value !== undefined)
+    .join(DISPLAY_VALUE_SEPARATOR);
+
+  if (!label) return null;
+
+  return (
+    <ControlHeader
+      aria-label="Arrangement source status"
+      className={styles.chartSourceNotice}
+      primary={
+        <span className={styles.chartSourceNoticeCopy}>
+          <Text as="span" size="sm" weight="semibold">
+            {label}
+          </Text>
+          <Text as="span" size="xs" variant="muted">
+            {unavailableCount > 0
+              ? "Saved Arrangement content will still play."
+              : "Chart is using its saved Arrangement content."}
+          </Text>
+        </span>
+      }
+      actions={
+        <Button
+          aria-label="Review Arrangement source changes"
+          label="Review"
+          size="sm"
+          onClick={onReview}
+        />
+      }
+    />
+  );
+}
+
 export function ArrangementWorkspace({
   arrangementId,
   onOpenLibrary,
@@ -267,6 +318,17 @@ export function ArrangementWorkspace({
   const updateablePositionCount = arrangement.entries.filter((entry) =>
     updateableSectionIds.has(entry.sectionId),
   ).length;
+  const unavailableSectionIds = new Set(
+    arrangement.sections
+      .filter((section) => {
+        const status = sectionSourceStatusById.get(section.id);
+        return status === "empty" || status === "unavailable";
+      })
+      .map((section) => section.id),
+  );
+  const unavailablePositionCount = arrangement.entries.filter((entry) =>
+    unavailableSectionIds.has(entry.sectionId),
+  ).length;
   const stopForMutation = () => {
     if (transport.isActive) partSequenceCoordinator.stop();
   };
@@ -320,6 +382,29 @@ export function ArrangementWorkspace({
       setSelectedEntryId(result.entryId);
       setOpenSessionEntryId(undefined);
     }
+  };
+  const reviewArrangementSources = () => {
+    const firstAffectedEntry = arrangement.entries.find(
+      (entry) => sectionSourceStatusById.get(entry.sectionId) !== "current",
+    );
+
+    if (firstAffectedEntry) {
+      setSelectedEntryId(firstAffectedEntry.id);
+    }
+    setOpenSessionEntryId(undefined);
+    actions.setViewMode(arrangementId, "build");
+
+    globalThis.setTimeout(() => {
+      const card = firstAffectedEntry
+        ? cardRefs.current.get(firstAffectedEntry.id)
+        : undefined;
+      card?.scrollIntoView({ block: "nearest", inline: "nearest" });
+      card
+        ?.querySelector<HTMLButtonElement>(
+          "button[data-arrangement-section-source-control]",
+        )
+        ?.focus();
+    }, 0);
   };
 
   return (
@@ -478,6 +563,7 @@ export function ArrangementWorkspace({
                           }
                           aria-expanded={openSessionEntryId === entry.id}
                           className={styles.sectionSessionButton}
+                          data-arrangement-section-source-control
                           density="compact"
                           disclosureState={
                             openSessionEntryId === entry.id ? "open" : "closed"
@@ -621,6 +707,11 @@ export function ArrangementWorkspace({
           </section>
         ) : (
           <section aria-label="Arrangement Chart" className={styles.chartView}>
+            <ArrangementChartSourceNotice
+              unavailableCount={unavailablePositionCount}
+              updateCount={updateablePositionCount}
+              onReview={reviewArrangementSources}
+            />
             <ol className={styles.sequence}>
               {arrangement.entries.map((entry, entryIndex) => {
                 const section = arrangement.sections.find(

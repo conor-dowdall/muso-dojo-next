@@ -160,6 +160,17 @@
   gap: var(--space-3);
 }
 
+.chartSourceNotice {
+  min-inline-size: 0;
+  padding-block: var(--space-1);
+}
+
+.chartSourceNoticeCopy {
+  display: grid;
+  min-inline-size: 0;
+  gap: var(--space-1);
+}
+
 .sequence {
   display: grid;
   min-inline-size: 0;

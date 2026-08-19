@@ -358,13 +358,25 @@ test("changed Arrangement Sections can be updated together", async ({
         },
       })),
       tempoBpm: 80,
-      workspaceViewMode: "build",
+      workspaceViewMode: "chart",
     },
   };
 
   await seedDojoWorkspace(page, snapshot);
   await page.goto("/dojo");
 
+  const chart = page.getByRole("region", { name: "Arrangement Chart" });
+  await expect(chart.getByText("2 Section updates available")).toBeVisible();
+  await expect(
+    chart.getByText("Chart is using its saved Arrangement content."),
+  ).toBeVisible();
+  await chart
+    .getByRole("button", { name: "Review Arrangement source changes" })
+    .click();
+
+  await expect(
+    page.getByRole("button", { name: /^Session for Section 1\./ }),
+  ).toBeFocused();
   await expect(page.getByText("Changed", { exact: true })).toHaveCount(2);
   await page.getByRole("button", { name: "Update All" }).click();
   const dialog = page.getByRole("dialog", {
