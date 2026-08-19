@@ -33,6 +33,7 @@ import {
 import { type ExercisePlaybackRequest } from "./exercisePlaybackCoordinator";
 import { type RhythmPlaybackRequest } from "./rhythmPlaybackCoordinator";
 import { type BeatTransportCountIn } from "./beatTransportCoordinator";
+import { type EndingPlaybackRequest } from "./endingPlaybackCoordinator";
 
 const PART_SEQUENCE_DEFAULT_EXERCISE_ID_PREFIX = "part-sequence-looper";
 const PART_SEQUENCE_DEFAULT_RHYTHM_ID_PREFIX = "part-sequence-drums";
@@ -55,6 +56,7 @@ export interface PartSequenceStepPlan {
   arrangement?: ArrangementStepContext;
   continueRhythm: boolean;
   durationBeats: number;
+  endingRequest?: EndingPlaybackRequest;
   exerciseRequests: readonly ExercisePlaybackRequest[];
   index: number;
   partId: string;
@@ -328,18 +330,30 @@ function createRhythmResetSignature(request: RhythmPlaybackRequest) {
   };
 }
 
+function createEndingSignature(request: EndingPlaybackRequest | undefined) {
+  return request === undefined
+    ? undefined
+    : { ...request, tempoBpm: undefined };
+}
+
 export function createPartSequenceStepResetSignature({
   continueRhythm,
   durationBeats,
+  endingRequest,
   exerciseRequests,
   rhythmRequests,
 }: Pick<
   PartSequenceStepPlan,
-  "continueRhythm" | "durationBeats" | "exerciseRequests" | "rhythmRequests"
+  | "continueRhythm"
+  | "durationBeats"
+  | "endingRequest"
+  | "exerciseRequests"
+  | "rhythmRequests"
 >) {
   return JSON.stringify({
     continueRhythm,
     durationBeats,
+    ending: createEndingSignature(endingRequest),
     exercises: exerciseRequests.map(createExerciseResetSignature),
     rhythms: rhythmRequests.map(createRhythmResetSignature),
   });
@@ -348,15 +362,21 @@ export function createPartSequenceStepResetSignature({
 export function createPartSequenceStepUpdateSignature({
   continueRhythm,
   durationBeats,
+  endingRequest,
   exerciseRequests,
   rhythmRequests,
 }: Pick<
   PartSequenceStepPlan,
-  "continueRhythm" | "durationBeats" | "exerciseRequests" | "rhythmRequests"
+  | "continueRhythm"
+  | "durationBeats"
+  | "endingRequest"
+  | "exerciseRequests"
+  | "rhythmRequests"
 >) {
   return JSON.stringify({
     continueRhythm,
     durationBeats,
+    ending: createEndingSignature(endingRequest),
     exercises: exerciseRequests.map((request) => ({
       ...request,
       tempoBpm: undefined,

@@ -20,6 +20,11 @@ import {
 import { musoAudioEngine } from "./createWebAudioEngine";
 import { AUDIO_PLAYBACK_START_LEAD_SECONDS } from "./audioTimingConfig";
 import {
+  EndingPlaybackCoordinator,
+  type EndingPlaybackAudioEngine,
+  type EndingPlaybackRequest,
+} from "./endingPlaybackCoordinator";
+import {
   scheduleCountInClicks,
   type CountInSchedulerAudioEngine,
 } from "./countInScheduler";
@@ -43,6 +48,7 @@ interface BeatGrid {
 
 export interface BeatTransportPartStartRequest {
   countIn?: BeatTransportCountIn;
+  ending?: EndingPlaybackRequest;
   exercises?: readonly ExercisePlaybackRequest[];
   handoff?: boolean;
   originTime?: number;
@@ -59,10 +65,11 @@ export interface BeatTransportCountIn {
   pulses: number;
 }
 
-export interface CountInPlaybackAudioEngine extends CountInSchedulerAudioEngine {
+export interface CountInPlaybackAudioEngine
+  extends CountInSchedulerAudioEngine, EndingPlaybackAudioEngine {
   cancelPlaybackGroup: (
     group: PlaybackGroupHandle,
-    options?: { atTime?: number },
+    options?: { atTime?: number; releaseSeconds?: number },
   ) => void;
   createPlaybackGroup: () => PlaybackGroupHandle;
   prime: () => Promise<boolean>;
@@ -123,8 +130,9 @@ function getManualRhythmGrid(
 function getTempoBpm(
   exercises: readonly ExercisePlaybackRequest[],
   rhythms: readonly RhythmPlaybackRequest[],
+  ending?: EndingPlaybackRequest,
 ) {
-  return exercises[0]?.tempoBpm ?? rhythms[0]?.tempoBpm;
+  return exercises[0]?.tempoBpm ?? rhythms[0]?.tempoBpm ?? ending?.tempoBpm;
 }
 
 function rhythmRequestsAreEquivalent(
@@ -144,6 +152,7 @@ function rhythmRequestsAreEquivalent(
 
 export class BeatTransportCoordinator {
   private countInGroup: PlaybackGroupHandle | undefined;
+  private readonly ending: EndingPlaybackCoordinator;
   private manualControlListeners = new Set<
     (event: BeatTransportManualControlEvent) => void
   >();
@@ -153,7 +162,9 @@ export class BeatTransportCoordinator {
     private readonly exercise: ExercisePlaybackCoordinator = exercisePlaybackCoordinator,
     private readonly rhythm: RhythmPlaybackCoordinator = rhythmPlaybackCoordinator,
     private readonly countInAudio: CountInPlaybackAudioEngine = musoAudioEngine,
-  ) {}
+  ) {
+    this.ending = new EndingPlaybackCoordinator(countInAudio);
+  }
 
   private stopCountIn(atTime?: number) {
     if (!this.countInGroup) {
@@ -317,6 +328,7 @@ export class BeatTransportCoordinator {
 
   async startPart({
     countIn,
+    ending,
     exercises = [],
     handoff = false,
     originTime,
@@ -358,6 +370,7 @@ export class BeatTransportCoordinator {
       originTime === undefined &&
       (selectedExercises.length > 0 ||
         rhythmsInitiallyRequiringStart.length > 0 ||
+        ending !== undefined ||
         resolvedCountIn !== undefined);
 
     if (preparesFreshOrigin) {
@@ -370,6 +383,7 @@ export class BeatTransportCoordinator {
           rhythmsInitiallyRequiringStart.length > 0
             ? this.rhythm.prepare()
             : Promise.resolve(true),
+          ending ? this.ending.prepare() : Promise.resolve(true),
           resolvedCountIn ? this.countInAudio.prime() : Promise.resolve(true),
         ]);
       } catch {
@@ -382,7 +396,8 @@ export class BeatTransportCoordinator {
 
     const currentTime = this.getCurrentTime();
     const tempoBpm =
-      getTempoBpm(selectedExercises, selectedRhythms) ?? requestedTempoBpm;
+      getTempoBpm(selectedExercises, selectedRhythms, ending) ??
+      requestedTempoBpm;
     const secondsPerBeat = tempoBpm ? 60 / normalizeTempo(tempoBpm) : undefined;
     const requestedOrigin =
       originTime ??
@@ -452,6 +467,9 @@ export class BeatTransportCoordinator {
             this.rhythm.stop(id, { atTime: resolvedReplacementTime }),
           );
       }
+      if (!ending && this.ending.getActiveOwner() === owner) {
+        this.ending.stop(owner, { atTime: resolvedReplacementTime });
+      }
     }
 
     const results = await Promise.all([
@@ -473,6 +491,16 @@ export class BeatTransportCoordinator {
           replacementTime: resolvedReplacementTime,
         }),
       ),
+      ...(ending
+        ? [
+            this.ending.start(ending, {
+              owner,
+              originTime: resolvedOriginTime,
+              prepared: preparesFreshOrigin,
+              replacementTime: resolvedReplacementTime,
+            }),
+          ]
+        : []),
     ]);
     const isCurrent = revision === this.revision;
     const started = isCurrent && results.every(Boolean);
@@ -489,6 +517,11 @@ export class BeatTransportCoordinator {
           this.rhythm.stop(request.id);
         }
       });
+      const endingResultIndex =
+        selectedExercises.length + rhythmsToStart.length;
+      if (ending && results[endingResultIndex]) {
+        this.ending.stop(owner);
+      }
     }
 
     return {
@@ -579,6 +612,9 @@ export class BeatTransportCoordinator {
     this.rhythm
       .getActiveIds(owner)
       .forEach((id) => this.rhythm.stop(id, layerStopOptions));
+    if (this.ending.getActiveOwner() === owner) {
+      this.ending.stop(owner, layerStopOptions);
+    }
   }
 
   /**
@@ -593,6 +629,7 @@ export class BeatTransportCoordinator {
     this.stopCountIn();
     this.exercise.stop();
     this.rhythm.stop();
+    this.ending.stop();
   }
 }
 

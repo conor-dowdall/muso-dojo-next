@@ -336,7 +336,12 @@ export function createWebAudioEngine(): AudioEngine {
     group: PlaybackGroup,
     voiceHandle: AudioVoiceHandle,
   ) => {
-    if (group.cancelAtTime === undefined) {
+    const voice = activeVoices.get(voiceHandle);
+    if (
+      group.cancelAtTime === undefined ||
+      !voice ||
+      !startsAtOrAfterBoundary(voice.startTime, group.cancelAtTime)
+    ) {
       return;
     }
 
@@ -347,7 +352,10 @@ export function createWebAudioEngine(): AudioEngine {
     group: PlaybackGroup,
     hit: ScheduledHit,
   ) => {
-    if (group.cancelAtTime === undefined) {
+    if (
+      group.cancelAtTime === undefined ||
+      !startsAtOrAfterBoundary(hit.startTime, group.cancelAtTime)
+    ) {
       return;
     }
 
@@ -431,7 +439,7 @@ export function createWebAudioEngine(): AudioEngine {
       if (
         cancelAtTime !== undefined &&
         context &&
-        cancelAtTime > context.currentTime
+        (cancelAtTime > context.currentTime || releaseSeconds !== undefined)
       ) {
         if (
           group.cancelAtTime === undefined ||
@@ -441,11 +449,11 @@ export function createWebAudioEngine(): AudioEngine {
           group.releaseSeconds = releaseSeconds;
         }
         const boundaryTime = group.cancelAtTime;
+        const releaseStartTime = Math.max(context.currentTime, boundaryTime);
         const resolvedReleaseSeconds =
           group.releaseSeconds ?? PERCUSSION_STOP_RELEASE_SECONDS;
 
         if (group.output) {
-          const releaseStartTime = boundaryTime;
           const releaseEndTime = releaseStartTime + resolvedReleaseSeconds;
 
           group.output.gain.cancelScheduledValues(context.currentTime);
@@ -474,11 +482,9 @@ export function createWebAudioEngine(): AudioEngine {
             }
           });
         } else {
-          group.hits.forEach((hit) =>
-            applyScheduledGroupCancelToHit(group, hit),
-          );
+          group.hits.forEach((hit) => hit.stop(boundaryTime));
           group.voices.forEach((voiceHandle) =>
-            applyScheduledGroupCancelToVoice(group, voiceHandle),
+            stopVoice(voiceHandle, group.releaseSeconds, boundaryTime),
           );
         }
         clearPlaybackGroupCancelTimer(group);
@@ -490,7 +496,7 @@ export function createWebAudioEngine(): AudioEngine {
           },
           Math.max(
             0,
-            (boundaryTime -
+            (releaseStartTime -
               context.currentTime +
               resolvedReleaseSeconds +
               PLAYBACK_GROUP_CLEANUP_SECONDS) *

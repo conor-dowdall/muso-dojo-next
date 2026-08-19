@@ -79,6 +79,12 @@ export {
   type ExercisePlaybackSnapshot,
 } from "./exercisePlaybackCoordinator";
 export {
+  EndingPlaybackCoordinator,
+  type EndingPlaybackAudioEngine,
+  type EndingPlaybackRequest,
+  type EndingPlaybackStartOptions,
+} from "./endingPlaybackCoordinator";
+export {
   getRhythmPlaybackOwner,
   isRhythmPlaybackActive,
   rhythmPatternsAreEqual,

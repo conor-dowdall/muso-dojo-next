@@ -708,6 +708,63 @@ describe("createWebAudioEngine", () => {
     ).toBe(false);
   });
 
+  it("does not cut off a pre-boundary crash queued after its group boundary", async () => {
+    vi.useFakeTimers();
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    MockAudioContext.lastInstance!.currentTime = 1;
+    const group = engine.createPlaybackGroup();
+    const groupGain = MockAudioContext.gainNodes.at(-1)!
+      .gain as unknown as MockAudioParam;
+
+    engine.cancelPlaybackGroup(group, { atTime: 2, releaseSeconds: 1 });
+    expect(
+      engine.schedulePercussionHit({
+        group,
+        sampleId: "crash",
+        startTime: 1.2,
+      }),
+    ).toBe(true);
+
+    expect(MockAudioContext.bufferSources.at(-1)?.stopCalls).toEqual([]);
+    expect(groupGain.events).toContainEqual({
+      time: 3,
+      type: "ramp",
+      value: 0.0001,
+    });
+  });
+
+  it("uses the shared release when an explicit boundary is registered late", async () => {
+    vi.useFakeTimers();
+    installMockAudioWindow();
+
+    const engine = createWebAudioEngine();
+    await engine.prime();
+    MockAudioContext.lastInstance!.currentTime = 1;
+    const group = engine.createPlaybackGroup();
+    const groupGain = MockAudioContext.gainNodes.at(-1)!
+      .gain as unknown as MockAudioParam;
+    expect(
+      engine.schedulePercussionHit({
+        group,
+        sampleId: "crash",
+        startTime: 1,
+      }),
+    ).toBe(true);
+
+    MockAudioContext.lastInstance!.currentTime = 2.1;
+    engine.cancelPlaybackGroup(group, { atTime: 2, releaseSeconds: 1 });
+
+    expect(MockAudioContext.bufferSources.at(-1)?.stopCalls).toEqual([]);
+    expect(groupGain.events).toContainEqual({
+      time: 3.1,
+      type: "ramp",
+      value: 0.0001,
+    });
+  });
+
   it("silences events already queued on a future group boundary", async () => {
     vi.useFakeTimers();
     installMockAudioWindow();

@@ -7,21 +7,6 @@ const coreTestIgnore = [
   /\.mobile\.spec\.ts$/,
   /\.pwa\.spec\.ts$/,
 ];
-const snapWebKitEnvironment =
-  process.env.SNAP_NAME === "code"
-    ? (Object.fromEntries(
-        Object.entries(process.env).filter(
-          ([key]) =>
-            !key.startsWith("SNAP") &&
-            ![
-              "GIO_MODULE_DIR",
-              "GTK_EXE_PREFIX",
-              "GTK_IM_MODULE_FILE",
-              "GTK_PATH",
-            ].includes(key),
-        ),
-      ) as Record<string, string>)
-    : undefined;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -73,9 +58,6 @@ export default defineConfig({
       testIgnore: coreTestIgnore,
       use: {
         ...devices["Desktop Safari"],
-        ...(snapWebKitEnvironment
-          ? { launchOptions: { env: snapWebKitEnvironment } }
-          : {}),
         serviceWorkers: "block",
       },
     },
