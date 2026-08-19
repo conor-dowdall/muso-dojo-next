@@ -37,12 +37,12 @@ export function ArrangementSectionUpdateDialog({
       />
       <DialogContent layout="stack">
         <Text as="p">
-          Update {sectionCount} {sectionLabel} from {sessionCount} source{" "}
-          {sessionLabel}?
+          Update {sectionCount} {sectionLabel} with the latest content from{" "}
+          {sessionCount} {sessionLabel}?
         </Text>
         <Text as="p" size="sm" variant="muted">
-          Their saved Parts and playback settings will be replaced. Arrangement
-          order, plays, and tempo settings will stay the same.
+          Saved Parts and playback settings will be replaced. Arrangement order,
+          play counts, and tempo settings won&apos;t change.
         </Text>
       </DialogContent>
       <DialogFooter>

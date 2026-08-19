@@ -371,7 +371,9 @@ test("changed Arrangement Sections can be updated together", async ({
     name: "Update Changed Sections",
   });
   await expect(
-    dialog.getByText("Update 2 Sections from 1 source Session?"),
+    dialog.getByText(
+      "Update 2 Sections with the latest content from 1 Session?",
+    ),
   ).toBeVisible();
   await dialog.getByRole("button", { name: "Update 2 Sections" }).click();
 
