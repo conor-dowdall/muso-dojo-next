@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
   ArrangementChartEntryTile,
+  ArrangementChartSourceNotice,
   formatArrangementChartPlaybackLabel,
 } from "@/components/arrangement/ArrangementWorkspace";
 
@@ -82,5 +83,46 @@ describe("Arrangement playback presentation", () => {
         playIndex: 2,
       }),
     ).toBe("Section 01");
+  });
+});
+
+describe("Arrangement Chart source notice", () => {
+  it("summarizes available updates without treating them as an error", () => {
+    const markup = renderToStaticMarkup(
+      <ArrangementChartSourceNotice
+        unavailableCount={0}
+        updateCount={2}
+        onReview={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain("2 Section updates available");
+    expect(markup).toContain("Chart is using its saved Arrangement content.");
+    expect(markup).toContain("Review Arrangement source changes");
+  });
+
+  it("reassures the user when a Section cannot be updated", () => {
+    const markup = renderToStaticMarkup(
+      <ArrangementChartSourceNotice
+        unavailableCount={1}
+        updateCount={0}
+        onReview={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain("1 Section cannot currently be updated");
+    expect(markup).toContain("Saved Arrangement content will still play.");
+  });
+
+  it("renders nothing while every Section source is current", () => {
+    expect(
+      renderToStaticMarkup(
+        <ArrangementChartSourceNotice
+          unavailableCount={0}
+          updateCount={0}
+          onReview={() => undefined}
+        />,
+      ),
+    ).toBe("");
   });
 });

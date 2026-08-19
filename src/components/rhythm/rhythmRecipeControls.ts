@@ -130,7 +130,7 @@ export const rhythmStarterChoices = [
   },
   {
     id: "country",
-    label: "Country",
+    label: "Offbeat Snare",
   },
   {
     id: "swing",
