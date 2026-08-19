@@ -47,6 +47,16 @@ describe("normalizeModuleCreationDefaults", () => {
     });
   });
 
+  it("does not mistake invalid non-empty selections for an intentional empty selection", () => {
+    expect(
+      normalizeModuleCreationDefaults({
+        moduleKindDefaults: {
+          session: ["not-a-module"],
+        },
+      }),
+    ).toBeUndefined();
+  });
+
   it("drops built-in Rhythm creation defaults", () => {
     expect(
       normalizeRhythmModuleCreationDefault({
