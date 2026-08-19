@@ -525,6 +525,7 @@ export class PartSequenceCoordinator {
       handoff && part.continueRhythm && !forceRhythmRestart;
     const result = await this.transport.startPart({
       countIn: handoff ? undefined : (this.startCountIn ?? plan.countIn),
+      ending: part.endingRequest,
       exercises: part.exerciseRequests,
       handoff,
       originTime,

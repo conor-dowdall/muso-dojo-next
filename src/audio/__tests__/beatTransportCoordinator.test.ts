@@ -15,7 +15,7 @@ import {
 } from "@/audio/rhythmPlaybackCoordinator";
 import { RHYTHM_PPQ, type RhythmPattern } from "@/data/rhythmPresets";
 import { type LookaheadScheduler } from "@/audio/lookaheadScheduler";
-import { type PlaybackGroupHandle } from "@/audio/types";
+import { type AudioVoiceHandle, type PlaybackGroupHandle } from "@/audio/types";
 
 function createScheduler(): LookaheadScheduler {
   return { isRunning: () => true, start: vi.fn(), stop: vi.fn() };
@@ -91,8 +91,11 @@ function createHarness({
   const countInAudio: CountInPlaybackAudioEngine = {
     cancelPlaybackGroup: vi.fn(),
     createPlaybackGroup: () => "count-in" as PlaybackGroupHandle,
+    getCurrentTime: () => currentTime,
     prime: async () => true,
     scheduleMetronomeClick: vi.fn(() => true),
+    scheduleNote: vi.fn(() => "ending-note" as AudioVoiceHandle),
+    schedulePercussionHit: vi.fn(() => true),
   };
   const exercise = new ExercisePlaybackCoordinator(
     exerciseEngine,
@@ -288,6 +291,58 @@ describe("BeatTransportCoordinator", () => {
 
     transport.stopPartPlayback();
     expect(countInAudio.cancelPlaybackGroup).toHaveBeenCalledWith("count-in");
+  });
+
+  it("schedules an Ending note, kick, and crash once on one shared group", async () => {
+    const { countInAudio, transport } = createHarness();
+    const result = await transport.startPart({
+      ending: {
+        crashVelocity: 0.56,
+        durationBeats: 4,
+        fadeSeconds: 1,
+        kickVelocity: 0.8,
+        midi: 38,
+        noteVelocity: 0.72,
+        presetId: "bowed-strings",
+        tempoBpm: 60,
+      },
+      originTime: 24,
+      source: "part-sequence",
+    });
+
+    expect(result).toEqual({ originTime: 24, started: true });
+    expect(countInAudio.scheduleNote).toHaveBeenCalledOnce();
+    expect(countInAudio.scheduleNote).toHaveBeenCalledWith({
+      durationSeconds: 5,
+      group: "count-in",
+      midiNote: 38,
+      presetId: "bowed-strings",
+      startTime: 24,
+      use: "exercise",
+      velocity: 0.72,
+    });
+    expect(countInAudio.schedulePercussionHit).toHaveBeenCalledTimes(2);
+    expect(countInAudio.schedulePercussionHit).toHaveBeenNthCalledWith(1, {
+      group: "count-in",
+      sampleId: "kick",
+      startTime: 24,
+      velocity: 0.944,
+    });
+    expect(countInAudio.schedulePercussionHit).toHaveBeenNthCalledWith(2, {
+      group: "count-in",
+      sampleId: "crash",
+      startTime: 24,
+      velocity: 0.6608,
+    });
+
+    transport.stopPartPlayback("part-sequence", {
+      atTime: 28,
+      releaseSeconds: 1,
+    });
+    expect(countInAudio.cancelPlaybackGroup).toHaveBeenCalledWith("count-in", {
+      atTime: 28,
+      releaseSeconds: 1,
+    });
   });
 
   it("uses compound-meter pulses across the full bar duration", async () => {

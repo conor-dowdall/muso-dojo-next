@@ -119,7 +119,7 @@ describe("createArrangementPlaybackRequest", () => {
     expect(plan.sourceSignature).not.toContain("90");
   });
 
-  it("appends a one-bar kick, crash, and configured root to finite playback", () => {
+  it("appends a one-shot one-bar ending with a shared fade", () => {
     const arrangement = createArrangement();
     arrangement.ending = {
       audioPresetId: "bowed-strings",
@@ -144,32 +144,22 @@ describe("createArrangementPlaybackRequest", () => {
       },
       continueRhythm: false,
       durationBeats: 4,
-      sourcePartId: "b-part",
-      tempoBpm: 96,
-    });
-    expect(ending.exerciseRequests).toMatchObject([
-      {
-        countInBeats: 0,
-        events: [
-          {
-            durationBeats: 4,
-            gateRatio: 1,
-            midi: 38,
-            offsetBeats: 0,
-            sustainTailSeconds: 1.4,
-            velocity: 0.72,
-          },
-        ],
-        metronomeEnabled: false,
+      endingRequest: {
+        crashVelocity: 0.56,
+        durationBeats: 4,
+        fadeSeconds: 1,
+        kickVelocity: 0.8,
+        midi: 38,
+        noteVelocity: 0.72,
         presetId: "bowed-strings",
         tempoBpm: 96,
       },
-    ]);
-    expect(ending.releaseSeconds).toBe(1.4);
-    expect(ending.rhythmRequests[0]?.pattern.hits).toEqual([
-      { atTicks: 0, sampleId: "kick", velocity: 0.8 },
-      { atTicks: 0, sampleId: "crash", velocity: 0.56 },
-    ]);
+      sourcePartId: "b-part",
+      tempoBpm: 96,
+    });
+    expect(ending.exerciseRequests).toEqual([]);
+    expect(ending.rhythmRequests).toEqual([]);
+    expect(ending.releaseSeconds).toBe(1);
 
     const contentSignature = request.plan.contentSignature;
     arrangement.entries[1]!.tempoOverrideBpm = 97;

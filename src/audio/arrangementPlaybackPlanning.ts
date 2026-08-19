@@ -3,11 +3,7 @@ import {
   type ArrangementEndingConfig,
   type ArrangementSectionConfig,
 } from "@/types/arrangement";
-import {
-  RHYTHM_PPQ,
-  getRhythmRecipeBarBeatCount,
-  type RhythmPattern,
-} from "@/data/rhythmPresets";
+import { getRhythmRecipeBarBeatCount } from "@/data/rhythmPresets";
 import { getArrangementEndingMidi } from "@/utils/arrangement/arrangementEnding";
 import { resolvePartBackingBand } from "@/utils/music-part/resolvePartBackingBand";
 import { getRhythmSelectionRecipe } from "@/utils/rhythm/rhythmConfig";
@@ -29,7 +25,7 @@ export interface ArrangementPlaybackRequest {
 const ARRANGEMENT_ENDING_NOTE_VELOCITY = 0.72;
 const ARRANGEMENT_ENDING_KICK_VELOCITY = 0.8;
 const ARRANGEMENT_ENDING_CRASH_VELOCITY = 0.56;
-const ARRANGEMENT_ENDING_RELEASE_SECONDS = 1.4;
+const ARRANGEMENT_ENDING_FADE_SECONDS = 1;
 
 function createArrangementSourceSignature(
   arrangementId: string,
@@ -156,53 +152,22 @@ function createEndingStep({
   );
   const durationBeats = getRhythmRecipeBarBeatCount(finalRhythmRecipe);
   const stepId = `${arrangement.id}:ending`;
-  const exerciseRequests = [
-    {
-      countInBeats: 0 as const,
-      events: [
-        {
-          durationBeats,
-          gateRatio: 1,
-          midi: getArrangementEndingMidi(ending),
-          offsetBeats: 0,
-          stepIndex: 0,
-          sustainTailSeconds: ARRANGEMENT_ENDING_RELEASE_SECONDS,
-          velocity: ARRANGEMENT_ENDING_NOTE_VELOCITY,
-        },
-      ],
-      id: `${stepId}:note`,
-      metronomeEnabled: false,
-      presetId: ending.audioPresetId,
-      tempoBpm,
-    },
-  ];
-  const endingPattern: RhythmPattern = {
-    cycleTicks: durationBeats * RHYTHM_PPQ,
-    hits: [
-      {
-        atTicks: 0,
-        sampleId: "kick" as const,
-        velocity: ARRANGEMENT_ENDING_KICK_VELOCITY,
-      },
-      {
-        atTicks: 0,
-        sampleId: "crash" as const,
-        velocity: ARRANGEMENT_ENDING_CRASH_VELOCITY,
-      },
-    ],
-    meter: { beatUnit: 4, beats: durationBeats },
-    ppq: RHYTHM_PPQ,
+  const endingRequest = {
+    crashVelocity: ARRANGEMENT_ENDING_CRASH_VELOCITY,
+    durationBeats,
+    fadeSeconds: ARRANGEMENT_ENDING_FADE_SECONDS,
+    kickVelocity: ARRANGEMENT_ENDING_KICK_VELOCITY,
+    midi: getArrangementEndingMidi(ending),
+    noteVelocity: ARRANGEMENT_ENDING_NOTE_VELOCITY,
+    presetId: ending.audioPresetId,
+    tempoBpm,
   };
-  const rhythmRequests = [
-    {
-      id: `${stepId}:percussion`,
-      pattern: endingPattern,
-      tempoBpm,
-    },
-  ];
+  const exerciseRequests = [] as const;
+  const rhythmRequests = [] as const;
   const signatureInput = {
     continueRhythm: false,
     durationBeats,
+    endingRequest,
     exerciseRequests,
     rhythmRequests,
   };
@@ -221,7 +186,7 @@ function createEndingStep({
     ...signatureInput,
     index,
     partId: stepId,
-    releaseSeconds: ARRANGEMENT_ENDING_RELEASE_SECONDS,
+    releaseSeconds: ARRANGEMENT_ENDING_FADE_SECONDS,
     sourcePartId: finalPart.id,
     stepId,
     resetSignature,
