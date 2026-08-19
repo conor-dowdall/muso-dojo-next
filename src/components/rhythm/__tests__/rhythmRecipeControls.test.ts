@@ -84,7 +84,7 @@ describe("rhythmRecipeControls", () => {
     const fourFour = getRhythmStarterRecipe("4-4");
     const swing = getRhythmStarterRecipe("swing");
     const shuffle = getRhythmStarterRecipe("shuffle");
-    const country = getRhythmStarterRecipe("country");
+    const offbeatSnare = getRhythmStarterRecipe("country");
 
     expect(getRhythmStarterChoiceForRecipe(fourFour)?.label).toBe("4/4");
     expect(
@@ -108,7 +108,9 @@ describe("rhythmRecipeControls", () => {
       )?.label,
     ).toBe("Swing");
     expect(getRhythmStarterChoiceForRecipe(shuffle)?.label).toBe("Shuffle");
-    expect(getRhythmStarterChoiceForRecipe(country)?.label).toBe("Country");
+    expect(getRhythmStarterChoiceForRecipe(offbeatSnare)?.label).toBe(
+      "Offbeat Snare",
+    );
   });
 
   it("summarizes rhythm choices with their musical identity and meter", () => {
@@ -120,7 +122,7 @@ describe("rhythmRecipeControls", () => {
       "Shuffle • 4/4",
     );
     expect(getRhythmChoiceSummary(getRhythmStarterRecipe("country"))).toBe(
-      "Country • 4/4",
+      "Offbeat Snare • 4/4",
     );
   });
 
@@ -139,10 +141,10 @@ describe("rhythmRecipeControls", () => {
     ).toBe("12/8");
   });
 
-  it("includes a country drive starter for 4/4 hi-hat practice", () => {
-    const country = getRhythmStarterRecipe("country");
+  it("includes an offbeat snare starter for 4/4 hi-hat practice", () => {
+    const offbeatSnare = getRhythmStarterRecipe("country");
 
-    expect(country).toMatchObject({
+    expect(offbeatSnare).toMatchObject({
       beats: 4,
       groove: "bluegrass",
       grouping: "auto",
@@ -155,7 +157,7 @@ describe("rhythmRecipeControls", () => {
     expect(getRhythmStarterSummary("country")).toBe(
       "4 Beats • Drive • Hi-Hat • 2 per Beat",
     );
-    expect(getRhythmRecipeCreationSummary(country)).toBe(
+    expect(getRhythmRecipeCreationSummary(offbeatSnare)).toBe(
       "4/4 • Drive • Hi-Hat • 2 per Beat",
     );
   });
