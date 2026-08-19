@@ -220,10 +220,7 @@ function normalizeModuleCreationKinds(
     return [...kinds, kind];
   }, []);
 
-  if (
-    moduleKinds.length === 0 ||
-    moduleCreationKindsAreEqual(moduleKinds, fallback, fallback)
-  ) {
+  if (moduleCreationKindsAreEqual(moduleKinds, fallback, fallback)) {
     return undefined;
   }
 

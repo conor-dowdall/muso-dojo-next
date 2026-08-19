@@ -5,7 +5,7 @@ import {
   seedDojoWorkspace,
 } from "./fixtures/dojo";
 
-test("creates a playable module and moves through session views", async ({
+test("creates Session material and moves through session views", async ({
   page,
 }) => {
   await page.goto("/dojo");
@@ -23,13 +23,14 @@ test("creates a playable module and moves through session views", async ({
     page.getByRole("heading", { name: "Add to Session" }),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: "Add Keyboard module" }).click();
-  await expect(
-    page.getByRole("button", { name: "Remove Keyboard module" }),
-  ).toBeVisible();
+  await page.getByRole("button", { name: "Remove Fretboard module" }).click();
+  await expect(page.getByRole("button", { name: "Add Part" })).toBeEnabled();
   await page.getByRole("button", { name: "Add Part" }).click();
 
-  await expect(page.locator('[data-instrument="keyboard"]')).toBeVisible();
+  await expect(page.locator("[data-instrument]")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Add to part", exact: true }),
+  ).toBeVisible();
 
   await page
     .getByRole("button", { name: "Choose view. Current: Session" })

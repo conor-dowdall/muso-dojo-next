@@ -32,6 +32,21 @@ describe("normalizeModuleCreationDefaults", () => {
     ).toBeUndefined();
   });
 
+  it("keeps an explicit empty Session selection distinct from the Fretboard default", () => {
+    expect(
+      normalizeModuleCreationDefaults({
+        moduleKindDefaults: {
+          session: [],
+          part: [],
+        },
+      }),
+    ).toStrictEqual({
+      moduleKindDefaults: {
+        session: [],
+      },
+    });
+  });
+
   it("drops built-in Rhythm creation defaults", () => {
     expect(
       normalizeRhythmModuleCreationDefault({
