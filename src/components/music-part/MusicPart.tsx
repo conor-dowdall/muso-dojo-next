@@ -69,6 +69,7 @@ function MusicPartContent({
   const [addDialogKey, setAddDialogKey] = useState(0);
   const hasContent = musicPart.moduleCount > 0;
   const canAddPartModules = musicPart.addPartModules !== undefined;
+  const showEmptyAddAction = !hasContent && !showHeader && canAddPartModules;
   const openAddDialog = () => {
     setAddDialogKey((currentKey) => currentKey + 1);
     setIsAddDialogOpen(true);
@@ -86,21 +87,23 @@ function MusicPartContent({
       ) : showReadOnlyIdentity ? (
         <MusicPartIdentity />
       ) : null}
-      <div
-        className={styles.content}
-        data-empty={hasContent ? undefined : true}
-      >
-        {hasContent ? children : null}
-        {!hasContent && canAddPartModules ? (
-          <Button
-            icon={<Plus />}
-            label="Add to Part"
-            size="md"
-            variant="outline"
-            onClick={openAddDialog}
-          />
-        ) : null}
-      </div>
+      {hasContent || showEmptyAddAction ? (
+        <div
+          className={styles.content}
+          data-empty={hasContent ? undefined : true}
+        >
+          {hasContent ? children : null}
+          {showEmptyAddAction ? (
+            <Button
+              icon={<Plus />}
+              label="Add to Part"
+              size="md"
+              variant="outline"
+              onClick={openAddDialog}
+            />
+          ) : null}
+        </div>
+      ) : null}
       {musicPart.addPartModules ? (
         <Dialog isOpen={isAddDialogOpen} onClose={closeAddDialog} size="wide">
           <PartModuleCreationDialog

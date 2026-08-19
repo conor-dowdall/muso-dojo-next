@@ -288,7 +288,6 @@ export function AddToSessionDialog({
     selectedMode === "chord-progression"
       ? progressionRhythmProfile.preferredRhythmStarterId
       : undefined;
-  const canSubmit = moduleDraft.moduleRequests.length > 0;
   const effectiveReplaceSession = canReplaceSession && replaceSession;
   const actionLabel = effectiveReplaceSession
     ? "Replace Parts"
@@ -330,10 +329,6 @@ export function AddToSessionDialog({
   };
 
   const handleSubmit = () => {
-    if (!canSubmit) {
-      return;
-    }
-
     if (selectedMode === "part") {
       onAddCustomChordOrScale({
         rootNote: selectedRootNote,
@@ -502,12 +497,16 @@ export function AddToSessionDialog({
 
         <DialogContentSection
           ariaLabel={
-            selectedMode === "part" ? "Modules" : "Modules in Each Part"
+            selectedMode === "part"
+              ? "Optional Modules"
+              : "Optional Modules in Each Part"
           }
           menuGroup
         >
           <Heading as="h3" size="xs" variant="muted">
-            {selectedMode === "part" ? "Modules" : "Modules in Each Part"}
+            {selectedMode === "part"
+              ? "Modules (Optional)"
+              : "Modules in Each Part (Optional)"}
           </Heading>
           <ModuleCreationList
             context="session"
@@ -533,7 +532,6 @@ export function AddToSessionDialog({
           ) : null}
           <DialogFooterActionGroup placement="primary">
             <Button
-              disabled={!canSubmit}
               label={actionLabel}
               preventConcurrentClicks
               size="lg"

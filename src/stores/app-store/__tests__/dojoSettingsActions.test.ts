@@ -437,6 +437,21 @@ describe("dojo settings app store actions", () => {
     expect(notificationCount).toBe(0);
   });
 
+  it("remembers that Session material should be created without Modules", () => {
+    const store = createTestStore();
+
+    store.getState().rememberModuleCreation({
+      context: "session",
+      moduleKinds: [],
+    });
+
+    expect(store.getState().dojoSettings.moduleCreationDefaults).toEqual({
+      moduleKindDefaults: {
+        session: [],
+      },
+    });
+  });
+
   it("clears remembered module creation when restoring the built-in default", () => {
     const store = createTestStore({
       ...createStoreSnapshot(),
