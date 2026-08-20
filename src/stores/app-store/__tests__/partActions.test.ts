@@ -1,8 +1,109 @@
 import { describe, expect, it } from "vitest";
-import { createTestStore, sessionId } from "./appStoreTestUtils";
+import { createTestStore, partId, sessionId } from "./appStoreTestUtils";
 import { getPartLengthBeats } from "@/utils/music-part/partLength";
 
+function addRangeModules(store: ReturnType<typeof createTestStore>) {
+  const droneId = store
+    .getState()
+    .addPartModule(sessionId, partId, { type: "drone" });
+  const looperId = store
+    .getState()
+    .addPartModule(sessionId, partId, { type: "exercise-looper" });
+
+  if (!droneId || !looperId) {
+    throw new Error("Expected range module IDs");
+  }
+
+  store.getState().setDroneNoteCount(sessionId, partId, droneId, 2);
+  store.getState().setDroneOctaveOffset(sessionId, partId, droneId, 1);
+  store.getState().setExerciseLooperStart(sessionId, partId, looperId, {
+    octave: 0,
+    stepOffset: 1,
+  });
+  store.getState().setExerciseLooperEnd(sessionId, partId, looperId, {
+    octave: 1,
+    stepOffset: 1,
+  });
+  store
+    .getState()
+    .setExerciseLooperSubdivision(sessionId, partId, looperId, "2-per-beat");
+
+  return { droneId, looperId };
+}
+
+function getRangeModules(
+  store: ReturnType<typeof createTestStore>,
+  droneId: string,
+  looperId: string,
+) {
+  const modules = store.getState().sessions[sessionId]?.parts[0]?.modules;
+
+  return {
+    drone: modules?.find((module) => module.id === droneId),
+    looper: modules?.find((module) => module.id === looperId),
+  };
+}
+
 describe("Part actions", () => {
+  it("preserves module note ranges when Note Collections share a range shape", () => {
+    const store = createTestStore();
+    const { droneId, looperId } = addRangeModules(store);
+
+    store.getState().setPartNoteCollectionKey(sessionId, partId, "minor");
+
+    expect(getRangeModules(store, droneId, looperId)).toMatchObject({
+      drone: { noteCount: 2 },
+      looper: {
+        end: { octave: 1, stepOffset: 1 },
+        start: { octave: 0, stepOffset: 1 },
+      },
+    });
+  });
+
+  it("resets module note ranges when the Note Collection length changes", () => {
+    const store = createTestStore();
+    const { droneId, looperId } = addRangeModules(store);
+
+    store.getState().setPartNoteCollectionKey(sessionId, partId, "ionian");
+
+    const { drone, looper } = getRangeModules(store, droneId, looperId);
+    expect(drone).not.toHaveProperty("noteCount");
+    expect(drone).toMatchObject({ octaveOffset: 1 });
+    expect(looper).not.toHaveProperty("end");
+    expect(looper).not.toHaveProperty("start");
+    expect(looper).toMatchObject({ subdivision: "2-per-beat" });
+  });
+
+  it("resets module note ranges when finite presentation changes", () => {
+    const store = createTestStore();
+    store
+      .getState()
+      .setPartNoteCollectionKey(sessionId, partId, "majorPentatonic");
+    const { droneId, looperId } = addRangeModules(store);
+
+    store.getState().setPartNoteCollectionKey(sessionId, partId, "major9");
+
+    const { drone, looper } = getRangeModules(store, droneId, looperId);
+    expect(drone).not.toHaveProperty("noteCount");
+    expect(looper).not.toHaveProperty("end");
+    expect(looper).not.toHaveProperty("start");
+  });
+
+  it("preserves module note ranges when the Part root changes", () => {
+    const store = createTestStore();
+    const { droneId, looperId } = addRangeModules(store);
+
+    store.getState().setPartRootNote(sessionId, partId, "D");
+
+    expect(getRangeModules(store, droneId, looperId)).toMatchObject({
+      drone: { noteCount: 2 },
+      looper: {
+        end: { octave: 1, stepOffset: 1 },
+        start: { octave: 0, stepOffset: 1 },
+      },
+    });
+  });
+
   it("uses a selected Rhythm module for length and four beats for Automatic", () => {
     const store = createTestStore();
     const partId = store.getState().addPart(sessionId, {

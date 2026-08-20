@@ -1,4 +1,6 @@
 import { createDefaultMusicPartConfig } from "@/utils/session/createSessionEntities";
+import { getCollectionTonePresentationMetadata } from "@/utils/note-collection/collectionTonePresentation";
+import { type PartModuleConfig } from "@/types/session";
 import { cloneMusicPartConfig } from "./cloneConfig";
 import { resolveSettingValue } from "./settingValue";
 import {
@@ -28,6 +30,40 @@ function resolveTargetSessionId(
   return targetSessionId && state.sessions[targetSessionId]
     ? targetSessionId
     : undefined;
+}
+
+function resetCollectionDependentNoteRange(
+  partModule: PartModuleConfig,
+): PartModuleConfig {
+  switch (partModule.type) {
+    case "drone": {
+      const nextModule = { ...partModule };
+      delete nextModule.noteCount;
+      return nextModule;
+    }
+    case "exercise-looper": {
+      const nextModule = { ...partModule };
+      delete nextModule.end;
+      delete nextModule.start;
+      return nextModule;
+    }
+    case "instrument":
+    case "rhythm":
+      return partModule;
+  }
+}
+
+function noteCollectionsShareRangeShape(
+  currentKey: Parameters<typeof getCollectionTonePresentationMetadata>[0],
+  nextKey: Parameters<typeof getCollectionTonePresentationMetadata>[0],
+) {
+  const current = getCollectionTonePresentationMetadata(currentKey);
+  const next = getCollectionTonePresentationMetadata(nextKey);
+
+  return (
+    current.tones.length === next.tones.length &&
+    current.isFiniteVoicing === next.isFiniteVoicing
+  );
 }
 
 export function createPartActions(
@@ -107,9 +143,23 @@ export function createPartActions(
       set((state) =>
         updateSessionById(state, sessionId, (session) =>
           updatePartById(session, partId, (part) => {
+            const shouldResetCollectionDependentNoteRanges =
+              patch.noteCollectionKey !== undefined &&
+              patch.noteCollectionKey !== part.noteCollectionKey &&
+              !noteCollectionsShareRangeShape(
+                part.noteCollectionKey,
+                patch.noteCollectionKey,
+              );
             const patchedPart = {
               ...part,
               ...patch,
+              ...(shouldResetCollectionDependentNoteRanges
+                ? {
+                    modules: part.modules.map(
+                      resetCollectionDependentNoteRange,
+                    ),
+                  }
+                : {}),
             };
 
             return shouldClearActiveNotes
