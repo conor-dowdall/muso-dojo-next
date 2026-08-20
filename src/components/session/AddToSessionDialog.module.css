@@ -8,6 +8,7 @@
   min-inline-size: 0;
   max-inline-size: min(16rem, 42vw);
   overflow: hidden;
+  line-height: var(--leading-tight);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
