@@ -211,10 +211,13 @@ test("Section playback options persist independent tempo overrides", async ({
     .click();
 
   await expectWorkspacePersisted(page, (snapshot) => {
-    const entries = Object.values(snapshot.arrangements)[0]?.entries;
+    const arrangement = Object.values(snapshot.arrangements)[0];
+    const entries = arrangement?.entries;
     return (
       entries?.[0]?.tempoOverrideBpm === 126 &&
-      entries?.[1]?.tempoOverrideBpm === 140
+      entries?.[1]?.tempoOverrideBpm === 140 &&
+      entries[0].sectionId !== entries[1].sectionId &&
+      arrangement?.sections.length === 2
     );
   });
   await page.reload();
