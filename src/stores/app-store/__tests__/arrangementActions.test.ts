@@ -187,6 +187,73 @@ describe("arrangement app store actions", () => {
     ).toBe(16);
   });
 
+  it("duplicates a Section with independent content and copied Entry settings", () => {
+    const store = createTestStore();
+    const arrangementId = store.getState().addArrangement();
+    const capture = store
+      .getState()
+      .addArrangementSectionFromSession(arrangementId, sessionId)!;
+    store
+      .getState()
+      .setArrangementEntryPlayCount(arrangementId, capture.entryId, 3);
+    store
+      .getState()
+      .setArrangementEntryTempoOverrideBpm(arrangementId, capture.entryId, 120);
+
+    const duplicateEntryId = store
+      .getState()
+      .cloneArrangementEntry(arrangementId, capture.entryId)!;
+    const duplicatedArrangement = store.getState().arrangements[arrangementId]!;
+    const duplicateEntry = duplicatedArrangement.entries.find(
+      ({ id }) => id === duplicateEntryId,
+    )!;
+    const sourceSection = duplicatedArrangement.sections.find(
+      ({ id }) => id === capture.sectionId,
+    )!;
+    const duplicateSection = duplicatedArrangement.sections.find(
+      ({ id }) => id === duplicateEntry.sectionId,
+    )!;
+
+    expect(duplicatedArrangement.entries).toMatchObject([
+      {
+        id: capture.entryId,
+        playCount: 3,
+        sectionId: capture.sectionId,
+        tempoOverrideBpm: 120,
+      },
+      {
+        id: duplicateEntryId,
+        playCount: 3,
+        sectionId: duplicateSection.id,
+        tempoOverrideBpm: 120,
+      },
+    ]);
+    expect(duplicateSection.id).not.toBe(sourceSection.id);
+    expect(duplicateSection.parts[0]?.id).not.toBe(sourceSection.parts[0]?.id);
+    expect(duplicateSection.parts[0]?.modules[0]?.id).not.toBe(
+      sourceSection.parts[0]?.modules[0]?.id,
+    );
+
+    store.getState().setPartRootNote(sessionId, partId, "D");
+    expect(
+      store
+        .getState()
+        .replaceArrangementSectionFromSession(
+          arrangementId,
+          duplicateSection.id,
+          sessionId,
+        ),
+    ).toBe(true);
+
+    expect(
+      store
+        .getState()
+        .arrangements[arrangementId]?.sections.map(
+          (section) => section.parts[0]?.rootNote,
+        ),
+    ).toEqual(["C", "D"]);
+  });
+
   it("refreshes a shared Section snapshot without changing its Arrangement structure", () => {
     const store = createTestStore();
     const arrangementId = store.getState().addArrangement();
@@ -195,7 +262,7 @@ describe("arrangement app store actions", () => {
       .addArrangementSectionFromSession(arrangementId, sessionId)!;
     const repeatedEntryId = store
       .getState()
-      .cloneArrangementEntry(arrangementId, capture.entryId)!;
+      .appendArrangementSectionEntry(arrangementId, capture.sectionId)!;
 
     store
       .getState()

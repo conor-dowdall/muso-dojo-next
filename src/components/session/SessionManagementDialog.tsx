@@ -132,11 +132,14 @@ export function SessionManagementDialog({
   };
 
   const handleCloneSession = (sessionId: string) => {
-    cloneSession(sessionId);
+    const cloneId = cloneSession(sessionId);
+    if (!cloneId) return;
+
     setOpenSessionId(null);
     setOpenRenameSessionId(null);
     setOpenTempoSessionId(null);
     setDeleteConfirmationSessionId(null);
+    onClose();
   };
 
   const handleDeleteSession = (sessionId: string) => {

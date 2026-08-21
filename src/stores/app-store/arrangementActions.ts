@@ -364,13 +364,31 @@ export function createArrangementActions(
       const arrangement = get().arrangements[arrangementId];
       const index = arrangement?.entries.findIndex(({ id }) => id === entryId);
       if (!arrangement || index === undefined || index < 0) return undefined;
+      const sourceEntry = arrangement.entries[index]!;
+      const sourceSection = arrangement.sections.find(
+        ({ id }) => id === sourceEntry.sectionId,
+      );
+      if (!sourceSection) return undefined;
+
       const id = createEntityId("entry");
+      const section: ArrangementSectionConfig = {
+        ...copySerializable(sourceSection),
+        id: createEntityId("section"),
+        parts: cloneMusicPartGraph(sourceSection.parts),
+      };
       const entries = [...arrangement.entries];
-      entries.splice(index + 1, 0, { ...entries[index]!, id });
+      entries.splice(index + 1, 0, {
+        ...sourceEntry,
+        id,
+        sectionId: section.id,
+      });
       set((state) => ({
         arrangements: {
           ...state.arrangements,
-          [arrangementId]: touchArrangement(arrangement, { entries }),
+          [arrangementId]: touchArrangement(arrangement, {
+            entries,
+            sections: [...arrangement.sections, section],
+          }),
         },
       }));
       return id;

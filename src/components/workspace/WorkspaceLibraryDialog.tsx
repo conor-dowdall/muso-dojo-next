@@ -302,8 +302,11 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
                     onCloseRename={() => setRenameId(null)}
                     onDeleteSession={actions.removeSession}
                     onDuplicateSession={(id) => {
-                      actions.cloneSession(id);
+                      const cloneId = actions.cloneSession(id);
+                      if (!cloneId) return;
+
                       resetMenus();
+                      onClose();
                     }}
                     onRenameSession={actions.renameSession}
                     onRequestDeleteSession={(id) => {
@@ -460,8 +463,13 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
                             actions.removeArrangement(arrangement.id)
                           }
                           onDuplicate={() => {
-                            actions.cloneArrangement(arrangement.id);
+                            const cloneId = actions.cloneArrangement(
+                              arrangement.id,
+                            );
+                            if (!cloneId) return;
+
                             resetMenus();
+                            onClose();
                           }}
                           onRequestDangerConfirm={() => {
                             setDeleteId(arrangement.id);
