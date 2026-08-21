@@ -9,7 +9,12 @@ import { type SessionConfig } from "@/types/session";
 import { cloneMusicPartGraph } from "@/utils/arrangement/cloneMusicPartGraph";
 import { createEntityId } from "@/utils/session/createSessionEntities";
 import { normalizeSessionBackingBandConfig } from "@/utils/session/sessionBackingBand";
-import { normalizeArrangementEndingConfig } from "@/utils/arrangement/arrangementEnding";
+import {
+  createArrangementEndingSeed,
+  DEFAULT_ARRANGEMENT_ENDING_CONFIG,
+  isDefaultArrangementEndingConfig,
+  normalizeArrangementEndingConfig,
+} from "@/utils/arrangement/arrangementEnding";
 import { getUpdateableArrangementSections } from "@/utils/arrangement/arrangementSectionSource";
 import {
   createEntityCopyName,
@@ -76,6 +81,7 @@ export function createArrangementActions(
         lastModified: now(),
         tempoBpm: 80,
         playbackMode: "once",
+        ending: { ...DEFAULT_ARRANGEMENT_ENDING_CONFIG },
         sections: [],
         entries: [],
         workspaceViewMode: "build",
@@ -241,13 +247,22 @@ export function createArrangementActions(
       const entryId = createEntityId("entry");
       const entry = { id: entryId, sectionId: section.id, playCount: 1 };
       const firstCapture = arrangement.entries.length === 0;
+      const sections = [...arrangement.sections, section];
+      const entries = [...arrangement.entries, entry];
+      // A new, empty Arrangement starts with the generic Band Ending. Replace
+      // that seed once there is musical context, but preserve Off or any edit.
+      const inferredEnding =
+        firstCapture && isDefaultArrangementEndingConfig(arrangement.ending)
+          ? createArrangementEndingSeed({ ...arrangement, sections, entries })
+          : undefined;
       set((current) => ({
         arrangements: {
           ...current.arrangements,
           [arrangementId]: touchArrangement(arrangement, {
             ...(firstCapture ? { tempoBpm: session.tempoBpm ?? 80 } : {}),
-            sections: [...arrangement.sections, section],
-            entries: [...arrangement.entries, entry],
+            ...(inferredEnding ? { ending: inferredEnding } : {}),
+            sections,
+            entries,
           }),
         },
       }));

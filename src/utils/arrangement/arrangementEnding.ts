@@ -28,6 +28,16 @@ export const DEFAULT_ARRANGEMENT_ENDING_CONFIG: ArrangementEndingConfig = {
   rootNote: DEFAULT_PART_ROOT_NOTE,
 };
 
+export function isDefaultArrangementEndingConfig(
+  ending: ArrangementEndingConfig | undefined,
+) {
+  return (
+    ending?.audioPresetId === DEFAULT_ARRANGEMENT_ENDING_CONFIG.audioPresetId &&
+    ending.octaveOffset === DEFAULT_ARRANGEMENT_ENDING_CONFIG.octaveOffset &&
+    ending.rootNote === DEFAULT_ARRANGEMENT_ENDING_CONFIG.rootNote
+  );
+}
+
 export function normalizeArrangementEndingConfig(
   value: unknown,
 ): ArrangementEndingConfig | undefined {

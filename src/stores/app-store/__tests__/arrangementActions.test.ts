@@ -16,6 +16,11 @@ describe("arrangement app store actions", () => {
       name: "My Arrangement",
       playbackMode: "once",
       tempoBpm: 80,
+      ending: {
+        audioPresetId: "acoustic-bass",
+        octaveOffset: -1,
+        rootNote: "C",
+      },
     });
 
     store.getState().setSessionTempoBpm(sessionId, 112);
@@ -87,7 +92,7 @@ describe("arrangement app store actions", () => {
     expect(clone.ending).toEqual(source.ending);
   });
 
-  it("stores and removes an independent Arrangement ending", () => {
+  it("enables a default Ending and stores or removes independent changes", () => {
     const store = createTestStore();
     const arrangementId = store.getState().addArrangement();
     const ending = {
@@ -96,9 +101,11 @@ describe("arrangement app store actions", () => {
       rootNote: "D" as const,
     };
 
-    expect(store.getState().arrangements[arrangementId]).not.toHaveProperty(
-      "ending",
-    );
+    expect(store.getState().arrangements[arrangementId]?.ending).toEqual({
+      audioPresetId: "acoustic-bass",
+      octaveOffset: -1,
+      rootNote: "C",
+    });
     store.getState().setArrangementEnding(arrangementId, ending);
     expect(store.getState().arrangements[arrangementId]?.ending).toEqual(
       ending,
@@ -106,6 +113,48 @@ describe("arrangement app store actions", () => {
     store.getState().setArrangementEnding(arrangementId, undefined);
     expect(store.getState().arrangements[arrangementId]).not.toHaveProperty(
       "ending",
+    );
+  });
+
+  it("infers the untouched default Ending from the first captured Section", () => {
+    const store = createTestStore();
+    const arrangementId = store.getState().addArrangement();
+
+    store.getState().setPartRootNote(sessionId, partId, "D");
+    store.getState().addArrangementSectionFromSession(arrangementId, sessionId);
+
+    expect(store.getState().arrangements[arrangementId]?.ending).toEqual({
+      audioPresetId: "acoustic-bass",
+      octaveOffset: -1,
+      rootNote: "D",
+    });
+  });
+
+  it("does not re-enable or replace an Ending chosen before the first capture", () => {
+    const store = createTestStore();
+    const offArrangementId = store.getState().addArrangement();
+    const customArrangementId = store.getState().addArrangement();
+    const customEnding = {
+      audioPresetId: "piano" as const,
+      octaveOffset: 1,
+      rootNote: "F" as const,
+    };
+
+    store.getState().setArrangementEnding(offArrangementId, undefined);
+    store.getState().setArrangementEnding(customArrangementId, customEnding);
+    store.getState().setPartRootNote(sessionId, partId, "D");
+    store
+      .getState()
+      .addArrangementSectionFromSession(offArrangementId, sessionId);
+    store
+      .getState()
+      .addArrangementSectionFromSession(customArrangementId, sessionId);
+
+    expect(store.getState().arrangements[offArrangementId]).not.toHaveProperty(
+      "ending",
+    );
+    expect(store.getState().arrangements[customArrangementId]?.ending).toEqual(
+      customEnding,
     );
   });
 
