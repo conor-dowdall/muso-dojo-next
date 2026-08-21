@@ -104,15 +104,23 @@ export function CustomChordProgressionsDialog({
     setDeleteProgressionId(null);
   };
 
-  const handleCreate = (name: string, progression: ChordProgression) => {
-    const id = addProgression({ name, progression });
+  const handleCreate = (
+    name: string,
+    progression: ChordProgression,
+    editingGridPositionCount: number,
+  ) => {
+    const id = addProgression({
+      editingGridPositionCount,
+      name,
+      progression,
+    });
     if (!id) return false;
 
     setIsNewOpen(false);
     setNewEditorVersion((version) => version + 1);
 
     if (mode === "choose") {
-      onSelect?.({ id, name, progression });
+      onSelect?.({ editingGridPositionCount, id, name, progression });
       onClose();
     }
 
@@ -220,6 +228,9 @@ export function CustomChordProgressionsDialog({
                           >
                             <CustomChordProgressionEditor
                               key={`${progression.id}-${progression.name}`}
+                              initialEditingGridPositionCount={
+                                progression.editingGridPositionCount
+                              }
                               initialName={progression.name}
                               initialProgression={progression.progression}
                               isNameAvailable={(name) =>
@@ -229,10 +240,15 @@ export function CustomChordProgressionsDialog({
                                   progression.id,
                                 )
                               }
-                              onSave={(name, nextProgression) => {
+                              onSave={(
+                                name,
+                                nextProgression,
+                                editingGridPositionCount,
+                              ) => {
                                 const wasUpdated = updateProgression(
                                   progression.id,
                                   {
+                                    editingGridPositionCount,
                                     name,
                                     progression: nextProgression,
                                   },

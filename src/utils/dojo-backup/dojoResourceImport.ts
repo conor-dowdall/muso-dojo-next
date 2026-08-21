@@ -191,6 +191,7 @@ export function mergeDojoBackupResources(
     ] as SavedFretboardTuning["openMidiNotes"],
   }));
   const importedProgressions = selectedProgressions.map((candidate) => ({
+    editingGridPositionCount: candidate.resource.editingGridPositionCount,
     id: createId("progression"),
     name: candidate.keepBothName ?? candidate.resource.name,
     progression: {

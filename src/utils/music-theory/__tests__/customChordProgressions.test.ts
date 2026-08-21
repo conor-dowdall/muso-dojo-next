@@ -287,7 +287,7 @@ describe("customChordProgressions", () => {
     ]);
   });
 
-  it("normalizes unique saved progression names with derived-only analysis", () => {
+  it("normalizes unique saved progression names and editing grid metadata", () => {
     const progression = {
       chords: [
         {
@@ -301,11 +301,17 @@ describe("customChordProgressions", () => {
 
     expect(
       normalizeSavedChordProgressions([
-        { id: "one", name: "My Changes", progression },
+        {
+          editingGridPositionCount: 6,
+          id: "one",
+          name: "My Changes",
+          progression,
+        },
         { id: "two", name: " my changes ", progression },
       ]),
     ).toEqual([
       {
+        editingGridPositionCount: 6,
         id: "one",
         name: "My Changes",
         progression: {
@@ -318,6 +324,38 @@ describe("customChordProgressions", () => {
           ],
         },
       },
+    ]);
+  });
+
+  it("derives a compatible editing grid for legacy or invalid metadata", () => {
+    const progression = {
+      chords: [
+        {
+          degree: "1",
+          chordCollectionKey: "major",
+          durationInBars: 0.5,
+        },
+        {
+          degree: "5",
+          chordCollectionKey: "major",
+          durationInBars: 0.5,
+        },
+      ],
+    };
+
+    expect(
+      normalizeSavedChordProgressions([
+        { id: "legacy", name: "Legacy", progression },
+        {
+          editingGridPositionCount: 3,
+          id: "invalid-grid",
+          name: "Invalid Grid",
+          progression,
+        },
+      ]),
+    ).toMatchObject([
+      { editingGridPositionCount: 4, id: "legacy" },
+      { editingGridPositionCount: 4, id: "invalid-grid" },
     ]);
   });
 });

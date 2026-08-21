@@ -9,10 +9,13 @@ type CustomChordProgressionDefinition = Pick<
 >;
 
 export interface SavedChordProgression extends CustomChordProgressionDefinition {
+  editingGridPositionCount?: number;
   id: string;
 }
 
-export type SavedChordProgressionInput = CustomChordProgressionDefinition;
+export type SavedChordProgressionInput = CustomChordProgressionDefinition & {
+  editingGridPositionCount?: number;
+};
 
 export type ChordProgressionSelection =
   | { kind: "built-in"; progressionKey: ChordProgressionKey }

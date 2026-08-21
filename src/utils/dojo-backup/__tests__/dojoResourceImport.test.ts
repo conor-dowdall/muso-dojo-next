@@ -43,8 +43,18 @@ function createBackupSettings(): DojoSettings {
   return {
     appTheme: "purple",
     customChordProgressions: [
-      { id: "backup-collision", name: "my changes", progression: changes },
-      { id: "backup-new", name: "Turnaround", progression: changes },
+      {
+        editingGridPositionCount: 5,
+        id: "backup-collision",
+        name: "my changes",
+        progression: changes,
+      },
+      {
+        editingGridPositionCount: 6,
+        id: "backup-new",
+        name: "Turnaround",
+        progression: changes,
+      },
     ],
     customFretboardTunings: [
       {
@@ -114,6 +124,7 @@ describe("Dojo backup resource import", () => {
     });
     expect(result.dojoSettings.customChordProgressions).toHaveLength(2);
     expect(result.dojoSettings.customChordProgressions?.at(-1)).toMatchObject({
+      editingGridPositionCount: 6,
       id: "imported-progression-2",
       name: "Turnaround",
     });

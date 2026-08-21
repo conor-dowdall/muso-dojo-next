@@ -66,6 +66,26 @@ export function getCustomProgressionCompatiblePositionCounts(
   );
 }
 
+export function resolveCustomProgressionEditingGridPositionCount(
+  bars: readonly CustomChordProgressionDraftBar[],
+  value?: unknown,
+) {
+  const compatiblePositionCounts =
+    getCustomProgressionCompatiblePositionCounts(bars);
+
+  if (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    compatiblePositionCounts.includes(value)
+  ) {
+    return value;
+  }
+
+  return compatiblePositionCounts.includes(4)
+    ? 4
+    : (compatiblePositionCounts[0] ?? 4);
+}
+
 export interface CustomProgressionBarPositionSelection {
   bar: CustomChordProgressionDraftBar;
   chordIndex: number;
@@ -300,9 +320,21 @@ export function normalizeSavedChordProgression(
     definitionResult.value.progression,
   );
 
-  return progression
-    ? { id, name: definitionResult.value.name, progression }
-    : undefined;
+  if (!progression) {
+    return undefined;
+  }
+
+  const bars = createCustomProgressionBars(progression);
+
+  return {
+    editingGridPositionCount: resolveCustomProgressionEditingGridPositionCount(
+      bars ?? [],
+      value.editingGridPositionCount,
+    ),
+    id,
+    name: definitionResult.value.name,
+    progression,
+  };
 }
 
 export function normalizeSavedChordProgressions(
@@ -350,9 +382,20 @@ export function normalizeSavedChordProgressionInput(
     definitionResult.value.progression,
   );
 
-  return progression
-    ? { name: definitionResult.value.name, progression }
-    : undefined;
+  if (!progression) {
+    return undefined;
+  }
+
+  const bars = createCustomProgressionBars(progression);
+
+  return {
+    editingGridPositionCount: resolveCustomProgressionEditingGridPositionCount(
+      bars ?? [],
+      value.editingGridPositionCount,
+    ),
+    name: definitionResult.value.name,
+    progression,
+  };
 }
 
 export function normalizeChordProgressionNameForComparison(name: string) {
