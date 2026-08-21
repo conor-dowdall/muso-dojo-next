@@ -198,6 +198,7 @@ export function createDojoSettingsActions(
         }
 
         const progression = normalizeSavedChordProgressionInput({
+          editingGridPositionCount: source.editingGridPositionCount,
           name: createUniqueEntityName(
             createEntityCopyName(source.name),
             customChordProgressions.map(({ name }) => name),

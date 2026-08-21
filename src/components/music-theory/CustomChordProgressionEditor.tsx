@@ -43,16 +43,22 @@ import {
   getCustomProgressionCompatiblePositionCounts,
   normalizeCustomChordProgressionName,
   removeCustomProgressionDraftChord,
+  resolveCustomProgressionEditingGridPositionCount,
   selectCustomProgressionBarPosition,
   type CustomChordProgressionDraftBar,
 } from "@/utils/music-theory/customChordProgressions";
 import styles from "./CustomChordProgressionEditor.module.css";
 
 interface CustomChordProgressionEditorProps {
+  initialEditingGridPositionCount?: number;
   initialName?: string;
   initialProgression?: ChordProgression;
   isNameAvailable?: (name: string) => boolean;
-  onSave: (name: string, progression: ChordProgression) => boolean;
+  onSave: (
+    name: string,
+    progression: ChordProgression,
+    editingGridPositionCount: number,
+  ) => boolean;
 }
 
 interface ExistingSelectedChord {
@@ -215,19 +221,8 @@ function getDegreeChromaticIndex(degree: ChordRootDegree) {
     : customChordProgressionSharpDegrees.indexOf(degree);
 }
 
-function getInitialPositionCount(
-  bars: readonly CustomChordProgressionDraftBar[],
-) {
-  const compatiblePositionCounts =
-    getCustomProgressionCompatiblePositionCounts(bars);
-
-  return compatiblePositionCounts.includes(4)
-    ? 4
-    : (compatiblePositionCounts[0] ?? 4);
-}
-
 function formatPositionCount(positionCount: number) {
-  return `${positionCount} per Bar`;
+  return `${positionCount} Positions per Bar`;
 }
 
 function getChordIndexAtPosition(
@@ -245,17 +240,22 @@ function getChordIndexAtPosition(
 }
 
 export function CustomChordProgressionEditor({
+  initialEditingGridPositionCount,
   initialName = "",
   initialProgression,
   isNameAvailable = () => true,
   onSave,
 }: CustomChordProgressionEditorProps) {
   const [initialBars] = useState(() => getInitialBars(initialProgression));
+  const [initialPositionCount] = useState(() =>
+    resolveCustomProgressionEditingGridPositionCount(
+      initialBars,
+      initialEditingGridPositionCount,
+    ),
+  );
   const [name, setName] = useState(initialName);
   const [bars, setBars] = useState(() => cloneBars(initialBars));
-  const [positionCount, setPositionCount] = useState(() =>
-    getInitialPositionCount(initialBars),
-  );
+  const [positionCount, setPositionCount] = useState(initialPositionCount);
   const [isPositionCountOpen, setIsPositionCountOpen] = useState(false);
   const [selectedChord, setSelectedChord] = useState<SelectedChord | null>(
     null,
@@ -281,7 +281,8 @@ export function CustomChordProgressionEditor({
     normalizedName !== undefined && !isNameAvailable(normalizedName);
   const hasChanges =
     normalizedName !== normalizedInitialName ||
-    !barsAreEqual(savableBars, initialBars);
+    !barsAreEqual(savableBars, initialBars) ||
+    positionCount !== initialPositionCount;
   const canSave =
     normalizedName !== undefined &&
     !hasNameConflict &&
@@ -556,7 +557,7 @@ export function CustomChordProgressionEditor({
     submissionPendingRef.current = true;
     setSubmissionPending(true);
     try {
-      const wasSaved = onSave(normalizedName, progression);
+      const wasSaved = onSave(normalizedName, progression, positionCount);
 
       if (!wasSaved) {
         submissionPendingRef.current = false;
@@ -602,9 +603,9 @@ export function CustomChordProgressionEditor({
         <>
           <DisclosureList>
             <DisclosureListItem
-              ariaLabel={`Chord positions per bar. Current: ${positionCount}`}
+              ariaLabel={`Editing grid. Current: ${positionCount} positions per bar`}
               isOpen={isPositionCountOpen}
-              label="Chord Positions"
+              label="Editing Grid"
               panelVariant="menu"
               preview={formatPositionCount(positionCount)}
               onToggle={() => {
@@ -613,7 +614,7 @@ export function CustomChordProgressionEditor({
               }}
             >
               <div
-                aria-label="Chord positions per bar"
+                aria-label="Editing grid positions per bar"
                 className={`${choiceGridStyles.tokenGrid} ${choiceGridStyles.numericTokenGrid}`}
                 role="group"
               >
@@ -627,8 +628,8 @@ export function CustomChordProgressionEditor({
                       key={candidatePositionCount}
                       aria-label={
                         isAvailable
-                          ? `Use ${candidatePositionCount} chord positions per bar`
-                          : `${candidatePositionCount} chord positions per bar. Not compatible with the current chord changes`
+                          ? `Use an editing grid with ${candidatePositionCount} positions per bar`
+                          : `Editing grid with ${candidatePositionCount} positions per bar. Not compatible with the current chord changes`
                       }
                       className={`${choiceGridStyles.tokenChoice} ${choiceGridStyles.squareTokenChoice}`}
                       disabled={!isAvailable}

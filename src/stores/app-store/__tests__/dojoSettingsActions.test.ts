@@ -24,25 +24,35 @@ describe("dojo settings app store actions", () => {
       ],
     } as const;
     const progressionId = store.getState().addCustomChordProgression({
+      editingGridPositionCount: 6,
       name: "My Changes",
       progression,
     });
 
     expect(progressionId).toMatch(/^progression-/);
     expect(store.getState().dojoSettings.customChordProgressions).toEqual([
-      { id: progressionId, name: "My Changes", progression },
+      {
+        editingGridPositionCount: 6,
+        id: progressionId,
+        name: "My Changes",
+        progression,
+      },
     ]);
 
     expect(
       store.getState().updateCustomChordProgression(progressionId ?? "", {
+        editingGridPositionCount: 7,
         name: "My Turnaround",
         progression,
       }),
     ).toBe(true);
 
     expect(
-      store.getState().dojoSettings.customChordProgressions?.[0]?.name,
-    ).toBe("My Turnaround");
+      store.getState().dojoSettings.customChordProgressions?.[0],
+    ).toMatchObject({
+      editingGridPositionCount: 7,
+      name: "My Turnaround",
+    });
     expect(store.getState().sessions[sessionId]).toBe(existingSession);
 
     store.getState().rememberSessionMaterialCreation({
@@ -100,6 +110,7 @@ describe("dojo settings app store actions", () => {
   it("duplicates custom progressions with unique names and independent data", () => {
     const store = createTestStore();
     const progressionId = store.getState().addCustomChordProgression({
+      editingGridPositionCount: 6,
       name: "My Changes",
       progression: {
         chords: [
@@ -128,6 +139,11 @@ describe("dojo settings app store actions", () => {
       "My Changes Copy",
       "My Changes Copy 2",
     ]);
+    expect(
+      progressions.map(
+        ({ editingGridPositionCount }) => editingGridPositionCount,
+      ),
+    ).toEqual([6, 6, 6]);
     expect(progressions[1]?.progression).toEqual(progressions[0]?.progression);
     expect(progressions[1]?.progression).not.toBe(progressions[0]?.progression);
   });
