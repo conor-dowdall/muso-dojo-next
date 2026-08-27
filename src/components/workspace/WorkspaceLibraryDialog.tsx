@@ -438,6 +438,7 @@ export function WorkspaceLibraryDialog({ onClose }: { onClose: () => void }) {
                             }
                             isOpen={renameId === arrangement.id}
                             label="Rename"
+                            shouldFocusInput
                             value={arrangement.name}
                             onClose={() => setRenameId(null)}
                             onRename={(name) =>
